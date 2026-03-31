@@ -1,0 +1,300 @@
+# Martial Cultivation Decisions
+# Major choices that define one's path
+
+decision = {
+	name = abandon_mortal_coil
+	title = decision_abandon_mortal
+	desc = decision_abandon_mortal_desc
+	
+	is_shown = {
+		is_ruler = yes
+		age >= 40
+		has_trait = nascent_soul
+		NOT = { has_trait = void }
+	}
+	
+	is_valid = {
+		prestige >= 1000
+		piety >= 500
+		stress < 50
+	}
+	
+	effect = {
+		remove_trait = nascent_soul
+		add_trait = void
+		add_prestige = -500
+		add_piety = 500
+		add_lifespan = 100
+		custom_tooltip = tt_ascending_void
+	}
+	
+	cooldown = { years = 20 }
+}
+
+decision = {
+	name = challenge_sect_master
+	title = decision_challenge_master
+	desc = decision_challenge_master_desc
+	
+	is_shown = {
+		is_ruler = yes
+		martial >= 25
+		opinion = {
+			target = realm_owner
+			value < -50
+		}
+	}
+	
+	is_valid = {
+		prowess >= 20
+		army_size >= realm_owner.army_size * 0.5
+	}
+		effect = {
+		start_war = {
+			target = realm_owner
+			casus_belli = sect_challenge
+		}
+		add_prestige = 100
+	}
+	
+	cooldown = { years = 10 }
+}
+
+decision = {
+	name = close_sect_disciple
+	title = decision_close_disciple
+	desc = decision_close_disciple_desc
+	
+	is_shown = {
+		is_ruler = yes
+		age >= 30
+		martial >= 15
+		num_of_vassals >= 2
+	}
+	
+	is_valid = {
+		gold >= 100
+		prestige >= 100
+	}
+		effect = {
+		add_gold = -100
+		add_prestige = 50
+		create_character = {
+			age = 16-20
+			martial = 10-15
+			faith = root.faith
+			culture = root.culture
+			has_trait = qi_refinement
+			dynasty = root.dynasty
+			opinion_modifier = {
+				target = root
+				modifier = master_disciple_bond
+			}
+		}
+		add_trait = respected_master
+	}
+	
+	cooldown = { years = 5 }
+}
+
+decision = {
+	name = seclude_for_cultivation
+	title = decision_seclude
+	desc = decision_seclude_desc
+	
+	is_shown = {
+		is_ruler = yes
+		has_trait = core_formation
+		age < 60
+	}
+	
+	effect = {
+		add_character_modifier = {
+			modifier = secluded_cultivation
+			duration = 365
+		}
+		add_stress = 20
+		add_character_modifier = {
+			modifier = cultivation_speed_bonus
+			duration = 365
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = cultivation.0002
+				days = 365
+			}
+		}
+	}
+	
+	cooldown = { years = 3 }
+}
+
+decision = {
+	name = found_martial_sect
+	title = decision_found_sect
+	desc = decision_found_sect_desc
+	
+	is_shown = {
+		is_lowborn = no
+		prestige_level >= 3
+		martial >= 20
+	}
+	
+	is_valid = {
+		prestige >= 2000
+		gold >= 500
+		independent = yes
+	}
+		effect = {
+		add_prestige = -500
+		add_gold = -500
+		set_primary_title = {
+			title = new_sect
+		}
+		add_realm_law = sect_government
+		add_trait = sect_founder
+	}
+	
+	cooldown = { years = 50 }
+}
+
+decision = {
+	name = refine_pill
+	title = decision_refine_pill
+	desc = decision_refine_pill_desc
+	
+	is_shown = {
+		has_trait = alchemist
+	}
+	
+	effect = {
+		custom_tooltip = tt_pill_refinement
+		add_character_modifier = {
+			modifier = recently_refined_pill
+			duration = 30
+		}
+		random_list = {
+			30 = { # Success
+				add_trait = minor_enhancement
+				add_health = 1
+			}
+			50 = { # Partial
+				add_stress = -10
+			}
+			20 = { # Failure
+				add_stress = 20
+				add_trait = stressed
+			}
+		}
+	}
+	
+	cooldown = { months = 6 }
+}
+
+decision = {
+	name = comprehend_technique
+	title = decision_comprehend
+	desc = decision_comprehend_desc
+	
+	is_shown = {
+		is_ruler = yes
+		has_trait = sword_aptitude_2
+		OR = {
+			has_trait = secret_manual_holder
+			prestige >= 500
+		}
+	}
+	
+	effect = {
+		add_trait = sword_aptitude_3
+		remove_trait = secret_manual_holder
+		add_martial = 3
+		add_prowess = 5
+		add_dynasty_prestige = 100
+	}
+	
+	cooldown = { years = 10 }
+}
+
+decision = {
+	name = challenge_heavenly_tribulation
+	title = decision_tribulation
+	desc = decision_tribulation_desc
+	
+	is_shown = {
+		has_trait = great_vehicle
+		age >= 100
+	}
+	
+	is_valid = {
+		martial >= 50
+		prowess >= 50
+		stress < 30
+	}
+		effect = {
+		trigger_event = {
+			id = cultivation.0006
+		}
+	}
+	
+	cooldown = { years = 50 }
+}
+
+decision = {
+	name = enter_demon_path
+	title = decision_demon_path
+	desc = decision_demon_path_desc
+	
+	is_shown = {
+		is_ruler = yes
+		NOT = { has_doctrine = demonic_cult }
+		OR = {
+			has_trait = greedy
+			has_trait = vengeful
+			has_trait = ambitious
+		}
+	}
+	
+	effect = {
+		add_piety = -500
+		set_faith = demonic_cultivation_sect
+		add_trait = demonic_aptitude_1
+		dynasty = {
+			every_member = {
+				add_opinion_modifier = {
+					target = root
+					modifier = fell_to_demon_path
+				}
+			}
+		}
+	}
+	
+	cooldown = { years = 100 }
+}
+
+decision = {
+	name = establish_treasure_vault
+	title = decision_treasure_vault
+	desc = decision_treasure_vault_desc
+	
+	is_shown = {
+		is_ruler = yes
+		gold >= 1000
+	}
+	
+	is_valid = {
+		gold >= 1000
+		prestige >= 500
+	}
+		effect = {
+		add_gold = -1000
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = treasure_vault_owner
+			years = 100
+		}
+		add_dynasty_prestige = 500
+	}
+	
+	cooldown = { years = 20 }
+}
