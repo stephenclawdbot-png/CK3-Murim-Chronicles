@@ -1,0 +1,1768 @@
+############################################
+# MURIM CULTIVATION SCHEMES
+# Custom intrigue schemes for the Murim
+# cultivation world.
+#
+# These schemes make AI cultivators plot
+# CONSTANTLY against each other. Murder,
+# theft, infiltration, corruption, and
+# massacre are all tools of advancement.
+############################################
+
+# ==========================================
+# QI DISRUPTION MURDER
+# Secretly disrupt a target's cultivation,
+# causing a fatal qi deviation.
+# The perfect assassination - looks like
+# a cultivation accident.
+#
+# Base success: 15%
+# Boosted by: intrigue, cultivation rank
+# AI cultivators use this FREQUENTLY
+# ==========================================
+
+murim_qi_disruption_murder = {
+	scheme_type = hostile
+	scheme_category = murder
+
+	# ------------------------------------------
+	# Scheme availability
+	# ------------------------------------------
+	is_valid = {
+		is_alive = yes
+		NOT = { this = scope:target }
+		scope:target = {
+			is_alive = yes
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+		}
+		has_variable = var:murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+	}
+
+	# ------------------------------------------
+	# Base values
+	# ------------------------------------------
+	base_success_chance = 15
+
+	# Scheme power determines speed
+	base_scheme_power = {
+		value = 5
+
+		# Intrigue is the primary stat
+		add = {
+			value = intrigue
+			multiply = 0.8
+		}
+
+		# Cultivation rank adds significant power
+		if = {
+			limit = { has_variable = var:murim_cultivation_rank }
+			add = {
+				value = var:murim_cultivation_rank
+				multiply = 4
+			}
+		}
+
+		# Technique mastery helps
+		if = {
+			limit = { has_variable = var:murim_technique_mastery }
+			add = {
+				value = var:murim_technique_mastery
+				multiply = 0.3
+			}
+		}
+
+		# Demonic cultivators are MUCH better at this
+		if = {
+			limit = { has_trait = murim_demonic_cultivator }
+			add = 15
+		}
+	}
+
+	# ------------------------------------------
+	# Target's defense
+	# ------------------------------------------
+	base_scheme_resistance = {
+		value = 5
+
+		# Target's intrigue resists
+		add = {
+			value = scope:target.intrigue
+			multiply = 0.5
+		}
+
+		# Target's cultivation rank provides protection
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_cultivation_rank
+				}
+			}
+			add = {
+				value = scope:target.var:murim_cultivation_rank
+				multiply = 5
+			}
+		}
+
+		# Target's meridian flow acts as defense
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_meridian_flow
+				}
+			}
+			add = {
+				value = scope:target.var:murim_meridian_flow
+				multiply = 0.4
+			}
+		}
+
+		# High qi makes target harder to disrupt
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_qi_current
+					var:murim_qi_current >= 80
+				}
+			}
+			add = 10
+		}
+	}
+
+	# ------------------------------------------
+	# Success chance modifiers
+	# ------------------------------------------
+	success_chance_modifier = {
+		# Schemer has higher rank than target
+		if = {
+			limit = {
+				var:murim_cultivation_rank > scope:target.var:murim_cultivation_rank
+			}
+			add = 15
+		}
+
+		# Much higher rank (3+ levels)
+		if = {
+			limit = {
+				var:murim_cultivation_rank >= 4
+				scope:target = {
+					var:murim_cultivation_rank < 2
+				}
+			}
+			add = 25
+		}
+
+		# Intrigue >= 20: master schemer
+		if = {
+			limit = { intrigue >= 20 }
+			add = 15
+		}
+
+		# Target is stressed/wounded - vulnerable
+		if = {
+			limit = {
+				scope:target = {
+					stress >= 50
+				}
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				scope:target = {
+					OR = {
+						has_trait = wounded
+						has_trait = severely_wounded
+					}
+				}
+			}
+			add = 20
+		}
+
+		# Schemer has schemer/deceitful trait
+		if = {
+			limit = {
+				OR = {
+					has_trait = schemer
+					has_trait = deceitful
+				}
+			}
+			add = 10
+		}
+	}
+
+	# ------------------------------------------
+	# On success - Target dies from qi deviation
+	# ------------------------------------------
+	on_success = {
+		custom_tooltip = murim_qi_disruption_murder_success_tt
+
+		scope:target = {
+			# Fatal qi deviation
+			death = {
+				death_reason = death_mystery
+				killer = scope:owner
+			}
+		}
+
+		# Schemer gains XP from the kill
+		scope:owner = {
+			change_variable = {
+				name = var:murim_cultivation_xp
+				add = 30
+			}
+			add_intrigue_skill = 1
+
+			# Demonic cultivators absorb victim's qi
+			if = {
+				limit = { has_trait = murim_demonic_cultivator }
+				change_variable = {
+					name = var:murim_qi_current
+					add = 40
+				}
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 25
+				}
+				custom_tooltip = murim_demonic_qi_absorption_murder_tt
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# On failure / exposure
+	# ------------------------------------------
+	on_fail = {
+		custom_tooltip = murim_qi_disruption_murder_fail_tt
+		scope:owner = {
+			add_stress = 20
+		}
+	}
+
+	on_expose = {
+		custom_tooltip = murim_qi_disruption_murder_exposed_tt
+		scope:owner = {
+			add_tyranny = 20
+			add_dread = 15
+			reverse_add_opinion = {
+				target = scope:target
+				modifier = murim_attempted_qi_murder
+				opinion = -80
+			}
+			# Target becomes rival
+			scope:target = {
+				set_relation_rival = scope:owner
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Agent recruitment
+	# Other cultivators in court can join
+	# ------------------------------------------
+	agent_join_chance = {
+		base = 10
+
+		# Agent is also a cultivator
+		modifier = {
+			add = 15
+			has_variable = var:murim_cultivation_rank
+		}
+
+		# Agent dislikes target
+		opinion_modifier = {
+			who = this
+			opinion_target = scope:target
+			multiplier = -0.3
+		}
+
+		# Agent is ambitious
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+
+		# Agent is deceitful
+		modifier = {
+			add = 15
+			has_trait = deceitful
+		}
+
+		# Agent is demonic cultivator
+		modifier = {
+			add = 25
+			has_trait = murim_demonic_cultivator
+		}
+
+		# Agent likes schemer
+		opinion_modifier = {
+			who = this
+			opinion_target = scope:owner
+			multiplier = 0.2
+		}
+
+		# Agent is craven - afraid to join murder plots
+		modifier = {
+			add = -30
+			has_trait = craven
+		}
+
+		# Agent is honest - refuses
+		modifier = {
+			add = -40
+			has_trait = honest
+		}
+	}
+
+	# ------------------------------------------
+	# AI targeting - makes AI use this OFTEN
+	# ------------------------------------------
+	ai_target_score = {
+		base = 50
+
+		# Target is a rival
+		modifier = {
+			add = 100
+			scope:target = {
+				has_relation_rival = scope:owner
+			}
+		}
+
+		# Target is demonic (orthodox motivation)
+		modifier = {
+			add = 60
+			has_trait = murim_orthodox_cultivator
+			scope:target = {
+				has_trait = murim_demonic_cultivator
+			}
+		}
+
+		# Schemer is demonic (murder for power)
+		modifier = {
+			add = 80
+			has_trait = murim_demonic_cultivator
+		}
+
+		# Target has higher rank (eliminate threats)
+		modifier = {
+			add = 40
+			scope:target = {
+				var:murim_cultivation_rank > prev.var:murim_cultivation_rank
+			}
+		}
+
+		# Target is a neighboring ruler (geopolitical)
+		modifier = {
+			add = 30
+			scope:target = {
+				is_ruler = yes
+				any_neighboring_ruler = {
+					this = scope:owner
+				}
+			}
+		}
+
+		# High intrigue schemer
+		modifier = {
+			add = 40
+			intrigue >= 15
+		}
+	}
+
+	ai_war_chance = 0.75
+
+	# Cooldown
+	cooldown = { months = 6 }
+
+	# Maximum agents
+	max_agents = 10
+}
+
+# ==========================================
+# CULTIVATION THEFT
+# Steal someone's cultivation through a
+# forbidden technique. Drains victim's XP,
+# adds to schemer.
+#
+# Base success: 10% (VERY hard)
+# Devastatingly powerful on success.
+# Primarily a demonic cultivator technique.
+# ==========================================
+
+murim_cultivation_theft = {
+	scheme_type = hostile
+	scheme_category = personal
+
+	# ------------------------------------------
+	# Scheme availability
+	# ------------------------------------------
+	is_valid = {
+		is_alive = yes
+		NOT = { this = scope:target }
+		scope:target = {
+			is_alive = yes
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+			has_variable = var:murim_cultivation_xp
+		}
+		has_variable = var:murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		# Must know forbidden techniques or be demonic
+		OR = {
+			has_trait = murim_demonic_cultivator
+			intrigue >= 18
+			has_character_flag = murim_knows_forbidden_technique
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+	}
+
+	# ------------------------------------------
+	# Base values - VERY hard
+	# ------------------------------------------
+	base_success_chance = 10
+
+	base_scheme_power = {
+		value = 3
+
+		# Intrigue is critical
+		add = {
+			value = intrigue
+			multiply = 0.6
+		}
+
+		# Cultivation rank matters a lot
+		if = {
+			limit = { has_variable = var:murim_cultivation_rank }
+			add = {
+				value = var:murim_cultivation_rank
+				multiply = 3
+			}
+		}
+
+		# Demonic cultivators are specialists
+		if = {
+			limit = { has_trait = murim_demonic_cultivator }
+			add = 12
+		}
+
+		# Technique mastery is essential
+		if = {
+			limit = { has_variable = var:murim_technique_mastery }
+			add = {
+				value = var:murim_technique_mastery
+				multiply = 0.5
+			}
+		}
+	}
+
+	base_scheme_resistance = {
+		value = 10
+
+		# Target's cultivation rank provides strong defense
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_cultivation_rank
+				}
+			}
+			add = {
+				value = scope:target.var:murim_cultivation_rank
+				multiply = 7
+			}
+		}
+
+		# Target's body tempering resists drainage
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_body_tempering
+				}
+			}
+			add = {
+				value = scope:target.var:murim_body_tempering
+				multiply = 0.5
+			}
+		}
+
+		# Target's intrigue detects the scheme
+		add = {
+			value = scope:target.intrigue
+			multiply = 0.6
+		}
+
+		# Orthodox cultivators have natural defense
+		if = {
+			limit = {
+				scope:target = {
+					has_trait = murim_orthodox_cultivator
+				}
+			}
+			add = 8
+		}
+	}
+
+	# ------------------------------------------
+	# Success chance modifiers
+	# ------------------------------------------
+	success_chance_modifier = {
+		# Target is imprisoned - MUCH easier
+		if = {
+			limit = {
+				scope:target = {
+					is_imprisoned = yes
+				}
+			}
+			add = 35
+		}
+
+		# Target is wounded
+		if = {
+			limit = {
+				scope:target = {
+					has_trait = severely_wounded
+				}
+			}
+			add = 20
+		}
+
+		# Target's qi is depleted
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_qi_current
+					var:murim_qi_current < 20
+				}
+			}
+			add = 15
+		}
+
+		# Schemer has massive rank advantage (3+)
+		if = {
+			limit = {
+				var:murim_cultivation_rank >= 5
+				scope:target = {
+					var:murim_cultivation_rank <= 2
+				}
+			}
+			add = 25
+		}
+	}
+
+	# ------------------------------------------
+	# On success - DEVASTATING
+	# Drain target's cultivation, empower schemer
+	# ------------------------------------------
+	on_success = {
+		custom_tooltip = murim_cultivation_theft_success_tt
+
+		# Calculate stolen XP (50% of target's current XP)
+		scope:target = {
+			# Lose half their XP
+			change_variable = {
+				name = var:murim_cultivation_xp
+				add = {
+					value = var:murim_cultivation_xp
+					multiply = -0.50
+				}
+			}
+			# Lose meridian flow
+			change_variable = {
+				name = var:murim_meridian_flow
+				add = -20
+			}
+			# Lose qi max permanently
+			change_variable = {
+				name = var:murim_qi_max
+				add = -30
+			}
+			# Lose body tempering
+			change_variable = {
+				name = var:murim_body_tempering
+				add = -10
+			}
+			# Target may be demoted in rank
+			if = {
+				limit = { var:murim_cultivation_rank >= 2 }
+				change_variable = {
+					name = var:murim_cultivation_rank
+					add = -1
+				}
+			}
+			# Devastating debuff
+			add_character_modifier = {
+				modifier = murim_cultivation_stolen
+				years = 10
+			}
+			add_trait = severely_wounded
+			add_stress = 100
+
+			# Floor checks
+			if = {
+				limit = { var:murim_meridian_flow < 0 }
+				set_variable = { name = var:murim_meridian_flow value = 0 }
+			}
+			if = {
+				limit = { var:murim_qi_max < 10 }
+				set_variable = { name = var:murim_qi_max value = 10 }
+			}
+			if = {
+				limit = { var:murim_body_tempering < 0 }
+				set_variable = { name = var:murim_body_tempering value = 0 }
+			}
+		}
+
+		# Schemer absorbs the stolen power
+		scope:owner = {
+			change_variable = {
+				name = var:murim_cultivation_xp
+				add = {
+					value = scope:target.var:murim_cultivation_xp
+					multiply = 0.40
+				}
+			}
+			change_variable = {
+				name = var:murim_qi_max
+				add = 20
+			}
+			change_variable = {
+				name = var:murim_technique_mastery
+				add = 8
+			}
+			add_character_modifier = {
+				modifier = murim_stolen_cultivation_power
+				years = 5
+			}
+			custom_tooltip = murim_cultivation_theft_power_gained_tt
+		}
+	}
+
+	on_fail = {
+		custom_tooltip = murim_cultivation_theft_fail_tt
+		scope:owner = {
+			add_stress = 30
+			# Backlash damage from failed technique
+			change_variable = {
+				name = var:murim_qi_current
+				add = -20
+			}
+		}
+	}
+
+	on_expose = {
+		custom_tooltip = murim_cultivation_theft_exposed_tt
+		scope:owner = {
+			add_tyranny = 30
+			add_dread = 25
+
+			# This is one of the worst crimes in Murim
+			reverse_add_opinion = {
+				target = scope:target
+				modifier = murim_attempted_cultivation_theft
+				opinion = -100
+			}
+
+			# Everyone in the realm hates you
+			every_courtier = {
+				limit = { NOT = { this = scope:owner } }
+				add_opinion = {
+					target = scope:owner
+					modifier = murim_forbidden_technique_user
+					opinion = -40
+				}
+			}
+
+			# Target becomes nemesis-level rival
+			scope:target = {
+				set_relation_rival = scope:owner
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Agent recruitment - Hard to recruit
+	# Only the wicked help with this
+	# ------------------------------------------
+	agent_join_chance = {
+		base = 5
+
+		# Demonic cultivators understand
+		modifier = {
+			add = 30
+			has_trait = murim_demonic_cultivator
+		}
+
+		# Hates the target
+		opinion_modifier = {
+			who = this
+			opinion_target = scope:target
+			multiplier = -0.4
+		}
+
+		# Sadistic agents enjoy this
+		modifier = {
+			add = 20
+			has_trait = sadistic
+		}
+
+		# Ambitious agents want power
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+
+		# Most people REFUSE
+		modifier = {
+			add = -50
+			has_trait = murim_orthodox_cultivator
+		}
+		modifier = {
+			add = -60
+			has_trait = just
+		}
+		modifier = {
+			add = -40
+			has_trait = compassionate
+		}
+	}
+
+	ai_target_score = {
+		base = 30
+
+		# Demonic cultivators love this
+		modifier = {
+			add = 80
+			has_trait = murim_demonic_cultivator
+		}
+
+		# Target is imprisoned (easy prey)
+		modifier = {
+			add = 60
+			scope:target = {
+				is_imprisoned = yes
+			}
+		}
+
+		# Target is a rival
+		modifier = {
+			add = 70
+			scope:target = {
+				has_relation_rival = scope:owner
+			}
+		}
+
+		# Target has high XP (valuable cultivation)
+		modifier = {
+			add = 50
+			scope:target = {
+				var:murim_cultivation_xp >= 500
+			}
+		}
+
+		# Schemer is sadistic
+		modifier = {
+			add = 40
+			has_trait = sadistic
+		}
+	}
+
+	ai_war_chance = 0.60
+
+	cooldown = { years = 1 }
+	max_agents = 5
+}
+
+# ==========================================
+# SECT INFILTRATION
+# Plant a spy in a rival sect.
+# Gain intelligence and can trigger
+# betrayal during sect war.
+#
+# Base success: 25%
+# Long-duration intelligence scheme.
+# ==========================================
+
+murim_sect_infiltration = {
+	scheme_type = hostile
+	scheme_category = personal
+
+	# ------------------------------------------
+	# Scheme availability
+	# ------------------------------------------
+	is_valid = {
+		is_alive = yes
+		NOT = { this = scope:target }
+		is_ruler = yes
+		scope:target = {
+			is_alive = yes
+			is_ruler = yes
+			has_character_modifier = murim_sect_master
+		}
+		has_variable = var:murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		intrigue >= 10
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+	}
+
+	# ------------------------------------------
+	# Base values
+	# ------------------------------------------
+	base_success_chance = 25
+
+	base_scheme_power = {
+		value = 5
+
+		add = {
+			value = intrigue
+			multiply = 1.0
+		}
+
+		# Cultivation rank helps establish spy's cover
+		if = {
+			limit = { has_variable = var:murim_cultivation_rank }
+			add = {
+				value = var:murim_cultivation_rank
+				multiply = 2
+			}
+		}
+
+		# Spymaster trait
+		if = {
+			limit = { has_trait = schemer }
+			add = 10
+		}
+	}
+
+	base_scheme_resistance = {
+		value = 8
+
+		add = {
+			value = scope:target.intrigue
+			multiply = 0.8
+		}
+
+		# Target's sect power makes infiltration harder
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_sect_power
+				}
+			}
+			add = {
+				value = scope:target.var:murim_sect_power
+				multiply = 0.05
+			}
+		}
+
+		# Paranoid target is much harder to infiltrate
+		if = {
+			limit = {
+				scope:target = { has_trait = paranoid }
+			}
+			add = 15
+		}
+	}
+
+	# ------------------------------------------
+	# Success chance modifiers
+	# ------------------------------------------
+	success_chance_modifier = {
+		# Target is at war (distracted)
+		if = {
+			limit = {
+				scope:target = { is_at_war = yes }
+			}
+			add = 15
+		}
+
+		# Target is stressed
+		if = {
+			limit = {
+				scope:target = { stress >= 50 }
+			}
+			add = 10
+		}
+
+		# Schemer has intrigue >= 20
+		if = {
+			limit = { intrigue >= 20 }
+			add = 15
+		}
+
+		# Target has low intrigue
+		if = {
+			limit = {
+				scope:target = { intrigue < 8 }
+			}
+			add = 20
+		}
+	}
+
+	# ------------------------------------------
+	# On success - Spy planted
+	# ------------------------------------------
+	on_success = {
+		custom_tooltip = murim_sect_infiltration_success_tt
+
+		scope:owner = {
+			# Gain intelligence modifier
+			add_character_modifier = {
+				modifier = murim_sect_spy_network
+				years = 10
+			}
+
+			# Gain intrigue skill
+			add_intrigue_skill = 2
+
+			# Set flag for future betrayal trigger during war
+			add_character_flag = {
+				flag = murim_has_spy_in_target_sect
+				years = 10
+			}
+
+			# Store target reference for betrayal events
+			set_variable = {
+				name = var:murim_infiltrated_sect_leader
+				value = scope:target
+			}
+
+			# Opinion bonus from intelligence
+			add_opinion = {
+				target = scope:target
+				modifier = murim_knows_secrets
+				opinion = 0
+			}
+		}
+
+		# Create internal dissent in target's court
+		scope:target = {
+			random_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					is_alive = yes
+				}
+				save_scope_as = turned_agent
+			}
+			if = {
+				limit = { exists = scope:turned_agent }
+				scope:turned_agent = {
+					add_opinion = {
+						target = scope:target
+						modifier = murim_secret_dissent
+						opinion = -30
+					}
+					add_character_flag = {
+						flag = murim_turned_agent
+						years = 10
+					}
+				}
+			}
+		}
+	}
+
+	on_fail = {
+		custom_tooltip = murim_sect_infiltration_fail_tt
+		scope:owner = {
+			add_stress = 15
+		}
+	}
+
+	on_expose = {
+		custom_tooltip = murim_sect_infiltration_exposed_tt
+		scope:owner = {
+			reverse_add_opinion = {
+				target = scope:target
+				modifier = murim_attempted_sect_infiltration
+				opinion = -60
+			}
+			add_tyranny = 10
+		}
+		# Target declares rivalry
+		scope:target = {
+			set_relation_rival = scope:owner
+		}
+	}
+
+	# ------------------------------------------
+	# Agent recruitment
+	# ------------------------------------------
+	agent_join_chance = {
+		base = 15
+
+		# Fellow cultivators
+		modifier = {
+			add = 10
+			has_variable = var:murim_cultivation_rank
+		}
+
+		# Agents who dislike the target
+		opinion_modifier = {
+			who = this
+			opinion_target = scope:target
+			multiplier = -0.3
+		}
+
+		# Deceitful agents love espionage
+		modifier = {
+			add = 20
+			has_trait = deceitful
+		}
+
+		# Scheming personality
+		modifier = {
+			add = 15
+			has_trait = schemer
+		}
+
+		# Loyal agents won't betray their sect
+		modifier = {
+			add = -35
+			has_trait = trusting
+		}
+	}
+
+	ai_target_score = {
+		base = 40
+
+		# Target is a rival
+		modifier = {
+			add = 60
+			scope:target = {
+				has_relation_rival = scope:owner
+			}
+		}
+
+		# Target is a neighboring sect master
+		modifier = {
+			add = 40
+			scope:target = {
+				has_character_modifier = murim_sect_master
+				any_neighboring_ruler = {
+					this = scope:owner
+				}
+			}
+		}
+
+		# Schemer has high intrigue
+		modifier = {
+			add = 30
+			intrigue >= 15
+		}
+
+		# Preparing for war
+		modifier = {
+			add = 50
+			has_character_flag = murim_preparing_sect_war
+		}
+	}
+
+	ai_war_chance = 0.55
+
+	cooldown = { years = 2 }
+	max_agents = 8
+}
+
+# ==========================================
+# CIVILIAN MASSACRE
+# Demonic cultivators terrorize a county,
+# killing civilians to fuel their cultivation.
+#
+# Base success: 40% (easy for demons)
+# Gain power, lose standing, reduce development.
+# AI demonic cultivators do this AUTOMATICALLY.
+# ==========================================
+
+murim_civilian_massacre = {
+	scheme_type = hostile
+	scheme_category = personal
+
+	# ------------------------------------------
+	# Scheme availability
+	# ONLY demonic cultivators or truly evil ones
+	# ------------------------------------------
+	is_valid = {
+		is_alive = yes
+		has_variable = var:murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		OR = {
+			has_trait = murim_demonic_cultivator
+			AND = {
+				has_trait = sadistic
+				has_trait = callous
+			}
+		}
+		# Target must be a county holder
+		scope:target = {
+			is_alive = yes
+			is_ruler = yes
+			any_held_title = {
+				tier = tier_county
+			}
+		}
+		NOT = { this = scope:target }
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+	}
+
+	# ------------------------------------------
+	# Base values - relatively easy for demons
+	# ------------------------------------------
+	base_success_chance = 40
+
+	base_scheme_power = {
+		value = 10
+
+		# Raw power matters more than subtlety
+		add = {
+			value = martial
+			multiply = 0.8
+		}
+
+		# Cultivation rank is the main driver
+		if = {
+			limit = { has_variable = var:murim_cultivation_rank }
+			add = {
+				value = var:murim_cultivation_rank
+				multiply = 5
+			}
+		}
+
+		# Demonic specialization
+		if = {
+			limit = { has_trait = murim_demonic_cultivator }
+			add = 15
+		}
+	}
+
+	base_scheme_resistance = {
+		value = 5
+
+		# Target's martial provides garrison defense
+		add = {
+			value = scope:target.martial
+			multiply = 0.5
+		}
+
+		# Target's cultivation provides resistance
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_cultivation_rank
+				}
+			}
+			add = {
+				value = scope:target.var:murim_cultivation_rank
+				multiply = 4
+			}
+		}
+
+		# Fortified counties resist better
+		if = {
+			limit = {
+				scope:target = {
+					any_held_title = {
+						tier = tier_county
+						county_control >= 80
+					}
+				}
+			}
+			add = 10
+		}
+	}
+
+	# ------------------------------------------
+	# Success chance modifiers
+	# ------------------------------------------
+	success_chance_modifier = {
+		# Target is at war (garrison depleted)
+		if = {
+			limit = {
+				scope:target = { is_at_war = yes }
+			}
+			add = 20
+		}
+
+		# Night attack (high cultivation rank)
+		if = {
+			limit = { var:murim_cultivation_rank >= 4 }
+			add = 15
+		}
+
+		# Target has no cultivator courtiers to defend
+		if = {
+			limit = {
+				scope:target = {
+					NOT = {
+						any_courtier = {
+							has_variable = var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 2
+						}
+					}
+				}
+			}
+			add = 25
+		}
+	}
+
+	# ------------------------------------------
+	# On success - County devastated
+	# ------------------------------------------
+	on_success = {
+		custom_tooltip = murim_civilian_massacre_success_tt
+
+		# Devastate the county
+		scope:target = {
+			random_held_title = {
+				limit = { tier = tier_county }
+				change_county_control = -40
+				change_development_level = -5
+			}
+		}
+
+		# Schemer gains massive power
+		scope:owner = {
+			change_variable = {
+				name = var:murim_cultivation_xp
+				add = 80
+			}
+			change_variable = {
+				name = var:murim_qi_current
+				add = 50
+			}
+			change_variable = {
+				name = var:murim_body_tempering
+				add = 5
+			}
+			add_dread = 40
+			add_tyranny = 30
+
+			add_character_modifier = {
+				modifier = murim_fresh_massacre_power
+				years = 3
+			}
+
+			custom_tooltip = murim_massacre_power_surge_tt
+		}
+
+		# Target and neighbors become hostile
+		scope:target = {
+			add_opinion = {
+				target = scope:owner
+				modifier = murim_massacred_civilians
+				opinion = -100
+			}
+			every_neighboring_ruler = {
+				add_opinion = {
+					target = scope:owner
+					modifier = murim_nearby_massacre
+					opinion = -50
+				}
+			}
+		}
+
+		# Alert all orthodox cultivators in range
+		scope:target = {
+			every_neighboring_ruler = {
+				limit = {
+					has_trait = murim_orthodox_cultivator
+				}
+				trigger_event = {
+					id = murim_cultivation.4001
+					days = { 1 10 }
+				}
+			}
+		}
+	}
+
+	on_fail = {
+		custom_tooltip = murim_civilian_massacre_fail_tt
+		scope:owner = {
+			add_stress = 10
+			# Residents fought back
+			change_variable = {
+				name = var:murim_qi_current
+				add = -15
+			}
+		}
+	}
+
+	on_expose = {
+		custom_tooltip = murim_civilian_massacre_exposed_tt
+		scope:owner = {
+			add_tyranny = 40
+			add_dread = 20
+
+			# Everyone HATES you
+			every_neighboring_ruler = {
+				add_opinion = {
+					target = scope:owner
+					modifier = murim_known_massacrer
+					opinion = -80
+				}
+			}
+
+			# Orthodox cultivators declare enmity
+			every_neighboring_ruler = {
+				limit = {
+					has_trait = murim_orthodox_cultivator
+				}
+				set_relation_rival = scope:owner
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Agent recruitment - Other demons join
+	# ------------------------------------------
+	agent_join_chance = {
+		base = 5
+
+		# Other demonic cultivators
+		modifier = {
+			add = 35
+			has_trait = murim_demonic_cultivator
+		}
+
+		# Sadistic agents
+		modifier = {
+			add = 25
+			has_trait = sadistic
+		}
+
+		# Lunatics don't care
+		modifier = {
+			add = 20
+			has_trait = lunatic
+		}
+
+		# Everyone else REFUSES
+		modifier = {
+			add = -80
+			has_trait = murim_orthodox_cultivator
+		}
+		modifier = {
+			add = -60
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -50
+			has_trait = just
+		}
+		modifier = {
+			add = -40
+			has_trait = honest
+		}
+	}
+
+	# AI targeting - Demonic cultivators do this AUTOMATICALLY
+	ai_target_score = {
+		base = 70
+
+		# Demonic cultivators default to this
+		modifier = {
+			add = 100
+			has_trait = murim_demonic_cultivator
+		}
+
+		# High rank demons ALWAYS do this
+		modifier = {
+			add = 80
+			has_trait = murim_demonic_cultivator
+			var:murim_cultivation_rank >= 3
+		}
+
+		# Sadistic bonus
+		modifier = {
+			add = 50
+			has_trait = sadistic
+		}
+
+		# Weak target (no cultivator defender)
+		modifier = {
+			add = 40
+			scope:target = {
+				NOT = {
+					any_courtier = {
+						has_variable = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 2
+					}
+				}
+			}
+		}
+
+		# Orthodox cultivators NEVER do this
+		modifier = {
+			add = -500
+			has_trait = murim_orthodox_cultivator
+		}
+	}
+
+	ai_war_chance = 0.90
+
+	cooldown = { months = 3 }
+	max_agents = 6
+}
+
+# ==========================================
+# DISCIPLE CORRUPTION
+# Turn someone's disciple to your side.
+# An intrigue scheme targeting a cultivator
+# to steal their trained disciple.
+#
+# Base success: 20%
+# Moderate difficulty, high political impact.
+# ==========================================
+
+murim_disciple_corruption = {
+	scheme_type = hostile
+	scheme_category = personal
+
+	# ------------------------------------------
+	# Scheme availability
+	# ------------------------------------------
+	is_valid = {
+		is_alive = yes
+		NOT = { this = scope:target }
+		has_variable = var:murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		intrigue >= 8
+		scope:target = {
+			is_alive = yes
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 2
+			# Target must have cultivator courtiers (disciples)
+			any_courtier = {
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+				age >= 16
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		is_imprisoned = no
+	}
+
+	# ------------------------------------------
+	# Base values
+	# ------------------------------------------
+	base_success_chance = 20
+
+	base_scheme_power = {
+		value = 5
+
+		add = {
+			value = intrigue
+			multiply = 0.7
+		}
+
+		add = {
+			value = diplomacy
+			multiply = 0.4
+		}
+
+		# Higher rank = more convincing
+		if = {
+			limit = { has_variable = var:murim_cultivation_rank }
+			add = {
+				value = var:murim_cultivation_rank
+				multiply = 3
+			}
+		}
+
+		# Deceitful trait
+		if = {
+			limit = { has_trait = deceitful }
+			add = 8
+		}
+	}
+
+	base_scheme_resistance = {
+		value = 8
+
+		add = {
+			value = scope:target.intrigue
+			multiply = 0.5
+		}
+
+		add = {
+			value = scope:target.diplomacy
+			multiply = 0.3
+		}
+
+		# Target's cultivation rank - stronger masters hold disciples better
+		if = {
+			limit = {
+				scope:target = {
+					has_variable = var:murim_cultivation_rank
+				}
+			}
+			add = {
+				value = scope:target.var:murim_cultivation_rank
+				multiply = 4
+			}
+		}
+
+		# Target is beloved by court
+		if = {
+			limit = {
+				scope:target = {
+					has_trait = gregarious
+				}
+			}
+			add = 8
+		}
+	}
+
+	# ------------------------------------------
+	# Success chance modifiers
+	# ------------------------------------------
+	success_chance_modifier = {
+		# Target treats courtiers poorly
+		if = {
+			limit = {
+				scope:target = {
+					has_trait = callous
+				}
+			}
+			add = 15
+		}
+
+		# Target is tyrannical (disciples want out)
+		if = {
+			limit = {
+				scope:target = {
+					tyranny >= 30
+				}
+			}
+			add = 20
+		}
+
+		# Schemer has higher rank (more attractive master)
+		if = {
+			limit = {
+				var:murim_cultivation_rank > scope:target.var:murim_cultivation_rank
+			}
+			add = 20
+		}
+
+		# Schemer is generous (bribes)
+		if = {
+			limit = { has_trait = generous }
+			add = 10
+		}
+
+		# Schemer has high diplomacy
+		if = {
+			limit = { diplomacy >= 16 }
+			add = 10
+		}
+	}
+
+	# ------------------------------------------
+	# On success - Disciple turns
+	# ------------------------------------------
+	on_success = {
+		custom_tooltip = murim_disciple_corruption_success_tt
+
+		# Find the best disciple to turn
+		scope:target = {
+			random_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+					age >= 16
+				}
+				weight = {
+					base = 1
+					modifier = {
+						add = 5
+						var:murim_cultivation_rank >= 2
+					}
+					modifier = {
+						add = 3
+						martial >= 12
+					}
+					modifier = {
+						add = 5
+						opinion = {
+							target = scope:target
+							value < 0
+						}
+					}
+				}
+				save_scope_as = corrupted_disciple
+			}
+		}
+
+		if = {
+			limit = { exists = scope:corrupted_disciple }
+
+			# Disciple leaves target's court
+			scope:corrupted_disciple = {
+				# Join schemer's court
+				visit_court_of = scope:owner
+
+				# Opinion shifts
+				add_opinion = {
+					target = scope:owner
+					modifier = murim_new_master_gratitude
+					opinion = 40
+				}
+				add_opinion = {
+					target = scope:target
+					modifier = murim_betrayed_master
+					opinion = -60
+				}
+
+				# Gain bonus XP from new teaching
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 30
+				}
+
+				custom_tooltip = murim_disciple_turned_tt
+			}
+
+			# Schemer gains a valuable cultivator
+			scope:owner = {
+				add_prestige = 150
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 15
+				}
+			}
+
+			# Target loses face and power
+			scope:target = {
+				add_prestige = -200
+				add_stress = 30
+				custom_tooltip = murim_lost_disciple_shame_tt
+			}
+		}
+	}
+
+	on_fail = {
+		custom_tooltip = murim_disciple_corruption_fail_tt
+		scope:owner = {
+			add_stress = 15
+		}
+	}
+
+	on_expose = {
+		custom_tooltip = murim_disciple_corruption_exposed_tt
+		scope:owner = {
+			reverse_add_opinion = {
+				target = scope:target
+				modifier = murim_tried_to_steal_disciple
+				opinion = -60
+			}
+			add_tyranny = 10
+		}
+		scope:target = {
+			set_relation_rival = scope:owner
+		}
+	}
+
+	# ------------------------------------------
+	# Agent recruitment
+	# ------------------------------------------
+	agent_join_chance = {
+		base = 15
+
+		# Cultivators understand the value
+		modifier = {
+			add = 10
+			has_variable = var:murim_cultivation_rank
+		}
+
+		# Agents who dislike the target
+		opinion_modifier = {
+			who = this
+			opinion_target = scope:target
+			multiplier = -0.3
+		}
+
+		# Ambitious agents
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+
+		# Gregarious agents (good at persuasion)
+		modifier = {
+			add = 10
+			has_trait = gregarious
+		}
+
+		# Loyal agents refuse
+		modifier = {
+			add = -25
+			has_trait = trusting
+		}
+
+		# Honest agents refuse
+		modifier = {
+			add = -20
+			has_trait = honest
+		}
+	}
+
+	ai_target_score = {
+		base = 35
+
+		# Target is a rival (steal their people)
+		modifier = {
+			add = 60
+			scope:target = {
+				has_relation_rival = scope:owner
+			}
+		}
+
+		# Schemer wants more disciples
+		modifier = {
+			add = 30
+			has_character_modifier = murim_sect_master
+		}
+
+		# Target has valuable disciples
+		modifier = {
+			add = 40
+			scope:target = {
+				any_courtier = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 3
+				}
+			}
+		}
+
+		# Ambitious schemer
+		modifier = {
+			add = 30
+			has_trait = ambitious
+		}
+
+		# Demonic cultivators corrupt for fun
+		modifier = {
+			add = 40
+			has_trait = murim_demonic_cultivator
+		}
+	}
+
+	ai_war_chance = 0.50
+
+	cooldown = { months = 8 }
+	max_agents = 8
+}

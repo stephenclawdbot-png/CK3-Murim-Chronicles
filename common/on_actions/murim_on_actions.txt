@@ -1,0 +1,1373 @@
+############################################
+# MURIM ON_ACTIONS
+# Automatic event triggers that drive the
+# cultivation world simulation.
+#
+# Monthly pulses handle passive training,
+# random events, and demonic activity.
+# Yearly pulses handle breakthroughs,
+# sect politics, and AI duels.
+# Death/war/battle hooks create dramatic
+# consequences for cultivator conflicts.
+############################################
+
+# ==========================================
+# MONTHLY CHARACTER PULSE
+# The heartbeat of cultivator progression.
+# Fires every month for eligible characters.
+# ==========================================
+
+on_monthly_character_pulse = {
+
+	# ------------------------------------------
+	# AI Passive Cultivation Training
+	# AI cultivators gain XP each month to
+	# simulate off-screen training. Scales
+	# with learning stat and cultivation rank.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_ai = yes
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+				is_alive = yes
+				is_imprisoned = no
+			}
+
+			# Base monthly XP gain for AI
+			random_list = {
+				30 = {
+					# Minimal training - distracted
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = 3
+					}
+				}
+				40 = {
+					# Normal training session
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = 8
+					}
+				}
+				20 = {
+					# Intense training - good progress
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = 15
+					}
+					modifier = {
+						factor = 1.5
+						learning >= 12
+					}
+					modifier = {
+						factor = 1.5
+						has_trait = diligent
+					}
+				}
+				10 = {
+					# Enlightenment flash - major gain
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = 30
+					}
+					modifier = {
+						factor = 2.0
+						learning >= 18
+					}
+					modifier = {
+						factor = 1.5
+						has_trait = genius
+					}
+					modifier = {
+						factor = 1.5
+						var:murim_cultivation_rank >= 3
+					}
+				}
+			}
+
+			# Bonus XP scaling with rank
+			# Higher rank cultivators train more efficiently
+			if = {
+				limit = {
+					var:murim_cultivation_rank >= 3
+				}
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 5
+				}
+			}
+			if = {
+				limit = {
+					var:murim_cultivation_rank >= 5
+				}
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 10
+				}
+			}
+
+			# Demonic cultivators gain bonus XP from conflict
+			if = {
+				limit = {
+					has_trait = murim_demonic_cultivator
+					is_at_war = yes
+				}
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 12
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Random Cultivation Event Firing
+	# Monthly chance for cultivation events.
+	# Higher rank = more frequent events.
+	# Uses the events from murim_cultivation_events.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+				is_alive = yes
+				NOT = { has_character_flag = murim_event_cooldown }
+			}
+
+			random_list = {
+				# Rank 1-2: Low event frequency
+				70 = {
+					# Nothing happens this month
+					modifier = {
+						factor = 0.5
+						var:murim_cultivation_rank >= 3
+					}
+					modifier = {
+						factor = 0.3
+						var:murim_cultivation_rank >= 5
+					}
+				}
+				8 = {
+					# Midnight Enlightenment
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 1 25 }
+					}
+					modifier = {
+						factor = 1.5
+						learning >= 14
+					}
+				}
+				6 = {
+					# Qi Deviation Crisis
+					trigger_event = {
+						id = murim_cultivation.0002
+						days = { 1 20 }
+					}
+					modifier = {
+						factor = 2.0
+						has_trait = murim_demonic_cultivator
+					}
+					modifier = {
+						factor = 1.5
+						stress >= 50
+					}
+				}
+				5 = {
+					# The Hidden Manual
+					trigger_event = {
+						id = murim_cultivation.0003
+						days = { 5 28 }
+					}
+					modifier = {
+						factor = 1.5
+						learning >= 12
+					}
+				}
+				6 = {
+					# Breakthrough Attempt (XP threshold check inside event)
+					trigger_event = {
+						id = murim_cultivation.0004
+						days = { 1 15 }
+					}
+					modifier = {
+						factor = 2.0
+						var:murim_cultivation_xp >= 100
+					}
+					modifier = {
+						factor = 3.0
+						var:murim_cultivation_xp >= 300
+					}
+				}
+				3 = {
+					# Master and Disciple
+					trigger_event = {
+						id = murim_cultivation.0005
+						days = { 5 28 }
+					}
+					modifier = {
+						factor = 2.0
+						var:murim_cultivation_rank >= 3
+					}
+					modifier = {
+						factor = 0.3
+						var:murim_cultivation_rank < 2
+					}
+				}
+				2 = {
+					# Herb of Heavenly Vitality
+					trigger_event = {
+						id = murim_cultivation.0006
+						days = { 1 28 }
+					}
+					modifier = {
+						factor = 2.0
+						has_trait = wounded
+					}
+					modifier = {
+						factor = 2.0
+						has_trait = severely_wounded
+					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Demonic Activity - Civilian Deaths
+	# Provinces with demonic cultivator rulers
+	# suffer random civilian casualties.
+	# Creates terror, reduces development,
+	# and gives orthodox cultivators casus belli.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_trait = murim_demonic_cultivator
+				is_ruler = yes
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 2
+			}
+
+			random_list = {
+				60 = {
+					# No civilian deaths this month
+					modifier = {
+						factor = 0.3
+						var:murim_cultivation_rank >= 5
+					}
+				}
+				25 = {
+					# Minor demonic activity
+					# Random disappearances, livestock killed
+					custom_tooltip = murim_demonic_minor_activity_tt
+					random_held_title = {
+						limit = {
+							tier = tier_county
+						}
+						change_county_control = -5
+					}
+					add_dread = 3
+					modifier = {
+						factor = 1.5
+						var:murim_cultivation_rank >= 3
+					}
+				}
+				10 = {
+					# Major demonic cultivation ritual
+					# Villagers found drained of qi
+					custom_tooltip = murim_demonic_major_activity_tt
+					random_held_title = {
+						limit = {
+							tier = tier_county
+						}
+						change_county_control = -15
+						change_development_level = -1
+					}
+					add_dread = 10
+					add_tyranny = 5
+					modifier = {
+						factor = 2.0
+						var:murim_cultivation_rank >= 4
+					}
+					modifier = {
+						factor = 2.0
+						has_trait = sadistic
+					}
+				}
+				5 = {
+					# Catastrophic demonic massacre
+					# Entire village destroyed for cultivation
+					custom_tooltip = murim_demonic_massacre_tt
+					random_held_title = {
+						limit = {
+							tier = tier_county
+						}
+						change_county_control = -30
+						change_development_level = -3
+					}
+					add_dread = 25
+					add_tyranny = 15
+					# Gain significant cultivation power
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = 50
+					}
+					change_variable = {
+						name = var:murim_qi_current
+						add = 30
+					}
+					# Alert nearby orthodox cultivators
+					every_neighboring_ruler = {
+						limit = {
+							has_trait = murim_orthodox_cultivator
+						}
+						trigger_event = {
+							id = murim_cultivation.1001
+							days = { 1 10 }
+						}
+					}
+					modifier = {
+						factor = 3.0
+						var:murim_cultivation_rank >= 5
+					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Qi Regeneration
+	# All cultivators slowly regenerate qi
+	# each month. Rate scales with rank.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_variable = var:murim_qi_current
+				has_variable = var:murim_qi_max
+				is_alive = yes
+			}
+
+			# Base regeneration
+			change_variable = {
+				name = var:murim_qi_current
+				add = 5
+			}
+
+			# Rank-scaled bonus
+			if = {
+				limit = { var:murim_cultivation_rank >= 3 }
+				change_variable = {
+					name = var:murim_qi_current
+					add = 5
+				}
+			}
+			if = {
+				limit = { var:murim_cultivation_rank >= 5 }
+				change_variable = {
+					name = var:murim_qi_current
+					add = 10
+				}
+			}
+
+			# Cap qi at maximum
+			if = {
+				limit = {
+					var:murim_qi_current > var:murim_qi_max
+				}
+				set_variable = {
+					name = var:murim_qi_current
+					value = var:murim_qi_max
+				}
+			}
+		}
+	}
+}
+
+# ==========================================
+# YEARLY CHARACTER PULSE
+# Annual sect politics, forced AI
+# breakthroughs, and cultivator duels.
+# ==========================================
+
+on_yearly_character_pulse = {
+
+	# ------------------------------------------
+	# Annual Sect Power Recalculation
+	# Sect masters have their sect's power
+	# score updated based on territory,
+	# disciples, and cultivation strength.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_character_modifier = murim_sect_master
+				is_ruler = yes
+				is_alive = yes
+			}
+
+			# Reset sect power
+			set_variable = {
+				name = var:murim_sect_power
+				value = 0
+			}
+
+			# Power from cultivation rank (x50)
+			if = {
+				limit = { has_variable = var:murim_cultivation_rank }
+				change_variable = {
+					name = var:murim_sect_power
+					add = {
+						value = var:murim_cultivation_rank
+						multiply = 50
+					}
+				}
+			}
+
+			# Power from realm size
+			change_variable = {
+				name = var:murim_sect_power
+				add = sub_realm_size
+			}
+
+			# Power from martial stat
+			change_variable = {
+				name = var:murim_sect_power
+				add = martial
+			}
+
+			# Power from cultivator courtiers
+			every_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+				}
+				prev = {
+					change_variable = {
+						name = var:murim_sect_power
+						add = 15
+					}
+				}
+			}
+
+			# Power from high-rank disciples
+			every_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 3
+				}
+				prev = {
+					change_variable = {
+						name = var:murim_sect_power
+						add = 30
+					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Forced AI Breakthrough Attempts
+	# AI cultivators who have accumulated
+	# enough XP are forced to attempt
+	# breakthrough. Prevents AI from sitting
+	# on mountains of unused XP.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_ai = yes
+				has_variable = var:murim_cultivation_rank
+				has_variable = var:murim_cultivation_xp
+				is_alive = yes
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_breakthrough_cooldown }
+			}
+
+			# Rank 1 -> 2 threshold: 100 XP
+			if = {
+				limit = {
+					var:murim_cultivation_rank = 1
+					var:murim_cultivation_xp >= 100
+				}
+				trigger_event = {
+					id = murim_cultivation.0004
+					days = { 1 30 }
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_cooldown
+					years = 1
+				}
+			}
+
+			# Rank 2 -> 3 threshold: 300 XP
+			if = {
+				limit = {
+					var:murim_cultivation_rank = 2
+					var:murim_cultivation_xp >= 300
+				}
+				trigger_event = {
+					id = murim_cultivation.0004
+					days = { 1 30 }
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_cooldown
+					years = 1
+				}
+			}
+
+			# Rank 3 -> 4 threshold: 600 XP
+			if = {
+				limit = {
+					var:murim_cultivation_rank = 3
+					var:murim_cultivation_xp >= 600
+				}
+				trigger_event = {
+					id = murim_cultivation.0004
+					days = { 1 60 }
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_cooldown
+					years = 2
+				}
+			}
+
+			# Rank 4 -> 5 threshold: 1000 XP
+			if = {
+				limit = {
+					var:murim_cultivation_rank = 4
+					var:murim_cultivation_xp >= 1000
+				}
+				trigger_event = {
+					id = murim_cultivation.0004
+					days = { 1 90 }
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_cooldown
+					years = 3
+				}
+			}
+
+			# Rank 5 -> 6 threshold: 1500 XP
+			if = {
+				limit = {
+					var:murim_cultivation_rank = 5
+					var:murim_cultivation_xp >= 1500
+				}
+				trigger_event = {
+					id = murim_cultivation.0004
+					days = { 1 120 }
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_cooldown
+					years = 5
+				}
+			}
+
+			# Rank 6 -> 7 threshold: 2500 XP (legendary)
+			if = {
+				limit = {
+					var:murim_cultivation_rank = 6
+					var:murim_cultivation_xp >= 2500
+				}
+				trigger_event = {
+					id = murim_cultivation.0004
+					days = { 1 180 }
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_cooldown
+					years = 10
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Random AI Cultivator Duels
+	# AI cultivators in the same court will
+	# randomly challenge each other to duels.
+	# Creates internal sect drama and rivalry.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_ai = yes
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 2
+				is_alive = yes
+				is_ruler = yes
+				NOT = { has_character_flag = murim_duel_cooldown }
+			}
+
+			random_list = {
+				50 = {
+					# No duel this year
+					modifier = {
+						factor = 0.3
+						has_trait = wrathful
+					}
+					modifier = {
+						factor = 0.5
+						var:murim_cultivation_rank >= 4
+					}
+				}
+				30 = {
+					# Challenge a courtier cultivator
+					random_courtier = {
+						limit = {
+							has_variable = var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 1
+							is_alive = yes
+							NOT = { this = prev }
+						}
+						save_scope_as = duel_target
+					}
+					if = {
+						limit = { exists = scope:duel_target }
+						custom_tooltip = murim_duel_courtier_challenge_tt
+						# Simulate duel outcome
+						random_list = {
+							60 = {
+								# Challenger wins
+								change_variable = {
+									name = var:murim_cultivation_xp
+									add = 20
+								}
+								add_prestige = 100
+								scope:duel_target = {
+									add_prestige = -50
+								}
+								modifier = {
+									factor = 1.5
+									martial > scope:duel_target.martial
+								}
+							}
+							30 = {
+								# Draw - both gain respect
+								change_variable = {
+									name = var:murim_cultivation_xp
+									add = 10
+								}
+								scope:duel_target = {
+									change_variable = {
+										name = var:murim_cultivation_xp
+										add = 10
+									}
+								}
+							}
+							10 = {
+								# Challenger loses
+								scope:duel_target = {
+									change_variable = {
+										name = var:murim_cultivation_xp
+										add = 25
+									}
+									add_prestige = 100
+								}
+								add_prestige = -75
+								modifier = {
+									factor = 2.0
+									martial < scope:duel_target.martial
+								}
+							}
+						}
+						add_character_flag = {
+							flag = murim_duel_cooldown
+							months = 6
+						}
+					}
+					modifier = {
+						factor = 2.0
+						has_trait = brave
+					}
+					modifier = {
+						factor = 2.0
+						var:murim_cultivation_rank >= 4
+					}
+				}
+				20 = {
+					# Challenge a neighboring ruler cultivator
+					random_neighboring_ruler = {
+						limit = {
+							has_variable = var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 1
+							is_alive = yes
+						}
+						save_scope_as = rival_duel_target
+					}
+					if = {
+						limit = { exists = scope:rival_duel_target }
+						custom_tooltip = murim_duel_rival_ruler_challenge_tt
+						# This can escalate to war
+						random_list = {
+							50 = {
+								# Clean duel - winner gains prestige
+								change_variable = {
+									name = var:murim_cultivation_xp
+									add = 30
+								}
+								add_prestige = 200
+							}
+							30 = {
+								# Duel creates rivalry
+								set_relation_rival = scope:rival_duel_target
+								add_opinion = {
+									target = scope:rival_duel_target
+									modifier = murim_duel_grudge
+									opinion = -40
+								}
+							}
+							20 = {
+								# Duel escalates to war declaration
+								custom_tooltip = murim_duel_escalation_war_tt
+								add_opinion = {
+									target = scope:rival_duel_target
+									modifier = murim_duel_humiliation
+									opinion = -80
+								}
+							}
+						}
+						add_character_flag = {
+							flag = murim_duel_cooldown
+							months = 6
+						}
+					}
+					modifier = {
+						factor = 2.5
+						has_trait = wrathful
+					}
+					modifier = {
+						factor = 3.0
+						var:murim_cultivation_rank >= 5
+					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Meridian Degradation
+	# Cultivators who are stressed, wounded,
+	# or imprisoned slowly lose meridian flow.
+	# Forces them to maintain their condition.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_variable = var:murim_meridian_flow
+				is_alive = yes
+				OR = {
+					stress >= 75
+					has_trait = wounded
+					has_trait = severely_wounded
+					is_imprisoned = yes
+				}
+			}
+			change_variable = {
+				name = var:murim_meridian_flow
+				add = -5
+			}
+			# Floor at 0
+			if = {
+				limit = { var:murim_meridian_flow < 0 }
+				set_variable = {
+					name = var:murim_meridian_flow
+					value = 0
+				}
+			}
+		}
+	}
+}
+
+# ==========================================
+# ON CHARACTER DEATH
+# Cultivation knowledge transfer, sect
+# succession, and rival notification.
+# ==========================================
+
+on_character_death = {
+
+	# ------------------------------------------
+	# Transfer Cultivation Knowledge to Heir
+	# When a cultivator dies, their heir
+	# receives a portion of their cultivation
+	# knowledge as a head start.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 2
+				exists = player_heir
+			}
+
+			player_heir = {
+				save_scope_as = cultivation_heir
+			}
+
+			# Initialize heir cultivation if needed
+			if = {
+				limit = {
+					scope:cultivation_heir = {
+						NOT = { has_variable = var:murim_cultivation_xp }
+					}
+				}
+				scope:cultivation_heir = {
+					set_variable = {
+						name = var:murim_cultivation_xp
+						value = 0
+					}
+					set_variable = {
+						name = var:murim_cultivation_rank
+						value = 1
+					}
+					set_variable = {
+						name = var:murim_qi_current
+						value = 50
+					}
+					set_variable = {
+						name = var:murim_qi_max
+						value = 100
+					}
+					set_variable = {
+						name = var:murim_meridian_flow
+						value = 10
+					}
+					set_variable = {
+						name = var:murim_body_tempering
+						value = 5
+					}
+					set_variable = {
+						name = var:murim_technique_mastery
+						value = 0
+					}
+				}
+			}
+
+			# Transfer 25% of XP to heir
+			scope:cultivation_heir = {
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = {
+						value = prev.var:murim_cultivation_xp
+						multiply = 0.25
+					}
+				}
+				# Heir gains technique mastery from predecessor
+				change_variable = {
+					name = var:murim_technique_mastery
+					add = {
+						value = prev.var:murim_technique_mastery
+						multiply = 0.30
+					}
+				}
+				# Notification event
+				trigger_event = {
+					id = murim_cultivation.2001
+					days = { 1 5 }
+				}
+			}
+
+			# Bonus transfer if heir was in same court (direct teaching)
+			if = {
+				limit = {
+					scope:cultivation_heir = {
+						is_courtier_of = prev
+					}
+				}
+				scope:cultivation_heir = {
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = {
+							value = prev.var:murim_cultivation_xp
+							multiply = 0.15
+						}
+					}
+					custom_tooltip = murim_heir_direct_teaching_bonus_tt
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Sect Leadership Succession Crisis
+	# When a sect master dies, the sect enters
+	# a power vacuum. Strongest courtier
+	# cultivator may seize control or the sect
+	# fragments.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_character_modifier = murim_sect_master
+				is_ruler = yes
+			}
+
+			# Trigger succession crisis event for all courtier cultivators
+			every_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 2
+					is_alive = yes
+				}
+				trigger_event = {
+					id = murim_cultivation.2002
+					days = { 1 15 }
+				}
+			}
+
+			# Alert vassal cultivators
+			every_vassal = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+				}
+				trigger_event = {
+					id = murim_cultivation.2003
+					days = { 5 30 }
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Death Notification to Rivals
+	# When a cultivator dies, their rivals
+	# gain power from the broken rivalry bond
+	# and may celebrate or gain cultivation.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_variable = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+			}
+
+			every_relation = {
+				type = rival
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					is_alive = yes
+				}
+				# Rivals gain XP from outliving their enemy
+				change_variable = {
+					name = var:murim_cultivation_xp
+					add = 25
+				}
+				add_prestige = 50
+				# Trigger celebration/power absorption event
+				trigger_event = {
+					id = murim_cultivation.2004
+					days = { 1 5 }
+				}
+			}
+		}
+	}
+}
+
+# ==========================================
+# ON WAR STARTED
+# Cultivators mobilize as champions when
+# their realm goes to war.
+# ==========================================
+
+on_war_started = {
+
+	# ------------------------------------------
+	# Cultivator Champion Mobilization
+	# When war is declared, cultivator courtiers
+	# receive combat buffs and join as champions.
+	# ------------------------------------------
+	effect = {
+		# Attacker cultivator champion buff
+		scope:attacker = {
+			if = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 2
+				}
+				add_character_modifier = {
+					modifier = murim_war_champion_attacker
+					years = 5
+				}
+				custom_tooltip = murim_champion_mobilization_tt
+			}
+
+			# Buff cultivator courtiers
+			every_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+					is_alive = yes
+				}
+				add_character_modifier = {
+					modifier = murim_sect_war_mobilization
+					years = 5
+				}
+			}
+		}
+
+		# Defender cultivator rallying
+		scope:defender = {
+			if = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 2
+				}
+				add_character_modifier = {
+					modifier = murim_war_champion_defender
+					years = 5
+				}
+				# Defensive qi surge
+				change_variable = {
+					name = var:murim_qi_current
+					add = 20
+				}
+				custom_tooltip = murim_defensive_qi_surge_tt
+			}
+
+			# Defender sect mobilization
+			every_courtier = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+					is_alive = yes
+				}
+				add_character_modifier = {
+					modifier = murim_sect_war_mobilization
+					years = 5
+				}
+			}
+		}
+
+		# Sect master war declaration triggers full sect mobilization event
+		if = {
+			limit = {
+				scope:attacker = {
+					has_character_modifier = murim_sect_master
+				}
+			}
+			scope:attacker = {
+				trigger_event = {
+					id = murim_cultivation.3001
+					days = { 1 3 }
+				}
+			}
+		}
+	}
+}
+
+# ==========================================
+# ON BATTLE WON
+# Winning commanders gain martial XP.
+# Chance to capture enemy cultivators.
+# ==========================================
+
+on_battle_won = {
+
+	# ------------------------------------------
+	# Martial XP for Winning Commander
+	# The thrill of victory fuels cultivation.
+	# ------------------------------------------
+	effect = {
+		scope:winner = {
+			if = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+				}
+
+				# Base XP from victory
+				random_list = {
+					40 = {
+						change_variable = {
+							name = var:murim_cultivation_xp
+							add = 10
+						}
+					}
+					35 = {
+						change_variable = {
+							name = var:murim_cultivation_xp
+							add = 20
+						}
+						modifier = {
+							factor = 1.5
+							martial >= 15
+						}
+					}
+					20 = {
+						# Significant insight from battle
+						change_variable = {
+							name = var:murim_cultivation_xp
+							add = 35
+						}
+						change_variable = {
+							name = var:murim_body_tempering
+							add = 3
+						}
+						modifier = {
+							factor = 2.0
+							martial >= 20
+						}
+					}
+					5 = {
+						# Battle enlightenment - rare major gain
+						change_variable = {
+							name = var:murim_cultivation_xp
+							add = 75
+						}
+						change_variable = {
+							name = var:murim_technique_mastery
+							add = 5
+						}
+						custom_tooltip = murim_battle_enlightenment_tt
+						modifier = {
+							factor = 2.0
+							has_trait = brave
+						}
+						modifier = {
+							factor = 1.5
+							var:murim_cultivation_rank >= 4
+						}
+					}
+				}
+
+				# Demonic cultivators absorb qi from the battlefield dead
+				if = {
+					limit = {
+						has_trait = murim_demonic_cultivator
+					}
+					change_variable = {
+						name = var:murim_qi_current
+						add = 25
+					}
+					change_variable = {
+						name = var:murim_cultivation_xp
+						add = 15
+					}
+					custom_tooltip = murim_demonic_battlefield_absorption_tt
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Chance to Capture Enemy Cultivator
+	# Defeated cultivator commanders can be
+	# captured alive for ransom, forced
+	# teaching, or cultivation theft.
+	# ------------------------------------------
+	effect = {
+		scope:loser = {
+			if = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+					is_alive = yes
+				}
+
+				random_list = {
+					70 = {
+						# Escapes capture
+						modifier = {
+							factor = 0.5
+							martial < 10
+						}
+						modifier = {
+							factor = 1.5
+							var:murim_cultivation_rank >= 4
+						}
+					}
+					30 = {
+						# CAPTURED!
+						custom_tooltip = murim_cultivator_captured_tt
+						scope:winner = {
+							if = {
+								limit = {
+									has_variable = var:murim_cultivation_rank
+								}
+								imprison = {
+									target = prev
+									type = dungeon
+								}
+								trigger_event = {
+									id = murim_cultivation.3002
+									days = { 1 5 }
+								}
+							}
+						}
+						modifier = {
+							factor = 2.0
+							martial < 8
+						}
+						modifier = {
+							factor = 0.3
+							var:murim_cultivation_rank >= 5
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+# ==========================================
+# ON BATTLE LOST
+# Risk of death or cultivation loss for
+# defeated cultivator commanders.
+# ==========================================
+
+on_battle_lost = {
+
+	# ------------------------------------------
+	# Death Risk for Cultivator Commander
+	# Losing a battle as a cultivator commander
+	# can be fatal. Higher rank = more survivable
+	# but still dangerous.
+	# ------------------------------------------
+	effect = {
+		scope:loser = {
+			if = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 1
+					is_alive = yes
+				}
+
+				random_list = {
+					55 = {
+						# Survives unscathed - retreats
+						custom_tooltip = murim_battle_retreat_tt
+						modifier = {
+							factor = 1.5
+							var:murim_cultivation_rank >= 3
+						}
+					}
+					25 = {
+						# Wounded in battle
+						custom_tooltip = murim_battle_wounded_tt
+						if = {
+							limit = {
+								NOT = { has_trait = wounded }
+								NOT = { has_trait = severely_wounded }
+							}
+							add_trait = wounded
+						}
+						else = {
+							add_trait = severely_wounded
+						}
+						# Lose qi from injuries
+						change_variable = {
+							name = var:murim_qi_current
+							add = -20
+						}
+						modifier = {
+							factor = 0.5
+							var:murim_cultivation_rank >= 4
+						}
+					}
+					12 = {
+						# Severely wounded - cultivation damaged
+						custom_tooltip = murim_battle_cultivation_damaged_tt
+						add_trait = severely_wounded
+						change_variable = {
+							name = var:murim_cultivation_xp
+							add = -50
+						}
+						change_variable = {
+							name = var:murim_meridian_flow
+							add = -15
+						}
+						change_variable = {
+							name = var:murim_qi_current
+							add = -40
+						}
+						# Floor checks
+						if = {
+							limit = { var:murim_cultivation_xp < 0 }
+							set_variable = {
+								name = var:murim_cultivation_xp
+								value = 0
+							}
+						}
+						if = {
+							limit = { var:murim_meridian_flow < 0 }
+							set_variable = {
+								name = var:murim_meridian_flow
+								value = 0
+							}
+						}
+						modifier = {
+							factor = 0.3
+							var:murim_cultivation_rank >= 5
+						}
+					}
+					8 = {
+						# DEATH on the battlefield
+						# Only for lower-rank cultivators or unlucky elders
+						custom_tooltip = murim_battle_death_tt
+						death = {
+							death_reason = death_battle
+						}
+						modifier = {
+							factor = 2.0
+							var:murim_cultivation_rank < 3
+						}
+						modifier = {
+							factor = 0.2
+							var:murim_cultivation_rank >= 5
+						}
+						modifier = {
+							factor = 0.1
+							var:murim_cultivation_rank >= 6
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Cultivation Loss if Captured
+	# Imprisoned cultivators slowly lose power.
+	# This makes capture devastating.
+	# ------------------------------------------
+	effect = {
+		scope:loser = {
+			if = {
+				limit = {
+					has_variable = var:murim_cultivation_rank
+					is_imprisoned = yes
+				}
+
+				# Immediate cultivation suppression
+				change_variable = {
+					name = var:murim_qi_current
+					add = -30
+				}
+				change_variable = {
+					name = var:murim_meridian_flow
+					add = -10
+				}
+				add_character_modifier = {
+					modifier = murim_cultivation_suppressed
+					years = 3
+				}
+				custom_tooltip = murim_cultivation_suppressed_tt
+
+				# Floor check
+				if = {
+					limit = { var:murim_qi_current < 0 }
+					set_variable = {
+						name = var:murim_qi_current
+						value = 0
+					}
+				}
+			}
+		}
+	}
+}

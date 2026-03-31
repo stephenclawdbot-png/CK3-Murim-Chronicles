@@ -1,0 +1,453 @@
+############################################
+# MURIM AI AGGRESSION BEHAVIOR
+# Controls cultivator AI war willingness,
+# scheme aggression, duel frequency, and
+# territorial expansion drive.
+#
+# Higher cultivation = more dangerous AI.
+# Demonic cultivators are apex predators.
+############################################
+
+# ==========================================
+# CULTIVATOR WAR DECLARATION WEIGHTS
+# Applied as additive modifiers to base AI
+# war declaration willingness.
+# ==========================================
+
+murim_cultivator_war_aggression = {
+
+	# ------------------------------------------
+	# Base cultivator aggression
+	# Any character with cultivation rank >= 1
+	# gets a baseline aggression boost.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+			martial >= 10
+		}
+		ai_boldness = 25
+		ai_rationality = -10
+		ai_war_chance = 0.15
+	}
+
+	# ------------------------------------------
+	# Martial cultivator - high martial fighters
+	# These are born warriors. They WANT war.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+			martial >= 15
+		}
+		ai_boldness = 40
+		ai_rationality = -20
+		ai_war_chance = 0.30
+	}
+
+	# ------------------------------------------
+	# Veteran cultivator (rank 2-3)
+	# Proven fighters who actively seek conflict.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 2
+			var:murim_cultivation_rank < 4
+		}
+		ai_boldness = 50
+		ai_rationality = -25
+		ai_war_chance = 0.40
+	}
+
+	# ------------------------------------------
+	# Elder cultivator (rank 4-5)
+	# Mountains that walk. They CONSTANTLY seek
+	# war to expand their domain and test their
+	# cultivation against worthy foes.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 4
+			var:murim_cultivation_rank < 6
+		}
+		ai_boldness = 75
+		ai_rationality = -40
+		ai_war_chance = 0.60
+	}
+
+	# ------------------------------------------
+	# Transcendent cultivator (rank 6+)
+	# Living calamities. War is beneath them
+	# but they will crush anything in their path.
+	# Slightly lower war_chance because they have
+	# fewer equals, but maximum boldness.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 6
+		}
+		ai_boldness = 100
+		ai_rationality = -50
+		ai_war_chance = 0.50
+	}
+}
+
+# ==========================================
+# DEMONIC CULTIVATOR - APEX AGGRESSION
+# Demonic cultivators are the most violent
+# entities in the world. They attack everyone,
+# everywhere, constantly.
+# ==========================================
+
+murim_demonic_war_aggression = {
+
+	# ------------------------------------------
+	# Base demonic aggression
+	# Even low-rank demonic cultivators are
+	# rabidly aggressive. They NEED conflict
+	# to fuel their cultivation through blood.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_demonic_cultivator
+			has_variable = var:murim_cultivation_rank
+		}
+		ai_boldness = 60
+		ai_rationality = -50
+		ai_war_chance = 0.55
+	}
+
+	# ------------------------------------------
+	# High-rank demonic cultivator (rank 3+)
+	# Near-maximum aggression. Will attack
+	# neighbors constantly. Only stops warring
+	# when exhausted or dead.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_demonic_cultivator
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+		}
+		ai_boldness = 90
+		ai_rationality = -75
+		ai_war_chance = 0.80
+	}
+
+	# ------------------------------------------
+	# Demonic elder (rank 5+)
+	# MAXIMUM AGGRESSION. These are walking
+	# apocalypses. They will declare war on
+	# anyone they can reach.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_demonic_cultivator
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 5
+		}
+		ai_boldness = 100
+		ai_rationality = -100
+		ai_war_chance = 0.95
+	}
+
+	# ------------------------------------------
+	# Demonic cultivator with lunatic/sadistic
+	# traits - beyond maximum aggression.
+	# These are unhinged killing machines.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_demonic_cultivator
+			OR = {
+				has_trait = lunatic
+				has_trait = sadistic
+			}
+		}
+		ai_boldness = 100
+		ai_rationality = -100
+		ai_war_chance = 1.00
+	}
+}
+
+# ==========================================
+# ORTHODOX vs DEMONIC - CRUSADE MENTALITY
+# Orthodox cultivators are aggressive
+# SPECIFICALLY toward demonic ones.
+# This creates constant factional warfare.
+# ==========================================
+
+murim_orthodox_anti_demonic = {
+
+	# ------------------------------------------
+	# Orthodox cultivator targeting demonic
+	# neighbor. Strong desire to purge evil.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_orthodox_cultivator
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+			# Target is demonic
+			scope:target = {
+				has_trait = murim_demonic_cultivator
+			}
+		}
+		ai_boldness = 70
+		ai_rationality = -30
+		ai_war_chance = 0.65
+	}
+
+	# ------------------------------------------
+	# High-rank orthodox (rank 3+) vs demonic
+	# They see it as their sacred duty to
+	# eliminate demonic cultivators.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_orthodox_cultivator
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+			scope:target = {
+				has_trait = murim_demonic_cultivator
+			}
+		}
+		ai_boldness = 90
+		ai_rationality = -20
+		ai_war_chance = 0.85
+	}
+
+	# ------------------------------------------
+	# Orthodox with zealous trait vs demonic
+	# MAXIMUM anti-demonic aggression.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_trait = murim_orthodox_cultivator
+			has_trait = zealous
+			scope:target = {
+				has_trait = murim_demonic_cultivator
+			}
+		}
+		ai_boldness = 100
+		ai_rationality = -10
+		ai_war_chance = 0.95
+	}
+}
+
+# ==========================================
+# SECT MASTER EXPANSION DRIVE
+# Sect masters (realm holders with sect
+# modifier) aggressively expand territory.
+# ==========================================
+
+murim_sect_master_expansion = {
+
+	# ------------------------------------------
+	# Base sect master expansion drive.
+	# Sect masters need territory to recruit
+	# disciples and gather resources.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_character_modifier = murim_sect_master
+			is_ruler = yes
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 2
+		}
+		ai_boldness = 50
+		ai_rationality = -15
+		ai_war_chance = 0.45
+	}
+
+	# ------------------------------------------
+	# Powerful sect master (rank 4+)
+	# Actively building a cultivation empire.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_character_modifier = murim_sect_master
+			is_ruler = yes
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 4
+		}
+		ai_boldness = 75
+		ai_rationality = -30
+		ai_war_chance = 0.70
+	}
+
+	# ------------------------------------------
+	# Ambitious sect master
+	# The ambitious trait stacks with sect
+	# master drive for relentless expansion.
+	# ------------------------------------------
+	ai_war_declare_modifier = {
+		trigger = {
+			has_character_modifier = murim_sect_master
+			is_ruler = yes
+			has_trait = ambitious
+		}
+		ai_boldness = 85
+		ai_rationality = -35
+		ai_war_chance = 0.75
+	}
+}
+
+# ==========================================
+# SCHEME AGGRESSION MODIFIERS
+# All cultivators scheme more. Murder and
+# abduction are tools of the trade.
+# ==========================================
+
+murim_cultivator_scheme_aggression = {
+
+	# ------------------------------------------
+	# Base scheme aggression for cultivators.
+	# They live in a world where assassination
+	# is just another cultivation technique.
+	# ------------------------------------------
+	ai_scheme_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+		}
+		ai_murder_scheme_chance = 0.30
+		ai_abduct_scheme_chance = 0.25
+		ai_boldness = 30
+	}
+
+	# ------------------------------------------
+	# High-rank cultivator scheme aggression.
+	# Elders plot constantly against rivals.
+	# ------------------------------------------
+	ai_scheme_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+		}
+		ai_murder_scheme_chance = 0.50
+		ai_abduct_scheme_chance = 0.40
+		ai_boldness = 50
+	}
+
+	# ------------------------------------------
+	# Demonic cultivator schemes.
+	# They murder for POWER, not just politics.
+	# ------------------------------------------
+	ai_scheme_modifier = {
+		trigger = {
+			has_trait = murim_demonic_cultivator
+		}
+		ai_murder_scheme_chance = 0.70
+		ai_abduct_scheme_chance = 0.60
+		ai_boldness = 75
+	}
+
+	# ------------------------------------------
+	# Cultivators with intrigue >= 15
+	# Master schemers who plot relentlessly.
+	# ------------------------------------------
+	ai_scheme_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 2
+			intrigue >= 15
+		}
+		ai_murder_scheme_chance = 0.60
+		ai_abduct_scheme_chance = 0.55
+		ai_boldness = 60
+	}
+}
+
+# ==========================================
+# DUEL CHALLENGE BEHAVIOR
+# Cultivators challenge rivals to duels
+# constantly. Higher rank = more challenges.
+# ==========================================
+
+murim_cultivator_duel_aggression = {
+
+	# ------------------------------------------
+	# Base duel willingness.
+	# All cultivators seek to prove themselves.
+	# ------------------------------------------
+	ai_duel_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+			martial >= 8
+		}
+		ai_duel_challenge_chance = 0.35
+		ai_duel_accept_chance = 0.70
+		ai_boldness = 30
+	}
+
+	# ------------------------------------------
+	# Strong cultivator duel aggression (rank 3+)
+	# Actively seeks worthy opponents.
+	# ------------------------------------------
+	ai_duel_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+			martial >= 12
+		}
+		ai_duel_challenge_chance = 0.60
+		ai_duel_accept_chance = 0.85
+		ai_boldness = 55
+	}
+
+	# ------------------------------------------
+	# Elder cultivator (rank 5+)
+	# Challenges everyone. Fears nothing.
+	# ------------------------------------------
+	ai_duel_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 5
+		}
+		ai_duel_challenge_chance = 0.85
+		ai_duel_accept_chance = 0.95
+		ai_boldness = 80
+	}
+
+	# ------------------------------------------
+	# Wrathful/brave cultivators
+	# Personality-stacked duel aggression.
+	# ------------------------------------------
+	ai_duel_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 1
+			OR = {
+				has_trait = wrathful
+				has_trait = brave
+			}
+		}
+		ai_duel_challenge_chance = 0.75
+		ai_duel_accept_chance = 0.90
+		ai_boldness = 65
+	}
+
+	# ------------------------------------------
+	# Cultivator vs rival - near-guaranteed
+	# challenge. Rivals MUST be destroyed.
+	# ------------------------------------------
+	ai_duel_modifier = {
+		trigger = {
+			has_variable = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 2
+			scope:target = {
+				has_relation_rival = scope:owner
+			}
+		}
+		ai_duel_challenge_chance = 0.95
+		ai_duel_accept_chance = 1.00
+		ai_boldness = 100
+	}
+}
