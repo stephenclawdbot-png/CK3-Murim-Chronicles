@@ -1,203 +1,185 @@
 ################################################################
-# MURIM CHRONICLES — GOVERNMENT TYPES
-# Three martial world government types that overlay on vanilla
-# Uses valid CK3 1.18 government_type syntax
+# MURIM CHRONICLES -- GOVERNMENT TYPES
+# Path: common/governments/celestial_governments.txt
+# Defines three distinct governance structures for the
+# martial world, each reflecting a different relationship
+# between power and authority.
+#
+# 1. orthodox_sect_government  -- Righteous sects
+# 2. unorthodox_sect_government -- Demonic/heterodox sects
+# 3. free_cultivator_government -- Independent cultivators
+#
+# CK3 government_type syntax reference:
+#   create_cadet_branches, valid_holdings, can_get_government
+#   are top-level blocks; character_modifier goes inside
+#   the government definition.
 ################################################################
 
-# ============================================================
-# ORTHODOX SECT GOVERNMENT
-# The righteous path. Empire-tier sects and alliances.
-# Think: Wulin Alliance, Shaolin, Wudang, Emei
-# ============================================================
 orthodox_sect_government = {
-    # --- Core Settings ---
-    create_cadet_branches = yes
-    rulers_should_have_dynasty = yes
-    council = yes
-    dynasty_named_realms = yes
+	create_cadet_branches = yes
 
-    # --- Valid Holdings ---
-    valid_holdings = {
-        castle_holding
-        city_holding
-        church_holding
-    }
+	valid_holdings = {
+		castle
+		city
+		church
+	}
 
-    primary_holding = castle_holding
+	can_get_government = {
+		OR = {
+			has_character_flag = murim_orthodox_cultivator
+			has_character_flag = murim_sect_master
+			AND = {
+				has_character_flag = murim_initiated
+				NOT = { has_character_flag = murim_demonic_cultivator }
+			}
+		}
+	}
 
-    # --- Who Can Use This Government ---
-    can_get_government = {
-        OR = {
-            has_character_flag = murim_initiated
-            has_trait = martial_cultivator
-            has_trait = sect_master
-        }
-        OR = {
-            highest_held_title_tier >= tier_kingdom
-            has_character_flag = wulin_alliance_leader
-        }
-        NOT = { has_character_flag = murim_demonic_path }
-    }
+	character_modifier = {
+		# Sect master bonuses -- structured hierarchy
+		monthly_prestige = 0.5
+		monthly_piety = 0.3
+		domain_limit = 2
+		vassal_limit = 10
+		learning = 2
+		diplomacy = 1
+		monthly_dynasty_prestige = 0.2
+		# Righteous reputation
+		dread_baseline_add = -5
+	}
 
-    # --- Vassal Contracts ---
-    vassal_contract = {
-        feudal_government_taxes
-        feudal_government_levies
-    }
+	ai_priority = {
+		base = 50
+		modifier = {
+			add = 30
+			has_character_flag = murim_orthodox_cultivator
+		}
+		modifier = {
+			add = 20
+			has_character_flag = murim_sect_master
+		}
+		modifier = {
+			add = 10
+			learning >= 12
+		}
+		modifier = {
+			add = -50
+			has_character_flag = murim_demonic_cultivator
+		}
+	}
 
-    # --- Character Interactions ---
-    character_interaction = {
-        murim_challenge_to_duel
-        murim_request_teaching
-        murim_sect_alliance_proposal
-        murim_host_martial_tournament
-    }
-
-    # --- Government Modifiers ---
-    modifier = {
-        monthly_prestige = 0.5
-        monthly_piety = 0.3
-        knight_effectiveness_mult = 0.25
-        vassal_opinion = 5
-        same_faith_opinion = 10
-        levy_size = -0.1                # Rely on elite cultivators, not masses
-        men_at_arms_maintenance = -0.15
-        domain_tax_mult = 0.1
-    }
-
-    # --- AI Behavior ---
-    ai_primary_priority = {
-        value = 100
-    }
-
-    # --- Color ---
-    color = { 0.1 0.3 0.8 }   # Noble blue — orthodox righteousness
+	flag = government_is_sect
+	flag = government_is_orthodox
 }
 
-# ============================================================
-# UNORTHODOX SECT GOVERNMENT
-# The demonic/heretical path. Kingdom-tier dark sects.
-# Think: Blood Moon Cult, Bone Demon Sect, Yin-Yang Cult
-# ============================================================
 unorthodox_sect_government = {
-    create_cadet_branches = yes
-    rulers_should_have_dynasty = yes
-    council = no                        # Rule by absolute power
-    dynasty_named_realms = yes
+	create_cadet_branches = yes
 
-    valid_holdings = {
-        castle_holding
-        tribal_holding
-    }
+	valid_holdings = {
+		castle
+		city
+	}
 
-    primary_holding = castle_holding
+	can_get_government = {
+		OR = {
+			has_character_flag = murim_demonic_cultivator
+			AND = {
+				has_character_flag = murim_initiated
+				has_character_flag = murim_demonic_cultivator
+			}
+		}
+	}
 
-    can_get_government = {
-        OR = {
-            has_character_flag = murim_initiated
-            has_trait = martial_cultivator
-            has_trait = sect_master
-        }
-        OR = {
-            highest_held_title_tier >= tier_duchy
-            has_character_flag = murim_demonic_path
-        }
-        OR = {
-            has_character_flag = murim_demonic_path
-            has_trait = demonic_cultivator
-        }
-    }
+	character_modifier = {
+		# Demonic sect bonuses -- fear-based rule
+		monthly_prestige = 0.3
+		monthly_piety = -0.2
+		domain_limit = 3
+		vassal_limit = 5
+		intrigue = 3
+		martial = 2
+		# Rule through fear
+		dread_baseline_add = 20
+		dread_decay_mult = -0.25
+		monthly_tyranny = -0.1
+		# Demonic cultivation bonuses
+		prowess = 3
+	}
 
-    vassal_contract = {
-        feudal_government_taxes
-        feudal_government_levies
-    }
+	ai_priority = {
+		base = 30
+		modifier = {
+			add = 50
+			has_character_flag = murim_demonic_cultivator
+		}
+		modifier = {
+			add = 20
+			intrigue >= 15
+		}
+		modifier = {
+			add = 10
+			has_trait = sadistic
+		}
+		modifier = {
+			add = -60
+			has_character_flag = murim_orthodox_cultivator
+		}
+	}
 
-    character_interaction = {
-        murim_challenge_to_duel
-        murim_demand_submission
-        murim_blood_oath_pact
-        murim_forbidden_technique_exchange
-    }
-
-    modifier = {
-        monthly_prestige = 0.3
-        monthly_piety = -0.2            # Defying heaven's mandate
-        dread_baseline_add = 15
-        dread_decay_mult = -0.3
-        knight_effectiveness_mult = 0.40 # Demonic cultivators are brutal fighters
-        hostile_scheme_power_mult = 0.25
-        tyranny_gain_mult = -0.5        # Fear is expected
-        levy_size = -0.2
-        men_at_arms_maintenance = -0.1
-        domain_tax_mult = -0.1          # Rule through fear, not commerce
-        same_faith_opinion = -5
-        different_faith_opinion = -15
-    }
-
-    ai_primary_priority = {
-        value = 80
-    }
-
-    color = { 0.6 0.05 0.1 }  # Crimson — demonic cultivation
+	flag = government_is_sect
+	flag = government_is_unorthodox
 }
 
-# ============================================================
-# FREE CULTIVATOR GOVERNMENT
-# Independent martial artists and small sects. Duchy-tier.
-# Think: Wandering swordsmen, mountain hermits, small schools
-# ============================================================
 free_cultivator_government = {
-    create_cadet_branches = no
-    rulers_should_have_dynasty = no
-    council = no
-    dynasty_named_realms = no
+	create_cadet_branches = no
 
-    valid_holdings = {
-        castle_holding
-        tribal_holding
-        city_holding
-    }
+	valid_holdings = {
+		castle
+		city
+		church
+	}
 
-    primary_holding = tribal_holding
+	can_get_government = {
+		has_character_flag = murim_initiated
+		NOT = { has_character_flag = murim_sect_master }
+	}
 
-    can_get_government = {
-        OR = {
-            has_character_flag = murim_initiated
-            has_trait = martial_cultivator
-        }
-        highest_held_title_tier <= tier_duchy
-        NOR = {
-            has_character_flag = murim_demonic_path
-            has_character_flag = wulin_alliance_leader
-        }
-    }
+	character_modifier = {
+		# Wandering cultivator -- personal freedom
+		monthly_prestige = 0.2
+		domain_limit = 1
+		vassal_limit = 3
+		# Freedom of movement and independence
+		prowess = 2
+		martial = 1
+		intrigue = 1
+		# Small bonuses for personal cultivation focus
+		learning = 1
+		health = 0.25
+		stress_loss_mult = 0.10
+	}
 
-    vassal_contract = {
-        feudal_government_taxes
-    }
+	ai_priority = {
+		base = 20
+		modifier = {
+			add = 30
+			has_character_flag = murim_initiated
+			NOT = { has_character_flag = murim_sect_master }
+		}
+		modifier = {
+			add = 15
+			has_character_flag = murim_wandering_hero
+		}
+		modifier = {
+			add = 10
+			has_trait = content
+		}
+		modifier = {
+			add = -20
+			has_character_flag = murim_sect_master
+		}
+	}
 
-    character_interaction = {
-        murim_challenge_to_duel
-        murim_request_teaching
-        murim_seek_apprenticeship
-    }
-
-    modifier = {
-        monthly_prestige = 0.2
-        independent_ruler_opinion = 10
-        knight_effectiveness_mult = 0.50 # Small but elite — every man is a cultivator
-        levy_size = -0.4                 # Tiny forces
-        men_at_arms_maintenance = -0.25
-        domain_tax_mult = -0.2
-        monthly_lifestyle_xp_gain_mult = 0.15  # Focus on personal cultivation
-        learning = 2
-        martial = 3
-    }
-
-    ai_primary_priority = {
-        value = 60
-    }
-
-    color = { 0.4 0.7 0.3 }   # Forest green — freedom of the wanderer
+	flag = government_is_cultivator
+	flag = government_is_free
 }

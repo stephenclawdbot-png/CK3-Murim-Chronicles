@@ -1,225 +1,455 @@
 ################################################################
-# MURIM CHRONICLES — ASIA MURIM MAP SETUP
-# Overlays martial world regions onto vanilla CK3 map
-# NO new provinces — uses existing title keys only
+# MURIM CHRONICLES -- ASIA MAP SETUP
+# Path: common/lands/00_asia_murim_setup.txt
+# Defines the geographical framework for the Murim world
+# using real vanilla CK3 title IDs from the East Asia map.
+#
+# This file establishes:
+#   1. Murim Region Definitions (4 zones)
+#   2. Isolated Cultivation Zones (5 locations)
+#   3. Martial Population Density per region
+#   4. Sect Headquarters Locations (8 major sects)
+#   5. Region-Unique Interactions
+#
+# All title keys reference vanilla CK3 1.18 landed_titles.
+# No fictional provinces -- every key maps to a real title.
 ################################################################
 
-# ============================================================
-# REGION DEFINITIONS — Murim Cultivation Zones
-# These use on_action triggers, NOT new map objects.
-# Applied via scripted effects on game start.
-# ============================================================
 
-# --- HEARTLAND: Central Plains (Zhongyuan) ---
-# The core of the martial world. Highest sect density.
-# Maps to: Song Dynasty / Northern China regions
-murim_heartland_region_setup = {
-    # Core Chinese provinces — the beating heart of the Jianghu
-    title_list = {
-        k_song          # Song Dynasty heartland
-        k_jin           # Jin territories (Northern China)
-        d_kaifeng       # Capital of the Northern Song
-        d_luoyang       # Ancient capital, legendary martial ground
-        d_chang_an      # Tang legacy, Shaolin nearby
-        d_chengdu       # Sichuan basin, Emei & Qingcheng sects
-        d_hangzhou      # Southern Song capital, refined martial arts
-        d_nanjing       # Jiangnan cultural center
-    }
+# ==============================================================
+# 1. MURIM REGION DEFINITIONS
+# Four concentric zones radiating outward from the cultural
+# heartland of the Central Plains (Zhongyuan).
+# Each zone defines which duchies/kingdoms belong to it and
+# what baseline modifiers characters in that zone receive.
+# ==============================================================
 
-    # Region modifiers applied via on_action at game_start
-    murim_region_type = heartland
-    cultivation_density = 5         # Maximum cultivation activity
-    sect_founding_modifier = 1.5    # Easier to found sects here
-    wandering_master_chance = 0.15  # 15% chance per year of wandering master encounter
-    herb_discovery_bonus = 0.10     # 10% bonus to rare herb finds
+# --- HEARTLAND (Zhongyuan / Central Plains) ---
+# The cradle of martial arts. Highest sect density,
+# fastest cultivation, most political intrigue.
+murim_heartland = {
+	color = { 200 160 60 }
 
-    # Province development effect — applied to all counties in region
-    county_modifier = {
-        development_growth_factor = 0.1
-        monthly_county_control_change_add = 0.2
-    }
+	provinces = {
+		# Song Dynasty core -- the cultural and martial heart
+		d_kaifeng			# Kaifeng (historical Song capital)
+		d_luoyang			# Luoyang (ancient capital, Buddhist temples)
+		d_xiangyang			# Xiangyang (legendary wuxia battleground)
+		d_nanjing			# Nanjing (southern capital)
+		d_hangzhou			# Hangzhou (Song southern capital, Lin'an)
+		d_chengdu			# Chengdu (Sichuan, Emei Sect territory)
+		d_jiankang			# Jiankang (Six Dynasties capital)
+		d_yangzhou			# Yangzhou (Grand Canal hub, merchant sects)
+	}
+
+	modifier = {
+		murim_cultivation_speed_mult = 0.25	# +25% cultivation XP gain
+		murim_sect_influence_mult = 0.20		# +20% sect political power
+		murim_herb_discovery_mult = 0.15		# +15% chance to find rare herbs
+		monthly_prestige = 0.3					# Prestige from living in the heartland
+	}
 }
 
-# --- OUTER MARCHES: Korean Peninsula & Manchuria ---
-# Secondary martial territories. Strong independent traditions.
-murim_outer_marches_region_setup = {
-    title_list = {
-        k_korea         # Korean kingdoms
-        d_jinju         # Southern Korean martial traditions
-        d_gongju        # Baekje legacy
-        d_kaesong       # Goryeo capital
-        d_pyongyang     # Northern stronghold
-        d_liaoxi        # Manchurian frontier
-        d_liaodong      # Northeastern martial schools
-    }
+# --- OUTER MARCHES (Frontier Provinces) ---
+# Established but less dense martial presence.
+# Good for mid-tier sects and wandering cultivators.
+murim_outer_marches = {
+	color = { 140 180 100 }
 
-    murim_region_type = outer_marches
-    cultivation_density = 3
-    sect_founding_modifier = 1.0
-    wandering_master_chance = 0.08
-    herb_discovery_bonus = 0.15     # Rich mountain herbs
+	provinces = {
+		# Northern frontier -- bordering the steppe
+		d_taiyuan			# Taiyuan (Shanxi, mountain sects)
+		d_datong			# Datong (northern garrison)
+		d_youzhou			# Youzhou (Beijing area, border defense)
 
-    county_modifier = {
-        development_growth_factor = 0.05
-        monthly_county_control_change_add = 0.3
-    }
+		# Eastern coast
+		d_qingzhou			# Qingzhou (Shandong, Mount Tai nearby)
+		d_dengzhou			# Dengzhou (coastal Shandong)
+
+		# Southern expansion
+		d_changsha			# Changsha (Hunan, southern orthodox sects)
+		d_fuzhou			# Fuzhou (Fujian, coastal martial arts)
+		d_guangzhou			# Guangzhou (Canton, southern kung fu)
+
+		# Western reaches
+		d_lanzhou			# Lanzhou (Gansu corridor)
+		d_liangzhou			# Liangzhou (Silk Road gateway)
+	}
+
+	modifier = {
+		murim_cultivation_speed_mult = 0.10	# +10% cultivation XP
+		murim_sect_influence_mult = 0.10		# +10% sect power
+		murim_herb_discovery_mult = 0.20		# +20% herb discovery (wilder terrain)
+		monthly_prestige = 0.1
+	}
 }
 
-# --- FRONTIER: Tibetan Plateau & Western Reaches ---
-# Harsh terrain, esoteric cultivation methods. Rare but powerful sects.
-murim_frontier_region_setup = {
-    title_list = {
-        k_tibet         # Tibetan Plateau
-        k_guge         # Western Tibet
-        d_lhasa         # Heart of Tibetan mysticism
-        d_yarlung       # Ancient Tibetan dynasty seat
-        d_qinghai       # Kokonor region, Kunlun foothills
-        d_xixia         # Western Xia (Tangut)
-        d_ganzhou        # Hexi Corridor, Silk Road martial arts
-    }
+# --- FRONTIER (Borderlands and Tribal Zones) ---
+# Sparse cultivation presence. Dangerous but rich in
+# natural resources and ancient ruins.
+murim_frontier = {
+	color = { 100 140 160 }
 
-    murim_region_type = frontier
-    cultivation_density = 2
-    sect_founding_modifier = 0.7     # Harder to found sects in isolation
-    wandering_master_chance = 0.20   # Many hidden masters retreat here
-    herb_discovery_bonus = 0.25      # Rare high-altitude spiritual herbs
+	provinces = {
+		# Manchurian/Jurchen territories
+		d_liaoyang			# Liaoyang (Liao heartland)
+		d_shangjing			# Shangjing (Liao supreme capital)
 
-    county_modifier = {
-        development_growth_factor = 0.02
-        defender_advantage = 5
-    }
+		# Tibetan Plateau approaches
+		d_xining			# Xining (Qinghai, Tibetan border)
+		d_lhasa				# Lhasa (Tibet, tantric cultivation)
+
+		# Southeast Asian marches
+		d_thanglong			# Thang Long (Dai Viet, Vietnamese martial arts)
+		d_dali				# Dali (Yunnan, Dali Kingdom)
+
+		# Korean peninsula
+		d_kaesong			# Kaesong (Goryeo capital)
+		d_pyongyang			# Pyongyang (northern Korea)
+	}
+
+	modifier = {
+		murim_cultivation_speed_mult = -0.05	# -5% cultivation (harsh conditions)
+		murim_herb_discovery_mult = 0.35		# +35% herb discovery (pristine wilderness)
+		murim_ancient_ruin_mult = 0.30			# +30% chance to find ancient cultivation sites
+		monthly_prestige = -0.1					# Slight prestige penalty (far from civilization)
+	}
 }
 
-# --- WILDERNESS: Steppe & Southeast ---
-# Beast path cultivation, nomadic martial traditions
-murim_wilderness_region_setup = {
-    title_list = {
-        k_mongolia      # Mongol steppe
-        k_khitan        # Khitan territories
-        d_ikh_bogd      # Deep steppe
-        d_karakorum     # Mongol capital
-        k_pagan         # Burmese kingdoms
-        k_dali          # Dali Kingdom (Yunnan)
-        d_dali          # Dali proper
-        d_kunming       # Yunnan basin
-    }
+# --- WILDERNESS (Untamed Lands) ---
+# Almost no organized martial presence. Extremely dangerous
+# but contains the rarest resources and forgotten techniques.
+murim_wilderness = {
+	color = { 80 100 80 }
 
-    murim_region_type = wilderness
-    cultivation_density = 1
-    sect_founding_modifier = 0.5
-    wandering_master_chance = 0.05
-    herb_discovery_bonus = 0.05
-    beast_taming_chance = 0.20      # Unique: beast companion encounters
+	provinces = {
+		# Deep steppe
+		d_karakorum			# Karakorum (Mongol heartland)
+		d_ordu_baliq		# Ordu-Baliq (Uyghur capital)
 
-    county_modifier = {
-        development_growth_factor = 0.01
-        defender_advantage = 8
-        supply_limit_mult = -0.2
-    }
+		# Western Regions (Xiyu)
+		d_kashgar			# Kashgar (Tarim Basin)
+		d_khotan			# Khotan (ancient Buddhist kingdom)
+		d_kucha				# Kucha (Silk Road oasis)
+
+		# Deep south
+		d_pagan				# Pagan (Burma)
+	}
+
+	modifier = {
+		murim_cultivation_speed_mult = -0.15	# -15% cultivation (extreme isolation)
+		murim_herb_discovery_mult = 0.50		# +50% herb discovery (virgin wilderness)
+		murim_ancient_ruin_mult = 0.50			# +50% ancient ruins
+		murim_beast_encounter_mult = 0.40		# +40% spirit beast encounters
+		monthly_prestige = -0.3
+	}
 }
 
-# --- ISOLATED CULTIVATION ZONES ---
-# Special locations mapped to specific vanilla titles
-# These grant unique bonuses when controlled by a cultivator
 
-murim_isolated_zone_kunlun = {
-    # Kunlun Mountains — mapped to Qinghai highlands
-    title = d_qinghai
-    zone_type = sacred_peak
-    cultivation_xp_bonus = 0.25
-    breakthrough_chance_bonus = 0.10
-    special_herb = thousand_year_snow_lotus
+# ==============================================================
+# 2. ISOLATED CULTIVATION ZONES
+# Special locations tied to specific duchies that grant
+# unique cultivation bonuses. These are the legendary
+# training grounds of the martial world.
+# ==============================================================
+
+murim_isolated_zones = {
+
+	# Mount Wudang -- Taoist internal cultivation
+	wudang_mountain_retreat = {
+		province = d_xiangyang		# Historical location of Wudang
+		type = sacred_mountain
+
+		modifier = {
+			murim_internal_cultivation_mult = 0.40		# +40% internal cultivation
+			murim_qi_regeneration_mult = 0.30			# +30% qi regeneration
+			murim_meditation_efficiency_mult = 0.25		# +25% meditation effectiveness
+			learning = 2
+			stress_loss_mult = 0.15
+		}
+	}
+
+	# Mount Song / Shaolin -- Buddhist body cultivation
+	shaolin_temple_grounds = {
+		province = d_luoyang		# Shaolin is near Luoyang in Henan
+		type = sacred_temple
+
+		modifier = {
+			murim_body_tempering_mult = 0.40		# +40% body tempering speed
+			murim_martial_technique_mult = 0.30		# +30% technique learning
+			murim_discipline_mult = 0.20			# +20% discipline
+			prowess = 3
+			martial = 1
+		}
+	}
+
+	# Mount Emei -- Female cultivator haven
+	emei_peak_sanctuary = {
+		province = d_chengdu		# Emei is in Sichuan near Chengdu
+		type = sacred_mountain
+
+		modifier = {
+			murim_sword_cultivation_mult = 0.35		# +35% sword technique mastery
+			murim_yin_qi_mult = 0.30				# +30% yin qi cultivation
+			murim_poison_resistance_mult = 0.20		# +20% poison resistance
+			learning = 1
+			intrigue = 1
+		}
+	}
+
+	# Kunlun Mountains -- Ancient primordial qi
+	kunlun_forbidden_peaks = {
+		province = d_xining			# Kunlun range near Qinghai
+		type = forbidden_zone
+
+		modifier = {
+			murim_cultivation_speed_mult = 0.50		# +50% cultivation speed (raw qi)
+			murim_breakthrough_chance_mult = 0.20	# +20% breakthrough success
+			murim_lifespan_mult = 0.10				# +10% lifespan extension
+			health = 0.5
+			# But dangerous
+			murim_qi_deviation_risk_mult = 0.15		# +15% qi deviation risk
+		}
+	}
+
+	# Dongting Lake -- Hidden water cultivation
+	dongting_lake_depths = {
+		province = d_changsha		# Dongting Lake is in Hunan
+		type = hidden_realm
+
+		modifier = {
+			murim_water_technique_mult = 0.40		# +40% water techniques
+			murim_herb_discovery_mult = 0.35		# +35% aquatic herbs
+			murim_stealth_mult = 0.25				# +25% stealth cultivation
+			intrigue = 2
+		}
+	}
 }
 
-murim_isolated_zone_wudang = {
-    # Wudang Mountains — mapped to northern Sichuan
-    title = d_chang_an
-    zone_type = sacred_peak
-    cultivation_xp_bonus = 0.20
-    breakthrough_chance_bonus = 0.08
-    special_technique = taiji_sword
+
+# ==============================================================
+# 3. MARTIAL POPULATION DENSITY
+# Defines the baseline number of cultivators per region.
+# Used by on_actions and events to determine encounter rates.
+# ==============================================================
+
+murim_population_density = {
+	# Heartland: 40-60 cultivators per duchy
+	heartland_density = {
+		base_cultivators_per_duchy = 50
+		sect_master_chance = 0.15		# 15% chance a county ruler is a sect master
+		wandering_cultivator_chance = 0.25	# 25% chance of random wandering cultivators
+		demonic_cultivator_chance = 0.08	# 8% chance of demonic cultivators (suppressed)
+	}
+
+	# Outer Marches: 15-30 cultivators per duchy
+	outer_marches_density = {
+		base_cultivators_per_duchy = 22
+		sect_master_chance = 0.08
+		wandering_cultivator_chance = 0.15
+		demonic_cultivator_chance = 0.12	# More room for demons on the frontier
+	}
+
+	# Frontier: 5-15 cultivators per duchy
+	frontier_density = {
+		base_cultivators_per_duchy = 10
+		sect_master_chance = 0.04
+		wandering_cultivator_chance = 0.10
+		demonic_cultivator_chance = 0.18	# Demons thrive in lawless areas
+	}
+
+	# Wilderness: 1-5 cultivators per duchy
+	wilderness_density = {
+		base_cultivators_per_duchy = 3
+		sect_master_chance = 0.02
+		wandering_cultivator_chance = 0.05
+		demonic_cultivator_chance = 0.25	# Demons dominate the wilds
+	}
 }
 
-murim_isolated_zone_emei = {
-    # Emei Mountains — mapped to Chengdu region
-    title = d_chengdu
-    zone_type = sacred_peak
-    cultivation_xp_bonus = 0.20
-    breakthrough_chance_bonus = 0.08
-    special_technique = emei_swordsmanship
+
+# ==============================================================
+# 4. SECT HEADQUARTERS LOCATIONS
+# Canonical locations for the 8 major sects.
+# Each sect HQ grants additional province modifiers.
+# ==============================================================
+
+murim_sect_headquarters = {
+
+	# --- ORTHODOX SECTS ---
+
+	# Azure Dragon Sect (Wudang-style internal arts)
+	azure_dragon_sect_hq = {
+		province = d_xiangyang
+		alignment = orthodox
+		specialization = internal_cultivation
+		modifier = {
+			murim_sect_influence_mult = 0.30
+			murim_internal_cultivation_mult = 0.20
+			monthly_piety = 0.2
+		}
+	}
+
+	# White Tiger Palace (Shaolin-style external arts)
+	white_tiger_palace_hq = {
+		province = d_luoyang
+		alignment = orthodox
+		specialization = body_cultivation
+		modifier = {
+			murim_sect_influence_mult = 0.25
+			murim_body_tempering_mult = 0.25
+			monthly_prestige = 0.2
+		}
+	}
+
+	# Vermilion Bird Clan (Emei-style sword arts)
+	vermilion_bird_clan_hq = {
+		province = d_chengdu
+		alignment = orthodox
+		specialization = sword_cultivation
+		modifier = {
+			murim_sect_influence_mult = 0.20
+			murim_sword_cultivation_mult = 0.30
+			prowess = 2
+		}
+	}
+
+	# Black Tortoise School (Defensive/Formation arts)
+	black_tortoise_school_hq = {
+		province = d_taiyuan
+		alignment = orthodox
+		specialization = defensive_cultivation
+		modifier = {
+			murim_sect_influence_mult = 0.20
+			murim_defense_mult = 0.30
+			fort_level = 1
+		}
+	}
+
+	# --- DEMONIC SECTS ---
+
+	# Blood Moon Cult (Blood cultivation)
+	blood_moon_cult_hq = {
+		province = d_kaesong
+		alignment = demonic
+		specialization = blood_cultivation
+		modifier = {
+			murim_demonic_power_mult = 0.30
+			murim_blood_technique_mult = 0.35
+			dread_baseline_add = 10
+		}
+	}
+
+	# Bone Demon Sect (Corpse/Necromantic cultivation)
+	bone_demon_sect_hq = {
+		province = d_liaoyang
+		alignment = demonic
+		specialization = corpse_cultivation
+		modifier = {
+			murim_demonic_power_mult = 0.25
+			murim_corpse_technique_mult = 0.30
+			dread_baseline_add = 15
+		}
+	}
+
+	# --- INDEPENDENT SECTS ---
+
+	# Wandering Blades Guild (Mercenary cultivators)
+	wandering_blades_guild_hq = {
+		province = d_yangzhou
+		alignment = neutral
+		specialization = combat_arts
+		modifier = {
+			murim_combat_technique_mult = 0.25
+			murim_mercenary_income_mult = 0.20
+			monthly_gold = 0.3
+		}
+	}
+
+	# Mountain Hermits (Reclusive cultivators)
+	mountain_hermits_hq = {
+		province = d_lhasa
+		alignment = neutral
+		specialization = ascetic_cultivation
+		modifier = {
+			murim_cultivation_speed_mult = 0.30
+			murim_lifespan_mult = 0.15
+			health = 1.0
+		}
+	}
 }
 
-murim_isolated_zone_shaolin = {
-    # Shaolin Temple — mapped to Luoyang region
-    title = d_luoyang
-    zone_type = ancient_temple
-    cultivation_xp_bonus = 0.15
-    body_tempering_bonus = 0.20
-    special_technique = vajra_body
-}
 
-murim_isolated_zone_penglai = {
-    # Penglai Islands — mapped to Shandong coast
-    title = d_qingzhou
-    zone_type = immortal_isle
-    cultivation_xp_bonus = 0.30
-    lifespan_bonus = 5
-    special_herb = immortality_grass
-}
-
-# --- SECT HEADQUARTERS LOCATIONS ---
-# Default locations for major sects (can be moved via decisions)
-
-murim_sect_hq_locations = {
-    azure_dragon_sect = d_luoyang          # Central Plains orthodox
-    white_tiger_palace = d_chang_an        # Western martial palace
-    vermilion_bird_clan = d_hangzhou       # Southern elegance
-    black_tortoise_school = d_pyongyang    # Northern fortress
-    blood_moon_cult = d_dali              # Hidden in Yunnan mountains
-    bone_demon_sect = d_liaoxi            # Manchurian wastes
-    wandering_blades = none                # No fixed HQ
-    mountain_hermits = d_lhasa            # Tibetan seclusion
-}
-
-# --- MARTIAL POPULATION DENSITY ---
-# Determines base number of martial artists per region
-# Used by recruitment and event frequency calculations
-
-murim_martial_density = {
-    heartland = 100         # Per 1000 population
-    outer_marches = 60
-    frontier = 30
-    wilderness = 15
-}
-
-# --- REGION UNIQUE INTERACTIONS ---
-# Special event triggers tied to specific regions
+# ==============================================================
+# 5. REGION-UNIQUE INTERACTIONS
+# Special interactions available only in certain regions.
+# These create asymmetric gameplay across the map.
+# ==============================================================
 
 murim_region_interactions = {
-    heartland = {
-        wulin_assembly = yes            # Can host Wulin Alliance meetings
-        imperial_examination = yes       # Martial exam access
-        sect_war_arena = yes            # Formal sect war grounds
-        black_market_access = advanced  # Full forbidden technique market
-    }
-    outer_marches = {
-        wulin_assembly = no
-        imperial_examination = yes
-        sect_war_arena = yes
-        black_market_access = basic
-    }
-    frontier = {
-        wulin_assembly = no
-        imperial_examination = no
-        hidden_master_retreat = yes     # Unique: find reclusive masters
-        ancient_ruins_exploration = yes # Unique: discover lost techniques
-        black_market_access = none
-    }
-    wilderness = {
-        wulin_assembly = no
-        imperial_examination = no
-        beast_companion_bonding = yes   # Unique: tame spirit beasts
-        tribal_martial_traditions = yes # Unique: learn primal techniques
-        black_market_access = none
-    }
+
+	# Heartland: Political maneuvering
+	heartland_imperial_petition = {
+		region = murim_heartland
+		type = political
+		description = "Petition the Imperial Court for sect recognition"
+		requires = {
+			murim_jianghu_standing >= 30
+			prestige >= 200
+		}
+		effects = {
+			murim_sect_influence_mult = 0.15
+			monthly_prestige = 0.5
+			monthly_gold = 0.2
+		}
+	}
+
+	# Outer Marches: Border defense contracts
+	outer_marches_border_defense = {
+		region = murim_outer_marches
+		type = military
+		description = "Accept border defense contracts against northern invaders"
+		requires = {
+			murim_cultivation_rank >= 2
+			martial >= 10
+		}
+		effects = {
+			monthly_gold = 0.5
+			murim_combat_xp_mult = 0.20
+			murim_jianghu_standing_gain = 2
+		}
+	}
+
+	# Frontier: Ancient tomb exploration
+	frontier_ancient_tomb_expedition = {
+		region = murim_frontier
+		type = exploration
+		description = "Mount an expedition to explore ancient cultivation tombs"
+		requires = {
+			murim_cultivation_rank >= 3
+			gold >= 100
+		}
+		effects = {
+			# Random chance of finding: nothing, common manual, rare manual,
+			# legendary technique, or ancient artifact
+			murim_tomb_discovery_event = yes
+		}
+	}
+
+	# Wilderness: Spirit beast hunting
+	wilderness_spirit_beast_hunt = {
+		region = murim_wilderness
+		type = combat
+		description = "Hunt spirit beasts for cultivation materials"
+		requires = {
+			murim_cultivation_rank >= 2
+			prowess >= 12
+		}
+		effects = {
+			murim_beast_core_gain = yes
+			murim_body_tempering_xp_gain = 10
+			# Risk of death if underprepared
+			murim_beast_hunt_danger_event = yes
+		}
+	}
 }
