@@ -1,0 +1,1109 @@
+namespace = murim_cult
+
+# ================================================================
+# MURIM CHRONICLES -- CULTIVATION EVENTS
+# 20 events covering the full cultivation journey
+# Variables: murim_cultivation_xp, murim_cultivation_rank (0-6),
+#   murim_qi_reserves, murim_body_tempering, murim_meridians_opened
+# Ranks: 0=Mortal, 1=Qi Sensing, 2=Foundation, 3=Core Formation,
+#   4=Nascent Soul, 5=Tribulation, 6=Immortal
+# ================================================================
+
+
+# ================================================================
+# SIMPLE/FUN EVENTS (1-5)
+# ================================================================
+
+# --- EVENT 1: Morning Meditation Breakthrough ---
+murim_cult.0001 = {
+    type = character_event
+    title = murim_cult.0001.t
+    desc = murim_cult.0001.desc
+    theme = learning_theology_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_meditation_cooldown }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_meditation_cooldown
+            years = 1
+        }
+    }
+
+    # Option A: Push deeper into meditation (risky, more XP)
+    option = {
+        name = murim_cult.0001.a
+        trigger = { learning >= 8 }
+
+        random_list = {
+            70 = {
+                change_variable = { name = murim_cultivation_xp add = 25 }
+                add_prestige = 50
+                custom_tooltip = murim_meditation_deep_success_tt
+            }
+            30 = {
+                change_variable = { name = murim_cultivation_xp add = 5 }
+                add_stress = 20
+                custom_tooltip = murim_meditation_deep_fail_tt
+            }
+        }
+
+        ai_chance = { base = 30 }
+    }
+
+    # Option B: Accept the natural flow (safe)
+    option = {
+        name = murim_cult.0001.b
+
+        change_variable = { name = murim_cultivation_xp add = 10 }
+        add_prestige = 20
+        custom_tooltip = murim_meditation_gentle_tt
+
+        ai_chance = { base = 50 }
+    }
+
+    # Option C: Share insight with disciples
+    option = {
+        name = murim_cult.0001.c
+        trigger = {
+            any_courtier = {
+                has_character_flag = murim_initiated
+                NOT = { this = root }
+            }
+        }
+
+        change_variable = { name = murim_cultivation_xp add = 8 }
+        every_courtier = {
+            limit = { has_character_flag = murim_initiated }
+            add_opinion = { modifier = grateful_teacher_opinion target = root }
+            change_variable = { name = murim_cultivation_xp add = 5 }
+        }
+
+        ai_chance = { base = 20 }
+    }
+}
+
+
+# --- EVENT 2: Rare Herb Discovery ---
+murim_cult.0002 = {
+    type = character_event
+    title = murim_cult.0002.t
+    desc = murim_cult.0002.desc
+    theme = learning_medicine_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_herb_cooldown }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_herb_cooldown
+            years = 2
+        }
+    }
+
+    # Option A: Consume immediately (big XP, small health risk)
+    option = {
+        name = murim_cult.0002.a
+
+        random_list = {
+            80 = {
+                change_variable = { name = murim_cultivation_xp add = 30 }
+                change_variable = { name = murim_qi_reserves add = 15 }
+                add_prestige = 30
+                custom_tooltip = murim_herb_consume_success_tt
+            }
+            20 = {
+                change_variable = { name = murim_cultivation_xp add = 15 }
+                add_character_modifier = {
+                    modifier = murim_herb_side_effect
+                    years = 1
+                }
+                custom_tooltip = murim_herb_consume_sideeffect_tt
+            }
+        }
+
+        ai_chance = { base = 40 }
+    }
+
+    # Option B: Store for breakthrough attempt
+    option = {
+        name = murim_cult.0002.b
+
+        add_character_flag = murim_has_spiritual_herb
+        change_variable = { name = murim_cultivation_xp add = 5 }
+        custom_tooltip = murim_herb_stored_for_breakthrough_tt
+
+        ai_chance = { base = 35 }
+    }
+
+    # Option C: Gift to a powerful ally
+    option = {
+        name = murim_cult.0002.c
+        trigger = {
+            any_ally = {
+                has_character_flag = murim_initiated
+            }
+        }
+
+        random_ally = {
+            limit = { has_character_flag = murim_initiated }
+            add_opinion = { modifier = generous_gift_opinion target = root }
+            change_variable = { name = murim_cultivation_xp add = 10 }
+        }
+        add_prestige = 100
+        add_piety = 25
+        custom_tooltip = murim_herb_gifted_tt
+
+        ai_chance = { base = 25 }
+    }
+}
+
+
+# --- EVENT 3: Wandering Master Encounter ---
+murim_cult.0003 = {
+    type = character_event
+    title = murim_cult.0003.t
+    desc = murim_cult.0003.desc
+    theme = martial_strategy_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_wandering_master_cooldown }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_wandering_master_cooldown
+            years = 3
+        }
+    }
+
+    # Option A: Beg for teaching (humility check via diplomacy)
+    option = {
+        name = murim_cult.0003.a
+        trigger = { diplomacy >= 6 }
+
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 12
+                }
+                change_variable = { name = murim_cultivation_xp add = 40 }
+                change_variable = { name = murim_qi_reserves add = 20 }
+                add_prestige = 75
+                add_character_flag = murim_received_master_teaching
+                custom_tooltip = murim_wandering_master_teaches_tt
+            }
+            40 = {
+                change_variable = { name = murim_cultivation_xp add = 10 }
+                add_prestige = -25
+                custom_tooltip = murim_wandering_master_refuses_tt
+            }
+        }
+
+        ai_chance = { base = 35 }
+    }
+
+    # Option B: Challenge to a spar (prowess check)
+    option = {
+        name = murim_cult.0003.b
+        trigger = { prowess >= 10 }
+
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 2.0
+                    prowess >= 18
+                }
+                change_variable = { name = murim_cultivation_xp add = 20 }
+                add_martial_skill = 1
+                add_prowess_skill = 1
+                add_prestige = 100
+                custom_tooltip = murim_wandering_master_spar_impress_tt
+            }
+            40 = {
+                change_variable = { name = murim_cultivation_xp add = 15 }
+                add_prowess_skill = 1
+                custom_tooltip = murim_wandering_master_spar_learn_tt
+            }
+            20 = {
+                add_prestige = -50
+                add_stress = 15
+                custom_tooltip = murim_wandering_master_spar_humbled_tt
+            }
+        }
+
+        ai_chance = { base = 30 }
+    }
+
+    # Option C: Offer food and shelter (may gain recurring mentor)
+    option = {
+        name = murim_cult.0003.c
+
+        remove_short_term_gold = 25
+        change_variable = { name = murim_cultivation_xp add = 10 }
+        add_piety = 50
+
+        random_list = {
+            50 = {
+                add_character_flag = murim_has_hidden_mentor
+                custom_tooltip = murim_wandering_master_stays_tt
+            }
+            50 = {
+                add_prestige = 25
+                custom_tooltip = murim_wandering_master_blesses_and_leaves_tt
+            }
+        }
+
+        ai_chance = { base = 35 }
+    }
+}
+
+
+# --- EVENT 4: Disciple Shows Promise ---
+murim_cult.0004 = {
+    type = character_event
+    title = murim_cult.0004.t
+    desc = murim_cult.0004.desc
+    theme = education_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        any_courtier = {
+            has_character_flag = murim_initiated
+            age < 25
+            NOT = { this = root }
+        }
+        NOT = { has_character_flag = murim_disciple_promise_cooldown }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_disciple_promise_cooldown
+            years = 3
+        }
+        random_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                age < 25
+                NOT = { this = root }
+            }
+            save_scope_as = promising_disciple
+        }
+    }
+
+    # Option A: Intensify their training (disciple gains skill)
+    option = {
+        name = murim_cult.0004.a
+        trigger = { martial >= 10 }
+
+        scope:promising_disciple = {
+            add_martial_skill = 2
+            add_prowess_skill = 2
+            change_variable = { name = murim_cultivation_xp add = 20 }
+            add_character_flag = murim_intensely_trained
+            add_opinion = { modifier = strict_master_opinion target = root }
+        }
+        change_variable = { name = murim_cultivation_xp add = 5 }
+        add_stress = 10
+        custom_tooltip = murim_disciple_intensify_tt
+
+        ai_chance = { base = 35 }
+    }
+
+    # Option B: Let them find their own path (disciple loyalty +)
+    option = {
+        name = murim_cult.0004.b
+
+        scope:promising_disciple = {
+            change_variable = { name = murim_cultivation_xp add = 10 }
+            add_opinion = { modifier = wise_master_opinion target = root }
+        }
+        change_variable = { name = murim_cultivation_xp add = 8 }
+        add_piety = 30
+        custom_tooltip = murim_disciple_freedom_tt
+
+        ai_chance = { base = 40 }
+    }
+
+    # Option C: Take them as personal student (unlock chain)
+    option = {
+        name = murim_cult.0004.c
+        trigger = {
+            NOT = { has_character_flag = murim_has_personal_student }
+        }
+
+        add_character_flag = murim_has_personal_student
+        scope:promising_disciple = {
+            add_character_flag = murim_personal_student_of_root
+            change_variable = { name = murim_cultivation_xp add = 15 }
+            add_opinion = { modifier = devoted_student_opinion target = root }
+        }
+        change_variable = { name = murim_cultivation_xp add = 10 }
+        remove_short_term_gold = 50
+        custom_tooltip = murim_disciple_personal_student_tt
+
+        ai_chance = { base = 25 }
+    }
+}
+
+
+# --- EVENT 5: Qi Deviation Crisis ---
+murim_cult.0005 = {
+    type = character_event
+    title = murim_cult.0005.t
+    desc = murim_cult.0005.desc
+    theme = skull
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_qi_deviation_cooldown }
+        OR = {
+            has_character_flag = murim_recent_cultivation
+            stress >= 50
+        }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_qi_deviation_cooldown
+            years = 2
+        }
+        # Higher rank = more dangerous deviation
+        if = {
+            limit = {
+                var:murim_cultivation_rank >= 3
+            }
+            add_character_flag = murim_severe_deviation
+        }
+    }
+
+    # Option A: Force control with willpower (learning check)
+    option = {
+        name = murim_cult.0005.a
+        trigger = { learning >= 6 }
+
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 14
+                }
+                modifier = {
+                    factor = 0.7
+                    has_character_flag = murim_severe_deviation
+                }
+                change_variable = { name = murim_cultivation_xp add = 15 }
+                change_variable = { name = murim_qi_reserves add = -10 }
+                add_stress = -20
+                custom_tooltip = murim_qi_deviation_controlled_tt
+            }
+            30 = {
+                change_variable = { name = murim_qi_reserves add = -25 }
+                add_stress = 30
+                custom_tooltip = murim_qi_deviation_partial_tt
+            }
+            20 = {
+                modifier = {
+                    factor = 1.5
+                    has_character_flag = murim_severe_deviation
+                }
+                change_variable = { name = murim_cultivation_xp add = -20 }
+                change_variable = { name = murim_qi_reserves add = -50 }
+                add_character_modifier = {
+                    modifier = murim_qi_damaged_meridians
+                    years = 3
+                }
+                custom_tooltip = murim_qi_deviation_crippling_tt
+            }
+        }
+
+        ai_chance = { base = 40 }
+    }
+
+    # Option B: Release qi outward (destroys nearby, saves self)
+    option = {
+        name = murim_cult.0005.b
+
+        change_variable = { name = murim_qi_reserves add = -30 }
+        add_dread = 15
+        add_stress = -10
+
+        random_list = {
+            70 = {
+                add_prestige = -50
+                custom_tooltip = murim_qi_deviation_released_minor_tt
+            }
+            30 = {
+                add_prestige = -150
+                every_courtier = {
+                    limit = { is_alive = yes }
+                    add_opinion = { modifier = reckless_cultivator_opinion target = root }
+                }
+                custom_tooltip = murim_qi_deviation_released_major_tt
+            }
+        }
+
+        ai_chance = { base = 30 }
+    }
+
+    # Option C: Seek emergency help (costs prestige, guaranteed survival)
+    option = {
+        name = murim_cult.0005.c
+
+        add_prestige = -100
+        change_variable = { name = murim_qi_reserves add = -15 }
+        add_stress = -30
+        custom_tooltip = murim_qi_deviation_helped_tt
+
+        if = {
+            limit = { has_character_flag = murim_has_hidden_mentor }
+            change_variable = { name = murim_cultivation_xp add = 10 }
+            custom_tooltip = murim_qi_deviation_mentor_helps_tt
+        }
+
+        ai_chance = { base = 30 }
+    }
+}
+
+
+# ================================================================
+# MEDIUM COMPLEXITY EVENTS (6-10)
+# ================================================================
+
+# --- EVENT 6: Ancient Manual Fragment ---
+# Starts a 3-event chain to find remaining fragments
+murim_cult.0006 = {
+    type = character_event
+    title = murim_cult.0006.t
+    desc = murim_cult.0006.desc
+    theme = learning_scholarship_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_manual_fragment_found }
+        NOT = { has_character_flag = murim_manual_cooldown }
+        learning >= 8
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_manual_cooldown
+            years = 5
+        }
+        add_character_flag = murim_manual_fragment_found
+    }
+
+    # Option A: Study it immediately (partial benefit now)
+    option = {
+        name = murim_cult.0006.a
+
+        change_variable = { name = murim_cultivation_xp add = 20 }
+        add_learning_skill = 1
+        custom_tooltip = murim_manual_study_partial_tt
+
+        # Start chain to find fragment 2
+        trigger_event = {
+            id = murim_cult.0061
+            days = { 90 180 }
+        }
+
+        ai_chance = { base = 40 }
+    }
+
+    # Option B: Seek experts to decode (longer, better result)
+    option = {
+        name = murim_cult.0006.b
+        trigger = { gold >= 50 }
+
+        remove_short_term_gold = 50
+        add_character_flag = murim_manual_being_decoded
+        custom_tooltip = murim_manual_decoding_tt
+
+        trigger_event = {
+            id = murim_cult.0061
+            days = { 180 365 }
+        }
+
+        ai_chance = { base = 35 }
+    }
+
+    # Option C: Share with sect for collective benefit
+    option = {
+        name = murim_cult.0006.c
+        trigger = {
+            any_courtier = {
+                has_character_flag = murim_initiated
+            }
+        }
+
+        change_variable = { name = murim_cultivation_xp add = 10 }
+        every_courtier = {
+            limit = { has_character_flag = murim_initiated }
+            change_variable = { name = murim_cultivation_xp add = 8 }
+            add_opinion = { modifier = shared_knowledge_opinion target = root }
+        }
+        add_prestige = 75
+        custom_tooltip = murim_manual_shared_tt
+
+        trigger_event = {
+            id = murim_cult.0061
+            days = { 120 240 }
+        }
+
+        ai_chance = { base = 25 }
+    }
+}
+
+# Chain event: Second fragment discovered
+murim_cult.0061 = {
+    type = character_event
+    title = murim_cult.0061.t
+    desc = murim_cult.0061.desc
+    theme = learning_scholarship_focus
+
+    trigger = {
+        has_character_flag = murim_manual_fragment_found
+    }
+
+    immediate = {
+        add_character_flag = murim_manual_fragment_2
+    }
+
+    # Option A: Follow the trail to the final fragment
+    option = {
+        name = murim_cult.0061.a
+        trigger = { intrigue >= 8 }
+
+        change_variable = { name = murim_cultivation_xp add = 15 }
+        remove_short_term_gold = 30
+
+        random_list = {
+            60 = {
+                trigger_event = {
+                    id = murim_cult.0062
+                    days = { 60 120 }
+                }
+                custom_tooltip = murim_manual_trail_hot_tt
+            }
+            40 = {
+                trigger_event = {
+                    id = murim_cult.0062
+                    days = { 180 365 }
+                }
+                custom_tooltip = murim_manual_trail_cold_tt
+            }
+        }
+
+        ai_chance = { base = 60 }
+    }
+
+    # Option B: Abandon the search (keep partial benefit)
+    option = {
+        name = murim_cult.0061.b
+
+        change_variable = { name = murim_cultivation_xp add = 10 }
+        custom_tooltip = murim_manual_abandon_tt
+
+        ai_chance = { base = 40 }
+    }
+}
+
+# Chain event: Complete manual assembled
+murim_cult.0062 = {
+    type = character_event
+    title = murim_cult.0062.t
+    desc = murim_cult.0062.desc
+    theme = learning_theology_focus
+
+    trigger = {
+        has_character_flag = murim_manual_fragment_2
+    }
+
+    immediate = {
+        remove_character_flag = murim_manual_fragment_found
+        remove_character_flag = murim_manual_fragment_2
+        remove_character_flag = murim_manual_being_decoded
+        add_character_flag = murim_has_complete_manual
+    }
+
+    # Option A: Absorb the complete technique
+    option = {
+        name = murim_cult.0062.a
+
+        change_variable = { name = murim_cultivation_xp add = 75 }
+        change_variable = { name = murim_qi_reserves add = 30 }
+        add_learning_skill = 2
+        add_prestige = 200
+        custom_tooltip = murim_manual_complete_mastery_tt
+
+        ai_chance = { base = 70 }
+    }
+
+    # Option B: Transcribe and teach to sect
+    option = {
+        name = murim_cult.0062.b
+
+        change_variable = { name = murim_cultivation_xp add = 40 }
+        add_prestige = 300
+        add_piety = 100
+        every_courtier = {
+            limit = { has_character_flag = murim_initiated }
+            change_variable = { name = murim_cultivation_xp add = 25 }
+            add_opinion = { modifier = legendary_teacher_opinion target = root }
+        }
+        custom_tooltip = murim_manual_transcribe_sect_tt
+
+        ai_chance = { base = 30 }
+    }
+}
+
+
+# --- EVENT 7: Breakthrough Attempt ---
+# Complex multi-outcome event when XP hits rank threshold
+murim_cult.0007 = {
+    type = character_event
+    title = murim_cult.0007.t
+    desc = murim_cult.0007.desc
+    theme = learning_theology_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_breakthrough_cooldown }
+        # XP thresholds: 100, 250, 500, 1000, 2500, 5000
+        OR = {
+            AND = { var:murim_cultivation_rank = 0 var:murim_cultivation_xp >= 100 }
+            AND = { var:murim_cultivation_rank = 1 var:murim_cultivation_xp >= 250 }
+            AND = { var:murim_cultivation_rank = 2 var:murim_cultivation_xp >= 500 }
+            AND = { var:murim_cultivation_rank = 3 var:murim_cultivation_xp >= 1000 }
+            AND = { var:murim_cultivation_rank = 4 var:murim_cultivation_xp >= 2500 }
+            AND = { var:murim_cultivation_rank = 5 var:murim_cultivation_xp >= 5000 }
+        }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_breakthrough_cooldown
+            years = 1
+        }
+    }
+
+    # Option A: Attempt breakthrough with full power
+    option = {
+        name = murim_cult.0007.a
+
+        random_list = {
+            # Critical success
+            15 = {
+                modifier = {
+                    factor = 2.0
+                    learning >= 16
+                }
+                modifier = {
+                    factor = 1.5
+                    has_character_flag = murim_has_spiritual_herb
+                }
+                change_variable = { name = murim_cultivation_rank add = 1 }
+                change_variable = { name = murim_cultivation_xp add = 50 }
+                change_variable = { name = murim_qi_reserves add = 50 }
+                add_prestige = 300
+                add_learning_skill = 1
+                add_prowess_skill = 1
+                custom_tooltip = murim_breakthrough_critical_tt
+            }
+            # Standard success
+            35 = {
+                modifier = {
+                    factor = 1.3
+                    learning >= 12
+                }
+                change_variable = { name = murim_cultivation_rank add = 1 }
+                change_variable = { name = murim_qi_reserves add = 25 }
+                add_prestige = 150
+                custom_tooltip = murim_breakthrough_success_tt
+            }
+            # Failure (no progress lost)
+            25 = {
+                add_stress = 25
+                change_variable = { name = murim_qi_reserves add = -10 }
+                custom_tooltip = murim_breakthrough_fail_tt
+            }
+            # Qi deviation
+            15 = {
+                modifier = {
+                    factor = 1.5
+                    var:murim_cultivation_rank >= 4
+                }
+                change_variable = { name = murim_cultivation_xp add = -30 }
+                change_variable = { name = murim_qi_reserves add = -30 }
+                add_stress = 40
+                add_character_modifier = {
+                    modifier = murim_qi_deviation_aftermath
+                    years = 2
+                }
+                custom_tooltip = murim_breakthrough_deviation_tt
+            }
+            # Crippling failure
+            10 = {
+                modifier = {
+                    factor = 0.5
+                    learning >= 14
+                }
+                change_variable = { name = murim_cultivation_xp add = -50 }
+                change_variable = { name = murim_qi_reserves add = -50 }
+                change_variable = { name = murim_meridians_opened add = -1 }
+                add_character_modifier = {
+                    modifier = murim_shattered_foundation
+                    years = 5
+                }
+                custom_tooltip = murim_breakthrough_cripple_tt
+            }
+        }
+
+        if = {
+            limit = { has_character_flag = murim_has_spiritual_herb }
+            remove_character_flag = murim_has_spiritual_herb
+        }
+
+        ai_chance = { base = 70 }
+    }
+
+    # Option B: Cautious breakthrough (lower risk, lower ceiling)
+    option = {
+        name = murim_cult.0007.b
+
+        random_list = {
+            55 = {
+                change_variable = { name = murim_cultivation_rank add = 1 }
+                change_variable = { name = murim_qi_reserves add = 15 }
+                add_prestige = 100
+                custom_tooltip = murim_breakthrough_cautious_success_tt
+            }
+            35 = {
+                add_stress = 15
+                custom_tooltip = murim_breakthrough_cautious_fail_tt
+            }
+            10 = {
+                change_variable = { name = murim_cultivation_xp add = -15 }
+                add_stress = 25
+                custom_tooltip = murim_breakthrough_cautious_setback_tt
+            }
+        }
+
+        ai_chance = { base = 30 }
+    }
+}
+
+
+# --- EVENT 8: Body Tempering Trial ---
+murim_cult.0008 = {
+    type = character_event
+    title = murim_cult.0008.t
+    desc = murim_cult.0008.desc
+    theme = martial_chivalry_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_body_tempering_cooldown }
+        var:murim_cultivation_rank >= 1
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_body_tempering_cooldown
+            years = 2
+        }
+    }
+
+    # Option A: Short immersion -- safe, mild benefit
+    option = {
+        name = murim_cult.0008.a
+
+        change_variable = { name = murim_body_tempering add = 5 }
+        change_variable = { name = murim_cultivation_xp add = 8 }
+        add_prowess_skill = 1
+        custom_tooltip = murim_tempering_short_tt
+
+        ai_chance = { base = 40 }
+    }
+
+    # Option B: Medium immersion -- moderate risk, good reward
+    option = {
+        name = murim_cult.0008.b
+        trigger = { prowess >= 8 }
+
+        random_list = {
+            65 = {
+                change_variable = { name = murim_body_tempering add = 15 }
+                change_variable = { name = murim_cultivation_xp add = 15 }
+                add_prowess_skill = 2
+                custom_tooltip = murim_tempering_medium_success_tt
+            }
+            35 = {
+                change_variable = { name = murim_body_tempering add = 5 }
+                add_stress = 20
+                add_character_modifier = {
+                    modifier = murim_tempering_burns
+                    years = 1
+                }
+                custom_tooltip = murim_tempering_medium_painful_tt
+            }
+        }
+
+        ai_chance = { base = 35 }
+    }
+
+    # Option C: Full immersion -- high risk, transformative
+    option = {
+        name = murim_cult.0008.c
+        trigger = { prowess >= 14 }
+
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 20
+                }
+                change_variable = { name = murim_body_tempering add = 30 }
+                change_variable = { name = murim_cultivation_xp add = 25 }
+                add_prowess_skill = 3
+                add_martial_skill = 1
+                add_character_modifier = {
+                    modifier = murim_iron_body
+                    years = 5
+                }
+                custom_tooltip = murim_tempering_full_transcend_tt
+            }
+            30 = {
+                change_variable = { name = murim_body_tempering add = 15 }
+                add_prowess_skill = 1
+                add_stress = 30
+                custom_tooltip = murim_tempering_full_partial_tt
+            }
+            30 = {
+                change_variable = { name = murim_body_tempering add = 5 }
+                add_character_modifier = {
+                    modifier = murim_severe_tempering_injury
+                    years = 3
+                }
+                add_stress = 50
+                custom_tooltip = murim_tempering_full_injured_tt
+            }
+        }
+
+        ai_chance = { base = 25 }
+    }
+}
+
+
+# --- EVENT 9: Meridian Opening Ceremony ---
+murim_cult.0009 = {
+    type = character_event
+    title = murim_cult.0009.t
+    desc = murim_cult.0009.desc
+    theme = learning_theology_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_meridian_ceremony_cooldown }
+        var:murim_cultivation_rank >= 2
+        var:murim_meridians_opened < 12
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_meridian_ceremony_cooldown
+            years = 2
+        }
+    }
+
+    # Option A: Formal public ceremony (high stakes, high reward)
+    option = {
+        name = murim_cult.0009.a
+
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.4
+                    learning >= 14
+                }
+                change_variable = { name = murim_meridians_opened add = 2 }
+                change_variable = { name = murim_cultivation_xp add = 30 }
+                change_variable = { name = murim_qi_reserves add = 20 }
+                add_prestige = 150
+                every_courtier = {
+                    limit = { has_character_flag = murim_initiated }
+                    add_opinion = { modifier = witnessed_meridian_success_opinion target = root }
+                }
+                custom_tooltip = murim_meridian_public_success_tt
+            }
+            30 = {
+                change_variable = { name = murim_meridians_opened add = 1 }
+                change_variable = { name = murim_cultivation_xp add = 10 }
+                add_prestige = 25
+                custom_tooltip = murim_meridian_public_partial_tt
+            }
+            20 = {
+                add_prestige = -200
+                add_stress = 40
+                every_courtier = {
+                    limit = { has_character_flag = murim_initiated }
+                    add_opinion = { modifier = witnessed_meridian_failure_opinion target = root }
+                }
+                custom_tooltip = murim_meridian_public_shame_tt
+            }
+        }
+
+        ai_chance = { base = 40 }
+    }
+
+    # Option B: Private ceremony with trusted elder
+    option = {
+        name = murim_cult.0009.b
+
+        random_list = {
+            60 = {
+                change_variable = { name = murim_meridians_opened add = 1 }
+                change_variable = { name = murim_cultivation_xp add = 15 }
+                change_variable = { name = murim_qi_reserves add = 10 }
+                custom_tooltip = murim_meridian_private_success_tt
+            }
+            40 = {
+                change_variable = { name = murim_cultivation_xp add = 5 }
+                add_stress = 15
+                custom_tooltip = murim_meridian_private_fail_tt
+            }
+        }
+
+        ai_chance = { base = 45 }
+    }
+
+    # Option C: Force open with sheer qi (dangerous)
+    option = {
+        name = murim_cult.0009.c
+        trigger = { var:murim_qi_reserves >= 40 }
+
+        change_variable = { name = murim_qi_reserves add = -30 }
+
+        random_list = {
+            35 = {
+                change_variable = { name = murim_meridians_opened add = 3 }
+                change_variable = { name = murim_cultivation_xp add = 40 }
+                add_prestige = 100
+                custom_tooltip = murim_meridian_forced_breakthrough_tt
+            }
+            35 = {
+                change_variable = { name = murim_meridians_opened add = 1 }
+                add_stress = 30
+                custom_tooltip = murim_meridian_forced_partial_tt
+            }
+            30 = {
+                add_character_modifier = {
+                    modifier = murim_meridian_backlash
+                    years = 3
+                }
+                add_stress = 50
+                change_variable = { name = murim_qi_reserves add = -20 }
+                custom_tooltip = murim_meridian_forced_backlash_tt
+            }
+        }
+
+        ai_chance = { base = 15 }
+    }
+}
+
+
+# --- EVENT 10: Dual Cultivation Proposal ---
+murim_cult.0010 = {
+    type = character_event
+    title = murim_cult.0010.t
+    desc = murim_cult.0010.desc
+    theme = seduction_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_dual_cultivation_cooldown }
+        var:murim_cultivation_rank >= 2
+        is_married = no
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_dual_cultivation_cooldown
+            years = 5
+        }
+    }
+
+    # Option A: Accept the proposal (power + political danger)
+    option = {
+        name = murim_cult.0010.a
+
+        change_variable = { name = murim_cultivation_xp add = 35 }
+        change_variable = { name = murim_qi_reserves add = 25 }
+        add_character_flag = murim_dual_cultivating
+        add_prestige = -50
+
+        random_list = {
+            60 = {
+                add_character_modifier = {
+                    modifier = murim_dual_cultivation_harmony
+                    years = 5
+                }
+                custom_tooltip = murim_dual_cultivation_harmony_tt
+            }
+            40 = {
+                add_character_modifier = {
+                    modifier = murim_dual_cultivation_imbalance
+                    years = 3
+                }
+                add_stress = 20
+                custom_tooltip = murim_dual_cultivation_imbalance_tt
+            }
+        }
+
+        # Orthodox faction disapproves
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                NOT = { has_character_flag = murim_demonic_path }
+            }
+            add_opinion = { modifier = disapproves_dual_cultivation_opinion target = root }
+        }
+
+        ai_chance = { base = 30 }
+    }
+
+    # Option B: Politely decline
+    option = {
+        name = murim_cult.0010.b
+
+        add_prestige = 25
+        add_piety = 25
+        custom_tooltip = murim_dual_cultivation_decline_tt
+
+        ai_chance = { base = 50 }
+    }
+
+    # Option C: Report them to the orthodox elders (intrigue play)
+    option = {
+        name = murim_cult.0010.c
+        trigger = {
+            NOT = { has_character_flag = murim_demonic_path }
+            intrigue >= 8
+        }
+
+        add_prestige = 75
+        add_piety = 50
+        add_dread = 10
+        change_variable = { name = murim_cultivation_xp add = 5 }
+        custom_tooltip = murim_dual_cultivation_reported_tt
+
+        ai_chance = { base = 20 }
+    }
+}
