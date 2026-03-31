@@ -1,107 +1,203 @@
-# Celestial Government Types
-# Based on orthodox/unorthodox status and celestial alignment
+################################################################
+# MURIM CHRONICLES — GOVERNMENT TYPES
+# Three martial world government types that overlay on vanilla
+# Uses valid CK3 1.18 government_type syntax
+################################################################
 
-# Orthodox Government - Mandate of Heaven
-orthodox_government = {
-	primary_held_title = empire
-	
-	character_modifier = {
-		add_character_modifier = celestial_orthodox_ruler
-		add_character_modifier = mandate_legitimacy
-	}
-	
-	# Empire tier only
-	is_powerful = yes
-	
-	# All vassals must followorthodox doctrine
-	vassal_contract = {
-		vassal_pay_tax = 0.2
-		vassal_levy_contribution = 0.3
-		religious_head = emperor
-	}
-	
-	# Can only have orthodox faith vassals
-	vassal_requirement = {
-		has_doctrine = orthodox_dao
-	}
-	
-	# Gain legitimacy from celestial alignment
-	monthly_income = {
-		add = {
-			if = {
-				limit = { var:orthodox_favor > 0 }
-				value = var:orthodox_favor
-				multiply = 100
-			}
-		}
-	}
-	
-	# Can declare unorthodox sects as heretics
-	can_call_crusade = yes
-	
-	# Legitimacy decay if not empire tier
-	if = {
-		limit = { NOT = { primary_title = empire } }
-		add_character_modifier = {
-			modifier = lost_mandate
-		}
-	}
+# ============================================================
+# ORTHODOX SECT GOVERNMENT
+# The righteous path. Empire-tier sects and alliances.
+# Think: Wulin Alliance, Shaolin, Wudang, Emei
+# ============================================================
+orthodox_sect_government = {
+    # --- Core Settings ---
+    create_cadet_branches = yes
+    rulers_should_have_dynasty = yes
+    council = yes
+    dynasty_named_realms = yes
+
+    # --- Valid Holdings ---
+    valid_holdings = {
+        castle_holding
+        city_holding
+        church_holding
+    }
+
+    primary_holding = castle_holding
+
+    # --- Who Can Use This Government ---
+    can_get_government = {
+        OR = {
+            has_character_flag = murim_initiated
+            has_trait = martial_cultivator
+            has_trait = sect_master
+        }
+        OR = {
+            highest_held_title_tier >= tier_kingdom
+            has_character_flag = wulin_alliance_leader
+        }
+        NOT = { has_character_flag = murim_demonic_path }
+    }
+
+    # --- Vassal Contracts ---
+    vassal_contract = {
+        feudal_government_taxes
+        feudal_government_levies
+    }
+
+    # --- Character Interactions ---
+    character_interaction = {
+        murim_challenge_to_duel
+        murim_request_teaching
+        murim_sect_alliance_proposal
+        murim_host_martial_tournament
+    }
+
+    # --- Government Modifiers ---
+    modifier = {
+        monthly_prestige = 0.5
+        monthly_piety = 0.3
+        knight_effectiveness_mult = 0.25
+        vassal_opinion = 5
+        same_faith_opinion = 10
+        levy_size = -0.1                # Rely on elite cultivators, not masses
+        men_at_arms_maintenance = -0.15
+        domain_tax_mult = 0.1
+    }
+
+    # --- AI Behavior ---
+    ai_primary_priority = {
+        value = 100
+    }
+
+    # --- Color ---
+    color = { 0.1 0.3 0.8 }   # Noble blue — orthodox righteousness
 }
 
-# Unorthodox Government - Defying Heaven
-unorthodox_government = {
-	primary_held_title = kingdom
-	
-	character_modifier = {
-		add_character_modifier = defies_celestial_order
-		add_character_modifier = unorthodox_power
-	}
-	
-	# Can use demonic sects
-	can_have_demonic_vassals = yes
-	
-	# No religious head
-	religious_head = no
-	
-	# Bonuses during unorthodox periods
-	monthly_income = {
-		add = {
-			if = {
-				limit = { var:orthodox_favor < 0 }
-				value = var:orthodox_favor
-				multiply = -100
-			}
-		}
-		add = {
-			if = {
-				limit = { var:orthodox_favor < 0 }
-				value = 50
-			}
-		}
-	}
-	
-	# Can raid orthodox territories
-	can_raid = yes
-	
-	# Sect independence
-	vassal_contract = {
-		religious_head = no
-		can_convert_religion = yes
-	}
+# ============================================================
+# UNORTHODOX SECT GOVERNMENT
+# The demonic/heretical path. Kingdom-tier dark sects.
+# Think: Blood Moon Cult, Bone Demon Sect, Yin-Yang Cult
+# ============================================================
+unorthodox_sect_government = {
+    create_cadet_branches = yes
+    rulers_should_have_dynasty = yes
+    council = no                        # Rule by absolute power
+    dynasty_named_realms = yes
+
+    valid_holdings = {
+        castle_holding
+        tribal_holding
+    }
+
+    primary_holding = castle_holding
+
+    can_get_government = {
+        OR = {
+            has_character_flag = murim_initiated
+            has_trait = martial_cultivator
+            has_trait = sect_master
+        }
+        OR = {
+            highest_held_title_tier >= tier_duchy
+            has_character_flag = murim_demonic_path
+        }
+        OR = {
+            has_character_flag = murim_demonic_path
+            has_trait = demonic_cultivator
+        }
+    }
+
+    vassal_contract = {
+        feudal_government_taxes
+        feudal_government_levies
+    }
+
+    character_interaction = {
+        murim_challenge_to_duel
+        murim_demand_submission
+        murim_blood_oath_pact
+        murim_forbidden_technique_exchange
+    }
+
+    modifier = {
+        monthly_prestige = 0.3
+        monthly_piety = -0.2            # Defying heaven's mandate
+        dread_baseline_add = 15
+        dread_decay_mult = -0.3
+        knight_effectiveness_mult = 0.40 # Demonic cultivators are brutal fighters
+        hostile_scheme_power_mult = 0.25
+        tyranny_gain_mult = -0.5        # Fear is expected
+        levy_size = -0.2
+        men_at_arms_maintenance = -0.1
+        domain_tax_mult = -0.1          # Rule through fear, not commerce
+        same_faith_opinion = -5
+        different_faith_opinion = -15
+    }
+
+    ai_primary_priority = {
+        value = 80
+    }
+
+    color = { 0.6 0.05 0.1 }  # Crimson — demonic cultivation
 }
 
-# Celestial Sect Government
-sect_government = {
-	primary_held_title = duchy
-	
-	vassal_contract = {
-		vassal_pay_tax = 0.15
-		vassal_levy_contribution = 0.25
-	}
-	
-	# Must follow sect master
-	religious_head = sect_master
-	
-	# Martial focus
-	focuses = { martial martial_education }
+# ============================================================
+# FREE CULTIVATOR GOVERNMENT
+# Independent martial artists and small sects. Duchy-tier.
+# Think: Wandering swordsmen, mountain hermits, small schools
+# ============================================================
+free_cultivator_government = {
+    create_cadet_branches = no
+    rulers_should_have_dynasty = no
+    council = no
+    dynasty_named_realms = no
+
+    valid_holdings = {
+        castle_holding
+        tribal_holding
+        city_holding
+    }
+
+    primary_holding = tribal_holding
+
+    can_get_government = {
+        OR = {
+            has_character_flag = murim_initiated
+            has_trait = martial_cultivator
+        }
+        highest_held_title_tier <= tier_duchy
+        NOR = {
+            has_character_flag = murim_demonic_path
+            has_character_flag = wulin_alliance_leader
+        }
+    }
+
+    vassal_contract = {
+        feudal_government_taxes
+    }
+
+    character_interaction = {
+        murim_challenge_to_duel
+        murim_request_teaching
+        murim_seek_apprenticeship
+    }
+
+    modifier = {
+        monthly_prestige = 0.2
+        independent_ruler_opinion = 10
+        knight_effectiveness_mult = 0.50 # Small but elite — every man is a cultivator
+        levy_size = -0.4                 # Tiny forces
+        men_at_arms_maintenance = -0.25
+        domain_tax_mult = -0.2
+        monthly_lifestyle_xp_gain_mult = 0.15  # Focus on personal cultivation
+        learning = 2
+        martial = 3
+    }
+
+    ai_primary_priority = {
+        value = 60
+    }
+
+    color = { 0.4 0.7 0.3 }   # Forest green — freedom of the wanderer
 }
