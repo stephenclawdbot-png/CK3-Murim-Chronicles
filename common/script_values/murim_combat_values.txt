@@ -1,0 +1,803 @@
+################################################################
+# MURIM CHRONICLES — COMBAT SCRIPT VALUES
+# Path: common/script_values/murim_combat_values.txt
+# Handles: Duel prowess modifiers by cultivation rank,
+#          technique damage, qi expenditure, sparring XP,
+#          martial manual study, technique mastery,
+#          combat style bonuses, weapon affinity
+#
+# Combat in Murim uses CK3's prowess system as the base
+# and layers cultivation-based amplifiers on top.
+################################################################
+
+
+# ==============================================================
+# PROWESS MODIFIERS BY CULTIVATION RANK
+# Each cultivation tier grants a flat prowess bonus.
+# This is the core "cultivators are superhuman" mechanic.
+# ==============================================================
+
+murim_cultivation_prowess_bonus = {
+	value = 0
+
+	if = {
+		limit = { has_trait = murim_outer_qi }
+		add = 2
+	}
+	else_if = {
+		limit = { has_trait = murim_qi_gathering }
+		add = 5
+	}
+	else_if = {
+		limit = { has_trait = murim_foundation }
+		add = 10
+	}
+	else_if = {
+		limit = { has_trait = murim_golden_core }
+		add = 18
+	}
+	else_if = {
+		limit = { has_trait = murim_nascent_soul }
+		add = 28
+	}
+	else_if = {
+		limit = { has_trait = murim_spirit_severing }
+		add = 40
+	}
+
+	# Body tempering adds on top
+	if = {
+		limit = { exists = var:murim_body_tempering_level }
+		add = {
+			value = var:murim_body_tempering_level
+			max = 9
+		}
+	}
+
+	# Meridian flow affects qi delivery to limbs
+	multiply = murim_meridian_flow_efficiency
+
+	round = yes
+}
+
+# Effective prowess (base + cultivation bonus)
+murim_effective_prowess = {
+	value = prowess
+	add = murim_cultivation_prowess_bonus
+	min = 0
+}
+
+
+# ==============================================================
+# DUEL OUTCOME CALCULATION
+# Used when two cultivators formally duel.
+# Compares effective prowess + technique + modifiers.
+# ==============================================================
+
+murim_duel_power_score = {
+	value = murim_effective_prowess
+
+	# Active technique bonus
+	if = {
+		limit = { exists = var:murim_active_technique_power }
+		add = var:murim_active_technique_power
+	}
+
+	# Weapon affinity bonus
+	if = {
+		limit = { exists = var:murim_weapon_affinity_bonus }
+		add = var:murim_weapon_affinity_bonus
+	}
+
+	# Combat style modifier
+	add = murim_combat_style_bonus
+
+	# Qi reserves affect sustained combat
+	if = {
+		limit = { exists = var:murim_qi_reserves }
+		add = {
+			value = var:murim_qi_reserves
+			multiply = 0.1
+			max = 5
+		}
+	}
+
+	# Terrain familiarity (home ground advantage)
+	if = {
+		limit = { has_character_flag = murim_home_territory_duel }
+		add = 3
+	}
+
+	# Injury penalties
+	if = {
+		limit = { has_trait = wounded_1 }
+		subtract = 3
+	}
+	if = {
+		limit = { has_trait = wounded_2 }
+		subtract = 6
+	}
+	if = {
+		limit = { has_trait = wounded_3 }
+		subtract = 12
+	}
+	if = {
+		limit = { has_trait = one_handed }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = one_legged }
+		subtract = 8
+	}
+	if = {
+		limit = { has_trait = blind }
+		subtract = 15
+		# Unless they have inner sight...
+		if = {
+			limit = { has_character_flag = murim_inner_sight }
+			add = 12
+			# Blind masters who see with qi: classic wuxia
+		}
+	}
+
+	# Brave/Craven modifiers
+	if = {
+		limit = { has_trait = brave }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = craven }
+		subtract = 4
+	}
+
+	# Age modifiers (experience vs physical decline)
+	if = {
+		limit = { age >= 40 }
+		add = 2
+		# Experience bonus
+	}
+	if = {
+		limit = { age >= 60 }
+		subtract = 3
+		# Physical decline outweighs experience
+		# Unless high cultivation compensates
+		if = {
+			limit = { murim_cultivation_rank_value >= 4 }
+			add = 3
+			# Golden Core+ maintains body
+		}
+	}
+
+	round = yes
+	min = 0
+}
+
+# Duel advantage (difference between combatants)
+# Positive = this character is winning
+murim_duel_advantage = {
+	value = murim_duel_power_score
+	if = {
+		limit = { exists = scope:duel_target }
+		subtract = {
+			value = scope:duel_target.murim_duel_power_score
+		}
+	}
+}
+
+# Kill chance in a duel (only in death matches)
+murim_duel_kill_chance = {
+	value = 10
+
+	# Large advantage increases kill chance
+	if = {
+		limit = { murim_duel_advantage >= 15 }
+		add = 15
+	}
+	if = {
+		limit = { murim_duel_advantage >= 30 }
+		add = 20
+	}
+
+	# Cruel trait: more willing to kill
+	if = {
+		limit = { has_trait = cruel }
+		add = 10
+	}
+
+	# Compassionate: less willing
+	if = {
+		limit = { has_trait = compassionate }
+		subtract = 10
+	}
+
+	# Demonic cultivators kill more readily
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		add = 10
+	}
+
+	min = 5
+	max = 80
+	round = yes
+}
+
+
+# ==============================================================
+# COMBAT STYLES
+# Each style gives bonuses in specific situations.
+# Set via var:murim_combat_style (1-6)
+# ==============================================================
+
+murim_combat_style_bonus = {
+	value = 0
+
+	# Style 1: Iron Fist (raw power)
+	if = {
+		limit = {
+			exists = var:murim_combat_style
+			var:murim_combat_style = 1
+		}
+		add = {
+			value = martial
+			multiply = 0.3
+			max = 5
+		}
+	}
+
+	# Style 2: Flowing Water (evasion + counter)
+	if = {
+		limit = {
+			exists = var:murim_combat_style
+			var:murim_combat_style = 2
+		}
+		add = {
+			value = learning
+			multiply = 0.2
+			max = 4
+		}
+		# Bonus vs stronger opponents (redirect their power)
+		if = {
+			limit = {
+				exists = scope:duel_target
+				scope:duel_target = { prowess > root.prowess }
+			}
+			add = 3
+		}
+	}
+
+	# Style 3: Shadow Step (speed + assassination)
+	if = {
+		limit = {
+			exists = var:murim_combat_style
+			var:murim_combat_style = 3
+		}
+		add = {
+			value = intrigue
+			multiply = 0.25
+			max = 5
+		}
+	}
+
+	# Style 4: Mountain Stance (defense + endurance)
+	if = {
+		limit = {
+			exists = var:murim_combat_style
+			var:murim_combat_style = 4
+		}
+		add = {
+			value = murim_cultivation_rank_value
+			multiply = 1.5
+			max = 8
+		}
+		# Harder to kill in this stance
+	}
+
+	# Style 5: Thousand Cuts (speed + multi-hit)
+	if = {
+		limit = {
+			exists = var:murim_combat_style
+			var:murim_combat_style = 5
+		}
+		add = {
+			value = prowess
+			multiply = 0.15
+			max = 4
+		}
+		# Extra bonus at high speed (agility)
+		if = {
+			limit = { prowess >= 20 }
+			add = 2
+		}
+	}
+
+	# Style 6: Void Palm (qi-heavy, ignores armor)
+	if = {
+		limit = {
+			exists = var:murim_combat_style
+			var:murim_combat_style = 6
+		}
+		add = {
+			value = murim_cultivation_rank_value
+			multiply = 2.0
+			max = 10
+		}
+		# Most powerful but most qi-expensive
+	}
+}
+
+
+# ==============================================================
+# QI EXPENDITURE & RESERVES
+# Techniques cost qi. Running out mid-fight is dangerous.
+# Stored as var:murim_qi_reserves (0-100 scale)
+# ==============================================================
+
+murim_qi_max_reserves = {
+	value = 20
+
+	# Cultivation rank is the primary factor
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 15
+	}
+
+	# Golden Core formation doubles qi capacity
+	if = {
+		limit = { murim_cultivation_rank_value >= 4 }
+		multiply = 1.5
+	}
+
+	# Constitution bonuses
+	if = {
+		limit = { has_trait = murim_pure_yang_body }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_pure_yin_body }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_heavenly_body }
+		add = 20
+	}
+
+	# Meridian flow affects capacity
+	multiply = murim_meridian_flow_efficiency
+
+	round = yes
+	min = 10
+}
+
+murim_qi_recovery_rate = {
+	# Monthly qi recovery (also recovers between combat rounds)
+	value = murim_qi_max_reserves
+	multiply = 0.15
+
+	# Meditation speeds recovery
+	if = {
+		limit = { has_character_modifier = murim_meditating }
+		multiply = 2.0
+	}
+
+	# Health affects recovery
+	multiply = {
+		value = health
+		multiply = 0.20
+		min = 0.2
+		max = 1.2
+	}
+
+	round = yes
+	min = 1
+}
+
+# Technique qi costs (referenced by technique definitions)
+murim_technique_qi_cost_minor = {
+	# Minor technique: palm strike, qi push
+	value = 5
+	if = {
+		limit = { murim_cultivation_rank_value >= 4 }
+		# Higher ranks spend less qi on minor techniques
+		value = 3
+	}
+}
+
+murim_technique_qi_cost_major = {
+	# Major technique: sword formation, qi barrier
+	value = 15
+	if = {
+		limit = { murim_cultivation_rank_value >= 5 }
+		value = 10
+	}
+}
+
+murim_technique_qi_cost_ultimate = {
+	# Ultimate technique: sect signature move
+	value = 35
+	if = {
+		limit = { murim_cultivation_rank_value >= 6 }
+		value = 25
+	}
+}
+
+murim_technique_qi_cost_forbidden = {
+	# Forbidden technique: power at a cost
+	value = 40
+	# Also costs health/alignment, handled by events
+}
+
+
+# ==============================================================
+# TECHNIQUE POWER VALUES
+# Each technique tier has a base damage/effect value.
+# Modified by cultivation, style, and mastery.
+# ==============================================================
+
+murim_technique_power_minor = {
+	value = 3
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 1
+	}
+	# Mastery bonus
+	if = {
+		limit = {
+			exists = var:murim_technique_mastery_minor
+			var:murim_technique_mastery_minor >= 5
+		}
+		add = 2
+	}
+}
+
+murim_technique_power_major = {
+	value = 8
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 2
+	}
+	if = {
+		limit = {
+			exists = var:murim_technique_mastery_major
+			var:murim_technique_mastery_major >= 5
+		}
+		add = 4
+	}
+}
+
+murim_technique_power_ultimate = {
+	value = 20
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 4
+	}
+	if = {
+		limit = {
+			exists = var:murim_technique_mastery_ultimate
+			var:murim_technique_mastery_ultimate >= 5
+		}
+		add = 8
+	}
+}
+
+murim_technique_power_forbidden = {
+	value = 30
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 5
+	}
+	# Forbidden techniques are always powerful
+	# But trigger alignment shift and qi deviation risk
+}
+
+
+# ==============================================================
+# TECHNIQUE MASTERY
+# Repeated use of a technique increases mastery (1-10).
+# Higher mastery = more power, less qi cost.
+# ==============================================================
+
+murim_technique_mastery_xp_gain = {
+	# XP per use of the technique
+	value = 1
+
+	# Learning helps understand technique theory
+	add = {
+		value = learning
+		multiply = 0.05
+		max = 1
+	}
+
+	# Sparring with a master of the technique
+	if = {
+		limit = { has_character_modifier = murim_sparring_with_master }
+		add = 2
+	}
+
+	# Studying the source manual
+	if = {
+		limit = { has_character_modifier = murim_studying_manual }
+		add = 1
+	}
+
+	max = 5
+}
+
+murim_technique_mastery_threshold = {
+	# XP per mastery level (scales up)
+	value = 5
+	if = {
+		limit = { exists = var:murim_current_technique_mastery }
+		multiply = {
+			value = var:murim_current_technique_mastery
+			add = 1
+		}
+	}
+}
+
+
+# ==============================================================
+# SPARRING / TRAINING XP
+# Practice combat that builds cultivation and technique.
+# Safer than real fights, less rewarding.
+# ==============================================================
+
+murim_sparring_cultivation_xp = {
+	# Cultivation XP from sparring
+	value = 0.5
+
+	# Better partner = more learning
+	if = {
+		limit = {
+			exists = scope:sparring_partner
+			scope:sparring_partner = { murim_cultivation_rank_value > root.murim_cultivation_rank_value }
+		}
+		add = 1.0
+	}
+
+	# Same rank = moderate learning
+	if = {
+		limit = {
+			exists = scope:sparring_partner
+			scope:sparring_partner = { murim_cultivation_rank_value = root.murim_cultivation_rank_value }
+		}
+		add = 0.5
+	}
+
+	# Sect training grounds bonus
+	if = {
+		limit = { has_character_modifier = murim_sect_training_grounds }
+		add = 0.3
+	}
+
+	max = 3.0
+}
+
+murim_sparring_body_tempering_xp = {
+	value = 0.3
+
+	# Harder sparring = more body xp
+	if = {
+		limit = {
+			exists = scope:sparring_partner
+			scope:sparring_partner = { prowess > root.prowess }
+		}
+		add = 0.5
+	}
+
+	max = 1.5
+}
+
+# Real combat XP (from actual fights/wars)
+murim_real_combat_cultivation_xp = {
+	value = 2.0
+
+	# Fighting stronger opponents
+	if = {
+		limit = { has_character_flag = murim_fought_stronger_opponent }
+		add = 3.0
+	}
+
+	# Near-death experience
+	if = {
+		limit = { has_character_flag = murim_near_death_combat }
+		add = 5.0
+		# Classic wuxia: breakthrough after near-death
+	}
+
+	# War participation
+	if = {
+		limit = { is_commanding_army = yes }
+		add = 1.0
+	}
+
+	max = 12.0
+}
+
+
+# ==============================================================
+# MARTIAL MANUAL STUDY
+# Manuals are artifacts that grant technique knowledge
+# and cultivation bonuses when studied.
+# ==============================================================
+
+murim_manual_study_cultivation_bonus = {
+	# Monthly cultivation XP bonus while studying a manual
+	value = 0.5
+
+	# Manual quality tiers
+	if = {
+		limit = {
+			exists = var:murim_manual_quality
+			var:murim_manual_quality >= 3
+		}
+		add = 0.5
+		# Rare manual
+	}
+	if = {
+		limit = {
+			exists = var:murim_manual_quality
+			var:murim_manual_quality >= 5
+		}
+		add = 1.0
+		# Legendary manual
+	}
+
+	# Learning determines comprehension speed
+	multiply = {
+		value = learning
+		multiply = 0.05
+		min = 0.5
+		max = 1.5
+	}
+
+	# Can't study above your rank's comprehension
+	if = {
+		limit = {
+			exists = var:murim_manual_min_rank
+			murim_cultivation_rank_value < var:murim_manual_min_rank
+		}
+		value = 0
+		# Manual is too advanced
+	}
+}
+
+murim_manual_study_completion_threshold = {
+	# How long to fully study a manual (in accumulated XP)
+	value = 20
+
+	if = {
+		limit = {
+			exists = var:murim_manual_quality
+			var:murim_manual_quality >= 3
+		}
+		value = 40
+	}
+	if = {
+		limit = {
+			exists = var:murim_manual_quality
+			var:murim_manual_quality >= 5
+		}
+		value = 80
+	}
+}
+
+# Manual forbidden flag: studying demonic manuals shifts alignment
+murim_manual_forbidden_alignment_shift = -8
+
+
+# ==============================================================
+# WEAPON AFFINITY
+# Characters develop affinity with weapon types over time.
+# Affinity grants prowess bonus with that weapon.
+# var:murim_weapon_type: 1=sword, 2=saber, 3=spear, 4=fist,
+#                        5=palm, 6=whip, 7=hidden weapons
+# var:murim_weapon_affinity: 0-10 mastery
+# ==============================================================
+
+murim_weapon_affinity_bonus = {
+	value = 0
+	if = {
+		limit = { exists = var:murim_weapon_affinity }
+		add = {
+			value = var:murim_weapon_affinity
+			multiply = 1.5
+			# Max affinity 10 = +15 effective prowess with that weapon
+		}
+	}
+	round = yes
+}
+
+murim_weapon_affinity_xp_gain = {
+	# XP per combat/sparring session with the weapon
+	value = 1
+
+	# Martial skill helps
+	add = {
+		value = martial
+		multiply = 0.05
+		max = 1
+	}
+
+	# Training with a weapon master
+	if = {
+		limit = { has_character_modifier = murim_sparring_with_master }
+		add = 1
+	}
+
+	max = 4
+}
+
+murim_weapon_affinity_threshold = {
+	# XP per affinity level (1-10)
+	value = 10
+	if = {
+		limit = { exists = var:murim_weapon_affinity }
+		multiply = {
+			value = var:murim_weapon_affinity
+			add = 1
+		}
+	}
+}
+
+
+# ==============================================================
+# RANK GAP COMBAT MODIFIERS
+# Fighting someone multiple ranks above/below you.
+# Massive advantages for higher-ranked cultivators.
+# ==============================================================
+
+murim_rank_gap_combat_modifier = {
+	# Called with scope:duel_target set
+	value = 0
+
+	if = {
+		limit = { exists = scope:duel_target }
+
+		# Each rank of advantage = +5 effective power
+		add = {
+			value = murim_cultivation_rank_value
+			subtract = scope:duel_target.murim_cultivation_rank_value
+			multiply = 5
+		}
+
+		# 3+ rank gap: overwhelming advantage
+		if = {
+			limit = {
+				murim_cultivation_rank_value >= 3
+				scope:duel_target = {
+					murim_cultivation_rank_value < {
+						value = root.murim_cultivation_rank_value
+						subtract = 2
+					}
+				}
+			}
+			add = 10
+			# Near-automatic victory
+		}
+	}
+}
+
+# Can this character even challenge the target?
+murim_challenge_viability_score = {
+	# Returns how viable a duel challenge is.
+	# 0 = suicide, 50 = even, 100 = guaranteed win
+	value = 50
+
+	if = {
+		limit = { exists = scope:duel_target }
+
+		# Prowess difference
+		add = {
+			value = murim_effective_prowess
+			subtract = scope:duel_target.murim_effective_prowess
+			multiply = 1.5
+		}
+
+		# Rank gap
+		add = murim_rank_gap_combat_modifier
+	}
+
+	min = 0
+	max = 100
+	round = yes
+}
