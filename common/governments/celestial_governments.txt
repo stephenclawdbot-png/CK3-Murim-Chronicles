@@ -1,0 +1,107 @@
+# Celestial Government Types
+# Based on orthodox/unorthodox status and celestial alignment
+
+# Orthodox Government - Mandate of Heaven
+orthodox_government = {
+	primary_held_title = empire
+	
+	character_modifier = {
+		add_character_modifier = celestial_orthodox_ruler
+		add_character_modifier = mandate_legitimacy
+	}
+	
+	# Empire tier only
+	is_powerful = yes
+	
+	# All vassals must followorthodox doctrine
+	vassal_contract = {
+		vassal_pay_tax = 0.2
+		vassal_levy_contribution = 0.3
+		religious_head = emperor
+	}
+	
+	# Can only have orthodox faith vassals
+	vassal_requirement = {
+		has_doctrine = orthodox_dao
+	}
+	
+	# Gain legitimacy from celestial alignment
+	monthly_income = {
+		add = {
+			if = {
+				limit = { var:orthodox_favor > 0 }
+				value = var:orthodox_favor
+				multiply = 100
+			}
+		}
+	}
+	
+	# Can declare unorthodox sects as heretics
+	can_call_crusade = yes
+	
+	# Legitimacy decay if not empire tier
+	if = {
+		limit = { NOT = { primary_title = empire } }
+		add_character_modifier = {
+			modifier = lost_mandate
+		}
+	}
+}
+
+# Unorthodox Government - Defying Heaven
+unorthodox_government = {
+	primary_held_title = kingdom
+	
+	character_modifier = {
+		add_character_modifier = defies_celestial_order
+		add_character_modifier = unorthodox_power
+	}
+	
+	# Can use demonic sects
+	can_have_demonic_vassals = yes
+	
+	# No religious head
+	religious_head = no
+	
+	# Bonuses during unorthodox periods
+	monthly_income = {
+		add = {
+			if = {
+				limit = { var:orthodox_favor < 0 }
+				value = var:orthodox_favor
+				multiply = -100
+			}
+		}
+		add = {
+			if = {
+				limit = { var:orthodox_favor < 0 }
+				value = 50
+			}
+		}
+	}
+	
+	# Can raid orthodox territories
+	can_raid = yes
+	
+	# Sect independence
+	vassal_contract = {
+		religious_head = no
+		can_convert_religion = yes
+	}
+}
+
+# Celestial Sect Government
+sect_government = {
+	primary_held_title = duchy
+	
+	vassal_contract = {
+		vassal_pay_tax = 0.15
+		vassal_levy_contribution = 0.25
+	}
+	
+	# Must follow sect master
+	religious_head = sect_master
+	
+	# Martial focus
+	focuses = { martial martial_education }
+}

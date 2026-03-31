@@ -1,0 +1,156 @@
+# Celestial Movement Mechanics
+# Orthodox/Unorthodox based on celestial alignment
+
+# Check celestial alignment for the realm
+check_celestial_alignment = {
+	effect = {
+		# Calculate based on game date/year
+		set_variable = {
+			name = current_celestial_phase
+			value = {
+				add = current_year
+				modulo = 60
+			}
+		}
+		
+		# 0-15 = Azure Dragon (East, Spring) - Orthodox favored
+		# 16-30 = Vermilion Bird (South, Summer) - Orthodox peak
+		# 31-45 = White Tiger (West, Autumn) - Unorthodox rising
+		# 46-59 = Black Tortoise (North, Winter) - Unorthodox peak
+		
+		if = {
+			limit = { var:current_celestial_phase < 16 }
+			set_variable = {
+				name = celestial_beast
+				value = flag:azure_dragon
+			}
+			set_variable = {
+				name = orthodox_favor
+				value = 0.2
+			}
+		}
+		else_if = {
+			limit = { var:current_celestial_phase < 31 }
+			set_variable = {
+				name = celestial_beast
+				value = flag:vermilion_bird
+			}
+			set_variable = {
+				name = orthodox_favor
+				value = 0.3
+			}
+			set_character_modifier = {
+				modifier = celestial_mandate_orthodox
+			}
+		}
+		else_if = {
+			limit = { var:current_celestial_phase < 46 }
+			set_variable = {
+				name = celestial_beast
+				value = flag:white_tiger
+			}
+			set_variable = {
+				name = orthodox_favor
+				value = -0.1
+			}
+		}
+		else = {
+			set_variable = {
+				name = celestial_beast
+				value = flag:black_tortoise
+			}
+			set_variable = {
+				name = orthodox_favor
+				value = -0.2
+			}
+		}
+	}
+}
+
+# Grant Orthodox Mandate to Empire tier
+grant_orthodox_mandate = {
+	effect = {
+		add_character_modifier = {
+			modifier = mandate_of_heaven_orthodox
+			duration = -1
+		}
+		add_opinion_modifier = {
+			target = dynasty
+			modifier = orthodox_mandate_holder
+		}
+		add_realm_law = orthodox_empire_government
+		
+		# All vassals must acknowledge
+		every_vassal = {
+			add_opinion_modifier = {
+				target = root
+				modifier = acknowledges_celestial_mandate
+			}
+		}
+	}
+}
+
+# Remove mandate (if overthrown)
+remove_orthodox_mandate = {
+	effect = {
+		remove_character_modifier = mandate_of_heaven_orthodox
+		add_character_modifier = {
+			modifier = lost_celestial_mandate
+			duration = 3650
+		}
+		add_piety = -1000
+		add_prestige = -500
+	}
+}
+
+# Switch between orthodox/unorthodox based on celestial movement
+switch_celestial_alignment = {
+	effect = {
+		check_celestial_alignment = yes
+		
+		if = {
+			limit = {
+				var:orthodox_favor > 0
+				has_government = unorthodox_government
+			}
+			set_government = orthodox_government
+			custom_tooltip = tt_returned_to_orthodox
+		}
+		else_if = {
+			limit = {
+				var:orthodox_favor < 0
+				has_government = orthodox_government
+				NOT = { has_claim = empire }
+			}
+			set_government = unorthodox_government
+			custom_tooltip = tt_fell_to_unorthodox
+		}
+	}
+}
+
+# Celestial event - yearly check
+yearly_celestial_check = {
+	effect = {
+		check_celestial_alignment = yes
+		
+		# Show notification to player
+		if = {
+			limit = { is_ai = no }
+			trigger_event = {
+				id = celestial.0001
+			}
+		}
+		
+		# Empire holder updates mandate
+		if = {
+			limit = {
+				has_title = empire
+				has_character_modifier = mandate_of_heaven_orthodox
+			}
+			add_character_modifier = {
+				modifier = renewed_mandate
+				duration = 365
+			}
+		}
+	}
+}
