@@ -1,0 +1,766 @@
+################################################################
+# MURIM CHRONICLES — VARIABLE INITIALIZATION EFFECTS
+# Path: common/scripted_effects/murim_variable_init.txt
+# Called when a character receives the murim_initiated flag.
+# Sets all character variables to safe defaults.
+#
+# USAGE:
+#   murim_init_character_variables = yes
+#
+# IMPORTANT: Always guard with:
+#   trigger = { NOT = { has_character_flag = murim_initiated } }
+#   before calling, to prevent double-init.
+################################################################
+
+
+# ==============================================================
+# MASTER INITIALIZATION EFFECT
+# Call this ONCE when a character enters the Jianghu.
+# Sets all variables, assigns starting trait, flags.
+# ==============================================================
+
+murim_init_character_variables = {
+	# --- GUARD: Prevent double initialization ---
+	if = {
+		limit = {
+			has_character_flag = murim_variables_initialized
+		}
+		# Already initialized, do nothing
+	}
+	else = {
+		# =============================================
+		# CULTIVATION VARIABLES
+		# =============================================
+
+		# Cultivation XP: accumulated progress toward next rank
+		set_variable = {
+			name = murim_cultivation_xp
+			value = 0
+		}
+
+		# Cultivation talent: innate aptitude (1-100)
+		# Rolled at initiation, barely changes
+		if = {
+			limit = {
+				NOT = { exists = var:murim_talent }
+			}
+			set_variable = {
+				name = murim_talent
+				value = {
+					value = 30
+					add = {
+						value = learning
+						multiply = 1.5
+					}
+					add = {
+						value = prowess
+						multiply = 0.5
+					}
+					# Genius/Quick/Intelligent traits boost talent
+					if = {
+						limit = { has_trait = genius }
+						add = 20
+					}
+					else_if = {
+						limit = { has_trait = intelligent }
+						add = 12
+					}
+					else_if = {
+						limit = { has_trait = quick }
+						add = 6
+					}
+					# Slow/Stupid penalties
+					if = {
+						limit = { has_trait = dull }
+						add = -6
+					}
+					if = {
+						limit = { has_trait = slow }
+						add = -12
+					}
+					if = {
+						limit = { has_trait = imbecile }
+						add = -20
+					}
+					# Young characters have more potential
+					if = {
+						limit = { age < 20 }
+						add = 10
+					}
+					if = {
+						limit = { age >= 40 }
+						add = -5
+					}
+					min = 5
+					max = 100
+					round = yes
+				}
+			}
+		}
+
+		# Body tempering level: physical cultivation (0-9)
+		set_variable = {
+			name = murim_body_tempering_level
+			value = 0
+		}
+
+		# Body tempering XP
+		set_variable = {
+			name = murim_body_tempering_xp
+			value = 0
+		}
+
+		# =============================================
+		# JIANGHU STANDING VARIABLES
+		# =============================================
+
+		# Jianghu Standing: 0-100 reputation scale
+		set_variable = {
+			name = murim_jianghu_standing
+			value = {
+				value = 5
+				# Noble-born start slightly higher (name recognition)
+				if = {
+					limit = { is_landed = yes }
+					add = 5
+				}
+				# High prowess characters have martial reputation
+				if = {
+					limit = { prowess >= 15 }
+					add = 5
+				}
+				min = 0
+				max = 20
+			}
+		}
+
+		# Face: temporary reputation from recent deeds (-50 to 50)
+		set_variable = {
+			name = murim_face
+			value = 0
+		}
+
+		# =============================================
+		# ALIGNMENT VARIABLES
+		# =============================================
+
+		# Alignment: -100 (demonic) to +100 (orthodox)
+		# Starts neutral, shifts through actions
+		set_variable = {
+			name = murim_alignment
+			value = {
+				value = 0
+				# Virtuous traits lean orthodox
+				if = {
+					limit = { has_trait = just }
+					add = 10
+				}
+				if = {
+					limit = { has_trait = compassionate }
+					add = 10
+				}
+				if = {
+					limit = { has_trait = honest }
+					add = 5
+				}
+				if = {
+					limit = { has_trait = generous }
+					add = 5
+				}
+				# Sinful traits lean demonic
+				if = {
+					limit = { has_trait = cruel }
+					add = -10
+				}
+				if = {
+					limit = { has_trait = sadistic }
+					add = -15
+				}
+				if = {
+					limit = { has_trait = deceitful }
+					add = -5
+				}
+				if = {
+					limit = { has_trait = callous }
+					add = -8
+				}
+				min = -30
+				max = 30
+			}
+		}
+
+		# =============================================
+		# QI / COMBAT VARIABLES
+		# =============================================
+
+		# Qi reserves: current qi energy pool
+		set_variable = {
+			name = murim_qi_reserves
+			value = 20
+			# Starting qi = base amount for uninitiated
+		}
+
+		# Combat style: 0=none, 1=Iron Fist, 2=Flowing Water,
+		# 3=Shadow Step, 4=Mountain Stance, 5=Thousand Cuts,
+		# 6=Void Palm
+		set_variable = {
+			name = murim_combat_style
+			value = 0
+		}
+
+		# Weapon type: 0=none, 1=sword, 2=saber, 3=spear,
+		# 4=fist, 5=palm, 6=whip, 7=hidden weapons
+		set_variable = {
+			name = murim_weapon_type
+			value = 0
+		}
+
+		# Weapon affinity: mastery with chosen weapon (0-10)
+		set_variable = {
+			name = murim_weapon_affinity
+			value = 0
+		}
+
+		# Weapon affinity XP
+		set_variable = {
+			name = murim_weapon_affinity_xp
+			value = 0
+		}
+
+		# Technique mastery levels (per tier)
+		set_variable = {
+			name = murim_technique_mastery_minor
+			value = 0
+		}
+		set_variable = {
+			name = murim_technique_mastery_major
+			value = 0
+		}
+		set_variable = {
+			name = murim_technique_mastery_ultimate
+			value = 0
+		}
+
+		# Technique mastery XP (per tier)
+		set_variable = {
+			name = murim_technique_mastery_minor_xp
+			value = 0
+		}
+		set_variable = {
+			name = murim_technique_mastery_major_xp
+			value = 0
+		}
+		set_variable = {
+			name = murim_technique_mastery_ultimate_xp
+			value = 0
+		}
+
+		# Active technique power (set when using a specific technique)
+		set_variable = {
+			name = murim_active_technique_power
+			value = 0
+		}
+
+		# =============================================
+		# SECT VARIABLES (only set if sect master)
+		# These get initialized by murim_init_sect_master_variables
+		# =============================================
+
+		# =============================================
+		# MERIT TRACKING
+		# Mirrors AUH Merit for dual-path calculations
+		# =============================================
+
+		set_variable = {
+			name = murim_merit_tracking
+			value = 0
+		}
+
+		# =============================================
+		# MANUAL STUDY VARIABLES
+		# =============================================
+
+		set_variable = {
+			name = murim_manual_quality
+			value = 0
+			# 0 = no manual being studied
+		}
+		set_variable = {
+			name = murim_manual_study_xp
+			value = 0
+		}
+		set_variable = {
+			name = murim_manual_min_rank
+			value = 0
+		}
+
+		# =============================================
+		# DUEL / HONOR TRACKING
+		# =============================================
+
+		set_variable = {
+			name = murim_duels_won
+			value = 0
+		}
+		set_variable = {
+			name = murim_duels_lost
+			value = 0
+		}
+		set_variable = {
+			name = murim_kills_in_combat
+			value = 0
+		}
+
+		# =============================================
+		# SET FLAGS
+		# =============================================
+
+		# Mark as Jianghu initiated
+		add_character_flag = {
+			flag = murim_initiated
+		}
+
+		# Mark variables as initialized (prevents double-init)
+		add_character_flag = {
+			flag = murim_variables_initialized
+		}
+
+		# Assign starting cultivation trait if none exists
+		if = {
+			limit = {
+				NOT = { has_trait = murim_outer_qi }
+				NOT = { has_trait = murim_qi_gathering }
+				NOT = { has_trait = murim_foundation }
+				NOT = { has_trait = murim_golden_core }
+				NOT = { has_trait = murim_nascent_soul }
+				NOT = { has_trait = murim_spirit_severing }
+			}
+			add_trait = murim_outer_qi
+		}
+	}
+}
+
+
+# ==============================================================
+# SECT MASTER INITIALIZATION
+# Called when a character becomes a Sect Master.
+# Adds sect-specific variables on top of base init.
+# ==============================================================
+
+murim_init_sect_master_variables = {
+	# Guard: must already be murim_initiated
+	if = {
+		limit = {
+			has_character_flag = murim_initiated
+			NOT = { has_character_flag = murim_sect_master_vars_initialized }
+		}
+
+		# Sect power composite score
+		set_variable = {
+			name = murim_sect_power
+			value = 10
+			# Starts low, builds through recruitment and deeds
+		}
+
+		# Sect member count
+		set_variable = {
+			name = murim_sect_member_count
+			value = {
+				value = 3
+				# Minimum founding members
+				if = {
+					limit = { diplomacy >= 15 }
+					add = 2
+					# Charismatic founders attract more
+				}
+			}
+		}
+
+		# Average cultivation of top members
+		set_variable = {
+			name = murim_sect_avg_top_cultivation
+			value = murim_cultivation_rank_value
+			# Starts as master's own rank
+		}
+
+		# Sect treasury (gold)
+		set_variable = {
+			name = murim_sect_treasury
+			value = 0
+		}
+
+		# Territory count (provinces with sect presence)
+		set_variable = {
+			name = murim_sect_territory_count
+			value = 1
+			# Start with presence in home province
+		}
+
+		# Infiltrated ministry count (Demonic only, starts 0)
+		set_variable = {
+			name = murim_infiltrated_ministry_count
+			value = 0
+		}
+
+		# Sect master flag
+		add_character_flag = {
+			flag = murim_sect_master
+		}
+
+		# New master penalty (temporary)
+		add_character_modifier = {
+			modifier = murim_new_sect_master
+			years = 3
+		}
+
+		# Initialized flag
+		add_character_flag = {
+			flag = murim_sect_master_vars_initialized
+		}
+	}
+}
+
+
+# ==============================================================
+# MONTHLY UPDATE EFFECT
+# Called every month (via on_monthly_pulse) to update
+# all murim variables: XP gain, standing, qi recovery,
+# face decay, sect income, alignment decay.
+# ==============================================================
+
+murim_monthly_variable_update = {
+	if = {
+		limit = {
+			has_character_flag = murim_initiated
+			has_character_flag = murim_variables_initialized
+		}
+
+		# --- CULTIVATION XP ---
+		change_variable = {
+			name = murim_cultivation_xp
+			add = murim_cultivation_xp_after_dual_penalty
+		}
+
+		# --- BODY TEMPERING XP ---
+		change_variable = {
+			name = murim_body_tempering_xp
+			add = murim_body_tempering_xp_gain
+		}
+
+		# --- JIANGHU STANDING ---
+		change_variable = {
+			name = murim_jianghu_standing
+			add = murim_jianghu_standing_net_monthly
+		}
+		# Clamp to 0-100
+		if = {
+			limit = { var:murim_jianghu_standing > 100 }
+			set_variable = {
+				name = murim_jianghu_standing
+				value = 100
+			}
+		}
+		if = {
+			limit = { var:murim_jianghu_standing < 0 }
+			set_variable = {
+				name = murim_jianghu_standing
+				value = 0
+			}
+		}
+
+		# --- QI RECOVERY ---
+		change_variable = {
+			name = murim_qi_reserves
+			add = murim_qi_recovery_rate
+		}
+		# Clamp to max
+		if = {
+			limit = {
+				var:murim_qi_reserves > murim_qi_max_reserves
+			}
+			set_variable = {
+				name = murim_qi_reserves
+				value = murim_qi_max_reserves
+			}
+		}
+
+		# --- FACE DECAY ---
+		if = {
+			limit = { var:murim_face > 0 }
+			change_variable = {
+				name = murim_face
+				add = {
+					value = murim_face_monthly_decay
+					multiply = -1
+				}
+			}
+			if = {
+				limit = { var:murim_face < 0 }
+				set_variable = {
+					name = murim_face
+					value = 0
+				}
+			}
+		}
+		else_if = {
+			limit = { var:murim_face < 0 }
+			change_variable = {
+				name = murim_face
+				add = murim_face_monthly_decay
+			}
+			if = {
+				limit = { var:murim_face > 0 }
+				set_variable = {
+					name = murim_face
+					value = 0
+				}
+			}
+		}
+
+		# --- ALIGNMENT DECAY ---
+		change_variable = {
+			name = murim_alignment
+			add = murim_alignment_monthly_decay
+		}
+		# Clamp to -100 to 100
+		if = {
+			limit = { var:murim_alignment > 100 }
+			set_variable = { name = murim_alignment value = 100 }
+		}
+		if = {
+			limit = { var:murim_alignment < -100 }
+			set_variable = { name = murim_alignment value = -100 }
+		}
+
+		# --- UPDATE ALIGNMENT FLAGS ---
+		# Set orthodox/demonic flags based on alignment
+		if = {
+			limit = { var:murim_alignment >= 30 }
+			if = {
+				limit = {
+					NOT = { has_character_flag = murim_orthodox_cultivator }
+				}
+				add_character_flag = murim_orthodox_cultivator
+			}
+			remove_character_flag = murim_demonic_cultivator
+		}
+		else_if = {
+			limit = { var:murim_alignment <= -30 }
+			if = {
+				limit = {
+					NOT = { has_character_flag = murim_demonic_cultivator }
+				}
+				add_character_flag = murim_demonic_cultivator
+			}
+			remove_character_flag = murim_orthodox_cultivator
+		}
+		else = {
+			# Neutral zone: remove both flags
+			remove_character_flag = murim_orthodox_cultivator
+			remove_character_flag = murim_demonic_cultivator
+		}
+
+		# --- MANUAL STUDY PROGRESS ---
+		if = {
+			limit = {
+				has_character_modifier = murim_studying_manual
+				var:murim_manual_quality > 0
+			}
+			change_variable = {
+				name = murim_manual_study_xp
+				add = murim_manual_study_cultivation_bonus
+			}
+		}
+
+		# --- SECT MASTER MONTHLY ---
+		if = {
+			limit = {
+				has_character_flag = murim_sect_master
+				has_character_flag = murim_sect_master_vars_initialized
+			}
+			# Update sect treasury
+			change_variable = {
+				name = murim_sect_treasury
+				add = murim_sect_net_income
+			}
+			# Clamp treasury (no negative)
+			if = {
+				limit = { var:murim_sect_treasury < 0 }
+				set_variable = {
+					name = murim_sect_treasury
+					value = 0
+				}
+			}
+
+			# Update sect power score
+			set_variable = {
+				name = murim_sect_power
+				value = murim_sect_power_calculation
+			}
+		}
+	}
+}
+
+
+# ==============================================================
+# BREAKTHROUGH CHECK EFFECT
+# Called monthly after XP update to check if threshold reached.
+# If so, fires the breakthrough event.
+# ==============================================================
+
+murim_check_breakthrough = {
+	if = {
+		limit = {
+			has_character_flag = murim_initiated
+			exists = var:murim_cultivation_xp
+			var:murim_cultivation_xp >= murim_breakthrough_threshold
+			# Not already at max rank
+			NOT = { has_trait = murim_spirit_severing }
+			# Not already in breakthrough attempt
+			NOT = { has_character_flag = murim_breakthrough_in_progress }
+		}
+		# Flag to prevent double-trigger
+		add_character_flag = {
+			flag = murim_breakthrough_in_progress
+		}
+		# Fire the breakthrough event
+		trigger_event = {
+			id = murim_cultivation.100
+			days = 1
+		}
+	}
+}
+
+
+# ==============================================================
+# BODY TEMPERING CHECK
+# Similar to breakthrough but for physical cultivation.
+# ==============================================================
+
+murim_check_body_tempering = {
+	if = {
+		limit = {
+			has_character_flag = murim_initiated
+			exists = var:murim_body_tempering_xp
+			exists = var:murim_body_tempering_level
+			var:murim_body_tempering_xp >= murim_body_tempering_threshold
+			var:murim_body_tempering_level < 9
+		}
+		# Level up body tempering
+		change_variable = {
+			name = murim_body_tempering_level
+			add = 1
+		}
+		# Reset XP
+		set_variable = {
+			name = murim_body_tempering_xp
+			value = 0
+		}
+		# Fire notification event
+		trigger_event = {
+			id = murim_cultivation.200
+			days = 1
+		}
+	}
+}
+
+
+# ==============================================================
+# WEAPON AFFINITY CHECK
+# Levels up weapon mastery when threshold reached.
+# ==============================================================
+
+murim_check_weapon_affinity = {
+	if = {
+		limit = {
+			has_character_flag = murim_initiated
+			exists = var:murim_weapon_affinity_xp
+			exists = var:murim_weapon_affinity
+			var:murim_weapon_affinity_xp >= murim_weapon_affinity_threshold
+			var:murim_weapon_affinity < 10
+		}
+		change_variable = {
+			name = murim_weapon_affinity
+			add = 1
+		}
+		set_variable = {
+			name = murim_weapon_affinity_xp
+			value = 0
+		}
+	}
+}
+
+
+# ==============================================================
+# CLEANUP EFFECT
+# Called on character death to remove variables and prevent
+# save game bloat. CK3 best practice.
+# ==============================================================
+
+murim_cleanup_character_variables = {
+	if = {
+		limit = { has_character_flag = murim_initiated }
+
+		# Remove all murim variables
+		remove_variable = murim_cultivation_xp
+		remove_variable = murim_talent
+		remove_variable = murim_body_tempering_level
+		remove_variable = murim_body_tempering_xp
+		remove_variable = murim_jianghu_standing
+		remove_variable = murim_face
+		remove_variable = murim_alignment
+		remove_variable = murim_qi_reserves
+		remove_variable = murim_combat_style
+		remove_variable = murim_weapon_type
+		remove_variable = murim_weapon_affinity
+		remove_variable = murim_weapon_affinity_xp
+		remove_variable = murim_technique_mastery_minor
+		remove_variable = murim_technique_mastery_major
+		remove_variable = murim_technique_mastery_ultimate
+		remove_variable = murim_technique_mastery_minor_xp
+		remove_variable = murim_technique_mastery_major_xp
+		remove_variable = murim_technique_mastery_ultimate_xp
+		remove_variable = murim_active_technique_power
+		remove_variable = murim_merit_tracking
+		remove_variable = murim_manual_quality
+		remove_variable = murim_manual_study_xp
+		remove_variable = murim_manual_min_rank
+		remove_variable = murim_duels_won
+		remove_variable = murim_duels_lost
+		remove_variable = murim_kills_in_combat
+
+		# Sect master variables
+		if = {
+			limit = { has_character_flag = murim_sect_master }
+			remove_variable = murim_sect_power
+			remove_variable = murim_sect_member_count
+			remove_variable = murim_sect_avg_top_cultivation
+			remove_variable = murim_sect_treasury
+			remove_variable = murim_sect_territory_count
+			remove_variable = murim_infiltrated_ministry_count
+		}
+
+		# Remove all murim flags
+		remove_character_flag = murim_initiated
+		remove_character_flag = murim_variables_initialized
+		remove_character_flag = murim_sect_master
+		remove_character_flag = murim_sect_master_vars_initialized
+		remove_character_flag = murim_orthodox_cultivator
+		remove_character_flag = murim_demonic_cultivator
+		remove_character_flag = murim_sect_member
+		remove_character_flag = murim_sect_elder
+		remove_character_flag = murim_sect_sanctioned
+		remove_character_flag = murim_wandering_hero
+		remove_character_flag = murim_wulin_alliance_lord
+		remove_character_flag = murim_former_alliance_lord
+		remove_character_flag = murim_hidden_alignment
+		remove_character_flag = murim_martial_merit_holder
+		remove_character_flag = murim_ministry_infiltrator_active
+		remove_character_flag = murim_paying_tribute
+		remove_character_flag = murim_hegemon_puppet_planted
+		remove_character_flag = murim_breakthrough_in_progress
+		remove_character_flag = murim_inner_sight
+		remove_character_flag = murim_used_forbidden_technique
+		remove_character_flag = murim_manual_studied_for_breakthrough
+	}
+}
