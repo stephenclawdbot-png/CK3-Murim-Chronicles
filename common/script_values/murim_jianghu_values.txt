@@ -1,0 +1,574 @@
+################################################################
+# MURIM CHRONICLES — JIANGHU STANDING SCRIPT VALUES
+# Path: common/script_values/murim_jianghu_values.txt
+# Handles: Jianghu standing gain/loss, sect reputation,
+#          duel honor, Wulin Alliance election weights,
+#          face/renown mechanics, wandering hero reputation
+#
+# Jianghu Standing: 0-100 scale, stored as character variable
+# var:murim_jianghu_standing
+################################################################
+
+
+# ==============================================================
+# JIANGHU STANDING — BASE GAIN/LOSS RATES
+# Monthly passive changes based on actions and position.
+# ==============================================================
+
+murim_jianghu_standing_monthly_gain = {
+	value = 0
+
+	# Sect Masters gain standing passively
+	if = {
+		limit = { has_character_flag = murim_sect_master }
+		add = 0.3
+	}
+
+	# Sect Elders gain a bit
+	if = {
+		limit = { has_character_flag = murim_sect_elder }
+		add = 0.15
+	}
+
+	# Higher cultivation = more natural respect
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 0.08
+	}
+
+	# Prowess reputation (martial renown)
+	add = {
+		value = prowess
+		multiply = 0.02
+	}
+
+	# Active quest/mission modifier
+	if = {
+		limit = { has_character_modifier = murim_on_jianghu_quest }
+		add = 0.25
+	}
+
+	# Wandering hero lifestyle bonus
+	if = {
+		limit = { has_character_flag = murim_wandering_hero }
+		add = 0.20
+	}
+
+	# Orthodox alignment in good standing empire
+	if = {
+		limit = {
+			has_character_flag = murim_orthodox_cultivator
+			exists = global_var:murim_current_era
+			global_var:murim_current_era <= 2
+		}
+		add = 0.10
+	}
+
+	# Demonic alignment during chaos
+	if = {
+		limit = {
+			has_character_flag = murim_demonic_cultivator
+			exists = global_var:murim_current_era
+			global_var:murim_current_era >= 4
+		}
+		add = 0.15
+	}
+
+	min = 0
+	max = 1.5
+}
+
+# Monthly standing decay (standing erodes without action)
+murim_jianghu_standing_monthly_decay = {
+	value = 0.1
+
+	# Less decay for higher cultivation (legend persists)
+	subtract = {
+		value = murim_cultivation_rank_value
+		multiply = 0.01
+		max = 0.05
+	}
+
+	# Sect membership slows decay (institutional memory)
+	if = {
+		limit = { has_character_flag = murim_sect_member }
+		subtract = 0.03
+	}
+
+	# Wulin Alliance Lord has no decay
+	if = {
+		limit = { has_character_flag = murim_wulin_alliance_lord }
+		value = 0
+	}
+
+	min = 0
+	max = 0.15
+}
+
+# Net monthly change
+murim_jianghu_standing_net_monthly = {
+	value = murim_jianghu_standing_monthly_gain
+	subtract = murim_jianghu_standing_monthly_decay
+	# Apply dual path penalty
+	if = {
+		limit = {
+			murim_dual_path_penalty > 0
+		}
+		multiply = {
+			value = 1.0
+			subtract = murim_dual_path_penalty
+		}
+	}
+}
+
+
+# ==============================================================
+# STANDING EVENT REWARDS/PENALTIES
+# Standard amounts for common actions.
+# Referenced by events and decisions.
+# ==============================================================
+
+# Duel victories
+murim_standing_duel_victory = {
+	value = 3
+	# More standing for defeating higher-ranked opponents
+	if = {
+		limit = {
+			exists = scope:duel_target
+			scope:duel_target = { murim_cultivation_rank_value > root.murim_cultivation_rank_value }
+		}
+		add = 5
+	}
+	# Public duel bonus
+	if = {
+		limit = { has_character_flag = murim_public_duel }
+		multiply = 1.5
+	}
+	max = 15
+	round = yes
+}
+
+murim_standing_duel_defeat = {
+	value = -2
+	# Losing to a weaker opponent is humiliating
+	if = {
+		limit = {
+			exists = scope:duel_target
+			scope:duel_target = { murim_cultivation_rank_value < root.murim_cultivation_rank_value }
+		}
+		add = -4
+	}
+	min = -10
+}
+
+# Heroic deed (saved civilians, defended village, etc.)
+murim_standing_heroic_deed = {
+	value = 5
+	if = {
+		limit = { has_character_flag = murim_orthodox_cultivator }
+		add = 2
+		# Orthodox gets more credit for heroism
+	}
+	max = 10
+}
+
+# Villainous deed (massacre, betrayal, etc.)
+murim_standing_villainous_deed = {
+	value = -8
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		# Demonic sects respect villainy — gain standing in demonic circles
+		value = 4
+	}
+}
+
+# Tournament placement
+murim_standing_tournament_champion = 12
+murim_standing_tournament_finalist = 6
+murim_standing_tournament_participant = 2
+
+# Sect-level standing changes
+murim_standing_sect_master_elected = 15
+murim_standing_sect_expelled = -12
+murim_standing_sect_founded = 20
+murim_standing_sect_destroyed = -25
+
+# Righteous Pillar (supporting the Mandate)
+murim_standing_righteous_pillar = 10
+
+# Betrayal of Jianghu to Empire
+murim_standing_jianghu_betrayal = -20
+
+
+# ==============================================================
+# STANDING THRESHOLDS
+# Named tiers for UI display and trigger checks.
+# ==============================================================
+
+murim_standing_tier_unknown = 0			# 0-9: Nobody
+murim_standing_tier_known = 10			# 10-24: Known in local Jianghu
+murim_standing_tier_respected = 25		# 25-44: Respected martial artist
+murim_standing_tier_renowned = 45		# 45-64: Renowned across provinces
+murim_standing_tier_legendary = 65		# 65-84: Legendary figure
+murim_standing_tier_supreme = 85		# 85-100: Supreme of the Jianghu
+
+# Current tier (for UI)
+murim_jianghu_standing_tier = {
+	value = 0
+	if = {
+		limit = {
+			exists = var:murim_jianghu_standing
+			var:murim_jianghu_standing >= 85
+		}
+		value = 5
+	}
+	else_if = {
+		limit = { var:murim_jianghu_standing >= 65 }
+		value = 4
+	}
+	else_if = {
+		limit = { var:murim_jianghu_standing >= 45 }
+		value = 3
+	}
+	else_if = {
+		limit = { var:murim_jianghu_standing >= 25 }
+		value = 2
+	}
+	else_if = {
+		limit = { var:murim_jianghu_standing >= 10 }
+		value = 1
+	}
+}
+
+
+# ==============================================================
+# DUEL HONOR SYSTEM
+# Jianghu duels follow a code. Breaking the code costs standing.
+# ==============================================================
+
+murim_duel_honor_value = {
+	# Base honor from the duel itself
+	value = 1.0
+
+	# Formal challenge (both agreed) = full honor
+	if = {
+		limit = { has_character_flag = murim_formal_duel }
+		add = 1.0
+	}
+
+	# Ambush / dishonorable attack = negative honor
+	if = {
+		limit = { has_character_flag = murim_ambush_duel }
+		value = -2.0
+	}
+
+	# Showing mercy to defeated opponent
+	if = {
+		limit = { has_character_flag = murim_showed_mercy }
+		add = 1.5
+	}
+
+	# Killing a defeated opponent (outside death match)
+	if = {
+		limit = {
+			has_character_flag = murim_killed_opponent
+			NOT = { has_character_flag = murim_death_match }
+		}
+		add = -3.0
+	}
+
+	# Using forbidden techniques in an honorable duel
+	if = {
+		limit = {
+			has_character_flag = murim_used_forbidden_technique
+			has_character_flag = murim_formal_duel
+		}
+		add = -4.0
+	}
+
+	# Orthodox vs Demonic modifiers
+	if = {
+		limit = { has_character_flag = murim_orthodox_cultivator }
+		# Orthodox fighters gain more honor for clean wins
+		if = {
+			limit = {
+				has_character_flag = murim_formal_duel
+				NOT = { has_character_flag = murim_used_forbidden_technique }
+			}
+			add = 0.5
+		}
+	}
+}
+
+# Standing change from duel honor
+murim_duel_standing_change = {
+	value = murim_duel_honor_value
+	multiply = 2
+	round = yes
+	min = -10
+	max = 8
+}
+
+
+# ==============================================================
+# WULIN ALLIANCE ELECTION WEIGHTS
+# The Alliance Lord is elected by Sect Masters.
+# Weight = standing + cultivation + sect size + political factors.
+# ==============================================================
+
+murim_alliance_election_weight = {
+	# Jianghu Standing is the primary factor (40% weight)
+	value = 0
+	if = {
+		limit = { exists = var:murim_jianghu_standing }
+		add = {
+			value = var:murim_jianghu_standing
+			multiply = 0.40
+		}
+	}
+
+	# Cultivation Rank (25% weight)
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 4.0
+		# Rank 6 = 24 points
+	}
+
+	# Sect Power (20% weight)
+	if = {
+		limit = { exists = var:murim_sect_power }
+		add = {
+			value = var:murim_sect_power
+			multiply = 0.20
+		}
+	}
+
+	# Diplomacy (10% weight — political savvy)
+	add = {
+		value = diplomacy
+		multiply = 0.5
+	}
+
+	# Martial prowess (5% weight)
+	add = {
+		value = prowess
+		multiply = 0.2
+	}
+
+	# Trait bonuses
+	if = {
+		limit = { has_trait = just }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = brave }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = honest }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = generous }
+		add = 2
+	}
+
+	# Trait penalties
+	if = {
+		limit = { has_trait = craven }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = deceitful }
+		add = -3
+	}
+	if = {
+		limit = { has_trait = arbitrary }
+		add = -4
+	}
+
+	# Demonic sect masters can't run (unless they hide it)
+	if = {
+		limit = {
+			has_character_flag = murim_demonic_cultivator
+			NOT = { has_character_flag = murim_hidden_alignment }
+		}
+		value = -100
+		# Effectively disqualified
+	}
+
+	# Previous Alliance Lord bonus (incumbency)
+	if = {
+		limit = { has_character_flag = murim_former_alliance_lord }
+		add = 8
+	}
+
+	# Age respect (elders favored slightly)
+	if = {
+		limit = { age >= 50 }
+		add = 2
+	}
+	if = {
+		limit = { age >= 70 }
+		add = 3
+	}
+
+	min = 0
+	round = yes
+}
+
+# Alliance vote influence (how much this character's vote matters)
+murim_alliance_vote_influence = {
+	value = 1
+
+	# Sect size multiplier
+	if = {
+		limit = { has_character_flag = murim_sect_master }
+		add = 2
+	}
+	if = {
+		limit = {
+			has_character_flag = murim_sect_master
+			exists = var:murim_sect_power
+			var:murim_sect_power >= 50
+		}
+		add = 2
+	}
+
+	# Standing adds minor influence
+	add = {
+		value = murim_jianghu_standing_tier
+		multiply = 0.5
+	}
+
+	round = yes
+	min = 1
+	max = 8
+}
+
+
+# ==============================================================
+# FACE / RENOWN MECHANICS
+# "Face" is temporary reputation from recent deeds.
+# Decays fast. Modifies social interactions in the Jianghu.
+# ==============================================================
+
+murim_face_value = {
+	value = 0
+	if = {
+		limit = { exists = var:murim_face }
+		value = var:murim_face
+	}
+	min = -50
+	max = 50
+}
+
+# Face decay rate (face is fleeting)
+murim_face_monthly_decay = {
+	value = 2
+	# Positive face decays toward 0
+	# Negative face also decays toward 0
+	# Both sides return to baseline
+
+	# Famous people's face lasts longer
+	if = {
+		limit = { murim_jianghu_standing_tier >= 4 }
+		value = 1
+	}
+}
+
+# Face impact on social interactions
+murim_face_opinion_modifier = {
+	# Converts face to opinion-like value for sect interactions
+	value = murim_face_value
+	multiply = 0.5
+	round = yes
+	min = -25
+	max = 25
+}
+
+
+# ==============================================================
+# TENSION ERA BONUS: JIANGHU STANDING GAIN RATE
+# During Tension Era, the Jianghu matters more.
+# ==============================================================
+
+murim_era_standing_gain_modifier = {
+	value = 1.0
+
+	# Tension Era: Jianghu heroes rise
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 3
+		}
+		add = 0.20
+	}
+
+	# Conquest Era: warlords and sects clash
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 4
+		}
+		add = 0.30
+	}
+
+	# Division Era: Jianghu IS the only order
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 5
+		}
+		add = 0.50
+	}
+
+	# Expansion Era: Celestial order dominates, Jianghu quiet
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 1
+		}
+		add = -0.10
+	}
+}
+
+
+# ==============================================================
+# RIGHTEOUS CRUSADE THRESHOLD
+# How much orthodox outrage needed to trigger a Jianghu crusade
+# against a demonic sect or corrupt regime.
+# ==============================================================
+
+murim_righteous_crusade_threshold = {
+	value = 75
+
+	# Lower threshold during Tension (easier to rally)
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 3
+		}
+		subtract = 15
+	}
+
+	# Higher threshold during Expansion (nobody wants to rock the boat)
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 1
+		}
+		add = 15
+	}
+}
+
+# Current orthodox outrage level
+murim_orthodox_outrage_level = {
+	value = 0
+	if = {
+		limit = { exists = global_var:murim_orthodox_outrage }
+		value = global_var:murim_orthodox_outrage
+	}
+	min = 0
+	max = 100
+}
