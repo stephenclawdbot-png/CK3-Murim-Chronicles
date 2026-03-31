@@ -1,0 +1,1447 @@
+################################################################
+# MURIM CHRONICLES -- JIANGHU DECISIONS
+# Path: common/decisions/murim_jianghu_decisions.txt
+# 10 decisions covering entry into the martial world,
+# honor duels, hidden masters, Wulin Alliance politics,
+# righteous crusades, spy networks, gatherings, bounties,
+# retirement, and the ultimate claim to supremacy.
+#
+# Variables referenced (see murim_variable_init.txt):
+#   var:murim_cultivation_xp, var:murim_jianghu_standing,
+#   var:murim_alignment, var:murim_qi_reserves,
+#   var:murim_face, var:murim_duels_won, var:murim_duels_lost,
+#   var:murim_sect_power, var:murim_talent
+#
+# Flags referenced:
+#   murim_initiated, murim_orthodox_cultivator,
+#   murim_demonic_cultivator, murim_wulin_alliance_lord,
+#   murim_sect_master, murim_wandering_hero,
+#   murim_variables_initialized
+#
+# Traits referenced:
+#   murim_outer_qi, murim_qi_gathering, murim_foundation,
+#   murim_golden_core, murim_nascent_soul, murim_spirit_severing
+#
+# CK3 version: 1.18
+################################################################
+
+
+# =============================================================
+# 1. ENTER THE JIANGHU
+# Formally declare yourself a member of the martial world.
+# One-time, irreversible. Sets murim_initiated and initializes
+# all cultivation / standing / combat variables.
+# Major decision -- appears in the Important Decisions tab.
+# =============================================================
+
+enter_the_jianghu = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	major = yes
+	ai_check_interval = 60
+
+	desc = enter_the_jianghu_desc
+	selection_tooltip = enter_the_jianghu_tooltip
+
+	is_shown = {
+		is_landed = yes
+		is_adult = yes
+		NOT = { has_character_flag = murim_initiated }
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		prestige >= 150
+		OR = {
+			prowess >= 8
+			martial >= 8
+			learning >= 12
+		}
+		custom_description = {
+			text = "decision_enter_jianghu_age_req"
+			age >= 16
+		}
+	}
+
+	cost = {
+		prestige = {
+			value = 150
+			if = {
+				limit = { highest_held_title_tier >= tier_kingdom }
+				add = 100
+			}
+		}
+	}
+
+	effect = {
+		# Initialize all murim variables via scripted effect
+		murim_init_character_variables = yes
+
+		# Notification event: welcome to the martial world
+		trigger_event = {
+			id = murim_jiang.0001
+			days = 1
+		}
+
+		show_as_tooltip = {
+			add_character_flag = murim_initiated
+			custom_tooltip = enter_the_jianghu_effect_tt
+		}
+
+		# Starting standing boost based on existing fame
+		if = {
+			limit = { prestige_level >= 3 }
+			change_variable = {
+				name = murim_jianghu_standing
+				add = 5
+			}
+		}
+		if = {
+			limit = { prowess >= 15 }
+			change_variable = {
+				name = murim_jianghu_standing
+				add = 3
+			}
+		}
+
+		# Add starting cultivation trait tooltip
+		show_as_tooltip = {
+			add_trait = murim_outer_qi
+		}
+
+		# Stress from such a momentous life change
+		stress_impact = {
+			craven = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+			lazy = minor_stress_impact_gain
+		}
+
+		# Courtiers and vassals react
+		every_vassal = {
+			limit = {
+				has_character_flag = murim_initiated
+			}
+			add_opinion = {
+				target = root
+				modifier = impressed_opinion
+				opinion = 10
+			}
+		}
+	}
+
+	ai_potential = {
+		prowess >= 10
+		OR = {
+			has_trait = brave
+			has_trait = ambitious
+			martial >= 12
+		}
+	}
+
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+		modifier = {
+			add = -15
+			has_trait = content
+		}
+		modifier = {
+			add = 10
+			prowess >= 15
+		}
+		modifier = {
+			add = 10
+			any_neighbor_independent_ruler = {
+				has_character_flag = murim_initiated
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# 2. CHALLENGE TO HONOR DUEL
+# Challenge a rival cultivator to a formal honor duel.
+# Win/loss has major standing consequences.
+# Cooldown: 6 months via timed character flag.
+# =============================================================
+
+challenge_to_honor_duel = {
+	picture = "gfx/interface/illustrations/decisions/decision_knight_combat.dds"
+	ai_check_interval = 90
+
+	desc = challenge_to_honor_duel_desc
+	selection_tooltip = challenge_to_honor_duel_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		prestige >= 50
+		NOT = { has_character_flag = murim_duel_cooldown }
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		custom_description = {
+			text = "decision_honor_duel_qi_req"
+			var:murim_qi_reserves >= 10
+		}
+	}
+
+	cost = {
+		prestige = 50
+	}
+
+	effect = {
+		# Set cooldown flag (6 months = 180 days)
+		add_character_flag = {
+			flag = murim_duel_cooldown
+			days = 180
+		}
+
+		# Set formal duel flag for honor calculations
+		add_character_flag = {
+			flag = murim_formal_duel
+			days = 30
+		}
+
+		# Mark as public duel for standing multiplier
+		add_character_flag = {
+			flag = murim_public_duel
+			days = 30
+		}
+
+		# Fire the duel challenge event -- player picks target there
+		trigger_event = {
+			id = murim_jiang.0002
+			days = 3
+		}
+
+		custom_tooltip = challenge_to_honor_duel_effect_tt
+
+		stress_impact = {
+			craven = major_stress_impact_gain
+			calm = minor_stress_impact_gain
+		}
+	}
+
+	ai_potential = {
+		prowess >= 12
+		OR = {
+			has_trait = brave
+			has_trait = wrathful
+			has_trait = ambitious
+		}
+		NOT = { has_trait = craven }
+	}
+
+	ai_will_do = {
+		base = 10
+		modifier = {
+			add = 20
+			has_trait = wrathful
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = 10
+			has_trait = ambitious
+			var:murim_jianghu_standing < 50
+		}
+		modifier = {
+			add = -30
+			has_trait = content
+		}
+		modifier = {
+			add = -50
+			has_trait = craven
+		}
+		modifier = {
+			add = 10
+			any_relation = {
+				type = rival
+				has_character_flag = murim_initiated
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# 3. SEEK HIDDEN MASTER
+# Journey into the wilderness or mountains to find a reclusive
+# legendary cultivator. Costs gold + locks you for 90 days.
+# Random outcome: great teacher, lesser teacher, nothing, danger.
+# Cooldown: 2 years.
+# =============================================================
+
+seek_hidden_master = {
+	picture = "gfx/interface/illustrations/decisions/decision_go_on_pilgrimage.dds"
+	ai_check_interval = 120
+
+	desc = seek_hidden_master_desc
+	selection_tooltip = seek_hidden_master_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_seeking_master_cooldown }
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		gold >= 75
+		custom_description = {
+			text = "decision_seek_master_not_in_war"
+			is_at_war = no
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 75
+			if = {
+				limit = { highest_held_title_tier >= tier_kingdom }
+				add = 50
+			}
+		}
+	}
+
+	effect = {
+		# Cooldown: 2 years = 730 days
+		add_character_flag = {
+			flag = murim_seeking_master_cooldown
+			days = 730
+		}
+
+		# Lock character for 90 days (traveling)
+		add_character_modifier = {
+			modifier = murim_on_jianghu_quest
+			days = 90
+		}
+
+		custom_tooltip = seek_hidden_master_effect_tt
+
+		# Fire the journey event chain
+		trigger_event = {
+			id = murim_jiang.0003
+			days = 7
+		}
+
+		stress_impact = {
+			lazy = medium_stress_impact_gain
+			content = minor_stress_impact_gain
+			ambitious = minor_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		learning >= 10
+		gold >= 100
+		OR = {
+			has_trait = ambitious
+			has_trait = diligent
+			has_trait = zealous
+		}
+		is_at_war = no
+	}
+
+	ai_will_do = {
+		base = 15
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 10
+			has_trait = diligent
+		}
+		modifier = {
+			add = -25
+			has_trait = lazy
+		}
+		modifier = {
+			add = 10
+			# Lower cultivation = more motivation to seek teaching
+			NOR = {
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# 4. JOIN WULIN ALLIANCE
+# Apply to join the righteous Wulin Alliance.
+# Requires standing 30+, orthodox alignment (alignment >= 30).
+# Grants alliance benefits + obligations (must support crusades).
+# =============================================================
+
+join_wulin_alliance = {
+	picture = "gfx/interface/illustrations/decisions/decision_realm.dds"
+	ai_check_interval = 60
+
+	desc = join_wulin_alliance_desc
+	selection_tooltip = join_wulin_alliance_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+		NOT = { has_character_flag = murim_wulin_alliance_member }
+		NOT = { has_character_flag = murim_wulin_alliance_lord }
+		NOT = { has_character_flag = murim_demonic_cultivator }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		custom_description = {
+			text = "decision_wulin_standing_req"
+			var:murim_jianghu_standing >= 30
+		}
+		custom_description = {
+			text = "decision_wulin_alignment_req"
+			var:murim_alignment >= 30
+		}
+		custom_description = {
+			text = "decision_wulin_not_expelled"
+			NOT = { has_character_flag = murim_expelled_from_wulin }
+		}
+	}
+
+	cost = {
+		prestige = 100
+		gold = 25
+	}
+
+	effect = {
+		add_character_flag = murim_wulin_alliance_member
+
+		# Standing boost from joining
+		change_variable = {
+			name = murim_jianghu_standing
+			add = 5
+		}
+
+		# Alignment reinforced
+		change_variable = {
+			name = murim_alignment
+			add = 5
+		}
+
+		# Add the alliance modifier (benefits + obligations)
+		add_character_modifier = {
+			modifier = murim_wulin_alliance_member_modifier
+		}
+
+		# Notify: you are now a member
+		trigger_event = {
+			id = murim_jiang.0004
+			days = 3
+		}
+
+		custom_tooltip = join_wulin_alliance_effect_tt
+
+		# Demonic cultivators everywhere take note
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_demonic_cultivator
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_righteous_enemy_opinion
+				opinion = -15
+			}
+		}
+
+		# Orthodox cultivators approve
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_wulin_alliance_member
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_alliance_brother_opinion
+				opinion = 10
+			}
+		}
+
+		stress_impact = {
+			cynical = minor_stress_impact_gain
+			deceitful = minor_stress_impact_gain
+			zealous = minor_stress_impact_loss
+			just = minor_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_orthodox_cultivator
+		var:murim_jianghu_standing >= 30
+		var:murim_alignment >= 30
+	}
+
+	ai_will_do = {
+		base = 50
+		modifier = {
+			add = 20
+			has_trait = zealous
+		}
+		modifier = {
+			add = 15
+			has_trait = just
+		}
+		modifier = {
+			add = -20
+			has_trait = cynical
+		}
+		modifier = {
+			add = 15
+			has_character_flag = murim_sect_master
+		}
+	}
+}
+
+
+# =============================================================
+# 5. DECLARE RIGHTEOUS CRUSADE
+# Call orthodox sects to unite against a demonic threat.
+# Requires Wulin Alliance membership + standing 70+.
+# Massive political upheaval. Cooldown: 10 years.
+# =============================================================
+
+declare_righteous_crusade = {
+	picture = "gfx/interface/illustrations/decisions/decision_major_religion.dds"
+	major = yes
+	ai_check_interval = 360
+
+	desc = declare_righteous_crusade_desc
+	selection_tooltip = declare_righteous_crusade_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		has_character_flag = murim_wulin_alliance_member
+		is_adult = yes
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		NOT = { has_character_flag = murim_righteous_crusade_cooldown }
+		custom_description = {
+			text = "decision_crusade_standing_req"
+			var:murim_jianghu_standing >= 70
+		}
+		custom_description = {
+			text = "decision_crusade_alignment_req"
+			var:murim_alignment >= 50
+		}
+		custom_description = {
+			text = "decision_crusade_cultivation_req"
+			OR = {
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+	}
+
+	cost = {
+		prestige = 500
+		gold = 200
+		piety = 100
+	}
+
+	effect = {
+		# 10-year cooldown = 3650 days
+		add_character_flag = {
+			flag = murim_righteous_crusade_cooldown
+			days = 3650
+		}
+
+		# Massive standing boost -- you are leading the righteous
+		change_variable = {
+			name = murim_jianghu_standing
+			add = 15
+		}
+
+		# Face boost -- everyone knows your name
+		change_variable = {
+			name = murim_face
+			add = 30
+		}
+
+		# Alignment hardened toward orthodox
+		change_variable = {
+			name = murim_alignment
+			add = 20
+		}
+
+		# Apply crusade modifier (combat bonuses, vassal opinion)
+		add_character_modifier = {
+			modifier = murim_righteous_crusade_leader
+			years = 3
+		}
+
+		# Fire the crusade event chain
+		trigger_event = {
+			id = murim_jiang.0005
+			days = 5
+		}
+
+		custom_tooltip = declare_righteous_crusade_effect_tt
+
+		# Rally orthodox cultivators
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_wulin_alliance_member
+				NOT = { this = root }
+			}
+			trigger_event = {
+				id = murim_jiang.0011
+				days = 10
+			}
+		}
+
+		# Demonic sects receive warning
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_demonic_cultivator
+			}
+			trigger_event = {
+				id = murim_jiang.0011
+				days = 15
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_declared_crusade_opinion
+				opinion = -30
+			}
+		}
+
+		stress_impact = {
+			craven = major_stress_impact_gain
+			compassionate = minor_stress_impact_gain
+			brave = medium_stress_impact_loss
+			zealous = medium_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_orthodox_cultivator
+		var:murim_jianghu_standing >= 70
+		var:murim_alignment >= 50
+		OR = {
+			has_trait = zealous
+			has_trait = brave
+			has_trait = ambitious
+		}
+	}
+
+	ai_will_do = {
+		base = 15
+		modifier = {
+			add = 25
+			has_trait = zealous
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = 10
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -30
+			has_trait = craven
+		}
+		modifier = {
+			add = 20
+			# More likely during high demonic activity
+			any_living_character = {
+				count >= 3
+				has_character_flag = murim_demonic_cultivator
+				has_character_flag = murim_sect_master
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# 6. ESTABLISH SPY NETWORK
+# Create an intelligence network across the jianghu.
+# Costs gold. Provides intrigue bonuses and early warning of
+# hostile schemes. Takes 1 year to fully establish.
+# =============================================================
+
+establish_spy_network = {
+	picture = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	ai_check_interval = 120
+
+	desc = establish_spy_network_desc
+	selection_tooltip = establish_spy_network_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+		NOT = { has_character_flag = murim_spy_network_active }
+		NOT = { has_character_flag = murim_spy_network_building }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		gold >= 150
+		intrigue >= 8
+		custom_description = {
+			text = "decision_spy_net_standing_req"
+			var:murim_jianghu_standing >= 15
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 150
+			if = {
+				limit = { has_character_flag = murim_sect_master }
+				# Sect masters get a discount -- use sect resources
+				multiply = 0.75
+			}
+		}
+	}
+
+	effect = {
+		# Mark network as under construction
+		add_character_flag = murim_spy_network_building
+
+		# Apply building modifier (1 year = 365 days)
+		add_character_modifier = {
+			modifier = murim_spy_network_establishing
+			days = 365
+		}
+
+		# After 1 year, the network event fires to finalize
+		trigger_event = {
+			id = murim_jiang.0006
+			days = 365
+		}
+
+		# Immediate minor intrigue bonus while building
+		add_character_modifier = {
+			modifier = murim_spy_network_partial
+			days = 365
+		}
+
+		custom_tooltip = establish_spy_network_effect_tt
+
+		# Minor standing loss -- spying is not honorable
+		if = {
+			limit = { has_character_flag = murim_orthodox_cultivator }
+			change_variable = {
+				name = murim_jianghu_standing
+				add = -2
+			}
+			change_variable = {
+				name = murim_alignment
+				add = -3
+			}
+		}
+
+		# Demonic cultivators find this natural
+		if = {
+			limit = { has_character_flag = murim_demonic_cultivator }
+			change_variable = {
+				name = murim_jianghu_standing
+				add = 1
+			}
+		}
+
+		stress_impact = {
+			honest = medium_stress_impact_gain
+			trusting = minor_stress_impact_gain
+			paranoid = minor_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		intrigue >= 10
+		gold >= 200
+		OR = {
+			has_trait = deceitful
+			has_trait = paranoid
+			has_trait = ambitious
+			has_character_flag = murim_sect_master
+		}
+	}
+
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 25
+			has_trait = paranoid
+		}
+		modifier = {
+			add = 20
+			has_trait = deceitful
+		}
+		modifier = {
+			add = 15
+			has_character_flag = murim_sect_master
+		}
+		modifier = {
+			add = -30
+			has_trait = honest
+		}
+		modifier = {
+			add = -20
+			has_trait = trusting
+		}
+		modifier = {
+			add = 10
+			has_character_flag = murim_demonic_cultivator
+		}
+	}
+}
+
+
+# =============================================================
+# 7. ATTEND WULIN GATHERING
+# Travel to the annual martial world gathering.
+# Networking: gain contacts, hear rumors, make deals, find rivals.
+# Costs gold for travel. Cooldown: 1 year.
+# =============================================================
+
+attend_wulin_gathering = {
+	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+	ai_check_interval = 120
+
+	desc = attend_wulin_gathering_desc
+	selection_tooltip = attend_wulin_gathering_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		NOT = { has_character_flag = murim_wulin_gathering_cooldown }
+		gold >= 30
+		custom_description = {
+			text = "decision_gathering_not_in_war"
+			is_at_war = no
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 30
+			# Further you are from heartland, more travel costs
+			if = {
+				limit = { highest_held_title_tier >= tier_kingdom }
+				add = 20
+			}
+		}
+		prestige = 25
+	}
+
+	effect = {
+		# 1-year cooldown = 365 days
+		add_character_flag = {
+			flag = murim_wulin_gathering_cooldown
+			days = 365
+		}
+
+		# Traveling modifier (gone for ~30 days)
+		add_character_modifier = {
+			modifier = murim_on_jianghu_quest
+			days = 30
+		}
+
+		# Passive standing boost from showing up
+		change_variable = {
+			name = murim_jianghu_standing
+			add = 2
+		}
+
+		# Face boost -- being seen at the gathering
+		change_variable = {
+			name = murim_face
+			add = 5
+		}
+
+		# Fire the gathering event chain
+		trigger_event = {
+			id = murim_jiang.0007
+			days = 5
+		}
+
+		custom_tooltip = attend_wulin_gathering_effect_tt
+
+		stress_impact = {
+			shy = minor_stress_impact_gain
+			reclusive = medium_stress_impact_gain
+			gregarious = minor_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		gold >= 50
+		is_at_war = no
+		OR = {
+			has_trait = gregarious
+			has_trait = ambitious
+			has_trait = diplomacy_lifestyle
+		}
+		NOT = { has_trait = shy }
+	}
+
+	ai_will_do = {
+		base = 40
+		modifier = {
+			add = 20
+			has_trait = gregarious
+		}
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -25
+			has_trait = shy
+		}
+		modifier = {
+			add = 10
+			has_character_flag = murim_wulin_alliance_member
+		}
+		modifier = {
+			add = 10
+			var:murim_jianghu_standing < 30
+			# More motivated to attend when low standing
+		}
+	}
+}
+
+
+# =============================================================
+# 8. ISSUE JIANGHU BOUNTY
+# Place a bounty on an enemy cultivator. Costs gold (bounty
+# price). Sends assassins and bounty hunters after the target.
+# Effectiveness scales with gold invested.
+# Dishonorable if target has done nothing wrong.
+# =============================================================
+
+issue_jianghu_bounty = {
+	picture = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	ai_check_interval = 120
+
+	desc = issue_jianghu_bounty_desc
+	selection_tooltip = issue_jianghu_bounty_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+		NOT = { has_character_flag = murim_bounty_cooldown }
+		gold >= 100
+		custom_description = {
+			text = "decision_bounty_standing_req"
+			var:murim_jianghu_standing >= 10
+		}
+		custom_description = {
+			text = "decision_bounty_has_rival"
+			any_relation = {
+				type = rival
+				has_character_flag = murim_initiated
+			}
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 100
+			# Bounty on higher-ranked cultivators costs more
+		}
+	}
+
+	effect = {
+		# Cooldown: 1 year
+		add_character_flag = {
+			flag = murim_bounty_cooldown
+			days = 365
+		}
+
+		# Fire bounty placement event -- player chooses target and amount
+		trigger_event = {
+			id = murim_jiang.0008
+			days = 1
+		}
+
+		custom_tooltip = issue_jianghu_bounty_effect_tt
+
+		# Dishonorable action -- standing and alignment consequences
+		# (Applied conditionally in the event based on target's crimes)
+		change_variable = {
+			name = murim_face
+			add = -5
+		}
+
+		# Orthodox cultivators lose alignment for bounty hunting
+		if = {
+			limit = { has_character_flag = murim_orthodox_cultivator }
+			change_variable = {
+				name = murim_alignment
+				add = -5
+			}
+		}
+
+		# Demonic cultivators find this entirely normal
+		if = {
+			limit = { has_character_flag = murim_demonic_cultivator }
+			change_variable = {
+				name = murim_face
+				add = 3
+			}
+		}
+
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+			just = minor_stress_impact_gain
+			vengeful = minor_stress_impact_loss
+			sadistic = minor_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		gold >= 150
+		any_relation = {
+			type = rival
+			has_character_flag = murim_initiated
+		}
+		OR = {
+			has_trait = vengeful
+			has_trait = wrathful
+			has_trait = sadistic
+			has_trait = ambitious
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+		modifier = {
+			add = 30
+			has_trait = vengeful
+		}
+		modifier = {
+			add = 20
+			has_trait = wrathful
+		}
+		modifier = {
+			add = 15
+			has_trait = sadistic
+		}
+		modifier = {
+			add = -30
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -20
+			has_trait = just
+		}
+		modifier = {
+			add = 15
+			has_character_flag = murim_demonic_cultivator
+		}
+	}
+}
+
+
+# =============================================================
+# 9. RETIRE FROM JIANGHU
+# Formally withdraw from the martial world. Removes most murim
+# mechanics but grants lasting peace. Can be reversed by
+# re-entering the jianghu, but at a massive standing penalty.
+# For characters who want out of the endless cycle of violence.
+# =============================================================
+
+retire_from_jianghu = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	major = yes
+	ai_check_interval = 180
+
+	desc = retire_from_jianghu_desc
+	selection_tooltip = retire_from_jianghu_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		is_at_war = no
+		custom_description = {
+			text = "decision_retire_not_sect_master"
+			NOT = { has_character_flag = murim_sect_master }
+		}
+		custom_description = {
+			text = "decision_retire_not_alliance_lord"
+			NOT = { has_character_flag = murim_wulin_alliance_lord }
+		}
+	}
+
+	cost = {
+		prestige = 100
+	}
+
+	effect = {
+		# Mark as retired
+		add_character_flag = murim_retired_from_jianghu
+
+		# Remove active jianghu flags
+		remove_character_flag = murim_wulin_alliance_member
+		remove_character_flag = murim_wandering_hero
+		remove_character_flag = murim_spy_network_active
+		remove_character_flag = murim_spy_network_building
+
+		# Halve standing -- the world forgets
+		change_variable = {
+			name = murim_jianghu_standing
+			multiply = 0.5
+		}
+
+		# Remove combat modifiers
+		if = {
+			limit = { has_character_modifier = murim_on_jianghu_quest }
+			remove_character_modifier = murim_on_jianghu_quest
+		}
+		if = {
+			limit = { has_character_modifier = murim_spy_network_partial }
+			remove_character_modifier = murim_spy_network_partial
+		}
+
+		# Grant peace of mind
+		add_character_modifier = {
+			modifier = murim_retired_cultivator_peace
+		}
+
+		# Stress relief -- you are free from the martial world
+		add_stress = -30
+
+		# Fire retirement event
+		trigger_event = {
+			id = murim_jiang.0009
+			days = 1
+		}
+
+		custom_tooltip = retire_from_jianghu_effect_tt
+
+		# Reactions
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_initiated
+				has_relation_rival = root
+			}
+			# Rivals are disappointed
+			add_opinion = {
+				target = root
+				modifier = murim_retired_rival_opinion
+				opinion = -10
+			}
+		}
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_initiated
+				has_relation_friend = root
+			}
+			# Friends understand
+			add_opinion = {
+				target = root
+				modifier = murim_retired_friend_opinion
+				opinion = 5
+			}
+		}
+	}
+
+	ai_potential = {
+		age >= 50
+		OR = {
+			has_trait = content
+			has_trait = temperate
+			has_trait = calm
+			health <= 3
+		}
+		NOT = { has_trait = ambitious }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			add = 15
+			has_trait = content
+		}
+		modifier = {
+			add = 10
+			has_trait = calm
+		}
+		modifier = {
+			add = 20
+			age >= 65
+		}
+		modifier = {
+			add = 25
+			health <= 2
+		}
+		modifier = {
+			add = -50
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -30
+			has_trait = brave
+		}
+		modifier = {
+			add = 15
+			stress >= 80
+		}
+	}
+}
+
+
+# =============================================================
+# 10. CLAIM SUPREME TITLE
+# Declare yourself the Supreme Martial Artist of the Jianghu.
+# Requires standing 90+ and cultivation rank 5+ (Nascent Soul).
+# Every major sect will either submit or challenge you.
+# Triggers the ultimate Jianghu event chain.
+# The single most momentous decision a cultivator can make.
+# =============================================================
+
+claim_supreme_title = {
+	picture = "gfx/interface/illustrations/decisions/decision_dynasty_house.dds"
+	major = yes
+	ai_check_interval = 360
+
+	desc = claim_supreme_title_desc
+	selection_tooltip = claim_supreme_title_tooltip
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_adult = yes
+		NOT = { has_character_flag = murim_supreme_martial_artist }
+		NOT = { has_character_flag = murim_retired_from_jianghu }
+	}
+
+	is_valid_showing_failures_only = {
+		is_available = yes
+		is_alive = yes
+		is_imprisoned = no
+		custom_description = {
+			text = "decision_supreme_standing_req"
+			var:murim_jianghu_standing >= 90
+		}
+		custom_description = {
+			text = "decision_supreme_cultivation_req"
+			OR = {
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+		custom_description = {
+			text = "decision_supreme_no_other_supreme"
+			NOT = {
+				any_living_character = {
+					has_character_flag = murim_supreme_martial_artist
+				}
+			}
+		}
+		custom_description = {
+			text = "decision_supreme_prowess_req"
+			prowess >= 25
+		}
+	}
+
+	cost = {
+		prestige = 1000
+		gold = 500
+		piety = 200
+	}
+
+	effect = {
+		# The claim -- now everyone must respond
+		add_character_flag = murim_supreme_martial_artist
+
+		# Maximum standing
+		set_variable = {
+			name = murim_jianghu_standing
+			value = 100
+		}
+
+		# Massive face -- the entire martial world is watching
+		set_variable = {
+			name = murim_face
+			value = 50
+		}
+
+		# Grant the Supreme modifier -- massive bonuses but constant threats
+		add_character_modifier = {
+			modifier = murim_supreme_martial_artist_modifier
+		}
+
+		# Prestige explosion
+		add_prestige = 1000
+
+		# Fire the ultimate event chain
+		# Every sect master receives a submission/challenge event
+		trigger_event = {
+			id = murim_jiang.0010
+			days = 1
+		}
+
+		custom_tooltip = claim_supreme_title_effect_tt
+
+		# Every sect master must choose: submit or fight
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_sect_master
+				NOT = { this = root }
+			}
+			trigger_event = {
+				id = murim_jiang.0013
+				days = 14
+			}
+		}
+
+		# All Wulin Alliance members react
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_wulin_alliance_member
+				NOT = { has_character_flag = murim_sect_master }
+				NOT = { this = root }
+			}
+			trigger_event = {
+				id = murim_jiang.0013
+				days = 21
+			}
+		}
+
+		# Demonic cultivators see an opportunity or a threat
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_demonic_cultivator
+				NOT = { this = root }
+			}
+			trigger_event = {
+				id = murim_jiang.0013
+				days = 28
+			}
+		}
+
+		# Dread impact -- this is a power move
+		add_dread = 30
+
+		stress_impact = {
+			humble = major_stress_impact_gain
+			content = major_stress_impact_gain
+			craven = major_stress_impact_gain
+			ambitious = major_stress_impact_loss
+			arrogant = minor_stress_impact_loss
+		}
+	}
+
+	ai_potential = {
+		var:murim_jianghu_standing >= 90
+		prowess >= 25
+		OR = {
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+		}
+		OR = {
+			has_trait = ambitious
+			has_trait = arrogant
+		}
+		NOT = { has_trait = humble }
+		NOT = { has_trait = content }
+	}
+
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 40
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 25
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 20
+			has_trait = murim_spirit_severing
+		}
+		modifier = {
+			add = -100
+			has_trait = humble
+		}
+		modifier = {
+			add = -80
+			has_trait = content
+		}
+		modifier = {
+			add = -50
+			has_trait = craven
+		}
+		modifier = {
+			add = 15
+			has_character_flag = murim_wulin_alliance_lord
+		}
+		modifier = {
+			add = 10
+			var:murim_duels_won >= 10
+		}
+	}
+}

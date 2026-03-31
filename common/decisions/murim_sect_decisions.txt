@@ -1,0 +1,1598 @@
+################################################################
+# MURIM CHRONICLES -- SECT MANAGEMENT DECISIONS
+# Path: common/decisions/murim_sect_decisions.txt
+# 10 Sect-focused decisions for martial world gameplay.
+#
+# References:
+#   Variables: var:murim_cultivation_xp, var:murim_jianghu_standing,
+#     var:murim_sect_power, var:murim_sect_member_count,
+#     var:murim_sect_treasury, var:murim_sect_territory_count,
+#     var:murim_sect_avg_top_cultivation, var:murim_alignment,
+#     var:murim_face
+#   Flags: murim_initiated, murim_sect_master, murim_sect_member,
+#     murim_sect_elder, murim_orthodox_cultivator,
+#     murim_demonic_cultivator, murim_sect_sanctioned
+#   Traits: murim_outer_qi, murim_qi_gathering, murim_foundation,
+#     murim_golden_core, murim_nascent_soul, murim_spirit_severing
+#   Script values: murim_cultivation_rank_value,
+#     murim_sect_master_authority, murim_sect_power_calculation
+#   Effects: murim_init_sect_master_variables
+################################################################
+
+# ============================================================
+# 1. FOUND YOUR OWN SECT
+# Major decision. You've walked the path long enough alone.
+# Now you forge a legacy that will outlast your mortal frame.
+# Costs: 300 gold + 200 prestige. Requires cultivation rank 3+
+# (Foundation) and jianghu standing 40+.
+# ============================================================
+found_murim_sect = {
+    is_shown = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_sect_master }
+        is_ruler = yes
+    }
+
+    is_valid = {
+        has_character_flag = murim_initiated
+        # Must be Foundation rank or higher (rank value >= 3)
+        OR = {
+            has_trait = murim_foundation
+            has_trait = murim_golden_core
+            has_trait = murim_nascent_soul
+            has_trait = murim_spirit_severing
+        }
+        # Need real reputation in the Jianghu
+        exists = var:murim_jianghu_standing
+        var:murim_jianghu_standing >= 40
+        # Not already leading a sect
+        NOT = { has_character_flag = murim_sect_master }
+        # Must be landed (need a physical base)
+        is_ruler = yes
+        # Can afford it
+        gold >= 300
+        prestige >= 200
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+        is_incapable = no
+    }
+
+    cost = {
+        gold = 300
+        prestige = 200
+    }
+
+    cooldown = { years = 100 }  # Effectively once per lifetime
+
+    is_highlighted = {
+        has_character_flag = murim_initiated
+        OR = {
+            has_trait = murim_foundation
+            has_trait = murim_golden_core
+            has_trait = murim_nascent_soul
+            has_trait = murim_spirit_severing
+        }
+    }
+
+    # Major decision -- shows in the important decisions panel
+    major = yes
+
+    ai_check_interval = 60
+
+    ai_potential = {
+        has_character_flag = murim_initiated
+        OR = {
+            has_trait = murim_golden_core
+            has_trait = murim_nascent_soul
+            has_trait = murim_spirit_severing
+        }
+        exists = var:murim_jianghu_standing
+        var:murim_jianghu_standing >= 50
+        gold >= 450
+        prestige >= 300
+    }
+
+    ai_will_do = {
+        base = 30
+        modifier = {
+            add = 20
+            has_trait = ambitious
+        }
+        modifier = {
+            add = 15
+            has_trait = murim_nascent_soul
+        }
+        modifier = {
+            add = 30
+            has_trait = murim_spirit_severing
+        }
+        modifier = {
+            add = -20
+            has_trait = content
+        }
+        modifier = {
+            add = -40
+            has_trait = lazy
+        }
+    }
+
+    effect = {
+        # ---- Narrative flavor ----
+        custom_tooltip = found_murim_sect_tooltip
+
+        # ---- Initialize sect master variables ----
+        murim_init_sect_master_variables = yes
+
+        # ---- Remove old sect membership if any ----
+        if = {
+            limit = { has_character_flag = murim_sect_member }
+            remove_character_flag = murim_sect_member
+        }
+        if = {
+            limit = { has_character_flag = murim_sect_elder }
+            remove_character_flag = murim_sect_elder
+        }
+
+        # ---- Grant sect master trait ----
+        add_trait = sect_master
+
+        # ---- Massive standing boost -- founding a sect is legendary ----
+        change_variable = {
+            name = murim_jianghu_standing
+            add = 20
+        }
+        if = {
+            limit = { var:murim_jianghu_standing > 100 }
+            set_variable = { name = murim_jianghu_standing value = 100 }
+        }
+
+        # ---- Face boost ----
+        change_variable = {
+            name = murim_face
+            add = 25
+        }
+
+        # ---- Seed the sect treasury from personal gold ----
+        change_variable = {
+            name = murim_sect_treasury
+            add = 50
+        }
+
+        # ---- Prestige from the accomplishment ----
+        add_prestige = 300
+
+        # ---- Fire the founding ceremony event ----
+        trigger_event = {
+            id = murim_sect.0001
+            days = 3
+        }
+
+        # ---- Notify nearby rulers ----
+        every_neighboring_ruler = {
+            limit = { has_character_flag = murim_initiated }
+            trigger_event = {
+                id = murim_sect.0002
+                days = 14
+            }
+        }
+
+        # ---- Hidden: potential disciples hear of it ----
+        hidden_effect = {
+            # Add 3 starting courtiers with murim_initiated flag
+            create_character = {
+                age = { 16 25 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_outer_qi
+                save_scope_as = disciple_1
+            }
+            scope:disciple_1 = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 0 }
+                set_variable = { name = murim_jianghu_standing value = 5 }
+            }
+            create_character = {
+                age = { 18 30 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_outer_qi
+                save_scope_as = disciple_2
+            }
+            scope:disciple_2 = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 0 }
+                set_variable = { name = murim_jianghu_standing value = 5 }
+            }
+            create_character = {
+                age = { 20 35 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_qi_gathering
+                save_scope_as = disciple_3
+            }
+            scope:disciple_3 = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 0 }
+                set_variable = { name = murim_jianghu_standing value = 10 }
+            }
+        }
+    }
+}
+
+# ============================================================
+# 2. CHALLENGE SECT MASTER FOR LEADERSHIP
+# You've seen the rot in your master's heart. The sect
+# deserves better. Time to stake your claim -- with fists.
+# Win = become master. Lose = expelled... or worse.
+# ============================================================
+challenge_sect_master = {
+    is_shown = {
+        has_character_flag = murim_initiated
+        has_character_flag = murim_sect_member
+        NOT = { has_character_flag = murim_sect_master }
+    }
+
+    is_valid = {
+        has_character_flag = murim_initiated
+        has_character_flag = murim_sect_member
+        NOT = { has_character_flag = murim_sect_master }
+        # Must have some cultivation -- not a fresh outer disciple
+        OR = {
+            has_trait = murim_qi_gathering
+            has_trait = murim_foundation
+            has_trait = murim_golden_core
+            has_trait = murim_nascent_soul
+            has_trait = murim_spirit_severing
+        }
+        # Need minimum standing to even dare
+        exists = var:murim_jianghu_standing
+        var:murim_jianghu_standing >= 20
+        # Not a coward
+        NOT = { has_trait = craven }
+        # Has a liege (the sect master)
+        exists = liege
+        liege = {
+            has_character_flag = murim_sect_master
+        }
+        prestige >= 100
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+        is_incapable = no
+    }
+
+    cost = {
+        prestige = 100
+    }
+
+    cooldown = { years = 5 }
+
+    ai_check_interval = 36
+
+    ai_potential = {
+        has_character_flag = murim_sect_member
+        NOT = { has_character_flag = murim_sect_master }
+        OR = {
+            has_trait = murim_foundation
+            has_trait = murim_golden_core
+            has_trait = murim_nascent_soul
+            has_trait = murim_spirit_severing
+        }
+        OR = {
+            has_trait = ambitious
+            opinion = { target = liege value < -20 }
+        }
+    }
+
+    ai_will_do = {
+        base = 5
+        modifier = {
+            add = 30
+            has_trait = ambitious
+        }
+        modifier = {
+            add = 20
+            prowess >= 20
+        }
+        modifier = {
+            add = -50
+            has_trait = content
+        }
+        modifier = {
+            add = 15
+            has_trait = brave
+        }
+        modifier = {
+            # More likely if master is weak
+            add = 25
+            liege = { murim_sect_master_authority < 25 }
+        }
+    }
+
+    effect = {
+        custom_tooltip = challenge_sect_master_tooltip
+
+        # ---- Save the current sect master ----
+        liege = {
+            save_scope_as = current_sect_master
+        }
+
+        # ---- This is public -- face is on the line ----
+        add_character_flag = {
+            flag = murim_public_duel
+        }
+        add_character_flag = {
+            flag = murim_formal_duel
+        }
+
+        # ---- Set face change (win or lose, you're in the spotlight) ----
+        change_variable = {
+            name = murim_face
+            add = 5
+        }
+
+        # ---- Stress from the magnitude of this decision ----
+        stress_impact = {
+            base = 15
+            brave = -10
+            craven = 30
+            ambitious = -5
+        }
+
+        # ---- Fire the challenge duel event chain ----
+        trigger_event = {
+            id = murim_sect.0100
+            days = 3
+        }
+
+        # ---- Notify the sect master ----
+        scope:current_sect_master = {
+            trigger_event = {
+                id = murim_sect.0101
+                days = 1
+            }
+        }
+    }
+}
+
+# ============================================================
+# 3. RECRUIT DISCIPLES
+# Cast the net wide. The sect needs fresh blood -- young
+# bodies with clear meridians and fire in their bellies.
+# Quality depends on your reputation and sect power.
+# ============================================================
+recruit_disciples = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        gold >= 50
+        prestige >= 25
+        # Not currently suppressed (hard to recruit openly)
+        custom_tooltip = {
+            text = recruit_disciples_not_suppressed_tt
+            NOT = { has_character_modifier = murim_sect_suppressed }
+        }
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+    }
+
+    cost = {
+        gold = 50
+        prestige = 25
+    }
+
+    cooldown = { years = 1 }
+
+    ai_check_interval = 24
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        gold >= 100
+        exists = var:murim_sect_member_count
+        var:murim_sect_member_count < 20
+    }
+
+    ai_will_do = {
+        base = 40
+        modifier = {
+            add = 20
+            exists = var:murim_sect_member_count
+            var:murim_sect_member_count < 5
+        }
+        modifier = {
+            add = -20
+            exists = var:murim_sect_member_count
+            var:murim_sect_member_count >= 15
+        }
+    }
+
+    effect = {
+        custom_tooltip = recruit_disciples_tooltip
+
+        # ---- Number recruited based on standing + sect power ----
+        # Base: 1-3 disciples. High standing/power = more and better.
+
+        # ---- Always get at least one outer disciple ----
+        create_character = {
+            age = { 14 22 }
+            faith = root.faith
+            culture = root.culture
+            dynasty = none
+            trait = murim_outer_qi
+            save_scope_as = new_disciple_1
+        }
+        scope:new_disciple_1 = {
+            add_character_flag = murim_initiated
+            add_character_flag = murim_sect_member
+            set_variable = { name = murim_cultivation_xp value = 0 }
+            set_variable = { name = murim_jianghu_standing value = 2 }
+            set_variable = { name = murim_alignment value = 0 }
+        }
+
+        # ---- Second disciple if standing is decent ----
+        if = {
+            limit = {
+                exists = var:murim_jianghu_standing
+                var:murim_jianghu_standing >= 30
+            }
+            create_character = {
+                age = { 16 25 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_outer_qi
+                save_scope_as = new_disciple_2
+            }
+            scope:new_disciple_2 = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 0 }
+                set_variable = { name = murim_jianghu_standing value = 2 }
+            }
+        }
+
+        # ---- Third disciple (quality recruit) if powerful sect ----
+        if = {
+            limit = {
+                exists = var:murim_sect_power
+                var:murim_sect_power >= 40
+                exists = var:murim_jianghu_standing
+                var:murim_jianghu_standing >= 50
+            }
+            create_character = {
+                age = { 18 28 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_qi_gathering
+                save_scope_as = new_disciple_3
+            }
+            scope:new_disciple_3 = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 30 }
+                set_variable = { name = murim_jianghu_standing value = 8 }
+            }
+        }
+
+        # ---- Update sect member count ----
+        change_variable = {
+            name = murim_sect_member_count
+            add = {
+                value = 1
+                if = {
+                    limit = {
+                        exists = var:murim_jianghu_standing
+                        var:murim_jianghu_standing >= 30
+                    }
+                    add = 1
+                }
+                if = {
+                    limit = {
+                        exists = var:murim_sect_power
+                        var:murim_sect_power >= 40
+                        exists = var:murim_jianghu_standing
+                        var:murim_jianghu_standing >= 50
+                    }
+                    add = 1
+                }
+            }
+        }
+
+        # ---- Small standing boost (people see your sect growing) ----
+        change_variable = {
+            name = murim_jianghu_standing
+            add = 2
+        }
+
+        # ---- Notification event ----
+        trigger_event = {
+            id = murim_sect.0200
+            days = 7
+        }
+    }
+}
+
+# ============================================================
+# 4. DECLARE SECT WAR
+# The time for words has passed. You paint the declaration
+# in cinnabar ink and nail it to their gate at dawn.
+# Only sect masters may declare, and only with cause.
+# ============================================================
+declare_sect_war = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+        any_neighboring_ruler = {
+            has_character_flag = murim_sect_master
+        }
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        # Must have a cause (grievance, territory dispute, honor)
+        OR = {
+            has_character_flag = murim_sect_war_cause_honor
+            has_character_flag = murim_sect_war_cause_territory
+            has_character_flag = murim_sect_war_cause_betrayal
+            # Or just be strong enough to bully (demonic sects)
+            AND = {
+                has_character_flag = murim_demonic_cultivator
+                exists = var:murim_sect_power
+                var:murim_sect_power >= 60
+            }
+        }
+        prestige >= 150
+        # Not already at war
+        NOT = { has_character_flag = murim_sect_war_active }
+        # Must have minimum sect power
+        exists = var:murim_sect_power
+        var:murim_sect_power >= 20
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+        is_incapable = no
+    }
+
+    cost = {
+        prestige = 150
+    }
+
+    cooldown = { years = 5 }
+
+    ai_check_interval = 48
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        exists = var:murim_sect_power
+        var:murim_sect_power >= 40
+        prestige >= 250
+    }
+
+    ai_will_do = {
+        base = 10
+        modifier = {
+            add = 25
+            has_character_flag = murim_demonic_cultivator
+        }
+        modifier = {
+            add = 20
+            has_trait = wrathful
+        }
+        modifier = {
+            add = 15
+            has_trait = ambitious
+        }
+        modifier = {
+            add = -30
+            has_trait = content
+        }
+        modifier = {
+            add = -20
+            has_trait = craven
+        }
+        modifier = {
+            # Strong sects are more willing
+            add = 20
+            exists = var:murim_sect_power
+            var:murim_sect_power >= 70
+        }
+    }
+
+    effect = {
+        custom_tooltip = declare_sect_war_tooltip
+
+        # ---- Mark as at war ----
+        add_character_flag = {
+            flag = murim_sect_war_active
+        }
+
+        # ---- Standing change: declaring war is bold but divisive ----
+        if = {
+            limit = { has_character_flag = murim_orthodox_cultivator }
+            # Orthodox sects lose standing for aggression
+            change_variable = {
+                name = murim_jianghu_standing
+                add = -5
+            }
+        }
+        else_if = {
+            limit = { has_character_flag = murim_demonic_cultivator }
+            # Demonic sects gain fear-respect
+            change_variable = {
+                name = murim_jianghu_standing
+                add = 5
+            }
+        }
+
+        # ---- Face impact: everyone is watching ----
+        change_variable = {
+            name = murim_face
+            add = 10
+        }
+
+        # ---- Sect morale: war is exciting ----
+        add_character_modifier = {
+            modifier = murim_sect_at_war
+            years = 3
+        }
+
+        # ---- Fire the sect war declaration event chain ----
+        trigger_event = {
+            id = murim_sect.0300
+            days = 1
+        }
+
+        # ---- Stress from the weight of command ----
+        stress_impact = {
+            base = 10
+            brave = -15
+            craven = 25
+            calm = -5
+        }
+    }
+}
+
+# ============================================================
+# 5. HOST MARTIAL TOURNAMENT
+# Three days of thunder and glory. The finest martial
+# artists in the Jianghu gather under your banner to
+# test their arts. Costly, but the prestige is immense.
+# ============================================================
+host_martial_tournament = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+        is_ruler = yes
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        is_ruler = yes
+        gold >= 150
+        prestige >= 50
+        # Must have a certain baseline power (can't be a joke sect)
+        exists = var:murim_sect_power
+        var:murim_sect_power >= 15
+        # Not during active sect war
+        NOT = { has_character_flag = murim_sect_war_active }
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+        is_incapable = no
+    }
+
+    cost = {
+        gold = 150
+        prestige = 50
+    }
+
+    cooldown = { years = 3 }
+
+    ai_check_interval = 48
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        gold >= 250
+        exists = var:murim_sect_power
+        var:murim_sect_power >= 30
+    }
+
+    ai_will_do = {
+        base = 35
+        modifier = {
+            add = 15
+            has_trait = gregarious
+        }
+        modifier = {
+            add = 10
+            diplomacy >= 15
+        }
+        modifier = {
+            add = -20
+            has_trait = shy
+        }
+        modifier = {
+            add = 20
+            has_trait = ambitious
+        }
+    }
+
+    effect = {
+        custom_tooltip = host_martial_tournament_tooltip
+
+        # ---- Big standing boost ----
+        change_variable = {
+            name = murim_jianghu_standing
+            add = 8
+        }
+        if = {
+            limit = { var:murim_jianghu_standing > 100 }
+            set_variable = { name = murim_jianghu_standing value = 100 }
+        }
+
+        # ---- Face boost: all eyes on you ----
+        change_variable = {
+            name = murim_face
+            add = 15
+        }
+
+        # ---- Sect power boost (demonstrations of strength) ----
+        change_variable = {
+            name = murim_sect_power
+            add = 5
+        }
+        if = {
+            limit = { var:murim_sect_power > 100 }
+            set_variable = { name = murim_sect_power value = 100 }
+        }
+
+        # ---- Prestige and piety ----
+        add_prestige = 200
+        add_piety = 50
+
+        # ---- May attract a talented recruit (random chance) ----
+        random = {
+            chance = 40
+            create_character = {
+                age = { 18 30 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_qi_gathering
+                save_scope_as = tournament_recruit
+            }
+            scope:tournament_recruit = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 40 }
+                set_variable = { name = murim_jianghu_standing value = 12 }
+            }
+            change_variable = {
+                name = murim_sect_member_count
+                add = 1
+            }
+        }
+
+        # ---- Improved opinion from vassals (spectacle) ----
+        every_vassal = {
+            add_opinion = {
+                target = root
+                modifier = murim_hosted_tournament_opinion
+                opinion = 15
+            }
+        }
+
+        # ---- Fire the tournament event chain ----
+        trigger_event = {
+            id = murim_jiang.0013
+            days = 5
+        }
+    }
+}
+
+# ============================================================
+# 6. ESTABLISH TRAINING GROUNDS
+# Clear the bamboo grove. Level the sparring stones.
+# Build the meditation pavilion. A sect is only as
+# strong as where its disciples train. Three tiers.
+# ============================================================
+establish_training_grounds = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        is_ruler = yes
+        # Tier-based cost check (gold is handled in cost block)
+        # Tier 1: No training grounds yet
+        # Tier 2: Already has basic
+        # Tier 3: Already has advanced
+        OR = {
+            # Tier 1: Build basic training grounds
+            AND = {
+                NOT = { has_character_modifier = murim_sect_training_grounds }
+                NOT = { has_character_modifier = murim_sect_training_grounds_advanced }
+                NOT = { has_character_modifier = murim_sect_training_grounds_legendary }
+                gold >= 100
+            }
+            # Tier 2: Upgrade to advanced
+            AND = {
+                has_character_modifier = murim_sect_training_grounds
+                NOT = { has_character_modifier = murim_sect_training_grounds_advanced }
+                NOT = { has_character_modifier = murim_sect_training_grounds_legendary }
+                gold >= 200
+            }
+            # Tier 3: Upgrade to legendary
+            AND = {
+                has_character_modifier = murim_sect_training_grounds_advanced
+                NOT = { has_character_modifier = murim_sect_training_grounds_legendary }
+                gold >= 400
+            }
+        }
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+    }
+
+    # Cost depends on current tier (handled dynamically in effect)
+    cost = {
+        gold = {
+            value = 100
+            if = {
+                limit = { has_character_modifier = murim_sect_training_grounds }
+                add = 100
+            }
+            if = {
+                limit = { has_character_modifier = murim_sect_training_grounds_advanced }
+                add = 200
+            }
+        }
+    }
+
+    cooldown = { years = 2 }
+
+    ai_check_interval = 36
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        gold >= 200
+    }
+
+    ai_will_do = {
+        base = 50
+        modifier = {
+            add = 20
+            has_trait = diligent
+        }
+        modifier = {
+            add = -30
+            has_trait = lazy
+        }
+    }
+
+    effect = {
+        custom_tooltip = establish_training_grounds_tooltip
+
+        # ---- TIER 1: Basic Training Grounds ----
+        if = {
+            limit = {
+                NOT = { has_character_modifier = murim_sect_training_grounds }
+                NOT = { has_character_modifier = murim_sect_training_grounds_advanced }
+                NOT = { has_character_modifier = murim_sect_training_grounds_legendary }
+            }
+            add_character_modifier = {
+                modifier = murim_sect_training_grounds
+                # Permanent -- no duration means lifetime
+            }
+            # Bonus: +0.25 meditation efficiency for all sect members
+            # (handled by script value murim_meditation_efficiency check)
+            custom_tooltip = training_grounds_tier_1_tooltip
+            change_variable = { name = murim_sect_power add = 3 }
+        }
+        # ---- TIER 2: Advanced Training Grounds ----
+        else_if = {
+            limit = {
+                has_character_modifier = murim_sect_training_grounds
+                NOT = { has_character_modifier = murim_sect_training_grounds_advanced }
+            }
+            remove_character_modifier = murim_sect_training_grounds
+            add_character_modifier = {
+                modifier = murim_sect_training_grounds_advanced
+            }
+            custom_tooltip = training_grounds_tier_2_tooltip
+            change_variable = { name = murim_sect_power add = 5 }
+            add_prestige = 50
+        }
+        # ---- TIER 3: Legendary Training Grounds ----
+        else_if = {
+            limit = {
+                has_character_modifier = murim_sect_training_grounds_advanced
+                NOT = { has_character_modifier = murim_sect_training_grounds_legendary }
+            }
+            remove_character_modifier = murim_sect_training_grounds_advanced
+            add_character_modifier = {
+                modifier = murim_sect_training_grounds_legendary
+            }
+            custom_tooltip = training_grounds_tier_3_tooltip
+            change_variable = { name = murim_sect_power add = 8 }
+            # Legendary grounds attract a talented disciple
+            create_character = {
+                age = { 16 24 }
+                faith = root.faith
+                culture = root.culture
+                dynasty = none
+                trait = murim_qi_gathering
+                save_scope_as = grounds_recruit
+            }
+            scope:grounds_recruit = {
+                add_character_flag = murim_initiated
+                add_character_flag = murim_sect_member
+                set_variable = { name = murim_cultivation_xp value = 50 }
+                set_variable = { name = murim_jianghu_standing value = 10 }
+            }
+            change_variable = { name = murim_sect_member_count add = 1 }
+            add_prestige = 150
+            change_variable = { name = murim_jianghu_standing add = 5 }
+        }
+
+        trigger_event = {
+            id = murim_sect.0400
+            days = 14
+        }
+    }
+}
+
+# ============================================================
+# 7. SECT ALLIANCE PROPOSAL
+# You send a jade token and a pot of aged wine to the
+# neighboring sect master. An alliance in the Jianghu
+# is sealed not with paper, but with shared cups.
+# ============================================================
+sect_alliance_proposal = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        diplomacy >= 8
+        prestige >= 75
+        # Must know of another sect master (neighboring ruler)
+        any_neighboring_ruler = {
+            has_character_flag = murim_sect_master
+            NOT = { has_character_flag = murim_sect_war_active }
+            # Not already allied
+            NOT = {
+                has_opinion_modifier = {
+                    target = root
+                    modifier = murim_sect_alliance_opinion
+                }
+            }
+        }
+        # Not currently at war with everyone
+        NOT = { has_character_flag = murim_sect_war_active }
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+    }
+
+    cost = {
+        prestige = 75
+        gold = 25
+    }
+
+    cooldown = { years = 2 }
+
+    ai_check_interval = 36
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_orthodox_cultivator
+        diplomacy >= 10
+    }
+
+    ai_will_do = {
+        base = 30
+        modifier = {
+            add = 20
+            diplomacy >= 15
+        }
+        modifier = {
+            add = 15
+            has_trait = gregarious
+        }
+        modifier = {
+            add = -25
+            has_trait = paranoid
+        }
+        modifier = {
+            # More likely during Tension Era (need allies)
+            add = 25
+            exists = global_var:murim_current_era
+            global_var:murim_current_era >= 3
+        }
+    }
+
+    effect = {
+        custom_tooltip = sect_alliance_proposal_tooltip
+
+        # ---- Diplomacy check determines success ----
+        # The proposal event will handle acceptance/rejection
+        # based on opinion, alignment compatibility, and power balance
+
+        # ---- Small face boost (being diplomatic is respected) ----
+        change_variable = {
+            name = murim_face
+            add = 3
+        }
+
+        # ---- Fire alliance proposal event ----
+        # Picks a random valid neighboring sect master as target
+        random_neighboring_ruler = {
+            limit = {
+                has_character_flag = murim_sect_master
+                NOT = { has_character_flag = murim_sect_war_active }
+                NOT = {
+                    has_opinion_modifier = {
+                        target = root
+                        modifier = murim_sect_alliance_opinion
+                    }
+                }
+            }
+            save_scope_as = alliance_target
+            trigger_event = {
+                id = murim_sect.0500
+                days = 7
+            }
+        }
+
+        # ---- Fire your side's "proposal sent" event ----
+        trigger_event = {
+            id = murim_sect.0501
+            days = 1
+        }
+    }
+}
+
+# ============================================================
+# 8. PURGE TRAITORS
+# Snakes in the grass. Rats in the granary. You've seen
+# the whispered meetings, the missing scrolls. Time to
+# clean house -- but accuse the wrong person and YOU
+# become the villain.
+# ============================================================
+purge_traitors = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        intrigue >= 8
+        # Need at least a few members to purge from
+        exists = var:murim_sect_member_count
+        var:murim_sect_member_count >= 5
+        prestige >= 50
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+        is_incapable = no
+    }
+
+    cost = {
+        prestige = 50
+    }
+
+    cooldown = { years = 3 }
+
+    ai_check_interval = 36
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        intrigue >= 12
+        OR = {
+            has_character_modifier = murim_sect_internal_strife
+            has_character_modifier = murim_ambitious_elder_present
+        }
+    }
+
+    ai_will_do = {
+        base = 15
+        modifier = {
+            add = 30
+            has_character_modifier = murim_sect_internal_strife
+        }
+        modifier = {
+            add = 20
+            has_trait = paranoid
+        }
+        modifier = {
+            add = 15
+            intrigue >= 18
+        }
+        modifier = {
+            add = -20
+            has_trait = trusting
+        }
+        modifier = {
+            add = -15
+            has_trait = compassionate
+        }
+    }
+
+    effect = {
+        custom_tooltip = purge_traitors_tooltip
+
+        # ---- Intrigue-based skill check ----
+        # High intrigue = find real traitors. Low = false accusations.
+
+        # ---- Success path (intrigue >= 14) ----
+        if = {
+            limit = { intrigue >= 14 }
+
+            # Found real spies -- remove them
+            custom_tooltip = purge_traitors_success_tooltip
+
+            # Remove internal strife if present
+            if = {
+                limit = { has_character_modifier = murim_sect_internal_strife }
+                remove_character_modifier = murim_sect_internal_strife
+            }
+
+            # Remove ambitious elder if present
+            if = {
+                limit = { has_character_modifier = murim_ambitious_elder_present }
+                remove_character_modifier = murim_ambitious_elder_present
+            }
+
+            # Small member loss (purged traitors)
+            change_variable = {
+                name = murim_sect_member_count
+                add = -2
+            }
+            if = {
+                limit = { var:murim_sect_member_count < 1 }
+                set_variable = { name = murim_sect_member_count value = 1 }
+            }
+
+            # Sect is stronger for it
+            change_variable = { name = murim_sect_power add = 5 }
+            if = {
+                limit = { var:murim_sect_power > 100 }
+                set_variable = { name = murim_sect_power value = 100 }
+            }
+
+            # Dread (fear the master's eyes)
+            add_dread = 15
+
+            # Standing boost (decisive leader)
+            change_variable = { name = murim_jianghu_standing add = 3 }
+
+            trigger_event = {
+                id = murim_sect.0600
+                days = 3
+            }
+        }
+        # ---- Partial success (intrigue 10-13) ----
+        else_if = {
+            limit = { intrigue >= 10 }
+
+            custom_tooltip = purge_traitors_partial_tooltip
+
+            # Found some spies but also accused innocents
+            change_variable = {
+                name = murim_sect_member_count
+                add = -3
+            }
+            if = {
+                limit = { var:murim_sect_member_count < 1 }
+                set_variable = { name = murim_sect_member_count value = 1 }
+            }
+
+            # Sect power: mixed effect
+            change_variable = { name = murim_sect_power add = 2 }
+
+            # Some resentment
+            add_dread = 10
+            stress_impact = {
+                base = 10
+                paranoid = -5
+                just = 15
+            }
+
+            trigger_event = {
+                id = murim_sect.0601
+                days = 3
+            }
+        }
+        # ---- Failure (intrigue < 10) ----
+        else = {
+            custom_tooltip = purge_traitors_failure_tooltip
+
+            # False accusations -- loyal members are furious
+            add_character_modifier = {
+                modifier = murim_sect_internal_strife
+                years = 3
+            }
+
+            # Lose members (defections from outrage)
+            change_variable = {
+                name = murim_sect_member_count
+                add = -4
+            }
+            if = {
+                limit = { var:murim_sect_member_count < 1 }
+                set_variable = { name = murim_sect_member_count value = 1 }
+            }
+
+            # Sect power drops hard
+            change_variable = { name = murim_sect_power add = -10 }
+            if = {
+                limit = { var:murim_sect_power < 0 }
+                set_variable = { name = murim_sect_power value = 0 }
+            }
+
+            # Standing loss (seen as paranoid tyrant)
+            change_variable = { name = murim_jianghu_standing add = -5 }
+            if = {
+                limit = { var:murim_jianghu_standing < 0 }
+                set_variable = { name = murim_jianghu_standing value = 0 }
+            }
+
+            # Major face loss
+            change_variable = { name = murim_face add = -15 }
+
+            stress_impact = {
+                base = 25
+                paranoid = 15
+                just = 30
+            }
+
+            trigger_event = {
+                id = murim_sect.0602
+                days = 3
+            }
+        }
+    }
+}
+
+# ============================================================
+# 9. SECT TREASURY CONTRIBUTION
+# The sect coffers are thin. The disciples' robes are
+# threadbare and the training weapons are splintered.
+# Time to open your own purse.
+# ============================================================
+sect_treasury_contribution = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        gold >= 75
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+    }
+
+    cost = {
+        gold = 75
+    }
+
+    cooldown = { months = 6 }
+
+    ai_check_interval = 12
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        gold >= 150
+        exists = var:murim_sect_treasury
+        var:murim_sect_treasury < 30
+    }
+
+    ai_will_do = {
+        base = 20
+        modifier = {
+            add = 30
+            exists = var:murim_sect_treasury
+            var:murim_sect_treasury < 10
+        }
+        modifier = {
+            add = 20
+            has_trait = generous
+        }
+        modifier = {
+            add = -30
+            has_trait = greedy
+        }
+        modifier = {
+            add = 15
+            has_trait = diligent
+        }
+    }
+
+    effect = {
+        custom_tooltip = sect_treasury_contribution_tooltip
+
+        # ---- Inject gold into sect treasury ----
+        change_variable = {
+            name = murim_sect_treasury
+            add = 75
+        }
+
+        # ---- Sect power boost (resources = power) ----
+        change_variable = {
+            name = murim_sect_power
+            add = 3
+        }
+        if = {
+            limit = { var:murim_sect_power > 100 }
+            set_variable = { name = murim_sect_power value = 100 }
+        }
+
+        # ---- Member loyalty boost (they see you care) ----
+        # Opinion modifier on all courtier sect members
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_sect_member
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_generous_master_opinion
+                opinion = 20
+            }
+        }
+
+        # ---- Small standing boost (generosity is noted) ----
+        change_variable = {
+            name = murim_jianghu_standing
+            add = 2
+        }
+
+        # ---- Larger contribution bonus if you're rich ----
+        if = {
+            limit = { gold >= 200 }
+            # Extra: throw in more
+            change_variable = {
+                name = murim_sect_treasury
+                add = 25
+            }
+            custom_tooltip = sect_treasury_extra_contribution_tooltip
+        }
+
+        # ---- Alignment shift (generosity is orthodox) ----
+        change_variable = {
+            name = murim_alignment
+            add = 3
+        }
+        if = {
+            limit = { var:murim_alignment > 100 }
+            set_variable = { name = murim_alignment value = 100 }
+        }
+    }
+}
+
+# ============================================================
+# 10. OPEN SECT TEACHINGS
+# "Master, you can't be serious. Our techniques, sold
+# like turnips at the market?!" The elders are furious.
+# But gold is gold, and outsiders bring fresh perspectives.
+# Controversial. Profitable. Possibly ruinous.
+# ============================================================
+open_sect_teachings = {
+    is_shown = {
+        has_character_flag = murim_sect_master
+    }
+
+    is_valid = {
+        has_character_flag = murim_sect_master
+        has_character_flag = murim_sect_master_vars_initialized
+        # Must have actual techniques worth teaching
+        OR = {
+            has_trait = murim_foundation
+            has_trait = murim_golden_core
+            has_trait = murim_nascent_soul
+            has_trait = murim_spirit_severing
+        }
+        # Need some authority to push this through
+        murim_sect_master_authority >= 40
+        # Sect must have established itself
+        exists = var:murim_sect_power
+        var:murim_sect_power >= 25
+        # Not already opened
+        NOT = { has_character_flag = murim_sect_teachings_open }
+        prestige >= 100
+    }
+
+    is_valid_showing_failures_only = {
+        is_alive = yes
+        is_imprisoned = no
+        is_incapable = no
+    }
+
+    cost = {
+        prestige = 100
+    }
+
+    cooldown = { years = 5 }
+
+    ai_check_interval = 60
+
+    ai_potential = {
+        has_character_flag = murim_sect_master
+        gold < 100
+        exists = var:murim_sect_treasury
+        var:murim_sect_treasury < 20
+        murim_sect_master_authority >= 60
+    }
+
+    ai_will_do = {
+        base = 10
+        modifier = {
+            add = 20
+            has_trait = greedy
+        }
+        modifier = {
+            add = 15
+            gold < 50
+        }
+        modifier = {
+            add = -30
+            has_character_flag = murim_orthodox_cultivator
+            # Orthodox sects hate sharing secrets
+        }
+        modifier = {
+            add = 15
+            has_trait = gregarious
+        }
+        modifier = {
+            add = -20
+            has_trait = paranoid
+        }
+    }
+
+    effect = {
+        custom_tooltip = open_sect_teachings_tooltip
+
+        # ---- Flag: teachings are now open ----
+        add_character_flag = {
+            flag = murim_sect_teachings_open
+        }
+
+        # ---- Immediate gold income (outsiders pay for access) ----
+        add_gold = 100
+        change_variable = {
+            name = murim_sect_treasury
+            add = 50
+        }
+
+        # ---- Ongoing income modifier ----
+        add_character_modifier = {
+            modifier = murim_sect_open_teachings_income
+            years = 5
+        }
+
+        # ---- Recruit surge (outsiders become members) ----
+        create_character = {
+            age = { 20 35 }
+            faith = root.faith
+            culture = root.culture
+            dynasty = none
+            trait = murim_outer_qi
+            save_scope_as = outside_recruit_1
+        }
+        scope:outside_recruit_1 = {
+            add_character_flag = murim_initiated
+            add_character_flag = murim_sect_member
+            set_variable = { name = murim_cultivation_xp value = 15 }
+            set_variable = { name = murim_jianghu_standing value = 5 }
+        }
+        create_character = {
+            age = { 22 40 }
+            faith = root.faith
+            culture = root.culture
+            dynasty = none
+            trait = murim_outer_qi
+            save_scope_as = outside_recruit_2
+        }
+        scope:outside_recruit_2 = {
+            add_character_flag = murim_initiated
+            add_character_flag = murim_sect_member
+            set_variable = { name = murim_cultivation_xp value = 10 }
+            set_variable = { name = murim_jianghu_standing value = 3 }
+        }
+        change_variable = {
+            name = murim_sect_member_count
+            add = 2
+        }
+
+        # ---- BUT: Traditionalist elders are FURIOUS ----
+        # Authority hit (you overruled them)
+        # (Authority is a calculated script value, so we add strife modifier instead)
+        add_character_modifier = {
+            modifier = murim_sect_internal_strife
+            years = 2
+        }
+
+        # ---- Some existing members may defect in protest ----
+        random = {
+            chance = 30
+            change_variable = {
+                name = murim_sect_member_count
+                add = -1
+            }
+            custom_tooltip = open_sect_teachings_defection_tooltip
+        }
+
+        # ---- Standing: mixed reaction ----
+        # Orthodox world disapproves, free cultivators approve
+        if = {
+            limit = { has_character_flag = murim_orthodox_cultivator }
+            change_variable = { name = murim_jianghu_standing add = -5 }
+            custom_tooltip = open_teachings_orthodox_disapproval_tooltip
+        }
+        else = {
+            change_variable = { name = murim_jianghu_standing add = 3 }
+        }
+
+        # ---- Face: controversial but bold ----
+        change_variable = { name = murim_face add = 8 }
+
+        # ---- Alignment: sharing knowledge is slightly orthodox ----
+        change_variable = { name = murim_alignment add = 2 }
+        if = {
+            limit = { var:murim_alignment > 100 }
+            set_variable = { name = murim_alignment value = 100 }
+        }
+
+        # ---- Stress from the backlash ----
+        stress_impact = {
+            base = 15
+            gregarious = -10
+            shy = 10
+            paranoid = 20
+        }
+
+        # ---- Fire the aftermath event ----
+        trigger_event = {
+            id = murim_sect.0700
+            days = 14
+        }
+    }
+}

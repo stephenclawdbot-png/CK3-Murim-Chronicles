@@ -1,0 +1,1871 @@
+################################################################
+# MURIM CHRONICLES -- CULTIVATION DECISIONS
+# Path: common/decisions/murim_cultivation_decisions.txt
+# Player-facing decisions for cultivation progression.
+# All decisions require murim_initiated flag.
+#
+# Decisions:
+#   1. meditate_in_seclusion
+#   2. attempt_breakthrough
+#   3. study_martial_manual
+#   4. temper_body
+#   5. open_meridian
+#   6. refine_qi
+#   7. enter_closed_door_cultivation
+#   8. seek_cultivation_resources
+#   9. challenge_heavenly_tribulation
+#  10. create_cultivation_technique
+#
+# Variables referenced (from murim_variable_init.txt):
+#   var:murim_cultivation_xp, var:murim_talent,
+#   var:murim_body_tempering_level, var:murim_body_tempering_xp,
+#   var:murim_qi_reserves, var:murim_technique_mastery_minor,
+#   var:murim_technique_mastery_major, var:murim_technique_mastery_ultimate,
+#   var:murim_technique_mastery_minor_xp, var:murim_technique_mastery_major_xp,
+#   var:murim_technique_mastery_ultimate_xp,
+#   var:murim_weapon_type, var:murim_weapon_affinity,
+#   var:murim_alignment, var:murim_jianghu_standing,
+#   var:murim_manual_quality, var:murim_manual_study_xp,
+#   var:murim_meridians_opened (new, 0-12)
+#
+# Rank traits: murim_outer_qi (1), murim_qi_gathering (2),
+#   murim_foundation (3), murim_golden_core (4),
+#   murim_nascent_soul (5), murim_spirit_severing (6)
+################################################################
+
+# ==============================================================
+# 1. MEDITATE IN SECLUSION
+# Enter 30-day meditation retreat for cultivation XP.
+# Safe, reliable, bread-and-butter progression.
+# Cooldown: 6 months.
+# ==============================================================
+
+meditate_in_seclusion = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = meditate_in_seclusion_desc
+	selection_tooltip = meditate_in_seclusion_tooltip
+	major = no
+
+	ai_check_interval = 60
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+		NOR = {
+			has_character_flag = murim_in_seclusion
+			has_character_flag = murim_closed_door_cultivation
+			has_character_modifier = murim_meditating
+		}
+		custom_description = {
+			text = "murim_meditation_cooldown_not_expired"
+			NOT = { has_character_flag = murim_meditation_cooldown }
+		}
+	}
+
+	cost = {
+		prestige = {
+			value = 50
+			# Higher ranks demand more prestige (reputation cost of vanishing)
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 15
+			}
+		}
+	}
+
+	effect = {
+		# Lock for 30 days
+		add_character_flag = {
+			flag = murim_in_seclusion
+		}
+		add_character_modifier = {
+			modifier = murim_meditating
+			days = 30
+		}
+
+		# Calculate XP gain based on learning
+		custom_tooltip = murim_meditation_xp_gain_tooltip
+		hidden_effect = {
+			# Base XP: learning * 0.8, clamped
+			change_variable = {
+				name = murim_cultivation_xp
+				add = {
+					value = learning
+					multiply = 0.8
+					# Talent modifier
+					multiply = murim_cultivation_talent_modifier
+					# Meditation efficiency (traits, stress, etc.)
+					multiply = murim_meditation_efficiency
+					min = 2
+					max = 30
+					round = yes
+				}
+			}
+
+			# Bonus for patient/temperate characters
+			if = {
+				limit = { has_trait = patient }
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 3
+				}
+			}
+			if = {
+				limit = { has_trait = temperate }
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 2
+				}
+			}
+
+			# Small stress loss (meditation is calming)
+			add_stress = -10
+
+			# Set cooldown flag (6 months)
+			add_character_flag = {
+				flag = murim_meditation_cooldown
+				months = 6
+			}
+
+			# Remove seclusion lock after 30 days via event
+			trigger_event = {
+				id = murim_cultivation.001
+				days = 30
+			}
+		}
+
+		# Flavor text
+		custom_tooltip = murim_meditation_flavor_tooltip
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		is_at_war = no
+		stress >= 20
+	}
+
+	ai_will_do = {
+		base = 30
+
+		# AI more likely if high stress or low XP
+		modifier = {
+			add = 20
+			stress >= 50
+		}
+		modifier = {
+			add = 15
+			has_trait = patient
+		}
+		modifier = {
+			add = 10
+			has_trait = temperate
+		}
+		modifier = {
+			add = -20
+			has_trait = impatient
+		}
+		modifier = {
+			add = -15
+			has_trait = lazy
+		}
+		# Don't meditate if close to breakthrough (save for that)
+		modifier = {
+			add = -30
+			exists = var:murim_cultivation_xp
+			var:murim_cultivation_xp >= murim_breakthrough_threshold
+		}
+	}
+}
+
+# ==============================================================
+# 2. ATTEMPT BREAKTHROUGH
+# THE key progression decision. Advance cultivation rank.
+# Available when XP >= threshold. Complex outcomes.
+# ==============================================================
+
+attempt_breakthrough = {
+	picture = "gfx/interface/illustrations/decisions/decision_destiny_quest.dds"
+	desc = attempt_breakthrough_desc
+	selection_tooltip = attempt_breakthrough_tooltip
+	major = yes
+
+	ai_check_interval = 30
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		# Not already at max rank
+		NOT = { has_trait = murim_spirit_severing }
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_breakthrough_in_progress }
+		# Must have enough XP
+		custom_description = {
+			text = "murim_xp_meets_breakthrough_threshold"
+			exists = var:murim_cultivation_xp
+			var:murim_cultivation_xp >= murim_breakthrough_threshold
+		}
+		# Health gate: can't attempt while severely injured
+		custom_description = {
+			text = "murim_health_sufficient_for_breakthrough"
+			health >= 2
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 75
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 50
+			}
+		}
+		prestige = {
+			value = 100
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 75
+			}
+		}
+	}
+
+	effect = {
+		add_character_flag = {
+			flag = murim_breakthrough_in_progress
+		}
+
+		custom_tooltip = murim_breakthrough_attempt_tooltip
+
+		hidden_effect = {
+			# Main breakthrough roll
+			random_list = {
+				# --- CRITICAL SUCCESS ---
+				# Breakthrough + bonus XP carry-over + trait
+				5 = {
+					modifier = {
+						add = {
+							value = learning
+							multiply = 0.5
+						}
+					}
+					modifier = {
+						add = 5
+						has_trait = murim_heavenly_body
+					}
+					modifier = {
+						add = 3
+						has_character_flag = murim_manual_studied_for_breakthrough
+					}
+					trigger_event = {
+						id = murim_cultivation.101
+						days = 3
+					}
+				}
+
+				# --- STANDARD SUCCESS ---
+				# Breakthrough, XP resets, rank advances
+				murim_breakthrough_success_chance = {
+					trigger_event = {
+						id = murim_cultivation.102
+						days = 3
+					}
+				}
+
+				# --- FAILURE (No Deviation) ---
+				# Lose 30% XP, no rank change, try again later
+				20 = {
+					modifier = {
+						add = 10
+						stress >= 60
+					}
+					modifier = {
+						add = 10
+						age >= 55
+					}
+					modifier = {
+						add = -10
+						has_trait = patient
+					}
+					trigger_event = {
+						id = murim_cultivation.103
+						days = 3
+					}
+				}
+
+				# --- FAILURE WITH QI DEVIATION ---
+				# Lose XP + health damage + possible trait damage
+				murim_qi_deviation_risk = {
+					trigger_event = {
+						id = murim_cultivation.104
+						days = 3
+					}
+				}
+
+				# --- CATASTROPHIC FAILURE ---
+				# Permanent injury, massive XP loss, rank may drop
+				3 = {
+					modifier = {
+						add = 5
+						has_character_flag = murim_demonic_cultivator
+					}
+					modifier = {
+						add = 3
+						has_character_flag = murim_used_forbidden_technique
+					}
+					modifier = {
+						add = -3
+						has_character_modifier = murim_sect_master_guidance
+					}
+					trigger_event = {
+						id = murim_cultivation.105
+						days = 3
+					}
+				}
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		NOT = { has_trait = murim_spirit_severing }
+		exists = var:murim_cultivation_xp
+		var:murim_cultivation_xp >= murim_breakthrough_threshold
+	}
+
+	ai_will_do = {
+		base = 80
+
+		# AI almost always attempts when ready
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -30
+			health <= 3
+		}
+		modifier = {
+			add = -20
+			stress >= 70
+		}
+		# Demonic cultivators are more reckless
+		modifier = {
+			add = 10
+			has_character_flag = murim_demonic_cultivator
+		}
+		modifier = {
+			add = 10
+			has_character_modifier = murim_sect_master_guidance
+		}
+	}
+}
+
+# ==============================================================
+# 3. STUDY MARTIAL MANUAL
+# Spend time with a martial arts manual.
+# Gain technique mastery XP. Cooldown: 3 months.
+# ==============================================================
+
+study_martial_manual = {
+	picture = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	desc = study_martial_manual_desc
+	selection_tooltip = study_martial_manual_tooltip
+	major = no
+
+	ai_check_interval = 90
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		NOR = {
+			has_character_modifier = murim_studying_manual
+			has_character_flag = murim_in_seclusion
+			has_character_flag = murim_closed_door_cultivation
+		}
+		custom_description = {
+			text = "murim_manual_study_cooldown_not_expired"
+			NOT = { has_character_flag = murim_manual_study_cooldown }
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 30
+			# Higher quality manuals cost more
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 20
+			}
+		}
+	}
+
+	effect = {
+		# Add studying modifier (lasts 90 days, gives ongoing bonuses)
+		add_character_modifier = {
+			modifier = murim_studying_manual
+			days = 90
+		}
+
+		custom_tooltip = murim_study_manual_effects_tooltip
+
+		hidden_effect = {
+			# Determine manual quality based on rank + luck
+			random_list = {
+				# Common manual (quality 1-2)
+				50 = {
+					set_variable = {
+						name = murim_manual_quality
+						value = 1
+					}
+					set_variable = {
+						name = murim_manual_min_rank
+						value = 0
+					}
+				}
+				# Rare manual (quality 3-4)
+				30 = {
+					modifier = {
+						add = 10
+						murim_cultivation_rank_value >= 3
+					}
+					set_variable = {
+						name = murim_manual_quality
+						value = 3
+					}
+					set_variable = {
+						name = murim_manual_min_rank
+						value = 2
+					}
+				}
+				# Legendary manual (quality 5)
+				10 = {
+					modifier = {
+						add = 5
+						murim_cultivation_rank_value >= 4
+					}
+					modifier = {
+						add = 5
+						has_character_flag = murim_sect_master
+					}
+					set_variable = {
+						name = murim_manual_quality
+						value = 5
+					}
+					set_variable = {
+						name = murim_manual_min_rank
+						value = 3
+					}
+				}
+				# Forbidden manual (quality 5 + demonic)
+				10 = {
+					modifier = {
+						add = 10
+						has_character_flag = murim_demonic_cultivator
+					}
+					modifier = {
+						add = -5
+						has_character_flag = murim_orthodox_cultivator
+					}
+					set_variable = {
+						name = murim_manual_quality
+						value = 5
+					}
+					set_variable = {
+						name = murim_manual_min_rank
+						value = 2
+					}
+					# Forbidden manuals shift alignment
+					change_variable = {
+						name = murim_alignment
+						add = -8
+					}
+					add_character_flag = {
+						flag = murim_used_forbidden_technique
+					}
+				}
+			}
+
+			# Reset study XP for new manual
+			set_variable = {
+				name = murim_manual_study_xp
+				value = 0
+			}
+
+			# Immediate technique mastery XP boost
+			change_variable = {
+				name = murim_technique_mastery_minor_xp
+				add = {
+					value = learning
+					multiply = 0.3
+					min = 1
+					max = 5
+					round = yes
+				}
+			}
+
+			# Set cooldown (3 months)
+			add_character_flag = {
+				flag = murim_manual_study_cooldown
+				months = 3
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		gold >= 30
+	}
+
+	ai_will_do = {
+		base = 25
+
+		modifier = {
+			add = 15
+			has_trait = diligent
+		}
+		modifier = {
+			add = 10
+			learning >= 15
+		}
+		modifier = {
+			add = -15
+			has_trait = lazy
+		}
+		# Prioritize if approaching breakthrough
+		modifier = {
+			add = 20
+			exists = var:murim_cultivation_xp
+			var:murim_cultivation_xp >= {
+				value = murim_breakthrough_threshold
+				multiply = 0.7
+			}
+		}
+	}
+}
+
+# ==============================================================
+# 4. TEMPER BODY
+# Physical cultivation. Costs gold (medicine) + health risk.
+# Increases body_tempering variable. Cooldown: 6 months.
+# ==============================================================
+
+temper_body = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = temper_body_desc
+	selection_tooltip = temper_body_tooltip
+	major = no
+
+	ai_check_interval = 90
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+		# Max 9 body tempering levels
+		exists = var:murim_body_tempering_level
+		var:murim_body_tempering_level < 9
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_in_seclusion }
+		NOT = { has_character_flag = murim_closed_door_cultivation }
+		custom_description = {
+			text = "murim_body_tempering_cooldown_not_expired"
+			NOT = { has_character_flag = murim_body_tempering_cooldown }
+		}
+		# Need minimum health (this is physically brutal)
+		custom_description = {
+			text = "murim_health_sufficient_for_tempering"
+			health >= 3
+		}
+	}
+
+	cost = {
+		gold = {
+			# Medicinal baths get progressively more expensive
+			value = 40
+			add = {
+				value = var:murim_body_tempering_level
+				multiply = 25
+			}
+		}
+	}
+
+	effect = {
+		custom_tooltip = murim_body_tempering_effects_tooltip
+
+		hidden_effect = {
+			# Body tempering XP gain (martial + prowess based)
+			change_variable = {
+				name = murim_body_tempering_xp
+				add = {
+					value = martial
+					multiply = 0.5
+					add = {
+						value = prowess
+						multiply = 0.4
+					}
+					# Strong/Herculean traits help
+					if = {
+						limit = { has_trait = strong }
+						add = 3
+					}
+					if = {
+						limit = { has_trait = herculean }
+						add = 6
+					}
+					min = 3
+					max = 25
+					round = yes
+				}
+			}
+
+			# Health risk -- higher levels are more dangerous
+			random_list = {
+				# Safe -- no complications
+				60 = {
+					modifier = {
+						add = 10
+						has_trait = robust
+					}
+					modifier = {
+						add = 10
+						has_trait = strong
+					}
+					modifier = {
+						add = -5
+						var:murim_body_tempering_level >= 5
+					}
+					modifier = {
+						add = -10
+						var:murim_body_tempering_level >= 7
+					}
+					# Everything went fine
+					custom_tooltip = murim_tempering_safe_tooltip
+				}
+				# Minor injury -- small health loss
+				25 = {
+					modifier = {
+						add = 5
+						var:murim_body_tempering_level >= 5
+					}
+					add_character_modifier = {
+						modifier = murim_tempering_strain
+						days = 30
+					}
+				}
+				# Severe reaction -- significant health damage
+				10 = {
+					modifier = {
+						add = 5
+						var:murim_body_tempering_level >= 7
+					}
+					modifier = {
+						add = 5
+						has_trait = weak
+					}
+					modifier = {
+						add = -5
+						has_trait = herculean
+					}
+					add_character_modifier = {
+						modifier = murim_tempering_severe_strain
+						days = 60
+					}
+					# Small XP penalty (body rejected the tempering)
+					change_variable = {
+						name = murim_body_tempering_xp
+						add = -3
+					}
+				}
+				# Critical failure -- meridian damage
+				5 = {
+					modifier = {
+						add = 3
+						var:murim_body_tempering_level >= 8
+					}
+					modifier = {
+						add = -3
+						has_character_modifier = murim_sect_master_guidance
+					}
+					add_character_modifier = {
+						modifier = murim_meridian_damage_minor
+						years = 1
+					}
+					trigger_event = {
+						id = murim_cultivation.401
+						days = 1
+					}
+				}
+			}
+
+			# Prowess gain from the training
+			change_skill = {
+				prowess = 1
+			}
+
+			# Set cooldown (6 months)
+			add_character_flag = {
+				flag = murim_body_tempering_cooldown
+				months = 6
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		exists = var:murim_body_tempering_level
+		var:murim_body_tempering_level < 9
+		health >= 4
+	}
+
+	ai_will_do = {
+		base = 20
+
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = 10
+			has_trait = strong
+		}
+		modifier = {
+			add = 10
+			prowess >= 15
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+		modifier = {
+			add = -10
+			health <= 4
+		}
+	}
+}
+
+# ==============================================================
+# 5. OPEN MERIDIAN
+# Attempt to open next meridian (12 total).
+# Each grants specific bonus. Cooldown: 1 year.
+# ==============================================================
+
+open_meridian = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = open_meridian_desc
+	selection_tooltip = open_meridian_tooltip
+	major = no
+
+	ai_check_interval = 120
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_in_seclusion }
+		NOT = { has_character_flag = murim_closed_door_cultivation }
+		# Must have meridians left to open (max 12)
+		custom_description = {
+			text = "murim_meridians_remaining_to_open"
+			OR = {
+				NOT = { exists = var:murim_meridians_opened }
+				var:murim_meridians_opened < 12
+			}
+		}
+		# Cooldown check
+		custom_description = {
+			text = "murim_meridian_cooldown_not_expired"
+			NOT = { has_character_flag = murim_meridian_cooldown }
+		}
+		# Minimum cultivation rank scales with meridians opened
+		custom_description = {
+			text = "murim_rank_sufficient_for_meridian"
+			trigger_if = {
+				limit = {
+					exists = var:murim_meridians_opened
+					var:murim_meridians_opened >= 6
+				}
+				murim_cultivation_rank_value >= 3
+			}
+			trigger_if = {
+				limit = {
+					exists = var:murim_meridians_opened
+					var:murim_meridians_opened >= 9
+				}
+				murim_cultivation_rank_value >= 4
+			}
+		}
+	}
+
+	cost = {
+		prestige = {
+			value = 75
+			if = {
+				limit = { exists = var:murim_meridians_opened }
+				add = {
+					value = var:murim_meridians_opened
+					multiply = 25
+				}
+			}
+		}
+	}
+
+	effect = {
+		custom_tooltip = murim_open_meridian_effects_tooltip
+
+		hidden_effect = {
+			# Initialize if first meridian
+			if = {
+				limit = {
+					NOT = { exists = var:murim_meridians_opened }
+				}
+				set_variable = {
+					name = murim_meridians_opened
+					value = 0
+				}
+			}
+
+			# Qi cost -- uses reserves
+			if = {
+				limit = { exists = var:murim_qi_reserves }
+				change_variable = {
+					name = murim_qi_reserves
+					add = {
+						value = -10
+						subtract = {
+							value = var:murim_meridians_opened
+							multiply = 3
+						}
+					}
+				}
+				# Clamp to 0
+				if = {
+					limit = { var:murim_qi_reserves < 0 }
+					set_variable = {
+						name = murim_qi_reserves
+						value = 0
+					}
+				}
+			}
+
+			# Success roll
+			random_list = {
+				# Success -- meridian opens
+				60 = {
+					modifier = {
+						add = {
+							value = learning
+							multiply = 1.0
+						}
+					}
+					modifier = {
+						add = 10
+						has_trait = murim_heavenly_body
+					}
+					modifier = {
+						add = 5
+						has_trait = murim_pure_yin_body
+					}
+					modifier = {
+						add = 5
+						has_trait = murim_pure_yang_body
+					}
+					modifier = {
+						add = -5
+						exists = var:murim_meridians_opened
+						var:murim_meridians_opened >= 8
+					}
+
+					# Open the meridian
+					change_variable = {
+						name = murim_meridians_opened
+						add = 1
+					}
+
+					# Grant bonus based on which meridian (1-12)
+					# Meridians 1-4: stat bonuses
+					# Meridians 5-8: cultivation bonuses
+					# Meridians 9-12: transcendent bonuses
+					trigger_event = {
+						id = murim_cultivation.501
+						days = 1
+					}
+				}
+
+				# Failure -- qi backlash, no opening
+				30 = {
+					modifier = {
+						add = 5
+						exists = var:murim_meridians_opened
+						var:murim_meridians_opened >= 8
+					}
+					# Painful but not dangerous
+					add_stress = 15
+					add_character_modifier = {
+						modifier = murim_meridian_attempt_failed
+						days = 30
+					}
+				}
+
+				# Critical failure -- meridian damage
+				10 = {
+					modifier = {
+						add = 5
+						exists = var:murim_meridians_opened
+						var:murim_meridians_opened >= 10
+					}
+					modifier = {
+						add = -5
+						has_character_modifier = murim_sect_master_guidance
+					}
+					add_character_modifier = {
+						modifier = murim_meridian_damage_minor
+						years = 2
+					}
+					add_stress = 30
+					trigger_event = {
+						id = murim_cultivation.502
+						days = 1
+					}
+				}
+			}
+
+			# Set cooldown (1 year)
+			add_character_flag = {
+				flag = murim_meridian_cooldown
+				years = 1
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		OR = {
+			NOT = { exists = var:murim_meridians_opened }
+			var:murim_meridians_opened < 12
+		}
+	}
+
+	ai_will_do = {
+		base = 25
+
+		modifier = {
+			add = 15
+			learning >= 15
+		}
+		modifier = {
+			add = 10
+			has_trait = murim_heavenly_body
+		}
+		modifier = {
+			add = -10
+			health <= 3
+		}
+		modifier = {
+			add = -15
+			has_character_modifier = murim_meridian_damage_minor
+		}
+	}
+}
+
+# ==============================================================
+# 6. REFINE QI
+# Purify and compress qi reserves. Safe but slow.
+# Locks character for 30 days. No cooldown.
+# ==============================================================
+
+refine_qi = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = refine_qi_desc
+	selection_tooltip = refine_qi_tooltip
+	major = no
+
+	ai_check_interval = 60
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+		# Must have qi reserves to refine
+		exists = var:murim_qi_reserves
+		var:murim_qi_reserves >= 10
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+		NOR = {
+			has_character_flag = murim_in_seclusion
+			has_character_flag = murim_closed_door_cultivation
+			has_character_modifier = murim_meditating
+			has_character_modifier = murim_refining_qi
+		}
+	}
+
+	cost = {
+		# No gold/prestige cost -- just time
+	}
+
+	effect = {
+		# Lock for 30 days
+		add_character_modifier = {
+			modifier = murim_refining_qi
+			days = 30
+		}
+		add_character_flag = {
+			flag = murim_in_seclusion
+		}
+
+		custom_tooltip = murim_refine_qi_effects_tooltip
+
+		hidden_effect = {
+			# Increase qi quality multiplier (stored as variable)
+			if = {
+				limit = {
+					NOT = { exists = var:murim_qi_quality }
+				}
+				set_variable = {
+					name = murim_qi_quality
+					value = 100
+				}
+			}
+
+			# Each refinement adds 2-8 quality points (100 = base, higher = better)
+			change_variable = {
+				name = murim_qi_quality
+				add = {
+					value = 2
+					add = {
+						value = learning
+						multiply = 0.2
+						max = 4
+					}
+					# Higher cultivation refines more efficiently
+					add = {
+						value = murim_cultivation_rank_value
+						multiply = 0.5
+						max = 2
+					}
+					round = yes
+				}
+			}
+			# Cap quality at 200 (2x base)
+			if = {
+				limit = { var:murim_qi_quality > 200 }
+				set_variable = {
+					name = murim_qi_quality
+					value = 200
+				}
+			}
+
+			# Small cultivation XP bonus (disciplined practice)
+			change_variable = {
+				name = murim_cultivation_xp
+				add = {
+					value = 3
+					add = {
+						value = murim_cultivation_rank_value
+						multiply = 1
+					}
+					round = yes
+				}
+			}
+
+			# Stress reduction
+			add_stress = -5
+
+			# Remove seclusion lock after 30 days
+			trigger_event = {
+				id = murim_cultivation.601
+				days = 30
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		is_at_war = no
+		exists = var:murim_qi_reserves
+		var:murim_qi_reserves >= 10
+	}
+
+	ai_will_do = {
+		base = 15
+
+		modifier = {
+			add = 10
+			has_trait = patient
+		}
+		modifier = {
+			add = 10
+			has_trait = temperate
+		}
+		modifier = {
+			add = -10
+			has_trait = impatient
+		}
+		# More useful at higher ranks (qi quality matters more)
+		modifier = {
+			add = 10
+			murim_cultivation_rank_value >= 3
+		}
+		modifier = {
+			add = 15
+			murim_cultivation_rank_value >= 5
+		}
+	}
+}
+
+# ==============================================================
+# 7. ENTER CLOSED-DOOR CULTIVATION
+# Extreme 1-year seclusion. Massive XP but fully locked out.
+# Can be interrupted by wars/assassination.
+# Cooldown: 5 years.
+# ==============================================================
+
+enter_closed_door_cultivation = {
+	picture = "gfx/interface/illustrations/decisions/decision_destiny_quest.dds"
+	desc = enter_closed_door_cultivation_desc
+	selection_tooltip = enter_closed_door_cultivation_tooltip
+	major = yes
+
+	ai_check_interval = 365
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+		# Minimum Foundation rank (rank 3) to attempt
+		murim_cultivation_rank_value >= 3
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		is_at_war = no
+		NOR = {
+			has_character_flag = murim_in_seclusion
+			has_character_flag = murim_closed_door_cultivation
+			has_character_modifier = murim_meditating
+		}
+		custom_description = {
+			text = "murim_closed_door_cooldown_not_expired"
+			NOT = { has_character_flag = murim_closed_door_cooldown }
+		}
+		# Need stable realm
+		custom_description = {
+			text = "murim_realm_stable_for_seclusion"
+			is_at_war = no
+		}
+	}
+
+	cost = {
+		gold = {
+			# Significant investment in supplies and protection
+			value = 200
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 100
+			}
+		}
+		prestige = {
+			# Reputation cost of vanishing for a year
+			value = 200
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 50
+			}
+		}
+	}
+
+	effect = {
+		add_character_flag = {
+			flag = murim_closed_door_cultivation
+		}
+
+		custom_tooltip = murim_closed_door_warning_tooltip
+
+		hidden_effect = {
+			# Apply locked-out modifier for 365 days
+			add_character_modifier = {
+				modifier = murim_closed_door_seclusion
+				days = 365
+			}
+
+			# Massive XP gain (calculated at end)
+			# Monthly ticks from the modifier handle ongoing XP
+			# But we also give a big upfront calculation
+
+			# Store start XP to calculate bonus at end
+			set_variable = {
+				name = murim_closed_door_start_xp
+				value = var:murim_cultivation_xp
+			}
+
+			# Immediate partial XP (the first month of intense focus)
+			change_variable = {
+				name = murim_cultivation_xp
+				add = {
+					value = learning
+					multiply = 2.0
+					multiply = murim_cultivation_talent_modifier
+					multiply = murim_meditation_efficiency
+					min = 10
+					max = 60
+					round = yes
+				}
+			}
+
+			# Stress gain (isolation is hard)
+			add_stress = 20
+
+			# Event chain: quarterly check-in events (can interrupt)
+			# Quarter 1: Settling in
+			trigger_event = {
+				id = murim_cultivation.701
+				days = 90
+			}
+			# Quarter 2: Deep state
+			trigger_event = {
+				id = murim_cultivation.702
+				days = 180
+			}
+			# Quarter 3: Approaching enlightenment
+			trigger_event = {
+				id = murim_cultivation.703
+				days = 270
+			}
+			# Completion
+			trigger_event = {
+				id = murim_cultivation.704
+				days = 365
+			}
+
+			# Cooldown (5 years)
+			add_character_flag = {
+				flag = murim_closed_door_cooldown
+				years = 5
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		murim_cultivation_rank_value >= 3
+		is_at_war = no
+		# AI needs stable realm
+		realm_size >= 3
+	}
+
+	ai_will_do = {
+		base = 10
+
+		# AI very cautious about year-long seclusion
+		modifier = {
+			add = 15
+			has_trait = patient
+		}
+		modifier = {
+			add = 10
+			has_trait = diligent
+		}
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -30
+			has_trait = impatient
+		}
+		modifier = {
+			add = -20
+			any_neighboring_top_liege_realm_owner = {
+				is_at_war = yes
+			}
+		}
+		# More likely near breakthrough
+		modifier = {
+			add = 25
+			exists = var:murim_cultivation_xp
+			var:murim_cultivation_xp >= {
+				value = murim_breakthrough_threshold
+				multiply = 0.6
+			}
+		}
+	}
+}
+
+# ==============================================================
+# 8. SEEK CULTIVATION RESOURCES
+# Send agents to find rare herbs and materials.
+# Random outcome. Cooldown: 1 year.
+# ==============================================================
+
+seek_cultivation_resources = {
+	picture = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	desc = seek_cultivation_resources_desc
+	selection_tooltip = seek_cultivation_resources_tooltip
+	major = no
+
+	ai_check_interval = 120
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		custom_description = {
+			text = "murim_resource_search_cooldown_not_expired"
+			NOT = { has_character_flag = murim_resource_search_cooldown }
+		}
+	}
+
+	cost = {
+		gold = {
+			value = 60
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 20
+			}
+		}
+	}
+
+	effect = {
+		custom_tooltip = murim_resource_search_tooltip
+
+		hidden_effect = {
+			random_list = {
+				# --- Nothing found ---
+				20 = {
+					modifier = {
+						add = -5
+						intrigue >= 15
+					}
+					modifier = {
+						add = -5
+						has_character_flag = murim_sect_master
+					}
+					send_interface_toast = {
+						title = murim_resource_nothing_found_toast
+						left_icon = root
+					}
+				}
+
+				# --- Common herbs ---
+				# Small cultivation XP boost
+				35 = {
+					change_variable = {
+						name = murim_cultivation_xp
+						add = {
+							value = 5
+							add = {
+								value = murim_cultivation_rank_value
+								multiply = 2
+							}
+							round = yes
+						}
+					}
+					send_interface_toast = {
+						title = murim_resource_common_herbs_toast
+						left_icon = root
+					}
+				}
+
+				# --- Rare herbs ---
+				# Significant XP boost + body tempering XP
+				25 = {
+					modifier = {
+						add = 5
+						intrigue >= 15
+					}
+					modifier = {
+						add = 5
+						has_character_flag = murim_sect_master
+					}
+					change_variable = {
+						name = murim_cultivation_xp
+						add = {
+							value = 15
+							add = {
+								value = murim_cultivation_rank_value
+								multiply = 5
+							}
+							round = yes
+						}
+					}
+					change_variable = {
+						name = murim_body_tempering_xp
+						add = 8
+					}
+					send_interface_toast = {
+						title = murim_resource_rare_herbs_toast
+						left_icon = root
+					}
+				}
+
+				# --- Spirit stone deposit ---
+				# Gold + cultivation boost
+				12 = {
+					modifier = {
+						add = 3
+						has_character_flag = murim_sect_master
+					}
+					add_gold = 50
+					change_variable = {
+						name = murim_cultivation_xp
+						add = 10
+					}
+					send_interface_toast = {
+						title = murim_resource_spirit_stones_toast
+						left_icon = root
+					}
+				}
+
+				# --- Special discovery ---
+				# Triggers unique event (ancient cave, hidden manual, etc.)
+				8 = {
+					modifier = {
+						add = 3
+						learning >= 18
+					}
+					trigger_event = {
+						id = murim_cultivation.801
+						days = 5
+					}
+				}
+			}
+
+			# Cooldown (1 year)
+			add_character_flag = {
+				flag = murim_resource_search_cooldown
+				years = 1
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		gold >= 80
+	}
+
+	ai_will_do = {
+		base = 20
+
+		modifier = {
+			add = 10
+			gold >= 200
+		}
+		modifier = {
+			add = 10
+			has_trait = diligent
+		}
+		modifier = {
+			add = -10
+			has_trait = lazy
+		}
+		modifier = {
+			add = 15
+			has_character_flag = murim_sect_master
+		}
+	}
+}
+
+# ==============================================================
+# 9. CHALLENGE HEAVENLY TRIBULATION
+# Voluntarily trigger the ultimate test at peak rank.
+# Success = immortality trait. Failure = death.
+# Only available at Nascent Soul (rank 5) or Spirit Severing (rank 6).
+# ==============================================================
+
+challenge_heavenly_tribulation = {
+	picture = "gfx/interface/illustrations/decisions/decision_destiny_quest.dds"
+	desc = challenge_heavenly_tribulation_desc
+	selection_tooltip = challenge_heavenly_tribulation_tooltip
+	major = yes
+
+	ai_check_interval = 365
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+		# Must be at least Nascent Soul (rank 5)
+		murim_cultivation_rank_value >= 5
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		murim_cultivation_rank_value >= 5
+		NOT = { has_character_flag = murim_tribulation_attempted }
+		NOT = { has_trait = murim_immortal }
+		# Must be in good health
+		custom_description = {
+			text = "murim_health_sufficient_for_tribulation"
+			health >= 5
+		}
+		# Must have full qi reserves
+		custom_description = {
+			text = "murim_qi_full_for_tribulation"
+			exists = var:murim_qi_reserves
+			var:murim_qi_reserves >= {
+				value = murim_qi_max_reserves
+				multiply = 0.8
+			}
+		}
+		# No meridian damage
+		custom_description = {
+			text = "murim_no_meridian_damage_for_tribulation"
+			NOR = {
+				has_character_modifier = murim_meridian_damage_minor
+				has_character_modifier = murim_meridian_damage_severe
+			}
+		}
+	}
+
+	cost = {
+		prestige = 500
+		piety = 200
+	}
+
+	effect = {
+		add_character_flag = {
+			flag = murim_tribulation_attempted
+		}
+
+		custom_tooltip = murim_tribulation_warning_tooltip
+
+		hidden_effect = {
+			# Three-stage tribulation event chain
+			# Stage 1: First Lightning Strike
+			trigger_event = {
+				id = murim_cultivation.901
+				days = 1
+			}
+			# Stages 2 and 3 fire from within the event chain
+			# based on survival of each stage
+
+			# Drain qi reserves (the tribulation uses everything)
+			set_variable = {
+				name = murim_qi_reserves
+				value = 0
+			}
+		}
+
+		# Explicit warning
+		custom_tooltip = murim_tribulation_death_warning_tooltip
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		murim_cultivation_rank_value >= 5
+		NOT = { has_trait = murim_immortal }
+		NOT = { has_character_flag = murim_tribulation_attempted }
+		health >= 6
+		age >= 50
+	}
+
+	ai_will_do = {
+		base = 5
+
+		# AI extremely cautious about death risk
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = 10
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 20
+			murim_cultivation_rank_value >= 6
+		}
+		modifier = {
+			add = 15
+			age >= 70
+			# Old cultivators: now or never
+		}
+		modifier = {
+			add = 10
+			has_trait = murim_heavenly_body
+		}
+		modifier = {
+			add = -30
+			has_trait = craven
+		}
+		modifier = {
+			add = -20
+			any_child = {
+				is_alive = yes
+				age < 16
+			}
+			# Don't risk orphaning young children
+		}
+	}
+}
+
+# ==============================================================
+# 10. CREATE CULTIVATION TECHNIQUE
+# At high rank (4+), forge your own signature technique.
+# Quality based on rank + learning + existing mastery.
+# Named after the creator's dynasty.
+# ==============================================================
+
+create_cultivation_technique = {
+	picture = "gfx/interface/illustrations/decisions/decision_misc.dds"
+	desc = create_cultivation_technique_desc
+	selection_tooltip = create_cultivation_technique_tooltip
+	major = yes
+
+	ai_check_interval = 365
+
+	is_shown = {
+		has_character_flag = murim_initiated
+		is_available_adult = yes
+		# Minimum Golden Core (rank 4)
+		murim_cultivation_rank_value >= 4
+		# Can't already have created one
+		NOT = { has_character_flag = murim_technique_creator }
+	}
+
+	is_valid = {
+		is_available_adult = yes
+		is_imprisoned = no
+		murim_cultivation_rank_value >= 4
+		NOT = { has_character_flag = murim_in_seclusion }
+		NOT = { has_character_flag = murim_closed_door_cultivation }
+		NOT = { has_character_flag = murim_technique_creator }
+		# Need sufficient technique mastery (understand the art)
+		custom_description = {
+			text = "murim_technique_mastery_sufficient_for_creation"
+			exists = var:murim_technique_mastery_major
+			var:murim_technique_mastery_major >= 3
+		}
+		# Learning requirement
+		custom_description = {
+			text = "murim_learning_sufficient_for_technique"
+			learning >= 12
+		}
+	}
+
+	cost = {
+		prestige = {
+			value = 300
+			add = {
+				value = murim_cultivation_rank_value
+				multiply = 100
+			}
+		}
+		gold = {
+			value = 100
+		}
+	}
+
+	effect = {
+		custom_tooltip = murim_create_technique_tooltip
+
+		hidden_effect = {
+			# Lock character for creation period (60 days)
+			add_character_flag = {
+				flag = murim_in_seclusion
+			}
+			add_character_modifier = {
+				modifier = murim_creating_technique
+				days = 60
+			}
+
+			# Calculate technique quality
+			# Base quality from cultivation rank
+			set_variable = {
+				name = murim_created_technique_quality
+				value = {
+					# Rank contribution (4-6 -> 40-60 base)
+					value = murim_cultivation_rank_value
+					multiply = 10
+
+					# Learning contribution
+					add = {
+						value = learning
+						multiply = 1.0
+						max = 20
+					}
+
+					# Existing mastery contribution
+					add = {
+						value = var:murim_technique_mastery_major
+						multiply = 3
+						max = 15
+					}
+					if = {
+						limit = { exists = var:murim_technique_mastery_ultimate }
+						add = {
+							value = var:murim_technique_mastery_ultimate
+							multiply = 5
+							max = 25
+						}
+					}
+
+					# Talent bonus
+					if = {
+						limit = {
+							exists = var:murim_talent
+							var:murim_talent >= 70
+						}
+						add = 10
+					}
+
+					# Genius/Intelligent bonus
+					if = {
+						limit = { has_trait = genius }
+						add = 15
+					}
+					else_if = {
+						limit = { has_trait = intelligent }
+						add = 8
+					}
+
+					min = 30
+					max = 100
+					round = yes
+				}
+			}
+
+			# Determine technique tier based on quality
+			random_list = {
+				# Minor technique (underwhelming, but still yours)
+				15 = {
+					modifier = {
+						add = -10
+						murim_cultivation_rank_value >= 5
+					}
+					trigger_event = {
+						id = murim_cultivation.1001
+						days = 60
+					}
+				}
+				# Major technique (solid, respectable creation)
+				50 = {
+					trigger_event = {
+						id = murim_cultivation.1002
+						days = 60
+					}
+				}
+				# Ultimate technique (masterwork, legacy-defining)
+				25 = {
+					modifier = {
+						add = 10
+						murim_cultivation_rank_value >= 5
+					}
+					modifier = {
+						add = 10
+						learning >= 20
+					}
+					modifier = {
+						add = 5
+						has_trait = genius
+					}
+					trigger_event = {
+						id = murim_cultivation.1003
+						days = 60
+					}
+				}
+				# Legendary technique (once-in-a-generation, sect-defining)
+				10 = {
+					modifier = {
+						add = 5
+						murim_cultivation_rank_value >= 6
+					}
+					modifier = {
+						add = 5
+						has_trait = genius
+					}
+					modifier = {
+						add = 3
+						exists = var:murim_technique_mastery_ultimate
+						var:murim_technique_mastery_ultimate >= 7
+					}
+					trigger_event = {
+						id = murim_cultivation.1004
+						days = 60
+					}
+				}
+			}
+
+			# Mark as technique creator (one per lifetime)
+			add_character_flag = {
+				flag = murim_technique_creator
+			}
+
+			# Jianghu standing boost (creating techniques is prestigious)
+			change_variable = {
+				name = murim_jianghu_standing
+				add = 10
+			}
+			if = {
+				limit = { var:murim_jianghu_standing > 100 }
+				set_variable = {
+					name = murim_jianghu_standing
+					value = 100
+				}
+			}
+		}
+	}
+
+	ai_potential = {
+		has_character_flag = murim_initiated
+		murim_cultivation_rank_value >= 4
+		NOT = { has_character_flag = murim_technique_creator }
+		learning >= 12
+	}
+
+	ai_will_do = {
+		base = 30
+
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 15
+			learning >= 18
+		}
+		modifier = {
+			add = 15
+			murim_cultivation_rank_value >= 5
+		}
+		modifier = {
+			add = -10
+			gold < 150
+		}
+		modifier = {
+			add = 10
+			has_trait = diligent
+		}
+		# Sect masters want to create sect-defining techniques
+		modifier = {
+			add = 20
+			has_character_flag = murim_sect_master
+		}
+	}
+}
