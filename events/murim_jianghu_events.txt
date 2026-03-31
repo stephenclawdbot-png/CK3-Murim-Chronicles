@@ -1,0 +1,2583 @@
+namespace = murim_jianghu
+
+# ================================================================
+# MURIM CHRONICLES -- JIANGHU (MARTIAL WORLD) EVENTS
+# 8 events covering the political and social martial world
+# Variables: murim_jianghu_standing (0-100), murim_face_value,
+#   murim_cultivation_rank (0-6), murim_sect_alignment (-100 to 100)
+# Alignment: negative = demonic path, positive = orthodox path
+# ================================================================
+
+
+# ================================================================
+# EVENT 1: Challenge at the Teahouse
+# A rival cultivator challenges you to a public duel in front
+# of witnesses. Your response shapes your reputation.
+# ================================================================
+murim_jianghu.0001 = {
+    type = character_event
+    title = murim_jianghu.0001.t
+    desc = murim_jianghu.0001.desc
+    theme = martial_chivalry_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_teahouse_cooldown }
+        is_available = yes
+        age >= 16
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_teahouse_cooldown
+            years = 2
+        }
+        # Create the rival challenger
+        random_courtier = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                age >= 16
+                prowess >= 6
+            }
+            save_scope_as = teahouse_rival
+        }
+    }
+
+    # Option A: Accept the duel -- prowess-based combat
+    option = {
+        name = murim_jianghu.0001.a
+
+        custom_tooltip = murim_teahouse_accept_duel_tt
+
+        random_list = {
+            # Decisive victory
+            25 = {
+                modifier = {
+                    factor = 2.0
+                    prowess >= 18
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_cultivation_rank >= 3
+                }
+                change_variable = { name = murim_jianghu_standing add = 15 }
+                change_variable = { name = murim_face_value add = 10 }
+                add_prestige = 150
+                add_prowess_skill = 1
+                scope:teahouse_rival = {
+                    add_opinion = { modifier = defeated_in_duel_opinion target = root }
+                }
+                custom_tooltip = murim_teahouse_duel_decisive_win_tt
+            }
+            # Narrow victory
+            30 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 14
+                }
+                change_variable = { name = murim_jianghu_standing add = 8 }
+                change_variable = { name = murim_face_value add = 5 }
+                add_prestige = 75
+                add_stress = 10
+                custom_tooltip = murim_teahouse_duel_narrow_win_tt
+            }
+            # Draw -- mutual respect
+            20 = {
+                change_variable = { name = murim_jianghu_standing add = 3 }
+                add_prestige = 25
+                scope:teahouse_rival = {
+                    add_opinion = { modifier = respected_rival_opinion target = root }
+                }
+                custom_tooltip = murim_teahouse_duel_draw_tt
+            }
+            # Defeat -- humiliation
+            25 = {
+                modifier = {
+                    factor = 0.5
+                    prowess >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = -10 }
+                change_variable = { name = murim_face_value add = -8 }
+                add_prestige = -100
+                add_stress = 25
+                add_character_modifier = {
+                    modifier = murim_duel_wound
+                    years = 1
+                }
+                custom_tooltip = murim_teahouse_duel_defeat_tt
+            }
+        }
+
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 1.5
+                prowess >= 14
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = craven
+            }
+        }
+    }
+
+    # Option B: Decline and lose face
+    option = {
+        name = murim_jianghu.0001.b
+
+        change_variable = { name = murim_jianghu_standing add = -20 }
+        change_variable = { name = murim_face_value add = -15 }
+        add_prestige = -75
+        add_stress = 15
+
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                NOT = { this = root }
+            }
+            add_opinion = { modifier = coward_declined_duel_opinion target = root }
+        }
+
+        custom_tooltip = murim_teahouse_decline_shame_tt
+
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                prowess < 6
+            }
+        }
+    }
+
+    # Option C: Poison their tea first (intrigue path)
+    option = {
+        name = murim_jianghu.0001.c
+        trigger = {
+            intrigue >= 14
+        }
+
+        custom_tooltip = murim_teahouse_poison_attempt_tt
+
+        random_list = {
+            # Poison works -- rival dies, nobody notices
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                scope:teahouse_rival = {
+                    death = { death_reason = death_murder_unknown }
+                }
+                change_variable = { name = murim_face_value add = 5 }
+                add_intrigue_skill = 1
+                custom_tooltip = murim_teahouse_poison_clean_kill_tt
+            }
+            # Poison works but witnesses suspect you
+            35 = {
+                scope:teahouse_rival = {
+                    death = { death_reason = death_murder }
+                }
+                change_variable = { name = murim_jianghu_standing add = -15 }
+                change_variable = { name = murim_sect_alignment add = -10 }
+                add_dread = 20
+                add_character_flag = murim_suspected_poisoner
+                custom_tooltip = murim_teahouse_poison_exposed_tt
+            }
+            # Poison fails -- rival notices and attacks
+            25 = {
+                modifier = {
+                    factor = 0.5
+                    intrigue >= 20
+                }
+                change_variable = { name = murim_jianghu_standing add = -25 }
+                change_variable = { name = murim_face_value add = -20 }
+                change_variable = { name = murim_sect_alignment add = -15 }
+                add_prestige = -200
+                add_character_modifier = {
+                    modifier = murim_dishonorable_fighter
+                    years = 5
+                }
+                scope:teahouse_rival = {
+                    add_opinion = { modifier = attempted_poisoning_opinion target = root }
+                }
+                custom_tooltip = murim_teahouse_poison_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = honest
+            }
+        }
+    }
+
+    # Option D: Talk your way out (diplomacy path)
+    option = {
+        name = murim_jianghu.0001.d
+        trigger = {
+            diplomacy >= 16
+        }
+
+        custom_tooltip = murim_teahouse_diplomacy_tt
+
+        random_list = {
+            # Masterful deflection -- gain standing
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 20
+                }
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                change_variable = { name = murim_face_value add = 8 }
+                add_prestige = 100
+                add_diplomacy_skill = 1
+                scope:teahouse_rival = {
+                    add_opinion = { modifier = outwitted_by_words_opinion target = root }
+                }
+                custom_tooltip = murim_teahouse_talk_masterful_tt
+            }
+            # Decent deflection -- neutral outcome
+            30 = {
+                change_variable = { name = murim_jianghu_standing add = 3 }
+                add_prestige = 30
+                custom_tooltip = murim_teahouse_talk_decent_tt
+            }
+            # Fails -- crowd sees through it, still lose face
+            20 = {
+                modifier = {
+                    factor = 0.5
+                    diplomacy >= 22
+                }
+                change_variable = { name = murim_jianghu_standing add = -8 }
+                change_variable = { name = murim_face_value add = -5 }
+                add_prestige = -50
+                add_stress = 10
+                custom_tooltip = murim_teahouse_talk_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = gregarious
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 20
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 2: Wulin Alliance Summit
+# The great sects gather to elect a new Alliance Leader.
+# Complex political maneuvering with lasting consequences.
+# ================================================================
+murim_jianghu.0002 = {
+    type = character_event
+    title = murim_jianghu.0002.t
+    desc = murim_jianghu.0002.desc
+    theme = diplomacy_majesty_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_summit_cooldown }
+        var:murim_cultivation_rank >= 2
+        var:murim_jianghu_standing >= 20
+        is_ruler = yes
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_summit_cooldown
+            years = 5
+        }
+        play_music_cue = mx_cue_diplomatic
+    }
+
+    # Option A: Campaign for yourself -- become Alliance Leader
+    option = {
+        name = murim_jianghu.0002.a
+        trigger = {
+            prestige >= 500
+            gold >= 200
+            var:murim_jianghu_standing >= 40
+        }
+
+        remove_short_term_gold = 200
+        add_prestige = -300
+
+        custom_tooltip = murim_summit_campaign_tt
+
+        random_list = {
+            # Elected Alliance Leader
+            30 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 16
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_jianghu_standing >= 70
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_cultivation_rank >= 4
+                }
+                change_variable = { name = murim_jianghu_standing add = 30 }
+                change_variable = { name = murim_face_value add = 25 }
+                add_prestige = 1000
+                add_character_modifier = {
+                    modifier = murim_wulin_alliance_leader
+                    years = 10
+                }
+                add_character_flag = murim_alliance_leader
+                custom_tooltip = murim_summit_elected_leader_tt
+            }
+            # Close second -- gain respect
+            35 = {
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                change_variable = { name = murim_face_value add = 5 }
+                add_prestige = 200
+                custom_tooltip = murim_summit_close_second_tt
+            }
+            # Embarrassing defeat -- lost investment
+            35 = {
+                modifier = {
+                    factor = 0.7
+                    diplomacy >= 18
+                }
+                change_variable = { name = murim_jianghu_standing add = -10 }
+                change_variable = { name = murim_face_value add = -10 }
+                add_stress = 30
+                custom_tooltip = murim_summit_campaign_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = content
+            }
+        }
+    }
+
+    # Option B: Support another candidate -- gain a powerful ally
+    option = {
+        name = murim_jianghu.0002.b
+
+        custom_tooltip = murim_summit_support_candidate_tt
+
+        change_variable = { name = murim_jianghu_standing add = 8 }
+        add_prestige = 100
+
+        random_list = {
+            # Your candidate wins -- strong alliance
+            50 = {
+                modifier = {
+                    factor = 1.3
+                    diplomacy >= 14
+                }
+                add_character_modifier = {
+                    modifier = murim_alliance_kingmaker
+                    years = 5
+                }
+                add_prestige = 200
+                change_variable = { name = murim_face_value add = 10 }
+                custom_tooltip = murim_summit_candidate_wins_tt
+            }
+            # Your candidate loses -- minor political cost
+            50 = {
+                change_variable = { name = murim_face_value add = -3 }
+                add_stress = 10
+                custom_tooltip = murim_summit_candidate_loses_tt
+            }
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 1.5
+                has_trait = gregarious
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 12
+            }
+        }
+    }
+
+    # Option C: Sabotage the summit (intrigue path -- cause chaos)
+    option = {
+        name = murim_jianghu.0002.c
+        trigger = {
+            intrigue >= 12
+        }
+
+        custom_tooltip = murim_summit_sabotage_tt
+
+        random_list = {
+            # Perfect sabotage -- summit collapses, power vacuum
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                change_variable = { name = murim_sect_alignment add = -10 }
+                add_dread = 25
+                add_intrigue_skill = 1
+                add_prestige = 50
+                add_character_modifier = {
+                    modifier = murim_shadow_manipulator
+                    years = 3
+                }
+                custom_tooltip = murim_summit_sabotage_perfect_tt
+            }
+            # Partial chaos -- some suspicion falls on you
+            35 = {
+                change_variable = { name = murim_sect_alignment add = -5 }
+                add_dread = 15
+                change_variable = { name = murim_jianghu_standing add = -5 }
+                add_character_flag = murim_summit_suspect
+                custom_tooltip = murim_summit_sabotage_partial_tt
+            }
+            # Caught -- massive reputation loss
+            30 = {
+                modifier = {
+                    factor = 0.5
+                    intrigue >= 20
+                }
+                change_variable = { name = murim_jianghu_standing add = -30 }
+                change_variable = { name = murim_face_value add = -20 }
+                change_variable = { name = murim_sect_alignment add = -20 }
+                add_prestige = -500
+                add_character_modifier = {
+                    modifier = murim_summit_saboteur_exposed
+                    years = 10
+                }
+                custom_tooltip = murim_summit_sabotage_caught_tt
+            }
+        }
+
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                var:murim_sect_alignment < -30
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = honest
+            }
+        }
+    }
+
+    # Option D: Attend quietly -- small safe standing gain
+    option = {
+        name = murim_jianghu.0002.d
+
+        change_variable = { name = murim_jianghu_standing add = 5 }
+        change_variable = { name = murim_face_value add = 2 }
+        add_prestige = 50
+        add_piety = 25
+        custom_tooltip = murim_summit_attend_quietly_tt
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = shy
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 3: Bounty on Your Head
+# Someone placed a bounty. Assassins come at night.
+# Survival event with investigation options.
+# ================================================================
+murim_jianghu.0003 = {
+    type = character_event
+    title = murim_jianghu.0003.t
+    desc = murim_jianghu.0003.desc
+    theme = skull
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_bounty_cooldown }
+        var:murim_jianghu_standing >= 10
+        age >= 16
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_bounty_cooldown
+            years = 3
+        }
+        add_character_flag = murim_has_active_bounty
+
+        # Determine assassin strength based on standing
+        if = {
+            limit = { var:murim_jianghu_standing >= 60 }
+            add_character_flag = murim_elite_assassins
+        }
+        else_if = {
+            limit = { var:murim_jianghu_standing >= 30 }
+            add_character_flag = murim_veteran_assassins
+        }
+    }
+
+    # Option A: Fight them off (martial/prowess check)
+    option = {
+        name = murim_jianghu.0003.a
+
+        custom_tooltip = murim_bounty_fight_tt
+
+        random_list = {
+            # Slaughter them all -- terrifying display
+            25 = {
+                modifier = {
+                    factor = 2.0
+                    prowess >= 18
+                }
+                modifier = {
+                    factor = 1.5
+                    martial >= 16
+                }
+                modifier = {
+                    factor = 0.5
+                    has_character_flag = murim_elite_assassins
+                }
+                change_variable = { name = murim_jianghu_standing add = 12 }
+                change_variable = { name = murim_face_value add = 8 }
+                add_prestige = 150
+                add_dread = 20
+                add_prowess_skill = 1
+                custom_tooltip = murim_bounty_fight_massacre_tt
+            }
+            # Fight them off with wounds
+            35 = {
+                modifier = {
+                    factor = 1.3
+                    prowess >= 14
+                }
+                change_variable = { name = murim_jianghu_standing add = 5 }
+                add_prestige = 50
+                add_stress = 15
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+                custom_tooltip = murim_bounty_fight_wounded_tt
+            }
+            # Barely survive -- grievous injury
+            25 = {
+                modifier = {
+                    factor = 1.5
+                    has_character_flag = murim_elite_assassins
+                }
+                modifier = {
+                    factor = 0.5
+                    prowess >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = -5 }
+                add_stress = 35
+                add_character_modifier = {
+                    modifier = murim_grievous_assassin_wound
+                    years = 3
+                }
+                custom_tooltip = murim_bounty_fight_barely_survive_tt
+            }
+            # Overwhelmed -- captured or left for dead
+            15 = {
+                modifier = {
+                    factor = 2.0
+                    has_character_flag = murim_elite_assassins
+                }
+                modifier = {
+                    factor = 0.3
+                    prowess >= 20
+                }
+                change_variable = { name = murim_jianghu_standing add = -15 }
+                change_variable = { name = murim_face_value add = -10 }
+                add_prestige = -200
+                add_character_modifier = {
+                    modifier = murim_left_for_dead
+                    years = 2
+                }
+                add_stress = 50
+                custom_tooltip = murim_bounty_fight_overwhelmed_tt
+            }
+        }
+
+        # Cleanup assassin tier flags
+        if = {
+            limit = { has_character_flag = murim_elite_assassins }
+            remove_character_flag = murim_elite_assassins
+        }
+        if = {
+            limit = { has_character_flag = murim_veteran_assassins }
+            remove_character_flag = murim_veteran_assassins
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 1.5
+                prowess >= 16
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = craven
+            }
+        }
+    }
+
+    # Option B: Investigate who sent them (intrigue -- start scheme)
+    option = {
+        name = murim_jianghu.0003.b
+        trigger = {
+            intrigue >= 10
+        }
+
+        custom_tooltip = murim_bounty_investigate_tt
+
+        # First survive the night
+        random_list = {
+            70 = {
+                modifier = {
+                    factor = 1.2
+                    martial >= 12
+                }
+                add_stress = 10
+                custom_tooltip = murim_bounty_investigate_survive_tt
+            }
+            30 = {
+                add_stress = 25
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+                custom_tooltip = murim_bounty_investigate_wounded_tt
+            }
+        }
+
+        # Then investigate
+        random_list = {
+            # Find the mastermind -- start scheme
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 16
+                }
+                modifier = {
+                    factor = 1.3
+                    has_trait = paranoid
+                }
+                add_intrigue_skill = 1
+                change_variable = { name = murim_jianghu_standing add = 5 }
+                add_character_flag = murim_found_bounty_mastermind
+                add_character_modifier = {
+                    modifier = murim_hunting_the_hunter
+                    years = 2
+                }
+                custom_tooltip = murim_bounty_investigate_found_tt
+            }
+            # Partial clues -- narrow suspects
+            35 = {
+                change_variable = { name = murim_face_value add = 3 }
+                add_character_flag = murim_bounty_clues
+                custom_tooltip = murim_bounty_investigate_clues_tt
+            }
+            # Trail goes cold
+            25 = {
+                add_stress = 15
+                add_character_flag = murim_bounty_paranoia
+                custom_tooltip = murim_bounty_investigate_cold_tt
+            }
+        }
+
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 14
+            }
+        }
+    }
+
+    # Option C: Pay the bounty hunters to switch sides (gold)
+    option = {
+        name = murim_jianghu.0003.c
+        trigger = {
+            gold >= 150
+        }
+
+        custom_tooltip = murim_bounty_bribe_tt
+
+        remove_short_term_gold = 150
+
+        random_list = {
+            # They accept -- now your agents
+            45 = {
+                modifier = {
+                    factor = 1.5
+                    gold >= 300
+                }
+                add_intrigue_skill = 1
+                add_character_modifier = {
+                    modifier = murim_bought_assassin_network
+                    years = 3
+                }
+                change_variable = { name = murim_face_value add = 5 }
+                custom_tooltip = murim_bounty_bribe_success_tt
+            }
+            # They take the money and leave -- simple resolution
+            30 = {
+                add_stress = -10
+                custom_tooltip = murim_bounty_bribe_leave_tt
+            }
+            # They take the money AND try to kill you anyway
+            25 = {
+                modifier = {
+                    factor = 0.5
+                    diplomacy >= 16
+                }
+                add_prestige = -100
+                add_stress = 30
+                change_variable = { name = murim_face_value add = -5 }
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+                custom_tooltip = murim_bounty_bribe_betrayed_tt
+            }
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                gold >= 300
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = greedy
+            }
+        }
+    }
+
+    # Option D: Flee into the wilderness (exile modifier)
+    option = {
+        name = murim_jianghu.0003.d
+
+        change_variable = { name = murim_jianghu_standing add = -12 }
+        change_variable = { name = murim_face_value add = -10 }
+        add_prestige = -150
+        add_stress = -20
+
+        add_character_modifier = {
+            modifier = murim_wilderness_exile
+            years = 2
+        }
+
+        # Small chance of finding something useful in exile
+        random_list = {
+            30 = {
+                change_variable = { name = murim_cultivation_rank add = 0 }
+                add_character_flag = murim_found_hidden_cave
+                add_learning_skill = 1
+                custom_tooltip = murim_bounty_flee_discovery_tt
+            }
+            70 = {
+                add_stress = 10
+                custom_tooltip = murim_bounty_flee_harsh_tt
+            }
+        }
+
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                NOT = { this = root }
+            }
+            add_opinion = { modifier = master_fled_opinion target = root }
+        }
+
+        custom_tooltip = murim_bounty_flee_tt
+
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                health <= 1
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = brave
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 4: The Wandering Swordsman
+# A legendary hermit cultivator passes through your territory.
+# Rare opportunity for growth or conflict.
+# ================================================================
+murim_jianghu.0004 = {
+    type = character_event
+    title = murim_jianghu.0004.t
+    desc = murim_jianghu.0004.desc
+    theme = martial_strategy_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_wandering_sword_cooldown }
+        var:murim_cultivation_rank >= 1
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_wandering_sword_cooldown
+            years = 4
+        }
+        play_music_cue = mx_cue_epic_battle
+    }
+
+    # Option A: Challenge them (very hard duel, huge XP if win)
+    option = {
+        name = murim_jianghu.0004.a
+        trigger = {
+            prowess >= 10
+        }
+
+        custom_tooltip = murim_wandering_challenge_tt
+
+        random_list = {
+            # Miraculous victory -- legendary achievement
+            10 = {
+                modifier = {
+                    factor = 2.0
+                    prowess >= 22
+                }
+                modifier = {
+                    factor = 1.5
+                    var:murim_cultivation_rank >= 4
+                }
+                change_variable = { name = murim_jianghu_standing add = 25 }
+                change_variable = { name = murim_face_value add = 20 }
+                change_variable = { name = murim_cultivation_rank add = 0 }
+                add_prestige = 500
+                add_prowess_skill = 3
+                add_martial_skill = 1
+                add_character_modifier = {
+                    modifier = murim_defeated_a_legend
+                    years = 10
+                }
+                custom_tooltip = murim_wandering_challenge_miracle_tt
+            }
+            # Impressive showing -- earn teaching through combat
+            25 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                change_variable = { name = murim_face_value add = 8 }
+                add_prestige = 200
+                add_prowess_skill = 2
+                custom_tooltip = murim_wandering_challenge_impress_tt
+            }
+            # Defeated quickly but gracefully
+            35 = {
+                change_variable = { name = murim_jianghu_standing add = 2 }
+                add_prowess_skill = 1
+                add_stress = 15
+                custom_tooltip = murim_wandering_challenge_graceful_loss_tt
+            }
+            # Humiliated -- outclassed completely
+            30 = {
+                modifier = {
+                    factor = 0.7
+                    prowess >= 18
+                }
+                change_variable = { name = murim_jianghu_standing add = -8 }
+                change_variable = { name = murim_face_value add = -10 }
+                add_prestige = -100
+                add_stress = 30
+                add_character_modifier = {
+                    modifier = murim_duel_wound
+                    years = 1
+                }
+                custom_tooltip = murim_wandering_challenge_humiliated_tt
+            }
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.5
+                has_trait = brave
+            }
+            modifier = {
+                factor = 1.5
+                prowess >= 18
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = craven
+            }
+        }
+    }
+
+    # Option B: Beg for teaching (humility -- lose prestige, gain XP)
+    option = {
+        name = murim_jianghu.0004.b
+
+        add_prestige = -100
+        change_variable = { name = murim_face_value add = -5 }
+
+        custom_tooltip = murim_wandering_beg_teaching_tt
+
+        random_list = {
+            # The swordsman teaches you a profound technique
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    has_trait = humble
+                }
+                modifier = {
+                    factor = 1.3
+                    learning >= 14
+                }
+                change_variable = { name = murim_cultivation_rank add = 0 }
+                add_prowess_skill = 2
+                add_martial_skill = 1
+                add_learning_skill = 1
+                add_character_modifier = {
+                    modifier = murim_legendary_teaching
+                    years = 5
+                }
+                custom_tooltip = murim_wandering_beg_profound_tt
+            }
+            # Brief lesson -- some insight
+            35 = {
+                add_prowess_skill = 1
+                add_learning_skill = 1
+                custom_tooltip = murim_wandering_beg_brief_tt
+            }
+            # Refused -- the swordsman walks away
+            25 = {
+                add_stress = 20
+                add_piety = 25
+                custom_tooltip = murim_wandering_beg_refused_tt
+            }
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = humble
+            }
+            modifier = {
+                factor = 1.5
+                learning >= 12
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = arrogant
+            }
+        }
+    }
+
+    # Option C: Offer hospitality (random gift/boon later)
+    option = {
+        name = murim_jianghu.0004.c
+
+        remove_short_term_gold = 50
+        change_variable = { name = murim_jianghu_standing add = 5 }
+        change_variable = { name = murim_face_value add = 3 }
+        add_prestige = 50
+        add_piety = 50
+
+        custom_tooltip = murim_wandering_hospitality_tt
+
+        random_list = {
+            # The swordsman leaves a secret manual behind
+            30 = {
+                add_character_flag = murim_has_secret_sword_manual
+                add_learning_skill = 1
+                custom_tooltip = murim_wandering_hospitality_manual_tt
+            }
+            # The swordsman spreads your good name
+            40 = {
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                add_prestige = 100
+                custom_tooltip = murim_wandering_hospitality_fame_tt
+            }
+            # The swordsman returns years later to help in crisis
+            30 = {
+                add_character_flag = murim_swordsman_owes_favor
+                custom_tooltip = murim_wandering_hospitality_favor_tt
+            }
+        }
+
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 1.5
+                has_trait = generous
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 12
+            }
+        }
+    }
+
+    # Option D: Ignore them
+    option = {
+        name = murim_jianghu.0004.d
+
+        add_stress = -5
+        custom_tooltip = murim_wandering_ignore_tt
+
+        ai_chance = {
+            base = 5
+            modifier = {
+                factor = 3.0
+                has_trait = lazy
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = shy
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 5: Sect War Declaration
+# Your sect declares war on a rival. Mass conflict event
+# with multiple ways to participate or exploit the chaos.
+# ================================================================
+murim_jianghu.0005 = {
+    type = character_event
+    title = murim_jianghu.0005.t
+    desc = murim_jianghu.0005.desc
+    theme = martial_strategy_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_sect_war_cooldown }
+        var:murim_cultivation_rank >= 2
+        is_ruler = yes
+        any_courtier = {
+            has_character_flag = murim_initiated
+            NOT = { this = root }
+        }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_sect_war_cooldown
+            years = 5
+        }
+        add_character_flag = murim_sect_at_war
+        play_music_cue = mx_cue_combat
+    }
+
+    # Option A: Lead the charge (commander -- gain martial XP)
+    option = {
+        name = murim_jianghu.0005.a
+        trigger = {
+            martial >= 12
+        }
+
+        custom_tooltip = murim_sect_war_lead_charge_tt
+
+        random_list = {
+            # Glorious victory -- you crush the enemy sect
+            25 = {
+                modifier = {
+                    factor = 2.0
+                    martial >= 18
+                }
+                modifier = {
+                    factor = 1.5
+                    prowess >= 16
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_cultivation_rank >= 4
+                }
+                change_variable = { name = murim_jianghu_standing add = 20 }
+                change_variable = { name = murim_face_value add = 15 }
+                add_prestige = 500
+                add_martial_skill = 2
+                add_prowess_skill = 1
+                add_dread = 15
+                add_character_modifier = {
+                    modifier = murim_war_hero
+                    years = 5
+                }
+                every_courtier = {
+                    limit = { has_character_flag = murim_initiated }
+                    add_opinion = { modifier = glorious_commander_opinion target = root }
+                }
+                custom_tooltip = murim_sect_war_glorious_victory_tt
+            }
+            # Hard-fought victory -- costly but successful
+            30 = {
+                modifier = {
+                    factor = 1.3
+                    martial >= 14
+                }
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                change_variable = { name = murim_face_value add = 8 }
+                add_prestige = 200
+                add_martial_skill = 1
+                add_stress = 20
+                add_character_modifier = {
+                    modifier = murim_battle_scars
+                    years = 2
+                }
+                custom_tooltip = murim_sect_war_hard_victory_tt
+            }
+            # Pyrrhic victory -- won but at terrible cost
+            20 = {
+                change_variable = { name = murim_jianghu_standing add = 3 }
+                add_prestige = 50
+                add_stress = 40
+                add_character_modifier = {
+                    modifier = murim_grievous_assassin_wound
+                    years = 3
+                }
+                # Lose disciples in the battle
+                random_courtier = {
+                    limit = {
+                        has_character_flag = murim_initiated
+                        NOT = { this = root }
+                    }
+                    death = { death_reason = death_battle }
+                }
+                custom_tooltip = murim_sect_war_pyrrhic_tt
+            }
+            # Defeat -- routed in the field
+            25 = {
+                modifier = {
+                    factor = 0.5
+                    martial >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = -15 }
+                change_variable = { name = murim_face_value add = -12 }
+                add_prestige = -300
+                add_stress = 50
+                add_character_modifier = {
+                    modifier = murim_sect_war_defeat
+                    years = 3
+                }
+                custom_tooltip = murim_sect_war_defeat_tt
+            }
+        }
+
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 1.5
+                martial >= 16
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = craven
+            }
+        }
+    }
+
+    # Option B: Negotiate peace (diplomacy -- gain standing)
+    option = {
+        name = murim_jianghu.0005.b
+        trigger = {
+            diplomacy >= 14
+        }
+
+        custom_tooltip = murim_sect_war_negotiate_tt
+
+        random_list = {
+            # Masterful peace -- both sides save face
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 18
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_jianghu_standing >= 50
+                }
+                change_variable = { name = murim_jianghu_standing add = 20 }
+                change_variable = { name = murim_face_value add = 12 }
+                add_prestige = 400
+                add_diplomacy_skill = 2
+                add_character_modifier = {
+                    modifier = murim_peacemaker
+                    years = 5
+                }
+                remove_character_flag = murim_sect_at_war
+                custom_tooltip = murim_sect_war_masterful_peace_tt
+            }
+            # Acceptable truce -- war ends, some grumbling
+            35 = {
+                change_variable = { name = murim_jianghu_standing add = 8 }
+                change_variable = { name = murim_face_value add = 5 }
+                add_prestige = 100
+                add_diplomacy_skill = 1
+                remove_character_flag = murim_sect_at_war
+                # Some warriors unhappy
+                every_courtier = {
+                    limit = {
+                        has_character_flag = murim_initiated
+                        has_trait = brave
+                    }
+                    add_opinion = { modifier = denied_glory_opinion target = root }
+                }
+                custom_tooltip = murim_sect_war_truce_tt
+            }
+            # Negotiations fail -- war continues, you look weak
+            30 = {
+                modifier = {
+                    factor = 0.6
+                    diplomacy >= 20
+                }
+                change_variable = { name = murim_jianghu_standing add = -8 }
+                change_variable = { name = murim_face_value add = -5 }
+                add_prestige = -100
+                add_stress = 25
+                custom_tooltip = murim_sect_war_negotiate_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = wrathful
+            }
+        }
+    }
+
+    # Option C: Betray your sect and join the enemy
+    option = {
+        name = murim_jianghu.0005.c
+
+        custom_tooltip = murim_sect_war_betray_tt
+
+        change_variable = { name = murim_jianghu_standing add = -40 }
+        change_variable = { name = murim_face_value add = -30 }
+        change_variable = { name = murim_sect_alignment add = -25 }
+        add_prestige = -500
+        add_dread = 30
+
+        # But gain power from the enemy sect
+        random_list = {
+            # Enemy sect rewards treachery generously
+            50 = {
+                add_gold = 500
+                add_martial_skill = 1
+                add_intrigue_skill = 1
+                add_character_modifier = {
+                    modifier = murim_sect_traitor_power
+                    years = 5
+                }
+                custom_tooltip = murim_sect_war_betray_rewarded_tt
+            }
+            # Enemy sect uses you then discards you
+            50 = {
+                add_gold = 100
+                add_stress = 40
+                add_character_modifier = {
+                    modifier = murim_sect_traitor_discarded
+                    years = 5
+                }
+                custom_tooltip = murim_sect_war_betray_discarded_tt
+            }
+        }
+
+        # All courtiers despise you
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                NOT = { this = root }
+            }
+            add_opinion = { modifier = sect_traitor_opinion target = root }
+        }
+
+        add_character_modifier = {
+            modifier = murim_oathbreaker
+            years = 10
+        }
+
+        ai_chance = {
+            base = 5
+            modifier = {
+                factor = 3.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                var:murim_sect_alignment < -30
+            }
+            modifier = {
+                factor = 0.01
+                has_trait = honest
+            }
+            modifier = {
+                factor = 0.01
+                has_trait = loyal
+            }
+        }
+    }
+
+    # Option D: Use the chaos to assassinate a target (intrigue)
+    option = {
+        name = murim_jianghu.0005.d
+        trigger = {
+            intrigue >= 12
+        }
+
+        custom_tooltip = murim_sect_war_assassinate_tt
+
+        random_list = {
+            # Clean kill in the fog of war
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                add_intrigue_skill = 2
+                add_dread = 10
+                change_variable = { name = murim_sect_alignment add = -5 }
+                add_character_modifier = {
+                    modifier = murim_shadow_killer
+                    years = 3
+                }
+                custom_tooltip = murim_sect_war_assassinate_clean_tt
+            }
+            # Kill succeeds but someone saw you
+            30 = {
+                add_intrigue_skill = 1
+                add_dread = 20
+                change_variable = { name = murim_jianghu_standing add = -10 }
+                change_variable = { name = murim_sect_alignment add = -10 }
+                add_character_flag = murim_wartime_murder_witness
+                custom_tooltip = murim_sect_war_assassinate_witnessed_tt
+            }
+            # Target escapes -- now they know
+            35 = {
+                modifier = {
+                    factor = 0.6
+                    intrigue >= 16
+                }
+                add_stress = 25
+                change_variable = { name = murim_face_value add = -8 }
+                add_character_flag = murim_failed_wartime_assassination
+                custom_tooltip = murim_sect_war_assassinate_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.5
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = just
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 6: The Underground Tournament
+# Invitation to a secret death match tournament.
+# High risk, high reward with multiple approaches.
+# ================================================================
+murim_jianghu.0006 = {
+    type = character_event
+    title = murim_jianghu.0006.t
+    desc = murim_jianghu.0006.desc
+    theme = martial_chivalry_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_tournament_cooldown }
+        var:murim_cultivation_rank >= 2
+        age >= 16
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_tournament_cooldown
+            years = 3
+        }
+    }
+
+    # Option A: Enter the tournament (prowess checks, big rewards)
+    option = {
+        name = murim_jianghu.0006.a
+        trigger = {
+            prowess >= 10
+        }
+
+        custom_tooltip = murim_tournament_enter_tt
+
+        # Round 1: Preliminary
+        random_list = {
+            # Win all rounds -- tournament champion
+            15 = {
+                modifier = {
+                    factor = 2.0
+                    prowess >= 20
+                }
+                modifier = {
+                    factor = 1.5
+                    var:murim_cultivation_rank >= 4
+                }
+                modifier = {
+                    factor = 1.3
+                    martial >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = 20 }
+                change_variable = { name = murim_face_value add = 15 }
+                add_gold = 500
+                add_prestige = 400
+                add_prowess_skill = 3
+                add_character_modifier = {
+                    modifier = murim_underground_champion
+                    years = 5
+                }
+                custom_tooltip = murim_tournament_champion_tt
+            }
+            # Reach the finals but lose
+            25 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                change_variable = { name = murim_face_value add = 8 }
+                add_gold = 200
+                add_prestige = 150
+                add_prowess_skill = 2
+                add_stress = 15
+                add_character_modifier = {
+                    modifier = murim_battle_scars
+                    years = 1
+                }
+                custom_tooltip = murim_tournament_finalist_tt
+            }
+            # Win a few rounds, eliminated mid-tournament
+            30 = {
+                change_variable = { name = murim_jianghu_standing add = 3 }
+                add_gold = 50
+                add_prowess_skill = 1
+                add_stress = 20
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+                custom_tooltip = murim_tournament_midround_tt
+            }
+            # Eliminated first round -- humiliating
+            20 = {
+                modifier = {
+                    factor = 0.5
+                    prowess >= 14
+                }
+                change_variable = { name = murim_jianghu_standing add = -5 }
+                change_variable = { name = murim_face_value add = -8 }
+                add_prestige = -100
+                add_stress = 30
+                add_character_modifier = {
+                    modifier = murim_duel_wound
+                    years = 1
+                }
+                custom_tooltip = murim_tournament_first_round_tt
+            }
+            # Near-death experience -- barely survive
+            10 = {
+                modifier = {
+                    factor = 0.3
+                    prowess >= 18
+                }
+                change_variable = { name = murim_face_value add = -5 }
+                add_stress = 50
+                add_character_modifier = {
+                    modifier = murim_grievous_assassin_wound
+                    years = 3
+                }
+                custom_tooltip = murim_tournament_near_death_tt
+            }
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.5
+                has_trait = brave
+            }
+            modifier = {
+                factor = 1.5
+                prowess >= 16
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = craven
+            }
+        }
+    }
+
+    # Option B: Bet on fighters (gambling -- gain/lose gold)
+    option = {
+        name = murim_jianghu.0006.b
+        trigger = {
+            gold >= 100
+        }
+
+        custom_tooltip = murim_tournament_bet_tt
+
+        remove_short_term_gold = 100
+
+        random_list = {
+            # Big win -- your fighter dominates
+            25 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 14
+                }
+                add_gold = 400
+                add_prestige = 50
+                custom_tooltip = murim_tournament_bet_big_win_tt
+            }
+            # Modest win
+            25 = {
+                add_gold = 175
+                custom_tooltip = murim_tournament_bet_small_win_tt
+            }
+            # Break even -- exciting but no profit
+            20 = {
+                add_gold = 100
+                add_stress = 5
+                custom_tooltip = murim_tournament_bet_even_tt
+            }
+            # Lose it all
+            30 = {
+                modifier = {
+                    factor = 0.7
+                    intrigue >= 16
+                }
+                add_stress = 20
+                custom_tooltip = murim_tournament_bet_lose_tt
+            }
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+            modifier = {
+                factor = 1.5
+                gold >= 300
+            }
+        }
+    }
+
+    # Option C: Report to authorities (gain orthodox standing)
+    option = {
+        name = murim_jianghu.0006.c
+        trigger = {
+            var:murim_sect_alignment >= 0
+        }
+
+        custom_tooltip = murim_tournament_report_tt
+
+        change_variable = { name = murim_jianghu_standing add = 12 }
+        change_variable = { name = murim_sect_alignment add = 10 }
+        change_variable = { name = murim_face_value add = 5 }
+        add_prestige = 100
+        add_piety = 75
+
+        # Risk: tournament organizers find out
+        random_list = {
+            60 = {
+                add_character_modifier = {
+                    modifier = murim_righteous_informant
+                    years = 3
+                }
+                custom_tooltip = murim_tournament_report_safe_tt
+            }
+            40 = {
+                add_dread = -10
+                add_character_flag = murim_tournament_snitch_known
+                add_character_modifier = {
+                    modifier = murim_marked_by_underworld
+                    years = 5
+                }
+                custom_tooltip = murim_tournament_report_discovered_tt
+            }
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                var:murim_sect_alignment >= 50
+            }
+            modifier = {
+                factor = 0.1
+                var:murim_sect_alignment < -20
+            }
+        }
+    }
+
+    # Option D: Infiltrate to find intelligence (intrigue)
+    option = {
+        name = murim_jianghu.0006.d
+        trigger = {
+            intrigue >= 12
+        }
+
+        custom_tooltip = murim_tournament_infiltrate_tt
+
+        random_list = {
+            # Perfect infiltration -- gather critical intelligence
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                add_intrigue_skill = 2
+                change_variable = { name = murim_face_value add = 5 }
+                add_character_modifier = {
+                    modifier = murim_intelligence_network
+                    years = 3
+                }
+                add_character_flag = murim_tournament_intel
+                custom_tooltip = murim_tournament_infiltrate_perfect_tt
+            }
+            # Partial success -- some useful information
+            30 = {
+                add_intrigue_skill = 1
+                change_variable = { name = murim_face_value add = 2 }
+                custom_tooltip = murim_tournament_infiltrate_partial_tt
+            }
+            # Cover blown -- forced to fight your way out
+            35 = {
+                modifier = {
+                    factor = 0.5
+                    intrigue >= 20
+                }
+                add_stress = 30
+                change_variable = { name = murim_face_value add = -5 }
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+                # If also good at fighting, survive better
+                if = {
+                    limit = { prowess >= 14 }
+                    add_prowess_skill = 1
+                    custom_tooltip = murim_tournament_infiltrate_blown_fight_tt
+                }
+                else = {
+                    add_character_modifier = {
+                        modifier = murim_grievous_assassin_wound
+                        years = 2
+                    }
+                    custom_tooltip = murim_tournament_infiltrate_blown_hurt_tt
+                }
+            }
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 16
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 7: Demonic Path Temptation
+# A demonic cultivator offers forbidden knowledge.
+# Alignment-shifting event with major consequences.
+# ================================================================
+murim_jianghu.0007 = {
+    type = character_event
+    title = murim_jianghu.0007.t
+    desc = murim_jianghu.0007.desc
+    theme = skull
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_demonic_tempt_cooldown }
+        var:murim_cultivation_rank >= 1
+        NOT = { has_trait = zealous }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_demonic_tempt_cooldown
+            years = 4
+        }
+        play_music_cue = mx_cue_danger
+    }
+
+    # Option A: Accept forbidden knowledge (massive XP, demonic shift)
+    option = {
+        name = murim_jianghu.0007.a
+
+        custom_tooltip = murim_demonic_accept_tt
+
+        change_variable = { name = murim_sect_alignment add = -30 }
+        change_variable = { name = murim_face_value add = -10 }
+
+        # Gain massive cultivation power
+        random_list = {
+            # Full absorption -- incredible power gain
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 14
+                }
+                add_prowess_skill = 3
+                add_martial_skill = 2
+                add_character_modifier = {
+                    modifier = murim_demonic_qi_surge
+                    years = 5
+                }
+                custom_tooltip = murim_demonic_accept_full_power_tt
+            }
+            # Partial absorption -- good power, some backlash
+            35 = {
+                add_prowess_skill = 2
+                add_martial_skill = 1
+                add_stress = 25
+                add_character_modifier = {
+                    modifier = murim_demonic_qi_unstable
+                    years = 3
+                }
+                custom_tooltip = murim_demonic_accept_partial_tt
+            }
+            # Demonic qi corrupts you -- power with heavy cost
+            25 = {
+                add_prowess_skill = 1
+                add_stress = 50
+                add_character_modifier = {
+                    modifier = murim_demonic_corruption
+                    years = 10
+                }
+                custom_tooltip = murim_demonic_accept_corrupted_tt
+            }
+        }
+
+        # Always gain cruel trait if don't already have it
+        if = {
+            limit = { NOT = { has_trait = cruel } }
+            add_trait = cruel
+        }
+
+        # Orthodox cultivators shun you
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                NOT = { has_character_flag = murim_demonic_path }
+                NOT = { this = root }
+            }
+            add_opinion = { modifier = embraced_demonic_path_opinion target = root }
+        }
+
+        add_character_flag = murim_demonic_path
+        add_dread = 20
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                var:murim_sect_alignment < -20
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 0.1
+                var:murim_sect_alignment >= 50
+            }
+        }
+    }
+
+    # Option B: Refuse righteously (standing boost, orthodox alignment)
+    option = {
+        name = murim_jianghu.0007.b
+
+        custom_tooltip = murim_demonic_refuse_tt
+
+        change_variable = { name = murim_jianghu_standing add = 15 }
+        change_variable = { name = murim_face_value add = 10 }
+        change_variable = { name = murim_sect_alignment add = 15 }
+        add_prestige = 200
+        add_piety = 100
+
+        add_character_modifier = {
+            modifier = murim_righteous_resolve
+            years = 3
+        }
+
+        # Orthodox cultivators respect you
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_initiated
+                NOT = { has_character_flag = murim_demonic_path }
+            }
+            add_opinion = { modifier = resisted_temptation_opinion target = root }
+        }
+
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                var:murim_sect_alignment >= 30
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = honest
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = ambitious
+            }
+        }
+    }
+
+    # Option C: Pretend to accept then betray them (intrigue capture)
+    option = {
+        name = murim_jianghu.0007.c
+        trigger = {
+            intrigue >= 14
+        }
+
+        custom_tooltip = murim_demonic_betray_tt
+
+        random_list = {
+            # Perfect deception -- capture the demonic cultivator
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                modifier = {
+                    factor = 1.3
+                    has_trait = deceitful
+                }
+                change_variable = { name = murim_jianghu_standing add = 20 }
+                change_variable = { name = murim_face_value add = 15 }
+                change_variable = { name = murim_sect_alignment add = 10 }
+                add_prestige = 300
+                add_intrigue_skill = 2
+                add_dread = 15
+                add_character_modifier = {
+                    modifier = murim_demon_hunter
+                    years = 5
+                }
+                custom_tooltip = murim_demonic_betray_capture_tt
+            }
+            # Partial success -- they escape but you learn their secrets
+            30 = {
+                change_variable = { name = murim_jianghu_standing add = 8 }
+                change_variable = { name = murim_face_value add = 5 }
+                add_intrigue_skill = 1
+                add_learning_skill = 1
+                # Gain a little forbidden knowledge safely
+                add_character_modifier = {
+                    modifier = murim_stolen_demonic_insight
+                    years = 3
+                }
+                custom_tooltip = murim_demonic_betray_partial_tt
+            }
+            # They see through the deception -- fight for your life
+            35 = {
+                modifier = {
+                    factor = 0.5
+                    intrigue >= 20
+                }
+                change_variable = { name = murim_face_value add = -5 }
+                add_stress = 35
+
+                # Survival depends on combat ability
+                if = {
+                    limit = { prowess >= 14 }
+                    add_prowess_skill = 1
+                    add_character_modifier = {
+                        modifier = murim_battle_scars
+                        years = 1
+                    }
+                    custom_tooltip = murim_demonic_betray_fight_survive_tt
+                }
+                else = {
+                    add_character_modifier = {
+                        modifier = murim_grievous_assassin_wound
+                        years = 3
+                    }
+                    change_variable = { name = murim_sect_alignment add = -5 }
+                    custom_tooltip = murim_demonic_betray_fight_wounded_tt
+                }
+            }
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = honest
+            }
+        }
+    }
+
+    # Option D: Absorb their power by force (martial>=20, kill and take)
+    option = {
+        name = murim_jianghu.0007.d
+        trigger = {
+            martial >= 20
+            prowess >= 16
+        }
+
+        custom_tooltip = murim_demonic_absorb_force_tt
+
+        random_list = {
+            # Overpower and drain them -- immense power gain
+            30 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 22
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_cultivation_rank >= 4
+                }
+                add_prowess_skill = 3
+                add_martial_skill = 2
+                add_prestige = 200
+                add_dread = 25
+                change_variable = { name = murim_jianghu_standing add = 5 }
+                # Less alignment shift than accepting willingly
+                change_variable = { name = murim_sect_alignment add = -10 }
+                add_character_modifier = {
+                    modifier = murim_absorbed_demonic_essence
+                    years = 5
+                }
+                custom_tooltip = murim_demonic_absorb_success_tt
+            }
+            # Kill them but fail to absorb cleanly
+            35 = {
+                add_prowess_skill = 1
+                add_martial_skill = 1
+                add_dread = 15
+                add_stress = 20
+                change_variable = { name = murim_sect_alignment add = -8 }
+                custom_tooltip = murim_demonic_absorb_messy_tt
+            }
+            # They're stronger than expected -- mutual destruction
+            35 = {
+                modifier = {
+                    factor = 0.5
+                    prowess >= 24
+                }
+                add_stress = 50
+                change_variable = { name = murim_sect_alignment add = -15 }
+                add_character_modifier = {
+                    modifier = murim_demonic_backlash
+                    years = 5
+                }
+                add_character_modifier = {
+                    modifier = murim_grievous_assassin_wound
+                    years = 2
+                }
+                custom_tooltip = murim_demonic_absorb_backlash_tt
+            }
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.5
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = craven
+            }
+        }
+    }
+}
+
+
+# ================================================================
+# EVENT 8: Blood Debt Collected
+# Someone you wronged in the past returns for revenge.
+# Consequences for past actions come calling.
+# ================================================================
+murim_jianghu.0008 = {
+    type = character_event
+    title = murim_jianghu.0008.t
+    desc = murim_jianghu.0008.desc
+    theme = martial_chivalry_focus
+
+    trigger = {
+        has_character_flag = murim_initiated
+        NOT = { has_character_flag = murim_blood_debt_cooldown }
+        var:murim_cultivation_rank >= 1
+        # Must have done something to attract vengeance
+        OR = {
+            dread >= 15
+            has_character_flag = murim_suspected_poisoner
+            has_character_flag = murim_demonic_path
+            has_character_flag = murim_sect_traitor_power
+            any_relation = {
+                type = rival
+                is_alive = yes
+            }
+        }
+    }
+
+    immediate = {
+        add_character_flag = {
+            flag = murim_blood_debt_cooldown
+            years = 4
+        }
+
+        # Save the avenger if a rival exists
+        if = {
+            limit = {
+                any_relation = {
+                    type = rival
+                    is_alive = yes
+                }
+            }
+            random_relation = {
+                type = rival
+                save_scope_as = blood_debt_avenger
+            }
+        }
+    }
+
+    # Option A: Duel them honorably (prowess)
+    option = {
+        name = murim_jianghu.0008.a
+
+        custom_tooltip = murim_blood_debt_duel_tt
+
+        random_list = {
+            # Decisive victory -- debt settled with honor
+            30 = {
+                modifier = {
+                    factor = 2.0
+                    prowess >= 18
+                }
+                modifier = {
+                    factor = 1.3
+                    var:murim_cultivation_rank >= 3
+                }
+                change_variable = { name = murim_jianghu_standing add = 10 }
+                change_variable = { name = murim_face_value add = 8 }
+                add_prestige = 150
+                add_prowess_skill = 1
+
+                # If rival exists, potentially kill them
+                if = {
+                    limit = { exists = scope:blood_debt_avenger }
+                    scope:blood_debt_avenger = {
+                        death = { death_reason = death_duel killer = root }
+                    }
+                }
+
+                custom_tooltip = murim_blood_debt_duel_decisive_tt
+            }
+            # Narrow victory -- wounded but standing
+            30 = {
+                modifier = {
+                    factor = 1.3
+                    prowess >= 14
+                }
+                change_variable = { name = murim_jianghu_standing add = 5 }
+                change_variable = { name = murim_face_value add = 3 }
+                add_prestige = 50
+                add_stress = 15
+                add_character_modifier = {
+                    modifier = murim_duel_wound
+                    years = 1
+                }
+                custom_tooltip = murim_blood_debt_duel_narrow_tt
+            }
+            # Draw -- both wounded, grudge continues
+            20 = {
+                add_stress = 20
+                add_character_modifier = {
+                    modifier = murim_battle_scars
+                    years = 2
+                }
+                add_character_flag = murim_blood_debt_unresolved
+                custom_tooltip = murim_blood_debt_duel_draw_tt
+            }
+            # Defeat -- humiliated, further debt
+            20 = {
+                modifier = {
+                    factor = 0.5
+                    prowess >= 16
+                }
+                change_variable = { name = murim_jianghu_standing add = -12 }
+                change_variable = { name = murim_face_value add = -10 }
+                add_prestige = -200
+                add_stress = 40
+                add_character_modifier = {
+                    modifier = murim_grievous_assassin_wound
+                    years = 3
+                }
+                custom_tooltip = murim_blood_debt_duel_defeat_tt
+            }
+        }
+
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 1.5
+                prowess >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = honorable
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = craven
+            }
+        }
+    }
+
+    # Option B: Apologize and pay reparations (gold + prestige loss)
+    option = {
+        name = murim_jianghu.0008.b
+        trigger = {
+            gold >= 200
+        }
+
+        custom_tooltip = murim_blood_debt_apologize_tt
+
+        remove_short_term_gold = 200
+        add_prestige = -200
+        change_variable = { name = murim_face_value add = -8 }
+
+        random_list = {
+            # They accept -- debt cleared
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 14
+                }
+                add_stress = -30
+                change_variable = { name = murim_jianghu_standing add = 5 }
+                remove_character_flag = murim_has_active_bounty
+
+                if = {
+                    limit = { exists = scope:blood_debt_avenger }
+                    scope:blood_debt_avenger = {
+                        add_opinion = { modifier = debt_repaid_opinion target = root }
+                        remove_relation_rival = root
+                    }
+                }
+
+                custom_tooltip = murim_blood_debt_apologize_accepted_tt
+            }
+            # They take the money but still hate you
+            30 = {
+                add_stress = 10
+
+                if = {
+                    limit = { exists = scope:blood_debt_avenger }
+                    scope:blood_debt_avenger = {
+                        add_opinion = { modifier = grudging_acceptance_opinion target = root }
+                    }
+                }
+
+                custom_tooltip = murim_blood_debt_apologize_grudging_tt
+            }
+            # They reject the apology -- humiliated for nothing
+            20 = {
+                modifier = {
+                    factor = 0.5
+                    diplomacy >= 18
+                }
+                add_stress = 30
+                change_variable = { name = murim_jianghu_standing add = -8 }
+                change_variable = { name = murim_face_value add = -5 }
+                custom_tooltip = murim_blood_debt_apologize_rejected_tt
+            }
+        }
+
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = generous
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = greedy
+            }
+        }
+    }
+
+    # Option C: Have your disciples handle it (if sect master)
+    option = {
+        name = murim_jianghu.0008.c
+        trigger = {
+            is_ruler = yes
+            any_courtier = {
+                has_character_flag = murim_initiated
+                prowess >= 8
+                NOT = { this = root }
+            }
+        }
+
+        custom_tooltip = murim_blood_debt_disciples_handle_tt
+
+        random_list = {
+            # Disciples handle it cleanly
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    martial >= 14
+                }
+                change_variable = { name = murim_face_value add = 5 }
+                add_prestige = 50
+
+                random_courtier = {
+                    limit = {
+                        has_character_flag = murim_initiated
+                        prowess >= 8
+                        NOT = { this = root }
+                    }
+                    add_prowess_skill = 1
+                    add_opinion = { modifier = trusted_with_duty_opinion target = root }
+                }
+
+                custom_tooltip = murim_blood_debt_disciples_clean_tt
+            }
+            # Disciples fight but suffer casualties
+            35 = {
+                add_stress = 15
+
+                random_courtier = {
+                    limit = {
+                        has_character_flag = murim_initiated
+                        prowess >= 8
+                        NOT = { this = root }
+                    }
+                    add_character_modifier = {
+                        modifier = murim_battle_scars
+                        years = 2
+                    }
+                }
+
+                custom_tooltip = murim_blood_debt_disciples_casualties_tt
+            }
+            # Disciples fail -- avenger breaks through to you
+            30 = {
+                modifier = {
+                    factor = 0.5
+                    any_courtier = {
+                        has_character_flag = murim_initiated
+                        prowess >= 14
+                    }
+                }
+                change_variable = { name = murim_face_value add = -8 }
+                add_stress = 30
+                add_prestige = -100
+
+                # You must fight anyway, unprepared
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+
+                every_courtier = {
+                    limit = {
+                        has_character_flag = murim_initiated
+                        NOT = { this = root }
+                    }
+                    add_opinion = { modifier = failed_master_opinion target = root }
+                }
+
+                custom_tooltip = murim_blood_debt_disciples_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = lazy
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = arrogant
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = brave
+            }
+        }
+    }
+
+    # Option D: Assassinate them before they can act (intrigue, dark)
+    option = {
+        name = murim_jianghu.0008.d
+        trigger = {
+            intrigue >= 12
+        }
+
+        custom_tooltip = murim_blood_debt_preemptive_kill_tt
+
+        random_list = {
+            # Clean assassination -- problem eliminated
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                modifier = {
+                    factor = 1.3
+                    has_trait = deceitful
+                }
+                add_intrigue_skill = 1
+                add_dread = 15
+                change_variable = { name = murim_sect_alignment add = -8 }
+
+                if = {
+                    limit = { exists = scope:blood_debt_avenger }
+                    scope:blood_debt_avenger = {
+                        death = { death_reason = death_murder_unknown killer = root }
+                    }
+                }
+
+                custom_tooltip = murim_blood_debt_assassinate_clean_tt
+            }
+            # Kill them but it's traced back to you
+            30 = {
+                add_intrigue_skill = 1
+                add_dread = 25
+                change_variable = { name = murim_jianghu_standing add = -15 }
+                change_variable = { name = murim_face_value add = -10 }
+                change_variable = { name = murim_sect_alignment add = -15 }
+
+                # Gain the kinslayer-equivalent modifier
+                add_character_modifier = {
+                    modifier = murim_blood_debt_murderer
+                    years = 10
+                }
+
+                if = {
+                    limit = { exists = scope:blood_debt_avenger }
+                    scope:blood_debt_avenger = {
+                        death = { death_reason = death_murder killer = root }
+                    }
+                }
+
+                every_courtier = {
+                    limit = {
+                        has_character_flag = murim_initiated
+                        NOT = { this = root }
+                    }
+                    add_opinion = { modifier = dishonorable_killer_opinion target = root }
+                }
+
+                custom_tooltip = murim_blood_debt_assassinate_exposed_tt
+            }
+            # Assassination fails -- they're alerted and furious
+            35 = {
+                modifier = {
+                    factor = 0.5
+                    intrigue >= 20
+                }
+                change_variable = { name = murim_jianghu_standing add = -20 }
+                change_variable = { name = murim_face_value add = -15 }
+                change_variable = { name = murim_sect_alignment add = -10 }
+                add_prestige = -200
+                add_stress = 35
+
+                add_character_modifier = {
+                    modifier = murim_dishonorable_fighter
+                    years = 5
+                }
+
+                # They attack you immediately
+                add_character_modifier = {
+                    modifier = murim_assassin_wounds
+                    years = 1
+                }
+
+                if = {
+                    limit = { exists = scope:blood_debt_avenger }
+                    scope:blood_debt_avenger = {
+                        add_opinion = { modifier = attempted_murder_opinion target = root }
+                    }
+                }
+
+                custom_tooltip = murim_blood_debt_assassinate_fail_tt
+            }
+        }
+
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.5
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = just
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = honest
+            }
+        }
+    }
+}
