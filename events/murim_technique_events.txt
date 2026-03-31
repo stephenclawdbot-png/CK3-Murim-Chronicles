@@ -1,0 +1,528 @@
+################################################################
+# MURIM CHRONICLES — TECHNIQUE UNLOCK EVENTS
+# Path: events/murim_technique_events.txt
+#
+# Fires for BOTH AI and player characters.
+# AI: Triggered by yearly on_action pulse (automatic).
+# Player: Triggered by decision menu (manual).
+# Both use the same scripted triggers as gates.
+#
+# Event flow:
+#   on_action yearly pulse -> check triggers -> fire event
+#   Event presents the unlock -> adds trait
+#   AI auto-selects based on personality alignment triggers
+################################################################
+
+namespace = murim_technique
+
+
+# ==============================================================
+# TIER 1 UNLOCK EVENTS
+# ==============================================================
+
+# --- Master event: checks all Tier 1 options ---
+murim_technique.0001 = {
+	type = character_event
+	title = murim_technique.0001.t
+	desc = murim_technique.0001.desc
+	theme = martial
+
+	trigger = {
+		murim_can_unlock_any_tier1_trigger = yes
+		NOT = { murim_has_tier1_technique_trigger = yes }
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Higher prowess = more likely to trigger
+		modifier = {
+			add = 0.5
+			prowess >= 18
+		}
+		modifier = {
+			add = 1.0
+			prowess >= 22
+		}
+		# Cultivators more likely
+		modifier = {
+			add = 0.5
+			exists = var:murim_cultivation_rank
+		}
+	}
+
+	immediate = {
+		# Determine best fit based on highest qualifying skill
+		save_scope_value_as = {
+			name = technique_tier
+			value = 1
+		}
+	}
+
+	# Option A: Harmonious Palm (Diplomacy path)
+	option = {
+		name = murim_technique.0001.a
+		trigger = {
+			murim_can_unlock_harmonious_palm_trigger = yes
+		}
+		add_trait = murim_harmonious_palm
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+			cruel = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_honor = 1.0
+			}
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+			modifier = {
+				add = 20
+				has_trait = diplomat
+			}
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+			modifier = {
+				add = 10
+				diplomacy >= 20
+			}
+		}
+	}
+
+	# Option B: Iron Hegemon (Martial path)
+	option = {
+		name = murim_technique.0001.b
+		trigger = {
+			murim_can_unlock_iron_hegemon_trigger = yes
+		}
+		add_trait = murim_iron_hegemon
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_boldness = 1.0
+			}
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 10
+				martial >= 20
+			}
+		}
+	}
+
+	# Option C: Venom Needle (Intrigue path)
+	option = {
+		name = murim_technique.0001.c
+		trigger = {
+			murim_can_unlock_venom_needle_trigger = yes
+		}
+		add_trait = murim_venom_needle
+		stress_impact = {
+			deceitful = minor_stress_impact_loss
+			honest = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_vengefulness = 0.5
+			}
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+			modifier = {
+				add = 10
+				intrigue >= 20
+			}
+		}
+	}
+
+	# Option D: Void Sight (Learning path)
+	option = {
+		name = murim_technique.0001.d
+		trigger = {
+			murim_can_unlock_void_sight_trigger = yes
+		}
+		add_trait = murim_void_sight
+		stress_impact = {
+			patient = minor_stress_impact_loss
+			impatient = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_rationality = 1.0
+			}
+			modifier = {
+				add = 30
+				has_trait = patient
+			}
+			modifier = {
+				add = 20
+				has_trait = scholar
+			}
+			modifier = {
+				add = 15
+				has_trait = diligent
+			}
+			modifier = {
+				add = 10
+				learning >= 20
+			}
+		}
+	}
+
+	# Option E: Jade Treasury (Stewardship path)
+	option = {
+		name = murim_technique.0001.e
+		trigger = {
+			murim_can_unlock_jade_treasury_trigger = yes
+		}
+		add_trait = murim_jade_treasury
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+			generous = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			ai_value_modifier = {
+				ai_greed = 1.0
+			}
+			modifier = {
+				add = 30
+				has_trait = greedy
+			}
+			modifier = {
+				add = 20
+				has_trait = diligent
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 10
+				stewardship >= 20
+			}
+		}
+	}
+}
+
+
+# ==============================================================
+# TIER 2 UNLOCK EVENT
+# Fires when a character with a Tier 1 trait qualifies for Tier 2
+# ==============================================================
+
+murim_technique.0010 = {
+	type = character_event
+	title = murim_technique.0010.t
+	desc = murim_technique.0010.desc
+	theme = martial
+
+	trigger = {
+		murim_has_tier1_technique_trigger = yes
+		NOT = { murim_has_tier2_technique_trigger = yes }
+		murim_can_unlock_any_tier2_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			prowess >= 24
+		}
+		modifier = {
+			add = 1.0
+			prowess >= 28
+		}
+		modifier = {
+			add = 0.5
+			exists = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+		}
+	}
+
+	immediate = {
+		save_scope_value_as = {
+			name = technique_tier
+			value = 2
+		}
+	}
+
+	# Shadow Executioner (Martial + Intrigue)
+	option = {
+		name = murim_technique.0010.a
+		trigger = { murim_can_unlock_shadow_executioner_trigger = yes }
+		add_trait = murim_shadow_executioner
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_iron_hegemon }
+			modifier = { add = 30 has_trait = murim_venom_needle }
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 15 has_trait = brave }
+		}
+	}
+
+	# Sage Commander (Martial + Diplomacy)
+	option = {
+		name = murim_technique.0010.b
+		trigger = { murim_can_unlock_sage_commander_trigger = yes }
+		add_trait = murim_sage_commander
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_iron_hegemon }
+			modifier = { add = 30 has_trait = murim_harmonious_palm }
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 15 has_trait = diplomat }
+		}
+	}
+
+	# Silken Blade (Intrigue + Diplomacy)
+	option = {
+		name = murim_technique.0010.c
+		trigger = { murim_can_unlock_silken_blade_trigger = yes }
+		add_trait = murim_silken_blade
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_venom_needle }
+			modifier = { add = 30 has_trait = murim_harmonious_palm }
+			modifier = { add = 20 has_trait = seducer }
+		}
+	}
+
+	# Sutra Fist (Learning + Martial)
+	option = {
+		name = murim_technique.0010.d
+		trigger = { murim_can_unlock_sutra_fist_trigger = yes }
+		add_trait = murim_sutra_fist
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_void_sight }
+			modifier = { add = 30 has_trait = murim_iron_hegemon }
+			modifier = { add = 20 has_trait = scholar }
+		}
+	}
+
+	# Phantom Meridian (Learning + Intrigue)
+	option = {
+		name = murim_technique.0010.e
+		trigger = { murim_can_unlock_phantom_meridian_trigger = yes }
+		add_trait = murim_phantom_meridian
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_void_sight }
+			modifier = { add = 30 has_trait = murim_venom_needle }
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Golden Merchant (Stewardship + Martial)
+	option = {
+		name = murim_technique.0010.f
+		trigger = { murim_can_unlock_golden_merchant_trigger = yes }
+		add_trait = murim_golden_merchant
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_jade_treasury }
+			modifier = { add = 30 has_trait = murim_iron_hegemon }
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+
+	# Coin and Dagger (Stewardship + Intrigue)
+	option = {
+		name = murim_technique.0010.g
+		trigger = { murim_can_unlock_coin_and_dagger_trigger = yes }
+		add_trait = murim_coin_and_dagger
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_jade_treasury }
+			modifier = { add = 30 has_trait = murim_venom_needle }
+			modifier = { add = 20 has_trait = arbitrary }
+		}
+	}
+
+	# Jade Emperor Palm (Stewardship + Diplomacy)
+	option = {
+		name = murim_technique.0010.h
+		trigger = { murim_can_unlock_jade_emperor_palm_trigger = yes }
+		add_trait = murim_jade_emperor_palm
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_jade_treasury }
+			modifier = { add = 30 has_trait = murim_harmonious_palm }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Mountain Sage (Stewardship + Learning)
+	option = {
+		name = murim_technique.0010.i
+		trigger = { murim_can_unlock_mountain_sage_trigger = yes }
+		add_trait = murim_mountain_sage
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_jade_treasury }
+			modifier = { add = 30 has_trait = murim_void_sight }
+			modifier = { add = 20 has_trait = temperate }
+		}
+	}
+
+	# Heaven's Voice (Diplomacy + Learning)
+	option = {
+		name = murim_technique.0010.j
+		trigger = { murim_can_unlock_heavens_voice_trigger = yes }
+		add_trait = murim_heavens_voice
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = murim_harmonious_palm }
+			modifier = { add = 30 has_trait = murim_void_sight }
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+}
+
+
+# ==============================================================
+# TIER 3 UNLOCK EVENT
+# Legendary. Fires when a Tier 2 holder qualifies.
+# ==============================================================
+
+murim_technique.0100 = {
+	type = character_event
+	title = murim_technique.0100.t
+	desc = murim_technique.0100.desc
+	theme = martial
+
+	trigger = {
+		murim_has_tier2_technique_trigger = yes
+		NOT = { murim_has_tier3_technique_trigger = yes }
+		murim_can_unlock_any_tier3_trigger = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1.0
+			prowess >= 30
+		}
+		modifier = {
+			add = 1.0
+			exists = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 5
+		}
+	}
+
+	immediate = {
+		save_scope_value_as = {
+			name = technique_tier
+			value = 3
+		}
+	}
+
+	# Tyrant Fist
+	option = {
+		name = murim_technique.0100.a
+		trigger = { murim_can_unlock_tyrant_fist_trigger = yes }
+		add_trait = murim_tyrant_fist
+		stress_impact = {
+			ambitious = major_stress_impact_loss
+			content = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 40 has_trait = ambitious }
+			modifier = { add = 30 has_trait = wrathful }
+			modifier = { add = 20 has_trait = cruel }
+			ai_value_modifier = { ai_boldness = 1.5 }
+		}
+	}
+
+	# Dao Heart
+	option = {
+		name = murim_technique.0100.b
+		trigger = { murim_can_unlock_dao_heart_trigger = yes }
+		add_trait = murim_dao_heart
+		stress_impact = {
+			patient = major_stress_impact_loss
+			impatient = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 40 has_trait = compassionate }
+			modifier = { add = 30 has_trait = patient }
+			modifier = { add = 20 has_trait = just }
+			ai_value_modifier = { ai_honor = 1.5 }
+		}
+	}
+
+	# Asura's Crown
+	option = {
+		name = murim_technique.0100.c
+		trigger = { murim_can_unlock_asura_crown_trigger = yes }
+		add_trait = murim_asura_crown
+		stress_impact = {
+			greedy = major_stress_impact_loss
+			generous = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 40 has_trait = greedy }
+			modifier = { add = 30 has_trait = deceitful }
+			modifier = { add = 20 has_trait = ambitious }
+			ai_value_modifier = { ai_greed = 1.5 }
+		}
+	}
+
+	# Heavenly Sovereign (requires Tier 3 prerequisite)
+	option = {
+		name = murim_technique.0100.d
+		trigger = { murim_can_unlock_heavenly_sovereign_trigger = yes }
+		add_trait = murim_heavenly_sovereign
+		stress_impact = {
+			ambitious = major_stress_impact_loss
+		}
+		ai_chance = {
+			base = 100
+			# AI always picks this if available. It's the apex.
+		}
+	}
+}
+
+
+# ==============================================================
+# ON_ACTION: YEARLY AI TECHNIQUE CHECK
+# This is the engine that makes AI unlock techniques.
+# Fires once per year for every living character.
+# Checks if they qualify, then fires the appropriate event.
+# ==============================================================
+# NOTE: This on_action must be registered in
+# common/on_actions/murim_technique_on_actions.txt
+# ==============================================================
