@@ -1,0 +1,643 @@
+################################################################
+# MURIM CHRONICLES — CELESTIAL SYSTEM INTEGRATION VALUES
+# Path: common/script_values/murim_celestial_values.txt
+# Handles: Orthodox mandate aura, Demonic mandate drain,
+#          Ministry infiltration detection, Dynastic Cycle
+#          era modifiers, examination martial track scores,
+#          Celestial Registry, Shadow Emperor mechanics
+#
+# These values hook into AUH 1.18 systems.
+# Guard all usage with: has_dlc_feature = all_under_heaven
+################################################################
+
+
+# ==============================================================
+# ORTHODOX MANDATE SUPPORT
+# Orthodox Sect Masters passively sustain the Mandate.
+# Calculated per-character, summed by scripted_effect.
+# ==============================================================
+
+# Per-orthodox-sect-master monthly mandate contribution
+murim_orthodox_mandate_aura_value = {
+	value = 0
+
+	# Must be an Orthodox Sect Master at Foundation+
+	if = {
+		limit = {
+			has_character_flag = murim_orthodox_cultivator
+			has_character_flag = murim_sect_master
+			murim_cultivation_rank_value >= 3
+		}
+		# Base contribution
+		value = 0.05
+
+		# Higher cultivation = stronger aura
+		add = {
+			value = murim_cultivation_rank_value
+			subtract = 3
+			multiply = 0.02
+			min = 0
+		}
+
+		# Sanctioned Sect bonus (Court recognizes them)
+		if = {
+			limit = { has_character_flag = murim_sect_sanctioned }
+			add = 0.03
+		}
+
+		# Jianghu standing amplifies influence
+		if = {
+			limit = {
+				exists = var:murim_jianghu_standing
+				var:murim_jianghu_standing >= 65
+			}
+			add = 0.02
+		}
+	}
+
+	max = 0.15
+}
+
+# Righteous Pillar decision: immediate Mandate burst
+murim_righteous_pillar_mandate_gain = {
+	value = 5
+
+	# Stronger during Expansion/Advancement (Court listens)
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era <= 2
+		}
+		add = 2
+	}
+
+	# Weaker during Division (who cares?)
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 5
+		}
+		subtract = 3
+	}
+
+	# Higher rank = more impressive declaration
+	add = {
+		value = murim_cultivation_rank_value
+		subtract = 3
+		min = 0
+		max = 3
+	}
+
+	min = 2
+	max = 10
+	round = yes
+}
+
+# Merit gained by Sect Master from Righteous Pillar
+murim_righteous_pillar_merit_gain = 20
+
+# Opinion bonus Hegemon gets toward Sect Master
+murim_righteous_pillar_opinion_gain = 30
+
+
+# ==============================================================
+# DEMONIC MANDATE DRAIN
+# Demonic Sect Masters erode the Mandate passively.
+# Smaller per-character than orthodox gain, but they
+# also trigger big sabotage events.
+# ==============================================================
+
+murim_demonic_mandate_drain_value = {
+	value = 0
+
+	if = {
+		limit = {
+			has_character_flag = murim_demonic_cultivator
+			has_character_flag = murim_sect_master
+			murim_cultivation_rank_value >= 2
+		}
+		# Base drain (intentionally smaller than orthodox gain)
+		value = -0.03
+
+		# Higher cultivation = deeper rot
+		subtract = {
+			value = murim_cultivation_rank_value
+			subtract = 2
+			multiply = 0.01
+			min = 0
+		}
+
+		# Active Ministry infiltration amplifies drain
+		if = {
+			limit = { has_character_flag = murim_ministry_infiltrator_active }
+			subtract = 0.02
+		}
+
+		# Multiple infiltrated ministries
+		if = {
+			limit = {
+				exists = var:murim_infiltrated_ministry_count
+				var:murim_infiltrated_ministry_count >= 3
+			}
+			subtract = 0.03
+		}
+	}
+
+	min = -0.12
+}
+
+# Sow Discord decision: cycle catalyst push
+murim_sow_discord_catalyst_chance = {
+	# Chance of triggering a Tension/Conquest catalyst
+	value = 40
+
+	add = {
+		value = intrigue
+		multiply = 1.0
+		max = 20
+	}
+
+	# Already in Tension = easier to push further
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era >= 3
+		}
+		add = 15
+	}
+
+	# Active infiltration helps
+	if = {
+		limit = { has_character_flag = murim_ministry_infiltrator_active }
+		add = 10
+	}
+
+	min = 15
+	max = 90
+	round = yes
+}
+
+
+# ==============================================================
+# MINISTRY INFILTRATION
+# Detection chances per Ministry type.
+# Checked periodically and on specific triggers.
+# ==============================================================
+
+# Base detection chance (modified per ministry below)
+murim_infiltration_base_detection_chance = {
+	value = 20
+
+	# Higher intrigue = harder to detect
+	subtract = {
+		value = intrigue
+		multiply = 0.5
+		max = 10
+	}
+
+	# Imperial Censor is active (someone is watching)
+	if = {
+		limit = { exists = global_var:murim_imperial_censor_active }
+		add = 10
+	}
+
+	# Orthodox Censor (even more effective)
+	if = {
+		limit = { exists = global_var:murim_orthodox_censor_active }
+		add = 15
+	}
+
+	# Era modifiers
+	# Expansion: tight control
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 1
+		}
+		add = 15
+	}
+	# Tension: overwhelmed bureaucracy
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 3
+		}
+		subtract = 15
+	}
+	# Conquest: chaos, nobody watching
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era >= 4
+		}
+		subtract = 20
+	}
+
+	min = 5
+	max = 60
+	round = yes
+}
+
+# Per-ministry detection modifiers (added to base)
+murim_detection_personnel_modifier = 0		# 吏部 Personnel: baseline
+murim_detection_war_modifier = -5			# 兵部 War: military secrecy
+murim_detection_revenue_modifier = 5		# 戶部 Revenue: money leaves trails
+murim_detection_justice_modifier = 10		# 刑部 Justice: most scrutinized
+murim_detection_rites_modifier = 0			# 禮部 Rites: examination corruption
+murim_detection_works_modifier = -10		# 工部 Works: remote construction sites
+
+# Ministry sabotage impact values
+murim_personnel_corrupt_merit_loss = -15		# Merit lost per affected Governor
+murim_personnel_corrupt_mandate_loss = -3
+murim_personnel_corrupt_governor_count = 3		# Governors affected per event
+
+murim_war_sabotage_army_penalty = -10			# Army quality % loss
+murim_war_sabotage_duration_months = 6
+
+murim_revenue_skimming_treasury_loss = 200		# Gold lost from Imperial Treasury
+murim_revenue_skimming_sect_gain = 100			# Gold gained by Demonic Sect
+
+murim_rites_exam_cheat_legitimacy_loss = -5
+
+murim_works_levy_bonus_pct = 20					# % bonus to Demonic hidden levy
+murim_works_project_slowdown_pct = 15			# % slowdown on Great Projects
+
+
+# ==============================================================
+# IMPERIAL EXAMINATION — MARTIAL ANNEX SCORES
+# Alternative exam track for cultivators.
+# Uses prowess + cultivation instead of pure learning.
+# ==============================================================
+
+# Local Examination — Martial Track score
+murim_exam_local_martial_score = {
+	value = 0
+
+	# Prowess is primary (replaces Learning)
+	add = {
+		value = prowess
+		multiply = 1.5
+	}
+
+	# Cultivation rank adds significantly
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 5
+	}
+
+	# Some learning still helps (martial theory)
+	add = {
+		value = learning
+		multiply = 0.3
+	}
+
+	# Body tempering bonus
+	if = {
+		limit = {
+			exists = var:murim_body_tempering_level
+			var:murim_body_tempering_level >= 5
+		}
+		add = 5
+	}
+
+	round = yes
+}
+
+# Capital Examination — Combined Track (literary + martial)
+murim_exam_capital_combined_score = {
+	# Average of literary and martial
+	value = learning
+	add = prowess
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 3
+	}
+	divide = 2
+
+	# Merit already earned helps (experience)
+	if = {
+		limit = {
+			exists = var:murim_merit_tracking
+			var:murim_merit_tracking >= 30
+		}
+		add = 5
+	}
+
+	round = yes
+}
+
+# Palace Examination — Special demonstration
+murim_exam_palace_demonstration_score = {
+	value = murim_cultivation_rank_value
+	multiply = 10
+
+	add = prowess
+	add = {
+		value = murim_meridian_flow_efficiency
+		multiply = 10
+	}
+
+	# Qi deviation risk during public demonstration
+	# Higher rank = more impressive but riskier
+	round = yes
+}
+
+# Exam irregularity detection chance (Censor notices martial exam)
+murim_exam_irregularity_chance = {
+	value = 15
+
+	if = {
+		limit = { exists = global_var:murim_imperial_censor_active }
+		add = 15
+	}
+
+	# Capital exam is more visible
+	# (add 25 when calling from capital exam context)
+
+	min = 5
+	max = 60
+	round = yes
+}
+
+# Martial Merit bonus for Commander Succession
+murim_martial_merit_commander_bonus = {
+	# Martial Merit counts double for Celestial Commander Succession
+	value = 0
+	if = {
+		limit = { has_character_flag = murim_martial_merit_holder }
+		add = {
+			value = var:murim_merit_tracking
+			multiply = 1.0
+			# Effectively doubles the merit for commander selection
+		}
+	}
+}
+
+
+# ==============================================================
+# CELESTIAL REGISTRY — COURT RESPONSE VALUES
+# When a sect is discovered, the Hegemon chooses a response.
+# These values determine costs and effects.
+# ==============================================================
+
+# Sanction: hidden levy obligation
+murim_sanction_levy_obligation_size = {
+	value = 100
+	if = {
+		limit = {
+			exists = var:murim_sect_power
+			var:murim_sect_power >= 50
+		}
+		add = 100
+	}
+	if = {
+		limit = {
+			exists = var:murim_sect_power
+			var:murim_sect_power >= 80
+		}
+		add = 100
+	}
+	round = yes
+}
+
+# Tribute: annual payment
+murim_tribute_annual_gold = 50
+murim_tribute_merit_annual = 5
+
+# Suppression: severity of persecution
+murim_suppression_event_severity = {
+	value = 1
+	# 1 = investigation, 2 = raids, 3 = purge
+
+	# Hegemon martial affects severity
+	if = {
+		limit = {
+			exists = global_var:murim_hegemon_martial
+			global_var:murim_hegemon_martial >= 15
+		}
+		add = 1
+	}
+
+	# Division era: no resources for serious suppression
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era >= 4
+		}
+		subtract = 1
+	}
+
+	min = 1
+	max = 3
+}
+
+# Mandate cost of suppressing an Orthodox sect (bad idea)
+murim_suppress_orthodox_mandate_loss = -5
+# Mandate gain from suppressing a Demonic sect
+murim_suppress_demonic_mandate_gain = 3
+
+# Co-opt: Merit reward for Sect Master who accepts position
+murim_coopt_merit_reward = 40
+
+
+# ==============================================================
+# SHADOW EMPEROR REQUIREMENTS
+# Checks for the Demonic endgame "Hidden Hand" event.
+# ==============================================================
+
+murim_shadow_emperor_readiness = {
+	# Score 0-100. Must reach 100 to trigger.
+	value = 0
+
+	# Spirit Severing required (25 points)
+	if = {
+		limit = { has_trait = murim_spirit_severing }
+		add = 25
+	}
+
+	# 3+ infiltrated Ministries (25 points each up to 3)
+	if = {
+		limit = {
+			exists = var:murim_infiltrated_ministry_count
+		}
+		add = {
+			value = var:murim_infiltrated_ministry_count
+			multiply = 8.33
+			min = 0
+			max = 25
+		}
+	}
+
+	# Puppet Hegemon (25 points)
+	if = {
+		limit = { has_character_flag = murim_hegemon_puppet_planted }
+		add = 25
+	}
+
+	# Jianghu standing 70+ (25 points, scaled)
+	if = {
+		limit = {
+			exists = var:murim_jianghu_standing
+			var:murim_jianghu_standing >= 70
+		}
+		add = {
+			value = var:murim_jianghu_standing
+			subtract = 70
+			multiply = 0.83
+			min = 0
+			max = 25
+		}
+	}
+
+	min = 0
+	max = 100
+	round = yes
+}
+
+
+# ==============================================================
+# GRAND SECRETARIAT — VIRTUE MANDATE
+# When Secretary Director is Orthodox-initiated.
+# Slows the Advancement→Tension transition.
+# ==============================================================
+
+murim_virtue_mandate_cycle_slowdown = {
+	# Percentage slowdown on Advancement Era catalyst accumulation
+	value = 20
+
+	# Secretary's learning amplifies the effect
+	if = {
+		limit = {
+			exists = global_var:murim_secretary_learning
+			global_var:murim_secretary_learning >= 18
+		}
+		add = 5
+	}
+
+	# Orthodox Alliance Lord also present: combined stabilization
+	if = {
+		limit = { exists = global_var:murim_orthodox_alliance_lord_active }
+		add = 5
+	}
+
+	max = 30
+}
+
+
+# ==============================================================
+# UNDERGROUND NETWORK OF VIRTUE
+# Orthodox informant + Imperial Censor cooperation.
+# ==============================================================
+
+murim_virtue_network_corruption_expose_chance = {
+	value = 50
+
+	# Censor's intrigue helps
+	if = {
+		limit = {
+			exists = global_var:murim_censor_intrigue
+			global_var:murim_censor_intrigue >= 15
+		}
+		add = 15
+	}
+
+	# Sect Master's standing affects info quality
+	if = {
+		limit = {
+			exists = var:murim_jianghu_standing
+			var:murim_jianghu_standing >= 50
+		}
+		add = 10
+	}
+
+	min = 20
+	max = 85
+	round = yes
+}
+
+murim_virtue_network_mandate_gain = 2
+murim_virtue_network_merit_gain = 10
+murim_virtue_network_governor_merit_loss = -20
+
+
+# ==============================================================
+# MONGOL INVASION — JIANGHU RESPONSE VALUES
+# Righteous Crusade, collaboration, survival calculations.
+# ==============================================================
+
+# Righteous Crusade strength (based on participating sects)
+murim_righteous_crusade_strength = {
+	value = 0
+	if = {
+		limit = { exists = global_var:murim_crusade_participant_count }
+		add = {
+			value = global_var:murim_crusade_participant_count
+			multiply = 500
+		}
+	}
+	# Alliance Lord's cultivation amplifies
+	if = {
+		limit = { exists = global_var:murim_alliance_lord_rank }
+		add = {
+			value = global_var:murim_alliance_lord_rank
+			multiply = 200
+		}
+	}
+}
+
+# Mandate bonus for successful Mongol defense
+murim_mongol_defense_mandate_gain = 10
+
+# Standing gain for Jianghu Savior
+murim_savior_of_realm_standing_gain = 25
+
+# Collaboration standing penalty
+murim_mongol_collaborator_standing_loss = -30
+
+# Orthodox outrage from demonic collaboration with Mongols
+murim_mongol_betrayal_outrage = 50
+
+
+# ==============================================================
+# GREAT COMPILATION EVENT VALUES
+# Manual submission, forgery, refusal, sabotage.
+# ==============================================================
+
+murim_compilation_submit_merit_gain = 30
+murim_compilation_forgery_intrigue_threshold = 15
+murim_compilation_refusal_standing_gain = 5
+murim_compilation_sabotage_mandate_loss = -5
+murim_compilation_sabotage_demonic_standing_gain = 15
+
+# Forgery detection chance
+murim_compilation_forgery_detection_chance = {
+	value = 40
+
+	subtract = {
+		value = intrigue
+		multiply = 1.5
+		max = 25
+	}
+
+	if = {
+		limit = { exists = global_var:murim_imperial_censor_active }
+		add = 15
+	}
+
+	min = 10
+	max = 70
+	round = yes
+}
+
+
+# ==============================================================
+# DYNASTIC CYCLE ERA NUMBERS
+# Reference constants for era checks.
+# Stored in global_var:murim_current_era
+# ==============================================================
+
+murim_era_expansion = 1
+murim_era_advancement = 2
+murim_era_tension = 3
+murim_era_conquest = 4
+murim_era_division = 5
