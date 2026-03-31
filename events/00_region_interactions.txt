@@ -1,0 +1,369 @@
+# Region-Specific Unique Interactions
+# Central China, Goryeo, Japan, and Wilderness all have unique mechanics
+
+namespace = region_interaction
+
+# CENTRAL CHINA: Sect Leadership Challenge
+central_china.0001 = {
+	type = character_event
+	title = central_china.0001.t
+	desc = central_china.0001.desc
+
+	trigger = {
+		is_ruler = yes
+		is_in_central_china = yes
+		martial >= 20
+		NOT = { has_title = empire }
+		prestige_level >= 3
+		has_trait = nascent_soul
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = {
+			add = 30
+			has_trait = sword_aptitude_4
+		}
+	}
+
+	option = {
+		name = central_china.0001.a
+		desc = "Challenge the current Sect Master for leadership"
+		effect = {
+			start_war = {
+				target = liege
+				casus_belli = sect_challenge_cb
+			}
+			add_prestige = 100
+		}
+	}
+
+	option = {
+		name = central_china.0001.b
+		desc = "Bide my time and cultivate further"
+		effect = {
+			add_stress = -10
+			add_trait = patient
+		}
+	}
+}
+
+# GORYEO: Blade Tournament
+goryeo.0001 = {
+	type = character_event
+	title = goryeo.0001.t
+	desc = goryeo.0001.desc
+
+	trigger = {
+		is_ruler = yes
+		is_in_goryeo = yes
+		age >= 16
+		age <= 40
+		martial >= 12
+		prowess >= 10
+		NOT = { has_character_modifier = recently_attended_tournament }
+	}
+
+	weight_multiplier = {
+		base = 50
+		modifier = {
+			add = 20
+			has_trait = sword_aptitude_2
+		}
+	}
+
+	option = {
+		name = goryeo.0001.a
+		desc = "Enter the tournament"
+		effect = {
+			add_character_modifier = {
+				modifier = recently_attended_tournament
+				duration = 1825
+			}
+			random_list = {
+				30 = {
+					desc = won_tournament
+					add_prestige = 300
+					add_trait = sword_aptitude_3
+					add_gold = 200
+				}
+				40 = {
+					desc = placed_well
+					add_prestige = 100
+					add_prowess = 2
+				}
+				30 = {
+					desc = lost_early
+					add_prestige = -50
+					add_stress = 20
+				}
+			}
+		}
+	}
+
+	option = {
+		name = goryeo.0001.b
+		desc = "Watch as a spectator"
+		effect = {
+			add_learning = 1
+			add_character_modifier = {
+				modifier = recently_attended_tournament
+				duration = 1825
+			}
+		}
+	}
+}
+
+# JAPAN: Honor Duel
+japan.0001 = {
+	type = character_event
+	title = japan.0001.t
+	desc = japan.0001.desc
+
+	trigger = {
+		is_in_japan = yes
+		is_ruler = yes
+		OR = {
+			has_trait = dishonorable
+			has_trait = insulted
+			opinion = {
+				target = scope:rival
+				value < -50
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 30
+		modifier = {
+			add = 50
+			has_trait = vengeful
+		}
+	}
+
+	option = {
+		name = japan.0001.a
+		desc = "Challenge to death duel"
+		effect = {
+			custom_tooltip = tt_death_duel
+			random_list = {
+				50 = {
+					desc = won_honor_duel
+					remove_trait = dishonorable
+					add_trait = honorable
+					add_prestige = 500
+					scope:rival = {
+						death = {
+							death_reason = death_duel
+							killer = root
+						}
+					}
+				}
+				50 = {
+					desc = lost_honor_duel
+					death = {
+						death_reason = death_duel
+						killer = scope:rival
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = japan.0001.b
+		desc = "Forgive the insult"
+		effect = {
+			add_piety = 100
+			remove_trait = vengeful
+			add_trait = forgiving
+		}
+	}
+}
+
+# WILDERNESS: Demonic Cult Recruitment
+wilderness.0001 = {
+	type = character_event
+	title = wilderness.0001.t
+	desc = wilderness.0001.desc
+
+	trigger = {
+		is_in_wilderness = yes
+		is_ruler = yes
+		OR = {
+			has_trait = desperate
+			has_trait = greedy
+			has_trait = vengeful
+			stress >= 80
+		}
+		NOT = { has_trait = demonic_aptitude_1 }
+	}
+
+	weight_multiplier = {
+		base = 40
+		modifier = {
+			add = 30
+			has_trait = ambitious
+		}
+	}
+
+	option = {
+		name = wilderness.0001.a
+		desc = "Join the demonic cult"
+		effect = {
+			add_trait = demonic_aptitude_1
+			add_piety = -200
+			add_prestige = 100
+			add_martial = 3
+			set_faith = demonic_cultivation_sect
+			add_stress = -30
+		}
+	}
+
+	option = {
+		name = wilderness.0001.b
+		desc = "Resist temptation"
+		effect = {
+			add_stress = 40
+			add_piety = 50
+			add_trait = zealous
+		}
+	}
+}
+
+# CENTRAL CHINA: Mandate of Heaven Check
+celestial.0001 = {
+	type = character_event
+	title = celestial.0001.t
+	desc = celestial.0001.desc
+
+	trigger = {
+		has_title = empire
+		has_character_modifier = mandate_of_heaven_orthodox
+	}
+
+	hidden = yes
+
+	effect = {
+		check_celestial_alignment = yes
+		if = {
+			limit = { var:orthodox_favor < 0 }
+			add_stress = 10
+			add_character_modifier = {
+				modifier = waning_mandate
+			}
+		}
+		else_if = {
+			limit = { var:orthodox_favor > 0.2 }
+			add_prestige = 50
+			add_character_modifier = {
+				modifier = strong_mandate
+				duration = 365
+			}
+		}
+	}
+}
+
+# UNIQUE: Artifact Discovery in Ruins
+exploration.0001 = {
+	type = character_event
+	title = exploration.0001.t
+	desc = exploration.0001.desc
+
+	trigger = {
+		is_in_wilderness = yes
+		is_ruler = yes
+		martial >= 15
+		prowess >= 12
+	}
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 20
+			is_in_wilderness = yes
+		}
+	}
+
+	option = {
+		name = exploration.0001.a
+		desc = "Enter the ancient ruins"
+		effect = {
+			random_list = {
+				20 = {
+					desc = found_divine_scroll
+					add_trait = secret_manual_holder
+					add_learning = 2
+				}
+				20 = {
+					desc = found_spirit_sword
+					add_artifact = sect_disciple_sword
+					add_prowess = 2
+				}
+				20 = {
+					desc = found_pill_refinery
+					add_trait = alchemist_1
+					add_gold = 100
+				}
+				20 = {
+					desc = ancient_trap
+					add_trait = wounded
+					add_health = -2
+				}
+				20 = {
+					desc = nothing_of_value
+					add_stress = 10
+				}
+			}
+		}
+	}
+
+	option = {
+		name = exploration.0001.b
+		desc = "Too dangerous, leave it"
+		effect = {
+			add_stress = 5
+		}
+	}
+}
+
+# GORYEO: Mercenary Contracts
+goryeo.0002 = {
+	type = character_event
+	title = goryeo.0002.t
+	desc = goryeo.0002.desc
+
+	trigger = {
+		is_in_goryeo = yes
+		is_ruler = yes
+		martial >= 10
+		NOT = { has_trait = craven }
+	}
+
+	weight_multiplier = {
+		base = 25
+		modifier = {
+			add = 15
+			has_trait = greedy
+		}
+	}
+
+	option = {
+		name = goryeo.0002.a
+		desc = "Accept mercenary contract"
+		effect = {
+			add_gold = 300
+			add_prestige = 50
+			add_trait = mercenary_contract
+		}
+	}
+
+	option = {
+		name = goryeo.0002.b
+		desc = "Refuse, reputation matters more"
+		effect = {
+			add_honor = 10
+			add_prestige = 20
+		}
+	}
+}
