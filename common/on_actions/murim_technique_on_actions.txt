@@ -1,0 +1,186 @@
+################################################################
+# MURIM CHRONICLES — TECHNIQUE ON_ACTIONS
+# Path: common/on_actions/murim_technique_on_actions.txt
+#
+# The AI engine. Every year, every living character gets
+# checked for technique eligibility. If they qualify,
+# the unlock event fires automatically.
+#
+# This is how AI characters earn techniques without
+# player intervention. Same triggers, same requirements.
+################################################################
+
+
+# Yearly character pulse: check technique eligibility
+on_yearly_pulse = {
+	effect = {
+		# Only check characters who are rulers or knights
+		# (performance optimization: skip peasants)
+		if = {
+			limit = {
+				OR = {
+					is_ruler = yes
+					is_knight = yes
+					has_any_court_position = yes
+					prowess >= 12
+				}
+				age >= 16
+				is_alive = yes
+			}
+
+			# --- TIER 3 CHECK (highest priority) ---
+			if = {
+				limit = {
+					murim_has_tier2_technique_trigger = yes
+					NOT = { murim_has_tier3_technique_trigger = yes }
+					murim_can_unlock_any_tier3_trigger = yes
+				}
+				# 40% chance per year to fire the event
+				# (legendary techniques shouldn't be instant)
+				random = {
+					chance = 40
+					modifier = {
+						add = 20
+						prowess >= 30
+					}
+					modifier = {
+						add = 10
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 5
+					}
+					trigger_event = murim_technique.0100
+				}
+			}
+
+			# --- TIER 2 CHECK ---
+			else_if = {
+				limit = {
+					murim_has_tier1_technique_trigger = yes
+					NOT = { murim_has_tier2_technique_trigger = yes }
+					murim_can_unlock_any_tier2_trigger = yes
+				}
+				# 50% chance per year
+				random = {
+					chance = 50
+					modifier = {
+						add = 15
+						prowess >= 24
+					}
+					modifier = {
+						add = 10
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 3
+					}
+					trigger_event = murim_technique.0010
+				}
+			}
+
+			# --- TIER 1 CHECK ---
+			else_if = {
+				limit = {
+					NOT = { murim_has_tier1_technique_trigger = yes }
+					murim_can_unlock_any_tier1_trigger = yes
+				}
+				# 60% chance per year for Tier 1
+				# (these should be relatively common)
+				random = {
+					chance = 60
+					modifier = {
+						add = 20
+						prowess >= 18
+					}
+					modifier = {
+						add = 10
+						exists = var:murim_cultivation_rank
+					}
+					trigger_event = murim_technique.0001
+				}
+			}
+		}
+	}
+}
+
+
+# On character coming of age: initial technique check
+# Some prodigies unlock early
+on_coming_of_age = {
+	effect = {
+		# Prodigy check: if a 16-year-old already has 15+ prowess
+		# and 15+ in a skill, they're a natural talent
+		if = {
+			limit = {
+				murim_can_unlock_any_tier1_trigger = yes
+			}
+			# 80% chance for prodigies
+			random = {
+				chance = 80
+				trigger_event = murim_technique.0001
+			}
+		}
+	}
+}
+
+
+# After winning a duel: technique breakthrough chance
+# Classic murim: enlightenment through combat
+on_duel_completion = {
+	effect = {
+		# Winner gets a technique check
+		if = {
+			limit = {
+				scope:winner = root
+				OR = {
+					murim_can_unlock_any_tier1_trigger = yes
+					murim_can_unlock_any_tier2_trigger = yes
+					murim_can_unlock_any_tier3_trigger = yes
+				}
+			}
+			# Duel victory + qualification = guaranteed technique event
+			if = {
+				limit = { murim_can_unlock_any_tier3_trigger = yes }
+				trigger_event = murim_technique.0100
+			}
+			else_if = {
+				limit = { murim_can_unlock_any_tier2_trigger = yes }
+				trigger_event = murim_technique.0010
+			}
+			else_if = {
+				limit = { murim_can_unlock_any_tier1_trigger = yes }
+				trigger_event = murim_technique.0001
+			}
+		}
+	}
+}
+
+
+# After winning a war: technique check for commanders
+# Leading armies to victory tempers the martial spirit
+on_war_won = {
+	effect = {
+		if = {
+			limit = {
+				prowess >= 15
+				OR = {
+					murim_can_unlock_any_tier1_trigger = yes
+					murim_can_unlock_any_tier2_trigger = yes
+					murim_can_unlock_any_tier3_trigger = yes
+				}
+			}
+			random = {
+				chance = 70
+				if = {
+					limit = { murim_can_unlock_any_tier3_trigger = yes }
+					trigger_event = murim_technique.0100
+				}
+				else_if = {
+					limit = { murim_can_unlock_any_tier2_trigger = yes }
+					trigger_event = murim_technique.0010
+				}
+				else_if = {
+					limit = { murim_can_unlock_any_tier1_trigger = yes }
+					trigger_event = murim_technique.0001
+				}
+			}
+		}
+	}
+}
