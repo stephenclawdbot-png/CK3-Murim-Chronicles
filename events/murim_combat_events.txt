@@ -1,0 +1,975 @@
+
+namespace = murim_combat
+
+murim_combat.0001 = {
+	type = character_event
+	title = murim_combat.0001.t
+	desc = murim_combat.0001.desc
+	theme = martial
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_feast_duel.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = flag_nine_peaks_cooldown }
+		var:murim_cultivation_rank >= 2
+		prowess >= 8
+	}
+
+	immediate = {
+		set_character_flag = { flag = flag_nine_peaks_cooldown days = 1825 }
+		play_music_cue = "mx_cue_combat_2"
+		save_scope_value_as = { name = tournament_round value = 0 }
+	}
+
+	option = {
+		name = murim_combat.0001.a
+		custom_tooltip = murim_combat.0001.a.tt
+
+		random_list = {
+			60 = {
+				modifier = { add = 15 prowess >= 16 }
+				modifier = { add = 10 has_trait = brave }
+				modifier = { add = 5 var:murim_cultivation_rank >= 4 }
+				custom_tooltip = murim_combat.0001.a.round1_win
+
+				random_list = {
+					50 = {
+						modifier = { add = 15 prowess >= 20 }
+						modifier = { add = 10 var:murim_body_tempering >= 30 }
+						modifier = { add = 5 has_trait = wrathful }
+						custom_tooltip = murim_combat.0001.a.round2_win
+
+						random_list = {
+							40 = {
+								modifier = { add = 20 prowess >= 24 }
+								modifier = { add = 10 var:murim_cultivation_rank >= 5 }
+								modifier = { add = 5 has_trait = ambitious }
+								custom_tooltip = murim_combat.0001.a.champion
+								add_prestige = 500
+								change_variable = { name = murim_cultivation_xp add = 200 }
+								add_character_modifier = { modifier = murim_nine_peaks_champion years = 10 }
+							}
+							15 = {
+								modifier = { add = 10 prowess < 14 }
+								custom_tooltip = murim_combat.0001.a.heroic_death
+								add_prestige = 300
+								death = { death_reason = death_battle }
+							}
+							45 = {
+								custom_tooltip = murim_combat.0001.a.finals_loss
+								add_prestige = 200
+								change_variable = { name = murim_cultivation_xp add = 100 }
+								increase_wounds_effect = { REASON = fight }
+							}
+						}
+					}
+					50 = {
+						custom_tooltip = murim_combat.0001.a.round2_loss
+						add_prestige = 50
+						change_variable = { name = murim_cultivation_xp add = 50 }
+						increase_wounds_effect = { REASON = fight }
+					}
+				}
+			}
+			40 = {
+				custom_tooltip = murim_combat.0001.a.round1_loss
+				add_prestige = -50
+				change_variable = { name = murim_cultivation_xp add = 25 }
+				add_character_modifier = { modifier = murim_tournament_humiliation years = 2 }
+			}
+		}
+
+		ai_chance = {
+			base = 80
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 prowess >= 18 }
+		}
+	}
+
+	option = {
+		name = murim_combat.0001.b
+		custom_tooltip = murim_combat.0001.b.tt
+
+		random_list = {
+			65 = {
+				modifier = { add = 10 has_trait = patient }
+				custom_tooltip = murim_combat.0001.b.decent
+				add_prestige = 75
+				change_variable = { name = murim_cultivation_xp add = 60 }
+			}
+			35 = {
+				custom_tooltip = murim_combat.0001.b.coward
+				add_prestige = -100
+				add_character_modifier = { modifier = murim_tournament_coward years = 3 }
+			}
+		}
+
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	option = {
+		name = murim_combat.0001.c
+		trigger = {
+			OR = {
+				has_trait = arrogant
+				has_trait = brave
+				prowess >= 20
+			}
+		}
+		custom_tooltip = murim_combat.0001.c.tt
+
+		random_list = {
+			30 = {
+				modifier = { add = 20 prowess >= 24 }
+				modifier = { add = 15 var:murim_cultivation_rank >= 5 }
+				custom_tooltip = murim_combat.0001.c.victory
+				add_prestige = 750
+				change_variable = { name = murim_cultivation_xp add = 300 }
+				add_character_modifier = { modifier = murim_nine_peaks_legend years = 20 }
+			}
+			45 = {
+				custom_tooltip = murim_combat.0001.c.crushed
+				add_prestige = -150
+				increase_wounds_effect = { REASON = fight }
+				add_character_modifier = { modifier = murim_shattered_meridians years = 5 }
+			}
+			25 = {
+				modifier = { add = 10 prowess < 16 }
+				custom_tooltip = murim_combat.0001.c.slain
+				death = { death_reason = death_battle }
+			}
+		}
+
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = arrogant }
+			modifier = { add = 20 prowess >= 22 }
+		}
+	}
+}
+
+murim_combat.0002 = {
+	type = character_event
+	title = murim_combat.0002.t
+	desc = murim_combat.0002.desc
+	theme = skulduggery
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_desert.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = flag_forbidden_awakening_cooldown }
+		OR = {
+			has_character_flag = murim_forbidden_technique
+			var:murim_cultivation_rank >= 4
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = flag_forbidden_awakening_cooldown days = 730 }
+		play_music_cue = "mx_cue_combat_3"
+	}
+
+	option = {
+		name = murim_combat.0002.a
+		trigger = {
+			martial >= 12
+			learning >= 10
+		}
+		custom_tooltip = murim_combat.0002.a.tt
+
+		random_list = {
+			40 = {
+				modifier = { add = 15 martial >= 18 }
+				modifier = { add = 15 learning >= 16 }
+				modifier = { add = 10 var:murim_technique_mastery >= 40 }
+				custom_tooltip = murim_combat.0002.a.controlled
+				change_variable = { name = murim_cultivation_xp add = 250 }
+				change_variable = { name = murim_technique_mastery add = 20 }
+				add_character_modifier = { modifier = murim_forbidden_mastery years = 10 }
+			}
+			35 = {
+				custom_tooltip = murim_combat.0002.a.partial
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				change_variable = { name = murim_qi_current add = -30 }
+				increase_wounds_effect = { REASON = fight }
+			}
+			25 = {
+				modifier = { add = 10 martial < 15 }
+				custom_tooltip = murim_combat.0002.a.backlash
+				change_variable = { name = murim_cultivation_xp add = -50 }
+				add_character_modifier = { modifier = murim_qi_deviation_scars years = 5 }
+				increase_wounds_effect = { REASON = fight }
+				if = {
+					limit = { has_trait = wounded }
+					add_trait = severely_wounded
+					remove_trait = wounded
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 martial >= 16 }
+			modifier = { add = 15 learning >= 14 }
+		}
+	}
+
+	option = {
+		name = murim_combat.0002.b
+		custom_tooltip = murim_combat.0002.b.tt
+
+		random_courtier = {
+			limit = {
+				is_available_adult = yes
+				NOT = { this = root }
+			}
+			save_scope_as = forbidden_victim_1
+		}
+		if = {
+			limit = { exists = scope:forbidden_victim_1 }
+			scope:forbidden_victim_1 = {
+				random_list = {
+					70 = {
+						death = { death_reason = death_murder killer = root }
+					}
+					30 = {
+						increase_wounds_effect = { REASON = fight }
+					}
+				}
+			}
+		}
+
+		change_variable = { name = murim_cultivation_xp add = 300 }
+		change_variable = { name = murim_technique_mastery add = 30 }
+		add_dread = 40
+		add_character_modifier = { modifier = murim_forbidden_unleashed years = 8 }
+		add_trait = sadistic
+
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = wrathful }
+			modifier = { add = 20 has_trait = sadistic }
+			modifier = { add = -20 has_trait = compassionate }
+		}
+	}
+
+	option = {
+		name = murim_combat.0002.c
+		custom_tooltip = murim_combat.0002.c.tt
+
+		change_variable = { name = murim_technique_mastery add = -25 }
+		change_variable = { name = murim_cultivation_xp add = -100 }
+		remove_character_flag = murim_forbidden_technique
+		add_character_modifier = { modifier = murim_sealed_power years = 15 }
+		add_piety = 200
+		stress_impact = { ambitious = major_stress_impact_gain wrathful = medium_stress_impact_gain }
+
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = compassionate }
+			modifier = { add = -15 has_trait = ambitious }
+		}
+	}
+
+	option = {
+		name = murim_combat.0002.d
+		custom_tooltip = murim_combat.0002.d.tt
+
+		add_dread = 60
+		change_variable = { name = murim_cultivation_xp add = 500 }
+
+		if = {
+			limit = {
+				exists = scope:forbidden_victim_1
+			}
+			scope:forbidden_victim_1 = {
+				add_character_modifier = { modifier = murim_forbidden_curse years = 20 }
+			}
+		}
+
+		death = { death_reason = death_battle }
+
+		ai_chance = {
+			base = 5
+			modifier = { add = 15 has_trait = lunatic }
+			modifier = { add = 10 num_wounds >= 3 }
+		}
+	}
+}
+
+murim_combat.0003 = {
+	type = character_event
+	title = murim_combat.0003.t
+	desc = murim_combat.0003.desc
+	theme = martial
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_hunt_in_forest.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = flag_weapon_spirit_cooldown }
+		var:murim_cultivation_rank >= 3
+		prowess >= 12
+	}
+
+	immediate = {
+		set_character_flag = { flag = flag_weapon_spirit_cooldown days = 2555 }
+		play_music_cue = "mx_cue_epic_battle"
+	}
+
+	option = {
+		name = murim_combat.0003.a
+		custom_tooltip = murim_combat.0003.a.tt
+
+		random_list = {
+			45 = {
+				modifier = { add = 15 var:murim_cultivation_rank >= 5 }
+				modifier = { add = 10 has_trait = patient }
+				modifier = { add = 5 var:murim_qi_current >= 50 }
+				custom_tooltip = murim_combat.0003.a.perfect_bond
+				change_variable = { name = murim_cultivation_xp add = 150 }
+				add_character_modifier = { modifier = murim_weapon_spirit_bond years = 25 }
+				change_variable = { name = murim_technique_mastery add = 15 }
+			}
+			35 = {
+				custom_tooltip = murim_combat.0003.a.unstable
+				change_variable = { name = murim_cultivation_xp add = 75 }
+				add_character_modifier = { modifier = murim_weapon_spirit_unstable years = 10 }
+				stress_impact = { base = medium_stress_impact_gain }
+			}
+			20 = {
+				custom_tooltip = murim_combat.0003.a.rejected
+				increase_wounds_effect = { REASON = fight }
+				change_variable = { name = murim_qi_current add = -20 }
+			}
+		}
+
+		ai_chance = {
+			base = 55
+			modifier = { add = 15 has_trait = patient }
+			modifier = { add = 10 has_trait = calm }
+		}
+	}
+
+	option = {
+		name = murim_combat.0003.b
+		custom_tooltip = murim_combat.0003.b.tt
+
+		random_list = {
+			35 = {
+				modifier = { add = 20 prowess >= 20 }
+				modifier = { add = 15 var:murim_body_tempering >= 40 }
+				modifier = { add = 10 has_trait = wrathful }
+				custom_tooltip = murim_combat.0003.b.dominated
+				change_variable = { name = murim_cultivation_xp add = 200 }
+				add_character_modifier = { modifier = murim_weapon_spirit_enslaved years = 15 }
+				add_dread = 15
+			}
+			40 = {
+				custom_tooltip = murim_combat.0003.b.mutual
+				change_variable = { name = murim_cultivation_xp add = 50 }
+				increase_wounds_effect = { REASON = fight }
+				change_variable = { name = murim_qi_current add = -25 }
+			}
+			25 = {
+				modifier = { add = 10 prowess < 16 }
+				custom_tooltip = murim_combat.0003.b.overwhelmed
+				increase_wounds_effect = { REASON = fight }
+				if = {
+					limit = { has_trait = wounded }
+					add_trait = severely_wounded
+					remove_trait = wounded
+				}
+				change_variable = { name = murim_body_tempering add = -10 }
+			}
+		}
+
+		ai_chance = {
+			base = 70
+			modifier = { add = 25 has_trait = wrathful }
+			modifier = { add = 20 prowess >= 18 }
+		}
+	}
+
+	option = {
+		name = murim_combat.0003.c
+		custom_tooltip = murim_combat.0003.c.tt
+
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_piety = 150
+		change_variable = { name = murim_meridian_flow add = 10 }
+		stress_impact = { ambitious = medium_stress_impact_gain greedy = medium_stress_impact_gain }
+		add_character_modifier = { modifier = murim_inner_peace_destroyer years = 5 }
+
+		ai_chance = {
+			base = 15
+			modifier = { add = 15 has_trait = content }
+			modifier = { add = 10 has_trait = temperate }
+			modifier = { add = -10 has_trait = ambitious }
+		}
+	}
+
+	option = {
+		name = murim_combat.0003.d
+		custom_tooltip = murim_combat.0003.d.tt
+
+		change_variable = { name = murim_cultivation_xp add = 350 }
+		change_variable = { name = murim_technique_mastery add = 25 }
+		change_variable = { name = murim_body_tempering add = 20 }
+		add_character_modifier = { modifier = murim_weapon_possessed years = 20 }
+		add_trait = lunatic
+
+		random_list = {
+			50 = {
+				custom_tooltip = murim_combat.0003.d.rampage
+				add_dread = 30
+				random_courtier = {
+					limit = {
+						is_available_adult = yes
+						NOT = { this = root }
+					}
+					increase_wounds_effect = { REASON = fight }
+				}
+			}
+			50 = {
+				custom_tooltip = murim_combat.0003.d.dormant
+				add_stress = 50
+			}
+		}
+
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 20 has_trait = lunatic }
+			modifier = { add = -15 has_trait = just }
+		}
+	}
+}
+
+murim_combat.0004 = {
+	type = character_event
+	title = murim_combat.0004.t
+	desc = murim_combat.0004.desc
+	theme = war
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_siege.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = flag_sect_siege_cooldown }
+		has_character_flag = murim_sect_master
+	}
+
+	immediate = {
+		set_character_flag = { flag = flag_sect_siege_cooldown days = 1095 }
+		play_music_cue = "mx_cue_war"
+		random_courtier = {
+			limit = {
+				is_available_adult = yes
+				NOT = { this = root }
+			}
+			save_scope_as = siege_defender
+		}
+	}
+
+	option = {
+		name = murim_combat.0004.a
+		custom_tooltip = murim_combat.0004.a.tt
+
+		random_list = {
+			40 = {
+				modifier = { add = 20 martial >= 20 }
+				modifier = { add = 10 var:murim_cultivation_rank >= 4 }
+				modifier = { add = 10 has_trait = strategist }
+				custom_tooltip = murim_combat.0004.a.routed
+				add_prestige = 400
+				change_variable = { name = murim_cultivation_xp add = 200 }
+				add_character_modifier = { modifier = murim_iron_wall_master years = 10 }
+				if = {
+					limit = { exists = scope:siege_defender }
+					scope:siege_defender = {
+						add_opinion = { target = root modifier = murim_saved_my_life opinion = 40 }
+					}
+				}
+			}
+			35 = {
+				custom_tooltip = murim_combat.0004.a.pyrrhic
+				add_prestige = 100
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				increase_wounds_effect = { REASON = fight }
+				if = {
+					limit = { exists = scope:siege_defender }
+					scope:siege_defender = {
+						random_list = {
+							50 = {
+								death = { death_reason = death_battle }
+							}
+							50 = {
+								increase_wounds_effect = { REASON = fight }
+							}
+						}
+					}
+				}
+			}
+			25 = {
+				modifier = { add = 10 martial < 14 }
+				custom_tooltip = murim_combat.0004.a.collapsed
+				add_prestige = -200
+				change_variable = { name = murim_cultivation_xp add = 25 }
+				increase_wounds_effect = { REASON = fight }
+				add_character_modifier = { modifier = murim_sect_devastated years = 8 }
+			}
+		}
+
+		ai_chance = {
+			base = 65
+			modifier = { add = 25 martial >= 16 }
+			modifier = { add = 10 has_trait = brave }
+		}
+	}
+
+	option = {
+		name = murim_combat.0004.b
+		custom_tooltip = murim_combat.0004.b.tt
+
+		random_list = {
+			35 = {
+				modifier = { add = 20 prowess >= 22 }
+				modifier = { add = 15 var:murim_body_tempering >= 35 }
+				modifier = { add = 10 has_trait = brave }
+				custom_tooltip = murim_combat.0004.b.slain_leader
+				add_prestige = 600
+				add_dread = 25
+				change_variable = { name = murim_cultivation_xp add = 250 }
+				add_character_modifier = { modifier = murim_sect_slayer years = 15 }
+			}
+			35 = {
+				custom_tooltip = murim_combat.0004.b.mutual
+				add_prestige = 200
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				increase_wounds_effect = { REASON = fight }
+				add_character_modifier = { modifier = murim_duel_scars years = 5 }
+			}
+			30 = {
+				modifier = { add = 10 prowess < 16 }
+				custom_tooltip = murim_combat.0004.b.defeated
+				random_list = {
+					60 = {
+						death = { death_reason = death_battle }
+					}
+					40 = {
+						increase_wounds_effect = { REASON = fight }
+						if = {
+							limit = { has_trait = wounded }
+							add_trait = severely_wounded
+							remove_trait = wounded
+						}
+						add_prestige = -300
+						remove_character_flag = murim_sect_master
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 75
+			modifier = { add = 30 prowess >= 18 }
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	option = {
+		name = murim_combat.0004.c
+		trigger = {
+			gold >= 300
+		}
+		custom_tooltip = murim_combat.0004.c.tt
+
+		remove_short_term_gold = 300
+
+		random_list = {
+			60 = {
+				modifier = { add = 15 learning >= 14 }
+				modifier = { add = 10 var:murim_qi_current >= 60 }
+				custom_tooltip = murim_combat.0004.c.obliterated
+				add_prestige = 350
+				change_variable = { name = murim_cultivation_xp add = 150 }
+				change_variable = { name = murim_qi_current add = -40 }
+				add_character_modifier = { modifier = murim_formation_master years = 8 }
+			}
+			30 = {
+				custom_tooltip = murim_combat.0004.c.unstable
+				add_prestige = 100
+				change_variable = { name = murim_qi_current add = -60 }
+				change_variable = { name = murim_cultivation_xp add = 50 }
+			}
+			10 = {
+				custom_tooltip = murim_combat.0004.c.backfire
+				increase_wounds_effect = { REASON = fight }
+				change_variable = { name = murim_qi_current add = -80 }
+				add_prestige = -100
+			}
+		}
+
+		ai_chance = {
+			base = 45
+			modifier = { add = 20 gold >= 600 }
+			modifier = { add = 15 learning >= 14 }
+		}
+	}
+
+	option = {
+		name = murim_combat.0004.d
+		custom_tooltip = murim_combat.0004.d.tt
+
+		add_prestige = -500
+		remove_character_flag = murim_sect_master
+		add_character_modifier = { modifier = murim_sect_abandoned years = 15 }
+		stress_impact = { brave = major_stress_impact_gain ambitious = major_stress_impact_gain }
+		add_dread = -20
+
+		if = {
+			limit = { exists = scope:siege_defender }
+			scope:siege_defender = {
+				death = { death_reason = death_battle }
+			}
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = -10 has_trait = brave }
+		}
+	}
+}
+
+murim_combat.0005 = {
+	type = character_event
+	title = murim_combat.0005.t
+	desc = murim_combat.0005.desc
+	theme = martial
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_feast_duel.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = flag_death_match_cooldown }
+		var:murim_cultivation_rank >= 2
+	}
+
+	immediate = {
+		set_character_flag = { flag = flag_death_match_cooldown days = 1460 }
+		play_music_cue = "mx_cue_combat_2"
+
+		random_courtier = {
+			limit = {
+				is_available_adult = yes
+				NOT = { this = root }
+				prowess >= 8
+			}
+			save_scope_as = death_match_opponent
+		}
+	}
+
+	option = {
+		name = murim_combat.0005.a
+		custom_tooltip = murim_combat.0005.a.tt
+
+		random_list = {
+			45 = {
+				modifier = { add = 15 prowess >= 18 }
+				modifier = { add = 10 var:murim_cultivation_rank >= 4 }
+				modifier = { add = 10 var:murim_body_tempering >= 30 }
+				modifier = { add = 5 has_trait = brave }
+				custom_tooltip = murim_combat.0005.a.victory
+				change_variable = { name = murim_cultivation_xp add = 300 }
+				change_variable = { name = murim_qi_max add = 15 }
+				add_prestige = 300
+				add_dread = 20
+				add_character_modifier = { modifier = murim_death_match_victor years = 10 }
+				if = {
+					limit = { exists = scope:death_match_opponent }
+					scope:death_match_opponent = {
+						death = { death_reason = death_battle killer = root }
+					}
+				}
+			}
+			25 = {
+				custom_tooltip = murim_combat.0005.a.stalemate
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				increase_wounds_effect = { REASON = fight }
+				if = {
+					limit = { exists = scope:death_match_opponent }
+					scope:death_match_opponent = {
+						increase_wounds_effect = { REASON = fight }
+					}
+				}
+			}
+			30 = {
+				modifier = { add = 10 prowess < 14 }
+				modifier = { add = 5 var:murim_cultivation_rank < 3 }
+				custom_tooltip = murim_combat.0005.a.death
+				death = { death_reason = death_battle }
+			}
+		}
+
+		ai_chance = {
+			base = 70
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 prowess >= 16 }
+			modifier = { add = 15 has_trait = wrathful }
+		}
+	}
+
+	option = {
+		name = murim_combat.0005.b
+		trigger = {
+			OR = {
+				has_character_flag = murim_forbidden_technique
+				var:murim_technique_mastery >= 50
+			}
+		}
+		custom_tooltip = murim_combat.0005.b.tt
+
+		if = {
+			limit = { exists = scope:death_match_opponent }
+			scope:death_match_opponent = {
+				death = { death_reason = death_murder killer = root }
+			}
+		}
+
+		change_variable = { name = murim_cultivation_xp add = 400 }
+		change_variable = { name = murim_qi_max add = 20 }
+		add_dread = 40
+		add_prestige = -200
+
+		set_character_flag = murim_dishonorable_fighter
+		add_character_modifier = { modifier = murim_forbidden_killer years = 15 }
+
+		random_list = {
+			60 = {
+				custom_tooltip = murim_combat.0005.b.clean
+				change_variable = { name = murim_technique_mastery add = 10 }
+			}
+			40 = {
+				custom_tooltip = murim_combat.0005.b.backlash
+				increase_wounds_effect = { REASON = fight }
+				change_variable = { name = murim_qi_current add = -30 }
+				add_trait = lunatic
+			}
+		}
+
+		ai_chance = {
+			base = 55
+			modifier = { add = 25 has_trait = sadistic }
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = -20 has_trait = honest }
+			modifier = { add = -15 has_trait = just }
+		}
+	}
+
+	option = {
+		name = murim_combat.0005.c
+		custom_tooltip = murim_combat.0005.c.tt
+
+		add_piety = 500
+
+		if = {
+			limit = {
+				exists = player_heir
+			}
+			player_heir = {
+				change_variable = { name = murim_cultivation_xp add = 200 }
+				add_character_modifier = { modifier = murim_inherited_sacrifice years = 20 }
+			}
+		}
+
+		death = { death_reason = death_battle }
+
+		ai_chance = {
+			base = 3
+			modifier = { add = 10 has_trait = content }
+			modifier = { add = 10 num_wounds >= 3 }
+		}
+	}
+}
+
+murim_combat.0006 = {
+	type = character_event
+	title = murim_combat.0006.t
+	desc = murim_combat.0006.desc
+	theme = war
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_burning_building.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = flag_massacre_valley_cooldown }
+		var:murim_cultivation_rank >= 1
+	}
+
+	immediate = {
+		set_character_flag = { flag = flag_massacre_valley_cooldown days = 1095 }
+		play_music_cue = "mx_cue_war"
+	}
+
+	option = {
+		name = murim_combat.0006.a
+		custom_tooltip = murim_combat.0006.a.tt
+
+		random_list = {
+			25 = {
+				modifier = { add = 15 prowess >= 20 }
+				modifier = { add = 10 var:murim_cultivation_rank >= 4 }
+				modifier = { add = 10 martial >= 18 }
+				modifier = { add = 5 has_trait = brave }
+				custom_tooltip = murim_combat.0006.a.triumph
+				add_prestige = 500
+				add_piety = 200
+				change_variable = { name = murim_cultivation_xp add = 250 }
+				add_character_modifier = { modifier = murim_valley_protector years = 15 }
+				every_courtier = {
+					limit = {
+						is_available_adult = yes
+					}
+					add_opinion = { target = root modifier = murim_protector_opinion opinion = 30 }
+				}
+			}
+			35 = {
+				modifier = { add = 5 has_trait = compassionate }
+				custom_tooltip = murim_combat.0006.a.partial_save
+				add_prestige = 200
+				add_piety = 100
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				increase_wounds_effect = { REASON = fight }
+				add_character_modifier = { modifier = murim_battle_hardened years = 5 }
+			}
+			25 = {
+				modifier = { add = 10 prowess < 14 }
+				modifier = { add = 5 var:murim_cultivation_rank < 3 }
+				custom_tooltip = murim_combat.0006.a.overwhelmed
+				increase_wounds_effect = { REASON = fight }
+				if = {
+					limit = { has_trait = wounded }
+					add_trait = severely_wounded
+					remove_trait = wounded
+				}
+				change_variable = { name = murim_qi_current add = -40 }
+				change_variable = { name = murim_cultivation_xp add = 50 }
+			}
+			15 = {
+				modifier = { add = 10 prowess < 12 }
+				modifier = { add = 5 var:murim_cultivation_rank < 2 }
+				custom_tooltip = murim_combat.0006.a.heroic_death
+				add_prestige = 400
+				death = { death_reason = death_battle }
+			}
+		}
+
+		ai_chance = {
+			base = 60
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = -15 has_trait = craven }
+		}
+	}
+
+	option = {
+		name = murim_combat.0006.b
+		custom_tooltip = murim_combat.0006.b.tt
+
+		add_stress = 40
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_character_modifier = { modifier = murim_vengeance_sworn years = 10 }
+		set_character_flag = murim_hunting_demonic_sect
+
+		stress_impact = { compassionate = major_stress_impact_gain brave = medium_stress_impact_gain }
+
+		ai_chance = {
+			base = 30
+			modifier = { add = 15 has_trait = craven }
+			modifier = { add = 10 has_trait = lazy }
+		}
+	}
+
+	option = {
+		name = murim_combat.0006.c
+		custom_tooltip = murim_combat.0006.c.tt
+
+		change_variable = { name = murim_cultivation_xp add = 400 }
+		change_variable = { name = murim_qi_max add = 25 }
+		change_variable = { name = murim_body_tempering add = 15 }
+		add_dread = 50
+		add_prestige = -300
+		add_piety = -500
+
+		set_character_flag = murim_demonic_cultivator
+		add_trait = sadistic
+		if = {
+			limit = { NOT = { has_trait = callous } }
+			add_trait = callous
+		}
+		add_character_modifier = { modifier = murim_demonic_baptism years = 20 }
+
+		every_courtier = {
+			limit = {
+				is_available_adult = yes
+			}
+			add_opinion = { target = root modifier = murim_massacre_participant opinion = -50 }
+		}
+
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = sadistic }
+			modifier = { add = 25 has_trait = callous }
+			modifier = { add = -25 has_trait = compassionate }
+			modifier = { add = -20 has_trait = just }
+		}
+	}
+
+	option = {
+		name = murim_combat.0006.d
+		trigger = {
+			intrigue >= 14
+		}
+		custom_tooltip = murim_combat.0006.d.tt
+
+		random_list = {
+			55 = {
+				modifier = { add = 15 intrigue >= 20 }
+				modifier = { add = 10 has_trait = deceitful }
+				custom_tooltip = murim_combat.0006.d.framed
+				add_prestige = 200
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				add_character_modifier = { modifier = murim_shadow_manipulator years = 10 }
+				add_intrigue_lifestyle_xp = 300
+			}
+			30 = {
+				custom_tooltip = murim_combat.0006.d.suspected
+				add_prestige = -100
+				add_stress = 30
+				add_character_modifier = { modifier = murim_suspected_manipulator years = 5 }
+			}
+			15 = {
+				modifier = { add = 10 intrigue < 16 }
+				custom_tooltip = murim_combat.0006.d.exposed
+				add_prestige = -400
+				add_dread = -30
+				every_courtier = {
+					limit = {
+						is_available_adult = yes
+					}
+					add_opinion = { target = root modifier = murim_false_flag_exposed opinion = -60 }
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 20 intrigue >= 18 }
+			modifier = { add = -20 has_trait = honest }
+		}
+	}
+}
