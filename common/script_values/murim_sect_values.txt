@@ -1,0 +1,592 @@
+################################################################
+# MURIM CHRONICLES — SECT POWER SCRIPT VALUES
+# Path: common/script_values/murim_sect_values.txt
+# Handles: Sect power calculations, hidden levy size,
+#          recruitment pool, sect master authority,
+#          orthodox/demonic alignment, internal politics,
+#          sect treasury, disciple management
+#
+# Sects are landless hidden titles. Power is calculated
+# from members, cultivation, treasury, and territory.
+################################################################
+
+
+# ==============================================================
+# SECT POWER — COMPOSITE SCORE (0-100)
+# The overall strength of a sect. Used for Alliance voting,
+# levy size, recruitment, and political weight.
+# Stored as var:murim_sect_power on the Sect Master.
+# ==============================================================
+
+murim_sect_power_calculation = {
+	value = 0
+
+	# --- MEMBERSHIP (max 30 points) ---
+	# Number of initiated members
+	if = {
+		limit = { exists = var:murim_sect_member_count }
+		add = {
+			value = var:murim_sect_member_count
+			multiply = 1.5
+			max = 30
+		}
+	}
+
+	# --- CULTIVATION DEPTH (max 25 points) ---
+	# Average cultivation rank of top 5 members
+	if = {
+		limit = { exists = var:murim_sect_avg_top_cultivation }
+		add = {
+			value = var:murim_sect_avg_top_cultivation
+			multiply = 5
+			max = 25
+		}
+	}
+
+	# --- SECT MASTER STRENGTH (max 20 points) ---
+	# The master's personal power
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 2.5
+		max = 15
+	}
+	add = {
+		value = murim_jianghu_standing_tier
+		multiply = 1.0
+		max = 5
+	}
+
+	# --- TREASURY (max 15 points) ---
+	if = {
+		limit = { exists = var:murim_sect_treasury }
+		add = {
+			value = var:murim_sect_treasury
+			divide = 20
+			max = 15
+		}
+	}
+
+	# --- TERRITORY INFLUENCE (max 10 points) ---
+	# Provinces where sect has presence
+	if = {
+		limit = { exists = var:murim_sect_territory_count }
+		add = {
+			value = var:murim_sect_territory_count
+			multiply = 2
+			max = 10
+		}
+	}
+
+	# Modifiers
+	# Sanctioned sect bonus
+	if = {
+		limit = { has_character_flag = murim_sect_sanctioned }
+		add = 5
+	}
+
+	# Internal strife penalty
+	if = {
+		limit = { has_character_modifier = murim_sect_internal_strife }
+		subtract = 10
+	}
+
+	# Recently lost members (death, defection)
+	if = {
+		limit = { has_character_modifier = murim_sect_recent_losses }
+		subtract = 5
+	}
+
+	min = 0
+	max = 100
+	round = yes
+}
+
+
+# ==============================================================
+# HIDDEN LEVY SIZE
+# The sect's secret military force.
+# Based on sect power, membership, and modifiers.
+# ==============================================================
+
+murim_hidden_levy_base_size = {
+	# Base from membership
+	value = 0
+	if = {
+		limit = { exists = var:murim_sect_member_count }
+		add = {
+			value = var:murim_sect_member_count
+			multiply = 15
+			# Each member represents ~15 fighters
+		}
+	}
+
+	# Sect power amplifier
+	multiply = {
+		value = 1.0
+		if = {
+			limit = { exists = var:murim_sect_power }
+			add = {
+				value = var:murim_sect_power
+				multiply = 0.01
+			}
+		}
+	}
+
+	round = yes
+	min = 50
+}
+
+# Levy quality modifier (based on average cultivation)
+murim_hidden_levy_quality = {
+	value = 1.0
+
+	# Higher average cultivation = better troops
+	if = {
+		limit = { exists = var:murim_sect_avg_top_cultivation }
+		add = {
+			value = var:murim_sect_avg_top_cultivation
+			multiply = 0.1
+		}
+	}
+
+	# Orthodox sects: disciplined formations
+	if = {
+		limit = { has_character_flag = murim_orthodox_cultivator }
+		add = 0.10
+	}
+
+	# Demonic sects: ruthless but undisciplined
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		add = 0.05
+		# Slight bonus from forbidden techniques
+	}
+
+	# Works Ministry infiltration bonus (hidden chambers)
+	if = {
+		limit = { has_character_flag = murim_works_ministry_infiltrated }
+		add = 0.20
+	}
+
+	min = 0.5
+	max = 2.0
+}
+
+# Effective levy (size * quality)
+murim_hidden_levy_effective = {
+	value = murim_hidden_levy_base_size
+	multiply = murim_hidden_levy_quality
+	round = yes
+}
+
+
+# ==============================================================
+# RECRUITMENT POOL
+# How many new disciples the sect can attract per year.
+# Based on standing, cultivation, era, and geography.
+# ==============================================================
+
+murim_sect_recruitment_pool = {
+	value = 1
+
+	# Sect Master's standing attracts talent
+	if = {
+		limit = { exists = var:murim_jianghu_standing }
+		add = {
+			value = var:murim_jianghu_standing
+			multiply = 0.05
+			max = 3
+		}
+	}
+
+	# Cultivation rank of master (people want strong teachers)
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 0.5
+		max = 3
+	}
+
+	# Diplomacy helps recruitment (charisma)
+	add = {
+		value = diplomacy
+		multiply = 0.1
+		max = 2
+	}
+
+	# Advancement Era: cultural boom, more seekers
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 2
+		}
+		add = 2
+	}
+
+	# Tension/Conquest: desperate people join sects
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era >= 3
+			global_var:murim_current_era <= 4
+		}
+		add = 1
+	}
+
+	# Sanctioned sects recruit openly
+	if = {
+		limit = { has_character_flag = murim_sect_sanctioned }
+		add = 2
+	}
+
+	# Suppressed sects struggle
+	if = {
+		limit = { has_character_modifier = murim_sect_suppressed }
+		subtract = 3
+	}
+
+	# Demonic sects in Conquest/Division: open recruiting
+	if = {
+		limit = {
+			has_character_flag = murim_demonic_cultivator
+			exists = global_var:murim_current_era
+			global_var:murim_current_era >= 4
+		}
+		add = 3
+	}
+
+	min = 0
+	max = 12
+	round = yes
+}
+
+# Recruitment talent quality (how good are the recruits)
+murim_recruit_talent_average = {
+	# Returns average talent value (1-100) for new recruits
+	value = 40
+
+	# Famous sects attract better talent
+	if = {
+		limit = {
+			exists = var:murim_sect_power
+			var:murim_sect_power >= 50
+		}
+		add = 10
+	}
+	if = {
+		limit = {
+			exists = var:murim_sect_power
+			var:murim_sect_power >= 80
+		}
+		add = 10
+	}
+
+	# Advancement Era: higher baseline talent pool
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 2
+		}
+		add = 10
+	}
+
+	min = 20
+	max = 80
+}
+
+
+# ==============================================================
+# SECT MASTER AUTHORITY
+# How much control the master has over the sect.
+# Low authority = internal challenges, splits, defections.
+# ==============================================================
+
+murim_sect_master_authority = {
+	value = 50
+
+	# Cultivation rank of master (respect through power)
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 5
+	}
+
+	# Standing (external reputation reflects internally)
+	if = {
+		limit = { exists = var:murim_jianghu_standing }
+		add = {
+			value = var:murim_jianghu_standing
+			multiply = 0.2
+		}
+	}
+
+	# Diplomacy (internal politics)
+	add = {
+		value = diplomacy
+		multiply = 0.5
+	}
+
+	# Martial (respect through combat ability)
+	add = {
+		value = martial
+		multiply = 0.3
+	}
+
+	# Trait bonuses
+	if = {
+		limit = { has_trait = just }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = brave }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 3
+	}
+
+	# Trait penalties
+	if = {
+		limit = { has_trait = craven }
+		add = -10
+	}
+	if = {
+		limit = { has_trait = lazy }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = arbitrary }
+		add = -8
+	}
+	if = {
+		limit = { has_trait = cruel }
+		# Cruel masters: feared but not loved
+		if = {
+			limit = { has_character_flag = murim_demonic_cultivator }
+			add = 3
+			# Demonic sects respect cruelty
+		}
+		else = {
+			add = -5
+		}
+	}
+
+	# Internal strife
+	if = {
+		limit = { has_character_modifier = murim_sect_internal_strife }
+		add = -15
+	}
+
+	# Recent sect victories boost authority
+	if = {
+		limit = { has_character_modifier = murim_sect_recent_victory }
+		add = 10
+	}
+
+	# New master penalty (hasn't established yet)
+	if = {
+		limit = { has_character_modifier = murim_new_sect_master }
+		add = -20
+	}
+
+	min = 0
+	max = 100
+	round = yes
+}
+
+# Authority thresholds
+murim_authority_crisis_threshold = 25		# Below this: challenges fire
+murim_authority_stable_threshold = 50		# Above this: normal operations
+murim_authority_absolute_threshold = 80		# Above this: total control
+
+
+# ==============================================================
+# ORTHODOX / DEMONIC ALIGNMENT SCORE
+# Tracks how orthodox or demonic a cultivator is.
+# -100 (pure demonic) to +100 (pure orthodox).
+# Stored as var:murim_alignment
+# ==============================================================
+
+murim_alignment_shift_orthodox_deed = 5
+murim_alignment_shift_demonic_deed = -5
+murim_alignment_shift_forbidden_technique = -10
+murim_alignment_shift_righteous_pillar = 15
+murim_alignment_shift_sow_discord = -15
+murim_alignment_shift_save_civilians = 8
+murim_alignment_shift_massacre = -20
+murim_alignment_shift_mercy_shown = 3
+murim_alignment_shift_betray_jianghu = -25
+
+# Alignment decay toward center (extreme positions are hard to maintain)
+murim_alignment_monthly_decay = {
+	value = 0
+	if = {
+		limit = {
+			exists = var:murim_alignment
+			var:murim_alignment > 50
+		}
+		value = -0.2
+	}
+	else_if = {
+		limit = {
+			exists = var:murim_alignment
+			var:murim_alignment < -50
+		}
+		value = 0.2
+	}
+}
+
+# Alignment thresholds for trait assignment
+murim_alignment_orthodox_threshold = 30			# Above: orthodox flag
+murim_alignment_demonic_threshold = -30			# Below: demonic flag
+murim_alignment_neutral_low = -29				# Between: unaligned
+murim_alignment_neutral_high = 29
+
+
+# ==============================================================
+# SECT TREASURY
+# Income and expenses for sect operations.
+# ==============================================================
+
+murim_sect_monthly_income = {
+	value = 0
+
+	# Base income from members (dues)
+	if = {
+		limit = { exists = var:murim_sect_member_count }
+		add = {
+			value = var:murim_sect_member_count
+			multiply = 0.5
+		}
+	}
+
+	# Territory income
+	if = {
+		limit = { exists = var:murim_sect_territory_count }
+		add = {
+			value = var:murim_sect_territory_count
+			multiply = 2
+		}
+	}
+
+	# Sanctioned sect: Imperial stipend
+	if = {
+		limit = { has_character_flag = murim_sect_sanctioned }
+		add = 5
+	}
+
+	# Revenue Ministry skimming (Demonic)
+	if = {
+		limit = { has_character_flag = murim_revenue_ministry_infiltrated }
+		add = 8
+	}
+
+	# Tribute cost (paying the Hegemon)
+	if = {
+		limit = { has_character_flag = murim_paying_tribute }
+		subtract = 4
+	}
+
+	min = 0
+	round = yes
+}
+
+murim_sect_monthly_expenses = {
+	value = 0
+
+	# Levy upkeep
+	add = {
+		value = murim_hidden_levy_base_size
+		multiply = 0.01
+	}
+
+	# Training grounds maintenance
+	if = {
+		limit = { has_character_modifier = murim_sect_training_grounds }
+		add = 2
+	}
+
+	# Suppressed sects have higher expenses (secrecy costs)
+	if = {
+		limit = { has_character_modifier = murim_sect_suppressed }
+		add = 3
+	}
+
+	min = 1
+	round = yes
+}
+
+murim_sect_net_income = {
+	value = murim_sect_monthly_income
+	subtract = murim_sect_monthly_expenses
+}
+
+
+# ==============================================================
+# SECT INTERNAL CHALLENGE
+# When authority drops low, elders challenge the master.
+# ==============================================================
+
+murim_internal_challenge_chance = {
+	# Monthly chance of a challenge event firing
+	value = 0
+
+	# Only fires when authority is below crisis threshold
+	if = {
+		limit = {
+			murim_sect_master_authority < 25
+		}
+		value = 5
+
+		# Lower authority = higher chance
+		add = {
+			value = 25
+			subtract = murim_sect_master_authority
+			multiply = 0.5
+		}
+	}
+
+	# Ambitious elders increase chance
+	if = {
+		limit = { has_character_modifier = murim_ambitious_elder_present }
+		add = 5
+	}
+
+	min = 0
+	max = 30
+	round = yes
+}
+
+# Sect split chance (catastrophic outcome of failed authority)
+murim_sect_split_chance = {
+	value = 0
+
+	if = {
+		limit = {
+			murim_sect_master_authority < 15
+			has_character_modifier = murim_sect_internal_strife
+		}
+		value = 10
+
+		# More members = harder to hold together
+		if = {
+			limit = {
+				exists = var:murim_sect_member_count
+				var:murim_sect_member_count >= 15
+			}
+			add = 5
+		}
+	}
+
+	max = 25
+}
+
+
+# ==============================================================
+# SECT FOUNDING REQUIREMENTS
+# What it takes to establish a new sect.
+# ==============================================================
+
+murim_sect_founding_cultivation_min = 3			# Foundation minimum
+murim_sect_founding_standing_min = 35			# Need reputation
+murim_sect_founding_gold_cost = 150				# Startup costs
+murim_sect_founding_disciple_min = 3			# Need followers
