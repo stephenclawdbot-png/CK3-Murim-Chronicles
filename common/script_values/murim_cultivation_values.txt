@@ -1,0 +1,795 @@
+################################################################
+# MURIM CHRONICLES — CULTIVATION SCRIPT VALUES
+# Path: common/script_values/murim_cultivation_values.txt
+# Handles: XP gain, breakthrough thresholds, rank scaling,
+#          qi deviation risk, cultivation speed by era,
+#          meditation efficiency, body tempering, meridian flow
+#
+# All values scoped to CHARACTER unless noted otherwise.
+# Guard all usage with: has_character_flag = murim_initiated
+################################################################
+
+
+# ==============================================================
+# CULTIVATION RANK NUMERIC VALUES
+# Maps trait-based ranks to numeric values for math operations.
+# Rank traits: murim_outer_qi, murim_qi_gathering,
+#   murim_foundation, murim_golden_core,
+#   murim_nascent_soul, murim_spirit_severing
+# ==============================================================
+
+murim_cultivation_rank_value = {
+	value = 0
+	if = {
+		limit = { has_trait = murim_outer_qi }
+		add = 1
+	}
+	else_if = {
+		limit = { has_trait = murim_qi_gathering }
+		add = 2
+	}
+	else_if = {
+		limit = { has_trait = murim_foundation }
+		add = 3
+	}
+	else_if = {
+		limit = { has_trait = murim_golden_core }
+		add = 4
+	}
+	else_if = {
+		limit = { has_trait = murim_nascent_soul }
+		add = 5
+	}
+	else_if = {
+		limit = { has_trait = murim_spirit_severing }
+		add = 6
+	}
+}
+
+# Inverse: how far from peak (used for scaling ceilings)
+murim_cultivation_ranks_remaining = {
+	value = 6
+	subtract = murim_cultivation_rank_value
+	min = 0
+}
+
+
+# ==============================================================
+# CULTIVATION XP — BASE GAIN PER TICK
+# Main formula for monthly cultivation progress.
+# Factors: learning skill, health, age penalty, traits,
+#          current rank (diminishing returns at higher tiers)
+# ==============================================================
+
+murim_cultivation_xp_base = {
+	# Learning is the primary cultivation stat
+	value = learning
+	multiply = 0.15
+
+	# Martial contributes (body and qi are linked)
+	add = {
+		value = martial
+		multiply = 0.05
+	}
+
+	# Health multiplier: sick cultivators progress slowly
+	multiply = {
+		value = health
+		multiply = 0.25
+		min = 0.1
+		max = 1.5
+	}
+
+	# Age penalty: cultivation slows past 40
+	if = {
+		limit = { age >= 40 }
+		multiply = 0.85
+	}
+	if = {
+		limit = { age >= 55 }
+		multiply = 0.70
+	}
+	if = {
+		limit = { age >= 70 }
+		multiply = 0.50
+	}
+
+	# Diminishing returns at higher ranks
+	# Each rank makes XP gain harder
+	multiply = {
+		value = 1.0
+		subtract = {
+			value = murim_cultivation_rank_value
+			multiply = 0.08
+		}
+		min = 0.4
+	}
+
+	min = 0.1
+	max = 5.0
+}
+
+# Meditation bonus: active cultivation focus adds to base
+murim_meditation_efficiency = {
+	value = 1.0
+
+	# Learning skill improves meditation
+	add = {
+		value = learning
+		multiply = 0.03
+	}
+
+	# Temperance trait: disciplined mind
+	if = {
+		limit = { has_trait = temperate }
+		add = 0.15
+	}
+
+	# Patient trait: sustained focus
+	if = {
+		limit = { has_trait = patient }
+		add = 0.20
+	}
+
+	# Diligent trait: hard worker
+	if = {
+		limit = { has_trait = diligent }
+		add = 0.15
+	}
+
+	# Impatient / Lazy penalties
+	if = {
+		limit = { has_trait = impatient }
+		add = -0.20
+	}
+	if = {
+		limit = { has_trait = lazy }
+		add = -0.25
+	}
+
+	# Stressed cultivators lose focus
+	if = {
+		limit = { stress >= 50 }
+		add = -0.15
+	}
+	if = {
+		limit = { stress >= 80 }
+		add = -0.30
+	}
+
+	# Sect training grounds bonus
+	if = {
+		limit = { has_character_modifier = murim_sect_training_grounds }
+		add = 0.25
+	}
+
+	# Martial manual study bonus
+	if = {
+		limit = { has_character_modifier = murim_studying_manual }
+		add = 0.35
+	}
+
+	min = 0.2
+	max = 3.0
+}
+
+# Total monthly XP: base * meditation * era modifier
+murim_cultivation_xp_monthly = {
+	value = murim_cultivation_xp_base
+	multiply = murim_meditation_efficiency
+	multiply = murim_era_cultivation_modifier
+
+	# Body constitution bonus (special trait)
+	if = {
+		limit = { has_trait = murim_heavenly_body }
+		multiply = 1.30
+	}
+	if = {
+		limit = { has_trait = murim_pure_yin_body }
+		multiply = 1.20
+	}
+	if = {
+		limit = { has_trait = murim_pure_yang_body }
+		multiply = 1.20
+	}
+	if = {
+		limit = { has_trait = murim_poison_body }
+		multiply = 0.85
+		# Poison body hinders orthodox cultivation but aids demonic
+	}
+
+	# Demonic cultivation path is faster but riskier
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		multiply = 1.25
+	}
+
+	min = 0.1
+	max = 8.0
+	round = yes
+}
+
+
+# ==============================================================
+# BREAKTHROUGH THRESHOLDS
+# XP required to advance from current rank to next.
+# Stored as character variable: murim_cultivation_xp
+# On reaching threshold, breakthrough event fires.
+# ==============================================================
+
+murim_breakthrough_threshold = {
+	# Base threshold scales exponentially per rank
+	value = 100
+
+	if = {
+		limit = { has_trait = murim_outer_qi }
+		# Outer Qi → Qi Gathering: 100 XP
+		value = 100
+	}
+	else_if = {
+		limit = { has_trait = murim_qi_gathering }
+		# Qi Gathering → Foundation: 250 XP
+		value = 250
+	}
+	else_if = {
+		limit = { has_trait = murim_foundation }
+		# Foundation → Golden Core: 500 XP
+		value = 500
+	}
+	else_if = {
+		limit = { has_trait = murim_golden_core }
+		# Golden Core → Nascent Soul: 1000 XP
+		value = 1000
+	}
+	else_if = {
+		limit = { has_trait = murim_nascent_soul }
+		# Nascent Soul → Spirit Severing: 2500 XP
+		value = 2500
+	}
+	else = {
+		# Spirit Severing is max rank, no further breakthrough
+		value = 99999
+	}
+}
+
+# Progress percentage (for UI display)
+murim_breakthrough_progress_pct = {
+	value = 0
+	if = {
+		limit = { exists = var:murim_cultivation_xp }
+		value = var:murim_cultivation_xp
+		divide = murim_breakthrough_threshold
+		multiply = 100
+		min = 0
+		max = 100
+	}
+	round = yes
+}
+
+
+# ==============================================================
+# BREAKTHROUGH SUCCESS CHANCE
+# Not automatic — reaching the threshold triggers an event
+# with a success roll. Failure = XP loss + qi deviation risk.
+# ==============================================================
+
+murim_breakthrough_success_chance = {
+	# Base 60% chance
+	value = 60
+
+	# Learning adds to chance
+	add = {
+		value = learning
+		multiply = 0.8
+		max = 16
+	}
+
+	# Health matters
+	add = {
+		value = health
+		multiply = 3
+		max = 15
+	}
+
+	# Age penalty for breakthroughs
+	if = {
+		limit = { age >= 45 }
+		add = -5
+	}
+	if = {
+		limit = { age >= 60 }
+		add = -10
+	}
+
+	# Higher ranks are harder to break through
+	subtract = {
+		value = murim_cultivation_rank_value
+		multiply = 4
+	}
+
+	# Sect master guidance bonus
+	if = {
+		limit = { has_character_modifier = murim_sect_master_guidance }
+		add = 15
+	}
+
+	# Heavenly body constitution
+	if = {
+		limit = { has_trait = murim_heavenly_body }
+		add = 10
+	}
+
+	# Demonic path: higher chance but more deviation risk
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		add = 10
+	}
+
+	# Patience virtue
+	if = {
+		limit = { has_trait = patient }
+		add = 5
+	}
+
+	# Stress penalty
+	if = {
+		limit = { stress >= 60 }
+		add = -10
+	}
+
+	# Martial manual studied for this specific breakthrough
+	if = {
+		limit = { has_character_flag = murim_manual_studied_for_breakthrough }
+		add = 12
+	}
+
+	# Stone-song resonance (dwarven ally bonus)
+	if = {
+		limit = { has_character_modifier = murim_stone_song_resonance }
+		add = 8
+	}
+
+	min = 5
+	max = 95
+	round = yes
+}
+
+
+# ==============================================================
+# QI DEVIATION RISK
+# Fires on failed breakthrough or pushing too hard.
+# Severity determines health/trait consequences.
+# ==============================================================
+
+murim_qi_deviation_risk = {
+	# Base risk 15%
+	value = 15
+
+	# Higher ranks = more dangerous deviations
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 5
+	}
+
+	# Demonic cultivation is riskier
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		add = 12
+	}
+
+	# Forbidden technique usage stacks risk
+	if = {
+		limit = { has_character_flag = murim_used_forbidden_technique }
+		add = 15
+	}
+
+	# Stress amplifies deviation
+	if = {
+		limit = { stress >= 70 }
+		add = 10
+	}
+
+	# Poor health
+	if = {
+		limit = { health <= 3 }
+		add = 8
+	}
+
+	# Wounded/maimed states
+	if = {
+		limit = { has_trait = wounded_1 }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = wounded_3 }
+		add = 15
+	}
+
+	# Temperate/patient reduce risk
+	if = {
+		limit = { has_trait = temperate }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = -5
+	}
+
+	# Sect master supervision reduces risk
+	if = {
+		limit = { has_character_modifier = murim_sect_master_guidance }
+		add = -10
+	}
+
+	# Poison body constitution: deviation risk always elevated
+	if = {
+		limit = { has_trait = murim_poison_body }
+		add = 10
+	}
+
+	min = 5
+	max = 85
+	round = yes
+}
+
+# Qi deviation severity (determines consequences)
+murim_qi_deviation_severity = {
+	# 1 = minor (lose XP), 2 = moderate (health loss), 3 = severe (permanent trait damage)
+	value = 1
+
+	if = {
+		limit = { murim_cultivation_rank_value >= 3 }
+		add = 1
+	}
+	if = {
+		limit = { murim_cultivation_rank_value >= 5 }
+		add = 1
+	}
+	if = {
+		limit = { has_character_flag = murim_demonic_cultivator }
+		add = 1
+	}
+	if = {
+		limit = { has_character_flag = murim_used_forbidden_technique }
+		add = 1
+	}
+
+	max = 3
+}
+
+# XP lost on failed breakthrough
+murim_breakthrough_failure_xp_loss = {
+	value = murim_breakthrough_threshold
+	multiply = 0.30
+	# Lose 30% of the threshold requirement
+	# Painful but not total reset
+	round = yes
+}
+
+
+# ==============================================================
+# ERA-BASED CULTIVATION SPEED MODIFIERS
+# Tied to AUH Dynastic Cycle phases.
+# Advancement Era = cultural bloom = faster cultivation.
+# Division Era = chaos = slower orthodox, faster demonic.
+# ==============================================================
+
+murim_era_cultivation_modifier = {
+	value = 1.0
+
+	# Expansion Era: stable, normal speed
+	# (default 1.0, no modifier needed)
+
+	# Advancement Era: cultural flourishing boosts cultivation
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 2
+		}
+		add = 0.25
+	}
+
+	# Tension Era: anxiety disrupts focus
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 3
+		}
+		add = -0.10
+	}
+
+	# Conquest Era: war everywhere, hard to meditate
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 4
+		}
+		add = -0.20
+		# But demonic cultivators thrive in chaos
+		if = {
+			limit = { has_character_flag = murim_demonic_cultivator }
+			add = 0.35
+		}
+	}
+
+	# Division Era: total collapse
+	if = {
+		limit = {
+			exists = global_var:murim_current_era
+			global_var:murim_current_era = 5
+		}
+		add = -0.30
+		# Demonic cultivators at peak during Division
+		if = {
+			limit = { has_character_flag = murim_demonic_cultivator }
+			add = 0.50
+		}
+	}
+
+	min = 0.3
+	max = 2.0
+}
+
+
+# ==============================================================
+# BODY TEMPERING VALUES
+# Physical cultivation track: prowess + toughness.
+# Separate from spiritual cultivation but feeds into it.
+# ==============================================================
+
+murim_body_tempering_xp_gain = {
+	value = martial
+	multiply = 0.10
+
+	# Prowess is the key stat for body cultivation
+	add = {
+		value = prowess
+		multiply = 0.08
+	}
+
+	# Health floor: can't temper a broken body
+	multiply = {
+		value = health
+		multiply = 0.20
+		min = 0.1
+		max = 1.2
+	}
+
+	# Strong/Robust trait bonuses
+	if = {
+		limit = { has_trait = strong }
+		add = 0.20
+	}
+	if = {
+		limit = { has_trait = robust }
+		add = 0.10
+	}
+	if = {
+		limit = { has_trait = herculean }
+		add = 0.35
+	}
+
+	# Weak/Frail penalties
+	if = {
+		limit = { has_trait = weak }
+		add = -0.20
+	}
+	if = {
+		limit = { has_trait = frail }
+		add = -0.10
+	}
+
+	min = 0.05
+	max = 3.0
+}
+
+murim_body_tempering_threshold = {
+	# 9 levels of body tempering (Iron Skin progression)
+	value = 50
+	if = {
+		limit = { exists = var:murim_body_tempering_level }
+		multiply = {
+			value = var:murim_body_tempering_level
+			add = 1
+		}
+	}
+}
+
+
+# ==============================================================
+# MERIDIAN FLOW VALUES
+# Determines qi circulation efficiency.
+# Affected by body constitution traits and injuries.
+# Used as multiplier in multiple other formulas.
+# ==============================================================
+
+murim_meridian_flow_efficiency = {
+	value = 1.0
+
+	# Constitution bonuses
+	if = {
+		limit = { has_trait = murim_heavenly_body }
+		add = 0.40
+	}
+	if = {
+		limit = { has_trait = murim_pure_yin_body }
+		add = 0.25
+	}
+	if = {
+		limit = { has_trait = murim_pure_yang_body }
+		add = 0.25
+	}
+
+	# Blocked meridians from qi deviation
+	if = {
+		limit = { has_character_modifier = murim_meridian_damage_minor }
+		add = -0.15
+	}
+	if = {
+		limit = { has_character_modifier = murim_meridian_damage_severe }
+		add = -0.40
+	}
+
+	# Stone-song resonance (dwarven technique) aids flow
+	if = {
+		limit = { has_character_modifier = murim_stone_song_resonance }
+		add = 0.15
+	}
+
+	# Physical injuries block meridians
+	if = {
+		limit = { has_trait = wounded_1 }
+		add = -0.10
+	}
+	if = {
+		limit = { has_trait = wounded_3 }
+		add = -0.25
+	}
+	if = {
+		limit = { has_trait = one_handed }
+		add = -0.15
+	}
+	if = {
+		limit = { has_trait = one_legged }
+		add = -0.15
+	}
+
+	# Age degradation
+	if = {
+		limit = { age >= 60 }
+		add = -0.10
+	}
+	if = {
+		limit = { age >= 75 }
+		add = -0.20
+	}
+
+	# Higher cultivation improves baseline flow
+	add = {
+		value = murim_cultivation_rank_value
+		multiply = 0.05
+	}
+
+	min = 0.1
+	max = 2.0
+}
+
+
+# ==============================================================
+# LIFESPAN EXTENSION FROM CULTIVATION
+# Higher ranks grant health bonuses (longevity).
+# Spirit Severing cultivators can live 150+ years.
+# ==============================================================
+
+murim_cultivation_health_bonus = {
+	value = 0
+
+	if = {
+		limit = { has_trait = murim_qi_gathering }
+		add = 0.25
+	}
+	if = {
+		limit = { has_trait = murim_foundation }
+		add = 0.50
+	}
+	if = {
+		limit = { has_trait = murim_golden_core }
+		add = 1.0
+	}
+	if = {
+		limit = { has_trait = murim_nascent_soul }
+		add = 1.5
+	}
+	if = {
+		limit = { has_trait = murim_spirit_severing }
+		add = 2.5
+	}
+
+	# Meridian flow affects health delivery
+	multiply = murim_meridian_flow_efficiency
+}
+
+# Fertility impact (high cultivation reduces fertility, lore-accurate)
+murim_cultivation_fertility_modifier = {
+	value = 0
+
+	if = {
+		limit = { has_trait = murim_golden_core }
+		add = -0.10
+	}
+	if = {
+		limit = { has_trait = murim_nascent_soul }
+		add = -0.25
+	}
+	if = {
+		limit = { has_trait = murim_spirit_severing }
+		add = -0.50
+	}
+}
+
+
+# ==============================================================
+# CULTIVATION TALENT VALUE
+# Innate aptitude: set once at initiation, barely changes.
+# Affects XP gain rate. 1-100 scale stored as variable.
+# ==============================================================
+
+murim_cultivation_talent_modifier = {
+	value = 1.0
+	if = {
+		limit = { exists = var:murim_talent }
+		add = {
+			value = var:murim_talent
+			subtract = 50
+			multiply = 0.01
+			# Talent 50 = no change, 100 = +50%, 0 = -50%
+		}
+	}
+	min = 0.5
+	max = 1.5
+}
+
+
+# ==============================================================
+# DUAL PATH TENSION
+# Merit vs Cultivation conflict.
+# Characters pursuing both suffer diminishing returns.
+# ==============================================================
+
+murim_dual_path_penalty = {
+	# No penalty if either track is low
+	value = 0
+
+	# Penalty kicks in when both Merit and Cultivation are high
+	if = {
+		limit = {
+			exists = var:murim_jianghu_standing
+			var:murim_jianghu_standing >= 50
+			# Merit check would go here via AUH trigger
+			# Placeholder: use stored variable
+			exists = var:murim_merit_tracking
+			var:murim_merit_tracking >= 60
+		}
+		value = 0.20
+		# 20% slower gains on BOTH tracks
+	}
+
+	# Scholar-Warrior trait exemption
+	if = {
+		limit = { has_trait = murim_scholar_warrior }
+		value = 0
+		# Complete Scholar-Warrior transcends the fork
+	}
+}
+
+murim_cultivation_xp_after_dual_penalty = {
+	value = murim_cultivation_xp_monthly
+	multiply = {
+		value = 1.0
+		subtract = murim_dual_path_penalty
+	}
+	# Also apply talent
+	multiply = murim_cultivation_talent_modifier
+	round = yes
+	min = 0
+}
