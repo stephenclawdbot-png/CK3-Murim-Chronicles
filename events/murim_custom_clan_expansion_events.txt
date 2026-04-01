@@ -1,0 +1,570 @@
+namespace = murim_custom_exp
+
+# Custom Clan Creation Expansion Events
+# Vote Path: Elders vote on new clan's doctrine
+# Supreme Path: Prove dominance through combat
+# Clan naming, technique founding, territory claiming
+
+###################################
+# Vote Path - Elder Council Convenes
+###################################
+murim_custom_exp.0001 = {
+	type = character_event
+	title = murim_custom_exp.0001.t
+	desc = murim_custom_exp.0001.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = murim_founding_clan_vote_path
+		NOT = { has_character_flag = elder_council_convened }
+	}
+	
+	immediate = {
+		add_character_flag = elder_council_convened
+	}
+	
+	option = {
+		name = murim_custom_exp.0001.a
+		# Present orthodox doctrine to the elders
+		add_character_modifier = {
+			modifier = murim_orthodox_doctrine_proposed
+			years = 3
+		}
+		random_list = {
+			50 = {
+				# Elders approve - orthodox clan founded
+				add_trait = murim_clan_founder
+				set_variable = murim_clan_leader
+				set_variable = { name = murim_clan_alignment value = 1 } # orthodox
+				add_prestige = 800
+				add_character_modifier = {
+					modifier = murim_new_orthodox_clan
+					years = 20
+				}
+				trigger_event = { id = murim_custom_exp.0003 days = 30 }
+			}
+			30 = {
+				# Conditional approval - must prove worthy first
+				add_character_flag = {
+					flag = murim_must_prove_worthy
+					days = 365
+				}
+				trigger_event = { id = murim_custom_exp.0005 days = 60 }
+			}
+			20 = {
+				# Rejected by elders
+				add_prestige = -200
+				add_stress = 40
+				add_character_modifier = {
+					modifier = murim_elder_rejection
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0001.b
+		# Present unorthodox doctrine
+		add_character_modifier = {
+			modifier = murim_unorthodox_doctrine_proposed
+			years = 3
+		}
+		random_list = {
+			35 = {
+				add_trait = murim_clan_founder
+				set_variable = murim_clan_leader
+				set_variable = { name = murim_clan_alignment value = 2 } # unorthodox
+				add_prestige = 600
+				add_dread = 20
+				add_character_modifier = {
+					modifier = murim_new_unorthodox_clan
+					years = 20
+				}
+				trigger_event = { id = murim_custom_exp.0003 days = 30 }
+			}
+			35 = {
+				add_character_flag = {
+					flag = murim_must_prove_worthy
+					days = 365
+				}
+				trigger_event = { id = murim_custom_exp.0005 days = 60 }
+			}
+			30 = {
+				add_prestige = -300
+				add_stress = 50
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Supreme Path - Dominance Challenge
+###################################
+murim_custom_exp.0002 = {
+	type = character_event
+	title = murim_custom_exp.0002.t
+	desc = murim_custom_exp.0002.desc
+	theme = martial
+	
+	trigger = {
+		has_character_flag = murim_founding_clan_supreme_path
+		prowess >= 18
+		NOT = { has_character_flag = supreme_challenge_done }
+	}
+	
+	immediate = {
+		add_character_flag = supreme_challenge_done
+		# Find strongest non-leader martial artist
+		ordered_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { has_variable = murim_clan_leader }
+				NOT = { this = root }
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = supreme_opponent
+		}
+	}
+	
+	option = {
+		name = murim_custom_exp.0002.a
+		# Challenge 5 masters in succession
+		duel = {
+			skill = prowess
+			target = scope:supreme_opponent
+			45 = {
+				comparator = scope:duel_value
+				desc = murim_custom_exp.0002.supreme_victory
+				add_trait = murim_clan_founder
+				set_variable = murim_clan_leader
+				add_prestige = 1500
+				add_prowess = 3
+				add_character_modifier = {
+					modifier = murim_supreme_clan_founder
+					years = 30
+				}
+				trigger_event = { id = murim_custom_exp.0003 days = 7 }
+			}
+			55 = {
+				comparator = scope:duel_value
+				desc = murim_custom_exp.0002.supreme_defeat
+				add_trait = wounded_3
+				add_prestige = -500
+				add_character_modifier = {
+					modifier = murim_supreme_path_failed
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0002.b
+		# Not ready yet - train more
+		add_prowess = 2
+		remove_character_flag = supreme_challenge_done
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Name Your Clan
+###################################
+murim_custom_exp.0003 = {
+	type = character_event
+	title = murim_custom_exp.0003.t
+	desc = murim_custom_exp.0003.desc
+	theme = education
+	
+	trigger = {
+		has_trait = murim_clan_founder
+		NOT = { has_character_flag = clan_named }
+	}
+	
+	immediate = {
+		add_character_flag = clan_named
+	}
+	
+	option = {
+		name = murim_custom_exp.0003.a
+		# Name after your dynasty
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_dynasty_named_clan
+			years = 50
+		}
+		trigger_event = { id = murim_custom_exp.0004 days = 30 }
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0003.b
+		# Name after your martial philosophy
+		add_learning = 2
+		add_character_modifier = {
+			modifier = murim_philosophy_named_clan
+			years = 50
+		}
+		trigger_event = { id = murim_custom_exp.0004 days = 30 }
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0003.c
+		# Name after your homeland
+		add_diplomacy = 2
+		add_character_modifier = {
+			modifier = murim_homeland_named_clan
+			years = 50
+		}
+		trigger_event = { id = murim_custom_exp.0004 days = 30 }
+		ai_chance = { base = 30 }
+	}
+}
+
+###################################
+# Found Your Signature Technique
+###################################
+murim_custom_exp.0004 = {
+	type = character_event
+	title = murim_custom_exp.0004.t
+	desc = murim_custom_exp.0004.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = murim_clan_founder
+		has_character_flag = clan_named
+		NOT = { has_character_flag = signature_technique_created }
+	}
+	
+	immediate = {
+		add_character_flag = signature_technique_created
+	}
+	
+	option = {
+		name = murim_custom_exp.0004.a
+		# Create an aggressive combat art
+		add_prowess = 4
+		add_character_modifier = {
+			modifier = murim_custom_aggressive_art
+			years = 30
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0004.b
+		# Create a defensive formation art
+		add_martial = 4
+		add_character_modifier = {
+			modifier = murim_custom_defensive_art
+			years = 30
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0004.c
+		# Create an internal cultivation method
+		add_learning = 3
+		add_prowess = 2
+		add_character_modifier = {
+			modifier = murim_custom_cultivation_method
+			years = 30
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0004.d
+		# Create a poison/assassination art
+		add_intrigue = 4
+		add_character_modifier = {
+			modifier = murim_custom_shadow_art
+			years = 30
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+###################################
+# Prove Worthy Trial (Vote Path follow-up)
+###################################
+murim_custom_exp.0005 = {
+	type = character_event
+	title = murim_custom_exp.0005.t
+	desc = murim_custom_exp.0005.desc
+	theme = martial
+	
+	trigger = {
+		has_character_flag = murim_must_prove_worthy
+	}
+	
+	option = {
+		name = murim_custom_exp.0005.a
+		# Complete a dangerous mission for the elders
+		random_list = {
+			50 = {
+				# Mission successful
+				add_trait = murim_clan_founder
+				set_variable = murim_clan_leader
+				add_prestige = 600
+				remove_character_flag = murim_must_prove_worthy
+				trigger_event = { id = murim_custom_exp.0003 days = 7 }
+			}
+			30 = {
+				# Partial success - more time needed
+				add_prestige = 100
+				add_prowess = 1
+			}
+			20 = {
+				# Failed - dream over
+				remove_character_flag = murim_must_prove_worthy
+				remove_character_flag = murim_founding_clan_vote_path
+				add_stress = 60
+				add_trait = wounded_2
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0005.b
+		# Give up the dream
+		remove_character_flag = murim_must_prove_worthy
+		remove_character_flag = murim_founding_clan_vote_path
+		add_stress = 30
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Claim Territory for Clan
+###################################
+murim_custom_exp.0006 = {
+	type = character_event
+	title = murim_custom_exp.0006.t
+	desc = murim_custom_exp.0006.desc
+	theme = war
+	
+	trigger = {
+		has_trait = murim_clan_founder
+		has_variable = murim_clan_leader
+		NOT = { has_character_flag = territory_claimed }
+	}
+	
+	immediate = {
+		add_character_flag = territory_claimed
+	}
+	
+	option = {
+		name = murim_custom_exp.0006.a
+		# Claim a mountain stronghold
+		add_character_modifier = {
+			modifier = murim_mountain_stronghold_clan
+			years = 50
+		}
+		add_martial = 2
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0006.b
+		# Claim a river valley
+		add_character_modifier = {
+			modifier = murim_river_valley_clan
+			years = 50
+		}
+		add_stewardship = 2
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0006.c
+		# Operate from a city
+		add_character_modifier = {
+			modifier = murim_urban_clan
+			years = 50
+		}
+		add_gold = 200
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0006.d
+		# Nomadic - no fixed base
+		add_character_modifier = {
+			modifier = murim_nomadic_clan
+			years = 50
+		}
+		add_intrigue = 2
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Recruit First Disciples
+###################################
+murim_custom_exp.0007 = {
+	type = character_event
+	title = murim_custom_exp.0007.t
+	desc = murim_custom_exp.0007.desc
+	theme = education
+	
+	trigger = {
+		has_trait = murim_clan_founder
+		has_variable = murim_clan_leader
+		has_character_flag = territory_claimed
+		NOT = { has_character_flag = first_disciples_recruited }
+	}
+	
+	immediate = {
+		add_character_flag = first_disciples_recruited
+	}
+	
+	option = {
+		name = murim_custom_exp.0007.a
+		# Hold open trials for anyone
+		random_list = {
+			50 = {
+				# 5 promising disciples join
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_clan_growing_fast
+					years = 5
+				}
+			}
+			30 = {
+				# 2 strong disciples
+				add_prestige = 100
+			}
+			20 = {
+				# A spy infiltrated among recruits
+				add_character_flag = {
+					flag = murim_spy_among_disciples
+					days = 730
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0007.b
+		# Selectively recruit only from trusted families
+		add_character_modifier = {
+			modifier = murim_clan_selective_recruitment
+			years = 10
+		}
+		add_prestige = 100
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0007.c
+		# Recruit orphans and outcasts
+		add_character_modifier = {
+			modifier = murim_clan_orphan_recruits
+			years = 10
+		}
+		add_piety = 100
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Rival Clan Challenges Your Legitimacy
+###################################
+murim_custom_exp.0008 = {
+	type = character_event
+	title = murim_custom_exp.0008.t
+	desc = murim_custom_exp.0008.desc
+	theme = war
+	
+	trigger = {
+		has_trait = murim_clan_founder
+		has_variable = murim_clan_leader
+		any_living_character = {
+			has_variable = murim_clan_leader
+			NOT = { this = root }
+			opinion = {
+				target = root
+				value < 0
+			}
+		}
+		NOT = { has_character_flag = legitimacy_challenged }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = legitimacy_challenged
+			days = 1825
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { this = root }
+				opinion = {
+					target = root
+					value < 0
+				}
+			}
+			save_scope_as = challenger_clan
+		}
+	}
+	
+	option = {
+		name = murim_custom_exp.0008.a
+		# Accept the challenge - prove your clan's worth
+		duel = {
+			skill = prowess
+			target = scope:challenger_clan
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_custom_exp.0008.victory
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_legitimacy_proven
+					years = 10
+				}
+				scope:challenger_clan = {
+					add_opinion = {
+						target = root
+						modifier = murim_respected_new_clan
+						opinion = 30
+					}
+				}
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_custom_exp.0008.defeat
+				add_prestige = -300
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_legitimacy_questioned
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_custom_exp.0008.b
+		# Offer tribute to avoid conflict
+		add_gold = -200
+		scope:challenger_clan = {
+			add_opinion = {
+				target = root
+				modifier = murim_tribute_paid_opinion
+				opinion = 15
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
