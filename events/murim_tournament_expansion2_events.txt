@@ -1,0 +1,624 @@
+###############################################
+# MURIM TOURNAMENT EXPANSION 2
+# 10 complete events: Grand Tournament brackets,
+# Young Dragon competition, dark horse, rigged fights
+###############################################
+
+namespace = murim_tourney_exp2
+
+# === EVENT 0001: GRAND TOURNAMENT OPENING CEREMONY ===
+murim_tourney_exp2.0001 = {
+	type = character_event
+	title = murim_tourney_exp2.0001.t
+	desc = murim_tourney_exp2.0001.desc
+	theme = feast
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_global_variable = murim_grand_tournament_active
+	}
+	
+	# Option A: Enter as your clan's champion
+	option = {
+		name = murim_tourney_exp2.0001.a
+		add_character_modifier = {
+			modifier = murim_tournament_champion_entry
+			years = 1
+		}
+		add_prestige = 300
+		trigger_event = { id = murim_tourney_exp2.0002 days = 7 }
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Enter disguised - hidden identity
+	option = {
+		name = murim_tourney_exp2.0001.b
+		add_character_modifier = {
+			modifier = murim_tournament_masked_fighter
+			years = 1
+		}
+		add_intrigue_skill = 2
+		trigger_event = { id = murim_tourney_exp2.0002 days = 7 }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Observe and gather intelligence
+	option = {
+		name = murim_tourney_exp2.0001.c
+		add_intrigue_skill = 2
+		add_learning_skill = 1
+		add_character_modifier = {
+			modifier = murim_tournament_observer
+			years = 1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0002: FIRST ROUND - BRACKET FIGHTS ===
+murim_tourney_exp2.0002 = {
+	type = character_event
+	title = murim_tourney_exp2.0002.t
+	desc = murim_tourney_exp2.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		OR = {
+			has_character_modifier = murim_tournament_champion_entry
+			has_character_modifier = murim_tournament_masked_fighter
+		}
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { this = root }
+				OR = {
+					has_character_modifier = murim_tournament_champion_entry
+					has_character_modifier = murim_tournament_masked_fighter
+				}
+			}
+			save_scope_as = tournament_opponent
+		}
+	}
+	
+	# Option A: Fight with full power from the start
+	option = {
+		name = murim_tourney_exp2.0002.a
+		duel = {
+			skill = prowess
+			target = scope:tournament_opponent
+		}
+		random_list = {
+			60 = {
+				add_prestige = 500
+				trigger_event = { id = murim_tourney_exp2.0003 days = 7 }
+			}
+			40 = {
+				add_prestige = 100
+				add_health = -1
+				remove_character_modifier = murim_tournament_champion_entry
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Hold back - conserve energy for later rounds
+	option = {
+		name = murim_tourney_exp2.0002.b
+		random_list = {
+			50 = {
+				add_prestige = 200
+				trigger_event = { id = murim_tourney_exp2.0003 days = 7 }
+			}
+			50 = {
+				# Underestimated opponent
+				add_prestige = -100
+				add_health = -1
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Use a secret technique to end it instantly
+	option = {
+		name = murim_tourney_exp2.0002.c
+		trigger = { has_trait = murim_rank_peak }
+		add_prestige = 800
+		add_dread = 20
+		trigger_event = { id = murim_tourney_exp2.0003 days = 7 }
+		# Everyone now fears you
+		every_ruler = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { target = root modifier = murim_tournament_feared opinion = -10 }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0003: SEMIFINAL - THE DARK HORSE APPEARS ===
+murim_tourney_exp2.0003 = {
+	type = character_event
+	title = murim_tourney_exp2.0003.t
+	desc = murim_tourney_exp2.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = murim_martial_artist
+	}
+	
+	immediate = {
+		create_character = {
+			age = 22
+			trait = murim_martial_artist
+			trait = murim_rank_peak
+			trait = murim_dark_horse
+			prowess = 20
+		}
+		save_scope_as = dark_horse_fighter
+	}
+	
+	# Option A: Face the dark horse head-on
+	option = {
+		name = murim_tourney_exp2.0003.a
+		duel = {
+			skill = prowess
+			target = scope:dark_horse_fighter
+		}
+		random_list = {
+			40 = {
+				add_prestige = 1000
+				trigger_event = { id = murim_tourney_exp2.0004 days = 7 }
+			}
+			35 = {
+				# Close match - both advance to finals
+				add_health = -2
+				add_prestige = 500
+				trigger_event = { id = murim_tourney_exp2.0004 days = 14 }
+			}
+			25 = {
+				# Defeated by the dark horse
+				add_prestige = 200
+				add_health = -3
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Study the dark horse's style first
+	option = {
+		name = murim_tourney_exp2.0003.b
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_studied_dark_horse
+			years = 1
+		}
+		trigger_event = { id = murim_tourney_exp2.0004 days = 7 }
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Forfeit - the dark horse is too strong
+	option = {
+		name = murim_tourney_exp2.0003.c
+		add_prestige = -200
+		add_stress = 15
+		ai_chance = { base = 15 }
+	}
+}
+
+# === EVENT 0004: THE GRAND FINAL ===
+murim_tourney_exp2.0004 = {
+	type = character_event
+	title = murim_tourney_exp2.0004.t
+	desc = murim_tourney_exp2.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = murim_martial_artist
+	}
+	
+	# Option A: Fight with everything you have
+	option = {
+		name = murim_tourney_exp2.0004.a
+		random_list = {
+			50 = {
+				# Champion!
+				add_trait = murim_grand_tournament_champion
+				add_prestige = 3000
+				add_prowess = 5
+				add_character_modifier = {
+					modifier = murim_grand_champion_aura
+					years = -1
+				}
+				trigger_event = { id = murim_tourney_exp2.0005 days = 3 }
+			}
+			30 = {
+				# Runner-up - honorable defeat
+				add_prestige = 1000
+				add_prowess = 2
+				add_health = -2
+			}
+			20 = {
+				# Devastating loss - injured
+				add_health = -4
+				add_trait = murim_combat_trauma_tournament_loss
+				add_prestige = 300
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Reveal your hidden trump card technique
+	option = {
+		name = murim_tourney_exp2.0004.b
+		trigger = {
+			OR = {
+				has_trait = murim_rank_absolute
+				has_trait = murim_rank_transcendent
+			}
+		}
+		add_trait = murim_grand_tournament_champion
+		add_prestige = 5000
+		add_prowess = 8
+		add_dread = 30
+		trigger_event = { id = murim_tourney_exp2.0005 days = 3 }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Throw the fight for political gain
+	option = {
+		name = murim_tourney_exp2.0004.c
+		add_gold = 500
+		add_intrigue_skill = 3
+		add_prestige = -500
+		ai_chance = { base = 10 }
+	}
+}
+
+# === EVENT 0005: CHAMPION'S REWARD ===
+murim_tourney_exp2.0005 = {
+	type = character_event
+	title = murim_tourney_exp2.0005.t
+	desc = murim_tourney_exp2.0005.desc
+	theme = feast
+	
+	trigger = {
+		has_trait = murim_grand_tournament_champion
+	}
+	
+	# Option A: Claim the legendary weapon reward
+	option = {
+		name = murim_tourney_exp2.0005.a
+		create_artifact = {
+			name = grand_tournament_weapon
+			type = weapon
+			modifier = murim_tournament_legendary_weapon
+			quality = masterwork
+		}
+		add_prestige = 1000
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Request a boon from the Murim Alliance
+	option = {
+		name = murim_tourney_exp2.0005.b
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = murim_alliance_boon
+			years = 5
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Challenge the reigning Murim Lord
+	option = {
+		name = murim_tourney_exp2.0005.c
+		add_prestige = 500
+		trigger_event = { id = murim_tourney_exp2.0006 days = 30 }
+		ai_chance = { base = 25 }
+	}
+}
+
+# === EVENT 0006: YOUNG DRAGON TOURNAMENT - YOUTH COMPETITION ===
+murim_tourney_exp2.0006 = {
+	type = character_event
+	title = murim_tourney_exp2.0006.t
+	desc = murim_tourney_exp2.0006.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		age <= 25
+		age >= 14
+	}
+	
+	# Option A: Enter the Young Dragon competition
+	option = {
+		name = murim_tourney_exp2.0006.a
+		add_character_modifier = {
+			modifier = murim_young_dragon_contestant
+			years = 1
+		}
+		random_list = {
+			30 = {
+				add_trait = murim_young_dragon_champion
+				add_prestige = 2000
+				add_prowess = 4
+				add_martial_skill = 2
+			}
+			40 = {
+				# Top 4 finish
+				add_prestige = 800
+				add_prowess = 2
+			}
+			30 = {
+				# Early elimination
+				add_prestige = 200
+				add_health = -1
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Represent your clan with honor
+	option = {
+		name = murim_tourney_exp2.0006.b
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_clan_representative
+			years = 3
+		}
+		every_ruler = {
+			limit = {
+				has_trait = murim_clan_leader
+				dynasty = root.dynasty
+			}
+			add_opinion = { target = root modifier = murim_clan_pride opinion = 20 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Sabotage rivals before the tournament
+	option = {
+		name = murim_tourney_exp2.0006.c
+		add_intrigue_skill = 2
+		add_dread = 10
+		# Easy wins but dishonorable
+		random_list = {
+			50 = {
+				add_trait = murim_young_dragon_champion
+				add_prestige = 1000
+			}
+			50 = {
+				# Caught cheating - disgraced
+				add_prestige = -500
+				add_character_modifier = { modifier = murim_tournament_cheater years = -1 }
+			}
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+# === EVENT 0007: RIGGED FIGHT EXPOSED ===
+murim_tourney_exp2.0007 = {
+	type = character_event
+	title = murim_tourney_exp2.0007.t
+	desc = murim_tourney_exp2.0007.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_global_variable = murim_grand_tournament_active
+	}
+	
+	# Option A: Expose the cheating publicly
+	option = {
+		name = murim_tourney_exp2.0007.a
+		add_prestige = 800
+		add_piety = 300
+		add_character_modifier = {
+			modifier = murim_tournament_whistleblower
+			years = 5
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Blackmail the rigger
+	option = {
+		name = murim_tourney_exp2.0007.b
+		add_gold = 500
+		add_intrigue_skill = 2
+		add_hook = {
+			type = murim_blackmail_hook
+			target = scope:tournament_rigger
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Join the scheme - profit together
+	option = {
+		name = murim_tourney_exp2.0007.c
+		add_gold = 300
+		add_intrigue_skill = 1
+		add_prestige = -200
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0008: TOURNAMENT AFTERMATH - GRUDGE MATCH ===
+murim_tourney_exp2.0008 = {
+	type = character_event
+	title = murim_tourney_exp2.0008.t
+	desc = murim_tourney_exp2.0008.desc
+	theme = war
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_trait = murim_combat_trauma_tournament_loss
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_trait = murim_grand_tournament_champion
+			}
+			save_scope_as = tournament_rival
+		}
+	}
+	
+	# Option A: Challenge the champion to a private rematch
+	option = {
+		name = murim_tourney_exp2.0008.a
+		duel = {
+			skill = prowess
+			target = scope:tournament_rival
+		}
+		random_list = {
+			50 = {
+				remove_trait = murim_combat_trauma_tournament_loss
+				add_prestige = 1500
+				add_prowess = 3
+			}
+			50 = {
+				add_health = -3
+				add_stress = 30
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Train in seclusion - surpass them next time
+	option = {
+		name = murim_tourney_exp2.0008.b
+		add_character_modifier = {
+			modifier = murim_seclusion_training
+			years = 3
+		}
+		add_martial_skill = 3
+		add_prowess = 4
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Accept defeat and move on
+	option = {
+		name = murim_tourney_exp2.0008.c
+		remove_trait = murim_combat_trauma_tournament_loss
+		add_learning_skill = 2
+		add_stress = -20
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0009: TOURNAMENT HOST RESPONSIBILITIES ===
+murim_tourney_exp2.0009 = {
+	type = character_event
+	title = murim_tourney_exp2.0009.t
+	desc = murim_tourney_exp2.0009.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_trait = murim_clan_leader
+		prestige >= 5000
+	}
+	
+	# Option A: Host the next Grand Tournament at your sect
+	option = {
+		name = murim_tourney_exp2.0009.a
+		add_gold = -300
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = murim_tournament_host
+			years = 5
+		}
+		set_global_variable = { name = murim_grand_tournament_active value = yes }
+		every_ruler = {
+			limit = { has_trait = murim_martial_artist }
+			trigger_event = { id = murim_tourney_exp2.0001 days = { 30 90 } }
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Co-host with allied sect
+	option = {
+		name = murim_tourney_exp2.0009.b
+		add_gold = -150
+		add_prestige = 1000
+		add_diplomacy_skill = 2
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Decline - too costly
+	option = {
+		name = murim_tourney_exp2.0009.c
+		add_stress = 10
+		ai_chance = { base = 25 }
+	}
+}
+
+# === EVENT 0010: LEGENDARY TOURNAMENT - ONCE IN A CENTURY ===
+murim_tourney_exp2.0010 = {
+	type = character_event
+	title = murim_tourney_exp2.0010.t
+	desc = murim_tourney_exp2.0010.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		OR = {
+			has_trait = murim_rank_absolute
+			has_trait = murim_rank_transcendent
+		}
+	}
+	
+	# Option A: Enter the Legendary Tournament - only absolute masters
+	option = {
+		name = murim_tourney_exp2.0010.a
+		random_list = {
+			30 = {
+				# Win - become Murim Lord
+				add_trait = murim_lord_of_murim
+				add_prestige = 10000
+				add_prowess = 10
+				add_character_modifier = {
+					modifier = murim_lord_aura
+					years = -1
+				}
+			}
+			40 = {
+				# Honorable showing
+				add_prestige = 3000
+				add_prowess = 4
+			}
+			30 = {
+				# Defeated - near death
+				add_health = -5
+				add_prestige = 1000
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Referee the tournament - elder statesman role
+	option = {
+		name = murim_tourney_exp2.0010.b
+		add_prestige = 2000
+		add_diplomacy_skill = 3
+		add_character_modifier = {
+			modifier = murim_legendary_referee
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Use the tournament as cover for a secret meeting
+	option = {
+		name = murim_tourney_exp2.0010.c
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = murim_tournament_cover_meeting
+			years = 2
+		}
+		ai_chance = { base = 20 }
+	}
+}
