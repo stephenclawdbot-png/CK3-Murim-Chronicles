@@ -1,396 +1,349 @@
-# Murim Chronicles - Sect Harmony Tracking Values
-# Hidden harmony_score tracks each sect's internal health.
-# INTEGRATION: Referenced by murim_sect_politics_events.txt (golden age/discord),
-#              murim_clan_membership_effects.txt (membership changes affect harmony),
-#              murim_clan_war_events.txt (low harmony = vulnerable),
-#              murim_training_events.txt (high harmony = training bonus),
-#              murim_game_start_effects.txt (initial harmony seeding)
-# Cross-refs: murim_clan_triggers.txt (rank checks), murim_ranking_events.txt
-# GENDER: Harmony is gender-neutral. All members contribute equally.
+# Murim Chronicles - Sect Harmony Values
+# Tracks internal stability of each sect (0-100 scale)
+# INTEGRATION: Used by murim_clan_triggers.txt (harmony_is_high/low),
+#              murim_sect_politics_events.txt (golden age/discord triggers),
+#              murim_clan_membership_effects.txt (betrayal modifies harmony),
+#              murim_game_start_effects.txt (initial harmony set to 60-80)
+# Cross-refs: murim_seeding_values.txt (power score includes clan prestige),
+#             murim_on_actions.txt (yearly harmony recalculation)
+# RULE: Harmony affects training speed, loyalty, recruitment, vulnerability.
+#       High harmony (>=70) = bonuses. Low harmony (<=30) = penalties.
 
-########################################
-# SECT HARMONY SCORE CALCULATION
-########################################
+# ═══════════════════════════════════════════
+#  HARMONY SCORE CALCULATION (recalculated yearly)
+#  Base: 50 (neutral). Range: 0-100.
+# ═══════════════════════════════════════════
+murim_calculate_sect_harmony_value = {
+	value = 50 # Base neutral
 
-# Base harmony score for a sect leader
-# Calculated from multiple factors, range roughly 0-100
-# Used by: sect politics events to determine golden age vs discord
-murim_sect_harmony_score_value = {
-	value = 50 # Baseline neutral
+	# ── POSITIVE FACTORS ──
 
-	# POSITIVE FACTORS (increase harmony)
-
-	# Stable leadership (leader has been leader for 5+ years)
+	# Stable leadership (leader alive and in position 5+ years)
 	if = {
 		limit = {
-			has_character_modifier = sect_leader
-			NOT = { has_character_modifier = coup_leader_stigma }
-			NOT = { has_character_modifier = forced_promotion_resentment }
-			NOT = { has_character_modifier = iron_fist_leader }
+			any_living_character = {
+				murim_is_sect_leader_trigger = yes
+				has_character_flag = sect_leader_tenure_5yr
+			}
 		}
 		add = 10
 	}
 
-	# Peaceful succession history
+	# Leader has high diplomacy (charismatic leader)
 	if = {
 		limit = {
-			has_character_modifier = mandate_of_the_sect
+			any_living_character = {
+				murim_is_sect_leader_trigger = yes
+				diplomacy >= 15
+			}
+		}
+		add = 5
+	}
+
+	# No betrayals in last 5 years
+	if = {
+		limit = {
+			NOT = { has_global_variable = sect_recent_betrayal }
 		}
 		add = 8
 	}
 
-	# Sect golden age active
+	# Won recent tournament (sect member placed in top 3 grand tournament)
 	if = {
 		limit = {
-			OR = {
-				has_character_modifier = golden_age_training_bonus
-				has_character_modifier = golden_age_recruitment_surge
-				has_character_modifier = renowned_sect_leader
+			has_global_variable = sect_tournament_glory
+		}
+		add = 7
+	}
+
+	# Multiple elders alive (strong advisory council: 3+ elders)
+	if = {
+		limit = {
+			any_living_character = {
+				count >= 3
+				murim_is_sect_elder_trigger = yes
 			}
 		}
-		add = 15
+		add = 5
 	}
 
-	# Reconciliation after discord
+	# Growing membership (more outer disciples than 2 years ago)
 	if = {
 		limit = {
-			has_character_modifier = sect_reconciliation
+			has_global_variable = sect_membership_growing
 		}
 		add = 5
 	}
 
-	# Leader has good personality traits
-	if = {
-		limit = { has_trait = just }
-		add = 5
-	}
-	if = {
-		limit = { has_trait = compassionate }
-		add = 3
-	}
-	if = {
-		limit = { has_trait = patient }
-		add = 3
-	}
-	if = {
-		limit = { has_trait = gregarious }
-		add = 2
-	}
-	if = {
-		limit = { has_trait = humble }
-		add = 2
-	}
-
-	# High diplomacy leader
-	if = {
-		limit = { diplomacy >= 15 }
-		add = 5
-	}
-	if = {
-		limit = { diplomacy >= 20 }
-		add = 5
-	}
-
-	# NEGATIVE FACTORS (decrease harmony)
-
-	# Recent betrayal
+	# Successful missions / sect wars won
 	if = {
 		limit = {
-			OR = {
-				has_character_modifier = sect_vendetta_declared
-				has_character_modifier = traitor_executioner
+			has_global_variable = sect_recent_victory
+		}
+		add = 8
+	}
+
+	# ── NEGATIVE FACTORS ──
+
+	# No leader (succession crisis)
+	if = {
+		limit = {
+			NOT = {
+				any_living_character = {
+					murim_is_sect_leader_trigger = yes
+				}
 			}
-		}
-		add = -10
-	}
-
-	# Coup aftermath
-	if = {
-		limit = {
-			has_character_modifier = coup_leader_stigma
 		}
 		add = -20
 	}
 
-	# Forced promotion resentment
+	# Recent betrayal (within 3 years)
 	if = {
 		limit = {
-			has_character_modifier = forced_promotion_resentment
-		}
-		add = -8
-	}
-
-	# Iron fist leadership
-	if = {
-		limit = {
-			has_character_modifier = iron_fist_leader
+			has_global_variable = sect_recent_betrayal
 		}
 		add = -12
 	}
 
-	# Paranoid purge
+	# Multiple betrayals (2+ in 5 years)
 	if = {
 		limit = {
-			has_character_modifier = paranoid_purge
+			has_global_variable = sect_multiple_betrayals
+		}
+		add = -8 # Stacks with single betrayal
+	}
+
+	# Failed succession (contested or violent)
+	if = {
+		limit = {
+			has_global_variable = sect_contested_succession
 		}
 		add = -15
 	}
 
-	# Sect schism active
+	# Lost sect war
 	if = {
 		limit = {
-			has_character_modifier = sect_schism_participant
+			has_global_variable = sect_recent_defeat
 		}
-		add = -25
+		add = -10
 	}
 
-	# Discord active
+	# Members dying in large numbers (3+ sect members died this year)
 	if = {
 		limit = {
-			has_character_modifier = sect_discord_active
+			has_global_variable = sect_heavy_losses
 		}
-		add = -15
+		add = -12
 	}
 
-	# Leader has bad personality traits
-	if = {
-		limit = { has_trait = sadistic }
-		add = -8
-	}
-	if = {
-		limit = { has_trait = wrathful }
-		add = -5
-	}
-	if = {
-		limit = { has_trait = paranoid }
-		add = -5
-	}
-	if = {
-		limit = { has_trait = arrogant }
-		add = -3
-	}
-	if = {
-		limit = { has_trait = deceitful }
-		add = -3
-	}
-
-	# Low diplomacy leader
-	if = {
-		limit = { diplomacy < 8 }
-		add = -5
-	}
-
-	# Clamp to 0-100 range
-	min = 0
-	max = 100
-}
-
-########################################
-# HARMONY THRESHOLDS
-########################################
-
-# Is harmony high enough for golden age? (>= 75)
-murim_sect_harmony_is_high_value = {
-	value = murim_sect_harmony_score_value
+	# Leader is cruel or tyrannical
 	if = {
 		limit = {
-			murim_sect_harmony_score_value >= 75
-		}
-		value = 1
-	}
-	else = {
-		value = 0
-	}
-}
-
-# Is harmony low enough for discord? (<= 30)
-murim_sect_harmony_is_low_value = {
-	value = murim_sect_harmony_score_value
-	if = {
-		limit = {
-			murim_sect_harmony_score_value <= 30
-		}
-		value = 1
-	}
-	else = {
-		value = 0
-	}
-}
-
-# Is harmony critical? (<= 15) - sect may split
-murim_sect_harmony_is_critical_value = {
-	value = murim_sect_harmony_score_value
-	if = {
-		limit = {
-			murim_sect_harmony_score_value <= 15
-		}
-		value = 1
-	}
-	else = {
-		value = 0
-	}
-}
-
-########################################
-# HARMONY EFFECT VALUES
-########################################
-
-# Training speed modifier based on harmony
-# High harmony = faster training, low harmony = slower
-murim_harmony_training_modifier_value = {
-	value = 0
-	if = {
-		limit = { murim_sect_harmony_score_value >= 75 }
-		add = 20 # +20% training speed during golden age
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value >= 50 }
-		add = 10 # +10% training speed during good times
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value <= 30 }
-		add = -15 # -15% training speed during discord
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value <= 15 }
-		add = -25 # -25% training speed during crisis
-	}
-}
-
-# Betrayal chance modifier based on harmony
-# Low harmony = higher betrayal chance
-murim_harmony_betrayal_chance_value = {
-	value = 3 # Base 3% yearly betrayal chance for AI
-
-	# High harmony reduces betrayal
-	if = {
-		limit = { murim_sect_harmony_score_value >= 75 }
-		add = -2 # Only 1% during golden age
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value >= 50 }
-		add = -1 # 2% during good times
-	}
-
-	# Low harmony increases betrayal
-	if = {
-		limit = { murim_sect_harmony_score_value <= 30 }
-		add = 3 # 6% during discord
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value <= 15 }
-		add = 5 # 8% during crisis
-	}
-
-	# Trait modifiers stack on top
-	if = {
-		limit = { has_trait = ambitious }
-		add = 2
-	}
-	if = {
-		limit = { has_trait = deceitful }
-		add = 2
-	}
-	if = {
-		limit = { has_trait = loyal }
-		add = -3
-	}
-	if = {
-		limit = { has_trait = content }
-		add = -2
-	}
-
-	min = 0
-	max = 15
-}
-
-# Recruitment attractiveness based on harmony
-# High harmony sects attract more recruits
-murim_harmony_recruitment_value = {
-	value = 5 # Base 5% yearly recruitment chance
-
-	if = {
-		limit = { murim_sect_harmony_score_value >= 75 }
-		add = 5 # 10% during golden age
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value >= 50 }
-		add = 2 # 7% during good times
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value <= 30 }
-		add = -3 # 2% during discord
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value <= 15 }
-		add = -4 # 1% during crisis - no one wants to join
-	}
-
-	min = 1
-	max = 15
-}
-
-########################################
-# SECT VULNERABILITY VALUE
-########################################
-
-# How vulnerable is this sect to external attack?
-# Used by murim_clan_war_events.txt to determine if rival sects smell blood
-murim_sect_vulnerability_value = {
-	value = 0
-
-	# Low harmony = vulnerable
-	if = {
-		limit = { murim_sect_harmony_score_value <= 30 }
-		add = 20
-	}
-	if = {
-		limit = { murim_sect_harmony_score_value <= 15 }
-		add = 30
-	}
-
-	# Recent succession crisis
-	if = {
-		limit = {
-			OR = {
-				has_character_modifier = coup_leader_stigma
-				has_character_modifier = sect_schism_participant
-			}
-		}
-		add = 20
-	}
-
-	# Lost members recently
-	if = {
-		limit = {
-			has_character_modifier = paranoid_purge
-		}
-		add = 15
-	}
-
-	# Leader is weak
-	if = {
-		limit = {
-			has_character_modifier = sect_leader
-			prowess < 15
-		}
-		add = 10
-	}
-
-	# No vice leader (gap in chain of command)
-	if = {
-		limit = {
-			has_character_modifier = sect_leader
-			NOT = {
-				any_courtier = {
-					has_character_modifier = sect_vice_leader
+			any_living_character = {
+				murim_is_sect_leader_trigger = yes
+				OR = {
+					has_trait = cruel
+					has_trait = tyrannical
+					has_trait = callous
 				}
 			}
 		}
-		add = 10
+		add = -8
 	}
 
-	# Clamp
+	# Internal faction split (two or more power blocs)
+	if = {
+		limit = {
+			has_global_variable = sect_faction_split
+		}
+		add = -10
+	}
+
+	# Clamp to 0-100
 	min = 0
 	max = 100
+}
+
+# ═══════════════════════════════════════════
+#  HARMONY EFFECT THRESHOLDS
+# ═══════════════════════════════════════════
+
+# Golden Age threshold (triggers murim_sect_politics.0008)
+murim_sect_golden_age_threshold = {
+	value = 70
+}
+
+# Discord threshold (triggers murim_sect_politics.0009)
+murim_sect_discord_threshold = {
+	value = 30
+}
+
+# Critical collapse threshold (sect may split)
+murim_sect_collapse_threshold = {
+	value = 15
+}
+
+# ═══════════════════════════════════════════
+#  HARMONY-BASED MODIFIERS (applied to sect members)
+# ═══════════════════════════════════════════
+
+# Training speed bonus at high harmony
+murim_harmony_training_bonus_value = {
+	value = 0
+	if = {
+		limit = { scope:sect_harmony_score >= 70 }
+		add = 2 # +2 prowess gain rate from training events
+	}
+	if = {
+		limit = { scope:sect_harmony_score >= 85 }
+		add = 1 # Additional +1 at very high harmony (total +3)
+	}
+}
+
+# Loyalty modifier (affects betrayal chance)
+murim_harmony_loyalty_modifier_value = {
+	value = 0
+	# High harmony reduces betrayal chance
+	if = {
+		limit = { scope:sect_harmony_score >= 70 }
+		add = -2 # -2% to betrayal chance (base 3%, so now 1%)
+	}
+	# Low harmony increases betrayal chance
+	if = {
+		limit = { scope:sect_harmony_score <= 30 }
+		add = 3 # +3% to betrayal chance (base 3%, so now 6%)
+	}
+	if = {
+		limit = { scope:sect_harmony_score <= 15 }
+		add = 4 # +4% additional (total +7%, base 3% = 10% betrayal!)
+	}
+}
+
+# Recruitment modifier (affects how easily sect attracts new members)
+murim_harmony_recruitment_modifier_value = {
+	value = 0
+	# Golden age: everyone wants to join
+	if = {
+		limit = { scope:sect_harmony_score >= 80 }
+		add = 30 # +30% recruitment chance
+	}
+	if = {
+		limit = { scope:sect_harmony_score >= 60 }
+		add = 10 # +10% recruitment
+	}
+	# Discord: nobody wants to join a mess
+	if = {
+		limit = { scope:sect_harmony_score <= 30 }
+		add = -20 # -20% recruitment
+	}
+	if = {
+		limit = { scope:sect_harmony_score <= 15 }
+		add = -30 # Additional -30% (total -50% recruitment!)
+	}
+}
+
+# Defection chance (members leaving to join other sects)
+murim_harmony_defection_chance_value = {
+	value = 2 # Base 2% yearly for outer/associate members
+	# Low harmony = more defection
+	if = {
+		limit = { scope:sect_harmony_score <= 30 }
+		add = 5 # 7% defection at low harmony
+	}
+	if = {
+		limit = { scope:sect_harmony_score <= 15 }
+		add = 8 # 15% defection at critical harmony!
+	}
+	# High harmony = almost no defection
+	if = {
+		limit = { scope:sect_harmony_score >= 70 }
+		add = -1 # 1% defection
+	}
+	if = {
+		limit = { scope:sect_harmony_score >= 85 }
+		add = -1 # 0% defection at very high harmony (clamped)
+	}
+	min = 0
+}
+
+# Vulnerability to external attack (rival sects or players)
+murim_harmony_vulnerability_value = {
+	value = 0
+	# Low harmony = vulnerable to sect wars
+	if = {
+		limit = { scope:sect_harmony_score <= 30 }
+		add = 20 # +20% chance rival sects launch attack
+	}
+	if = {
+		limit = { scope:sect_harmony_score <= 15 }
+		add = 30 # +30% additional (total +50%)
+	}
+	# High harmony = deterrent
+	if = {
+		limit = { scope:sect_harmony_score >= 70 }
+		add = -15 # -15% attack chance (rivals know better)
+	}
+}
+
+# ═══════════════════════════════════════════
+#  SECT-SPECIFIC HARMONY INITIALIZERS
+#  (Used by murim_game_start_effects.txt)
+# ═══════════════════════════════════════════
+
+murim_initial_harmony_mount_hua = {
+	value = 72 # Righteous, stable, strong tradition
+}
+
+murim_initial_harmony_tang_clan = {
+	value = 78 # Blood unity, family loyalty, very stable
+}
+
+murim_initial_harmony_heavenly_demon = {
+	value = 55 # Power-based hierarchy, always some internal tension
+}
+
+murim_initial_harmony_wudang = {
+	value = 75 # Philosophical, calm, well-ordered
+}
+
+murim_initial_harmony_shaolin = {
+	value = 80 # Buddhist discipline, highest starting harmony
+}
+
+murim_initial_harmony_beggar_sect = {
+	value = 65 # Loose structure, loyal but chaotic
+}
+
+# ═══════════════════════════════════════════
+#  HARMONY RECOVERY / DECAY RATES (yearly)
+# ═══════════════════════════════════════════
+
+murim_harmony_yearly_drift_value = {
+	value = 0
+	# Natural drift toward 50 (regression to mean)
+	if = {
+		limit = { scope:sect_harmony_score > 50 }
+		add = -2 # Slowly decays without active maintenance
+	}
+	if = {
+		limit = { scope:sect_harmony_score < 50 }
+		add = 3 # Recovers slightly faster than it decays (hope)
+	}
+	# Shaolin special: Buddhist discipline resists decay
+	if = {
+		limit = {
+			scope:sect_type = flag:shaolin
+			scope:sect_harmony_score > 50
+		}
+		add = 1 # Partially offsets decay
+	}
+	# Heavenly Demon special: power struggles accelerate decay
+	if = {
+		limit = {
+			scope:sect_type = flag:heavenly_demon
+			scope:sect_harmony_score > 50
+		}
+		add = -1 # Additional decay for demon sect
+	}
 }
