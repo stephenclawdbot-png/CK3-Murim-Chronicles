@@ -1,0 +1,516 @@
+# Murim Chronicles - Combat Trauma Character Modifiers
+# Timed modifiers applied after duels and combat events
+# Severity scales: sparring (minor) < honor duel (moderate) < death match (severe) < ambush (unpredictable)
+# Winners roll at 50% of loser injury chance - winners CAN get hurt
+# Repeated fights within 30 days STACK injury risk via recent_combat tiers
+# Load-safe: all modifiers have graceful degradation
+
+######################################
+# RECENT COMBAT FATIGUE TIERS
+# Applied after ANY duel/combat. Stacks increase injury chance in next fight.
+# Tier 1: fought within 30 days. Tier 2: fought twice in 30 days. Tier 3: three+ fights in 30 days.
+######################################
+
+murim_recent_combat_tier_1 = {
+	icon = icon_martial
+	prowess = -1
+	health = -0.1
+	stress_gain_mult = 0.05
+
+	# 30 day duration - removed by on_action timer or healing events
+	# Next fight while this is active upgrades to tier 2
+	flag = murim_combat_fatigue_active
+	flag = murim_fatigue_tier_1
+}
+
+murim_recent_combat_tier_2 = {
+	icon = icon_martial
+	prowess = -2
+	health = -0.2
+	stress_gain_mult = 0.10
+	martial = -1
+
+	# Fighting while at tier 2 upgrades to tier 3
+	flag = murim_combat_fatigue_active
+	flag = murim_fatigue_tier_2
+}
+
+murim_recent_combat_tier_3 = {
+	icon = icon_martial
+	prowess = -4
+	health = -0.4
+	stress_gain_mult = 0.20
+	martial = -2
+	learning = -1
+
+	# Maximum fatigue. Any fight at this tier has DOUBLE injury chance.
+	# AI characters at tier 3 should refuse duels (ai_boldness penalty in triggers)
+	flag = murim_combat_fatigue_active
+	flag = murim_fatigue_tier_3
+	flag = murim_fatigue_critical
+}
+
+######################################
+# DUEL AFTERMATH MODIFIERS (BY FIGHT TYPE)
+# Applied to BOTH winner and loser after combat resolution
+# Duration and severity scale with fight type
+######################################
+
+# --- SPARRING AFTERMATH (lightest) ---
+
+murim_sparring_winner = {
+	icon = icon_martial
+	prowess = 1
+	monthly_prestige = 0.1
+	stress_loss_mult = 0.05
+
+	# 15 day duration. Minor confidence boost.
+	flag = murim_duel_aftermath
+	flag = murim_sparring_result
+}
+
+murim_sparring_loser = {
+	icon = icon_martial
+	prowess = 0
+	stress_gain_mult = 0.03
+	monthly_prestige = -0.05
+
+	# 15 day duration. Bruised ego, nothing serious.
+	flag = murim_duel_aftermath
+	flag = murim_sparring_result
+}
+
+# --- HONOR DUEL AFTERMATH (moderate) ---
+
+murim_honor_duel_victor = {
+	icon = icon_martial
+	prowess = 2
+	monthly_prestige = 0.3
+	martial = 1
+	diplomacy = 1
+	stress_loss_mult = 0.10
+	vassal_opinion = 5
+
+	# 60 day duration. Respected warrior.
+	flag = murim_duel_aftermath
+	flag = murim_honor_duel_result
+}
+
+murim_honor_duel_defeated = {
+	icon = icon_martial
+	prowess = -2
+	monthly_prestige = -0.3
+	stress_gain_mult = 0.15
+	vassal_opinion = -5
+	attraction_opinion = -5
+
+	# 90 day duration. Shame lingers longer than glory.
+	flag = murim_duel_aftermath
+	flag = murim_honor_duel_result
+	flag = murim_defeat_shame
+}
+
+# --- DEATH MATCH AFTERMATH (severe) ---
+
+murim_death_match_survivor = {
+	icon = icon_martial
+	prowess = 3
+	monthly_prestige = 0.5
+	martial = 2
+	stress_gain_mult = 0.10
+	dread_baseline_add = 10
+	vassal_opinion = -5
+	courtier_opinion = -10
+	attraction_opinion = -5
+
+	# 180 day duration. Feared and haunted.
+	flag = murim_duel_aftermath
+	flag = murim_death_match_result
+	flag = murim_killed_in_duel
+}
+
+murim_death_match_near_death = {
+	icon = icon_martial
+	prowess = -4
+	health = -0.5
+	monthly_prestige = -0.5
+	stress_gain_mult = 0.30
+	martial = -2
+	vassal_opinion = -10
+
+	# 365 day duration. Nearly died. Long recovery.
+	# High chance of gaining craven or broken_spirit from this.
+	flag = murim_duel_aftermath
+	flag = murim_death_match_result
+	flag = murim_near_death_experience
+}
+
+# --- AMBUSH AFTERMATH (unpredictable) ---
+
+murim_ambush_success = {
+	icon = icon_intrigue
+	intrigue = 3
+	prowess = 1
+	monthly_prestige = 0.2
+	dread_baseline_add = 15
+	diplomacy = -2
+	vassal_opinion = -15
+	same_faith_opinion = -10
+
+	# 120 day duration. Effective but dishonorable.
+	flag = murim_duel_aftermath
+	flag = murim_ambush_result
+	flag = murim_dishonorable_combat
+}
+
+murim_ambush_victim_survived = {
+	icon = icon_martial
+	prowess = -2
+	health = -0.3
+	stress_gain_mult = 0.25
+	monthly_prestige = -0.2
+	intrigue = 1
+
+	# 180 day duration. Survived but traumatized.
+	# High chance of gaining paranoid trait.
+	flag = murim_duel_aftermath
+	flag = murim_ambush_result
+	flag = murim_ambush_trauma
+}
+
+murim_ambush_failed_exposed = {
+	icon = icon_intrigue
+	intrigue = -3
+	monthly_prestige = -1.0
+	diplomacy = -4
+	vassal_opinion = -25
+	courtier_opinion = -20
+	dread_baseline_add = -10
+
+	# 365 day duration. Caught trying to ambush. Reputation destroyed.
+	flag = murim_duel_aftermath
+	flag = murim_ambush_result
+	flag = murim_exposed_coward
+}
+
+######################################
+# INJURY SEVERITY MODIFIERS
+# Applied on top of vanilla wound traits to represent murim-specific damage
+# Stacks with wounded/severely_wounded/brutally_wounded
+######################################
+
+murim_meridian_damage_minor = {
+	icon = icon_health
+	health = -0.15
+	prowess = -1
+	learning = -1
+	stress_gain_mult = 0.05
+
+	# 90 day recovery. Qi flow disrupted but recoverable.
+	flag = murim_injury
+	flag = murim_meridian_damage
+	flag = murim_recoverable
+}
+
+murim_meridian_damage_severe = {
+	icon = icon_health
+	health = -0.35
+	prowess = -3
+	learning = -3
+	martial = -1
+	stress_gain_mult = 0.15
+	monthly_piety = -0.3
+
+	# 365 day recovery. Major qi damage. Risk of permanent shattered_meridians.
+	# If not healed within duration, 30% chance of becoming shattered_meridians trait.
+	flag = murim_injury
+	flag = murim_meridian_damage
+	flag = murim_risk_permanent
+}
+
+murim_internal_bleeding = {
+	icon = icon_health
+	health = -0.5
+	prowess = -4
+	martial = -2
+	stress_gain_mult = 0.20
+
+	# 60 day duration. Dangerous. Needs immediate rest.
+	# Fighting with this modifier = 25% chance of death.
+	flag = murim_injury
+	flag = murim_critical_condition
+	flag = murim_no_combat_allowed
+}
+
+murim_shattered_bones = {
+	icon = icon_health
+	health = -0.3
+	prowess = -5
+	martial = -3
+	monthly_prestige = -0.2
+
+	# 180 day duration. Broken bones from powerful strike.
+	# May leave permanent phantom_pain trait after healing.
+	flag = murim_injury
+	flag = murim_bone_damage
+	flag = murim_no_combat_allowed
+}
+
+murim_burned_by_qi = {
+	icon = icon_health
+	health = -0.25
+	prowess = -2
+	diplomacy = -2
+	attraction_opinion = -15
+
+	# 120 day duration. Fire/lightning technique burns.
+	# May leave permanent disfigured trait.
+	flag = murim_injury
+	flag = murim_elemental_damage
+}
+
+murim_poisoned_in_combat = {
+	icon = icon_health
+	health = -0.6
+	prowess = -3
+	martial = -2
+	intrigue = -1
+	learning = -2
+	stress_gain_mult = 0.15
+
+	# 90 day duration. Poison from combat technique.
+	# Without antidote: 15% death chance. With antidote: full recovery.
+	flag = murim_injury
+	flag = murim_poison_condition
+	flag = murim_needs_treatment
+}
+
+######################################
+# HEALING AND RECOVERY MODIFIERS
+######################################
+
+murim_recovering_from_duel = {
+	icon = icon_health
+	health = 0.15
+	prowess = -1
+	stress_loss_mult = 0.10
+	monthly_piety = 0.2
+
+	# Applied when character rests after combat.
+	# Reduces duration of injury modifiers by 25%.
+	# Cannot fight while recovering.
+	flag = murim_healing
+	flag = murim_no_combat_allowed
+}
+
+murim_qi_healing_treatment = {
+	icon = icon_health
+	health = 0.3
+	learning = 1
+	stress_loss_mult = 0.15
+	monthly_piety = 0.3
+
+	# Applied when a healer character treats injuries with qi.
+	# Reduces injury duration by 50%.
+	# Reduces chance of permanent trauma traits by half.
+	flag = murim_healing
+	flag = murim_expert_treatment
+}
+
+murim_medicinal_pill_treatment = {
+	icon = icon_health
+	health = 0.5
+	prowess = 1
+	stress_loss_mult = 0.20
+
+	# Applied when using alchemical pills for healing.
+	# Most effective healing method but rare and expensive.
+	# 90% chance of preventing permanent injury.
+	flag = murim_healing
+	flag = murim_pill_treatment
+}
+
+murim_incomplete_recovery = {
+	icon = icon_health
+	health = -0.1
+	prowess = -1
+
+	# Permanent modifier for injuries that never fully healed.
+	# Old wound that persists. May develop into phantom_pain trait.
+	flag = murim_chronic_condition
+	flag = murim_partial_heal
+}
+
+######################################
+# TOURNAMENT SPECIFIC MODIFIERS
+######################################
+
+murim_tournament_champion = {
+	icon = icon_martial
+	prowess = 3
+	monthly_prestige = 1.0
+	martial = 2
+	diplomacy = 2
+	vassal_opinion = 10
+	courtier_opinion = 15
+	attraction_opinion = 15
+	dread_baseline_add = 5
+
+	# 365 day duration. Fame from winning a major tournament.
+	# Attracts: sect recruitment, marriage proposals, rival challenges.
+	flag = murim_tournament_result
+	flag = murim_champion
+}
+
+murim_tournament_runner_up = {
+	icon = icon_martial
+	prowess = 1
+	monthly_prestige = 0.3
+	martial = 1
+	courtier_opinion = 5
+	attraction_opinion = 5
+
+	# 180 day duration. Respectable showing.
+	flag = murim_tournament_result
+}
+
+murim_tournament_humiliation = {
+	icon = icon_martial
+	prowess = -2
+	monthly_prestige = -0.5
+	stress_gain_mult = 0.20
+	vassal_opinion = -5
+	courtier_opinion = -10
+	attraction_opinion = -10
+
+	# 180 day duration. Knocked out in first round or humiliated publicly.
+	# High chance of gaining shy or craven trait.
+	flag = murim_tournament_result
+	flag = murim_public_shame
+}
+
+######################################
+# MENTAL TRAUMA MODIFIERS (precursors to permanent traits)
+######################################
+
+murim_haunted_by_kill = {
+	icon = icon_stress
+	stress_gain_mult = 0.20
+	monthly_piety = 0.2
+	diplomacy = -1
+	intrigue = 1
+
+	# 180 day duration. Killed someone in a duel.
+	# 15% chance of developing into depressed trait.
+	# 10% chance of developing into battle_madness if 3+ kills.
+	flag = murim_mental_trauma
+	flag = murim_kill_guilt
+}
+
+murim_fear_of_combat = {
+	icon = icon_stress
+	prowess = -3
+	stress_gain_mult = 0.25
+	martial = -2
+	monthly_prestige = -0.2
+
+	# 365 day duration. Precursor to craven/broken_spirit.
+	# If not resolved (therapy, successful fight, mentorship), 25% becomes permanent craven.
+	# If resolved through successful duel: removed and gain brave trait instead.
+	flag = murim_mental_trauma
+	flag = murim_fear_precursor
+}
+
+murim_duel_adrenaline = {
+	icon = icon_martial
+	prowess = 2
+	health = -0.1
+	stress_loss_mult = 0.10
+
+	# 7 day duration. Post-fight high.
+	# If character fights again during this window, enhanced but injury risk doubled.
+	flag = murim_mental_state
+	flag = murim_adrenaline_rush
+}
+
+murim_witnessed_brutal_death = {
+	icon = icon_stress
+	stress_gain_mult = 0.30
+	diplomacy = -2
+	martial = -1
+	monthly_piety = 0.3
+
+	# 120 day duration. Watched someone die horribly in a duel.
+	# 20% chance of craven. 10% chance of paranoid. 5% chance of compassionate.
+	flag = murim_mental_trauma
+	flag = murim_witness_trauma
+}
+
+######################################
+# CROSS-SYSTEM INTERACTION MODIFIERS
+######################################
+
+murim_breakthrough_inspiration_from_duel = {
+	icon = icon_martial
+	learning = 2
+	monthly_piety = 0.5
+	prowess = 1
+
+	# 60 day duration. Insight gained from life-or-death combat.
+	# Increases breakthrough success chance by 15%.
+	# Feeds into cultivation event chain.
+	flag = murim_cultivation_bonus
+	flag = murim_duel_insight
+}
+
+murim_technique_revelation = {
+	icon = icon_martial
+	prowess = 2
+	martial = 1
+	learning = 1
+
+	# 30 day duration. Witnessed or experienced a new technique in combat.
+	# Can be converted into technique learning via scripted_effect.
+	flag = murim_technique_learning
+	flag = murim_duel_observation
+}
+
+murim_sect_crisis_from_duel_death = {
+	icon = icon_diplomacy
+	vassal_opinion = -15
+	courtier_opinion = -10
+	monthly_prestige = -0.5
+
+	# 180 day duration. A sect member was killed in a duel.
+	# Triggers sect revenge event chain.
+	# Sect may declare war or demand compensation.
+	flag = murim_sect_political
+	flag = murim_death_consequence
+}
+
+murim_wanted_by_sect = {
+	icon = icon_intrigue
+	dread_baseline_add = 5
+	monthly_prestige = -0.3
+	intrigue = -2
+
+	# 365 day duration. A sect is hunting you for killing their member.
+	# Random ambush events. Difficulty entering sect territories.
+	# Can be resolved by: paying compensation, defeating the sect champion, hiding.
+	flag = murim_political_consequence
+	flag = murim_hunted
+}
+
+murim_imperial_investigation_target = {
+	icon = icon_intrigue
+	monthly_prestige = -0.5
+	diplomacy = -3
+	intrigue = -2
+	vassal_opinion = -10
+
+	# 365 day duration. Imperial court investigating your combat activities.
+	# If court cultivator was killed, this is applied.
+	# Can lead to: arrest, exile, forced service, or cleared if evidence destroyed.
+	flag = murim_political_consequence
+	flag = murim_imperial_trouble
+}
