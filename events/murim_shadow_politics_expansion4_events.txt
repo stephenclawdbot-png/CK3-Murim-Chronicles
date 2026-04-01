@@ -1,0 +1,690 @@
+namespace = murim_shadow_pol_exp4
+
+# Shadow Politics Expansion 4 - Heavenly Demon Puppet Emperor Endgame
+# 10 events with full interaction trees
+
+### EVENT 1: Installing the Puppet Emperor ###
+murim_shadow_pol_exp4.0001 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0001.t
+	desc = murim_shadow_pol_exp4.0001.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		intrigue >= 20
+		NOT = { has_character_flag = puppet_emperor_installed }
+		any_ruler = {
+			is_ruler = yes
+			has_primary_title = yes
+			NOT = { has_trait = heavenly_demon_heir }
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 5 has_trait = schemer }
+		modifier = { add = 3 intrigue >= 25 }
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				is_ruler = yes
+				has_primary_title = yes
+				NOT = { has_trait = heavenly_demon_heir }
+				martial <= 14
+			}
+			save_scope_as = target_emperor
+		}
+	}
+	
+	# Option A: Blackmail and install puppet
+	option = {
+		name = murim_shadow_pol_exp4.0001.a
+		add_character_flag = { flag = puppet_emperor_installed days = -1 }
+		add_prestige = 1000
+		add_intrigue_skill = 3
+		add_dread = 40
+		reverse_add_opinion = {
+			target = scope:target_emperor
+			modifier = puppet_master_opinion
+			opinion = -60
+		}
+		hidden_effect = {
+			scope:target_emperor = {
+				add_character_flag = { flag = is_puppet_emperor days = -1 }
+				set_variable = { name = puppet_master value = root }
+			}
+			trigger_event = { id = murim_shadow_pol_exp4.0002 days = { 30 90 } }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Assassinate and replace with your own candidate
+	option = {
+		name = murim_shadow_pol_exp4.0001.b
+		trigger = { intrigue >= 22 }
+		hidden_effect = {
+			random_list = {
+				60 = {
+					modifier = { add = 20 intrigue >= 25 }
+					scope:target_emperor = {
+						death = { death_reason = death_murder_unknown killer = root }
+					}
+					root = {
+						add_prestige = 1500
+						add_character_flag = { flag = puppet_emperor_installed days = -1 }
+						add_dread = 30
+					}
+				}
+				40 = {
+					root = {
+						add_prestige = -500
+						add_character_flag = { flag = assassination_attempt_exposed days = 365 }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Marry into the imperial family
+	option = {
+		name = murim_shadow_pol_exp4.0001.c
+		trigger = { diplomacy >= 16 is_married = no }
+		add_character_flag = { flag = puppet_emperor_installed days = -1 }
+		add_character_flag = { flag = imperial_marriage days = -1 }
+		add_prestige = 800
+		add_diplomacy_skill = 2
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Rule from the shadows without a puppet
+	option = {
+		name = murim_shadow_pol_exp4.0001.d
+		add_character_flag = { flag = shadow_ruler days = -1 }
+		add_intrigue_skill = 4
+		add_prestige = 600
+		add_dread = 20
+		ai_chance = { base = 20 }
+	}
+}
+
+### EVENT 2: The Puppet Resists ###
+murim_shadow_pol_exp4.0002 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0002.t
+	desc = murim_shadow_pol_exp4.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = puppet_emperor_installed
+		has_trait = heavenly_demon_heir
+	}
+	
+	# Option A: Crush the rebellion brutally
+	option = {
+		name = murim_shadow_pol_exp4.0002.a
+		add_dread = 50
+		add_tyranny = 20
+		add_prestige = 300
+		scope:target_emperor = {
+			increase_wounds_effect = { reason = torture }
+			add_stress = 50
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Demonstrate your power subtly
+	option = {
+		name = murim_shadow_pol_exp4.0002.b
+		add_intrigue_skill = 2
+		add_prestige = 500
+		add_dread = 20
+		hidden_effect = {
+			scope:target_emperor = {
+				random_close_family_member = {
+					limit = { is_alive = yes }
+					increase_wounds_effect = { reason = mysterious_illness }
+				}
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Replace with a more compliant puppet
+	option = {
+		name = murim_shadow_pol_exp4.0002.c
+		add_prestige = 200
+		scope:target_emperor = {
+			death = { death_reason = death_murder_unknown killer = root }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_pol_exp4.0001 days = { 30 60 } }
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Grant the puppet some real power as a compromise
+	option = {
+		name = murim_shadow_pol_exp4.0002.d
+		trigger = { diplomacy >= 16 }
+		add_prestige = 400
+		reverse_add_opinion = {
+			target = scope:target_emperor
+			modifier = generous_master_opinion
+			opinion = 30
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+### EVENT 3: Heavenly Demon's Court of Shadows ###
+murim_shadow_pol_exp4.0003 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0003.t
+	desc = murim_shadow_pol_exp4.0003.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		has_character_flag = puppet_emperor_installed
+		NOT = { has_character_flag = shadow_court_established }
+	}
+	
+	# Option A: Build a shadow cabinet of spymasters
+	option = {
+		name = murim_shadow_pol_exp4.0003.a
+		add_character_flag = { flag = shadow_court_established days = -1 }
+		add_intrigue_skill = 4
+		add_prestige = 800
+		add_gold = -200
+		hidden_effect = {
+			set_variable = { name = shadow_agents value = 5 }
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Create a network of informants in every clan
+	option = {
+		name = murim_shadow_pol_exp4.0003.b
+		add_character_flag = { flag = shadow_court_established days = -1 }
+		add_intrigue_skill = 3
+		add_prestige = 600
+		add_gold = -300
+		hidden_effect = {
+			set_variable = { name = informant_network value = 9 }
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Establish control through commerce
+	option = {
+		name = murim_shadow_pol_exp4.0003.c
+		add_character_flag = { flag = shadow_court_established days = -1 }
+		add_stewardship_skill = 3
+		add_gold = 500
+		add_prestige = 400
+		ai_chance = { base = 15 }
+	}
+}
+
+### EVENT 4: Orthodox Discovery of the Puppet ###
+murim_shadow_pol_exp4.0004 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0004.t
+	desc = murim_shadow_pol_exp4.0004.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		has_character_flag = puppet_emperor_installed
+		NOT = { has_character_flag = puppet_discovered }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 any_ruler = { has_trait = shaolin_disciple intrigue >= 16 } }
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_disciple
+					has_trait = wudang_disciple
+				}
+				intrigue >= 14
+			}
+			save_scope_as = orthodox_investigator
+		}
+	}
+	
+	# Option A: Eliminate the investigator
+	option = {
+		name = murim_shadow_pol_exp4.0004.a
+		add_character_flag = { flag = puppet_discovered days = -1 }
+		hidden_effect = {
+			random_list = {
+				65 = {
+					modifier = { add = 20 intrigue >= 25 }
+					scope:orthodox_investigator = {
+						death = { death_reason = death_murder_unknown killer = root }
+					}
+					root = { add_prestige = 500 add_dread = 20 }
+				}
+				35 = {
+					root = {
+						add_prestige = -800
+						add_character_flag = { flag = exposed_puppet_master days = -1 }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Discredit the investigator
+	option = {
+		name = murim_shadow_pol_exp4.0004.b
+		trigger = { intrigue >= 20 }
+		add_character_flag = { flag = puppet_discovered days = -1 }
+		add_prestige = 300
+		reverse_add_opinion = {
+			target = scope:orthodox_investigator
+			modifier = discredited_opinion
+			opinion = -50
+		}
+		scope:orthodox_investigator = { add_prestige = -500 }
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Turn the investigator into a double agent
+	option = {
+		name = murim_shadow_pol_exp4.0004.c
+		trigger = { diplomacy >= 18 gold >= 200 }
+		add_character_flag = { flag = puppet_discovered days = -1 }
+		add_gold = -200
+		reverse_add_opinion = {
+			target = scope:orthodox_investigator
+			modifier = bribed_agent_opinion
+			opinion = 20
+		}
+		add_intrigue_skill = 2
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Reveal yourself and challenge openly
+	option = {
+		name = murim_shadow_pol_exp4.0004.d
+		trigger = { martial >= 22 prowess >= 20 }
+		add_character_flag = { flag = puppet_discovered days = -1 }
+		remove_character_flag = puppet_emperor_installed
+		add_character_flag = { flag = open_demon_rule days = -1 }
+		add_prestige = 1500
+		add_dread = 80
+		add_tyranny = 30
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 5: Imperial Decree Under Shadow Control ###
+murim_shadow_pol_exp4.0005 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0005.t
+	desc = murim_shadow_pol_exp4.0005.desc
+	theme = stewardship
+	
+	trigger = {
+		has_character_flag = puppet_emperor_installed
+		has_trait = heavenly_demon_heir
+		NOT = { has_character_flag = imperial_decree_issued }
+	}
+	
+	# Option A: Ban orthodox martial arts
+	option = {
+		name = murim_shadow_pol_exp4.0005.a
+		add_character_flag = { flag = imperial_decree_issued days = -1 }
+		add_prestige = 800
+		add_dread = 40
+		hidden_effect = {
+			every_ruler = {
+				limit = {
+					OR = {
+						has_trait = mount_hua_disciple
+						has_trait = shaolin_disciple
+						has_trait = wudang_disciple
+					}
+				}
+				add_opinion = { target = root modifier = arts_banned_opinion opinion = -60 }
+				add_prestige = -200
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Tax all martial sects
+	option = {
+		name = murim_shadow_pol_exp4.0005.b
+		add_character_flag = { flag = imperial_decree_issued days = -1 }
+		add_gold = 800
+		add_prestige = 400
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Establish the Heavenly Demon as official state protector
+	option = {
+		name = murim_shadow_pol_exp4.0005.c
+		add_character_flag = { flag = imperial_decree_issued days = -1 }
+		add_prestige = 1500
+		add_piety = -300
+		add_trait = state_protector_demon
+		ai_chance = { base = 25 }
+	}
+}
+
+### EVENT 6: Puppet Emperor's Secret Resistance ###
+murim_shadow_pol_exp4.0006 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0006.t
+	desc = murim_shadow_pol_exp4.0006.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = puppet_emperor_installed
+		has_trait = heavenly_demon_heir
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 3 NOT = { has_character_flag = shadow_court_established } } }
+	
+	# Option A: Root out the resistance network
+	option = {
+		name = murim_shadow_pol_exp4.0006.a
+		add_intrigue_skill = 2
+		add_dread = 30
+		add_prestige = 400
+		hidden_effect = {
+			random_list = {
+				70 = { root = { add_prestige = 300 } }
+				30 = { root = { add_stress = 20 } }
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Let the resistance think they're winning
+	option = {
+		name = murim_shadow_pol_exp4.0006.b
+		trigger = { intrigue >= 22 }
+		add_intrigue_skill = 3
+		add_prestige = 600
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Public execution of resistance leaders
+	option = {
+		name = murim_shadow_pol_exp4.0006.c
+		add_dread = 60
+		add_tyranny = 30
+		add_prestige = 200
+		stress_impact = { compassionate = major_stress_impact_gain }
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Address their grievances
+	option = {
+		name = murim_shadow_pol_exp4.0006.d
+		trigger = { has_trait = just }
+		add_prestige = 300
+		add_piety = 200
+		add_stress = -20
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 7: Shadow Empire - Continental Control ###
+murim_shadow_pol_exp4.0007 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0007.t
+	desc = murim_shadow_pol_exp4.0007.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		has_character_flag = puppet_emperor_installed
+		has_character_flag = shadow_court_established
+		NOT = { has_character_flag = continental_control }
+	}
+	
+	# Option A: Extend shadow control to neighboring kingdoms
+	option = {
+		name = murim_shadow_pol_exp4.0007.a
+		add_character_flag = { flag = continental_control days = -1 }
+		add_prestige = 2000
+		add_intrigue_skill = 3
+		add_gold = -500
+		add_dread = 30
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Focus on consolidating internal power
+	option = {
+		name = murim_shadow_pol_exp4.0007.b
+		add_character_flag = { flag = continental_control days = -1 }
+		add_prestige = 1000
+		add_stewardship_skill = 3
+		add_gold = 300
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Build a martial arts academy to train loyal agents
+	option = {
+		name = murim_shadow_pol_exp4.0007.c
+		add_character_flag = { flag = continental_control days = -1 }
+		add_prestige = 800
+		add_martial_skill = 2
+		add_learning_skill = 2
+		ai_chance = { base = 25 }
+	}
+}
+
+### EVENT 8: The Demon Emperor Revelation ###
+murim_shadow_pol_exp4.0008 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0008.t
+	desc = murim_shadow_pol_exp4.0008.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		OR = {
+			has_character_flag = open_demon_rule
+			AND = {
+				has_character_flag = puppet_emperor_installed
+				has_character_flag = continental_control
+			}
+		}
+		NOT = { has_character_flag = demon_emperor_revealed }
+	}
+	
+	# Option A: Declare yourself Demon Emperor openly
+	option = {
+		name = murim_shadow_pol_exp4.0008.a
+		add_character_flag = { flag = demon_emperor_revealed days = -1 }
+		add_trait = demon_emperor
+		add_prestige = 5000
+		add_dread = 100
+		add_tyranny = 50
+		add_martial_skill = 5
+		add_prowess = 10
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Stay in the shadows - a puppet emperor is more useful
+	option = {
+		name = murim_shadow_pol_exp4.0008.b
+		add_character_flag = { flag = demon_emperor_revealed days = -1 }
+		add_prestige = 2000
+		add_intrigue_skill = 5
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Abdicate shadow power - the burden is too great
+	option = {
+		name = murim_shadow_pol_exp4.0008.c
+		trigger = { stress >= 80 }
+		add_character_flag = { flag = demon_emperor_revealed days = -1 }
+		remove_character_flag = puppet_emperor_installed
+		add_stress = -60
+		add_piety = 500
+		add_trait = reformed_demon
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Merge with the imperial throne directly
+	option = {
+		name = murim_shadow_pol_exp4.0008.d
+		add_character_flag = { flag = demon_emperor_revealed days = -1 }
+		scope:target_emperor = {
+			death = { death_reason = death_murder_known killer = root }
+		}
+		add_trait = demon_emperor
+		add_prestige = 4000
+		add_dread = 80
+		add_tyranny = 40
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 9: Orthodox Coalition Against Demon Emperor ###
+murim_shadow_pol_exp4.0009 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0009.t
+	desc = murim_shadow_pol_exp4.0009.desc
+	theme = war
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		has_character_flag = demon_emperor_revealed
+		NOT = { has_character_flag = orthodox_coalition_faced }
+	}
+	
+	weight_multiplier = { base = 5 }
+	
+	# Option A: Crush the coalition with overwhelming force
+	option = {
+		name = murim_shadow_pol_exp4.0009.a
+		add_character_flag = { flag = orthodox_coalition_faced days = -1 }
+		duel = {
+			skill = martial
+			target = scope:coalition_leader
+			55 = {
+				desc = murim_shadow_pol_exp4.0009.a.success
+				compare_modifier = { value = scope:duel_value multiplier = 4.0 min = -49 }
+				add_prestige = 3000
+				add_dread = 50
+				add_trait = coalition_crusher
+			}
+			45 = {
+				desc = murim_shadow_pol_exp4.0009.a.failure
+				compare_modifier = { value = scope:duel_value multiplier = -4.0 min = -49 }
+				increase_wounds_effect = { reason = battle }
+				add_prestige = -1000
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Divide and conquer - turn coalition members against each other
+	option = {
+		name = murim_shadow_pol_exp4.0009.b
+		trigger = { intrigue >= 22 }
+		add_character_flag = { flag = orthodox_coalition_faced days = -1 }
+		add_prestige = 2000
+		add_intrigue_skill = 3
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Offer terms - share power with orthodox leaders
+	option = {
+		name = murim_shadow_pol_exp4.0009.c
+		trigger = { diplomacy >= 18 }
+		add_character_flag = { flag = orthodox_coalition_faced days = -1 }
+		add_prestige = 1000
+		add_diplomacy_skill = 3
+		ai_chance = { base = 20 }
+	}
+}
+
+### EVENT 10: Heavenly Demon's Legacy ###
+murim_shadow_pol_exp4.0010 = {
+	type = character_event
+	title = murim_shadow_pol_exp4.0010.t
+	desc = murim_shadow_pol_exp4.0010.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = heavenly_demon_heir
+		has_character_flag = demon_emperor_revealed
+		has_character_flag = orthodox_coalition_faced
+		age >= 50
+		NOT = { has_character_flag = demon_legacy_decided }
+	}
+	
+	# Option A: Establish an eternal demon dynasty
+	option = {
+		name = murim_shadow_pol_exp4.0010.a
+		add_character_flag = { flag = demon_legacy_decided days = -1 }
+		add_prestige = 5000
+		add_trait = eternal_demon_patriarch
+		random_child = {
+			limit = { is_alive = yes }
+			add_trait = heavenly_demon_heir
+			add_martial_skill = 5
+			add_prowess = 8
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Dissolve the demon throne - return to balance
+	option = {
+		name = murim_shadow_pol_exp4.0010.b
+		add_character_flag = { flag = demon_legacy_decided days = -1 }
+		remove_trait = demon_emperor
+		add_trait = reformed_demon
+		add_prestige = 2000
+		add_piety = 2000
+		add_stress = -50
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Transcend into a martial god
+	option = {
+		name = murim_shadow_pol_exp4.0010.c
+		trigger = { prowess >= 25 martial >= 25 }
+		add_character_flag = { flag = demon_legacy_decided days = -1 }
+		add_trait = transcendent_demon
+		add_prowess = 20
+		add_martial_skill = 5
+		add_health = 3
+		add_prestige = 8000
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Pass everything to the next generation and vanish
+	option = {
+		name = murim_shadow_pol_exp4.0010.d
+		add_character_flag = { flag = demon_legacy_decided days = -1 }
+		add_prestige = 3000
+		random_child = {
+			limit = { is_alive = yes }
+			add_trait = heavenly_demon_heir
+			add_prestige = 2000
+			add_martial_skill = 5
+		}
+		add_trait = vanished_master
+		ai_chance = { base = 10 }
+	}
+}
