@@ -1,0 +1,752 @@
+namespace = murim_sect_alliance
+
+# Sect Alliance Ceremony Events - Grand oaths, betrayals, blood pacts, alliance tournaments
+# Cross-references: murim_politics, murim_sect, murim_duel, murim_ranking, murim_jianghu, murim_fate
+
+######################################
+# murim_sect_alliance.0001 - Grand Alliance Formation Ceremony
+# Multiple sects gather to form a martial alliance against a common threat
+######################################
+murim_sect_alliance.0001 = {
+	type = character_event
+	title = murim_sect_alliance.0001.t
+	desc = murim_sect_alliance.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		NOT = { has_character_flag = attended_alliance_ceremony }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = diplomat
+		}
+		modifier = {
+			factor = 1.5
+			is_ruler = yes
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = attended_alliance_ceremony
+			days = 1825
+		}
+		create_character_memory = {
+			type = murim_attended_alliance_ceremony
+		}
+	}
+	
+	# Option A: Take the blood oath and become Alliance Leader
+	option = {
+		name = murim_sect_alliance.0001.a
+		trigger = {
+			var:murim_cultivation_level >= 6
+		}
+		
+		random_list = {
+			40 = {
+				desc = murim_sect_alliance.0001.a.leader
+				add_prestige = 1500
+				add_character_modifier = {
+					modifier = martial_alliance_leader
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_became_alliance_leader
+				}
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 30 90 }
+				}
+			}
+			30 = {
+				desc = murim_sect_alliance.0001.a.challenged
+				add_prestige = 500
+				create_character_memory = {
+					type = murim_leadership_challenged_at_ceremony
+				}
+				trigger_event = {
+					id = murim_duel.0005
+					days = { 1 5 }
+				}
+			}
+			30 = {
+				desc = murim_sect_alliance.0001.a.assassination_attempt
+				add_trait = wounded
+				add_prestige = 300
+				create_character_memory = {
+					type = murim_assassination_attempt_at_ceremony
+				}
+				trigger_event = {
+					id = murim_jianghu.0005
+					days = { 5 15 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 2
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Join the alliance as a supporting elder
+	option = {
+		name = murim_sect_alliance.0001.b
+		
+		add_prestige = 400
+		add_piety = 200
+		add_character_modifier = {
+			modifier = alliance_elder_status
+			years = 15
+		}
+		create_character_memory = {
+			type = murim_joined_alliance_as_elder
+		}
+		trigger_event = {
+			id = murim_sect.0001
+			days = { 30 120 }
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.5
+				has_trait = gregarious
+			}
+		}
+	}
+	
+	# Option C: Spy on the alliance for the underworld
+	option = {
+		name = murim_sect_alliance.0001.c
+		
+		random_list = {
+			50 = {
+				desc = murim_sect_alliance.0001.c.success
+				add_gold = 500
+				add_intrigue = 3
+				add_character_modifier = {
+					modifier = underworld_intelligence_asset
+					years = 10
+				}
+				create_character_memory = {
+					type = murim_spied_on_alliance_ceremony
+				}
+				trigger_event = {
+					id = murim_jianghu.0001
+					days = { 15 45 }
+				}
+			}
+			50 = {
+				desc = murim_sect_alliance.0001.c.caught
+				add_trait = wounded
+				add_prestige = -500
+				create_character_memory = {
+					type = murim_caught_spying_at_ceremony
+				}
+				trigger_event = {
+					id = murim_duel.0001
+					days = { 1 3 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+######################################
+# murim_sect_alliance.0002 - Alliance Tournament for Champion Selection
+# Sects within the alliance compete in a grand tournament
+######################################
+murim_sect_alliance.0002 = {
+	type = character_event
+	title = murim_sect_alliance.0002.t
+	desc = murim_sect_alliance.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 3
+		NOT = { has_character_flag = entered_alliance_tournament }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = brave
+		}
+		modifier = {
+			factor = 1.5
+			prowess >= 15
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = entered_alliance_tournament
+			days = 1825
+		}
+		create_character_memory = {
+			type = murim_entered_alliance_tournament
+		}
+	}
+	
+	# Option A: Fight with full power to claim champion title
+	option = {
+		name = murim_sect_alliance.0002.a
+		
+		random_list = {
+			25 = {
+				desc = murim_sect_alliance.0002.a.champion
+				modifier = {
+					factor = 2
+					prowess >= 20
+				}
+				add_prestige = 2000
+				add_prowess = 5
+				add_character_modifier = {
+					modifier = alliance_tournament_champion
+					years = 10
+				}
+				create_character_memory = {
+					type = murim_won_alliance_tournament
+				}
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 5 15 }
+				}
+			}
+			35 = {
+				desc = murim_sect_alliance.0002.a.semifinal
+				add_prestige = 800
+				add_prowess = 2
+				add_trait = scarred
+				create_character_memory = {
+					type = murim_reached_semifinal_alliance_tournament
+				}
+			}
+			25 = {
+				desc = murim_sect_alliance.0002.a.eliminated
+				add_prestige = 200
+				add_trait = wounded
+				create_character_memory = {
+					type = murim_eliminated_early_tournament
+				}
+			}
+			15 = {
+				desc = murim_sect_alliance.0002.a.crippled
+				add_trait = incapable
+				create_character_memory = {
+					type = murim_crippled_in_alliance_tournament
+				}
+				trigger_event = {
+					id = murim_ranker_death.0003
+					days = { 5 15 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 2
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Fight defensively, observe opponents
+	option = {
+		name = murim_sect_alliance.0002.b
+		
+		add_prestige = 300
+		add_martial = 2
+		add_intrigue = 2
+		add_character_modifier = {
+			modifier = tournament_intelligence_gathered
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_observed_tournament_techniques
+		}
+		trigger_event = {
+			id = murim_training.0001
+			days = { 30 90 }
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 2
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Refuse to participate - beneath your dignity
+	option = {
+		name = murim_sect_alliance.0002.c
+		
+		add_prestige = -100
+		add_stress = -20
+		add_character_modifier = {
+			modifier = above_petty_tournaments
+			years = 5
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 2
+				has_trait = arrogant
+			}
+		}
+	}
+}
+
+######################################
+# murim_sect_alliance.0003 - Blood Oath Betrayal
+# Someone within the alliance breaks the sacred blood oath
+######################################
+murim_sect_alliance.0003 = {
+	type = character_event
+	title = murim_sect_alliance.0003.t
+	desc = murim_sect_alliance.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		NOT = { has_character_flag = witnessed_oath_betrayal }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = just
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = witnessed_oath_betrayal
+			days = 3650
+		}
+		create_character_memory = {
+			type = murim_witnessed_blood_oath_betrayal
+		}
+	}
+	
+	# Option A: Hunt down the oath-breaker yourself
+	option = {
+		name = murim_sect_alliance.0003.a
+		
+		random_list = {
+			35 = {
+				desc = murim_sect_alliance.0003.a.captured
+				add_prestige = 1000
+				add_prowess = 3
+				add_character_modifier = {
+					modifier = oath_enforcer_reputation
+					years = 15
+				}
+				create_character_memory = {
+					type = murim_captured_oath_breaker
+				}
+				trigger_event = {
+					id = murim_duel.0005
+					days = { 5 15 }
+				}
+			}
+			35 = {
+				desc = murim_sect_alliance.0003.a.ambushed
+				add_trait = wounded
+				add_prestige = 300
+				create_character_memory = {
+					type = murim_ambushed_hunting_oath_breaker
+				}
+			}
+			30 = {
+				desc = murim_sect_alliance.0003.a.trap
+				add_trait = scarred
+				add_stress = 30
+				create_character_memory = {
+					type = murim_fell_into_oath_breaker_trap
+				}
+				trigger_event = {
+					id = murim_fate.0002
+					days = { 10 30 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Rally the alliance for a coordinated response
+	option = {
+		name = murim_sect_alliance.0003.b
+		
+		add_prestige = 500
+		add_diplomacy = 3
+		add_character_modifier = {
+			modifier = alliance_crisis_coordinator
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_rallied_alliance_against_betrayer
+		}
+		trigger_event = {
+			id = murim_politics.0002
+			days = { 15 45 }
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = diplomat
+			}
+		}
+	}
+	
+	# Option C: Use the chaos to seize power within the alliance
+	option = {
+		name = murim_sect_alliance.0003.c
+		
+		random_list = {
+			45 = {
+				desc = murim_sect_alliance.0003.c.seized_power
+				add_prestige = 800
+				add_intrigue = 4
+				add_character_modifier = {
+					modifier = alliance_power_usurper
+					years = 10
+				}
+				create_character_memory = {
+					type = murim_seized_alliance_power
+				}
+			}
+			55 = {
+				desc = murim_sect_alliance.0003.c.exposed
+				add_prestige = -800
+				add_character_modifier = {
+					modifier = exposed_opportunist
+					years = 15
+				}
+				create_character_memory = {
+					type = murim_exposed_as_opportunist
+				}
+				trigger_event = {
+					id = murim_sect.0003
+					days = { 5 20 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+######################################
+# murim_sect_alliance.0004 - Sacred Treasure Vault Opening
+# The alliance opens its shared treasure vault for worthy members
+######################################
+murim_sect_alliance.0004 = {
+	type = character_event
+	title = murim_sect_alliance.0004.t
+	desc = murim_sect_alliance.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 5
+		NOT = { has_character_flag = accessed_alliance_vault }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			var:murim_cultivation_level >= 7
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = accessed_alliance_vault
+			days = 3650
+		}
+		create_character_memory = {
+			type = murim_entered_alliance_treasure_vault
+		}
+	}
+	
+	# Option A: Claim a legendary weapon
+	option = {
+		name = murim_sect_alliance.0004.a
+		
+		add_prowess = 8
+		add_character_modifier = {
+			modifier = wielder_of_alliance_weapon
+			years = 20
+		}
+		create_character_memory = {
+			type = murim_claimed_alliance_legendary_weapon
+		}
+		trigger_event = {
+			id = murim_artifact.0001
+			days = { 5 15 }
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Take cultivation resources (rare pills and elixirs)
+	option = {
+		name = murim_sect_alliance.0004.b
+		
+		change_variable = {
+			name = murim_cultivation_level
+			add = 1
+		}
+		add_character_modifier = {
+			modifier = enhanced_by_rare_elixir
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_consumed_alliance_elixir
+		}
+		trigger_event = {
+			id = murim_cultivation.0003
+			days = { 15 45 }
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Study the ancient formation diagrams
+	option = {
+		name = murim_sect_alliance.0004.c
+		
+		add_martial = 4
+		add_learning = 3
+		add_character_modifier = {
+			modifier = formation_knowledge_adept
+			years = 15
+		}
+		create_character_memory = {
+			type = murim_studied_alliance_formations
+		}
+		trigger_event = {
+			id = murim_training.0001
+			days = { 30 90 }
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_trait = scholar
+			}
+		}
+	}
+}
+
+######################################
+# murim_sect_alliance.0005 - Alliance Dissolution Crisis
+# Internal strife threatens to tear the alliance apart
+######################################
+murim_sect_alliance.0005 = {
+	type = character_event
+	title = murim_sect_alliance.0005.t
+	desc = murim_sect_alliance.0005.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		NOT = { has_character_flag = faced_alliance_crisis }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = diplomat
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = faced_alliance_crisis
+			days = 3650
+		}
+		create_character_memory = {
+			type = murim_faced_alliance_dissolution_crisis
+		}
+	}
+	
+	# Option A: Mediate between factions to preserve unity
+	option = {
+		name = murim_sect_alliance.0005.a
+		
+		random_list = {
+			40 = {
+				desc = murim_sect_alliance.0005.a.unified
+				add_prestige = 1000
+				add_diplomacy = 4
+				add_character_modifier = {
+					modifier = peacemaker_of_the_alliance
+					years = 15
+				}
+				create_character_memory = {
+					type = murim_preserved_alliance_unity
+				}
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 30 90 }
+				}
+			}
+			30 = {
+				desc = murim_sect_alliance.0005.a.partial
+				add_prestige = 400
+				add_stress = 30
+				create_character_memory = {
+					type = murim_partially_preserved_alliance
+				}
+			}
+			30 = {
+				desc = murim_sect_alliance.0005.a.scapegoated
+				add_prestige = -500
+				add_stress = 50
+				create_character_memory = {
+					type = murim_scapegoated_during_alliance_crisis
+				}
+				trigger_event = {
+					id = murim_sect.0003
+					days = { 10 30 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option B: Side with the strongest faction
+	option = {
+		name = murim_sect_alliance.0005.b
+		
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = pragmatic_alliance_member
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_sided_with_strongest_faction
+		}
+		random_list = {
+			50 = {
+				trigger_event = {
+					id = murim_sect.0001
+					days = { 30 90 }
+				}
+			}
+			50 = {
+				trigger_event = {
+					id = murim_jianghu.0003
+					days = { 15 60 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				factor = 2
+				has_trait = cynical
+			}
+		}
+	}
+	
+	# Option C: Leave the alliance entirely
+	option = {
+		name = murim_sect_alliance.0005.c
+		
+		add_prestige = -200
+		add_stress = -30
+		add_character_modifier = {
+			modifier = independent_martial_artist
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_left_alliance_during_crisis
+		}
+		trigger_event = {
+			id = murim_daily_life.0001
+			days = { 30 90 }
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 2
+				has_trait = content
+			}
+		}
+	}
+}
