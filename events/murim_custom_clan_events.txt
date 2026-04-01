@@ -1,0 +1,619 @@
+# Murim Chronicles - Custom Clan Creation Events
+# Two paths to founding your own martial clan:
+# PATH 1 (Hard Way): Tier 5+, 10yr experience, 5+ followers, 500 gold.
+#   Petition all 9 clan leaders. Need 6/9 majority. Can bribe/duel for approval.
+#   Takes 1-3 years. Rejected = 10 year cooldown.
+# PATH 2 (Supreme Way): #1 ranked (Supreme Champion) OR defeat 3 clan leaders
+#   in succession. Simply DECLARE your clan. No vote needed.
+# Custom clans must declare orthodox/unorthodox within 5 years or stay independent.
+# Max 15 total clans. AI can also create (rare). Can be destroyed if empty.
+# INTEGRATION: Uses murim_clan_triggers.txt (murim_can_create_custom_clan_trigger)
+# INTEGRATION: Uses murim_clan_membership_effects.txt (new clan setup)
+# INTEGRATION: Feeds murim_faction_events.txt (faction declaration)
+# VANILLA SEPARATION: Clan creation is martial-layer only. Does NOT create titles,
+#   holdings, or political entities. A clan is an ORGANIZATION, not a realm.
+# CHINA-CENTRIC: Clan HQ must be in China or Goryeo (Tier 1-2 regions).
+
+namespace = murim_custom_clan
+
+# ═══════════════════════════════════════════
+# 0001 - INITIATE CLAN CREATION (decision triggers this)
+# ═══════════════════════════════════════════
+murim_custom_clan.0001 = {
+	type = character_event
+	title = murim_custom_clan.0001.t
+	desc = murim_custom_clan.0001.desc
+	# "You have walked the martial path long enough. You have trained disciples,
+	#  mastered techniques no school claims, and carved your own philosophy.
+	#  The time has come to plant your banner. But the martial world does not
+	#  grant this right lightly. You must petition the Nine Great Clans.
+	#  Each leader will vote: do you deserve to stand among them?"
+	theme = diplomacy
+	
+	trigger = {
+		murim_can_create_custom_clan_trigger = yes
+	}
+	
+	# Option A: Begin the Hard Way — petition the 9 clan leaders
+	option = {
+		name = murim_custom_clan.0001.a
+		# "I will earn my place through respect and diplomacy."
+		trigger = {
+			NOR = {
+				has_character_modifier = murim_supreme_champion
+				has_character_flag = defeated_three_clan_leaders
+			}
+		}
+		# Name your clan
+		set_character_flag = murim_clan_petition_active
+		# Cost: 500 gold
+		remove_short_term_gold = 500
+		# Begin the petition chain — each leader votes over 1-3 years
+		trigger_event = {
+			id = murim_custom_clan.0010
+			days = { 30 90 }
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	# Option B: Declare by Supreme Right
+	option = {
+		name = murim_custom_clan.0001.b
+		# "I am the Supreme Champion / I defeated three clan leaders. I don't ASK. I DECLARE."
+		trigger = {
+			OR = {
+				has_character_modifier = murim_supreme_champion
+				has_character_flag = defeated_three_clan_leaders
+			}
+		}
+		# Immediate clan creation — no vote needed
+		trigger_event = {
+			id = murim_custom_clan.0050
+			days = 1
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	# Option C: Not yet — I need more preparation
+	option = {
+		name = murim_custom_clan.0001.c
+		# "The time is not right."
+		ai_chance = { base = 0 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0010 - PETITION BEGINS — FIRST CLAN LEADER VOTES
+# Each leader evaluates you based on: reputation, prowess, opinion, faction
+# ═══════════════════════════════════════════
+murim_custom_clan.0010 = {
+	type = character_event
+	title = murim_custom_clan.0010.t
+	desc = murim_custom_clan.0010.desc
+	# "Your petition arrives at the first clan leader's desk. [Leader name]
+	#  of [Clan name] reads your credentials, reviews your fight record,
+	#  considers your philosophy. Then they vote."
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = murim_clan_petition_active
+	}
+	
+	immediate = {
+		# Track votes
+		if = {
+			limit = { NOT = { has_variable = clan_votes_yes } }
+			set_variable = { name = clan_votes_yes value = 0 }
+			set_variable = { name = clan_votes_no value = 0 }
+			set_variable = { name = clan_votes_total value = 0 }
+		}
+	}
+	
+	# Option A: Present your case formally
+	option = {
+		name = murim_custom_clan.0010.a
+		# "Honored leader, I present my petition with humility and conviction."
+		# Vote calculation: base 40% yes, modified by opinion/reputation/prowess
+		random_list = {
+			40 = {
+				modifier = {
+					add = 20
+					prowess >= 25
+				}
+				modifier = {
+					add = 10
+					has_character_modifier = murim_faction_war_hero
+				}
+				modifier = {
+					add = -20
+					# Rival clan leader less likely to approve
+					has_character_flag = murim_bad_reputation
+				}
+				# YES vote
+				change_variable = { name = clan_votes_yes add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+				add_character_modifier = {
+					modifier = murim_petition_vote_yes
+					years = 1
+				}
+			}
+			60 = {
+				modifier = {
+					add = -20
+					prowess >= 25
+				}
+				modifier = {
+					add = 20
+					has_character_flag = murim_bad_reputation
+				}
+				# NO vote
+				change_variable = { name = clan_votes_no add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+				add_character_modifier = {
+					modifier = murim_petition_vote_no
+					years = 1
+				}
+			}
+		}
+		# Continue to next leader or tally
+		if = {
+			limit = {
+				var:clan_votes_total >= 9
+			}
+			# All 9 have voted — tally
+			trigger_event = {
+				id = murim_custom_clan.0030
+				days = { 7 14 }
+			}
+		}
+		else = {
+			# Next leader
+			trigger_event = {
+				id = murim_custom_clan.0010
+				days = { 30 90 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Bribe the current leader
+	option = {
+		name = murim_custom_clan.0010.b
+		# "Perhaps a generous donation to your clan's treasury would help your deliberation."
+		trigger = { gold >= 100 }
+		remove_short_term_gold = 100
+		# Bribery: 75% yes, but if caught, reputation damage
+		random_list = {
+			75 = {
+				change_variable = { name = clan_votes_yes add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+			}
+			15 = {
+				# Takes bribe, still votes no
+				change_variable = { name = clan_votes_no add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+			}
+			10 = {
+				# Caught bribing — scandal
+				add_character_modifier = {
+					modifier = murim_bribery_scandal
+					years = 5
+				}
+				change_variable = { name = clan_votes_no add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+			}
+		}
+		# Continue
+		if = {
+			limit = { var:clan_votes_total >= 9 }
+			trigger_event = { id = murim_custom_clan.0030 days = { 7 14 } }
+		}
+		else = {
+			trigger_event = { id = murim_custom_clan.0010 days = { 30 90 } }
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option C: Challenge this leader to a duel for their vote
+	option = {
+		name = murim_custom_clan.0010.c
+		# "If words won't convince you, perhaps my fists will."
+		trigger = { prowess >= 18 }
+		duel = {
+			skill = prowess
+			target = scope:current_clan_leader
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				desc = murim_custom_clan.0010.c.win
+				# Forced YES vote through martial superiority
+				change_variable = { name = clan_votes_yes add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				desc = murim_custom_clan.0010.c.lose
+				# Definite NO vote + injury
+				change_variable = { name = clan_votes_no add = 1 }
+				change_variable = { name = clan_votes_total add = 1 }
+				add_trait = wounded
+			}
+		}
+		# Continue
+		if = {
+			limit = { var:clan_votes_total >= 9 }
+			trigger_event = { id = murim_custom_clan.0030 days = { 7 14 } }
+		}
+		else = {
+			trigger_event = { id = murim_custom_clan.0010 days = { 30 90 } }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0030 - VOTE TALLY — APPROVED OR REJECTED
+# Need 6/9 majority
+# ═══════════════════════════════════════════
+murim_custom_clan.0030 = {
+	type = character_event
+	title = murim_custom_clan.0030.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:clan_votes_yes >= 6 }
+				desc = murim_custom_clan.0030.desc_approved
+				# "The votes are counted. [X] clan leaders voted YES. [Y] voted NO.
+				#  The majority has spoken: the martial world recognizes your right
+				#  to found a new clan. The Nine — now Ten — Great Clans welcome you.
+				#  Name your clan. Choose your path. Write your legacy."
+			}
+			desc = murim_custom_clan.0030.desc_rejected
+			# "The votes are counted. [X] clan leaders voted YES. [Y] voted NO.
+			#  The majority has spoken: you are denied. The martial world is not
+			#  ready for your clan. Perhaps in ten years, when memories fade and
+			#  new alliances form, you may try again."
+		}
+	}
+	theme = diplomacy
+	
+	# Option A: APPROVED — found your clan
+	option = {
+		name = murim_custom_clan.0030.a
+		trigger = { var:clan_votes_yes >= 6 }
+		trigger_event = {
+			id = murim_custom_clan.0050
+			days = 1
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	# Option B: REJECTED — accept gracefully
+	option = {
+		name = murim_custom_clan.0030.b
+		trigger = { var:clan_votes_yes < 6 }
+		remove_character_flag = murim_clan_petition_active
+		set_character_flag = {
+			flag = custom_clan_creation_cooldown
+			years = 10
+		}
+		add_stress = 30
+		add_character_modifier = {
+			modifier = murim_petition_rejected
+			years = 10
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option C: REJECTED — declare anyway (rebellion)
+	option = {
+		name = murim_custom_clan.0030.c
+		trigger = {
+			var:clan_votes_yes < 6
+			OR = {
+				has_trait = ambitious
+				has_trait = arrogant
+				prowess >= 25
+			}
+		}
+		# "They said no. I say I don't care."
+		# Found clan as a ROGUE clan — all 9 clans hostile
+		trigger_event = {
+			id = murim_custom_clan.0050
+			days = 1
+		}
+		set_character_flag = murim_rogue_clan_founder
+		add_character_modifier = {
+			modifier = murim_rogue_clan
+			years = -1
+		}
+		# All 9 clans hostile for 10 years
+		add_dread = 20
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0050 - CLAN FOUNDED — Name and configure
+# ═══════════════════════════════════════════
+murim_custom_clan.0050 = {
+	type = character_event
+	title = murim_custom_clan.0050.t
+	desc = murim_custom_clan.0050.desc
+	# "The moment has arrived. You stand before your followers — the five
+	#  (or more) martial artists who believed in you when no one else did.
+	#  You plant your banner, speak your clan's philosophy, and carve your
+	#  name into the stone tablet that will stand at your clan's gate.
+	#  A new clan is born in the martial world."
+	theme = martial
+	
+	immediate = {
+		remove_character_flag = murim_clan_petition_active
+		set_character_flag = custom_clan_leader
+		set_character_flag = custom_clan_member
+		# Generate unique clan ID
+		set_variable = {
+			name = custom_clan_id
+			value = root.id
+		}
+		set_variable = {
+			name = custom_clan_member_count
+			value = 1
+		}
+	}
+	
+	# Option A: Orthodox philosophy — honor and righteousness
+	option = {
+		name = murim_custom_clan.0050.a
+		# "Our clan follows the Righteous Path. Honor above power."
+		set_character_flag = custom_clan_orthodox
+		add_character_modifier = {
+			modifier = murim_clan_founder
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_orthodox_founder
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_founded_orthodox_clan
+		}
+		# Followers join
+		trigger_event = {
+			id = murim_custom_clan.0060
+			days = { 7 30 }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Unorthodox philosophy — power and freedom
+	option = {
+		name = murim_custom_clan.0050.b
+		# "Our clan rejects the hypocritical codes. Only strength matters."
+		set_character_flag = custom_clan_unorthodox
+		add_character_modifier = {
+			modifier = murim_clan_founder
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_unorthodox_founder
+			years = -1
+		}
+		add_dread = 10
+		create_character_memory = {
+			type = murim_founded_unorthodox_clan
+		}
+		trigger_event = {
+			id = murim_custom_clan.0060
+			days = { 7 30 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Independent — neither faction
+	option = {
+		name = murim_custom_clan.0050.c
+		# "We walk our own path. Neither righteous nor demonic."
+		# Must declare within 5 years or stay independent permanently
+		add_character_modifier = {
+			modifier = murim_clan_founder
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_independent_founder
+			years = -1
+		}
+		set_character_flag = {
+			flag = custom_clan_must_declare
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_founded_independent_clan
+		}
+		trigger_event = {
+			id = murim_custom_clan.0060
+			days = { 7 30 }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0060 - FOLLOWERS JOIN YOUR NEW CLAN
+# ═══════════════════════════════════════════
+murim_custom_clan.0060 = {
+	type = character_event
+	title = murim_custom_clan.0060.t
+	desc = murim_custom_clan.0060.desc
+	# "Word spreads of your new clan. Your existing followers formally join.
+	#  But others come too — clanless wanderers, dissatisfied members of
+	#  other clans, young fighters seeking a fresh start. Your clan grows."
+	theme = diplomacy
+	
+	# Option A: Accept all who come (larger but weaker)
+	option = {
+		name = murim_custom_clan.0060.a
+		# "All are welcome who share our philosophy."
+		change_variable = { name = custom_clan_member_count add = 8 }
+		add_character_modifier = {
+			modifier = murim_open_clan
+			years = -1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Test each applicant (smaller but elite)
+	option = {
+		name = murim_custom_clan.0060.b
+		# "Prove your worth before you wear our colors."
+		change_variable = { name = custom_clan_member_count add = 3 }
+		add_character_modifier = {
+			modifier = murim_elite_clan
+			years = -1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Recruit from specific backgrounds
+	option = {
+		name = murim_custom_clan.0060.c
+		# "We recruit only warriors / scholars / the desperate / the exiled."
+		change_variable = { name = custom_clan_member_count add = 5 }
+		add_character_modifier = {
+			modifier = murim_specialized_clan
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0070 - FACTION DECLARATION DEADLINE (5 years after founding)
+# Must declare orthodox/unorthodox or stay independent
+# ═══════════════════════════════════════════
+murim_custom_clan.0070 = {
+	type = character_event
+	title = murim_custom_clan.0070.t
+	desc = murim_custom_clan.0070.desc
+	# "Five years have passed since you founded your clan. The martial world
+	#  demands to know: where do you stand? The Murim Alliance asks you to
+	#  join the Righteous Path. The Heavenly Demon extends an invitation to
+	#  the Demonic Path. Or you can remain independent — but independent
+	#  clans have no allies when trouble comes."
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = custom_clan_leader
+		has_character_flag = custom_clan_must_declare
+		NOT = {
+			OR = {
+				has_character_flag = custom_clan_orthodox
+				has_character_flag = custom_clan_unorthodox
+			}
+		}
+	}
+	
+	# Option A: Join Orthodox
+	option = {
+		name = murim_custom_clan.0070.a
+		set_character_flag = custom_clan_orthodox
+		remove_character_flag = custom_clan_must_declare
+		add_character_modifier = {
+			modifier = murim_orthodox_declaration
+			years = 5
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Join Unorthodox
+	option = {
+		name = murim_custom_clan.0070.b
+		set_character_flag = custom_clan_unorthodox
+		remove_character_flag = custom_clan_must_declare
+		add_character_modifier = {
+			modifier = murim_unorthodox_declaration
+			years = 5
+		}
+		add_dread = 10
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Stay independent permanently
+	option = {
+		name = murim_custom_clan.0070.c
+		# "We answer to no faction."
+		remove_character_flag = custom_clan_must_declare
+		add_character_modifier = {
+			modifier = murim_permanent_independent
+			years = -1
+		}
+		# Both factions distrust you
+		ai_chance = { base = 25 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0080 - CLAN DESTRUCTION (if empty or defeated)
+# ═══════════════════════════════════════════
+murim_custom_clan.0080 = {
+	type = character_event
+	title = murim_custom_clan.0080.t
+	desc = murim_custom_clan.0080.desc
+	# "Your clan is gone. The last members have left, died, or defected.
+	#  The banner you planted with such pride lies in the dust. The martial
+	#  world moves on. Some clans last centuries. Yours lasted [X] years.
+	#  Perhaps that is enough. Perhaps not."
+	theme = martial
+	
+	trigger = {
+		has_character_flag = custom_clan_leader
+		var:custom_clan_member_count <= 0
+	}
+	
+	# Option A: Accept the end
+	option = {
+		name = murim_custom_clan.0080.a
+		# "It was a good run."
+		remove_character_flag = custom_clan_leader
+		remove_character_flag = custom_clan_member
+		remove_character_flag = custom_clan_orthodox
+		remove_character_flag = custom_clan_unorthodox
+		add_character_modifier = {
+			modifier = murim_fallen_clan_founder
+			years = -1
+		}
+		add_stress = 40
+		create_character_memory = {
+			type = murim_clan_destroyed
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option B: Rebuild from nothing
+	option = {
+		name = murim_custom_clan.0080.b
+		# "One person is enough to start a clan. I did it before. I'll do it again."
+		trigger = { has_trait = ambitious }
+		change_variable = { name = custom_clan_member_count add = 1 }
+		add_character_modifier = {
+			modifier = murim_phoenix_founder
+			years = -1
+		}
+		trigger_event = {
+			id = murim_custom_clan.0060
+			days = { 90 365 }
+		}
+		ai_chance = { base = 30 }
+	}
+}
