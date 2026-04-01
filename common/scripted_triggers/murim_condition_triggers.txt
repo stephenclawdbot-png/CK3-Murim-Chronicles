@@ -2,7 +2,9 @@
 # MURIM CONDITION TRIGGERS
 # Phase 3 - Conditional checks for cultivation advancement,
 # sect eligibility, duel readiness, breakthrough requirements,
-# and penalty / debuff conditions.
+# penalty / debuff conditions, body cultivation, elemental
+# affinity, inner demons, meridian status, poison/toxin,
+# aging/lifespan, combat readiness, and spiritual states.
 # CK3 Murim Chronicles
 ########################################
 
@@ -97,6 +99,31 @@ murim_meets_qi_threshold_trigger = {
 	}
 }
 
+murim_is_early_stage_cultivator_trigger = {
+	murim_has_cultivation_trigger = yes
+	trigger_if = {
+		limit = { has_variable = murim_cultivation_stage }
+		var:murim_cultivation_stage <= 3
+	}
+}
+
+murim_is_mid_stage_cultivator_trigger = {
+	has_variable = murim_cultivation_stage
+	var:murim_cultivation_stage >= 4
+	var:murim_cultivation_stage <= 7
+}
+
+murim_is_late_stage_cultivator_trigger = {
+	has_variable = murim_cultivation_stage
+	var:murim_cultivation_stage >= 8
+	var:murim_cultivation_stage <= 10
+}
+
+murim_is_peak_cultivator_trigger = {
+	has_variable = murim_cultivation_stage
+	var:murim_cultivation_stage >= 11
+}
+
 ###############################
 # BREAKTHROUGH READINESS
 ###############################
@@ -139,6 +166,36 @@ murim_breakthrough_dangerous_trigger = {
 	}
 }
 
+murim_breakthrough_guaranteed_failure_trigger = {
+	OR = {
+		has_trait = incapable
+		has_character_modifier = murim_qi_deviation_penalty
+		AND = {
+			stress >= 95
+			has_trait = lunatic
+		}
+		AND = {
+			has_character_modifier = murim_meridian_shattered
+			NOT = { has_character_modifier = murim_meridian_repaired }
+		}
+	}
+}
+
+murim_breakthrough_has_catalyst_trigger = {
+	OR = {
+		has_character_modifier = murim_breakthrough_pill_active
+		has_character_modifier = murim_heavenly_lightning_survivor
+		has_character_modifier = murim_enlightenment_state
+		any_held_artifact = {
+			has_variable = murim_breakthrough_catalyst
+		}
+		trigger_if = {
+			limit = { has_variable = murim_insight_points }
+			var:murim_insight_points >= 10
+		}
+	}
+}
+
 ###############################
 # SECT ELIGIBILITY
 ###############################
@@ -177,38 +234,38 @@ murim_can_found_sect_trigger = {
 	is_ruler = yes
 	is_imprisoned = no
 	murim_is_at_least_earth_realm_trigger = yes
-	prestige >= 1000
-	custom_description = {
-		text = murim_not_already_in_sect_tt
-		NOT = { has_variable = murim_sect_id }
-	}
+	prowess >= 15
+	NOT = { has_variable = murim_sect_id }
 }
 
 murim_can_become_sect_elder_trigger = {
 	has_variable = murim_sect_id
 	murim_is_at_least_earth_realm_trigger = yes
 	age >= 30
+	prowess >= 18
 	NOT = { has_variable = murim_is_sect_leader }
 	custom_description = {
-		text = murim_good_sect_standing_tt
-		has_variable = murim_sect_standing
-		var:murim_sect_standing >= 50
+		text = murim_not_already_elder_tt
+		NOT = { has_character_flag = murim_is_sect_elder }
 	}
 }
 
-murim_is_sect_leader_trigger = {
-	has_variable = murim_is_sect_leader
+murim_can_challenge_sect_leader_trigger = {
 	has_variable = murim_sect_id
+	NOT = { has_variable = murim_is_sect_leader }
+	murim_is_at_least_earth_realm_trigger = yes
+	prowess >= 20
+	is_imprisoned = no
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = murim_sect_challenge_cooldown }
 }
 
-murim_same_sect_trigger = {
-	save_temporary_scope_as = murim_self_check
-	scope:target = {
-		has_variable = murim_sect_id
-		$SCOPE$ = {
-			has_variable = murim_sect_id
-			var:murim_sect_id = scope:target.var:murim_sect_id
-		}
+murim_is_sect_outcast_trigger = {
+	OR = {
+		has_character_modifier = murim_sect_exile_recent
+		has_character_modifier = murim_sect_exile_branded
+		has_character_modifier = murim_sect_excommunicated
+		has_character_flag = murim_sect_betrayer
 	}
 }
 
@@ -220,257 +277,1033 @@ murim_can_duel_trigger = {
 	is_alive = yes
 	is_adult = yes
 	is_imprisoned = no
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = murim_duel_cooldown }
 	prowess >= 8
-	custom_description = {
-		text = murim_not_recently_dueled_tt
-		NOT = { has_character_modifier = murim_duel_exhaustion }
-	}
-	custom_description = {
-		text = murim_not_crippled_tt
-		NOR = {
-			has_trait = incapable
-			has_trait = blind
-			has_trait = wounded_3
-		}
-	}
 }
 
-murim_is_duel_eligible_target_trigger = {
-	is_alive = yes
-	is_adult = yes
-	is_imprisoned = no
-	NOT = { this = scope:actor }
-	custom_description = {
-		text = murim_target_not_recently_dueled_tt
-		NOT = { has_character_modifier = murim_duel_exhaustion }
-	}
-}
-
-murim_duel_honor_trigger = {
-	custom_description = {
-		text = murim_duel_is_honorable_tt
-		OR = {
-			has_trait = just
-			has_trait = brave
-			has_trait = honest
-		}
-	}
-	NOT = { has_trait = craven }
-}
-
-murim_duel_death_match_trigger = {
+murim_can_accept_formal_duel_trigger = {
 	murim_can_duel_trigger = yes
-	murim_is_at_least_earth_realm_trigger = yes
-	OR = {
-		has_trait = brave
-		has_trait = wrathful
-		has_trait = sadistic
-	}
-	opinion = {
-		target = scope:target
-		value <= -50
-	}
-}
-
-###############################
-# PENALTY & DEBUFF CHECKS
-###############################
-
-murim_has_qi_deviation_trigger = {
-	has_character_modifier = murim_qi_deviation_penalty
-}
-
-murim_has_meridian_damage_trigger = {
-	has_character_modifier = murim_meridian_damage
-}
-
-murim_has_any_cultivation_penalty_trigger = {
-	OR = {
-		has_character_modifier = murim_qi_deviation_penalty
-		has_character_modifier = murim_meridian_damage
-		has_character_modifier = murim_unstable_foundation
-		has_character_modifier = murim_cultivation_backlash
-		has_character_modifier = murim_inner_demon_torment
-	}
-}
-
-murim_penalty_is_severe_trigger = {
 	custom_description = {
-		text = murim_severe_penalty_tt
+		text = murim_not_recovering_tt
+		NOR = {
+			has_trait = wounded_3
+			has_character_modifier = murim_critical_injury
+			has_character_modifier = murim_near_death_recovery
+		}
+	}
+}
+
+murim_is_duel_favorite_trigger = {
+	prowess >= 20
+	OR = {
+		murim_is_at_least_earth_realm_trigger = yes
+		has_trait = blademaster_3
+		has_trait = herculean
+	}
+}
+
+murim_should_duel_be_lethal_trigger = {
+	OR = {
+		# Blood feud
+		trigger_if = {
+			limit = { exists = scope:duel_opponent }
+			has_relation_rival = scope:duel_opponent
+		}
+		# Death match declared
+		has_character_flag = murim_death_match_declared
+		# Demonic cultivators fight to the death
+		AND = {
+			OR = {
+				has_trait = murim_blood_demon_art
+				has_trait = murim_soul_devouring_art
+			}
+			trigger_if = {
+				limit = { exists = scope:duel_opponent }
+				scope:duel_opponent = {
+					OR = {
+						has_trait = murim_righteous_heart
+						has_trait = just
+					}
+				}
+			}
+		}
+	}
+}
+
+murim_duel_should_cause_trauma_trigger = {
+	OR = {
+		# Close loss
+		trigger_if = {
+			limit = { has_variable = murim_last_duel_margin }
+			var:murim_last_duel_margin <= 5
+		}
+		# Already traumatized
+		has_trait = duel_ptsd
+		# Young and inexperienced
+		AND = {
+			age < 20
+			trigger_if = {
+				limit = { has_variable = murim_duel_count }
+				var:murim_duel_count < 3
+			}
+		}
+	}
+}
+
+murim_is_undefeated_duelist_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_duel_losses }
+		var:murim_duel_losses = 0
+	}
+	trigger_if = {
+		limit = { has_variable = murim_duel_wins }
+		var:murim_duel_wins >= 5
+	}
+}
+
+
+###############################
+# BODY CULTIVATION CONDITIONS
+###############################
+
+murim_has_body_cultivation_trigger = {
+	OR = {
+		has_trait = iron_body_1
+		has_trait = iron_body_2
+		has_trait = iron_body_3
+		trigger_if = {
+			limit = { has_variable = murim_body_refinement }
+			var:murim_body_refinement >= 1
+		}
+	}
+}
+
+murim_has_advanced_body_cultivation_trigger = {
+	OR = {
+		has_trait = iron_body_2
+		has_trait = iron_body_3
+		trigger_if = {
+			limit = { has_variable = murim_body_refinement }
+			var:murim_body_refinement >= 5
+		}
+	}
+}
+
+murim_has_peak_body_cultivation_trigger = {
+	OR = {
+		has_trait = iron_body_3
+		trigger_if = {
+			limit = { has_variable = murim_body_refinement }
+			var:murim_body_refinement >= 10
+		}
+	}
+}
+
+murim_body_can_withstand_technique_trigger = {
+	custom_description = {
+		text = murim_body_strong_enough_for_technique_tt
 		OR = {
-			AND = {
-				has_character_modifier = murim_qi_deviation_penalty
-				has_character_modifier = murim_meridian_damage
-			}
-			has_character_modifier = murim_inner_demon_torment
-			AND = {
-				has_character_modifier = murim_cultivation_backlash
-				stress >= 75
-			}
+			murim_has_body_cultivation_trigger = yes
+			has_trait = herculean
+			has_trait = robust
+			has_trait = strong
+			prowess >= 20
 		}
 	}
 }
 
-murim_can_recover_from_penalty_trigger = {
-	murim_has_any_cultivation_penalty_trigger = yes
-	custom_description = {
-		text = murim_recovery_conditions_met_tt
-		age >= 16
-		is_alive = yes
-		is_imprisoned = no
-		stress < 75
-	}
-	custom_description = {
-		text = murim_not_recovery_cooldown_tt
-		NOT = { has_character_modifier = murim_recovery_cooldown }
+murim_body_at_breaking_point_trigger = {
+	OR = {
+		has_trait = wounded_3
+		has_character_modifier = murim_body_overloaded
+		AND = {
+			has_trait = frail
+			trigger_if = {
+				limit = { has_variable = murim_body_strain }
+				var:murim_body_strain >= 8
+			}
+		}
+		AND = {
+			has_character_modifier = murim_critical_injury
+			has_trait = wounded_2
+		}
 	}
 }
+
+murim_body_enhanced_by_pills_trigger = {
+	OR = {
+		has_character_modifier = murim_body_tempering_pill
+		has_character_modifier = murim_bone_forging_elixir
+		has_character_modifier = murim_marrow_cleansing_pill
+		has_character_modifier = murim_five_poisons_body_active
+	}
+}
+
+murim_body_has_pill_toxicity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_pill_toxicity }
+		var:murim_pill_toxicity >= 5
+	}
+}
+
+murim_body_toxicity_critical_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_pill_toxicity }
+		var:murim_pill_toxicity >= 15
+	}
+}
+
 
 ###############################
-# TECHNIQUE CONDITION CHECKS
+# ELEMENTAL AFFINITY CONDITIONS
 ###############################
 
-murim_knows_any_technique_trigger = {
+murim_has_elemental_affinity_trigger = {
 	OR = {
-		has_variable = murim_technique_palm
-		has_variable = murim_technique_sword
-		has_variable = murim_technique_fist
-		has_variable = murim_technique_body
-		has_variable = murim_technique_qi
-		has_variable = murim_technique_movement
+		has_variable = murim_element_fire
+		has_variable = murim_element_water
+		has_variable = murim_element_earth
+		has_variable = murim_element_wood
+		has_variable = murim_element_metal
+		has_variable = murim_element_lightning
+		has_variable = murim_element_ice
 	}
 }
 
-murim_has_mastered_technique_trigger = {
-	murim_knows_any_technique_trigger = yes
+murim_has_fire_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_fire }
+		var:murim_element_fire >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_water_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_water }
+		var:murim_element_water >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_earth_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_earth }
+		var:murim_element_earth >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_wood_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_wood }
+		var:murim_element_wood >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_metal_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_metal }
+		var:murim_element_metal >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_lightning_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_lightning }
+		var:murim_element_lightning >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_ice_affinity_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_element_ice }
+		var:murim_element_ice >= 3
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_dual_element_trigger = {
+	calc_true_if = {
+		amount >= 2
+		murim_has_fire_affinity_trigger = yes
+		murim_has_water_affinity_trigger = yes
+		murim_has_earth_affinity_trigger = yes
+		murim_has_wood_affinity_trigger = yes
+		murim_has_metal_affinity_trigger = yes
+		murim_has_lightning_affinity_trigger = yes
+		murim_has_ice_affinity_trigger = yes
+	}
+}
+
+murim_has_opposing_elements_trigger = {
+	# Fire vs Water or Wood vs Metal -- creates internal conflict
 	OR = {
-		trigger_if = {
-			limit = { has_variable = murim_technique_palm }
-			var:murim_technique_palm >= 100
+		AND = {
+			murim_has_fire_affinity_trigger = yes
+			murim_has_water_affinity_trigger = yes
 		}
-		trigger_if = {
-			limit = { has_variable = murim_technique_sword }
-			var:murim_technique_sword >= 100
+		AND = {
+			murim_has_wood_affinity_trigger = yes
+			murim_has_metal_affinity_trigger = yes
 		}
-		trigger_if = {
-			limit = { has_variable = murim_technique_fist }
-			var:murim_technique_fist >= 100
-		}
-		trigger_if = {
-			limit = { has_variable = murim_technique_body }
-			var:murim_technique_body >= 100
-		}
-		trigger_if = {
-			limit = { has_variable = murim_technique_qi }
-			var:murim_technique_qi >= 100
-		}
-		trigger_if = {
-			limit = { has_variable = murim_technique_movement }
-			var:murim_technique_movement >= 100
+		AND = {
+			murim_has_fire_affinity_trigger = yes
+			murim_has_ice_affinity_trigger = yes
 		}
 	}
 }
 
-murim_can_learn_new_technique_trigger = {
+murim_has_five_elements_complete_trigger = {
+	murim_has_fire_affinity_trigger = yes
+	murim_has_water_affinity_trigger = yes
+	murim_has_earth_affinity_trigger = yes
+	murim_has_wood_affinity_trigger = yes
+	murim_has_metal_affinity_trigger = yes
+}
+
+murim_element_mastery_high_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_element_fire }
+			var:murim_element_fire >= 8
+		}
+		trigger_if = {
+			limit = { has_variable = murim_element_water }
+			var:murim_element_water >= 8
+		}
+		trigger_if = {
+			limit = { has_variable = murim_element_earth }
+			var:murim_element_earth >= 8
+		}
+		trigger_if = {
+			limit = { has_variable = murim_element_wood }
+			var:murim_element_wood >= 8
+		}
+		trigger_if = {
+			limit = { has_variable = murim_element_metal }
+			var:murim_element_metal >= 8
+		}
+		trigger_if = {
+			limit = { has_variable = murim_element_lightning }
+			var:murim_element_lightning >= 8
+		}
+		trigger_if = {
+			limit = { has_variable = murim_element_ice }
+			var:murim_element_ice >= 8
+		}
+	}
+}
+
+
+###############################
+# INNER DEMON / HEART DEMON
+###############################
+
+murim_has_inner_demon_trigger = {
+	OR = {
+		has_character_modifier = murim_inner_demon_whispers
+		has_character_modifier = murim_inner_demon_growing
+		has_character_modifier = murim_inner_demon_raging
+		has_character_modifier = murim_heart_demon_awakened
+		trigger_if = {
+			limit = { has_variable = murim_inner_demon_strength }
+			var:murim_inner_demon_strength >= 3
+		}
+	}
+}
+
+murim_inner_demon_mild_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_inner_demon_strength }
+		var:murim_inner_demon_strength >= 1
+		var:murim_inner_demon_strength < 5
+	}
+	trigger_else = {
+		has_character_modifier = murim_inner_demon_whispers
+	}
+}
+
+murim_inner_demon_severe_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_inner_demon_strength }
+			var:murim_inner_demon_strength >= 5
+			var:murim_inner_demon_strength < 10
+		}
+		has_character_modifier = murim_inner_demon_growing
+	}
+}
+
+murim_inner_demon_critical_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_inner_demon_strength }
+			var:murim_inner_demon_strength >= 10
+		}
+		has_character_modifier = murim_inner_demon_raging
+		has_character_modifier = murim_heart_demon_awakened
+	}
+}
+
+murim_can_resist_inner_demon_trigger = {
+	custom_description = {
+		text = murim_has_willpower_to_resist_tt
+		OR = {
+			has_trait = brave
+			has_trait = patient
+			has_trait = calm
+			has_trait = temperate
+			has_trait = zealous
+			learning >= 16
+			trigger_if = {
+				limit = { has_variable = murim_willpower }
+				var:murim_willpower >= 5
+			}
+		}
+	}
+	stress < 80
+	NOT = { has_trait = incapable }
+}
+
+murim_vulnerable_to_inner_demon_trigger = {
+	OR = {
+		stress >= 70
+		has_trait = wrathful
+		has_trait = vengeful
+		has_trait = sadistic
+		has_trait = lunatic
+		has_trait = possessed
+		AND = {
+			has_character_modifier = murim_inner_demon_growing
+			NOT = { murim_can_resist_inner_demon_trigger = yes }
+		}
+	}
+}
+
+murim_has_conquered_inner_demon_trigger = {
+	has_character_flag = murim_inner_demon_conquered
+	NOT = { murim_has_inner_demon_trigger = yes }
+}
+
+
+###############################
+# MERIDIAN STATUS CONDITIONS
+###############################
+
+murim_has_open_meridians_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_meridians_opened }
+		var:murim_meridians_opened >= 1
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_has_all_meridians_open_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_meridians_opened }
+		var:murim_meridians_opened >= 12
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_meridians_blocked_trigger = {
+	OR = {
+		has_character_modifier = murim_meridian_blockage_minor
+		has_character_modifier = murim_meridian_blockage_major
+		has_trait = meridian_blockage
+	}
+}
+
+murim_meridians_damaged_trigger = {
+	OR = {
+		has_character_modifier = murim_meridian_cracked
+		has_character_modifier = murim_meridian_shattered
+		has_character_modifier = murim_meridian_torn
+	}
+}
+
+murim_meridians_can_be_healed_trigger = {
+	murim_meridians_damaged_trigger = yes
+	NOT = { has_character_modifier = murim_meridian_shattered }
+	# Shattered meridians are permanent unless special conditions
+	custom_description = {
+		text = murim_healing_possible_tt
+		OR = {
+			trigger_if = {
+				limit = { has_variable = murim_cultivation_stage }
+				var:murim_cultivation_stage >= 6
+			}
+			any_relation = {
+				type = friend
+				has_trait = whole_of_body
+			}
+			has_character_modifier = murim_healing_master_treatment
+		}
+	}
+}
+
+murim_meridians_enhanced_trigger = {
+	OR = {
+		has_character_modifier = murim_meridians_tempered
+		has_character_modifier = murim_meridians_golden
+		trigger_if = {
+			limit = { has_variable = murim_meridians_opened }
+			var:murim_meridians_opened >= 12
+		}
+	}
+}
+
+murim_qi_flow_optimal_trigger = {
+	murim_has_open_meridians_trigger = yes
+	NOT = { murim_meridians_blocked_trigger = yes }
+	NOT = { murim_meridians_damaged_trigger = yes }
+	NOT = { has_character_modifier = murim_qi_deviation_penalty }
+}
+
+murim_qi_flow_disrupted_trigger = {
+	OR = {
+		murim_meridians_blocked_trigger = yes
+		murim_meridians_damaged_trigger = yes
+		has_character_modifier = murim_qi_deviation_penalty
+		has_character_modifier = murim_unstable_foundation
+	}
+}
+
+
+###############################
+# POISON & TOXIN CONDITIONS
+###############################
+
+murim_is_poisoned_trigger = {
+	OR = {
+		has_character_modifier = murim_poison_mild
+		has_character_modifier = murim_poison_moderate
+		has_character_modifier = murim_poison_severe
+		has_character_modifier = murim_poison_lethal
+		has_character_modifier = murim_poison_chronic
+	}
+}
+
+murim_has_poison_immunity_trigger = {
+	OR = {
+		has_character_modifier = murim_poison_immunity_building
+		has_character_modifier = murim_five_poisons_body_active
+		has_trait = murim_five_poisons_body
+		trigger_if = {
+			limit = { has_variable = murim_poison_resistance }
+			var:murim_poison_resistance >= 10
+		}
+	}
+}
+
+murim_is_poison_master_trigger = {
+	OR = {
+		has_trait = murim_venom_needle
+		has_character_flag = murim_poison_expert
+		trigger_if = {
+			limit = { has_variable = murim_poison_knowledge }
+			var:murim_poison_knowledge >= 8
+		}
+	}
+}
+
+murim_can_cure_poison_trigger = {
+	OR = {
+		murim_is_poison_master_trigger = yes
+		has_trait = whole_of_body
+		trigger_if = {
+			limit = { has_variable = murim_alchemy_skill }
+			var:murim_alchemy_skill >= 5
+		}
+		any_courtier = {
+			murim_is_poison_master_trigger = yes
+		}
+	}
+}
+
+murim_poison_is_lethal_trigger = {
+	OR = {
+		has_character_modifier = murim_poison_lethal
+		AND = {
+			has_character_modifier = murim_poison_severe
+			OR = {
+				has_trait = frail
+				has_trait = wounded_2
+				has_trait = wounded_3
+				age >= 60
+			}
+		}
+	}
+}
+
+
+###############################
+# AGING & LIFESPAN CONDITIONS
+###############################
+
+murim_has_extended_lifespan_trigger = {
+	OR = {
+		murim_is_at_least_earth_realm_trigger = yes
+		has_character_modifier = murim_longevity_pill_active
+		has_character_modifier = murim_life_extension_technique
+		trigger_if = {
+			limit = { has_variable = murim_lifespan_bonus }
+			var:murim_lifespan_bonus >= 10
+		}
+	}
+}
+
+murim_approaching_natural_death_trigger = {
+	# Mortal cultivators still age normally
+	trigger_if = {
+		limit = { murim_is_mortal_realm_trigger = yes }
+		age >= 55
+	}
+	trigger_else_if = {
+		limit = { murim_is_earth_realm_trigger = yes }
+		age >= 80
+	}
+	trigger_else_if = {
+		limit = { murim_is_heaven_realm_trigger = yes }
+		age >= 120
+	}
+	trigger_else_if = {
+		limit = { murim_is_transcendent_realm_trigger = yes }
+		age >= 200
+	}
+	trigger_else = {
+		age >= 55
+	}
+}
+
+murim_in_prime_cultivation_age_trigger = {
+	age >= 16
+	age < 35
+}
+
+murim_past_prime_cultivation_age_trigger = {
+	age >= 40
+	trigger_if = {
+		limit = { murim_is_mortal_realm_trigger = yes }
+		always = yes
+	}
+	trigger_else = {
+		# Higher realms delay aging
+		always = no
+	}
+}
+
+murim_is_young_prodigy_trigger = {
+	age < 20
 	murim_has_cultivation_trigger = yes
+	OR = {
+		prowess >= 15
+		has_trait = genius
+		has_trait = quick
+		trigger_if = {
+			limit = { has_variable = murim_cultivation_stage }
+			var:murim_cultivation_stage >= 3
+		}
+	}
+}
+
+murim_is_old_master_trigger = {
+	age >= 50
+	murim_is_at_least_earth_realm_trigger = yes
+	prowess >= 20
+}
+
+murim_aging_causing_decline_trigger = {
+	murim_approaching_natural_death_trigger = yes
+	NOT = { murim_has_extended_lifespan_trigger = yes }
+	OR = {
+		has_trait = frail
+		has_trait = infirm
+		NOT = { murim_is_at_least_earth_realm_trigger = yes }
+	}
+}
+
+
+###############################
+# COMBAT READINESS CONDITIONS
+###############################
+
+murim_combat_ready_trigger = {
 	is_alive = yes
 	is_adult = yes
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = wounded_3 }
+	is_imprisoned = no
+	NOT = { has_character_modifier = murim_critical_injury }
+}
+
+murim_at_full_combat_power_trigger = {
+	murim_combat_ready_trigger = yes
+	NOT = { has_trait = wounded_1 }
+	NOT = { has_trait = wounded_2 }
+	NOT = { murim_is_poisoned_trigger = yes }
+	NOT = { murim_meridians_damaged_trigger = yes }
+	NOT = { murim_meridians_blocked_trigger = yes }
+	NOT = { has_character_modifier = murim_qi_deviation_penalty }
+	stress < 50
+}
+
+murim_combat_power_diminished_trigger = {
+	murim_combat_ready_trigger = yes
+	OR = {
+		has_trait = wounded_1
+		has_trait = wounded_2
+		murim_is_poisoned_trigger = yes
+		murim_meridians_blocked_trigger = yes
+		has_character_modifier = murim_qi_deviation_penalty
+		stress >= 70
+		murim_aging_causing_decline_trigger = yes
+	}
+}
+
+murim_can_use_qi_in_combat_trigger = {
+	murim_has_cultivation_trigger = yes
+	NOT = { murim_meridians_blocked_trigger = yes }
+	NOT = { has_character_modifier = murim_qi_exhausted }
 	custom_description = {
-		text = murim_technique_slots_available_tt
+		text = murim_has_qi_reserves_tt
 		trigger_if = {
-			limit = { murim_is_mortal_realm_trigger = yes }
-			# Mortal realm: max 2 techniques
-			NOT = {
-				calc_true_if = {
-					amount >= 2
-					has_variable = murim_technique_palm
-					has_variable = murim_technique_sword
-					has_variable = murim_technique_fist
-					has_variable = murim_technique_body
-					has_variable = murim_technique_qi
-					has_variable = murim_technique_movement
-				}
-			}
-		}
-		trigger_else_if = {
-			limit = { murim_is_earth_realm_trigger = yes }
-			# Earth realm: max 4 techniques
-			NOT = {
-				calc_true_if = {
-					amount >= 4
-					has_variable = murim_technique_palm
-					has_variable = murim_technique_sword
-					has_variable = murim_technique_fist
-					has_variable = murim_technique_body
-					has_variable = murim_technique_qi
-					has_variable = murim_technique_movement
-				}
-			}
+			limit = { has_variable = murim_qi_amount }
+			var:murim_qi_amount >= 10
 		}
 		trigger_else = {
-			# Heaven+ realm: max 6 techniques (all)
-			always = yes
+			murim_has_cultivation_trigger = yes
 		}
 	}
 }
 
-###############################
-# AI BEHAVIOR CONDITION CHECKS
-###############################
+murim_can_use_forbidden_power_in_combat_trigger = {
+	OR = {
+		has_trait = murim_blood_demon_art
+		has_trait = murim_soul_devouring_art
+		has_trait = murim_life_stealing_palm
+		has_trait = murim_corpse_puppet_art
+	}
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = murim_forbidden_power_backlash }
+}
 
-murim_ai_should_cultivate_trigger = {
-	is_ai = yes
+murim_is_ambush_capable_trigger = {
+	intrigue >= 12
+	NOT = { has_trait = honest }
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = wounded_3 }
+	OR = {
+		has_trait = murim_venom_needle
+		has_trait = murim_shadow_executioner
+		has_trait = murim_life_stealing_palm
+		trigger_if = {
+			limit = { has_variable = murim_stealth_skill }
+			var:murim_stealth_skill >= 5
+		}
+	}
+}
+
+murim_is_formation_capable_trigger = {
+	# Can participate in group combat formations
+	murim_combat_ready_trigger = yes
 	murim_has_cultivation_trigger = yes
-	NOT = { murim_at_stage_cap_trigger = yes }
-	NOT = { murim_has_any_cultivation_penalty_trigger = yes }
-	ai_zeal >= 30
-}
-
-murim_ai_should_seek_duel_trigger = {
-	is_ai = yes
-	murim_can_duel_trigger = yes
-	prowess >= 12
-	OR = {
-		has_trait = brave
-		has_trait = wrathful
-		ai_boldness >= 50
-	}
-	NOT = { has_trait = craven }
-}
-
-murim_ai_should_join_sect_trigger = {
-	is_ai = yes
-	murim_can_join_sect_trigger = yes
-	murim_is_at_least_earth_realm_trigger = no
-	OR = {
-		ai_sociability >= 25
-		ai_honor >= 50
-		has_trait = gregarious
-	}
-}
-
-murim_ai_should_recover_trigger = {
-	is_ai = yes
-	murim_has_any_cultivation_penalty_trigger = yes
-	murim_can_recover_from_penalty_trigger = yes
-	OR = {
-		murim_penalty_is_severe_trigger = yes
-		ai_rationality >= 25
-	}
-}
-
-murim_ai_should_attempt_breakthrough_trigger = {
-	is_ai = yes
-	murim_ready_for_breakthrough_trigger = yes
-	OR = {
-		ai_boldness >= 50
-		AND = {
-			ai_rationality >= 50
-			murim_breakthrough_high_chance_trigger = yes
+	custom_description = {
+		text = murim_understands_formations_tt
+		OR = {
+			has_variable = murim_sect_id
+			has_trait = murim_sage_commander
+			martial >= 16
+			trigger_if = {
+				limit = { has_variable = murim_formation_knowledge }
+				var:murim_formation_knowledge >= 3
+			}
 		}
+	}
+}
+
+
+###############################
+# SPIRITUAL STATE CONDITIONS
+###############################
+
+murim_in_meditation_state_trigger = {
+	OR = {
+		has_character_modifier = murim_deep_meditation
+		has_character_modifier = murim_cultivation_seclusion
+		has_character_flag = murim_in_closed_door_training
+	}
+}
+
+murim_has_dao_heart_trigger = {
+	OR = {
+		has_character_flag = murim_dao_heart_formed
+		trigger_if = {
+			limit = { has_variable = murim_dao_comprehension }
+			var:murim_dao_comprehension >= 10
+		}
+		AND = {
+			murim_is_at_least_heaven_realm_trigger = yes
+			murim_has_conquered_inner_demon_trigger = yes
+		}
+	}
+}
+
+murim_dao_heart_unstable_trigger = {
+	OR = {
+		murim_has_inner_demon_trigger = yes
+		stress >= 80
 		AND = {
 			has_trait = ambitious
-			NOT = { murim_breakthrough_dangerous_trigger = yes }
+			trigger_if = {
+				limit = { has_variable = murim_dao_comprehension }
+				var:murim_dao_comprehension < 5
+			}
 		}
+		has_character_modifier = murim_dao_heart_cracked
+	}
+}
+
+murim_in_enlightenment_state_trigger = {
+	OR = {
+		has_character_modifier = murim_enlightenment_state
+		has_character_modifier = murim_sudden_enlightenment
+		has_character_flag = murim_experiencing_enlightenment
+	}
+}
+
+murim_spiritual_sense_active_trigger = {
+	murim_is_at_least_earth_realm_trigger = yes
+	NOT = { murim_meridians_blocked_trigger = yes }
+	NOT = { has_character_modifier = murim_spiritual_sense_sealed }
+	NOT = { has_trait = incapable }
+}
+
+murim_divine_sense_active_trigger = {
+	murim_is_at_least_heaven_realm_trigger = yes
+	NOT = { murim_meridians_damaged_trigger = yes }
+	NOT = { has_character_modifier = murim_spiritual_sense_sealed }
+	NOT = { has_trait = incapable }
+}
+
+murim_has_righteous_path_trigger = {
+	OR = {
+		has_trait = murim_righteous_heart
+		has_trait = just
+		has_trait = compassionate
+		AND = {
+			has_trait = honest
+			has_trait = brave
+		}
+	}
+	NOR = {
+		has_trait = murim_blood_demon_art
+		has_trait = murim_soul_devouring_art
+		has_trait = sadistic
+		has_trait = callous
+	}
+}
+
+murim_has_demonic_path_trigger = {
+	OR = {
+		has_trait = murim_blood_demon_art
+		has_trait = murim_soul_devouring_art
+		has_trait = murim_life_stealing_palm
+		has_trait = murim_corpse_puppet_art
+		trigger_if = {
+			limit = { has_variable = murim_demonic_affinity }
+			var:murim_demonic_affinity >= 5
+		}
+	}
+}
+
+murim_has_neutral_path_trigger = {
+	NOT = { murim_has_righteous_path_trigger = yes }
+	NOT = { murim_has_demonic_path_trigger = yes }
+	murim_has_cultivation_trigger = yes
+}
+
+murim_path_conflict_trigger = {
+	# Has both righteous and demonic tendencies -- creates internal conflict
+	OR = {
+		AND = {
+			has_trait = compassionate
+			OR = {
+				has_trait = murim_blood_demon_art
+				has_trait = murim_soul_devouring_art
+			}
+		}
+		AND = {
+			has_trait = just
+			has_trait = murim_life_stealing_palm
+		}
+		AND = {
+			has_trait = murim_righteous_heart
+			trigger_if = {
+				limit = { has_variable = murim_demonic_affinity }
+				var:murim_demonic_affinity >= 3
+			}
+		}
+	}
+}
+
+
+###############################
+# ALCHEMY & PILL CONDITIONS
+###############################
+
+murim_is_alchemist_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_alchemy_skill }
+			var:murim_alchemy_skill >= 3
+		}
+		has_character_flag = murim_alchemist_trained
+		has_character_modifier = murim_alchemy_apprentice
+	}
+}
+
+murim_is_master_alchemist_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_alchemy_skill }
+			var:murim_alchemy_skill >= 8
+		}
+		has_character_flag = murim_master_alchemist
+	}
+}
+
+murim_can_refine_pills_trigger = {
+	murim_is_alchemist_trigger = yes
+	NOT = { has_trait = incapable }
+	NOT = { is_imprisoned = yes }
+	custom_description = {
+		text = murim_has_alchemy_materials_tt
+		OR = {
+			gold >= 50
+			trigger_if = {
+				limit = { has_variable = murim_herb_stock }
+				var:murim_herb_stock >= 3
+			}
+		}
+	}
+}
+
+murim_pill_addiction_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_pill_dependency }
+		var:murim_pill_dependency >= 5
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+murim_pill_addiction_severe_trigger = {
+	trigger_if = {
+		limit = { has_variable = murim_pill_dependency }
+		var:murim_pill_dependency >= 10
+	}
+	trigger_else = {
+		always = no
+	}
+}
+
+
+###############################
+# REPUTATION & FAME CONDITIONS
+###############################
+
+murim_has_jianghu_reputation_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_fame_level }
+			var:murim_fame_level >= 1
+		}
+		prestige >= 500
+		has_character_flag = murim_known_in_jianghu
+	}
+}
+
+murim_has_fearsome_reputation_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_infamy_level }
+			var:murim_infamy_level >= 5
+		}
+		AND = {
+			trigger_if = {
+				limit = { has_variable = murim_duel_kills }
+				var:murim_duel_kills >= 10
+			}
+			dread >= 50
+		}
+		AND = {
+			murim_has_demonic_path_trigger = yes
+			prowess >= 25
+		}
+	}
+}
+
+murim_is_jianghu_celebrity_trigger = {
+	OR = {
+		trigger_if = {
+			limit = { has_variable = murim_fame_level }
+			var:murim_fame_level >= 8
+		}
+		AND = {
+			prestige >= 2000
+			murim_is_at_least_heaven_realm_trigger = yes
+		}
+	}
+}
+
+murim_is_wanted_by_righteous_sects_trigger = {
+	OR = {
+		murim_has_demonic_path_trigger = yes
+		trigger_if = {
+			limit = { has_variable = murim_infamy_level }
+			var:murim_infamy_level >= 8
+		}
+		has_character_modifier = murim_righteous_sect_bounty
+		AND = {
+			has_trait = murderer
+			trigger_if = {
+				limit = { has_variable = murim_duel_kills }
+				var:murim_duel_kills >= 15
+			}
+		}
+	}
+}
+
+murim_is_protected_by_sect_trigger = {
+	has_variable = murim_sect_id
+	OR = {
+		has_variable = murim_is_sect_leader
+		has_character_flag = murim_is_sect_elder
+		has_character_flag = murim_sect_core_disciple
 	}
 }
