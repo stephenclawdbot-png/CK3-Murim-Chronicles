@@ -1,0 +1,543 @@
+# Murim Chronicles - China-Centric Geography Triggers
+# HARD RULE: China (Song Dynasty) is the CENTER of the martial world.
+# Everything radiates outward. Goryeo is secondary hub. Everything else is periphery.
+# INTEGRATION: Referenced by ALL event files, ALL recruitment, ALL tournament logic,
+#              ALL ranking systems, ALL scout routes, ALL travel events.
+# VANILLA SEPARATION: Geography tiers affect MARTIAL systems only, not political.
+
+# ===========================
+# TIER 1 — CENTER: China / Song Dynasty Region
+# 60-70% of martial characters. All 6 clan HQs. Murim Alliance seat.
+# Grand Tournament, Champions Battle ALWAYS held here.
+# ===========================
+
+murim_is_in_china_trigger = {
+    # Character is in the Song Dynasty / Chinese cultural region
+    OR = {
+        # Primary check: Chinese culture group
+        culture = { has_cultural_pillar = heritage_chinese }
+        # Geographic check: key Chinese provinces
+        location = {
+            OR = {
+                geographical_region = world_china    # If CK3 defines this
+                # Fallback: specific title regions representing Song Dynasty
+                any_county_province = {
+                    barony = {
+                        de_jure_liege = {
+                            OR = {
+                                this = title:k_china    # Kingdom-level
+                                this = title:e_china    # Empire-level
+                                # Individual duchies in Chinese heartland
+                                this = title:d_kaifeng
+                                this = title:d_luoyang
+                                this = title:d_chengdu
+                                this = title:d_hangzhou
+                                this = title:d_nanjing
+                                this = title:d_xian
+                                this = title:d_guangzhou
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+murim_is_china_province_trigger = {
+    # Province-level check for a title/location
+    OR = {
+        geographical_region = world_china
+        de_jure_liege = title:e_china
+    }
+}
+
+murim_martial_density_tier_1_trigger = {
+    # Used for seeding: 60-70% of martial characters here
+    murim_is_in_china_trigger = yes
+}
+
+# ===========================
+# TIER 2 — SECONDARY HUB: Goryeo / Korea
+# 15-20% of martial characters. Regional tournaments feed into Chinese main events.
+# Some clan branch offices. Easy access to martial world center.
+# ===========================
+
+murim_is_in_goryeo_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_korean }
+        location = {
+            OR = {
+                geographical_region = world_korea
+                any_county_province = {
+                    barony = {
+                        de_jure_liege = {
+                            OR = {
+                                this = title:k_korea
+                                this = title:e_korea
+                                this = title:d_goryeo
+                                this = title:d_gyeongju
+                                this = title:d_pyongyang
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+murim_martial_density_tier_2_trigger = {
+    murim_is_in_goryeo_trigger = yes
+}
+
+# ===========================
+# TIER 3 — REGIONAL: Japan, India, Persia, Southeast Asia
+# 5-10% of martial characters each. Unique regional styles.
+# Must go to China to be globally ranked. Scouts visit.
+# ===========================
+
+murim_is_in_japan_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_japanese }
+        location = {
+            OR = {
+                geographical_region = world_japan
+                any_county_province = {
+                    barony = {
+                        de_jure_liege = {
+                            OR = {
+                                this = title:k_japan
+                                this = title:e_japan
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+murim_is_in_india_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_indo_aryan }
+        culture = { has_cultural_pillar = heritage_dravidian }
+        location = {
+            OR = {
+                geographical_region = world_india
+                any_county_province = {
+                    barony = {
+                        de_jure_liege = {
+                            OR = {
+                                this = title:e_india
+                                this = title:e_rajastan
+                                this = title:e_bengal
+                                this = title:e_deccan
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+murim_is_in_persia_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_iranian }
+        location = {
+            OR = {
+                geographical_region = world_persia
+                any_county_province = {
+                    barony = {
+                        de_jure_liege = {
+                            OR = {
+                                this = title:e_persia
+                                this = title:k_persia
+                                this = title:k_khorasan
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+murim_is_in_southeast_asia_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_burman }
+        culture = { has_cultural_pillar = heritage_thai }
+        culture = { has_cultural_pillar = heritage_viet }
+        culture = { has_cultural_pillar = heritage_malay }
+        location = {
+            OR = {
+                geographical_region = world_southeast_asia
+                any_county_province = {
+                    barony = {
+                        de_jure_liege = {
+                            OR = {
+                                this = title:e_southeast_asia
+                                this = title:k_burma
+                                this = title:k_siam
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+murim_is_in_regional_tier_trigger = {
+    # Any Tier 3 region
+    OR = {
+        murim_is_in_japan_trigger = yes
+        murim_is_in_india_trigger = yes
+        murim_is_in_persia_trigger = yes
+        murim_is_in_southeast_asia_trigger = yes
+    }
+}
+
+murim_martial_density_tier_3_trigger = {
+    murim_is_in_regional_tier_trigger = yes
+}
+
+# ===========================
+# TIER 4 — FRONTIER: Europe, Africa, Mongol Steppe, Norse
+# 1-3% of martial characters. Primitive/independent styles.
+# Unknown to Chinese murim until they show up.
+# Arrival in China is a MAJOR event.
+# ===========================
+
+murim_is_in_europe_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_latin }
+        culture = { has_cultural_pillar = heritage_frankish }
+        culture = { has_cultural_pillar = heritage_germanic }
+        culture = { has_cultural_pillar = heritage_byzantine }
+        culture = { has_cultural_pillar = heritage_british }
+        culture = { has_cultural_pillar = heritage_slavic }
+        culture = { has_cultural_pillar = heritage_baltic }
+        culture = { has_cultural_pillar = heritage_iberian }
+        culture = { has_cultural_pillar = heritage_italian }
+        location = { geographical_region = world_europe }
+    }
+}
+
+murim_is_in_africa_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_east_african }
+        culture = { has_cultural_pillar = heritage_west_african }
+        culture = { has_cultural_pillar = heritage_central_african }
+        culture = { has_cultural_pillar = heritage_somalian }
+        location = { geographical_region = world_africa }
+    }
+}
+
+murim_is_in_steppe_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_mongolic }
+        culture = { has_cultural_pillar = heritage_turkic }
+        location = { geographical_region = world_steppe }
+    }
+}
+
+murim_is_in_norse_trigger = {
+    OR = {
+        culture = { has_cultural_pillar = heritage_north_germanic }
+        location = { geographical_region = world_scandinavia }
+    }
+}
+
+murim_is_in_frontier_tier_trigger = {
+    OR = {
+        murim_is_in_europe_trigger = yes
+        murim_is_in_africa_trigger = yes
+        murim_is_in_steppe_trigger = yes
+        murim_is_in_norse_trigger = yes
+    }
+}
+
+murim_martial_density_tier_4_trigger = {
+    murim_is_in_frontier_tier_trigger = yes
+}
+
+# ===========================
+# MARTIAL CENTER CHECKS
+# Used by tournaments, rankings, and the Murim Ledger
+# ===========================
+
+murim_is_in_martial_center_trigger = {
+    # In the heart of the martial world (China)
+    murim_is_in_china_trigger = yes
+}
+
+murim_is_in_martial_sphere_trigger = {
+    # In any region with significant martial presence (Tier 1-2)
+    OR = {
+        murim_is_in_china_trigger = yes
+        murim_is_in_goryeo_trigger = yes
+    }
+}
+
+murim_is_in_martial_world_trigger = {
+    # In ANY region with martial presence (Tier 1-3)
+    OR = {
+        murim_is_in_china_trigger = yes
+        murim_is_in_goryeo_trigger = yes
+        murim_is_in_regional_tier_trigger = yes
+    }
+}
+
+murim_is_outside_martial_world_trigger = {
+    # Frontier regions — martial world is almost unknown here
+    NOR = {
+        murim_is_in_china_trigger = yes
+        murim_is_in_goryeo_trigger = yes
+        murim_is_in_regional_tier_trigger = yes
+    }
+}
+
+# ===========================
+# RANKING ELIGIBILITY
+# The Top 50 is a CHINESE institution.
+# Foreign fighters are UNRANKED until they prove themselves.
+# ===========================
+
+murim_is_eligible_for_ranking_trigger = {
+    # To be ranked, you must EITHER:
+    OR = {
+        # 1. Be in China (local fighters automatically eligible)
+        murim_is_in_china_trigger = yes
+        # 2. Have defeated a ranked fighter anywhere in the world
+        has_character_modifier = murim_defeated_ranked_fighter
+        # 3. Have a clan vouch for you
+        OR = {
+            has_trait = outer_disciple
+            has_trait = inner_disciple
+            has_trait = sect_elder
+            has_trait = vice_sect_leader
+            has_trait = sect_leader
+        }
+        # 4. Have won a major tournament (Grand Tournament or Champions Battle)
+        has_character_modifier = murim_tournament_champion
+        # 5. Have traveled to China and fought there (journey complete)
+        has_variable = murim_fought_in_china
+    }
+}
+
+murim_is_unranked_foreign_fighter_trigger = {
+    # Strong fighter who hasn't been to China or proven themselves
+    has_trait = martial_artist
+    prowess >= 15
+    NOR = {
+        murim_is_in_china_trigger = yes
+        has_variable = murim_ranking_position
+        has_character_modifier = murim_defeated_ranked_fighter
+        OR = {
+            has_trait = outer_disciple
+            has_trait = inner_disciple
+            has_trait = sect_elder
+        }
+    }
+}
+
+# ===========================
+# TECHNIQUE CEILING BY REGION
+# Chinese arts: Tier 1-8. Foreign arts: cap at Tier 5-6 unless hybrid.
+# ===========================
+
+murim_technique_ceiling_trigger = {
+    # Returns whether a character can access high-tier techniques
+    # Tier 7-8 techniques require Chinese training or hybrid fusion
+    OR = {
+        # Trained in China
+        murim_is_in_china_trigger = yes
+        has_variable = murim_trained_in_china
+        # Hybrid style (foreign + Chinese fusion)
+        has_character_modifier = murim_hybrid_technique_master
+        # Learned from a Chinese master abroad
+        has_variable = murim_learned_from_chinese_master
+    }
+}
+
+murim_foreign_technique_cap_trigger = {
+    # Character is limited to Tier 5-6 techniques (foreign cap)
+    NOR = {
+        murim_is_in_china_trigger = yes
+        has_variable = murim_trained_in_china
+        has_character_modifier = murim_hybrid_technique_master
+        has_variable = murim_learned_from_chinese_master
+    }
+}
+
+# ===========================
+# TOURNAMENT LOCATION TRIGGERS
+# Grand Tournament and Champions Battle ALWAYS in China.
+# Regional qualifiers in Tier 2-3 regions.
+# ===========================
+
+murim_is_in_grand_tournament_region_trigger = {
+    # Grand Tournament = China only
+    murim_is_in_china_trigger = yes
+}
+
+murim_is_in_regional_tournament_region_trigger = {
+    # Regional tournaments in Tier 2-3
+    OR = {
+        murim_is_in_goryeo_trigger = yes
+        murim_is_in_japan_trigger = yes
+        murim_is_in_india_trigger = yes
+        murim_is_in_persia_trigger = yes
+        murim_is_in_southeast_asia_trigger = yes
+    }
+}
+
+# ===========================
+# MURIM LEDGER ACCESS TRIGGERS
+# Full ledger = in China or in a clan. Partial = elsewhere.
+# ===========================
+
+murim_has_full_ledger_access_trigger = {
+    OR = {
+        murim_is_in_china_trigger = yes
+        has_trait = outer_disciple
+        has_trait = inner_disciple
+        has_trait = sect_elder
+        has_trait = vice_sect_leader
+        has_trait = sect_leader
+    }
+}
+
+murim_has_partial_ledger_access_trigger = {
+    # Outside China, no clan = limited martial world info
+    NOR = {
+        murim_is_in_china_trigger = yes
+        has_trait = outer_disciple
+        has_trait = inner_disciple
+        has_trait = sect_elder
+        has_trait = vice_sect_leader
+        has_trait = sect_leader
+    }
+    # But still aware of martial world
+    OR = {
+        has_trait = martial_awareness
+        has_trait = martial_artist
+    }
+}
+
+# ===========================
+# FOREIGNER ARRIVAL SHOCK TRIGGERS
+# When a non-Chinese fighter arrives in China, it's a major event.
+# The rarer the origin, the bigger the shock.
+# ===========================
+
+murim_is_foreign_fighter_in_china_trigger = {
+    murim_is_in_china_trigger = yes
+    has_trait = martial_artist
+    NOR = {
+        culture = { has_cultural_pillar = heritage_chinese }
+        culture = { has_cultural_pillar = heritage_korean }    # Koreans barely count as foreign
+    }
+}
+
+murim_is_frontier_fighter_in_china_trigger = {
+    # Maximum shock value: a European/African/Norse fighter in China
+    murim_is_in_china_trigger = yes
+    has_trait = martial_artist
+    OR = {
+        culture = { has_cultural_pillar = heritage_latin }
+        culture = { has_cultural_pillar = heritage_frankish }
+        culture = { has_cultural_pillar = heritage_germanic }
+        culture = { has_cultural_pillar = heritage_north_germanic }
+        culture = { has_cultural_pillar = heritage_east_african }
+        culture = { has_cultural_pillar = heritage_west_african }
+        culture = { has_cultural_pillar = heritage_slavic }
+    }
+}
+
+# ===========================
+# TRAVEL DISTANCE VALUES
+# Used for martial journey duration calculations
+# ===========================
+
+murim_travel_distance_to_china_value = {
+    # Returns approximate months of martial travel to China
+    if = {
+        limit = { murim_is_in_china_trigger = yes }
+        value = 1    # Already there
+    }
+    else_if = {
+        limit = { murim_is_in_goryeo_trigger = yes }
+        value = 3    # Short trip
+    }
+    else_if = {
+        limit = { murim_is_in_japan_trigger = yes }
+        value = 6    # Sea crossing
+    }
+    else_if = {
+        limit = { murim_is_in_southeast_asia_trigger = yes }
+        value = 6    # Southern route
+    }
+    else_if = {
+        limit = { murim_is_in_india_trigger = yes }
+        value = 9    # Long overland
+    }
+    else_if = {
+        limit = { murim_is_in_persia_trigger = yes }
+        value = 12    # Silk Road
+    }
+    else_if = {
+        limit = { murim_is_in_steppe_trigger = yes }
+        value = 9    # Northern route
+    }
+    else_if = {
+        limit = { murim_is_in_europe_trigger = yes }
+        value = 18    # Epic journey
+    }
+    else_if = {
+        limit = { murim_is_in_africa_trigger = yes }
+        value = 18    # Epic journey
+    }
+    else = {
+        value = 24    # Unknown far land
+    }
+}
+
+# ===========================
+# SEEDING DISTRIBUTION
+# Used by game start to distribute martial characters
+# ===========================
+
+murim_seeding_weight_value = {
+    # Weight for random martial character placement at game start
+    # Higher = more martial characters seeded in this region
+    if = {
+        limit = { murim_is_in_china_trigger = yes }
+        value = 65    # 60-70% of all martial characters
+    }
+    else_if = {
+        limit = { murim_is_in_goryeo_trigger = yes }
+        value = 18    # 15-20%
+    }
+    else_if = {
+        limit = { murim_is_in_japan_trigger = yes }
+        value = 5    # Part of the 10-15% rest
+    }
+    else_if = {
+        limit = { murim_is_in_india_trigger = yes }
+        value = 4
+    }
+    else_if = {
+        limit = { murim_is_in_persia_trigger = yes }
+        value = 3
+    }
+    else_if = {
+        limit = { murim_is_in_southeast_asia_trigger = yes }
+        value = 2
+    }
+    else = {
+        value = 1    # Frontier: 1-3% combined
+    }
+}
