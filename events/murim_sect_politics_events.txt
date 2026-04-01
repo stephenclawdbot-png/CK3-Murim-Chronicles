@@ -1,0 +1,2001 @@
+# Murim Chronicles - Sect/Clan Internal Politics Events
+# 14 events covering promotions, succession, betrayal, harmony, discord
+# INTEGRATION: Uses shared triggers from murim_triggers.txt:
+#   murim_is_clan_member_trigger, murim_is_martial_artist_trigger
+# INTEGRATION: Uses shared triggers from murim_clan_triggers.txt:
+#   is_sect_leader, is_sect_elder, is_inner_disciple, is_outer_disciple
+# INTEGRATION: Uses shared effects from murim_clan_membership_effects.txt:
+#   promote_to_inner_disciple_effect, promote_to_elder_effect, etc.
+# INTEGRATION: Uses harmony values from murim_harmony_values.txt
+# Cross-refs:
+#   murim_duel_events (formal leadership challenge duels)
+#   murim_clan_war_events (sect splits cause wars)
+#   murim_cultivation_events (betrayer gains demonic techniques)
+#   murim_ranking_events (leader change affects rankings)
+#   murim_politics_events (sect politics ripple to murim politics)
+#   murim_romance_events (romantic entanglement betrayal)
+#   murim_training_events (harmony bonus = training speed)
+#   murim_mentor_events (elder trains inner disciples)
+# GENDER: NO gender restrictions. All ranks open to all genders.
+# AI BEHAVIOR: AI actively participates in all events. See ai_chance blocks.
+
+namespace = murim_sect_politics
+
+######################################
+# PROMOTION EVENTS (0001-0003)
+######################################
+
+# murim_sect_politics.0001 - Outer Disciple Promotion Trial
+# Triggered: yearly pulse, 15% chance for outer disciples with 2+ years tenure
+# AI: Auto-attempts at 15% yearly if prowess >= 8
+murim_sect_politics.0001 = {
+	type = character_event
+	title = murim_sect_politics.0001.t
+	desc = murim_sect_politics.0001.desc
+	theme = martial
+	
+	# NO gender restriction - open to all
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_modifier = sect_outer_disciple
+		NOT = { has_character_modifier = sect_inner_disciple }
+		NOT = { has_character_modifier = sect_elder }
+		NOT = { has_character_modifier = sect_leader }
+		age >= 14
+		# Must have been outer disciple for at least 2 years
+		has_character_modifier = sect_outer_disciple
+		prowess >= 5
+		is_alive = yes
+		is_imprisoned = no
+	}
+	
+	# Option A: Take the formal trial (prowess + martial skill check)
+	option = {
+		name = murim_sect_politics.0001.a
+		# Prowess duel check against threshold
+		duel = {
+			skill = prowess
+			value = 10
+			# Win: promoted to inner disciple
+			50 = {
+				desc = murim_sect_politics.0001.a.success
+				trigger = {
+					prowess >= 10
+				}
+				send_interface_toast = {
+					title = murim_sect_politics.0001.a.success.toast
+				}
+				remove_character_modifier = sect_outer_disciple
+				add_character_modifier = {
+					modifier = sect_inner_disciple
+				}
+				add_prestige = 200
+				# Cross-ref: notify sect leader
+				if = {
+					limit = {
+						exists = scope:sect_leader
+					}
+					scope:sect_leader = {
+						trigger_event = {
+							id = murim_sect_politics.0001
+							days = { 1 3 }
+						}
+					}
+				}
+				stress_impact = {
+					ambitious = medium_stress_loss
+					humble = minor_stress_gain
+				}
+			}
+			# Fail: stay outer disciple, cooldown
+			50 = {
+				desc = murim_sect_politics.0001.a.fail
+				trigger = {
+					prowess < 10
+				}
+				add_character_modifier = {
+					modifier = promotion_trial_cooldown
+					years = 2
+				}
+				add_prestige = -50
+				stress_impact = {
+					ambitious = major_stress_gain
+					content = minor_stress_loss
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -40
+				has_trait = content
+			}
+			modifier = {
+				add = 20
+				prowess >= 12
+			}
+		}
+	}
+	
+	# Option B: Ask a senior to vouch for you (diplomacy check)
+	option = {
+		name = murim_sect_politics.0001.b
+		# Diplomacy check - social promotion
+		random_list = {
+			60 = {
+				trigger = { diplomacy >= 10 }
+				remove_character_modifier = sect_outer_disciple
+				add_character_modifier = {
+					modifier = sect_inner_disciple
+				}
+				add_prestige = 150
+				# Some inner disciples resent political promotion
+				random_list = {
+					40 = {
+						# Resentment from peers
+						add_character_modifier = {
+							modifier = politically_promoted_stigma
+							years = 3
+						}
+					}
+					60 = { }
+				}
+			}
+			40 = {
+				trigger = { diplomacy < 10 }
+				add_prestige = -100
+				add_character_modifier = {
+					modifier = promotion_trial_cooldown
+					years = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				diplomacy >= 12
+			}
+			modifier = {
+				add = -20
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option C: Decline - not ready yet (patient/humble response)
+	option = {
+		name = murim_sect_politics.0001.c
+		add_prestige = 25
+		# Earns respect from elders for humility
+		add_character_modifier = {
+			modifier = humble_disciple_reputation
+			years = 2
+		}
+		stress_impact = {
+			ambitious = major_stress_gain
+			patient = medium_stress_loss
+			humble = medium_stress_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = patient
+			}
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
+		}
+	}
+	
+	# Option D: Challenge the strongest inner disciple directly (risky, bold)
+	option = {
+		name = murim_sect_politics.0001.d
+		# Must have high prowess to even attempt
+		trigger = { prowess >= 12 }
+		# Cross-ref: fires a duel event
+		save_scope_as = challenger
+		# Find strongest inner disciple
+		random_list = {
+			50 = {
+				trigger = { prowess >= 15 }
+				# Decisive victory - promoted AND gain reputation
+				remove_character_modifier = sect_outer_disciple
+				add_character_modifier = {
+					modifier = sect_inner_disciple
+				}
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = bold_promotion_fame
+					years = 5
+				}
+				# Cross-ref: duel event creates fight memory
+				# Uses shared effect: create_fight_memory_effect
+			}
+			30 = {
+				# Narrow victory - promoted but made an enemy
+				remove_character_modifier = sect_outer_disciple
+				add_character_modifier = {
+					modifier = sect_inner_disciple
+				}
+				add_prestige = 200
+				# The defeated inner disciple becomes a rival
+			}
+			20 = {
+				# Defeat - humiliation, demotion risk
+				add_prestige = -200
+				add_character_modifier = {
+					modifier = promotion_trial_cooldown
+					years = 5
+				}
+				# Cross-ref: injury roll
+				random_list = {
+					30 = {
+						add_trait = wounded_1
+					}
+					70 = { }
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 35
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+			modifier = {
+				add = -30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0002 - Elder Nomination
+# Triggered: 5-year pulse, for inner disciples with 10+ years tenure and high prowess
+# AI: Elders may object based on personality traits
+murim_sect_politics.0002 = {
+	type = character_event
+	title = murim_sect_politics.0002.t
+	desc = murim_sect_politics.0002.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_modifier = sect_inner_disciple
+		NOT = { has_character_modifier = sect_elder }
+		age >= 30
+		prowess >= 15
+		martial >= 10
+		is_alive = yes
+		is_imprisoned = no
+	}
+	
+	# Option A: Accept nomination graciously
+	option = {
+		name = murim_sect_politics.0002.a
+		# Council of elders votes
+		random_list = {
+			60 = {
+				desc = murim_sect_politics.0002.a.approved
+				remove_character_modifier = sect_inner_disciple
+				add_character_modifier = {
+					modifier = sect_elder
+				}
+				add_prestige = 500
+				add_piety = 100
+				# Cross-ref: notify martial world
+				# Uses shared effect: notify_martial_world_effect
+			}
+			25 = {
+				desc = murim_sect_politics.0002.a.contested
+				# One elder objects - political subplot begins
+				add_character_modifier = {
+					modifier = contested_elder_nomination
+					years = 1
+				}
+				# Cross-ref: triggers follow-up politics event
+				trigger_event = {
+					id = murim_sect_politics.0006
+					days = { 30 90 }
+				}
+			}
+			15 = {
+				desc = murim_sect_politics.0002.a.rejected
+				add_prestige = -100
+				stress_impact = {
+					ambitious = major_stress_gain
+				}
+			}
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Decline - duty as inner disciple is more important
+	option = {
+		name = murim_sect_politics.0002.b
+		add_prestige = 100
+		add_piety = 50
+		add_character_modifier = {
+			modifier = selfless_disciple_reputation
+			years = 5
+		}
+		stress_impact = {
+			ambitious = major_stress_gain
+			humble = medium_stress_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 25
+				has_trait = humble
+			}
+		}
+	}
+	
+	# Option C: Demand immediate promotion - you've earned it (aggressive)
+	option = {
+		name = murim_sect_politics.0002.c
+		trigger = { has_trait = ambitious }
+		random_list = {
+			40 = {
+				# Forceful but effective - promoted with some resentment
+				remove_character_modifier = sect_inner_disciple
+				add_character_modifier = {
+					modifier = sect_elder
+				}
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = forced_promotion_resentment
+					years = 5
+				}
+			}
+			60 = {
+				# Backfires - seen as arrogant
+				add_prestige = -200
+				add_character_modifier = {
+					modifier = arrogant_disciple_mark
+					years = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = arrogant
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0003 - Vice Leader Position Opens
+# Triggered: on_character_death of vice leader, or retirement event
+# AI: Candidates actively compete
+murim_sect_politics.0003 = {
+	type = character_event
+	title = murim_sect_politics.0003.t
+	desc = murim_sect_politics.0003.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_modifier = sect_elder
+		is_alive = yes
+		is_imprisoned = no
+	}
+	
+	# Option A: Formally challenge for the position (prowess duel)
+	option = {
+		name = murim_sect_politics.0003.a
+		# Cross-ref: fires duel event (murim_duel_events)
+		random_list = {
+			40 = {
+				trigger = { prowess >= 20 }
+				desc = murim_sect_politics.0003.a.victory
+				remove_character_modifier = sect_elder
+				add_character_modifier = {
+					modifier = sect_vice_leader
+				}
+				add_prestige = 800
+			}
+			35 = {
+				desc = murim_sect_politics.0003.a.contested
+				# Multiple challengers - tournament to decide
+				trigger_event = {
+					id = murim_sect_politics.0006
+					days = { 14 30 }
+				}
+			}
+			25 = {
+				desc = murim_sect_politics.0003.a.defeated
+				add_prestige = -200
+				random_list = {
+					40 = { add_trait = wounded_1 }
+					60 = { }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				prowess >= 22
+			}
+		}
+	}
+	
+	# Option B: Political maneuvering - build alliances among elders
+	option = {
+		name = murim_sect_politics.0003.b
+		random_list = {
+			50 = {
+				trigger = { diplomacy >= 14 }
+				desc = murim_sect_politics.0003.b.success
+				remove_character_modifier = sect_elder
+				add_character_modifier = {
+					modifier = sect_vice_leader
+				}
+				add_prestige = 600
+				# Political vice leader - some question legitimacy
+				add_character_modifier = {
+					modifier = political_vice_leader
+					years = 3
+				}
+			}
+			50 = {
+				desc = murim_sect_politics.0003.b.fail
+				add_prestige = -100
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				diplomacy >= 15
+			}
+			modifier = {
+				add = 20
+				has_trait = gregarious
+			}
+		}
+	}
+	
+	# Option C: Call for a sect-wide vote (democratic, risky)
+	option = {
+		name = murim_sect_politics.0003.c
+		random_list = {
+			35 = {
+				desc = murim_sect_politics.0003.c.elected
+				remove_character_modifier = sect_elder
+				add_character_modifier = {
+					modifier = sect_vice_leader
+				}
+				add_prestige = 700
+				# Democratically chosen - high legitimacy
+				add_character_modifier = {
+					modifier = mandate_of_the_sect
+					years = 10
+				}
+			}
+			35 = {
+				desc = murim_sect_politics.0003.c.lost_vote
+				add_prestige = -50
+			}
+			30 = {
+				desc = murim_sect_politics.0003.c.deadlock
+				# Deadlock - sect tension rises
+				# Cross-ref: discord event
+				trigger_event = {
+					id = murim_sect_politics.0009
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option D: Assassinate the rival candidate (dark path)
+	option = {
+		name = murim_sect_politics.0003.d
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = deceitful
+				has_trait = sadistic
+				intrigue >= 14
+			}
+		}
+		random_list = {
+			30 = {
+				desc = murim_sect_politics.0003.d.success
+				# Rival eliminated, you ascend
+				remove_character_modifier = sect_elder
+				add_character_modifier = {
+					modifier = sect_vice_leader
+				}
+				add_prestige = 500
+				add_dread = 20
+				# Secret guilt
+				add_secret = {
+					type = secret_murder
+				}
+				stress_impact = {
+					compassionate = major_stress_gain
+					just = major_stress_gain
+					sadistic = medium_stress_loss
+				}
+			}
+			40 = {
+				desc = murim_sect_politics.0003.d.fail_undetected
+				# Failed but not caught
+				add_prestige = -50
+			}
+			30 = {
+				desc = murim_sect_politics.0003.d.exposed
+				# Caught! Expelled from sect
+				add_prestige = -500
+				# Cross-ref: betrayal discovered event
+				trigger_event = {
+					id = murim_sect_politics.0011
+					days = { 1 7 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 10
+				has_trait = sadistic
+			}
+			modifier = {
+				add = -20
+				has_trait = honest
+			}
+			modifier = {
+				add = -20
+				has_trait = just
+			}
+		}
+	}
+}
+
+######################################
+# SUCCESSION EVENTS (0004-0007)
+######################################
+
+# murim_sect_politics.0004 - SUCCESSION CRISIS
+# Triggered: on_character_death of sect_leader, or leader retirement
+# This is the BIG event - launches major chain
+# AI: Fires automatically, all eligible AI candidates participate
+murim_sect_politics.0004 = {
+	type = character_event
+	title = murim_sect_politics.0004.t
+	desc = murim_sect_politics.0004.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_vice_leader
+			has_character_modifier = sect_elder
+		}
+		is_alive = yes
+		is_imprisoned = no
+	}
+	
+	# Option A: Claim leadership as vice leader (legitimate succession)
+	option = {
+		name = murim_sect_politics.0004.a
+		trigger = { has_character_modifier = sect_vice_leader }
+		random_list = {
+			50 = {
+				desc = murim_sect_politics.0004.a.accepted
+				# Smooth transition
+				trigger_event = {
+					id = murim_sect_politics.0005
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				desc = murim_sect_politics.0004.a.contested
+				# Someone challenges
+				trigger_event = {
+					id = murim_sect_politics.0006
+					days = { 7 30 }
+				}
+			}
+			20 = {
+				desc = murim_sect_politics.0004.a.rejected
+				# Sect rejects vice leader - crisis deepens
+				add_prestige = -300
+				trigger_event = {
+					id = murim_sect_politics.0006
+					days = { 14 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 90
+		}
+	}
+	
+	# Option B: Throw your hat in the ring as elder (dark horse)
+	option = {
+		name = murim_sect_politics.0004.b
+		trigger = { has_character_modifier = sect_elder }
+		trigger_event = {
+			id = murim_sect_politics.0006
+			days = { 7 30 }
+		}
+		add_prestige = 100
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 40
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				prowess >= 20
+			}
+		}
+	}
+	
+	# Option C: Support another candidate (kingmaker)
+	option = {
+		name = murim_sect_politics.0004.c
+		add_prestige = 50
+		# Gain favor with whoever wins
+		add_character_modifier = {
+			modifier = sect_kingmaker
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+			modifier = {
+				add = 20
+				diplomacy >= 14
+			}
+		}
+	}
+	
+	# Option D: Use the chaos to seize power by force (coup)
+	option = {
+		name = murim_sect_politics.0004.d
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				intrigue >= 14
+				prowess >= 22
+			}
+		}
+		trigger_event = {
+			id = murim_sect_politics.0007
+			days = { 3 14 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+			modifier = {
+				add = -25
+				has_trait = just
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0005 - Peaceful Succession
+# Rare but possible with high harmony
+murim_sect_politics.0005 = {
+	type = character_event
+	title = murim_sect_politics.0005.t
+	desc = murim_sect_politics.0005.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_vice_leader
+			has_character_modifier = sect_elder
+		}
+		is_alive = yes
+	}
+	
+	# Option A: Accept the mantle with honor
+	option = {
+		name = murim_sect_politics.0005.a
+		if = {
+			limit = { has_character_modifier = sect_vice_leader }
+			remove_character_modifier = sect_vice_leader
+		}
+		if = {
+			limit = { has_character_modifier = sect_elder }
+			remove_character_modifier = sect_elder
+		}
+		add_character_modifier = {
+			modifier = sect_leader
+		}
+		add_prestige = 1000
+		add_piety = 200
+		# Harmony boost - peaceful transition
+		# Cross-ref: harmony system
+		add_character_modifier = {
+			modifier = sect_harmony_boost
+			years = 5
+		}
+		# Cross-ref: notify martial world
+		stress_impact = {
+			humble = medium_stress_gain
+			ambitious = major_stress_loss
+		}
+		ai_chance = {
+			base = 95
+		}
+	}
+	
+	# Option B: Refuse - not worthy (extremely rare AI choice)
+	option = {
+		name = murim_sect_politics.0005.b
+		add_prestige = 200
+		add_piety = 300
+		add_character_modifier = {
+			modifier = legendary_humility
+			years = 10
+		}
+		# Crisis reopens - need new candidate
+		trigger_event = {
+			id = murim_sect_politics.0004
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				has_trait = humble
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0006 - Contested Succession
+# Two or more candidates compete for leadership
+murim_sect_politics.0006 = {
+	type = character_event
+	title = murim_sect_politics.0006.t
+	desc = murim_sect_politics.0006.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_vice_leader
+			has_character_modifier = sect_elder
+			has_character_modifier = sect_inner_disciple
+		}
+		is_alive = yes
+		is_imprisoned = no
+	}
+	
+	# Option A: Formal duel for leadership
+	option = {
+		name = murim_sect_politics.0006.a
+		# Cross-ref: fires duel event (murim_duel_events)
+		random_list = {
+			40 = {
+				trigger = { prowess >= 18 }
+				desc = murim_sect_politics.0006.a.victory
+				# Clear all old rank modifiers
+				remove_character_modifier = sect_vice_leader
+				remove_character_modifier = sect_elder
+				remove_character_modifier = sect_inner_disciple
+				add_character_modifier = {
+					modifier = sect_leader
+				}
+				add_prestige = 1200
+				# Cross-ref: ranking update after leadership change
+			}
+			30 = {
+				desc = murim_sect_politics.0006.a.draw
+				# Stalemate - compromise needed
+				add_prestige = 100
+				trigger_event = {
+					id = murim_sect_politics.0006
+					days = { 60 120 }
+				}
+			}
+			30 = {
+				desc = murim_sect_politics.0006.a.defeat
+				add_prestige = -300
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					50 = { }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				prowess >= 20
+			}
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Build political alliance
+	option = {
+		name = murim_sect_politics.0006.b
+		random_list = {
+			45 = {
+				trigger = { diplomacy >= 14 }
+				desc = murim_sect_politics.0006.b.coalition_wins
+				remove_character_modifier = sect_vice_leader
+				remove_character_modifier = sect_elder
+				remove_character_modifier = sect_inner_disciple
+				add_character_modifier = {
+					modifier = sect_leader
+				}
+				add_prestige = 800
+				# Coalition leader - must maintain alliances
+				add_character_modifier = {
+					modifier = coalition_obligations
+					years = 5
+				}
+			}
+			55 = {
+				desc = murim_sect_politics.0006.b.coalition_fails
+				add_prestige = -100
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 25
+				diplomacy >= 15
+			}
+		}
+	}
+	
+	# Option C: Sect splits into factions (worst outcome)
+	option = {
+		name = murim_sect_politics.0006.c
+		# This is dramatic - the sect fractures
+		add_prestige = -500
+		# Cross-ref: clan war events (civil war within sect)
+		trigger_event = {
+			id = murim_clan_war.0001
+			days = { 30 90 }
+		}
+		# Harmony crashes
+		add_character_modifier = {
+			modifier = sect_schism_participant
+			years = 10
+		}
+		ai_chance = {
+			base = 10
+			# AI rarely chooses this deliberately - usually forced
+		}
+	}
+	
+	# Option D: Step aside - support the strongest candidate
+	option = {
+		name = murim_sect_politics.0006.d
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = sect_kingmaker
+			years = 5
+		}
+		stress_impact = {
+			ambitious = major_stress_gain
+			content = medium_stress_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+			modifier = {
+				add = -20
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0007 - Coup Attempt
+# An ambitious member tries to seize leadership by force
+# Cross-ref: murim_duel_events, murim_clan_war_events
+murim_sect_politics.0007 = {
+	type = character_event
+	title = murim_sect_politics.0007.t
+	desc = murim_sect_politics.0007.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		is_alive = yes
+		is_imprisoned = no
+	}
+	
+	# Option A: Support the coup (if you're the instigator or ally)
+	option = {
+		name = murim_sect_politics.0007.a
+		random_list = {
+			35 = {
+				desc = murim_sect_politics.0007.a.coup_succeeds
+				# Coup succeeds - new leader installed
+				remove_character_modifier = sect_vice_leader
+				remove_character_modifier = sect_elder
+				remove_character_modifier = sect_inner_disciple
+				add_character_modifier = {
+					modifier = sect_leader
+				}
+				add_prestige = 500
+				add_dread = 30
+				# Harmony drops hard
+				add_character_modifier = {
+					modifier = coup_leader_stigma
+					years = 10
+				}
+			}
+			65 = {
+				desc = murim_sect_politics.0007.a.coup_fails
+				# Coup fails - expelled or killed
+				add_prestige = -1000
+				random_list = {
+					40 = {
+						# Killed in the attempt
+						death = {
+							death_reason = death_duel
+						}
+					}
+					30 = {
+						# Expelled
+						remove_character_modifier = sect_elder
+						remove_character_modifier = sect_inner_disciple
+						remove_character_modifier = sect_outer_disciple
+						add_character_modifier = {
+							modifier = sect_exile
+							years = -1
+						}
+						add_trait = excommunicated
+					}
+					30 = {
+						# Imprisoned
+						imprison = {
+							target = this
+							type = house_arrest
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+			modifier = {
+				add = -30
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option B: Oppose the coup - defend the current order
+	option = {
+		name = murim_sect_politics.0007.b
+		add_prestige = 200
+		# Cross-ref: duel with coup leader
+		random_list = {
+			50 = {
+				desc = murim_sect_politics.0007.b.defended
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = sect_defender_honor
+					years = 10
+				}
+			}
+			30 = {
+				desc = murim_sect_politics.0007.b.pyrrhic
+				# Won but at cost
+				add_prestige = 300
+				add_trait = wounded_1
+			}
+			20 = {
+				desc = murim_sect_politics.0007.b.overwhelmed
+				# Coup succeeds despite resistance
+				add_prestige = 100
+				add_character_modifier = {
+					modifier = resistance_hero
+					years = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+			modifier = {
+				add = 20
+				has_trait = loyal
+			}
+		}
+	}
+	
+	# Option C: Stay neutral - wait and see who wins
+	option = {
+		name = murim_sect_politics.0007.c
+		# Survive regardless of outcome but gain no favor
+		add_prestige = -50
+		stress_impact = {
+			brave = medium_stress_gain
+			craven = medium_stress_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+			modifier = {
+				add = 15
+				has_trait = cynical
+			}
+		}
+	}
+	
+	# Option D: Flee the sect entirely during the chaos
+	option = {
+		name = murim_sect_politics.0007.d
+		# Leave during confusion - no one notices
+		remove_character_modifier = sect_elder
+		remove_character_modifier = sect_inner_disciple
+		remove_character_modifier = sect_outer_disciple
+		remove_character_modifier = sect_vice_leader
+		add_character_modifier = {
+			modifier = sect_deserter
+			years = 5
+		}
+		add_prestige = -200
+		# Cross-ref: may become wandering master
+		stress_impact = {
+			brave = major_stress_gain
+			craven = medium_stress_loss
+			loyal = major_stress_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# HARMONY EVENTS (0008-0009)
+######################################
+
+# murim_sect_politics.0008 - Sect Golden Age (High Harmony)
+# Triggered: 5-year pulse, if sect harmony high and stable
+murim_sect_politics.0008 = {
+	type = character_event
+	title = murim_sect_politics.0008.t
+	desc = murim_sect_politics.0008.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_modifier = sect_leader
+		# Harmony must be high - no recent conflicts
+		NOT = { has_character_modifier = sect_schism_participant }
+		NOT = { has_character_modifier = coup_leader_stigma }
+		NOT = { has_character_modifier = forced_promotion_resentment }
+		is_alive = yes
+	}
+	
+	# Option A: Invest in training - all members improve
+	option = {
+		name = murim_sect_politics.0008.a
+		add_prestige = 500
+		# All sect members gain training bonus
+		add_character_modifier = {
+			modifier = golden_age_training_bonus
+			years = 5
+		}
+		# Cross-ref: training events fire more frequently
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Recruit aggressively - expand the sect
+	option = {
+		name = murim_sect_politics.0008.b
+		add_prestige = 300
+		# More characters join the sect
+		add_character_modifier = {
+			modifier = golden_age_recruitment_surge
+			years = 3
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Build reputation - diplomatic prestige
+	option = {
+		name = murim_sect_politics.0008.c
+		add_prestige = 800
+		add_piety = 200
+		# Sect becomes famous
+		add_character_modifier = {
+			modifier = renowned_sect_leader
+			years = 10
+		}
+		# Cross-ref: tournament invitations, alliance offers
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+# murim_sect_politics.0009 - Sect Discord (Low Harmony)
+# Triggered: yearly pulse if multiple negative modifiers active
+murim_sect_politics.0009 = {
+	type = character_event
+	title = murim_sect_politics.0009.t
+	desc = murim_sect_politics.0009.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_leader
+			has_character_modifier = sect_vice_leader
+			has_character_modifier = sect_elder
+		}
+		is_alive = yes
+	}
+	
+	# Option A: Call emergency council - address grievances
+	option = {
+		name = murim_sect_politics.0009.a
+		random_list = {
+			40 = {
+				desc = murim_sect_politics.0009.a.resolved
+				add_prestige = 200
+				remove_character_modifier = sect_discord_active
+				add_character_modifier = {
+					modifier = sect_reconciliation
+					years = 2
+				}
+			}
+			60 = {
+				desc = murim_sect_politics.0009.a.failed
+				add_prestige = -100
+				# Discord worsens
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Purge dissidents - iron fist approach
+	option = {
+		name = murim_sect_politics.0009.b
+		add_dread = 20
+		random_list = {
+			50 = {
+				desc = murim_sect_politics.0009.b.order_restored
+				remove_character_modifier = sect_discord_active
+				add_character_modifier = {
+					modifier = iron_fist_leader
+					years = 5
+				}
+			}
+			50 = {
+				desc = murim_sect_politics.0009.b.rebellion
+				# Purge triggers rebellion
+				trigger_event = {
+					id = murim_sect_politics.0007
+					days = { 14 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 15
+				has_trait = wrathful
+			}
+		}
+	}
+	
+	# Option C: Let it burn - focus on personal power
+	option = {
+		name = murim_sect_politics.0009.c
+		# Members defect, sect weakens
+		add_prestige = -300
+		# Cross-ref: rival sects sense weakness
+		# Cross-ref: clan war events (rival attacks weakened sect)
+		trigger_event = {
+			id = murim_clan_war.0001
+			days = { 60 180 }
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+	
+	# Option D: Resign leadership to restore harmony
+	option = {
+		name = murim_sect_politics.0009.d
+		trigger = { has_character_modifier = sect_leader }
+		remove_character_modifier = sect_leader
+		add_character_modifier = {
+			modifier = sect_elder
+		}
+		add_prestige = 100
+		add_piety = 200
+		# Triggers new succession
+		trigger_event = {
+			id = murim_sect_politics.0004
+			days = { 7 30 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
+			modifier = {
+				add = 15
+				age >= 60
+			}
+		}
+	}
+}
+
+######################################
+# BETRAYAL EVENTS (0010-0014)
+######################################
+
+# murim_sect_politics.0010 - Member Betrays Clan
+# Triggered: yearly pulse, ~3% for AI with ambitious/deceitful, lower for others
+# NO gender restriction
+murim_sect_politics.0010 = {
+	type = character_event
+	title = murim_sect_politics.0010.t
+	desc = murim_sect_politics.0010.desc
+	theme = intrigue
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		NOT = { has_character_modifier = sect_leader }
+		is_alive = yes
+		is_imprisoned = no
+		# Betrayal motivations - at least one must apply
+		OR = {
+			has_trait = ambitious
+			has_trait = deceitful
+			has_trait = vengeful
+			has_trait = sadistic
+			intrigue >= 14
+			# Low opinion of leader
+			# Romantic entanglement with rival sect member
+		}
+	}
+	
+	# Option A: Steal secret techniques before leaving
+	option = {
+		name = murim_sect_politics.0010.a
+		random_list = {
+			40 = {
+				desc = murim_sect_politics.0010.a.success
+				# Gained forbidden knowledge
+				add_character_modifier = {
+					modifier = stolen_sect_techniques
+					years = -1
+				}
+				# Leave sect
+				remove_character_modifier = sect_inner_disciple
+				remove_character_modifier = sect_outer_disciple
+				remove_character_modifier = sect_elder
+				add_character_modifier = {
+					modifier = sect_traitor
+					years = -1
+				}
+				add_prestige = -500
+				# Cross-ref: betrayal discovered event (delayed)
+				trigger_event = {
+					id = murim_sect_politics.0011
+					days = { 30 180 }
+				}
+			}
+			60 = {
+				desc = murim_sect_politics.0010.a.caught
+				# Caught stealing - immediate expulsion + hunt
+				trigger_event = {
+					id = murim_sect_politics.0011
+					days = { 1 3 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+			modifier = {
+				add = 15
+				intrigue >= 16
+			}
+		}
+	}
+	
+	# Option B: Sabotage from within (double agent)
+	option = {
+		name = murim_sect_politics.0010.b
+		add_character_modifier = {
+			modifier = sect_double_agent
+			years = -1
+		}
+		# Hidden - not immediately detected
+		# Cross-ref: double agent event chain (0012)
+		trigger_event = {
+			id = murim_sect_politics.0012
+			days = { 180 365 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				intrigue >= 16
+			}
+		}
+	}
+	
+	# Option C: Defect openly (honorable betrayal, if such a thing exists)
+	option = {
+		name = murim_sect_politics.0010.c
+		# Public departure - less sneaky, more honest
+		remove_character_modifier = sect_inner_disciple
+		remove_character_modifier = sect_outer_disciple
+		remove_character_modifier = sect_elder
+		add_character_modifier = {
+			modifier = sect_defector
+			years = -1
+		}
+		add_prestige = -300
+		# Some respect for honesty
+		stress_impact = {
+			honest = minor_stress_loss
+			deceitful = medium_stress_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option D: Don't betray - the moment of doubt passes
+	option = {
+		name = murim_sect_politics.0010.d
+		stress_impact = {
+			ambitious = medium_stress_gain
+			content = medium_stress_loss
+			loyal = major_stress_loss
+		}
+		# Loyalty reinforced
+		add_character_modifier = {
+			modifier = renewed_loyalty
+			years = 5
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = loyal
+			}
+			modifier = {
+				add = -20
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0011 - Betrayal Discovered
+# Triggered by: 0010 (betrayal), 0003.d (assassination exposed)
+murim_sect_politics.0011 = {
+	type = character_event
+	title = murim_sect_politics.0011.t
+	desc = murim_sect_politics.0011.desc
+	theme = intrigue
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_leader
+			has_character_modifier = sect_elder
+		}
+		is_alive = yes
+	}
+	
+	# Option A: Hunt the traitor - send assassins
+	option = {
+		name = murim_sect_politics.0011.a
+		add_dread = 15
+		# Cross-ref: assassination events or duel events
+		random_list = {
+			50 = {
+				desc = murim_sect_politics.0011.a.found
+				add_prestige = 200
+			}
+			50 = {
+				desc = murim_sect_politics.0011.a.escaped
+				add_prestige = -100
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = vengeful
+			}
+		}
+	}
+	
+	# Option B: Exile them - formal banishment
+	option = {
+		name = murim_sect_politics.0011.b
+		add_prestige = 100
+		# Traitor is marked, cannot return to any righteous sect
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Forgive if they return (merciful)
+	option = {
+		name = murim_sect_politics.0011.c
+		trigger = {
+			OR = {
+				has_trait = compassionate
+				has_trait = forgiving
+			}
+		}
+		add_piety = 200
+		# Opens door for returning traitor event (0014)
+		add_character_modifier = {
+			modifier = merciful_sect_policy
+			years = 5
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option D: Declare vendetta - anyone who helps the traitor is also an enemy
+	option = {
+		name = murim_sect_politics.0011.d
+		add_dread = 25
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = sect_vendetta_declared
+			years = 10
+		}
+		# Cross-ref: clan war may trigger if traitor joins rival sect
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				has_trait = vengeful
+			}
+			modifier = {
+				add = 15
+				has_trait = wrathful
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0012 - Double Agent Discovered (Investigation Chain)
+# Triggered: delayed from 0010.b, clues appear over time
+murim_sect_politics.0012 = {
+	type = character_event
+	title = murim_sect_politics.0012.t
+	desc = murim_sect_politics.0012.desc
+	theme = intrigue
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_leader
+			has_character_modifier = sect_elder
+		}
+		is_alive = yes
+	}
+	
+	# Option A: Investigate quietly - find the mole
+	option = {
+		name = murim_sect_politics.0012.a
+		random_list = {
+			40 = {
+				trigger = { intrigue >= 12 }
+				desc = murim_sect_politics.0012.a.found
+				# Mole identified
+				add_prestige = 300
+				# Cross-ref: betrayal discovered
+				trigger_event = {
+					id = murim_sect_politics.0011
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				desc = murim_sect_politics.0012.a.wrong_person
+				# Accused wrong person - internal conflict
+				add_prestige = -200
+			}
+			30 = {
+				desc = murim_sect_politics.0012.a.inconclusive
+				# Can't find them yet - more clues needed
+				trigger_event = {
+					id = murim_sect_politics.0012
+					days = { 90 180 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Set a trap - feed false information
+	option = {
+		name = murim_sect_politics.0012.b
+		random_list = {
+			50 = {
+				trigger = { intrigue >= 14 }
+				desc = murim_sect_politics.0012.b.trapped
+				add_prestige = 400
+				# Mole exposed through false intel
+				trigger_event = {
+					id = murim_sect_politics.0011
+					days = { 14 30 }
+				}
+			}
+			50 = {
+				desc = murim_sect_politics.0012.b.aware
+				# Mole realized and fled
+				add_prestige = -100
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				intrigue >= 16
+			}
+		}
+	}
+	
+	# Option C: Ignore the signs - paranoia is worse than a spy
+	option = {
+		name = murim_sect_politics.0012.c
+		stress_impact = {
+			paranoid = major_stress_gain
+			trusting = minor_stress_loss
+		}
+		# Double agent continues operating
+		ai_chance = {
+			base = 15
+		}
+	}
+	
+	# Option D: Purge everyone suspicious - scorched earth
+	option = {
+		name = murim_sect_politics.0012.d
+		add_dread = 20
+		# Multiple members expelled - some innocent
+		add_prestige = -200
+		# Harmony drops
+		add_character_modifier = {
+			modifier = paranoid_purge
+			years = 5
+		}
+		# Cross-ref: discord event
+		trigger_event = {
+			id = murim_sect_politics.0009
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0013 - Defection to Heavenly Demon Sect
+# Especially dramatic - righteous member turns to the dark side
+# Cross-ref: murim_heavenly_demon_events, murim_cultivation_events
+murim_sect_politics.0013 = {
+	type = character_event
+	title = murim_sect_politics.0013.t
+	desc = murim_sect_politics.0013.desc
+	theme = intrigue
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		# Must be in a righteous sect
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_monk
+		}
+		NOT = { has_character_modifier = sect_leader }
+		is_alive = yes
+		# Motivation: ambitious, has grudge, or offered power
+		OR = {
+			has_trait = ambitious
+			has_trait = vengeful
+			has_trait = sadistic
+			has_trait = deceitful
+		}
+	}
+	
+	# Option A: Embrace the dark path - full defection
+	option = {
+		name = murim_sect_politics.0013.a
+		# Remove all righteous sect traits
+		remove_trait = mount_hua_disciple
+		remove_trait = wudang_disciple
+		remove_trait = shaolin_monk
+		remove_character_modifier = sect_inner_disciple
+		remove_character_modifier = sect_outer_disciple
+		remove_character_modifier = sect_elder
+		# Gain demonic traits
+		add_trait = heavenly_demon_disciple
+		add_character_modifier = {
+			modifier = sect_outer_disciple
+		}
+		add_character_modifier = {
+			modifier = fallen_to_darkness
+			years = -1
+		}
+		add_prestige = -500
+		add_dread = 20
+		# Cross-ref: demonic cultivation path opens
+		# Cross-ref: former sect declares vendetta
+		trigger_event = {
+			id = murim_sect_politics.0011
+			days = { 7 30 }
+		}
+		stress_impact = {
+			compassionate = major_stress_gain
+			honest = major_stress_gain
+			sadistic = medium_stress_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+		}
+	}
+	
+	# Option B: Refuse the dark temptation
+	option = {
+		name = murim_sect_politics.0013.b
+		add_piety = 300
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = resisted_dark_path
+			years = 10
+		}
+		stress_impact = {
+			ambitious = medium_stress_gain
+			zealous = major_stress_loss
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = zealous
+			}
+			modifier = {
+				add = 15
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option C: Pretend to defect - become a spy FOR your sect
+	option = {
+		name = murim_sect_politics.0013.c
+		trigger = { intrigue >= 14 }
+		# Dangerous double life
+		add_character_modifier = {
+			modifier = undercover_in_demon_sect
+			years = -1
+		}
+		# Does NOT remove original sect traits (secretly still a member)
+		# Cross-ref: double agent chain but reversed
+		stress_impact = {
+			honest = major_stress_gain
+			deceitful = minor_stress_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				intrigue >= 16
+			}
+			modifier = {
+				add = 15
+				has_trait = loyal
+			}
+		}
+	}
+	
+	# Option D: Report the approach to your sect leader (loyal response)
+	option = {
+		name = murim_sect_politics.0013.d
+		add_prestige = 300
+		add_piety = 100
+		# Leader now knows Heavenly Demon is recruiting
+		# Cross-ref: sect war events may trigger
+		add_character_modifier = {
+			modifier = loyal_sect_informant
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = loyal
+			}
+		}
+	}
+}
+
+# murim_sect_politics.0014 - Returning Traitor
+# Someone who betrayed the sect years ago returns seeking forgiveness
+# Triggered: random event for sect leaders, ~5% yearly if a known traitor exists
+murim_sect_politics.0014 = {
+	type = character_event
+	title = murim_sect_politics.0014.t
+	desc = murim_sect_politics.0014.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		OR = {
+			has_character_modifier = sect_leader
+			has_character_modifier = sect_elder
+		}
+		is_alive = yes
+	}
+	
+	# Option A: Accept them back - forgiveness and redemption
+	option = {
+		name = murim_sect_politics.0014.a
+		add_piety = 300
+		add_prestige = 100
+		# Returning traitor gains special status
+		# They may have learned enemy techniques (useful)
+		random_list = {
+			50 = {
+				desc = murim_sect_politics.0014.a.genuine
+				# Genuinely reformed - valuable asset
+				add_character_modifier = {
+					modifier = redeemed_traitor_knowledge
+					years = 10
+				}
+			}
+			30 = {
+				desc = murim_sect_politics.0014.a.useful
+				# Useful intelligence about rival sects
+				add_character_modifier = {
+					modifier = insider_knowledge
+					years = 5
+				}
+			}
+			20 = {
+				desc = murim_sect_politics.0014.a.still_spy
+				# They're STILL a spy! Betrayal again later
+				trigger_event = {
+					id = murim_sect_politics.0010
+					days = { 180 365 }
+				}
+			}
+		}
+		stress_impact = {
+			vengeful = major_stress_gain
+			compassionate = medium_stress_loss
+			forgiving = major_stress_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = compassionate
+			}
+			modifier = {
+				add = 20
+				has_trait = forgiving
+			}
+			modifier = {
+				add = -20
+				has_trait = vengeful
+			}
+		}
+	}
+	
+	# Option B: Reject them - once a traitor, always a traitor
+	option = {
+		name = murim_sect_politics.0014.b
+		add_prestige = 200
+		add_dread = 10
+		# Send them away
+		stress_impact = {
+			compassionate = medium_stress_gain
+			vengeful = medium_stress_loss
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = vengeful
+			}
+		}
+	}
+	
+	# Option C: Accept but test them - probationary period
+	option = {
+		name = murim_sect_politics.0014.c
+		# They must prove loyalty through dangerous mission
+		random_list = {
+			40 = {
+				desc = murim_sect_politics.0014.c.passes
+				# Completed the test - readmitted as outer disciple
+				add_prestige = 200
+			}
+			30 = {
+				desc = murim_sect_politics.0014.c.fails
+				# Failed the test - exiled again
+				add_prestige = -50
+			}
+			30 = {
+				desc = murim_sect_politics.0014.c.dies
+				# Died during the test mission
+				add_prestige = 100
+				add_piety = 50
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option D: Execute them as a message to all traitors
+	option = {
+		name = murim_sect_politics.0014.d
+		trigger = {
+			OR = {
+				has_trait = vengeful
+				has_trait = sadistic
+				has_trait = wrathful
+			}
+		}
+		add_dread = 30
+		add_prestige = 100
+		add_piety = -100
+		# No one will ever betray again... or so you think
+		add_character_modifier = {
+			modifier = traitor_executioner
+			years = 10
+		}
+		stress_impact = {
+			compassionate = major_stress_gain
+			sadistic = major_stress_loss
+			just = medium_stress_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 15
+				has_trait = vengeful
+			}
+		}
+	}
+}
