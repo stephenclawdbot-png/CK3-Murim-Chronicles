@@ -1,618 +1,969 @@
-# Murim Chronicles Phase 4 - Jianghu Underground Triggers
-# Conditions for underground network membership, shadow operations, imperial infiltration
+# Murim Chronicles - Jianghu Underground Scripted Triggers
+# Phase 4: Wuxia Underground Integration
+# All triggers for jianghu underground mechanics: shadow brokers, sect politics,
+# assassination contracts, spy networks, trade route control, imperial exam rigging,
+# puppet governor installation, and hidden cultivator warfare influence.
 
-######################################
-# JIANGHU MEMBERSHIP CHECKS
-######################################
+####################################
+# SECTION 1: CORE JIANGHU STATUS TRIGGERS
+####################################
 
+# Check if character is part of the jianghu underground
 murim_is_jianghu_member_trigger = {
 	OR = {
 		has_trait = shadow_broker
-		has_trait = sect_spy
-		has_trait = jianghu_enforcer
-		has_trait = wulin_alliance_member
-		has_trait = black_market_dealer
-		has_trait = forbidden_text_smuggler
-		has_trait = underground_tournament_champion
-		has_trait = hidden_master
-		has_character_flag = murim_jianghu_inducted
+		has_trait = sect_enforcer
+		has_trait = jianghu_informant
+		has_trait = underground_merchant
+		has_trait = hidden_cultivator
+		has_trait = wulin_outcast
+		has_trait = jianghu_assassin
+		has_trait = puppet_master
+		has_character_flag = joined_jianghu_underground
+		has_variable = jianghu_standing
 	}
 }
 
+# Check if character has significant jianghu influence
+murim_has_jianghu_influence_trigger = {
+	murim_is_jianghu_member_trigger = yes
+	OR = {
+		has_variable_list = jianghu_contacts
+		AND = {
+			has_variable = jianghu_standing
+			var:jianghu_standing >= 25
+		}
+		has_trait = shadow_broker
+		has_trait = puppet_master
+	}
+}
+
+# Check if character is a jianghu leader (sect master, alliance head, etc.)
 murim_is_jianghu_leader_trigger = {
-	murim_is_jianghu_member_trigger = yes
 	OR = {
-		has_trait = shadow_broker
-		has_trait = hidden_master
-		has_trait = wulin_alliance_member
-		AND = {
-			has_character_flag = murim_jianghu_inducted
-			var:murim_jianghu_influence >= 80
-		}
-	}
-}
-
-murim_is_active_jianghu_operative_trigger = {
-	murim_is_jianghu_member_trigger = yes
-	is_alive = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	age >= 16
-}
-
-######################################
-# UNDERGROUND CONNECTION CHECKS
-######################################
-
-murim_has_underground_connections_trigger = {
-	OR = {
-		murim_is_jianghu_member_trigger = yes
-		has_character_flag = murim_underground_contact
-		any_relation = {
-			type = friend
-			murim_is_jianghu_member_trigger = yes
-		}
-		any_relation = {
-			type = lover
-			murim_is_jianghu_member_trigger = yes
-		}
-		any_vassal = {
-			murim_is_jianghu_member_trigger = yes
-		}
-		any_courtier = {
-			murim_is_jianghu_member_trigger = yes
-		}
-	}
-}
-
-murim_has_strong_underground_network_trigger = {
-	murim_has_underground_connections_trigger = yes
-	OR = {
-		intrigue >= 15
+		has_trait = sect_master
+		has_trait = wulin_alliance_leader
 		has_trait = shadow_broker
 		AND = {
-			is_ruler = yes
-			any_courtier = {
-				count >= 3
-				murim_is_jianghu_member_trigger = yes
-			}
+			has_variable = jianghu_standing
+			var:jianghu_standing >= 75
 		}
+		has_character_flag = recognized_jianghu_authority
 	}
 }
 
-murim_has_underground_informant_trigger = {
-	OR = {
-		has_character_flag = murim_has_planted_spy
-		any_courtier = {
-			has_trait = sect_spy
-		}
-		any_relation = {
-			type = friend
-			has_trait = imperial_informant
-		}
-	}
-}
-
-######################################
-# IMPERIAL CULTIVATOR SECRET CHECKS
-######################################
-
-murim_is_imperial_cultivator_secret_trigger = {
-	has_character_flag = murim_initiated
-	OR = {
-		has_trait = court_cultivator_secret
-		AND = {
-			is_ruler = yes
-			highest_held_title_tier >= tier_county
-			murim_is_cultivator_trigger = yes
-			NOT = { has_character_flag = murim_cultivation_public }
-		}
-	}
-}
-
-murim_is_known_cultivator_at_court_trigger = {
-	murim_is_cultivator_trigger = yes
-	OR = {
-		has_character_flag = murim_cultivation_public
-		has_trait = retired_legend
-		any_secret = {
-			secret_type = secret_murim_cultivator
-			is_known_by = scope:target
-		}
-	}
-}
-
+# Check if character is a hidden cultivator (concealed martial power)
 murim_is_hidden_cultivator_trigger = {
-	murim_is_cultivator_trigger = yes
-	NOT = { has_character_flag = murim_cultivation_public }
-	NOT = { has_trait = retired_legend }
-}
-
-murim_can_be_exposed_as_cultivator_trigger = {
-	murim_is_hidden_cultivator_trigger = yes
-	NOT = { has_character_modifier = murim_identity_perfectly_concealed }
 	OR = {
-		has_trait_rank = {
-			trait = cultivation_rank
-			rank >= 3
-		}
-		has_character_flag = murim_used_technique_publicly
-		any_secret = {
-			secret_type = secret_murim_cultivator
-			is_known_by >= 3
+		has_trait = hidden_cultivator
+		has_character_flag = concealed_cultivation_base
+		AND = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 3
+			has_character_flag = disguised_as_mortal
 		}
 	}
 }
 
-######################################
-# COURT INFLUENCE CHECKS
-######################################
-
-murim_can_influence_court_trigger = {
-	is_alive = yes
-	age >= 16
-	is_imprisoned = no
-	OR = {
-		is_ruler = yes
-		is_powerful_vassal = yes
-		is_councillor = yes
-		has_trait = shadow_broker
-		has_trait = puppet_official
-		AND = {
-			murim_is_jianghu_member_trigger = yes
-			intrigue >= 12
-		}
-		AND = {
-			murim_has_underground_connections_trigger = yes
-			diplomacy >= 14
-		}
-	}
-}
-
-murim_can_manipulate_succession_trigger = {
-	murim_can_influence_court_trigger = yes
-	OR = {
-		has_trait = shadow_broker
-		intrigue >= 18
-		AND = {
-			murim_has_strong_underground_network_trigger = yes
-			diplomacy >= 14
-		}
-	}
-	NOT = { has_character_modifier = murim_recently_manipulated_succession }
-}
-
-murim_can_influence_title_grant_trigger = {
-	murim_can_influence_court_trigger = yes
-	OR = {
-		is_powerful_vassal = yes
-		has_trait = shadow_broker
-		has_trait = puppet_official
-		AND = {
-			murim_is_jianghu_leader_trigger = yes
-			intrigue >= 14
-		}
-	}
-}
-
-######################################
-# SECT BACKING CHECKS
-######################################
-
-murim_has_sect_backing_trigger = {
-	OR = {
-		has_character_flag = murim_sect_member
-		has_character_flag = murim_sect_elder
-		has_character_flag = murim_sect_leader
-		any_relation = {
-			type = friend
-			has_character_flag = murim_sect_leader
-		}
-		AND = {
-			has_character_flag = murim_jianghu_inducted
-			var:murim_sect_standing >= 50
-		}
-	}
-}
-
-murim_has_powerful_sect_backing_trigger = {
-	murim_has_sect_backing_trigger = yes
-	OR = {
-		has_character_flag = murim_sect_elder
-		has_character_flag = murim_sect_leader
-		AND = {
-			any_relation = {
-				type = friend
-				has_character_flag = murim_sect_leader
-			}
-			var:murim_sect_standing >= 80
-		}
-	}
-}
-
-murim_is_sect_backed_ruler_trigger = {
-	is_ruler = yes
-	murim_has_sect_backing_trigger = yes
-	highest_held_title_tier >= tier_county
-}
-
-######################################
-# SHADOW BROKER CHECKS
-######################################
-
-murim_is_shadow_broker_trigger = {
-	has_trait = shadow_broker
-	is_alive = yes
-	is_imprisoned = no
-}
-
-murim_is_active_shadow_broker_trigger = {
-	murim_is_shadow_broker_trigger = yes
-	intrigue >= 12
-	gold >= 50
-	NOT = { has_character_modifier = murim_network_compromised }
-}
-
-murim_can_become_shadow_broker_trigger = {
-	NOT = { has_trait = shadow_broker }
+# Check if character is operating covertly in the mundane world
+murim_is_operating_covertly_trigger = {
 	murim_is_jianghu_member_trigger = yes
-	intrigue >= 16
-	gold >= 200
-	age >= 25
+	NOR = {
+		has_trait = known_cultivator
+		has_character_flag = exposed_jianghu_identity
+		has_character_flag = publicly_declared_sect_allegiance
+	}
 	OR = {
-		has_trait = deceitful
+		has_trait = hidden_cultivator
+		has_trait = jianghu_informant
+		has_character_flag = covert_operations_active
+	}
+}
+
+####################################
+# SECTION 2: SHADOW BROKER TRIGGERS
+####################################
+
+# Check if character can act as shadow broker
+murim_can_be_shadow_broker_trigger = {
+	is_adult = yes
+	is_imprisoned = no
+	NOR = {
+		has_trait = honest
+		has_trait = just
+		has_trait = zealous
+	}
+	OR = {
+		intrigue >= 12
 		has_trait = schemer
-		has_trait = ambitious
-		has_character_flag = murim_ran_black_market
+		has_trait = deceitful
+		has_trait = shadow_broker
 	}
-}
-
-murim_has_broker_intelligence_trigger = {
-	murim_is_shadow_broker_trigger = yes
 	OR = {
-		has_character_flag = murim_spy_network_active
-		any_courtier = {
-			count >= 2
-			has_trait = sect_spy
-		}
-		var:murim_intelligence_network >= 5
+		has_variable = jianghu_standing
+		has_trait = jianghu_informant
+		has_character_flag = shadow_network_established
 	}
 }
 
-######################################
-# EXAMINATION RIGGING CHECKS
-######################################
-
-murim_can_rig_examination_trigger = {
-	murim_can_influence_court_trigger = yes
+# Check if character has an active shadow broker network
+murim_has_shadow_network_trigger = {
 	OR = {
 		has_trait = shadow_broker
-		has_trait = sect_spy
-		AND = {
-			murim_has_underground_connections_trigger = yes
-			intrigue >= 16
-		}
-		AND = {
-			learning >= 16
-			has_character_flag = murim_examination_insider
-		}
+		has_character_flag = shadow_network_established
 	}
-	NOT = { has_character_modifier = murim_examination_rigging_discovered }
+	has_variable = shadow_network_reach
+	var:shadow_network_reach >= 1
+	NOT = { has_character_flag = shadow_network_compromised }
 }
 
-murim_can_forge_examination_results_trigger = {
-	murim_can_rig_examination_trigger = yes
+# Check if character can install puppet governors via shadow broker network
+murim_can_install_puppet_governor_trigger = {
+	murim_has_shadow_network_trigger = yes
 	OR = {
-		learning >= 18
-		has_trait = scholar
-		AND = {
-			has_trait = shadow_broker
-			gold >= 100
-		}
+		has_trait = shadow_broker
+		has_trait = puppet_master
+	}
+	gold >= 150
+	has_variable = shadow_network_reach
+	var:shadow_network_reach >= 3
+	any_vassal = {
+		is_ai = yes
+		NOT = { has_character_flag = puppet_governor_installed }
 	}
 }
 
-murim_has_examination_connections_trigger = {
+# Check if a character is a puppet governor
+murim_is_puppet_governor_trigger = {
+	has_character_flag = puppet_governor_installed
+	has_variable = puppet_master_id
+	is_ai = yes
+}
+
+# Check if shadow broker can intercept communications
+murim_can_intercept_messages_trigger = {
+	murim_has_shadow_network_trigger = yes
+	intrigue >= 15
 	OR = {
-		has_character_flag = murim_examination_insider
-		any_courtier = {
-			OR = {
-				has_trait = scholar
-				has_character_flag = murim_imperial_examiner
-			}
-		}
-		any_relation = {
-			type = friend
-			has_character_flag = murim_imperial_examiner
-		}
+		has_trait = shadow_broker
+		has_perk = truth_is_relative_perk
+		has_character_flag = interceptor_network_active
 	}
+	NOT = { has_character_modifier = network_exposed_cooldown }
 }
 
-######################################
-# TRADE ROUTE CONTROL CHECKS
-######################################
+####################################
+# SECTION 3: SECT POLITICS TRIGGERS
+####################################
 
-murim_controls_trade_route_trigger = {
+# Check if character's sect can rig imperial exams
+murim_sect_can_rig_exams_trigger = {
+	is_adult = yes
 	is_ruler = yes
 	OR = {
-		has_character_flag = murim_controls_silk_road_segment
-		has_character_flag = murim_controls_tea_route
-		has_character_flag = murim_controls_salt_route
-		has_character_flag = murim_controls_jade_route
-		has_character_modifier = murim_trade_route_controller
+		has_trait = sect_master
+		has_trait = sect_elder
+		has_trait = shadow_broker
+	}
+	OR = {
+		has_variable = sect_influence
+		has_character_flag = sect_court_infiltration
+	}
+	any_courtier = {
+		OR = {
+			has_trait = jianghu_informant
+			has_trait = sect_enforcer
+			has_character_flag = exam_rigging_agent
+		}
+	}
+	NOT = { has_character_modifier = exam_rigging_exposed_cooldown }
+}
+
+# Check if character can manipulate sect elections
+murim_can_manipulate_sect_election_trigger = {
+	OR = {
+		has_trait = sect_elder
+		has_trait = sect_master
+		has_trait = puppet_master
+	}
+	intrigue >= 10
+	has_variable = sect_political_capital
+	var:sect_political_capital >= 20
+	NOT = { has_character_flag = election_manipulation_caught }
+}
+
+# Check if a sect has court infiltrators placed
+murim_sect_has_infiltrators_trigger = {
+	has_variable = sect_infiltrator_count
+	var:sect_infiltrator_count >= 1
+	any_courtier = {
+		OR = {
+			has_trait = jianghu_informant
+			has_character_flag = sect_infiltrator_placed
+		}
+		NOT = { has_character_flag = infiltrator_exposed }
 	}
 }
 
-murim_can_seize_trade_route_trigger = {
-	is_ruler = yes
-	is_at_war = no
+# Check if sect power struggle is active
+murim_sect_power_struggle_active_trigger = {
 	OR = {
+		has_character_flag = sect_succession_crisis
+		has_character_flag = sect_schism_brewing
+		AND = {
+			has_variable = sect_unity
+			var:sect_unity <= 25
+		}
+	}
+}
+
+# Check if character can form inter-sect alliance
+murim_can_form_sect_alliance_trigger = {
+	OR = {
+		has_trait = sect_master
+		has_trait = wulin_alliance_leader
+	}
+	diplomacy >= 12
+	has_variable = sect_reputation
+	var:sect_reputation >= 30
+	NOT = { has_character_flag = sect_alliance_cooldown }
+	NOT = { has_character_modifier = betrayed_sect_alliance }
+}
+
+# Check if sect is eligible for wulin tournament hosting
+murim_sect_can_host_tournament_trigger = {
+	has_trait = sect_master
+	is_ruler = yes
+	gold >= 200
+	has_variable = sect_reputation
+	var:sect_reputation >= 50
+	NOT = { has_character_flag = tournament_hosted_recently }
+	NOT = { has_character_modifier = sect_disgraced }
+}
+
+####################################
+# SECTION 4: ASSASSINATION CONTRACT TRIGGERS
+####################################
+
+# Check if character can issue assassination contracts
+murim_can_issue_assassination_contract_trigger = {
+	is_adult = yes
+	is_imprisoned = no
+	gold >= 100
+	OR = {
+		has_trait = shadow_broker
+		has_trait = jianghu_assassin
 		murim_is_jianghu_leader_trigger = yes
 		AND = {
-			murim_has_strong_underground_network_trigger = yes
-			gold >= 300
-		}
-		AND = {
-			martial >= 14
-			has_character_flag = murim_jianghu_inducted
-			num_of_knights >= 5
+			has_variable = jianghu_standing
+			var:jianghu_standing >= 40
 		}
 	}
-	NOT = { has_character_modifier = murim_recently_seized_trade_route }
+	NOT = { has_character_modifier = assassination_contract_cooldown }
 }
 
-murim_controls_multiple_trade_routes_trigger = {
-	custom_description = {
-		text = "murim_controls_two_or_more_routes"
-		calc_true_if = {
-			amount >= 2
-			has_character_flag = murim_controls_silk_road_segment
-			has_character_flag = murim_controls_tea_route
-			has_character_flag = murim_controls_salt_route
-			has_character_flag = murim_controls_jade_route
-		}
-	}
-}
-
-######################################
-# PUPPET OFFICIAL CHECKS
-######################################
-
-murim_is_puppet_official_trigger = {
-	has_trait = puppet_official
-	is_ruler = yes
-}
-
-murim_can_install_puppet_trigger = {
-	murim_is_jianghu_leader_trigger = yes
+# Check if character can accept assassination contracts
+murim_can_accept_assassination_contract_trigger = {
+	is_adult = yes
+	is_imprisoned = no
+	prowess >= 10
 	OR = {
-		has_trait = shadow_broker
+		has_trait = jianghu_assassin
+		has_trait = sect_enforcer
+		has_trait = wulin_outcast
+		AND = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 2
+			has_trait = deceitful
+		}
+	}
+	NOR = {
+		has_trait = compassionate
+		has_trait = just
+		has_character_flag = sworn_pacifist
+	}
+}
+
+# Check if assassination contract is viable against target
+murim_assassination_contract_viable_trigger = {
+	# Target scope
+	is_alive = yes
+	is_imprisoned = no
+	NOR = {
+		has_trait = immortal_cultivator
+		has_character_modifier = heavenly_protection
+		AND = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 6
+			has_character_flag = divine_sense_active
+		}
+	}
+}
+
+# Check if character has active bodyguard cultivators
+murim_has_cultivator_bodyguards_trigger = {
+	OR = {
+		has_character_flag = cultivator_bodyguard_detail
+		any_knight = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 2
+			has_character_flag = assigned_as_bodyguard
+		}
+	}
+}
+
+# Check if assassination attempt can be detected
+murim_can_detect_assassination_trigger = {
+	OR = {
 		intrigue >= 18
+		has_trait = paranoid
+		murim_has_cultivator_bodyguards_trigger = yes
+		AND = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 4
+			has_character_flag = spiritual_sense_active
+		}
+		has_character_modifier = heightened_vigilance
 	}
-	gold >= 200
-	NOT = { has_character_modifier = murim_puppet_scheme_failed_recently }
 }
 
-murim_is_controlled_by_underground_trigger = {
+####################################
+# SECTION 5: SPY NETWORK TRIGGERS
+####################################
+
+# Check if character can establish a spy network in jianghu
+murim_can_establish_spy_network_trigger = {
+	is_adult = yes
+	intrigue >= 10
 	OR = {
-		has_trait = puppet_official
+		has_trait = jianghu_informant
+		has_trait = shadow_broker
+		has_trait = schemer
+		has_trait = deceitful
+	}
+	gold >= 50
+	NOT = { has_character_flag = spy_network_compromised_recently }
+}
+
+# Check if character has an active jianghu spy network
+murim_has_spy_network_trigger = {
+	has_variable = jianghu_spy_network_strength
+	var:jianghu_spy_network_strength >= 1
+	NOT = { has_character_flag = spy_network_dismantled }
+}
+
+# Check if spy network can gather intel on a target sect
+murim_spy_network_can_target_sect_trigger = {
+	murim_has_spy_network_trigger = yes
+	var:jianghu_spy_network_strength >= 3
+	NOT = { has_character_modifier = counter_intelligence_blocked }
+}
+
+# Check if character can run counter-intelligence operations
+murim_can_run_counter_intelligence_trigger = {
+	OR = {
+		has_trait = paranoid
+		has_trait = shadow_broker
+		intrigue >= 16
+	}
+	murim_is_jianghu_member_trigger = yes
+	OR = {
+		has_character_flag = counter_intel_trained
+		has_trait = sect_master
+		has_variable = jianghu_spy_network_strength
+	}
+}
+
+# Check if rival spy network has been detected
+murim_rival_spy_detected_trigger = {
+	OR = {
+		has_character_flag = rival_spy_network_detected
 		AND = {
-			any_liege_or_above = {
-				has_trait = puppet_official
+			murim_can_run_counter_intelligence_trigger = yes
+			any_courtier = {
+				has_character_flag = suspected_spy
 			}
 		}
-		has_character_modifier = murim_under_sect_control
 	}
 }
 
-######################################
-# WULIN ALLIANCE CHECKS
-######################################
-
-murim_is_wulin_alliance_member_trigger = {
-	has_trait = wulin_alliance_member
-	is_alive = yes
+# Check if character can flip a spy (turn double agent)
+murim_can_flip_spy_trigger = {
+	murim_has_spy_network_trigger = yes
+	intrigue >= 14
+	OR = {
+		has_trait = shadow_broker
+		has_trait = puppet_master
+		has_perk = truth_is_relative_perk
+	}
+	gold >= 75
+	NOT = { has_character_modifier = spy_flip_cooldown }
 }
 
-murim_can_join_wulin_alliance_trigger = {
-	murim_is_cultivator_trigger = yes
-	NOT = { has_trait = wulin_alliance_member }
-	NOT = { has_trait = demonic_cultivator }
-	NOT = { has_character_flag = murim_wulin_expelled }
-	prowess >= 12
+####################################
+# SECTION 6: TRADE ROUTE CONTROL TRIGGERS
+####################################
+
+# Check if character can control jianghu trade routes
+murim_can_control_trade_routes_trigger = {
+	is_ruler = yes
+	is_adult = yes
+	murim_is_jianghu_member_trigger = yes
+	OR = {
+		has_trait = underground_merchant
+		has_trait = shadow_broker
+		has_trait = sect_master
+		stewardship >= 12
+	}
+	OR = {
+		capital_province = {
+			OR = {
+				terrain = plains
+				terrain = farmlands
+				terrain = floodplains
+				has_building_or_higher = market_villages_01
+			}
+		}
+		has_character_flag = trade_route_access_granted
+	}
+}
+
+# Check if character has active trade route control
+murim_has_trade_route_control_trigger = {
+	has_variable = controlled_trade_routes
+	var:controlled_trade_routes >= 1
+	NOT = { has_character_flag = trade_routes_seized }
+}
+
+# Check if character can smuggle cultivation resources
+murim_can_smuggle_resources_trigger = {
+	murim_has_trade_route_control_trigger = yes
+	OR = {
+		has_trait = underground_merchant
+		has_trait = shadow_broker
+	}
+	NOT = { has_character_modifier = smuggling_crackdown_active }
+	gold >= 25
+}
+
+# Check if character can establish black market for artifacts
+murim_can_run_black_market_trigger = {
+	murim_is_jianghu_member_trigger = yes
+	OR = {
+		has_trait = underground_merchant
+		has_trait = shadow_broker
+		AND = {
+			stewardship >= 14
+			has_trait = greedy
+		}
+	}
+	is_ruler = yes
+	NOT = { has_character_modifier = black_market_raided }
+	NOT = { has_character_flag = black_market_cooldown }
+}
+
+# Check if trade route is contested by rival sect
+murim_trade_route_contested_trigger = {
+	murim_has_trade_route_control_trigger = yes
+	OR = {
+		has_character_flag = trade_route_rivalry_active
+		any_rival = {
+			murim_has_trade_route_control_trigger = yes
+		}
+	}
+}
+
+# Check if character can levy trade route tolls
+murim_can_levy_trade_tolls_trigger = {
+	murim_has_trade_route_control_trigger = yes
+	var:controlled_trade_routes >= 2
+	is_ruler = yes
+	NOT = { has_character_modifier = trade_toll_backlash }
+}
+
+####################################
+# SECTION 7: HIDDEN CULTIVATOR WARFARE TRIGGERS
+####################################
+
+# Check if hidden cultivators can tip a war
+murim_hidden_cultivators_can_tip_war_trigger = {
+	is_at_war = yes
+	OR = {
+		murim_is_jianghu_leader_trigger = yes
+		has_character_flag = hidden_cultivator_war_pact
+	}
+	any_knight = {
+		has_variable = cultivation_realm
+		var:cultivation_realm >= 3
+	}
+	NOT = { has_character_modifier = cultivator_war_intervention_cooldown }
+}
+
+# Check if character can deploy cultivator strike force
+murim_can_deploy_cultivator_strike_trigger = {
+	is_at_war = yes
+	murim_is_jianghu_member_trigger = yes
+	gold >= 200
+	any_knight = {
+		count >= 3
+		has_variable = cultivation_realm
+		var:cultivation_realm >= 2
+		NOT = { has_character_flag = cultivation_war_exhausted }
+	}
+}
+
+# Check if enemy army has cultivator commanders
+murim_enemy_has_cultivator_commanders_trigger = {
+	is_at_war = yes
+	any_war_enemy = {
+		any_knight = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 2
+		}
+	}
+}
+
+# Check if cultivator duel can resolve siege
+murim_cultivator_duel_can_resolve_siege_trigger = {
+	is_at_war = yes
+	any_knight = {
+		has_variable = cultivation_realm
+		var:cultivation_realm >= 3
+		prowess >= 15
+		NOT = { has_character_modifier = duel_exhaustion }
+	}
+	NOT = { has_character_flag = siege_duel_attempted_recently }
+}
+
+# Check if character can call upon sect reinforcements in war
+murim_can_call_sect_reinforcements_trigger = {
+	is_at_war = yes
+	OR = {
+		has_trait = sect_master
+		has_trait = wulin_alliance_leader
+	}
+	has_variable = sect_military_reserves
+	var:sect_military_reserves >= 500
+	NOT = { has_character_modifier = sect_reinforcement_cooldown }
+}
+
+# Check if spiritual bombardment is available in siege
+murim_can_use_spiritual_bombardment_trigger = {
+	is_at_war = yes
+	any_knight = {
+		has_variable = cultivation_realm
+		var:cultivation_realm >= 5
+		NOT = { has_character_modifier = qi_depleted }
+	}
+	NOT = { has_character_flag = spiritual_bombardment_used_this_war }
+}
+
+####################################
+# SECTION 8: IMPERIAL EXAM RIGGING TRIGGERS
+####################################
+
+# Check if imperial exam rigging is possible
+murim_can_rig_imperial_exams_trigger = {
+	murim_sect_can_rig_exams_trigger = yes
+	OR = {
+		any_realm_county = {
+			has_county_modifier = exam_center_province
+		}
+		has_character_flag = remote_exam_influence
+	}
+	gold >= 100
+	NOT = { has_character_flag = exam_rigging_under_investigation }
+}
+
+# Check if exam rigging has been detected
+murim_exam_rigging_detected_trigger = {
+	has_character_flag = exam_rigging_active
+	OR = {
+		has_character_flag = exam_irregularities_noticed
+		any_vassal = {
+			has_trait = just
+			intrigue >= 12
+			has_character_flag = investigating_exams
+		}
+		any_courtier = {
+			has_character_flag = exam_whistleblower
+		}
+	}
+}
+
+# Check if character can place exam graduates as agents
+murim_can_place_exam_agents_trigger = {
+	murim_can_rig_imperial_exams_trigger = yes
+	has_character_flag = exam_rigging_active
+	NOT = { has_character_flag = exam_rigging_detected }
+	has_variable = rigged_exam_graduates
+	var:rigged_exam_graduates >= 1
+}
+
+# Check if exam scandal would destabilize realm
+murim_exam_scandal_destabilizing_trigger = {
+	has_character_flag = exam_rigging_detected
+	OR = {
+		realm_size >= 20
+		any_vassal = {
+			opinion = {
+				target = root
+				value < 0
+			}
+			has_trait = just
+		}
+		tyranny >= 20
+	}
+}
+
+####################################
+# SECTION 9: PUPPET GOVERNOR SYSTEM TRIGGERS
+####################################
+
+# Check if character can begin puppet governor installation
+murim_can_begin_puppet_installation_trigger = {
+	murim_can_install_puppet_governor_trigger = yes
+	NOT = { has_character_flag = puppet_installation_in_progress }
+	NOT = { has_character_modifier = puppet_scheme_exposed }
+}
+
+# Check if puppet governor is still loyal
+murim_puppet_governor_loyal_trigger = {
+	murim_is_puppet_governor_trigger = yes
+	opinion = {
+		target = scope:puppet_master
+		value >= -10
+	}
+	NOT = { has_character_flag = puppet_governor_rebelling }
+	NOT = { has_character_flag = puppet_strings_discovered }
+}
+
+# Check if puppet governor network is at risk of exposure
+murim_puppet_network_exposure_risk_trigger = {
+	has_variable = puppet_governor_count
+	var:puppet_governor_count >= 3
+	OR = {
+		any_vassal = {
+			murim_is_puppet_governor_trigger = yes
+			has_character_flag = puppet_strings_discovered
+		}
+		any_courtier = {
+			intrigue >= 16
+			has_character_flag = suspicious_of_puppet_network
+		}
+		has_character_modifier = puppet_network_investigation_active
+	}
+}
+
+# Check if character can liberate a puppet governor
+murim_can_liberate_puppet_governor_trigger = {
+	is_adult = yes
+	is_ruler = yes
 	OR = {
 		has_trait = just
-		has_trait = brave
-		has_trait = honest
 		has_trait = compassionate
-		has_character_flag = murim_sect_member
+		has_trait = honest
+		intrigue >= 15
 	}
-}
-
-murim_can_call_wulin_summit_trigger = {
-	has_trait = wulin_alliance_member
-	OR = {
-		has_character_flag = murim_wulin_elder
-		has_character_flag = murim_wulin_leader
-		AND = {
-			prowess >= 20
-			diplomacy >= 14
-		}
+	any_vassal = {
+		murim_is_puppet_governor_trigger = yes
 	}
-	NOT = { has_character_modifier = murim_recent_wulin_summit }
+	NOT = { has_character_flag = puppet_liberation_cooldown }
 }
 
-######################################
-# ASSASSINATION & SABOTAGE CHECKS
-######################################
+####################################
+# SECTION 10: CROSS-SYSTEM INTEGRATION TRIGGERS
+####################################
 
-murim_can_commission_assassination_trigger = {
-	murim_has_underground_connections_trigger = yes
-	gold >= 150
-	intrigue >= 10
-	NOT = { has_trait = just }
-	NOT = { has_trait = compassionate }
-	NOT = { has_character_modifier = murim_assassination_cooldown }
-}
-
-murim_can_sabotage_rival_sect_trigger = {
-	murim_is_jianghu_member_trigger = yes
-	intrigue >= 12
-	OR = {
-		has_trait = deceitful
-		has_trait = schemer
-		has_trait = shadow_broker
-		has_trait = sect_spy
-	}
-	NOT = { has_character_modifier = murim_sabotage_cooldown }
-}
-
-murim_can_poison_rivals_qi_trigger = {
-	murim_is_cultivator_trigger = yes
-	murim_has_underground_connections_trigger = yes
-	OR = {
-		learning >= 14
-		has_trait = physician
-		has_character_flag = murim_knows_poison_arts
-	}
-	NOT = { has_trait = honest }
-	NOT = { has_character_modifier = murim_poison_cooldown }
-}
-
-######################################
-# FORBIDDEN KNOWLEDGE CHECKS
-######################################
-
-murim_has_forbidden_text_access_trigger = {
-	OR = {
-		has_trait = forbidden_text_smuggler
-		has_character_flag = murim_owns_forbidden_text
-		any_relation = {
-			type = friend
-			has_trait = forbidden_text_smuggler
-		}
-		AND = {
+# Check if jianghu influence can affect council vote
+murim_jianghu_can_sway_council_trigger = {
+	murim_has_jianghu_influence_trigger = yes
+	is_ruler = yes
+	any_councillor = {
+		OR = {
 			murim_is_jianghu_member_trigger = yes
-			gold >= 100
+			has_character_flag = jianghu_compromised
+			opinion = {
+				target = root
+				value < 10
+			}
 		}
 	}
 }
 
-murim_can_smuggle_forbidden_texts_trigger = {
-	murim_is_jianghu_member_trigger = yes
-	intrigue >= 12
-	NOT = { has_character_modifier = murim_smuggling_busted }
-	OR = {
-		has_trait = forbidden_text_smuggler
-		has_trait = black_market_dealer
-		AND = {
-			murim_has_underground_connections_trigger = yes
-			gold >= 50
+# Check if jianghu network spans multiple realms
+murim_jianghu_cross_realm_network_trigger = {
+	murim_has_shadow_network_trigger = yes
+	has_variable = shadow_network_reach
+	var:shadow_network_reach >= 5
+	any_neighboring_and_across_water_top_liege_realm_owner = {
+		any_courtier = {
+			has_character_flag = shadow_network_contact
 		}
 	}
 }
 
-######################################
-# PROTECTION RACKET CHECKS
-######################################
-
-murim_can_run_protection_racket_trigger = {
-	murim_is_jianghu_member_trigger = yes
-	is_ruler = yes
-	martial >= 10
+# Check if character can leverage jianghu for diplomacy
+murim_can_use_jianghu_diplomacy_trigger = {
+	murim_is_jianghu_leader_trigger = yes
+	diplomacy >= 10
 	OR = {
-		has_trait = jianghu_enforcer
 		has_trait = shadow_broker
-		prowess >= 14
+		has_trait = sect_master
+		has_trait = wulin_alliance_leader
 	}
-	NOT = { has_character_modifier = murim_racket_exposed }
+	NOT = { has_character_modifier = jianghu_diplomatic_failure_cooldown }
 }
 
-murim_is_under_protection_racket_trigger = {
+# Check if jianghu underground is destabilizing the region
+murim_jianghu_destabilizing_region_trigger = {
+	any_realm_county = {
+		OR = {
+			has_county_modifier = jianghu_unrest
+			has_county_modifier = underground_gang_war
+			has_county_modifier = black_market_explosion
+		}
+	}
 	OR = {
-		has_character_modifier = murim_paying_protection
-		has_character_flag = murim_racket_victim
+		has_character_flag = jianghu_power_struggle_spillover
+		realm_size >= 10
 	}
 }
 
-######################################
-# IMPERIAL CRACKDOWN CHECKS
-######################################
+# Check if character can call emergency wulin congress
+murim_can_call_wulin_congress_trigger = {
+	OR = {
+		has_trait = wulin_alliance_leader
+		AND = {
+			has_trait = sect_master
+			has_variable = sect_reputation
+			var:sect_reputation >= 80
+		}
+	}
+	prestige >= 500
+	NOT = { has_character_flag = wulin_congress_cooldown }
+	NOT = { has_character_modifier = wulin_congress_recently_held }
+}
 
-murim_can_launch_imperial_crackdown_trigger = {
+# Check if jianghu can influence succession
+murim_jianghu_can_influence_succession_trigger = {
+	murim_is_jianghu_leader_trigger = yes
+	murim_has_shadow_network_trigger = yes
+	intrigue >= 14
+	OR = {
+		has_trait = puppet_master
+		has_trait = shadow_broker
+	}
+	any_claim_holder = {
+		OR = {
+			murim_is_jianghu_member_trigger = yes
+			has_character_flag = jianghu_backed_claimant
+		}
+	}
+}
+
+# Check if realm is ripe for jianghu takeover
+murim_realm_ripe_for_jianghu_takeover_trigger = {
 	is_ruler = yes
-	highest_held_title_tier >= tier_duchy
-	NOT = { murim_is_jianghu_member_trigger = yes }
-	martial >= 12
+	OR = {
+		has_realm_law_flag = crown_authority_0
+		tyranny >= 30
+		any_vassal = {
+			count >= 3
+			opinion = {
+				target = root
+				value < -25
+			}
+		}
+	}
+	murim_jianghu_destabilizing_region_trigger = yes
+}
+
+# Check if character can resist jianghu influence
+murim_can_resist_jianghu_influence_trigger = {
 	OR = {
 		has_trait = just
 		has_trait = zealous
-		has_trait = diligent
-		has_character_flag = murim_discovered_underground
+		has_trait = brave
+		intrigue >= 16
+		AND = {
+			has_variable = cultivation_realm
+			var:cultivation_realm >= 4
+		}
 	}
-	NOT = { has_character_modifier = murim_recent_crackdown }
+	NOT = { has_character_flag = jianghu_compromised }
+	NOT = { murim_is_puppet_governor_trigger = yes }
 }
 
-murim_is_crackdown_target_trigger = {
+####################################
+# SECTION 11: UNDERGROUND ECONOMY TRIGGERS
+####################################
+
+# Check if character can fence stolen artifacts
+murim_can_fence_artifacts_trigger = {
+	murim_can_run_black_market_trigger = yes
+	any_held_artifact = {
+		has_artifact_flag = stolen_artifact
+	}
+	NOT = { has_character_modifier = artifact_fence_cooldown }
+}
+
+# Check if character can launder gold through jianghu channels
+murim_can_launder_gold_trigger = {
+	murim_is_jianghu_member_trigger = yes
+	gold >= 200
+	OR = {
+		has_trait = underground_merchant
+		has_trait = shadow_broker
+		murim_has_trade_route_control_trigger = yes
+	}
+	NOT = { has_character_modifier = financial_investigation_active }
+}
+
+# Check if cultivation resource black market is available
+murim_cultivation_black_market_available_trigger = {
 	murim_is_jianghu_member_trigger = yes
 	OR = {
-		has_character_flag = murim_crackdown_wanted
-		has_character_modifier = murim_imperial_bounty
+		capital_province = {
+			has_province_modifier = underground_pill_market
+		}
+		has_character_flag = black_market_access
+		murim_has_trade_route_control_trigger = yes
+	}
+}
+
+# Check if character can bribe officials through jianghu channels
+murim_can_bribe_officials_trigger = {
+	murim_is_jianghu_member_trigger = yes
+	gold >= 75
+	OR = {
+		has_trait = shadow_broker
+		has_trait = underground_merchant
+		has_trait = puppet_master
+	}
+	is_ruler = yes
+	NOT = { has_character_modifier = bribery_investigation_active }
+}
+
+####################################
+# SECTION 12: JIANGHU EVENT CONDITION TRIGGERS
+####################################
+
+# Check if the great sect war can begin
+murim_great_sect_war_can_begin_trigger = {
+	game_date >= 900.1.1
+	NOT = { has_global_flag = great_sect_war_active }
+	NOT = { has_global_flag = great_sect_war_cooldown }
+	any_living_character = {
+		count >= 5
+		has_trait = sect_master
+		is_ruler = yes
+	}
+}
+
+# Check if wulin martial tournament season is approaching
+murim_tournament_season_trigger = {
+	OR = {
+		current_month >= 3
+		current_month <= 5
+	}
+	OR = {
+		current_month >= 9
+		current_month <= 11
+	}
+	NOT = { has_global_flag = tournament_season_active }
+}
+
+# Check if jianghu purge is imminent
+murim_jianghu_purge_imminent_trigger = {
+	is_ruler = yes
+	has_trait = just
+	OR = {
+		has_character_flag = discovered_jianghu_infiltration
+		has_character_flag = puppet_network_fully_exposed
+		tyranny <= 5
+	}
+	any_vassal_or_below = {
+		count >= 3
+		murim_is_jianghu_member_trigger = yes
+	}
+}
+
+# Check if heavenly mandate is threatened by jianghu
+murim_heavenly_mandate_threatened_trigger = {
+	has_variable = heavenly_mandate
+	var:heavenly_mandate <= 30
+	murim_jianghu_destabilizing_region_trigger = yes
+	OR = {
+		murim_puppet_network_exposure_risk_trigger = yes
+		murim_exam_scandal_destabilizing_trigger = yes
+		any_war_enemy = {
+			murim_is_jianghu_leader_trigger = yes
+		}
+	}
+}
+
+# Check if character can initiate jianghu reformation
+murim_can_initiate_jianghu_reform_trigger = {
+	murim_is_jianghu_leader_trigger = yes
+	has_variable = jianghu_standing
+	var:jianghu_standing >= 90
+	diplomacy >= 16
+	learning >= 12
+	NOT = { has_character_flag = jianghu_reform_attempted }
+	NOT = { has_character_modifier = jianghu_reform_cooldown }
+}
+
+# Check if character can betray jianghu for imperial favor
+murim_can_betray_jianghu_trigger = {
+	murim_is_jianghu_member_trigger = yes
+	is_ruler = yes
+	NOR = {
+		has_trait = honest
+		has_trait = loyal_friend
+	}
+	OR = {
+		has_trait = deceitful
+		has_trait = ambitious
 		AND = {
-			any_liege_or_above = {
-				has_character_flag = murim_launched_crackdown
+			liege = {
+				is_ai = no
+			}
+			opinion = {
+				target = liege
+				value >= 30
 			}
 		}
 	}
+	NOT = { has_character_flag = jianghu_betrayal_cooldown }
 }
 
-murim_can_evade_crackdown_trigger = {
-	murim_is_crackdown_target_trigger = yes
-	OR = {
-		intrigue >= 16
-		has_trait = shadow_broker
-		has_trait = hidden_master
-		AND = {
-			murim_has_strong_underground_network_trigger = yes
-			gold >= 100
-		}
+# Check if underground fighting pit is operational
+murim_fighting_pit_operational_trigger = {
+	is_ruler = yes
+	capital_province = {
+		has_province_modifier = underground_fighting_pit
 	}
+	NOT = { has_character_modifier = fighting_pit_raided }
+	NOT = { has_character_flag = fighting_pit_shutdown }
 }
 
-######################################
-# GENERAL ELIGIBILITY COMPOUND CHECKS
-######################################
-
-murim_is_valid_jianghu_recruit_trigger = {
-	is_alive = yes
-	age >= 16
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	NOT = { murim_is_jianghu_member_trigger = yes }
+# Check if character qualifies for jianghu legend status
+murim_qualifies_for_jianghu_legend_trigger = {
+	murim_is_jianghu_leader_trigger = yes
+	age >= 40
+	has_variable = jianghu_standing
+	var:jianghu_standing >= 95
+	prestige >= 3000
 	OR = {
-		intrigue >= 10
-		martial >= 12
-		has_trait = ambitious
-		has_trait = deceitful
-		has_character_flag = murim_initiated
+		prowess >= 25
+		intrigue >= 25
+		has_variable = cultivation_realm
 	}
-}
-
-murim_is_established_jianghu_operative_trigger = {
-	murim_is_jianghu_member_trigger = yes
-	has_character_flag = murim_jianghu_inducted
-	var:murim_jianghu_influence >= 30
-	age >= 20
-}
-
-murim_can_perform_shadow_operation_trigger = {
-	murim_is_active_jianghu_operative_trigger = yes
-	gold >= 25
-	NOT = { has_character_modifier = murim_shadow_op_cooldown }
 	OR = {
-		intrigue >= 10
-		has_trait = shadow_broker
-		has_trait = sect_spy
-		has_trait = jianghu_enforcer
+		num_of_known_murders >= 3
+		has_trait = wulin_alliance_leader
+		has_character_flag = survived_three_assassination_attempts
+		has_character_flag = united_three_sects
 	}
 }
