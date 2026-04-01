@@ -1,0 +1,906 @@
+namespace = murim_shadow_pol_exp3
+
+# Shadow Politics Expansion 3 — Heavenly Demon Puppet Emperor System
+# 10 complete events: installing puppet, court manipulation, resistance, overthrow
+
+######################################
+# EVENT 0001 — Puppet Emperor Installation Plan
+# Heavenly Demon Sect plans to install a puppet on the imperial throne
+######################################
+murim_shadow_pol_exp3.0001 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0001.t
+	desc = murim_shadow_pol_exp3.0001.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:puppet_candidate
+		animation = idle
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_member
+		intrigue >= 16
+		NOT = { has_character_flag = puppet_emperor_plan_started }
+		any_ruler = {
+			has_trait = murim_emperor
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 3
+			intrigue >= 20
+		}
+	}
+
+	immediate = {
+		set_character_flag = puppet_emperor_plan_started
+		random_courtier = {
+			limit = {
+				is_ai = yes
+				NOT = { has_trait = heavenly_demon_member }
+				diplomacy >= 8
+			}
+			save_scope_as = puppet_candidate
+		}
+	}
+
+	# Begin the long game — infiltrate the imperial court
+	option = {
+		name = murim_shadow_pol_exp3.0001.a
+		add_character_modifier = {
+			modifier = puppet_emperor_scheme_active
+			years = 10
+		}
+		add_gold = -300
+		add_intrigue_skill = 2
+		hidden_effect = {
+			trigger_event = {
+				id = murim_shadow_pol_exp3.0002
+				days = { 120 240 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Quick strike — assassinate the emperor and install puppet immediately
+	option = {
+		name = murim_shadow_pol_exp3.0001.b
+		trigger = {
+			intrigue >= 22
+		}
+		duel = {
+			skill = intrigue
+			value = 70
+			40 = {
+				desc = murim_shadow_pol_exp3.0001.b.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				random_ruler = {
+					limit = { has_trait = murim_emperor }
+					death = { death_reason = death_murder killer = root }
+				}
+				scope:puppet_candidate = {
+					add_trait = puppet_emperor
+				}
+				add_prestige = 1000
+				add_dread = 60
+				add_character_modifier = { modifier = shadow_puppet_master years = 30 }
+			}
+			60 = {
+				desc = murim_shadow_pol_exp3.0001.b.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				add_prestige = -500
+				add_character_modifier = { modifier = failed_coup_exposed years = 10 }
+				add_dread = -30
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Abandon — too risky
+	option = {
+		name = murim_shadow_pol_exp3.0001.c
+		add_stress = 10
+		remove_character_flag = puppet_emperor_plan_started
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0002 — Court Infiltration Phase
+# Placing agents throughout the imperial bureaucracy
+######################################
+murim_shadow_pol_exp3.0002 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0002.t
+	desc = murim_shadow_pol_exp3.0002.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_character_modifier = puppet_emperor_scheme_active
+	}
+
+	immediate = { }
+
+	# Place agents in military positions
+	option = {
+		name = murim_shadow_pol_exp3.0002.a
+		add_gold = -200
+		add_character_modifier = {
+			modifier = agents_in_military
+			years = 10
+		}
+		add_martial_skill = 1
+		ai_chance = { base = 40 }
+	}
+
+	# Place agents in the treasury
+	option = {
+		name = murim_shadow_pol_exp3.0002.b
+		add_gold = -150
+		add_character_modifier = {
+			modifier = agents_in_treasury
+			years = 10
+		}
+		add_stewardship_skill = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Place agents close to the emperor personally
+	option = {
+		name = murim_shadow_pol_exp3.0002.c
+		add_gold = -250
+		add_character_modifier = {
+			modifier = agents_near_emperor
+			years = 10
+		}
+		add_intrigue_skill = 2
+		hidden_effect = {
+			trigger_event = {
+				id = murim_shadow_pol_exp3.0003
+				days = { 90 180 }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# EVENT 0003 — Emperor Poisoning Attempt
+# Slowly poisoning the emperor to weaken his authority
+######################################
+murim_shadow_pol_exp3.0003 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0003.t
+	desc = murim_shadow_pol_exp3.0003.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:current_emperor
+		animation = sick
+	}
+
+	trigger = {
+		has_character_modifier = agents_near_emperor
+		any_ruler = {
+			has_trait = murim_emperor
+		}
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = { has_trait = murim_emperor }
+			save_scope_as = current_emperor
+		}
+	}
+
+	# Slow poison — weaken over months
+	option = {
+		name = murim_shadow_pol_exp3.0003.a
+		scope:current_emperor = {
+			health = -3
+			add_character_modifier = {
+				modifier = mysteriously_weakening
+				years = 2
+			}
+		}
+		add_dread = 10
+		hidden_effect = {
+			trigger_event = {
+				id = murim_shadow_pol_exp3.0004
+				days = { 120 240 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Mind-affecting poison — make him suggestible
+	option = {
+		name = murim_shadow_pol_exp3.0003.b
+		trigger = {
+			intrigue >= 18
+		}
+		scope:current_emperor = {
+			add_character_modifier = {
+				modifier = mind_clouded_by_poison
+				years = 5
+			}
+			add_diplomacy_skill = -3
+			add_martial_skill = -2
+		}
+		add_character_modifier = {
+			modifier = controlling_emperor_mind
+			years = 5
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Wait — not the right time yet
+	option = {
+		name = murim_shadow_pol_exp3.0003.c
+		add_stress = 15
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0004 — Emperor Falls — Puppet Installed
+# The current emperor dies or abdicates, puppet takes throne
+######################################
+murim_shadow_pol_exp3.0004 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0004.t
+	desc = murim_shadow_pol_exp3.0004.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:new_puppet
+		animation = fear
+	}
+
+	trigger = {
+		has_character_flag = puppet_emperor_plan_started
+		has_character_modifier = puppet_emperor_scheme_active
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_ruler = { has_trait = murim_emperor }
+			}
+			random_ruler = {
+				limit = { has_trait = murim_emperor }
+				death = { death_reason = death_murder killer = root }
+			}
+		}
+		random_courtier = {
+			limit = {
+				is_ai = yes
+				NOT = { has_trait = heavenly_demon_member }
+			}
+			save_scope_as = new_puppet
+			add_trait = puppet_emperor
+		}
+	}
+
+	# Take full shadow control
+	option = {
+		name = murim_shadow_pol_exp3.0004.a
+		add_prestige = 1500
+		add_dread = 50
+		add_character_modifier = {
+			modifier = shadow_puppet_master
+			years = 30
+		}
+		add_intrigue_skill = 3
+		scope:new_puppet = {
+			add_opinion = {
+				target = root
+				modifier = my_puppet_master
+				opinion = -50
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Share power with the puppet — more sustainable
+	option = {
+		name = murim_shadow_pol_exp3.0004.b
+		add_prestige = 800
+		add_character_modifier = {
+			modifier = shadow_advisor_to_emperor
+			years = 20
+		}
+		scope:new_puppet = {
+			add_opinion = {
+				target = root
+				modifier = powerful_advisor
+				opinion = -20
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# EVENT 0005 — Puppet Emperor's Secret Resistance
+# The puppet tries to break free from demon control
+######################################
+murim_shadow_pol_exp3.0005 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0005.t
+	desc = murim_shadow_pol_exp3.0005.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:resisting_puppet
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_modifier = shadow_puppet_master
+		any_courtier = {
+			has_trait = puppet_emperor
+		}
+		NOT = { has_character_flag = puppet_resistance_event }
+	}
+
+	weight_multiplier = {
+		base = 2
+	}
+
+	immediate = {
+		set_character_flag = puppet_resistance_event
+		random_courtier = {
+			limit = { has_trait = puppet_emperor }
+			save_scope_as = resisting_puppet
+		}
+	}
+
+	# Crush the resistance brutally
+	option = {
+		name = murim_shadow_pol_exp3.0005.a
+		scope:resisting_puppet = {
+			add_character_modifier = {
+				modifier = broken_puppet_spirit
+				years = 10
+			}
+			health = -1
+			add_stress = 50
+		}
+		add_dread = 30
+		add_tyranny = 20
+		ai_chance = { base = 40 }
+	}
+
+	# Negotiate — give the puppet more autonomy
+	option = {
+		name = murim_shadow_pol_exp3.0005.b
+		scope:resisting_puppet = {
+			add_opinion = {
+				target = root
+				modifier = gave_me_more_freedom
+				opinion = 20
+			}
+		}
+		add_character_modifier = {
+			modifier = loosened_puppet_control
+			years = 5
+		}
+		ai_chance = { base = 35 }
+	}
+
+	# Replace the puppet with someone more compliant
+	option = {
+		name = murim_shadow_pol_exp3.0005.c
+		scope:resisting_puppet = {
+			remove_trait = puppet_emperor
+			death = { death_reason = death_murder killer = root }
+		}
+		create_character = {
+			template = murim_compliant_puppet_template
+			save_scope_as = new_puppet
+		}
+		scope:new_puppet = {
+			add_trait = puppet_emperor
+		}
+		add_dread = 40
+		add_tyranny = 15
+		ai_chance = { base = 25 }
+	}
+}
+
+######################################
+# EVENT 0006 — Orthodox Investigation into Imperial Court
+# Orthodox sects suspect demonic influence on emperor
+######################################
+murim_shadow_pol_exp3.0006 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0006.t
+	desc = murim_shadow_pol_exp3.0006.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:investigator
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_modifier = shadow_puppet_master
+		any_ruler = {
+			OR = {
+				has_trait = shaolin_member
+				has_trait = mount_hua_member
+				has_trait = wudang_member
+			}
+			intrigue >= 14
+		}
+		NOT = { has_character_flag = orthodox_investigating_puppet }
+	}
+
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 3
+			has_character_modifier = agents_near_emperor
+		}
+	}
+
+	immediate = {
+		set_character_flag = orthodox_investigating_puppet
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = shaolin_member
+					has_trait = mount_hua_member
+					has_trait = wudang_member
+				}
+				intrigue >= 14
+			}
+			save_scope_as = investigator
+		}
+	}
+
+	# Eliminate the investigator before they find proof
+	option = {
+		name = murim_shadow_pol_exp3.0006.a
+		duel = {
+			skill = intrigue
+			target = scope:investigator
+			55 = {
+				desc = murim_shadow_pol_exp3.0006.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				scope:investigator = {
+					death = { death_reason = death_murder killer = root }
+				}
+				add_dread = 20
+			}
+			45 = {
+				desc = murim_shadow_pol_exp3.0006.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				add_prestige = -500
+				add_character_modifier = { modifier = puppet_scheme_exposed years = 10 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Frame someone else as the puppet master
+	option = {
+		name = murim_shadow_pol_exp3.0006.b
+		trigger = {
+			intrigue >= 20
+		}
+		add_gold = -200
+		scope:investigator = {
+			add_character_modifier = { modifier = investigating_wrong_suspect years = 5 }
+		}
+		add_character_modifier = { modifier = successfully_deflected_investigation years = 10 }
+		ai_chance = { base = 30 }
+	}
+
+	# Flee and regroup
+	option = {
+		name = murim_shadow_pol_exp3.0006.c
+		remove_character_modifier = shadow_puppet_master
+		add_prestige = -300
+		add_character_modifier = { modifier = puppet_master_in_hiding years = 5 }
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0007 — Imperial Decree Manipulation
+# Using puppet emperor to issue decrees against enemies
+######################################
+murim_shadow_pol_exp3.0007 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0007.t
+	desc = murim_shadow_pol_exp3.0007.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_character_modifier = shadow_puppet_master
+		NOT = { has_character_flag = manipulated_imperial_decree }
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = { flag = manipulated_imperial_decree days = 365 }
+	}
+
+	# Ban orthodox martial arts practices
+	option = {
+		name = murim_shadow_pol_exp3.0007.a
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+				}
+			}
+			add_character_modifier = { modifier = imperial_ban_on_practice years = 5 }
+			add_opinion = {
+				target = root
+				modifier = banned_our_arts
+				opinion = -40
+			}
+		}
+		add_prestige = 500
+		add_dread = 30
+		ai_chance = { base = 40 }
+	}
+
+	# Levy massive taxes on rival clans
+	option = {
+		name = murim_shadow_pol_exp3.0007.b
+		add_gold = 800
+		every_ruler = {
+			limit = {
+				has_variable = murim_clan_id
+				NOT = { has_trait = heavenly_demon_member }
+			}
+			add_opinion = {
+				target = root
+				modifier = crushing_imperial_taxes
+				opinion = -25
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+
+	# Grant unorthodox sects official recognition
+	option = {
+		name = murim_shadow_pol_exp3.0007.c
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = phantom_blade_member
+					has_trait = poison_flower_palace_member
+				}
+			}
+			add_opinion = { target = root modifier = imperial_recognition opinion = 30 }
+			add_prestige = 300
+		}
+		add_prestige = 400
+		ai_chance = { base = 25 }
+	}
+}
+
+######################################
+# EVENT 0008 — Puppet Emperor Assassination Attempt by Orthodox
+# Orthodox forces try to kill the puppet emperor
+######################################
+murim_shadow_pol_exp3.0008 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0008.t
+	desc = murim_shadow_pol_exp3.0008.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:assassin
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_modifier = shadow_puppet_master
+		NOT = { has_character_flag = puppet_assassination_attempt }
+	}
+
+	weight_multiplier = {
+		base = 2
+	}
+
+	immediate = {
+		set_character_flag = puppet_assassination_attempt
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = wudang_member
+				}
+				prowess >= 15
+			}
+			save_scope_as = assassin
+		}
+	}
+
+	# Intercept and fight the assassin personally
+	option = {
+		name = murim_shadow_pol_exp3.0008.a
+		duel = {
+			skill = prowess
+			target = scope:assassin
+			50 = {
+				desc = murim_shadow_pol_exp3.0008.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				scope:assassin = {
+					death = { death_reason = death_battle killer = root }
+				}
+				add_prestige = 500
+				add_dread = 30
+			}
+			50 = {
+				desc = murim_shadow_pol_exp3.0008.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				health = -3
+				add_character_modifier = { modifier = wounded_protecting_puppet years = 3 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Let the puppet die — install a new one
+	option = {
+		name = murim_shadow_pol_exp3.0008.b
+		random_courtier = {
+			limit = { has_trait = puppet_emperor }
+			death = { death_reason = death_murder killer = scope:assassin }
+		}
+		add_character_modifier = {
+			modifier = sacrificed_puppet_emperor
+			years = 5
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Use the attempt to justify a crackdown
+	option = {
+		name = murim_shadow_pol_exp3.0008.c
+		scope:assassin = {
+			death = { death_reason = death_execution killer = root }
+		}
+		add_dread = 50
+		add_tyranny = 30
+		add_character_modifier = {
+			modifier = imperial_martial_law
+			years = 5
+		}
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+				}
+			}
+			add_opinion = { target = root modifier = crackdown_on_orthodox opinion = -50 }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0009 — Shadow Court Inner Circle
+# Building a secret government within the government
+######################################
+murim_shadow_pol_exp3.0009 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0009.t
+	desc = murim_shadow_pol_exp3.0009.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_modifier = shadow_puppet_master
+		NOT = { has_character_flag = shadow_court_built }
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = shadow_court_built
+	}
+
+	# Appoint Heavenly Demon members to key shadow positions
+	option = {
+		name = murim_shadow_pol_exp3.0009.a
+		add_character_modifier = {
+			modifier = shadow_court_full_control
+			years = 20
+		}
+		add_intrigue_skill = 3
+		add_prestige = 800
+		every_courtier = {
+			limit = { has_trait = heavenly_demon_member }
+			add_opinion = {
+				target = root
+				modifier = elevated_in_shadow_court
+				opinion = 25
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Include talented outsiders in the shadow court
+	option = {
+		name = murim_shadow_pol_exp3.0009.b
+		add_character_modifier = {
+			modifier = diverse_shadow_court
+			years = 15
+		}
+		add_diplomacy_skill = 2
+		add_intrigue_skill = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Keep the shadow court minimal — trust no one
+	option = {
+		name = murim_shadow_pol_exp3.0009.c
+		add_character_modifier = {
+			modifier = minimal_shadow_court
+			years = 10
+		}
+		add_intrigue_skill = 2
+		add_stress = 20
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0010 — Puppet System Collapse or Consolidation
+# The puppet emperor system reaches a crisis point
+######################################
+murim_shadow_pol_exp3.0010 = {
+	type = character_event
+	title = murim_shadow_pol_exp3.0010.t
+	desc = murim_shadow_pol_exp3.0010.desc
+	theme = realm_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_modifier = shadow_puppet_master
+		OR = {
+			has_character_flag = puppet_resistance_event
+			has_character_flag = orthodox_investigating_puppet
+			has_character_flag = puppet_assassination_attempt
+		}
+		NOT = { has_character_flag = puppet_system_resolution }
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		set_character_flag = puppet_system_resolution
+	}
+
+	# Consolidate — become the true power behind the throne forever
+	option = {
+		name = murim_shadow_pol_exp3.0010.a
+		add_trait = eternal_shadow_ruler
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = permanent_shadow_government
+			years = 50
+		}
+		add_intrigue_skill = 4
+		ai_chance = { base = 40 }
+	}
+
+	# Reveal yourself — take the throne openly
+	option = {
+		name = murim_shadow_pol_exp3.0010.b
+		remove_character_modifier = shadow_puppet_master
+		add_trait = usurper_emperor
+		add_prestige = 3000
+		add_dread = 80
+		add_tyranny = 50
+		add_character_modifier = {
+			modifier = self_declared_demon_emperor
+			years = 30
+		}
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+				}
+			}
+			add_opinion = { target = root modifier = demon_usurped_throne opinion = -80 }
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Dismantle the system — return to the shadows
+	option = {
+		name = murim_shadow_pol_exp3.0010.c
+		remove_character_modifier = shadow_puppet_master
+		random_courtier = {
+			limit = { has_trait = puppet_emperor }
+			remove_trait = puppet_emperor
+		}
+		add_character_modifier = {
+			modifier = returned_to_shadows_voluntarily
+			years = 15
+		}
+		add_piety = 200
+		add_stress = -30
+		ai_chance = { base = 30 }
+	}
+}
