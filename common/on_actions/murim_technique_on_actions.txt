@@ -1,21 +1,43 @@
 ################################################################
-# MURIM CHRONICLES — TECHNIQUE ON_ACTIONS
+# MURIM CHRONICLES - TECHNIQUE ON_ACTIONS
 # Path: common/on_actions/murim_technique_on_actions.txt
 #
-# The AI engine. Every year, every living character gets
-# checked for technique eligibility. If they qualify,
-# the unlock event fires automatically.
+# The AI engine for technique acquisition and management.
+# Every pulse, eligible characters get checked for technique
+# unlocks, practice, degradation, inheritance, and exchange.
 #
-# This is how AI characters earn techniques without
-# player intervention. Same triggers, same requirements.
+# AI characters earn techniques through the same triggers
+# and requirements as the player. No shortcuts.
+#
+# SECTIONS:
+#  1. Yearly Technique Unlock Pulse
+#  2. Coming of Age Prodigy Check
+#  3. Duel Victory Breakthrough
+#  4. War Victory Enlightenment
+#  5. Death: Technique Inheritance
+#  6. Marriage: Technique Exchange
+#  7. Monthly Practice Pulse
+#  8. Technique Degradation (Inactivity)
+#  9. AI Sparring for Improvement
+# 10. Secret Technique Theft Opportunity
+# 11. Master-Disciple Teaching Pulse
+# 12. Tournament Technique Showcase
+# 13. Meditation Breakthrough
+# 14. Near-Death Enlightenment
+# 15. Sect Technique Library Access
 ################################################################
 
 
-# Yearly character pulse: check technique eligibility
+# =============================================================
+# SECTION 1: YEARLY TECHNIQUE UNLOCK PULSE
+# =============================================================
+
+# Core yearly pulse: check every eligible character for
+# technique unlock eligibility. Performance-optimized to
+# skip non-martial characters.
 on_yearly_pulse = {
 	effect = {
-		# Only check characters who are rulers or knights
-		# (performance optimization: skip peasants)
+		# Only check characters who are martial-relevant
 		if = {
 			limit = {
 				OR = {
@@ -26,17 +48,30 @@ on_yearly_pulse = {
 				}
 				age >= 16
 				is_alive = yes
+				NOT = { has_trait = incapable }
 			}
 
 			# --- TIER 3 CHECK (highest priority) ---
 			if = {
 				limit = {
-					murim_has_tier2_technique_trigger = yes
-					NOT = { murim_has_tier3_technique_trigger = yes }
+					trigger_if = {
+						limit = { exists = var:murim_has_tier2_technique }
+						var:murim_has_tier2_technique >= 1
+					}
+					trigger_else = {
+						murim_has_tier2_technique_trigger = yes
+					}
+					NOT = {
+						trigger_if = {
+							limit = { exists = var:murim_has_tier3_technique }
+							var:murim_has_tier3_technique >= 1
+						}
+						trigger_else = {
+							murim_has_tier3_technique_trigger = yes
+						}
+					}
 					murim_can_unlock_any_tier3_trigger = yes
 				}
-				# 40% chance per year to fire the event
-				# (legendary techniques shouldn't be instant)
 				random = {
 					chance = 40
 					modifier = {
@@ -48,6 +83,11 @@ on_yearly_pulse = {
 						exists = var:murim_cultivation_rank
 						var:murim_cultivation_rank >= 5
 					}
+					modifier = {
+						add = 10
+						exists = var:technique_practice_hours
+						var:technique_practice_hours >= 50
+					}
 					trigger_event = murim_technique.0100
 				}
 			}
@@ -55,11 +95,24 @@ on_yearly_pulse = {
 			# --- TIER 2 CHECK ---
 			else_if = {
 				limit = {
-					murim_has_tier1_technique_trigger = yes
-					NOT = { murim_has_tier2_technique_trigger = yes }
+					trigger_if = {
+						limit = { exists = var:murim_has_tier1_technique }
+						var:murim_has_tier1_technique >= 1
+					}
+					trigger_else = {
+						murim_has_tier1_technique_trigger = yes
+					}
+					NOT = {
+						trigger_if = {
+							limit = { exists = var:murim_has_tier2_technique }
+							var:murim_has_tier2_technique >= 1
+						}
+						trigger_else = {
+							murim_has_tier2_technique_trigger = yes
+						}
+					}
 					murim_can_unlock_any_tier2_trigger = yes
 				}
-				# 50% chance per year
 				random = {
 					chance = 50
 					modifier = {
@@ -71,6 +124,11 @@ on_yearly_pulse = {
 						exists = var:murim_cultivation_rank
 						var:murim_cultivation_rank >= 3
 					}
+					modifier = {
+						add = 10
+						exists = var:technique_practice_hours
+						var:technique_practice_hours >= 30
+					}
 					trigger_event = murim_technique.0010
 				}
 			}
@@ -78,11 +136,17 @@ on_yearly_pulse = {
 			# --- TIER 1 CHECK ---
 			else_if = {
 				limit = {
-					NOT = { murim_has_tier1_technique_trigger = yes }
+					NOT = {
+						trigger_if = {
+							limit = { exists = var:murim_has_tier1_technique }
+							var:murim_has_tier1_technique >= 1
+						}
+						trigger_else = {
+							murim_has_tier1_technique_trigger = yes
+						}
+					}
 					murim_can_unlock_any_tier1_trigger = yes
 				}
-				# 60% chance per year for Tier 1
-				# (these should be relatively common)
 				random = {
 					chance = 60
 					modifier = {
@@ -96,38 +160,120 @@ on_yearly_pulse = {
 					trigger_event = murim_technique.0001
 				}
 			}
+
+			# --- TECHNIQUE MASTERY DEEPENING ---
+			# Characters with T3 can continue improving
+			else_if = {
+				limit = {
+					OR = {
+						murim_has_tier3_technique_trigger = yes
+						trigger_if = {
+							limit = { exists = var:murim_has_tier3_technique }
+							var:murim_has_tier3_technique >= 1
+						}
+					}
+					NOT = { has_character_modifier = technique_mastery_deepening }
+				}
+				random = {
+					chance = 25
+					modifier = {
+						add = 15
+						prowess >= 35
+					}
+					modifier = {
+						add = 10
+						exists = var:technique_practice_hours
+						var:technique_practice_hours >= 100
+					}
+					add_character_modifier = {
+						modifier = technique_mastery_deepening
+						years = 3
+					}
+					add_prowess = 2
+					if = {
+						limit = { is_ai = no }
+						custom_tooltip = tt_technique_mastery_deepened
+					}
+				}
+			}
 		}
 	}
 }
 
 
-# On character coming of age: initial technique check
-# Some prodigies unlock early
+# =============================================================
+# SECTION 2: COMING OF AGE - PRODIGY CHECK
+# =============================================================
+
 on_coming_of_age = {
 	effect = {
-		# Prodigy check: if a 16-year-old already has 15+ prowess
-		# and 15+ in a skill, they're a natural talent
+		# Prodigy check: 16-year-old with 15+ prowess
 		if = {
 			limit = {
 				murim_can_unlock_any_tier1_trigger = yes
 			}
-			# 80% chance for prodigies
 			random = {
 				chance = 80
 				trigger_event = murim_technique.0001
 			}
 		}
+
+		# Super prodigy: inherits family technique tradition
+		if = {
+			limit = {
+				prowess >= 18
+				exists = dynasty
+				any_parent = {
+					is_alive = yes
+					OR = {
+						murim_has_tier2_technique_trigger = yes
+						murim_has_tier3_technique_trigger = yes
+					}
+				}
+			}
+			random = {
+				chance = 40
+				add_character_modifier = {
+					modifier = inherited_family_technique_aptitude
+					years = 5
+				}
+				add_prowess = 2
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_prodigy_family_aptitude
+					trigger_event = { id = murim_technique.0200 }
+				}
+			}
+		}
+
+		# Initialize technique tracking variables
+		if = {
+			limit = {
+				NOT = { exists = var:technique_practice_hours }
+			}
+			set_variable = { name = technique_practice_hours value = 0 }
+		}
+		if = {
+			limit = {
+				NOT = { exists = var:techniques_learned_count }
+			}
+			set_variable = { name = techniques_learned_count value = 0 }
+		}
 	}
 }
 
 
-# After winning a duel: technique breakthrough chance
+# =============================================================
+# SECTION 3: DUEL VICTORY - TECHNIQUE BREAKTHROUGH
+# =============================================================
+
 # Classic murim: enlightenment through combat
 on_duel_completion = {
 	effect = {
 		# Winner gets a technique check
 		if = {
 			limit = {
+				exists = scope:winner
 				scope:winner = root
 				OR = {
 					murim_can_unlock_any_tier1_trigger = yes
@@ -135,7 +281,7 @@ on_duel_completion = {
 					murim_can_unlock_any_tier3_trigger = yes
 				}
 			}
-			# Duel victory + qualification = guaranteed technique event
+			# Duel victory + qualification = guaranteed event
 			if = {
 				limit = { murim_can_unlock_any_tier3_trigger = yes }
 				trigger_event = murim_technique.0100
@@ -149,12 +295,72 @@ on_duel_completion = {
 				trigger_event = murim_technique.0001
 			}
 		}
+
+		# Combat insight: even without unlocking, gain practice
+		if = {
+			limit = {
+				exists = scope:winner
+				scope:winner = root
+				exists = var:technique_practice_hours
+			}
+			change_variable = { name = technique_practice_hours add = 15 }
+		}
+
+		# Loser also gains insight from defeat
+		if = {
+			limit = {
+				exists = scope:loser
+				scope:loser = root
+				exists = var:technique_practice_hours
+			}
+			change_variable = { name = technique_practice_hours add = 5 }
+			random = {
+				chance = 20
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_defeat_insight
+				}
+			}
+		}
+
+		# Observe opponent's technique (chance to learn)
+		if = {
+			limit = {
+				exists = scope:winner
+				scope:winner = root
+				exists = scope:loser
+				scope:loser = {
+					OR = {
+						murim_has_tier2_technique_trigger = yes
+						murim_has_tier3_technique_trigger = yes
+					}
+				}
+			}
+			random = {
+				chance = 15
+				modifier = {
+					add = 10
+					learning >= 15
+				}
+				add_character_modifier = {
+					modifier = observed_enemy_technique
+					years = 2
+				}
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_observed_enemy_technique
+					trigger_event = { id = murim_technique.0300 }
+				}
+			}
+		}
 	}
 }
 
 
-# After winning a war: technique check for commanders
-# Leading armies to victory tempers the martial spirit
+# =============================================================
+# SECTION 4: WAR VICTORY - ENLIGHTENMENT
+# =============================================================
+
 on_war_won = {
 	effect = {
 		if = {
@@ -176,10 +382,913 @@ on_war_won = {
 					limit = { murim_can_unlock_any_tier2_trigger = yes }
 					trigger_event = murim_technique.0010
 				}
-				else_if = {
-					limit = { murim_can_unlock_any_tier1_trigger = yes }
+				else = {
 					trigger_event = murim_technique.0001
 				}
+			}
+		}
+
+		# War hardening: mass combat refines technique
+		if = {
+			limit = {
+				exists = var:technique_practice_hours
+				prowess >= 12
+			}
+			change_variable = { name = technique_practice_hours add = 20 }
+			if = {
+				limit = { is_ai = no }
+				custom_tooltip = tt_war_technique_refinement
+			}
+		}
+
+		# Battlefield commanders gain leadership technique insight
+		if = {
+			limit = {
+				martial >= 20
+				NOT = { has_character_modifier = battlefield_technique_insight }
+			}
+			random = {
+				chance = 40
+				add_character_modifier = {
+					modifier = battlefield_technique_insight
+					years = 3
+				}
+				add_martial_skill = 1
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 5: DEATH - TECHNIQUE INHERITANCE
+# =============================================================
+
+# When a martial artist dies, their techniques can be inherited
+# by their children, disciples, or sect members
+on_death = {
+	effect = {
+		# Only process martial artists with techniques
+		if = {
+			limit = {
+				OR = {
+					murim_has_tier1_technique_trigger = yes
+					murim_has_tier2_technique_trigger = yes
+					murim_has_tier3_technique_trigger = yes
+				}
+			}
+
+			# Priority 1: Designated heir/disciple inherits
+			if = {
+				limit = {
+					exists = var:murim_designated_disciple
+					var:murim_designated_disciple = {
+						is_alive = yes
+						age >= 16
+					}
+				}
+				var:murim_designated_disciple = {
+					add_character_modifier = {
+						modifier = inherited_master_technique
+						years = 5
+					}
+					add_prowess = 3
+					if = {
+						limit = { is_ai = no }
+						trigger_event = { id = murim_technique.0400 }
+					}
+					# Track inheritance
+					if = {
+						limit = { exists = var:techniques_learned_count }
+						change_variable = { name = techniques_learned_count add = 1 }
+					}
+					else = {
+						set_variable = { name = techniques_learned_count value = 1 }
+					}
+				}
+			}
+			# Priority 2: Eldest child with martial talent
+			else = {
+				random_child = {
+					limit = {
+						is_alive = yes
+						age >= 14
+						prowess >= 10
+					}
+					weight = {
+						base = 10
+						modifier = {
+							add = 20
+							prowess >= 18
+						}
+						modifier = {
+							add = 10
+							has_trait = brave
+						}
+						modifier = {
+							add = 15
+							murim_has_tier1_technique_trigger = yes
+						}
+					}
+					add_character_modifier = {
+						modifier = inherited_family_technique
+						years = 10
+					}
+					add_prowess = 2
+					if = {
+						limit = { is_ai = no }
+						trigger_event = { id = murim_technique.0401 }
+					}
+				}
+			}
+
+			# Create legacy manual artifact from T3 technique holders
+			if = {
+				limit = {
+					murim_has_tier3_technique_trigger = yes
+					prestige >= 500
+				}
+				random_child = {
+					limit = { is_alive = yes }
+					weight = {
+						base = 10
+						modifier = { add = 20 prowess >= 15 }
+					}
+					add_character_modifier = {
+						modifier = possesses_legacy_manual
+						duration = -1
+					}
+					if = {
+						limit = { is_ai = no }
+						custom_tooltip = tt_legacy_manual_inherited
+						trigger_event = { id = murim_technique.0402 }
+					}
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 6: MARRIAGE - TECHNIQUE EXCHANGE
+# =============================================================
+
+# When two martial artists marry, there's a chance of
+# technique cross-pollination
+on_marriage = {
+	effect = {
+		# Check if both spouses are martial artists
+		if = {
+			limit = {
+				prowess >= 12
+				exists = scope:spouse
+				scope:spouse = {
+					is_alive = yes
+					prowess >= 12
+				}
+			}
+
+			# Exchange technique insights
+			random = {
+				chance = 35
+				modifier = {
+					add = 15
+					scope:spouse = { murim_has_tier2_technique_trigger = yes }
+				}
+				modifier = {
+					add = 10
+					learning >= 15
+				}
+				add_character_modifier = {
+					modifier = spousal_technique_exchange
+					years = 5
+				}
+				scope:spouse = {
+					add_character_modifier = {
+						modifier = spousal_technique_exchange
+						years = 5
+					}
+				}
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_spousal_technique_exchange
+					trigger_event = { id = murim_technique.0500 }
+				}
+			}
+
+			# Dual cultivation technique (rare, powerful)
+			if = {
+				limit = {
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 3
+					scope:spouse = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 3
+					}
+				}
+				random = {
+					chance = 15
+					add_character_modifier = {
+						modifier = dual_cultivation_technique
+						duration = -1
+					}
+					scope:spouse = {
+						add_character_modifier = {
+							modifier = dual_cultivation_technique
+							duration = -1
+						}
+					}
+					if = {
+						limit = { is_ai = no }
+						custom_tooltip = tt_dual_cultivation_unlocked
+						trigger_event = { id = murim_technique.0501 }
+					}
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 7: MONTHLY PRACTICE PULSE
+# =============================================================
+
+# Monthly check for active technique practice
+# Characters who regularly train accumulate practice hours
+on_monthly_pulse = {
+	effect = {
+		# Only martial artists with techniques
+		if = {
+			limit = {
+				OR = {
+					murim_has_tier1_technique_trigger = yes
+					prowess >= 15
+				}
+				is_alive = yes
+				NOT = { has_trait = incapable }
+				age >= 16
+			}
+
+			# Initialize if needed
+			if = {
+				limit = { NOT = { exists = var:technique_practice_hours } }
+				set_variable = { name = technique_practice_hours value = 0 }
+			}
+
+			# Base practice: all martial artists train somewhat
+			change_variable = { name = technique_practice_hours add = 1 }
+
+			# Bonus: actively training characters
+			if = {
+				limit = {
+					has_character_modifier = secluded_cultivation
+				}
+				change_variable = { name = technique_practice_hours add = 3 }
+			}
+
+			# Bonus: has a training partner/sparring partner
+			if = {
+				limit = {
+					any_courtier = {
+						prowess >= 15
+						opinion = { target = root value >= 0 }
+					}
+				}
+				change_variable = { name = technique_practice_hours add = 1 }
+			}
+
+			# Bonus: knight duty provides combat practice
+			if = {
+				limit = { is_knight = yes }
+				change_variable = { name = technique_practice_hours add = 2 }
+			}
+
+			# Milestone: Dedicated Practitioner (50 hours)
+			if = {
+				limit = {
+					var:technique_practice_hours >= 50
+					NOT = { has_character_modifier = dedicated_technique_practitioner }
+				}
+				add_character_modifier = {
+					modifier = dedicated_technique_practitioner
+					years = 1
+				}
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_dedicated_practitioner
+				}
+			}
+
+			# Milestone: Technique Virtuoso (150 hours)
+			if = {
+				limit = {
+					var:technique_practice_hours >= 150
+					NOT = { has_character_modifier = technique_virtuoso }
+				}
+				add_character_modifier = {
+					modifier = technique_virtuoso
+					years = 2
+				}
+				add_prowess = 1
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_technique_virtuoso
+				}
+			}
+
+			# Milestone: Living Legend (300 hours)
+			if = {
+				limit = {
+					var:technique_practice_hours >= 300
+					NOT = { has_character_modifier = technique_living_legend }
+				}
+				add_character_modifier = {
+					modifier = technique_living_legend
+					duration = -1
+				}
+				add_prowess = 3
+				add_prestige = 200
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_technique_living_legend
+					trigger_event = { id = murim_technique.0600 }
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 8: TECHNIQUE DEGRADATION (INACTIVITY)
+# =============================================================
+
+# Characters who don't practice lose technique sharpness
+# Checked every 6 months via bi-annual pulse
+on_bi_yearly_pulse = {
+	effect = {
+		if = {
+			limit = {
+				OR = {
+					murim_has_tier1_technique_trigger = yes
+					murim_has_tier2_technique_trigger = yes
+					murim_has_tier3_technique_trigger = yes
+				}
+				is_alive = yes
+				NOT = { has_trait = incapable }
+			}
+
+			# Check for inactivity flags
+			if = {
+				limit = {
+					NOT = { exists = var:technique_practice_hours }
+				}
+				set_variable = { name = technique_practice_hours value = 0 }
+			}
+
+			# Characters who stopped training lose sharpness
+			if = {
+				limit = {
+					var:technique_practice_hours < 10
+					NOT = { is_knight = yes }
+					NOT = { has_character_modifier = secluded_cultivation }
+					age >= 30
+				}
+				random = {
+					chance = 25
+					modifier = {
+						add = 15
+						age >= 50
+					}
+					modifier = {
+						add = 10
+						has_trait = lazy
+					}
+					modifier = {
+						add = -20
+						has_trait = diligent
+					}
+					add_character_modifier = {
+						modifier = technique_rust
+						years = 2
+					}
+					if = {
+						limit = { is_ai = no }
+						custom_tooltip = tt_technique_degradation
+						trigger_event = { id = murim_technique.0700 }
+					}
+				}
+			}
+
+			# Old age technique decline (harsh but realistic)
+			if = {
+				limit = {
+					age >= 60
+					NOT = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 6
+					}
+					NOT = { has_character_modifier = ageless_technique_master }
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 10
+						age >= 70
+					}
+					modifier = {
+						add = 15
+						age >= 80
+					}
+					add_character_modifier = {
+						modifier = aging_technique_decline
+						years = 3
+					}
+					add_prowess = -2
+					if = {
+						limit = { is_ai = no }
+						custom_tooltip = tt_aging_decline
+					}
+				}
+			}
+
+			# High cultivators resist aging
+			if = {
+				limit = {
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 6
+					age >= 60
+					NOT = { has_character_modifier = ageless_technique_master }
+				}
+				add_character_modifier = {
+					modifier = ageless_technique_master
+					duration = -1
+				}
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_ageless_master
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 9: AI SPARRING FOR IMPROVEMENT
+# =============================================================
+
+# AI characters actively seek sparring partners to improve
+# This makes the AI martial world feel alive
+on_quarterly_pulse = {
+	effect = {
+		# AI martial artists seek sparring
+		if = {
+			limit = {
+				is_ai = yes
+				is_alive = yes
+				prowess >= 12
+				age >= 16
+				NOT = { has_trait = incapable }
+				NOT = { has_trait = craven }
+				NOT = { has_character_modifier = recently_sparred }
+			}
+
+			# Find a worthy opponent at court
+			random_courtier = {
+				limit = {
+					is_alive = yes
+					prowess >= 10
+					age >= 16
+					NOT = { has_trait = incapable }
+					NOT = { this = root }
+				}
+				weight = {
+					base = 10
+					modifier = {
+						add = 20
+						prowess >= 20
+					}
+					modifier = {
+						add = 10
+						murim_has_tier1_technique_trigger = yes
+					}
+					modifier = {
+						add = -10
+						opinion = { target = root value < -50 }
+					}
+				}
+
+				save_scope_as = sparring_partner
+
+				# Both gain practice and potential prowess
+				root = {
+					add_character_modifier = {
+						modifier = recently_sparred
+						months = 3
+					}
+					if = {
+						limit = { exists = var:technique_practice_hours }
+						change_variable = { name = technique_practice_hours add = 5 }
+					}
+					# Small chance of prowess gain
+					random = {
+						chance = 20
+						modifier = {
+							add = 10
+							scope:sparring_partner = { prowess > root.prowess }
+						}
+						add_prowess = 1
+					}
+				}
+
+				# Sparring partner also benefits
+				add_character_modifier = {
+					modifier = recently_sparred
+					months = 3
+				}
+				if = {
+					limit = { exists = var:technique_practice_hours }
+					change_variable = { name = technique_practice_hours add = 5 }
+				}
+				random = {
+					chance = 15
+					add_prowess = 1
+				}
+			}
+		}
+
+		# Player notification: nearby sparring
+		if = {
+			limit = {
+				is_ai = no
+				is_alive = yes
+				prowess >= 15
+				NOT = { has_character_modifier = sparring_invitation_cooldown }
+			}
+			random = {
+				chance = 30
+				add_character_modifier = {
+					modifier = sparring_invitation_cooldown
+					months = 6
+				}
+				trigger_event = { id = murim_technique.0800 }
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 10: SECRET TECHNIQUE THEFT OPPORTUNITY
+# =============================================================
+
+# When visiting another court or during intrigues,
+# characters may get opportunities to steal techniques
+on_join_court = {
+	effect = {
+		if = {
+			limit = {
+				prowess >= 12
+				intrigue >= 10
+				NOT = { has_character_modifier = technique_theft_cooldown }
+			}
+
+			# Check if host court has technique masters
+			if = {
+				limit = {
+					host = {
+						any_courtier = {
+							OR = {
+								murim_has_tier2_technique_trigger = yes
+								murim_has_tier3_technique_trigger = yes
+							}
+						}
+					}
+				}
+				random = {
+					chance = 20
+					modifier = {
+						add = 15
+						intrigue >= 18
+					}
+					modifier = {
+						add = 10
+						has_trait = deceitful
+					}
+					add_character_modifier = {
+						modifier = technique_theft_cooldown
+						years = 3
+					}
+					if = {
+						limit = { is_ai = no }
+						trigger_event = { id = murim_technique.0900 }
+					}
+					else = {
+						# AI auto-resolves theft attempt
+						random_list = {
+							40 = {
+								add_character_modifier = {
+									modifier = stolen_technique_insight
+									years = 5
+								}
+								add_prowess = 2
+							}
+							35 = {
+								# Caught! Opinion penalty
+								host = {
+									add_opinion = {
+										target = root
+										modifier = caught_stealing_techniques
+									}
+								}
+							}
+							25 = {
+								# Nothing happens
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 11: MASTER-DISCIPLE TEACHING PULSE
+# =============================================================
+
+# Masters periodically teach their designated disciples
+on_yearly_pulse = {
+	effect = {
+		# Masters with disciples teach them
+		if = {
+			limit = {
+				is_alive = yes
+				exists = var:murim_designated_disciple
+				OR = {
+					murim_has_tier2_technique_trigger = yes
+					murim_has_tier3_technique_trigger = yes
+				}
+				var:murim_designated_disciple = {
+					is_alive = yes
+					is_imprisoned = no
+				}
+			}
+
+			var:murim_designated_disciple = {
+				# Disciple gains practice hours from master's teaching
+				if = {
+					limit = { exists = var:technique_practice_hours }
+					change_variable = { name = technique_practice_hours add = 10 }
+				}
+				else = {
+					set_variable = { name = technique_practice_hours value = 10 }
+				}
+
+				# Chance of prowess gain from teaching
+				random = {
+					chance = 30
+					modifier = {
+						add = 15
+						root = { prowess >= 25 }
+					}
+					modifier = {
+						add = 10
+						learning >= 12
+					}
+					add_prowess = 1
+				}
+
+				# Rare: disciple surpasses master
+				if = {
+					limit = {
+						prowess > root.prowess
+						NOT = { has_character_modifier = surpassed_master }
+					}
+					random = {
+						chance = 25
+						add_character_modifier = {
+							modifier = surpassed_master
+							duration = -1
+						}
+						if = {
+							limit = { is_ai = no }
+							custom_tooltip = tt_surpassed_master
+							trigger_event = { id = murim_technique.1100 }
+						}
+					}
+				}
+			}
+
+			# Master gains satisfaction/prestige from teaching
+			if = {
+				limit = {
+					NOT = { has_character_modifier = teaching_satisfaction }
+				}
+				add_character_modifier = {
+					modifier = teaching_satisfaction
+					years = 1
+				}
+				add_stress = -5
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 12: TOURNAMENT TECHNIQUE SHOWCASE
+# =============================================================
+
+# During tournaments, martial artists display techniques
+# Spectators and participants can learn from each other
+on_activity_pulse = {
+	effect = {
+		# Check if this is a martial tournament
+		if = {
+			limit = {
+				has_character_modifier = hosting_martial_tournament
+				is_alive = yes
+			}
+
+			# All participating courtiers get practice
+			every_courtier = {
+				limit = {
+					is_alive = yes
+					prowess >= 10
+					age >= 16
+				}
+				if = {
+					limit = { exists = var:technique_practice_hours }
+					change_variable = { name = technique_practice_hours add = 3 }
+				}
+				random = {
+					chance = 10
+					add_prowess = 1
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 13: MEDITATION BREAKTHROUGH
+# =============================================================
+
+# Characters in seclusion may achieve technique breakthroughs
+# through pure meditation and contemplation
+on_yearly_pulse = {
+	effect = {
+		if = {
+			limit = {
+				has_character_modifier = secluded_cultivation
+				is_alive = yes
+				learning >= 12
+				OR = {
+					murim_can_unlock_any_tier1_trigger = yes
+					murim_can_unlock_any_tier2_trigger = yes
+					murim_can_unlock_any_tier3_trigger = yes
+				}
+			}
+
+			# Meditation breakthrough: higher chance than normal
+			random = {
+				chance = 45
+				modifier = {
+					add = 20
+					learning >= 20
+				}
+				modifier = {
+					add = 15
+					exists = var:yin_yang_balance
+					var:yin_yang_balance >= -10
+					var:yin_yang_balance <= 10
+				}
+				modifier = {
+					add = 10
+					exists = var:meridians_opened
+					var:meridians_opened >= 12
+				}
+
+				if = {
+					limit = { murim_can_unlock_any_tier3_trigger = yes }
+					trigger_event = murim_technique.0100
+				}
+				else_if = {
+					limit = { murim_can_unlock_any_tier2_trigger = yes }
+					trigger_event = murim_technique.0010
+				}
+				else = {
+					trigger_event = murim_technique.0001
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 14: NEAR-DEATH ENLIGHTENMENT
+# =============================================================
+
+# Characters who survive a near-death experience may have
+# sudden technique breakthroughs (classic murim trope)
+on_birth = {
+	# Placeholder: actual trigger is from combat/health events
+}
+
+# This hooks into the health system
+on_yearly_pulse = {
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				OR = {
+					has_trait = wounded_2
+					has_trait = wounded_3
+				}
+				prowess >= 12
+				NOT = { has_character_modifier = near_death_enlightenment_cooldown }
+			}
+
+			random = {
+				chance = 20
+				modifier = {
+					add = 15
+					has_trait = wounded_3
+				}
+				modifier = {
+					add = 10
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 3
+				}
+
+				add_character_modifier = {
+					modifier = near_death_enlightenment_cooldown
+					years = 5
+				}
+
+				# Gain a massive technique insight
+				if = {
+					limit = { exists = var:technique_practice_hours }
+					change_variable = { name = technique_practice_hours add = 50 }
+				}
+				add_prowess = 3
+
+				if = {
+					limit = { is_ai = no }
+					custom_tooltip = tt_near_death_enlightenment
+					trigger_event = { id = murim_technique.1400 }
+				}
+			}
+		}
+	}
+}
+
+
+# =============================================================
+# SECTION 15: SECT TECHNIQUE LIBRARY ACCESS
+# =============================================================
+
+# Characters who join or lead a sect gain access to
+# sect technique libraries for accelerated learning
+on_title_gained = {
+	effect = {
+		# Gaining a title in a sect region grants library access
+		if = {
+			limit = {
+				is_ruler = yes
+				prowess >= 10
+				OR = {
+					has_trait = sect_founder
+					has_government = sect_government
+					trigger_if = {
+						limit = { exists = var:is_sect_member }
+						var:is_sect_member >= 1
+					}
+				}
+				NOT = { has_character_modifier = sect_library_access }
+			}
+			add_character_modifier = {
+				modifier = sect_library_access
+				duration = -1
+			}
+			# Accelerated technique learning
+			if = {
+				limit = { exists = var:technique_practice_hours }
+				change_variable = { name = technique_practice_hours add = 20 }
+			}
+			else = {
+				set_variable = { name = technique_practice_hours value = 20 }
+			}
+			if = {
+				limit = { is_ai = no }
+				custom_tooltip = tt_sect_library_access
 			}
 		}
 	}
