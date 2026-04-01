@@ -1,0 +1,858 @@
+###############################################################################
+# MURIM ROMANCE EXPANSION EVENTS
+# Love letter interception, dual cultivation catastrophe, jealous sect elder,
+# elopement flight, reunion after years apart
+# Cross-references: murim_romance_events, murim_cultivation_events, murim_duel_events,
+#                   murim_sect_events, murim_fate_events, murim_jianghu_events
+###############################################################################
+
+namespace = murim_romance_exp
+
+###############################################################################
+# 11. LOVE LETTER INTERCEPTION
+# A secret love letter between you and someone from a rival sect is discovered
+###############################################################################
+murim_romance_exp.0001 = {
+	type = character_event
+	title = murim_romance_exp.0001.t
+	desc = murim_romance_exp.0001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		any_relation = {
+			type = lover
+			is_alive = yes
+		}
+		NOT = { has_character_flag = love_letter_intercepted }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = lustful }
+		modifier = { add = 0.5 intrigue < 10 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = love_letter_intercepted
+			years = 5
+		}
+		random_relation = {
+			type = lover
+			limit = { is_alive = yes }
+			save_scope_as = secret_lover
+		}
+		create_character_memory = {
+			type = love_letter_discovered_memory
+			participants = {
+				lover = scope:secret_lover
+			}
+		}
+	}
+
+	# Deny everything - burn the evidence
+	option = {
+		name = murim_romance_exp.0001.a
+		duel = {
+			skill = intrigue
+			target = root
+			50 = {
+				desc = murim_romance_exp.0001.a.covered
+				add_intrigue_skill = 1
+				add_stress = 20
+				create_character_memory = {
+					type = successfully_hid_romance_memory
+				}
+			}
+			30 = {
+				desc = murim_romance_exp.0001.a.suspicious
+				add_stress = 30
+				add_character_modifier = {
+					modifier = under_suspicion_secret_romance
+					years = 2
+				}
+				create_character_memory = {
+					type = romance_suspicion_lingering_memory
+				}
+			}
+			20 = {
+				desc = murim_romance_exp.0001.a.exposed
+				add_prestige = -200
+				add_character_modifier = {
+					modifier = forbidden_romance_exposed
+					years = 5
+				}
+				create_character_memory = {
+					type = forbidden_romance_exposed_memory
+				}
+				# Sect punishment chain
+				hidden_effect = {
+					trigger_event = {
+						id = murim_sect.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+
+	# Openly declare your love - damn the consequences
+	option = {
+		name = murim_romance_exp.0001.b
+		add_prestige = -100
+		add_stress = -30
+		add_opinion = {
+			target = scope:secret_lover
+			modifier = declared_love_openly
+			opinion = 50
+		}
+		add_character_modifier = {
+			modifier = open_forbidden_love
+			years = 5
+		}
+		create_character_memory = {
+			type = declared_forbidden_love_openly_memory
+			participants = {
+				lover = scope:secret_lover
+			}
+		}
+		hidden_effect = {
+			# Triggers sect conflict
+			trigger_event = {
+				id = murim_romance_exp.0003
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 has_trait = honest }
+		}
+	}
+
+	# End the relationship to protect both of you
+	option = {
+		name = murim_romance_exp.0001.c
+		add_stress = 40
+		remove_relation_lover = scope:secret_lover
+		create_character_memory = {
+			type = ended_forbidden_love_for_safety_memory
+			participants = {
+				ex_lover = scope:secret_lover
+			}
+		}
+		add_character_modifier = {
+			modifier = heartbreak_of_duty
+			years = 3
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = temperate }
+		}
+	}
+}
+
+###############################################################################
+# 12. DUAL CULTIVATION CATASTROPHE
+# A dual cultivation session goes horribly wrong - qi backlash
+###############################################################################
+murim_romance_exp.0002 = {
+	type = character_event
+	title = murim_romance_exp.0002.t
+	desc = murim_romance_exp.0002.desc
+	theme = death
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	right_portrait = {
+		character = scope:cultivation_partner
+		animation = pain
+	}
+
+	trigger = {
+		is_alive = yes
+		any_relation = {
+			type = lover
+			is_alive = yes
+			has_trait = murim_cultivator
+		}
+		NOT = { has_character_flag = dual_cultivation_catastrophe }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 has_trait = impatient }
+		modifier = { add = 0.3 has_trait = reckless }
+	}
+
+	immediate = {
+		set_character_flag = dual_cultivation_catastrophe
+		random_relation = {
+			type = lover
+			limit = {
+				is_alive = yes
+				has_trait = murim_cultivator
+			}
+			save_scope_as = cultivation_partner
+		}
+		create_character_memory = {
+			type = dual_cultivation_catastrophe_memory
+			participants = {
+				partner = scope:cultivation_partner
+			}
+		}
+	}
+
+	# Sacrifice your own qi to save your partner
+	option = {
+		name = murim_romance_exp.0002.a
+		add_prowess_skill = -3
+		add_stress = 40
+		random_list = {
+			40 = {
+				add_trait = wounded_2
+				create_character_memory = {
+					type = sacrificed_qi_saved_partner_memory
+					participants = {
+						partner = scope:cultivation_partner
+					}
+				}
+			}
+			30 = {
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = qi_channels_damaged
+					years = 5
+				}
+			}
+			20 = {
+				add_trait = incapable
+				create_character_memory = {
+					type = crippled_saving_lover_memory
+				}
+			}
+			10 = {
+				# Both survive with minimal harm
+				add_trait = wounded_1
+				scope:cultivation_partner = {
+					add_opinion = {
+						target = root
+						modifier = saved_my_life_cultivation
+						opinion = 60
+					}
+				}
+			}
+		}
+		scope:cultivation_partner = {
+			add_opinion = {
+				target = root
+				modifier = saved_my_life_cultivation
+				opinion = 40
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+
+	# Try to contain the backlash together
+	option = {
+		name = murim_romance_exp.0002.b
+		duel = {
+			skill = learning
+			target = root
+			40 = {
+				desc = murim_romance_exp.0002.b.contained
+				add_learning_skill = 2
+				add_prowess_skill = 1
+				create_character_memory = {
+					type = overcame_qi_catastrophe_together_memory
+				}
+				# Cross-ref: cultivation event breakthrough from adversity
+				hidden_effect = {
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 14 30 }
+					}
+				}
+			}
+			35 = {
+				desc = murim_romance_exp.0002.b.partial
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					50 = {
+						scope:cultivation_partner = {
+							add_trait = wounded_1
+						}
+					}
+				}
+				create_character_memory = {
+					type = partially_contained_qi_backlash_memory
+				}
+			}
+			25 = {
+				desc = murim_romance_exp.0002.b.failed
+				add_trait = wounded_2
+				scope:cultivation_partner = {
+					random_list = {
+						50 = { add_trait = wounded_2 }
+						30 = { add_trait = wounded_3 }
+						20 = { add_trait = incapable }
+					}
+				}
+				create_character_memory = {
+					type = qi_backlash_devastation_memory
+				}
+				# Cross-ref: fate event - karmic consequence
+				hidden_effect = {
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 30 60 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 learning >= 12 }
+		}
+	}
+
+	# Flee and save yourself - abandon your partner
+	option = {
+		name = murim_romance_exp.0002.c
+		add_stress = 50
+		add_trait = craven
+		remove_relation_lover = scope:cultivation_partner
+		scope:cultivation_partner = {
+			add_opinion = {
+				target = root
+				modifier = abandoned_during_catastrophe
+				opinion = -80
+			}
+			random_list = {
+				40 = { add_trait = wounded_3 }
+				30 = { add_trait = incapable }
+				30 = {
+					death = {
+						death_reason = death_qi_deviation
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = abandoned_partner_during_catastrophe_memory
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 10 has_trait = callous }
+		}
+	}
+}
+
+###############################################################################
+# 13. JEALOUS SECT ELDER OPPOSES YOUR RELATIONSHIP
+# A powerful elder in your sect demands you end your romance
+###############################################################################
+murim_romance_exp.0003 = {
+	type = character_event
+	title = murim_romance_exp.0003.t
+	desc = murim_romance_exp.0003.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_alive = yes
+		any_relation = {
+			type = lover
+			is_alive = yes
+		}
+		NOT = { has_character_flag = elder_opposed_romance }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = murim_inner_disciple }
+		modifier = { add = 0.5 has_trait = beautiful }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = elder_opposed_romance
+			years = 5
+		}
+		random_relation = {
+			type = lover
+			limit = { is_alive = yes }
+			save_scope_as = romance_target
+		}
+		create_character_memory = {
+			type = sect_elder_opposes_romance_memory
+			participants = {
+				lover = scope:romance_target
+			}
+		}
+	}
+
+	# Defy the elder - fight for your love
+	option = {
+		name = murim_romance_exp.0003.a
+		duel = {
+			skill = prowess
+			target = root
+			25 = {
+				desc = murim_romance_exp.0003.a.victory
+				add_prestige = 300
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = defied_elder_for_love
+					years = 5
+				}
+				create_character_memory = {
+					type = defeated_elder_for_love_memory
+				}
+				# Cross-ref: ranking challenge after defeating elder
+				hidden_effect = {
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 14 30 }
+					}
+				}
+			}
+			40 = {
+				desc = murim_romance_exp.0003.a.struggle
+				add_prestige = 100
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					40 = { add_trait = wounded_2 }
+				}
+				create_character_memory = {
+					type = fought_elder_barely_survived_memory
+				}
+			}
+			35 = {
+				desc = murim_romance_exp.0003.a.crushed
+				add_prestige = -200
+				random_list = {
+					30 = { add_trait = wounded_2 }
+					30 = { add_trait = wounded_3 }
+					20 = { add_trait = incapable }
+					20 = { add_trait = craven }
+				}
+				create_character_memory = {
+					type = crushed_by_sect_elder_memory
+				}
+				# Exiled from sect
+				hidden_effect = {
+					trigger_event = {
+						id = murim_sect.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 has_trait = lustful }
+		}
+	}
+
+	# Submit and end the relationship
+	option = {
+		name = murim_romance_exp.0003.b
+		add_stress = 50
+		remove_relation_lover = scope:romance_target
+		add_character_modifier = {
+			modifier = heartbroken_obeyed_sect
+			years = 3
+		}
+		create_character_memory = {
+			type = obeyed_elder_ended_romance_memory
+			participants = {
+				ex_lover = scope:romance_target
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Plan to elope - flee together
+	option = {
+		name = murim_romance_exp.0003.c
+		add_stress = 20
+		add_character_modifier = {
+			modifier = planning_elopement
+			years = 1
+		}
+		create_character_memory = {
+			type = planning_elopement_with_lover_memory
+			participants = {
+				lover = scope:romance_target
+			}
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_romance_exp.0004
+				days = { 30 60 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = adventurer }
+		}
+	}
+}
+
+###############################################################################
+# 14. ELOPEMENT FLIGHT - FLEEING TOGETHER INTO THE JIANGHU
+# You and your lover flee the sect to live freely in the martial world
+###############################################################################
+murim_romance_exp.0004 = {
+	type = character_event
+	title = murim_romance_exp.0004.t
+	desc = murim_romance_exp.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = planning_elopement
+		any_relation = {
+			type = lover
+			is_alive = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		remove_character_flag = planning_elopement
+		random_relation = {
+			type = lover
+			limit = { is_alive = yes }
+			save_scope_as = eloping_partner
+		}
+		create_character_memory = {
+			type = elopement_flight_memory
+			participants = {
+				partner = scope:eloping_partner
+			}
+		}
+	}
+
+	# Flee under cover of darkness - stealth escape
+	option = {
+		name = murim_romance_exp.0004.a
+		duel = {
+			skill = intrigue
+			target = root
+			50 = {
+				desc = murim_romance_exp.0004.a.clean_escape
+				add_prestige = 100
+				add_character_modifier = {
+					modifier = eloped_successfully_free
+					years = -1
+				}
+				create_character_memory = {
+					type = clean_elopement_escape_memory
+				}
+				# Cross-ref: jianghu wandering life
+				hidden_effect = {
+					trigger_event = {
+						id = murim_daily_life.0001
+						days = { 30 60 }
+					}
+				}
+			}
+			30 = {
+				desc = murim_romance_exp.0004.a.pursued
+				add_stress = 30
+				add_character_modifier = {
+					modifier = fugitives_on_the_run
+					years = 3
+				}
+				create_character_memory = {
+					type = elopement_pursued_by_sect_memory
+				}
+				# Sect hunters are on your trail
+				hidden_effect = {
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 14 30 }
+					}
+				}
+			}
+			20 = {
+				desc = murim_romance_exp.0004.a.caught
+				add_prestige = -300
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { add_trait = incapable }
+				}
+				remove_relation_lover = scope:eloping_partner
+				add_character_modifier = {
+					modifier = caught_eloping_punished
+					years = 5
+				}
+				create_character_memory = {
+					type = elopement_caught_separated_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 intrigue >= 12 }
+		}
+	}
+
+	# Fight your way out - warrior's escape
+	option = {
+		name = murim_romance_exp.0004.b
+		trigger = { prowess >= 15 }
+		duel = {
+			skill = prowess
+			target = root
+			40 = {
+				desc = murim_romance_exp.0004.b.broke_through
+				add_prestige = 300
+				add_prowess_skill = 1
+				add_dread = 20
+				add_character_modifier = {
+					modifier = fought_free_with_lover
+					years = -1
+				}
+				create_character_memory = {
+					type = fought_past_guards_for_love_memory
+				}
+			}
+			35 = {
+				desc = murim_romance_exp.0004.b.bloody
+				add_trait = wounded_2
+				add_prestige = 100
+				create_character_memory = {
+					type = bloody_escape_with_lover_memory
+				}
+			}
+			25 = {
+				desc = murim_romance_exp.0004.b.overwhelmed
+				random_list = {
+					40 = { add_trait = wounded_2 }
+					30 = { add_trait = wounded_3 }
+					20 = { add_trait = incapable }
+					10 = { add_trait = craven }
+				}
+				create_character_memory = {
+					type = overwhelmed_during_escape_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Abandon the plan - too dangerous
+	option = {
+		name = murim_romance_exp.0004.c
+		add_stress = 40
+		add_character_modifier = {
+			modifier = elopement_abandoned_cowardice
+			years = 2
+		}
+		create_character_memory = {
+			type = abandoned_elopement_plan_memory
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = craven }
+		}
+	}
+}
+
+###############################################################################
+# 15. REUNION AFTER YEARS APART
+# You encounter your lost love after years of separation
+###############################################################################
+murim_romance_exp.0005 = {
+	type = character_event
+	title = murim_romance_exp.0005.t
+	desc = murim_romance_exp.0005.desc
+	theme = love
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		OR = {
+			has_character_flag = elopement_caught_separated
+			has_character_flag = ended_forbidden_love
+			has_character_flag = love_letter_intercepted
+		}
+		NOT = { has_character_flag = reunion_with_lost_love }
+		age >= 25
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 age >= 35 }
+		modifier = { add = 0.5 has_trait = patient }
+	}
+
+	immediate = {
+		set_character_flag = reunion_with_lost_love
+		create_character_memory = {
+			type = reunion_with_lost_love_memory
+		}
+	}
+
+	# Rekindle the romance - this time we are stronger
+	option = {
+		name = murim_romance_exp.0005.a
+		add_stress = -50
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = rekindled_lost_love
+			years = -1
+		}
+		create_character_memory = {
+			type = rekindled_romance_after_years_memory
+		}
+		hidden_effect = {
+			# Harmonized qi from reunion
+			random_list = {
+				50 = {
+					add_prowess_skill = 2
+					# Cross-ref: dual cultivation opportunity
+					trigger_event = {
+						id = murim_romance.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					add_prowess_skill = 1
+					add_learning_skill = 1
+				}
+				20 = {
+					# Old enemies return to threaten the reunion
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 30 60 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = lustful }
+			modifier = { add = 15 has_trait = compassionate }
+		}
+	}
+
+	# Acknowledge the past but move on - too much has changed
+	option = {
+		name = murim_romance_exp.0005.b
+		add_stress = 20
+		add_piety = 100
+		add_character_modifier = {
+			modifier = accepted_lost_love_moved_on
+			years = 5
+		}
+		create_character_memory = {
+			type = acknowledged_past_love_moved_on_memory
+		}
+		# Emotional growth triggers cultivation insight
+		hidden_effect = {
+			trigger_event = {
+				id = murim_cultivation.0001
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = temperate }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	# Challenge them to a duel - love turned to resentment
+	option = {
+		name = murim_romance_exp.0005.c
+		trigger = {
+			OR = {
+				has_trait = vengeful
+				has_trait = wrathful
+			}
+		}
+		add_dread = 15
+		duel = {
+			skill = prowess
+			target = root
+			40 = {
+				desc = murim_romance_exp.0005.c.victory
+				add_prestige = 200
+				add_prowess_skill = 1
+				create_character_memory = {
+					type = defeated_former_lover_in_duel_memory
+				}
+			}
+			35 = {
+				desc = murim_romance_exp.0005.c.draw
+				add_stress = -20
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					40 = { }
+				}
+				create_character_memory = {
+					type = duel_with_former_lover_stalemate_memory
+				}
+			}
+			25 = {
+				desc = murim_romance_exp.0005.c.defeat
+				add_prestige = -100
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { add_trait = craven }
+				}
+				create_character_memory = {
+					type = defeated_by_former_lover_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = vengeful }
+		}
+	}
+}
