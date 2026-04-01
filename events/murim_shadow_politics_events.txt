@@ -1,0 +1,709 @@
+# Murim Chronicles - Heavenly Demon Shadow Politics Events
+# The Heavenly Demon Sect infiltrates GOVERNMENTS.
+# DESIGN: If any Chinese/Korean ruler has aggressive/deceitful/ambitious traits,
+#   15% yearly chance Heavenly Demon approaches secretly.
+# VANILLA SEPARATION EXCEPTION: This is the ONE system where martial and political
+#   worlds INTENTIONALLY overlap. The HD uses martial power to influence politics.
+#   But the overlap is CHOSEN by event options, not automatic.
+# CHINA-CENTRIC: Only Chinese/Korean rulers can be infiltrated.
+# INTEGRATION: Uses murim_clan_triggers.txt (murim_hd_can_infiltrate_ruler_trigger)
+# INTEGRATION: Feeds murim_faction_events.txt (exposure triggers faction crisis)
+# AI BEHAVIOR: AI Heavenly Demon leaders ALWAYS attempt infiltration. Player can choose.
+
+namespace = murim_shadow
+
+# ═══════════════════════════════════════════
+# 0001 - HD LEADER INITIATES INFILTRATION (yearly pulse)
+# AI always attempts. Player chooses.
+# ═══════════════════════════════════════════
+murim_shadow.0001 = {
+	type = character_event
+	title = murim_shadow.0001.t
+	desc = murim_shadow.0001.desc
+	# "As leader of the Heavenly Demon Sect, you survey the political
+	#  landscape. The Emperor of [realm] is [trait-based description].
+	#  Such weakness is an invitation. A puppet on the throne would give
+	#  the Demonic Path access to armies, treasuries, and the legal
+	#  authority to crush the orthodox sects. Do you send your Shadow Envoy?"
+	theme = intrigue
+	
+	trigger = {
+		has_character_modifier = heavenly_demon_sect_leader
+		NOT = { has_character_flag = hd_infiltration_cooldown }
+	}
+	
+	# Option A: Send the Shadow Envoy
+	option = {
+		name = murim_shadow.0001.a
+		# "Find me a ruler who can be... persuaded."
+		# Find eligible ruler
+		random_living_character = {
+			limit = {
+				murim_hd_can_infiltrate_ruler_trigger = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					has_trait = ambitious
+				}
+				modifier = {
+					add = 3
+					has_trait = deceitful
+				}
+				modifier = {
+					add = 2
+					has_trait = greedy
+				}
+				modifier = {
+					add = 5
+					highest_held_title_tier >= tier_kingdom
+				}
+			}
+			save_scope_as = infiltration_target
+		}
+		# Send envoy to target
+		scope:infiltration_target = {
+			trigger_event = {
+				id = murim_shadow.0010
+				days = { 30 90 }
+			}
+		}
+		set_character_flag = {
+			flag = hd_infiltration_cooldown
+			years = 3
+		}
+		ai_chance = { base = 100 } # AI ALWAYS attempts
+	}
+	
+	# Option B: Wait for better opportunity
+	option = {
+		name = murim_shadow.0001.b
+		# "Not yet. The time is not right."
+		set_character_flag = {
+			flag = hd_infiltration_cooldown
+			years = 1
+		}
+		ai_chance = { base = 0 } # AI never waits
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0010 - RULER RECEIVES HD APPROACH
+# The ruler is contacted by the Heavenly Demon's agent
+# ═══════════════════════════════════════════
+murim_shadow.0010 = {
+	type = character_event
+	title = murim_shadow.0010.t
+	desc = murim_shadow.0010.desc
+	# "A figure appears in your chamber — impossible, given the guards.
+	#  They move like smoke, bow with predatory grace, and speak with
+	#  silk-wrapped menace: 'The Heavenly Demon Sect extends its hand
+	#  to you, great ruler. We offer: protection from ALL martial threats,
+	#  elimination of your political rivals through... accidents, intelligence
+	#  from our networks spanning all of China, and the most powerful
+	#  bodyguards the martial world has ever produced. In return, we ask
+	#  only... accommodation. A seat at your court. Freedom to operate
+	#  within your borders. And occasionally, your authority directed
+	#  against those who oppose us.' 15% base acceptance."
+	theme = intrigue
+	
+	trigger = {
+		murim_hd_can_infiltrate_ruler_trigger = yes
+	}
+	
+	# Option A: Accept the Heavenly Demon's offer
+	option = {
+		name = murim_shadow.0010.a
+		# "Your... services are welcome at my court."
+		add_character_modifier = {
+			modifier = heavenly_demon_puppet
+			years = -1 # permanent until exposed
+		}
+		# HD agent becomes court physician/advisor (hidden role)
+		# Ruler gains benefits
+		add_intrigue_skill = 2
+		add_character_modifier = {
+			modifier = hd_shadow_protection
+			years = -1
+			# +10 scheme power defense, +5 dread, -10 piety
+		}
+		set_character_flag = hd_puppet_ruler
+		# Persecution of orthodox sects begins
+		trigger_event = {
+			id = murim_shadow.0020
+			days = { 90 365 }
+		}
+		# Risk of discovery starts
+		trigger_event = {
+			id = murim_shadow.0030
+			days = { 365 1825 }
+		}
+		create_character_memory = {
+			type = murim_accepted_demon_pact
+		}
+		stress_impact = {
+			honest = major_stress_gain
+			paranoid = minor_stress_gain
+		}
+		ai_chance = {
+			base = 15 # 15% base
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 10
+				has_trait = deceitful
+			}
+			modifier = {
+				add = 10
+				has_trait = greedy
+			}
+			modifier = {
+				add = -20
+				has_trait = just
+			}
+			modifier = {
+				add = -20
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option B: Reject firmly
+	option = {
+		name = murim_shadow.0010.b
+		# "Leave before I have you arrested."
+		set_character_flag = {
+			flag = hd_infiltration_rejected
+			years = 10
+		}
+		add_character_modifier = {
+			modifier = murim_rejected_demonic_offer
+			years = 5
+		}
+		# HD may retaliate
+		random_list = {
+			70 = { } # Nothing happens
+			30 = {
+				# HD sends assassin as punishment
+				trigger_event = {
+					id = murim_shadow.0015
+					days = { 30 180 }
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option C: Pretend to accept, then alert orthodox sects
+	option = {
+		name = murim_shadow.0010.c
+		# "Of course... (Guards, send word to the Murim Alliance immediately.)"
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				has_trait = just
+				intrigue >= 12
+			}
+		}
+		set_character_flag = {
+			flag = hd_infiltration_rejected
+			years = 20
+		}
+		add_character_modifier = {
+			modifier = murim_defender_of_righteousness
+			years = 10
+		}
+		# Alert the orthodox faction — major intelligence coup
+		# Orthodox clans gain opinion of this ruler
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option D: Negotiate better terms
+	option = {
+		name = murim_shadow.0010.d
+		# "Your offer is... interesting. But I want more."
+		trigger = { has_trait = greedy }
+		# Extended negotiation — better deal but deeper entanglement
+		add_gold = 500
+		add_character_modifier = {
+			modifier = heavenly_demon_puppet
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = hd_deep_entanglement
+			years = -1
+		}
+		set_character_flag = hd_puppet_ruler
+		trigger_event = {
+			id = murim_shadow.0020
+			days = { 60 180 }
+		}
+		trigger_event = {
+			id = murim_shadow.0030
+			days = { 180 1095 } # Discovered faster due to greed
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0015 - HD RETALIATION FOR REJECTION
+# ═══════════════════════════════════════════
+murim_shadow.0015 = {
+	type = character_event
+	title = murim_shadow.0015.t
+	desc = murim_shadow.0015.desc
+	# "The Heavenly Demon does not accept rejection gracefully. A Phantom
+	#  Blade assassin — contracted through the demonic network — has been
+	#  sent to remind you of the cost of defiance."
+	theme = intrigue
+	
+	# Option A: Your guards intercept
+	option = {
+		name = murim_shadow.0015.a
+		random_list = {
+			60 = {
+				# Assassin stopped
+				add_character_modifier = {
+					modifier = murim_survived_hd_retaliation
+					years = 5
+				}
+			}
+			40 = {
+				# Assassin partially succeeds — wounded
+				add_trait = wounded
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option B: Reconsider the offer
+	option = {
+		name = murim_shadow.0015.b
+		# "Perhaps... I was too hasty in my refusal."
+		trigger = { has_trait = craven }
+		trigger_event = {
+			id = murim_shadow.0010
+			days = { 7 14 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0020 - PUPPET RULER PERSECUTES ORTHODOX SECTS
+# Consequences of HD infiltration
+# ═══════════════════════════════════════════
+murim_shadow.0020 = {
+	type = character_event
+	title = murim_shadow.0020.t
+	desc = murim_shadow.0020.desc
+	# "Your Heavenly Demon advisor whispers suggestions: ban public martial
+	#  demonstrations (targeting orthodox sects who train openly), tax martial
+	#  schools (orthodox ones are public, unorthodox hide), arrest 'dangerous
+	#  martial vagrants' (orthodox sect members traveling through your lands).
+	#  Each decree strengthens the demonic path and weakens the righteous."
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = hd_puppet_ruler
+	}
+	
+	# Option A: Issue anti-orthodox decree
+	option = {
+		name = murim_shadow.0020.a
+		# "Draft the edict. All martial schools must register with the court."
+		add_character_modifier = {
+			modifier = murim_anti_orthodox_decree
+			years = 5
+		}
+		# Orthodox clans lose members/resources in this realm
+		# Unorthodox gains influence
+		add_tyranny = 5
+		# Continue persecution
+		trigger_event = {
+			id = murim_shadow.0020
+			days = { 365 730 }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Rig the next tournament
+	option = {
+		name = murim_shadow.0020.b
+		# "Ensure our fighters win. Bribe the judges, poison the orthodox champions."
+		add_character_modifier = {
+			modifier = murim_rigged_tournament
+			years = 3
+		}
+		# Tournament results favor unorthodox
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Use army against orthodox stronghold
+	option = {
+		name = murim_shadow.0020.c
+		# "Send soldiers to 'inspect' Mount Hua Sect's mountain."
+		# THIS IS THE ULTIMATE ESCALATION — political army vs martial sect
+		# VANILLA SEPARATION: This is the ONE scenario where worlds collide
+		add_tyranny = 15
+		add_character_modifier = {
+			modifier = murim_military_suppression
+			years = 10
+		}
+		# Triggers massive orthodox backlash
+		trigger_event = {
+			id = murim_shadow.0025
+			days = { 30 90 }
+		}
+		ai_chance = { base = 10 }
+	}
+	
+	# Option D: Resist the advisor's suggestions
+	option = {
+		name = murim_shadow.0020.d
+		# "I accepted your protection, not your tyranny."
+		# Begin breaking free of HD control
+		add_stress = 20
+		random_list = {
+			50 = {
+				# HD accepts reluctantly
+				add_character_modifier = {
+					modifier = murim_puppet_resistance
+					years = 3
+				}
+			}
+			50 = {
+				# HD threatens you
+				trigger_event = {
+					id = murim_shadow.0027
+					days = { 7 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0025 - ORTHODOX BACKLASH AGAINST PERSECUTION
+# ═══════════════════════════════════════════
+murim_shadow.0025 = {
+	type = character_event
+	title = murim_shadow.0025.t
+	desc = murim_shadow.0025.desc
+	# "The orthodox sects have had enough. Mount Hua, Shaolin, and Wudang
+	#  have united — their combined martial force could topple a dynasty.
+	#  They don't want your throne. They want you to STOP. A delegation
+	#  of elders arrives at your palace, qi radiating menace through their
+	#  politeness: 'Your Majesty, we respectfully suggest you reconsider
+	#  your recent... policies.'"
+	theme = diplomacy
+	
+	# Option A: Back down — remove HD influence
+	option = {
+		name = murim_shadow.0025.a
+		# "The decrees are rescinded. The martial schools are free."
+		remove_character_modifier = heavenly_demon_puppet
+		remove_character_modifier = hd_shadow_protection
+		remove_character_flag = hd_puppet_ruler
+		add_character_modifier = {
+			modifier = murim_freed_from_hd
+			years = 10
+		}
+		# HD is furious — sends assassin
+		trigger_event = {
+			id = murim_shadow.0015
+			days = { 30 90 }
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Double down — HD protects you
+	option = {
+		name = murim_shadow.0025.b
+		# "The Heavenly Demon Sect will deal with these troublemakers."
+		# Full martial world civil war triggered
+		set_global_variable = {
+			name = murim_faction_tension_high
+			value = yes
+			years = 5
+		}
+		# Triggers faction war
+		trigger_event = {
+			id = murim_faction.0001
+			days = { 30 90 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Negotiate — give ground but keep HD ties
+	option = {
+		name = murim_shadow.0025.c
+		# "I will ease the restrictions... but the Heavenly Demon stays at my court."
+		add_character_modifier = {
+			modifier = murim_puppet_compromise
+			years = 5
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0027 - HD THREATENS PUPPET RULER
+# Ruler tried to resist HD demands
+# ═══════════════════════════════════════════
+murim_shadow.0027 = {
+	type = character_event
+	title = murim_shadow.0027.t
+	desc = murim_shadow.0027.desc
+	# "Your Heavenly Demon advisor drops all pretense of servility.
+	#  'You seem to have forgotten the nature of our arrangement.
+	#  We don't serve you. You serve US. Would you like a demonstration
+	#  of what happens to puppets who cut their own strings?'
+	#  A blade of qi slices your desk in half without them moving."
+	theme = intrigue
+	
+	# Option A: Submit
+	option = {
+		name = murim_shadow.0027.a
+		# "I... understand."
+		add_stress = 30
+		add_character_modifier = {
+			modifier = murim_terrified_puppet
+			years = -1
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Call for help — expose the HD
+	option = {
+		name = murim_shadow.0027.b
+		# "GUARDS! This person is a Heavenly Demon agent!"
+		remove_character_modifier = heavenly_demon_puppet
+		remove_character_flag = hd_puppet_ruler
+		set_character_flag = hd_infiltration_exposed
+		# HD agent fights guards — chaos in the palace
+		random_list = {
+			40 = {
+				# HD agent killed/captured
+				add_character_modifier = {
+					modifier = murim_exposed_hd_plot
+					years = 10
+				}
+			}
+			40 = {
+				# HD agent escapes
+				# HD declares this ruler an enemy
+			}
+			20 = {
+				# HD agent kills YOU before escaping
+				death = { death_reason = death_murder_unknown }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option C: Secret message to orthodox sects
+	option = {
+		name = murim_shadow.0027.c
+		# "Smile. Nod. And send a coded message to Shaolin tonight."
+		trigger = { intrigue >= 12 }
+		# Begin the exposure storyline
+		trigger_event = {
+			id = murim_shadow.0030
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				intrigue >= 15
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0030 - INFILTRATION DISCOVERY EVENT
+# Orthodox sects investigate the puppet ruler
+# ═══════════════════════════════════════════
+murim_shadow.0030 = {
+	type = character_event
+	title = murim_shadow.0030.t
+	desc = murim_shadow.0030.desc
+	# "Rumors reach the Murim Alliance: the ruler of [realm] is acting
+	#  strangely. Persecuting martial schools, favoring demonic sect members,
+	#  issuing decrees that benefit only the Heavenly Demon. An investigation
+	#  team is dispatched — Shaolin monks, Wudang strategists, Beggar Sect
+	#  informants. They're looking for the truth."
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = hd_puppet_ruler
+	}
+	
+	immediate = {
+		random_list = {
+			# Chance of discovery increases over time
+			40 = { set_local_variable = { name = discovered value = yes } }
+			60 = { set_local_variable = { name = not_found value = yes } }
+		}
+	}
+	
+	# Option A: Discovered — massive exposure event
+	option = {
+		name = murim_shadow.0030.a
+		trigger = { exists = local_var:discovered }
+		# The truth is out
+		remove_character_modifier = heavenly_demon_puppet
+		remove_character_flag = hd_puppet_ruler
+		set_character_flag = hd_infiltration_exposed
+		add_character_modifier = {
+			modifier = murim_exposed_puppet
+			years = -1
+		}
+		add_tyranny = 20
+		# Triggers civil unrest, potential overthrow
+		trigger_event = {
+			id = murim_shadow.0040
+			days = { 14 60 }
+		}
+		create_character_memory = {
+			type = murim_hd_puppet_exposed
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	# Option B: Not found yet — continue
+	option = {
+		name = murim_shadow.0030.b
+		trigger = { exists = local_var:not_found }
+		# Will be checked again
+		trigger_event = {
+			id = murim_shadow.0030
+			days = { 365 730 }
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0040 - EXPOSURE AFTERMATH — EMPEROR OVERTHROW ATTEMPT
+# ═══════════════════════════════════════════
+murim_shadow.0040 = {
+	type = character_event
+	title = murim_shadow.0040.t
+	desc = murim_shadow.0040.desc
+	# "The martial world erupts. A ruler controlled by the Heavenly Demon!
+	#  The Murim Alliance calls for the ruler's removal. Orthodox sect
+	#  elders infiltrate the capital. The question: does the ruler step
+	#  down, or does the Heavenly Demon fight to keep their puppet in power?
+	#  VANILLA SEPARATION: This event CAN trigger actual political change —
+	#  it's the designed exception where martial and political worlds collide."
+	theme = martial
+	
+	trigger = {
+		has_character_flag = hd_infiltration_exposed
+		is_ruler = yes
+	}
+	
+	# Option A: Abdicate — martial world wins
+	option = {
+		name = murim_shadow.0040.a
+		# "I was a fool. I step down. Let my heir rule free of demonic influence."
+		add_character_modifier = {
+			modifier = murim_abdicated_puppet
+			years = -1
+		}
+		# Political abdication — CK3 succession triggers
+		# This is the ONE place martial affects politics
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Fight — HD mobilizes to protect you
+	option = {
+		name = murim_shadow.0040.b
+		# "The Heavenly Demon Sect is my shield. Let them come."
+		# Martial world civil war + political crisis simultaneously
+		set_global_variable = {
+			name = murim_faction_tension_high
+			value = yes
+			years = 5
+		}
+		trigger_event = {
+			id = murim_faction.0001
+			days = { 7 14 }
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Blame the HD — claim you were coerced
+	option = {
+		name = murim_shadow.0040.c
+		# "I was their victim, not their ally! They threatened my family!"
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				diplomacy >= 12
+			}
+		}
+		random_list = {
+			50 = {
+				# Believed — ruler keeps throne
+				add_character_modifier = {
+					modifier = murim_forgiven_puppet
+					years = 10
+				}
+			}
+			50 = {
+				# Not believed — forced out anyway
+				add_character_modifier = {
+					modifier = murim_disgraced_ruler
+					years = -1
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+}
