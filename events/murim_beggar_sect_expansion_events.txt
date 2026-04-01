@@ -1,0 +1,997 @@
+# Murim Chronicles - Beggar Sect Expansion Events
+# Deeper Beggar Sect content: Clean/Dirty faction politics, spy networks,
+# supreme technique mastery, succession crises, and espionage missions.
+# INTEGRATION: murim_beggar_sect_events.txt, murim_faction_war_events.txt, murim_politics_events.txt
+# INTEGRATION: murim_shadow_politics_events.txt, murim_jianghu_events.txt, murim_ranking_events.txt
+# GENDER: Fully equal. Men and women serve as sect chief, elders, and spies equally.
+
+namespace = murim_beggar_exp
+
+##############################
+# EVENT 1: CLEAN VS DIRTY FACTION SHOWDOWN
+# The eternal internal struggle of the Beggar Sect.
+# Clean Faction: Wealthy patrons who fund the sect but never lived as beggars.
+# Dirty Faction: True street beggars who built the sect from nothing.
+# When the Chief dies, this tension erupts into open conflict.
+##############################
+murim_beggar_exp.0001 = {
+	type = character_event
+	title = murim_beggar_exp.0001.t
+	desc = murim_beggar_exp.0001.desc
+	theme = intrigue
+	
+	trigger = {
+		is_beggar_sect_member_trigger = yes
+		OR = {
+			murim_is_clan_leader_trigger = yes
+			murim_is_clan_elder_trigger = yes
+		}
+		NOT = { has_character_flag = beggar_faction_showdown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_variable = murim_clan_harmony
+			var:murim_clan_harmony < 30
+		}
+	}
+	
+	immediate = {
+		set_character_flag = beggar_faction_showdown
+		# Find the opposing faction leader
+		random_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				prowess >= 12
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					has_trait = ambitious
+				}
+				modifier = {
+					add = 2
+					intrigue >= 14
+				}
+			}
+			save_scope_as = faction_rival
+		}
+		create_character_memory = {
+			type = beggar_faction_showdown_memory
+			participants = { rival = scope:faction_rival }
+		}
+	}
+	
+	# Option A: Call for a martial contest to settle it (Dirty Faction tradition)
+	option = {
+		name = murim_beggar_exp.0001.a
+		duel = {
+			skill = prowess
+			target = scope:faction_rival
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				# Your faction wins control
+				add_prowess_xp = 600
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = beggar_faction_champion_modifier
+					years = 10
+				}
+				scope:faction_rival = {
+					add_trait = wounded_1
+					add_opinion = {
+						modifier = beggar_faction_defeated_opinion
+						target = root
+						opinion = -30
+					}
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = -10
+				}
+				create_character_memory = {
+					type = beggar_faction_duel_victory_memory
+					participants = { defeated = scope:faction_rival }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:faction_rival.prowess
+				# Rival faction takes control
+				add_trait = wounded_1
+				add_stress = 35
+				scope:faction_rival = {
+					add_prestige = 400
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = -15
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+	
+	# Option B: Propose a democratic vote among all members (Clean Faction tradition)
+	option = {
+		name = murim_beggar_exp.0001.b
+		add_diplomacy_xp = 500
+		random_list = {
+			50 = {
+				# Vote goes your way
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = beggar_elected_leader_modifier
+					years = 10
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = 5
+				}
+			}
+			50 = {
+				# Vote goes against you
+				add_stress = 30
+				scope:faction_rival = {
+					add_prestige = 300
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option C: Secretly eliminate the rival (assassination path)
+	option = {
+		name = murim_beggar_exp.0001.c
+		trigger = {
+			intrigue >= 14
+		}
+		add_intrigue_xp = 500
+		add_dread = 20
+		random_list = {
+			60 = {
+				modifier = {
+					add = 15
+					intrigue >= 18
+				}
+				# Assassination succeeds
+				scope:faction_rival = {
+					death = {
+						death_reason = death_murder_known
+						killer = root
+					}
+				}
+				add_character_modifier = {
+					modifier = beggar_shadow_chief_modifier
+					years = -1
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = -25
+				}
+			}
+			40 = {
+				# Assassination discovered!
+				add_trait = murderer
+				add_character_modifier = {
+					modifier = beggar_traitor_exposed_modifier
+					years = 10
+				}
+				every_courtier = {
+					limit = {
+						is_beggar_sect_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = beggar_traitor_opinion
+						target = root
+						opinion = -50
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 10
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+##############################
+# EVENT 2: INTELLIGENCE NETWORK BREAKTHROUGH
+# The Beggar Sect's spy network discovers critical information.
+# Could be about Heavenly Demon's puppet emperor scheme,
+# a rival clan's secret weapon, or Orthodox Alliance betrayal.
+##############################
+murim_beggar_exp.0002 = {
+	type = character_event
+	title = murim_beggar_exp.0002.t
+	desc = murim_beggar_exp.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		is_beggar_sect_member_trigger = yes
+		OR = {
+			has_character_modifier = beggar_intelligence_operative_modifier
+			murim_is_clan_leader_trigger = yes
+			murim_is_clan_elder_trigger = yes
+		}
+		NOT = { has_character_flag = beggar_intel_breakthrough_recent }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			intrigue >= 16
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = beggar_intel_breakthrough_recent
+			years = 3
+		}
+		create_character_memory = {
+			type = beggar_intelligence_breakthrough_memory
+		}
+	}
+	
+	# Option A: Share intelligence with Orthodox Alliance (gain faction favor)
+	option = {
+		name = murim_beggar_exp.0002.a
+		trigger = {
+			murim_is_orthodox_trigger = yes
+		}
+		add_intrigue_xp = 400
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = beggar_intel_shared_orthodox_modifier
+			years = 5
+		}
+		# Boost orthodox faction reputation
+		every_living_character = {
+			limit = {
+				murim_is_orthodox_trigger = yes
+				murim_is_clan_leader_trigger = yes
+				NOT = { this = root }
+			}
+			add_opinion = {
+				modifier = beggar_intel_provider_opinion
+				target = root
+				opinion = 25
+			}
+		}
+		# Cross-ref: may trigger faction war preparation
+		trigger_event = {
+			id = murim_faction_war.0001
+			days = { 60 180 }
+		}
+		ai_chance = {
+			base = 45
+		}
+	}
+	
+	# Option B: Sell the intelligence to the highest bidder (profit)
+	option = {
+		name = murim_beggar_exp.0002.b
+		add_gold = 150
+		add_intrigue_xp = 300
+		add_character_modifier = {
+			modifier = beggar_information_broker_modifier
+			years = 5
+		}
+		# Risk: both sides distrust you now
+		random_list = {
+			40 = {
+				# Clean transaction
+				add_gold = 50
+			}
+			60 = {
+				# Buyer traces it back to you
+				add_character_modifier = {
+					modifier = beggar_exposed_broker_modifier
+					years = 3
+				}
+				add_dread = 10
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = greedy
+			}
+		}
+	}
+	
+	# Option C: Use the intelligence for personal leverage (blackmail)
+	option = {
+		name = murim_beggar_exp.0002.c
+		add_intrigue_xp = 600
+		add_dread = 15
+		# Find someone to blackmail
+		random_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				NOT = { is_beggar_sect_member_trigger = yes }
+				OR = {
+					murim_is_clan_leader_trigger = yes
+					murim_is_clan_elder_trigger = yes
+				}
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 2
+					is_heavenly_demon_member_trigger = yes
+				}
+			}
+			save_scope_as = blackmail_target
+		}
+		scope:blackmail_target = {
+			add_opinion = {
+				modifier = beggar_blackmailer_opinion
+				target = root
+				opinion = -40
+			}
+			add_stress = 30
+		}
+		add_character_modifier = {
+			modifier = beggar_blackmail_leverage_modifier
+			years = 10
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+##############################
+# EVENT 3: EIGHTEEN DRAGON SUBDUING PALMS TRAINING
+# The Beggar Sect's most powerful combat technique.
+# Only the Sect Chief and their chosen successor may learn it.
+# Each palm strike carries the weight of a dragon's claw.
+##############################
+murim_beggar_exp.0003 = {
+	type = character_event
+	title = murim_beggar_exp.0003.t
+	desc = murim_beggar_exp.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_beggar_sect_member_trigger = yes
+		OR = {
+			murim_is_clan_leader_trigger = yes
+			has_character_flag = beggar_successor_chosen
+		}
+		prowess >= 18
+		NOT = { has_character_flag = beggar_dragon_palm_training }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			prowess >= 22
+		}
+	}
+	
+	immediate = {
+		set_character_flag = beggar_dragon_palm_training
+		create_character_memory = {
+			type = beggar_dragon_palm_training_memory
+		}
+	}
+	
+	# Option A: Train all 18 palms sequentially (months of dedication)
+	option = {
+		name = murim_beggar_exp.0003.a
+		random_list = {
+			40 = {
+				modifier = {
+					add = 20
+					prowess >= 24
+				}
+				# Master all 18 palms!
+				add_prowess_xp = 1200
+				add_trait = dragon_subduing_palm_master
+				add_character_modifier = {
+					modifier = beggar_eighteen_dragons_mastered_modifier
+					years = -1
+				}
+				add_prestige = 600
+				create_character_memory = {
+					type = beggar_dragon_palm_mastery_memory
+				}
+				# All martial artists hear of this achievement
+				every_living_character = {
+					limit = {
+						murim_is_martial_artist_trigger = yes
+					}
+					add_opinion = {
+						modifier = beggar_dragon_palm_awe_opinion
+						target = root
+						opinion = 15
+					}
+				}
+				# Cross-ref: ranking challenge likely
+				trigger_event = {
+					id = murim_rank.0001
+					days = { 30 90 }
+				}
+			}
+			35 = {
+				# Master 12 of 18 palms (strong but incomplete)
+				add_prowess_xp = 700
+				add_character_modifier = {
+					modifier = beggar_partial_dragon_palm_modifier
+					years = 10
+				}
+			}
+			25 = {
+				# Qi backlash during the 9th palm
+				add_trait = wounded_1
+				add_stress = 40
+				add_prowess_xp = 300
+				add_character_modifier = {
+					modifier = beggar_dragon_palm_backlash_modifier
+					years = 2
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+		}
+	}
+	
+	# Option B: Focus only on the 3 most devastating palms (combat specialist)
+	option = {
+		name = murim_beggar_exp.0003.b
+		add_prowess_xp = 800
+		add_character_modifier = {
+			modifier = beggar_three_dragons_specialist_modifier
+			years = -1
+		}
+		# Less prestige but faster combat power
+		add_prestige = 200
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Decline the training (not ready)
+	option = {
+		name = murim_beggar_exp.0003.c
+		add_stress = -10
+		remove_character_flag = beggar_dragon_palm_training
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+##############################
+# EVENT 4: BEGGAR KING SUCCESSION CRISIS
+# The Beggar Sect Chief has died or retired.
+# The Dog Beating Staff must be passed to the next Chief.
+# Multiple candidates, each backed by different factions.
+##############################
+murim_beggar_exp.0004 = {
+	type = character_event
+	title = murim_beggar_exp.0004.t
+	desc = murim_beggar_exp.0004.desc
+	theme = intrigue
+	
+	trigger = {
+		is_beggar_sect_member_trigger = yes
+		murim_is_clan_elder_trigger = yes
+		NOT = { has_character_flag = beggar_succession_crisis }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 2
+			has_trait = dog_beating_staff_user
+		}
+	}
+	
+	immediate = {
+		set_character_flag = beggar_succession_crisis
+		# Find a rival candidate
+		random_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				prowess >= 14
+				NOT = { this = root }
+				age >= 20
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					has_trait = dog_beating_staff_user
+				}
+				modifier = {
+					add = 2
+					has_trait = ambitious
+				}
+			}
+			save_scope_as = succession_rival
+		}
+		create_character_memory = {
+			type = beggar_succession_crisis_memory
+			participants = { rival = scope:succession_rival }
+		}
+	}
+	
+	# Option A: Claim the staff through martial superiority
+	option = {
+		name = murim_beggar_exp.0004.a
+		duel = {
+			skill = prowess
+			target = scope:succession_rival
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				# Win the staff!
+				add_prowess_xp = 800
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = beggar_new_chief_modifier
+					years = -1
+				}
+				create_character_memory = {
+					type = beggar_became_chief_memory
+				}
+				# Trigger succession effects
+				trigger_event = {
+					id = murim_sect_politics.0001
+					days = { 15 30 }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:succession_rival.prowess
+				# Rival takes the staff
+				add_trait = wounded_1
+				add_stress = 35
+				scope:succession_rival = {
+					add_character_modifier = {
+						modifier = beggar_new_chief_modifier
+						years = -1
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Rally the elders to vote for you (political path)
+	option = {
+		name = murim_beggar_exp.0004.b
+		add_diplomacy_xp = 600
+		random_list = {
+			50 = {
+				modifier = {
+					add = 15
+					diplomacy >= 16
+				}
+				# Elders support you
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = beggar_elected_chief_modifier
+					years = -1
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = 10
+				}
+			}
+			50 = {
+				# Elders choose the rival
+				add_stress = 30
+				scope:succession_rival = {
+					add_prestige = 400
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Withdraw candidacy and support the rival (preserve unity)
+	option = {
+		name = murim_beggar_exp.0004.c
+		add_diplomacy_xp = 300
+		add_piety = 100
+		scope:succession_rival = {
+			add_opinion = {
+				modifier = beggar_gracious_withdrawal_opinion
+				target = root
+				opinion = 30
+			}
+		}
+		change_variable = {
+			name = murim_clan_harmony
+			add = 15
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = content
+			}
+		}
+	}
+}
+
+##############################
+# EVENT 5: UNDERCOVER MISSION IN ENEMY CLAN
+# A Beggar Sect spy infiltrates an unorthodox clan.
+# Could be Heavenly Demon, Poison Flower, or Phantom Blade.
+# Deep cover espionage with huge risk and reward.
+##############################
+murim_beggar_exp.0005 = {
+	type = character_event
+	title = murim_beggar_exp.0005.t
+	desc = murim_beggar_exp.0005.desc
+	theme = intrigue
+	
+	trigger = {
+		is_beggar_sect_member_trigger = yes
+		intrigue >= 14
+		NOT = { has_character_flag = beggar_undercover_mission }
+		any_living_character = {
+			murim_is_unorthodox_trigger = yes
+			murim_is_clan_leader_trigger = yes
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_character_modifier = beggar_intelligence_operative_modifier
+		}
+	}
+	
+	immediate = {
+		set_character_flag = beggar_undercover_mission
+		# Find the target clan leader
+		random_living_character = {
+			limit = {
+				murim_is_unorthodox_trigger = yes
+				murim_is_clan_leader_trigger = yes
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					is_heavenly_demon_member_trigger = yes
+				}
+				modifier = {
+					add = 2
+					is_poison_flower_member_trigger = yes
+				}
+			}
+			save_scope_as = infiltration_target
+		}
+		create_character_memory = {
+			type = beggar_undercover_mission_memory
+			participants = { target = scope:infiltration_target }
+		}
+	}
+	
+	# Option A: Go deep cover - live among them for years
+	option = {
+		name = murim_beggar_exp.0005.a
+		random_list = {
+			35 = {
+				modifier = {
+					add = 20
+					intrigue >= 18
+				}
+				# Brilliant success - steal their secrets
+				add_intrigue_xp = 800
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = beggar_master_spy_modifier
+					years = -1
+				}
+				# Learn an enemy technique fragment
+				add_prowess_xp = 400
+				create_character_memory = {
+					type = beggar_spy_triumph_memory
+					participants = { target = scope:infiltration_target }
+				}
+				# Cross-ref: discovered shadow politics info
+				trigger_event = {
+					id = murim_shadow.0001
+					days = { 30 90 }
+				}
+			}
+			35 = {
+				# Partial success - got some info but had to flee
+				add_intrigue_xp = 500
+				add_character_modifier = {
+					modifier = beggar_partial_intel_modifier
+					years = 5
+				}
+				add_stress = 20
+			}
+			30 = {
+				# Cover blown - captured and interrogated!
+				add_trait = wounded_2
+				add_stress = 50
+				scope:infiltration_target = {
+					add_opinion = {
+						modifier = beggar_spy_caught_opinion
+						target = root
+						opinion = -50
+					}
+				}
+				add_character_modifier = {
+					modifier = beggar_captured_spy_modifier
+					years = 3
+				}
+				create_character_memory = {
+					type = beggar_spy_captured_memory
+					participants = { captor = scope:infiltration_target }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Send a subordinate instead (safer, less reward)
+	option = {
+		name = murim_beggar_exp.0005.b
+		add_intrigue_xp = 300
+		random_list = {
+			50 = {
+				# Subordinate succeeds
+				add_character_modifier = {
+					modifier = beggar_network_intel_modifier
+					years = 5
+				}
+				add_prestige = 200
+			}
+			50 = {
+				# Subordinate is captured or killed
+				add_stress = 25
+				add_character_modifier = {
+					modifier = beggar_lost_agent_modifier
+					years = 2
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Abort the mission (too risky)
+	option = {
+		name = murim_beggar_exp.0005.c
+		add_stress = -10
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = craven
+			}
+		}
+	}
+}
+
+##############################
+# EVENT 6: BEGGAR SECT MASS GATHERING
+# Annual assembly of ALL Beggar Sect chapters from across the realm.
+# Thousands of beggars converge. Intelligence shared, disputes settled,
+# new members initiated, and the Chief delivers annual address.
+# Opportunity for recruitment, alliance building, and internal politics.
+##############################
+murim_beggar_exp.0006 = {
+	type = character_event
+	title = murim_beggar_exp.0006.t
+	desc = murim_beggar_exp.0006.desc
+	theme = diplomacy
+	
+	trigger = {
+		is_beggar_sect_member_trigger = yes
+		NOT = { has_character_flag = beggar_mass_gathering_recent }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			murim_is_clan_leader_trigger = yes
+		}
+		modifier = {
+			add = 2
+			murim_is_clan_elder_trigger = yes
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = beggar_mass_gathering_recent
+			years = 2
+		}
+		create_character_memory = {
+			type = beggar_mass_gathering_memory
+		}
+	}
+	
+	# Option A: Focus on recruitment (bring in new members)
+	option = {
+		name = murim_beggar_exp.0006.a
+		add_diplomacy_xp = 400
+		add_character_modifier = {
+			modifier = beggar_recruitment_drive_modifier
+			years = 3
+		}
+		# Trigger recruitment event chain
+		trigger_event = {
+			id = murim_recruit.0001
+			days = { 30 60 }
+		}
+		# Improve clan harmony through shared purpose
+		change_variable = {
+			name = murim_clan_harmony
+			add = 10
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option B: Focus on intelligence sharing (strengthen spy network)
+	option = {
+		name = murim_beggar_exp.0006.b
+		add_intrigue_xp = 500
+		add_character_modifier = {
+			modifier = beggar_network_enhanced_modifier
+			years = 5
+		}
+		# Share intel across the sect
+		every_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+			}
+			add_intrigue_xp = 100
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Use the gathering for political maneuvering
+	option = {
+		name = murim_beggar_exp.0006.c
+		trigger = {
+			has_trait = ambitious
+		}
+		add_diplomacy_xp = 300
+		add_intrigue_xp = 300
+		add_character_modifier = {
+			modifier = beggar_political_maneuverer_modifier
+			years = 5
+		}
+		# Build personal faction
+		every_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				NOT = { has_trait = ambitious }
+			}
+			random = {
+				chance = 30
+				add_opinion = {
+					modifier = beggar_political_follower_opinion
+					target = root
+					opinion = 15
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option D: Challenge someone during the gathering (prove your worth)
+	option = {
+		name = murim_beggar_exp.0006.d
+		trigger = {
+			prowess >= 16
+		}
+		# Find a sparring partner
+		random_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				prowess >= 14
+				NOT = { this = root }
+			}
+			save_scope_as = sparring_partner
+		}
+		duel = {
+			skill = prowess
+			target = scope:sparring_partner
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				add_prowess_xp = 500
+				add_prestige = 200
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:sparring_partner.prowess
+				add_prowess_xp = 200
+				add_stress = 15
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
