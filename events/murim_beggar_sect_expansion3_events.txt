@@ -1,0 +1,771 @@
+namespace = murim_beggar_sect_expansion3
+
+# Beggar Sect Expansion 3 — Underworld Intelligence Network, Dog Beating Staff Legacy, Street War
+# 10 events: deep Beggar Sect chain with spy network, succession, and jianghu underworld
+
+murim_beggar_sect_expansion3.0001 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0001.t
+	desc = murim_beggar_sect_expansion3.0001.desc
+	theme = martial_arts
+	
+	# The Beggar Network Awakens — as Beggar Sect leader, your intelligence network
+	# spanning every city, town, and village reports disturbing patterns. The Heavenly Demon
+	# Sect is moving agents into position across all major trade cities simultaneously.
+	
+	trigger = {
+		has_trait = beggar_sect_member
+		is_ruler = yes
+		any_held_title = { tier >= county }
+		NOT = { has_character_flag = beggar_network_awakened }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = diligent }
+		modifier = { add = 2 has_trait = paranoid }
+	}
+	
+	immediate = {
+		set_character_flag = beggar_network_awakened
+		set_global_variable = {
+			name = beggar_intelligence_alert
+			value = yes
+		}
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0001.a
+		# Mobilize the full network — shadow every Demon agent
+		add_intrigue = 5
+		add_gold = -150
+		add_character_modifier = {
+			modifier = full_network_mobilization
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_beggar_sect_expansion3.0002
+				days = { 30 60 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0001.b
+		# Alert the Orthodox Alliance immediately
+		add_diplomacy = 4
+		add_prestige = 300
+		hidden_effect = {
+			every_known_character = {
+				limit = {
+					OR = {
+						has_trait = shaolin_disciple
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+					}
+				}
+				add_opinion = {
+					target = root
+					modifier = intelligence_warning
+					opinion = 25
+				}
+			}
+			trigger_event = {
+				id = murim_beggar_sect_expansion3.0004
+				days = { 15 30 }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0001.c
+		# Sell the information to the highest bidder — profit from chaos
+		add_gold = 500
+		add_intrigue = 3
+		add_piety = -200
+		stress_impact = {
+			honest = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = { base = 20 modifier = { add = 20 has_trait = greedy } }
+	}
+}
+
+murim_beggar_sect_expansion3.0002 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0002.t
+	desc = murim_beggar_sect_expansion3.0002.desc
+	theme = martial_arts
+	
+	# Counter-Intelligence War — your beggars have identified the Demon agents, but
+	# one of your own sub-leaders has been turned. A mole inside the Beggar Sect is
+	# feeding information back to the Heavenly Demon.
+	
+	trigger = {
+		has_character_flag = beggar_network_awakened
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = beggar_sect_member
+				age >= 25
+			}
+			save_scope_as = suspected_mole
+		}
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0002.a
+		# Feed false information through the mole — use them
+		add_intrigue = 6
+		add_character_modifier = {
+			modifier = counter_intelligence_master
+			years = 5
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_beggar_sect_expansion3.0003
+				days = { 60 120 }
+			}
+		}
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = deceitful } }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0002.b
+		# Confront and execute the mole publicly
+		add_martial = 3
+		add_tyranny = 5
+		add_prestige = 100
+		scope:suspected_mole = {
+			death = { death_reason = death_execution killer = root }
+		}
+		hidden_effect = {
+			every_courtier = {
+				limit = { has_trait = beggar_sect_member }
+				add_opinion = {
+					target = root
+					modifier = fear_of_leader
+					opinion = -10
+				}
+			}
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = wrathful } }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0002.c
+		# Offer the mole redemption — everyone deserves a second chance
+		add_diplomacy = 4
+		add_piety = 200
+		random_list = {
+			50 = {
+				# Mole is genuinely repentant
+				scope:suspected_mole = {
+					add_opinion = {
+						target = root
+						modifier = grateful_redemption
+						opinion = 50
+					}
+				}
+				add_character_modifier = {
+					modifier = merciful_leader
+					years = 10
+				}
+			}
+			50 = {
+				# Mole betrays you again — ambush!
+				add_prowess = -2
+				add_health = -1
+				add_character_modifier = {
+					modifier = betrayed_by_mercy
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = compassionate } }
+	}
+}
+
+murim_beggar_sect_expansion3.0003 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0003.t
+	desc = murim_beggar_sect_expansion3.0003.desc
+	theme = martial_arts
+	
+	# False Intelligence Trap Success — the false info you fed through the mole worked.
+	# The Heavenly Demon agents walked into a trap set by the Orthodox Alliance. Major
+	# Demon operation disrupted. But the Demon Lord is now personally furious at you.
+	
+	trigger = {
+		has_trait = beggar_sect_member
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0003.a
+		# Accept the fame — become the Orthodox Alliance spymaster
+		add_trait = orthodox_spymaster
+		add_prestige = 600
+		add_intrigue = 4
+		add_character_modifier = {
+			modifier = alliance_intelligence_chief
+			years = -1
+		}
+		hidden_effect = {
+			# Heavenly Demon puts a bounty on you
+			set_character_flag = demon_bounty_target
+			trigger_event = {
+				id = murim_beggar_sect_expansion3.0005
+				days = { 60 180 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0003.b
+		# Stay in the shadows — let someone else take credit
+		add_intrigue = 6
+		add_character_modifier = {
+			modifier = shadow_operative
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0003.c
+		# Use this as leverage to demand resources for the beggars
+		add_gold = 800
+		add_stewardship = 3
+		add_character_modifier = {
+			modifier = beggar_sect_funded
+			years = 10
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_beggar_sect_expansion3.0004 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0004.t
+	desc = murim_beggar_sect_expansion3.0004.desc
+	theme = martial_arts
+	
+	# Orthodox Alliance Emergency Summit — after your intelligence report, all major
+	# Orthodox sects gather. Shaolin, Wudang, Mount Hua, Tang Clan, and Beggar Sect
+	# must agree on a unified response. But old rivalries threaten unity.
+	
+	trigger = {
+		has_trait = beggar_sect_member
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0004.a
+		# Push for immediate preemptive strike on Demon positions
+		add_martial = 4
+		add_prestige = 200
+		random_list = {
+			40 = {
+				# Alliance agrees — massive orthodox offensive
+				set_global_variable = {
+					name = orthodox_preemptive_strike
+					value = yes
+				}
+				add_character_modifier = {
+					modifier = war_architect
+					years = 5
+				}
+			}
+			60 = {
+				# Alliance splits — Wudang refuses violence
+				add_character_modifier = {
+					modifier = divided_alliance
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0004.b
+		# Advocate for defensive posture — strengthen each sect's borders
+		add_diplomacy = 4
+		add_martial = 2
+		add_character_modifier = {
+			modifier = defensive_strategist
+			years = 5
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0004.c
+		# Propose sending a spy into the Heavenly Demon Sect itself
+		add_intrigue = 5
+		hidden_effect = {
+			trigger_event = {
+				id = murim_beggar_sect_expansion3.0006
+				days = { 30 60 }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_beggar_sect_expansion3.0005 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0005.t
+	desc = murim_beggar_sect_expansion3.0005.desc
+	theme = martial_arts
+	
+	# Demon Bounty Hunters — three elite Phantom Blade assassins have been dispatched
+	# to kill you. Your beggars spot them entering the city. You have hours to prepare.
+	
+	trigger = {
+		has_character_flag = demon_bounty_target
+	}
+	
+	immediate = {
+		remove_character_flag = demon_bounty_target
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0005.a
+		# Set an ambush — use the city streets (your territory)
+		add_martial = 3
+		add_prowess = 3
+		random_list = {
+			50 = {
+				# Ambush succeeds — all three assassins captured
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = assassin_slayer
+					years = 10
+				}
+			}
+			30 = {
+				# Partial success — killed two, one escaped
+				add_prowess = 2
+				add_prestige = 200
+			}
+			20 = {
+				# Ambush goes wrong — you're wounded
+				add_health = -2
+				add_character_modifier = {
+					modifier = assassination_wound
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0005.b
+		# Flee the city — regroup at a Beggar Sect safe house
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = strategic_retreat
+			years = 2
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0005.c
+		# Face them openly — Dog Beating Staff vs Phantom Blades
+		duel = {
+			target = root
+			skill = prowess
+			60 = {
+				desc = murim_beggar_sect_expansion3.0005.c.win
+				add_trait = phantom_blade_slayer
+				add_prowess = 5
+				add_prestige = 800
+			}
+			40 = {
+				desc = murim_beggar_sect_expansion3.0005.c.lose
+				add_health = -3
+				random_list = {
+					70 = {
+						add_character_modifier = {
+							modifier = near_death_experience
+							years = 5
+						}
+					}
+					30 = {
+						death = { death_reason = death_assassination }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 30 modifier = { add = 30 has_trait = brave } }
+	}
+}
+
+murim_beggar_sect_expansion3.0006 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0006.t
+	desc = murim_beggar_sect_expansion3.0006.desc
+	theme = martial_arts
+	
+	# Deep Cover Mission — you select a beggar to infiltrate the Heavenly Demon Sect.
+	# They must abandon their identity, pretend to be a rogue martial artist, and
+	# slowly work their way up through the Demon hierarchy.
+	
+	trigger = {
+		has_trait = beggar_sect_member
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = beggar_sect_member
+				age >= 18
+				age <= 30
+				intrigue >= 10
+			}
+			save_scope_as = deep_cover_agent
+		}
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0006.a
+		# Send the agent — accept the risk
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = deep_cover_handler
+			years = -1
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Agent succeeds — invaluable intel flows in
+					trigger_event = {
+						id = murim_beggar_sect_expansion3.0007
+						days = { 365 730 }
+					}
+				}
+				30 = {
+					# Agent is discovered and killed
+					scope:deep_cover_agent = {
+						death = { death_reason = death_torture }
+					}
+					trigger_event = {
+						id = murim_beggar_sect_expansion3.0008
+						days = { 180 365 }
+					}
+				}
+				30 = {
+					# Agent turns — becomes a genuine Demon disciple
+					scope:deep_cover_agent = {
+						remove_trait = beggar_sect_member
+						add_trait = heavenly_demon_disciple
+					}
+					trigger_event = {
+						id = murim_beggar_sect_expansion3.0009
+						days = { 365 730 }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0006.b
+		# Go yourself — only a master can survive deep cover
+		add_intrigue = 6
+		remove_trait = beggar_sect_member
+		add_trait = deep_cover_operative
+		add_character_modifier = {
+			modifier = living_double_life
+			years = -1
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_beggar_sect_expansion3.0007
+				days = { 180 365 }
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0006.c
+		# Abort — too dangerous, use other methods
+		add_diplomacy = 2
+		add_stress = -10
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_beggar_sect_expansion3.0007 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0007.t
+	desc = murim_beggar_sect_expansion3.0007.desc
+	theme = martial_arts
+	
+	# Deep Cover Intel — the agent inside the Demon Sect reports: the Heavenly Demon
+	# is planning to trigger the Great Calamity artificially. They want to destroy
+	# the Orthodox world and rebuild it under Demon rule.
+	
+	trigger = {
+		OR = {
+			has_trait = beggar_sect_member
+			has_trait = deep_cover_operative
+		}
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0007.a
+		# Rush this intel to every Orthodox leader
+		add_prestige = 1000
+		add_diplomacy = 5
+		hidden_effect = {
+			set_global_variable = {
+				name = calamity_plot_exposed
+				value = yes
+			}
+			every_known_character = {
+				limit = {
+					OR = {
+						has_trait = shaolin_disciple
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+						has_trait = tang_clan_member
+					}
+				}
+				trigger_event = {
+					id = murim_great_calamity_events.0001
+					days = { 5 15 }
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0007.b
+		# Keep it secret — use it as leverage
+		add_intrigue = 6
+		add_character_modifier = {
+			modifier = holder_of_doomsday_intel
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0007.c
+		# Attempt to stop the Calamity from within the Demon Sect
+		add_prowess = 4
+		add_intrigue = 4
+		random_list = {
+			30 = {
+				# Heroic sabotage succeeds
+				add_trait = savior_of_murim
+				add_prestige = 2000
+			}
+			40 = {
+				# Partially delayed
+				add_character_modifier = {
+					modifier = calamity_delayed
+					years = 10
+				}
+			}
+			30 = {
+				# Caught — tortured and killed
+				death = { death_reason = death_torture }
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_beggar_sect_expansion3.0008 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0008.t
+	desc = murim_beggar_sect_expansion3.0008.desc
+	theme = martial_arts
+	
+	# Agent's Death — your deep cover operative was discovered and killed. The Demon
+	# Sect sent back the body with a message: "Next time, send someone better."
+	
+	trigger = {
+		has_trait = beggar_sect_member
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0008.a
+		# Mourn and honor their sacrifice
+		add_piety = 300
+		add_stress = 40
+		add_character_modifier = {
+			modifier = mourning_fallen_agent
+			years = 3
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0008.b
+		# Swear vengeance — the Demon Sect will pay
+		add_prowess = 3
+		add_martial = 3
+		add_character_modifier = {
+			modifier = vendetta_declared
+			years = -1
+		}
+		hidden_effect = {
+			set_character_flag = demon_vendetta
+		}
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = wrathful } }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0008.c
+		# Learn from the failure — improve training
+		add_intrigue = 4
+		add_learning = 3
+		add_character_modifier = {
+			modifier = intelligence_reform
+			years = 10
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_beggar_sect_expansion3.0009 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0009.t
+	desc = murim_beggar_sect_expansion3.0009.desc
+	theme = martial_arts
+	
+	# Agent Turned Traitor — your operative has genuinely joined the Demon Sect.
+	# Worse: they know all Beggar Sect safe houses, codes, and agent identities.
+	# The entire intelligence network is compromised.
+	
+	trigger = {
+		has_trait = beggar_sect_member
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0009.a
+		# Emergency protocol — burn everything, rebuild from scratch
+		add_gold = -500
+		add_intrigue = 5
+		add_character_modifier = {
+			modifier = network_rebuilt
+			years = 5
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = beggar_network_compromised
+				value = yes
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0009.b
+		# Hunt the traitor personally
+		add_martial = 3
+		add_prowess = 3
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Found and eliminated the traitor
+					add_trait = traitor_hunter
+					add_prestige = 500
+				}
+				50 = {
+					# The traitor was bait — ambush!
+					add_health = -2
+					add_character_modifier = {
+						modifier = ambushed_by_traitor
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0009.c
+		# Feed them false information — make them think we dont know
+		add_intrigue = 7
+		add_character_modifier = {
+			modifier = double_deception
+			years = -1
+		}
+		ai_chance = { base = 20 modifier = { add = 20 has_trait = deceitful } }
+	}
+}
+
+murim_beggar_sect_expansion3.0010 = {
+	type = character_event
+	title = murim_beggar_sect_expansion3.0010.t
+	desc = murim_beggar_sect_expansion3.0010.desc
+	theme = martial_arts
+	
+	# Dog Beating Staff Ultimate — Eighteen Dragon-Subduing Palms Combined
+	# The Beggar Sect's two supreme techniques finally merge into one: the Beggar King's
+	# Divine Art. Only achieved once every 300 years. Makes the wielder the supreme
+	# intelligence operative AND unmatched fighter.
+	
+	trigger = {
+		has_trait = beggar_sect_member
+		prowess >= 20
+		intrigue >= 18
+		OR = {
+			has_trait = orthodox_spymaster
+			has_trait = phantom_blade_slayer
+			has_trait = traitor_hunter
+		}
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0010.a
+		# Achieve the Beggar King's Divine Art
+		add_trait = beggar_king_divine
+		add_prowess = 10
+		add_intrigue = 8
+		add_martial = 5
+		add_character_modifier = {
+			modifier = beggar_king_supreme
+			years = -1
+		}
+		add_prestige = 3000
+		hidden_effect = {
+			set_global_variable = {
+				name = beggar_king_divine_achieved
+				value = yes
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_beggar_sect_expansion3.0010.b
+		# Record the method for future generations
+		add_learning = 8
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = beggar_king_legacy_recorder
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
