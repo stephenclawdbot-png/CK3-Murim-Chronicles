@@ -1,0 +1,800 @@
+namespace = murim_calamity_cycle
+
+# Great Calamity — Cyclical Reset, Mythology Formation, Era Transition
+# 10 complete events — cycle detection, era naming, mythology writing, new world
+
+##############################
+# 0001 — Omens of the Cycle: Heavenly Signs
+##############################
+murim_calamity_cycle.0001 = {
+	type = character_event
+	title = murim_calamity_cycle.0001.t
+	desc = murim_calamity_cycle.0001.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		is_ruler = yes
+		has_global_variable = murim_world_active
+		NOT = { has_global_variable = calamity_active }
+		NOT = { has_character_flag = calamity_omens_seen }
+		current_date >= 1250.1.1
+		OR = {
+			has_trait_rank = { trait = martial_cultivation value >= 5 }
+			has_trait = celestial_sage
+			learning >= 20
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 10
+			has_global_variable = previous_calamity_occurred
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = calamity_omens_seen }
+	}
+	
+	# Warn the Murim Alliance of impending doom
+	option = {
+		name = murim_calamity_cycle.0001.a
+		
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = calamity_prophet
+			years = 10
+		}
+		
+		hidden_effect = {
+			set_global_variable = { name = calamity_warning_issued value = yes }
+			every_ruler = {
+				limit = {
+					is_ai = yes
+					OR = {
+						has_trait = mount_hua_disciple
+						has_trait = shaolin_disciple
+						has_trait = wudang_disciple
+						has_trait = beggar_sect_member
+						has_trait = tang_clan_member
+						has_trait = iron_fist_member
+						has_trait = poison_flower_member
+						has_trait = phantom_blade_member
+						has_trait = heavenly_demon_sect_member
+					}
+				}
+				random = {
+					chance = 30
+					trigger_event = { id = murim_calamity_cycle.0002 days = { 30 90 } }
+				}
+			}
+		}
+		
+		ai_chance = { base = 70 }
+	}
+	
+	# Keep the knowledge secret — prepare alone
+	option = {
+		name = murim_calamity_cycle.0001.b
+		
+		add_character_modifier = {
+			modifier = secret_calamity_preparation
+			years = 10
+		}
+		add_stress = 30
+		
+		ai_chance = { base = 20 }
+	}
+	
+	# Dismiss it as superstition
+	option = {
+		name = murim_calamity_cycle.0001.c
+		
+		add_prestige = -50
+		add_stress = -10
+		
+		ai_chance = { base = 10 }
+	}
+}
+
+##############################
+# 0002 — Response to Calamity Warning
+##############################
+murim_calamity_cycle.0002 = {
+	type = character_event
+	title = murim_calamity_cycle.0002.t
+	desc = murim_calamity_cycle.0002.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		always = yes
+	}
+	
+	# Prepare defenses — fortify the sect
+	option = {
+		name = murim_calamity_cycle.0002.a
+		
+		add_character_modifier = {
+			modifier = calamity_prepared_sect
+			years = 10
+		}
+		remove_short_term_gold = 100
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Ignore the warning — continue normal operations
+	option = {
+		name = murim_calamity_cycle.0002.b
+		add_prestige = 25
+		ai_chance = { base = 30 }
+	}
+	
+	# Flee to the mountains with core disciples
+	option = {
+		name = murim_calamity_cycle.0002.c
+		
+		add_character_modifier = {
+			modifier = mountain_retreat_preparation
+			years = 5
+		}
+		add_prestige = -100
+		
+		ai_chance = { base = 20 }
+	}
+}
+
+##############################
+# 0003 — The Calamity Begins: Heaven Weeps
+##############################
+murim_calamity_cycle.0003 = {
+	type = character_event
+	title = murim_calamity_cycle.0003.t
+	desc = murim_calamity_cycle.0003.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		is_ruler = yes
+		has_global_variable = calamity_active
+		NOT = { has_character_flag = witnessed_calamity_start }
+	}
+	
+	weight_multiplier = {
+		base = 100
+	}
+	
+	immediate = {
+		set_character_flag = { flag = witnessed_calamity_start }
+		add_trait_force_tooltip = calamity_witness
+	}
+	
+	# Rally your clan for war
+	option = {
+		name = murim_calamity_cycle.0003.a
+		
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = calamity_war_leader
+			years = 5
+		}
+		
+		hidden_effect = {
+			# AI clans start declaring wars on each other
+			every_ruler = {
+				limit = {
+					is_ai = yes
+					has_trait = heavenly_demon_sect_member
+				}
+				random = {
+					chance = 80
+					random_ruler = {
+						limit = {
+							is_ai = yes
+							OR = {
+								has_trait = mount_hua_disciple
+								has_trait = shaolin_disciple
+								has_trait = wudang_disciple
+							}
+						}
+						root = {
+							start_war = {
+								cb = murim_sect_dominance_cb
+								target = prev
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# Protect civilians first
+	option = {
+		name = murim_calamity_cycle.0003.b
+		
+		add_piety = 200
+		add_character_modifier = {
+			modifier = civilian_protector
+			years = 5
+		}
+		
+		ai_chance = { base = 25 }
+	}
+	
+	# Seal yourself in meditation — wait for it to pass
+	option = {
+		name = murim_calamity_cycle.0003.c
+		
+		add_character_modifier = {
+			modifier = sealed_meditation
+			years = 5
+		}
+		add_stress = 40
+		
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# 0004 — Mass Extinction: Clan Annihilation
+##############################
+murim_calamity_cycle.0004 = {
+	type = character_event
+	title = murim_calamity_cycle.0004.t
+	desc = murim_calamity_cycle.0004.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+	
+	trigger = {
+		has_global_variable = calamity_active
+		has_character_flag = witnessed_calamity_start
+		NOT = { has_character_flag = witnessed_mass_extinction }
+		is_ai = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = beggar_sect_member
+			has_trait = tang_clan_member
+			has_trait = iron_fist_member
+			has_trait = poison_flower_member
+			has_trait = phantom_blade_member
+			has_trait = heavenly_demon_sect_member
+		}
+	}
+	
+	weight_multiplier = {
+		base = 50
+	}
+	
+	immediate = {
+		set_character_flag = { flag = witnessed_mass_extinction }
+	}
+	
+	# Die in battle (70-90% kill rate for AI characters)
+	option = {
+		name = murim_calamity_cycle.0004.a
+		
+		random_list = {
+			80 = {
+				# Death
+				death = { death_reason = death_battle }
+			}
+			20 = {
+				modifier = {
+					add = 30
+					has_character_modifier = calamity_prepared_sect
+				}
+				modifier = {
+					add = 20
+					has_character_modifier = mountain_retreat_preparation
+				}
+				# Survive
+				add_trait_force_tooltip = calamity_survivor
+				add_character_modifier = {
+					modifier = calamity_survivor_trauma
+					years = -1
+				}
+			}
+		}
+		
+		ai_chance = { base = 100 }
+	}
+}
+
+##############################
+# 0005 — Player Dynasty Protection
+##############################
+murim_calamity_cycle.0005 = {
+	type = character_event
+	title = murim_calamity_cycle.0005.t
+	desc = murim_calamity_cycle.0005.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	
+	trigger = {
+		is_ai = no
+		has_global_variable = calamity_active
+		NOT = { has_character_flag = player_calamity_survival }
+	}
+	
+	weight_multiplier = {
+		base = 100
+	}
+	
+	immediate = {
+		set_character_flag = { flag = player_calamity_survival }
+	}
+	
+	# Fight through the calamity — your dynasty survives
+	option = {
+		name = murim_calamity_cycle.0005.a
+		
+		add_trait_force_tooltip = calamity_survivor
+		add_prowess_skill = 3
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = dynasty_calamity_survivor
+			years = -1
+		}
+		add_prestige = 500
+		
+		hidden_effect = {
+			dynasty = {
+				add_dynasty_modifier = {
+					modifier = calamity_surviving_dynasty
+					years = 50
+				}
+			}
+		}
+		
+		ai_chance = { base = 100 }
+	}
+	
+	# Protect your family above all else
+	option = {
+		name = murim_calamity_cycle.0005.b
+		
+		add_trait_force_tooltip = calamity_survivor
+		add_character_modifier = {
+			modifier = family_protector_calamity
+			years = -1
+		}
+		add_piety = 300
+		
+		hidden_effect = {
+			every_close_family_member = {
+				limit = { is_alive = yes }
+				add_character_modifier = {
+					modifier = protected_during_calamity
+					years = 10
+				}
+			}
+		}
+		
+		ai_chance = { base = 100 }
+	}
+}
+
+##############################
+# 0006 — Era Ends: Naming the Lost Age
+##############################
+murim_calamity_cycle.0006 = {
+	type = character_event
+	title = murim_calamity_cycle.0006.t
+	desc = murim_calamity_cycle.0006.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		has_trait = calamity_survivor
+		is_ruler = yes
+		NOT = { has_character_flag = named_the_lost_age }
+		NOT = { has_global_variable = calamity_active }
+		has_global_variable = previous_calamity_occurred
+	}
+	
+	weight_multiplier = {
+		base = 5
+		modifier = {
+			add = 10
+			learning >= 15
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = named_the_lost_age }
+	}
+	
+	# Name it the Age of Shattering
+	option = {
+		name = murim_calamity_cycle.0006.a
+		
+		set_global_variable = { name = previous_era_name value = flag:age_of_shattering }
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = era_namer
+			years = -1
+		}
+		
+		ai_chance = { base = 30 }
+	}
+	
+	# Name it the Crimson Twilight
+	option = {
+		name = murim_calamity_cycle.0006.b
+		
+		set_global_variable = { name = previous_era_name value = flag:crimson_twilight }
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = era_namer
+			years = -1
+		}
+		
+		ai_chance = { base = 30 }
+	}
+	
+	# Name it the Heaven's Weeping
+	option = {
+		name = murim_calamity_cycle.0006.c
+		
+		set_global_variable = { name = previous_era_name value = flag:heavens_weeping }
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = era_namer
+			years = -1
+		}
+		
+		ai_chance = { base = 25 }
+	}
+	
+	# Let the survivors name it themselves
+	option = {
+		name = murim_calamity_cycle.0006.d
+		add_piety = 100
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# 0007 — Mythology Formation: Tales of the Old Masters
+##############################
+murim_calamity_cycle.0007 = {
+	type = character_event
+	title = murim_calamity_cycle.0007.t
+	desc = murim_calamity_cycle.0007.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_trait = calamity_survivor
+		age >= 40
+		NOT = { has_character_flag = mythology_formation }
+		has_global_variable = previous_calamity_occurred
+	}
+	
+	weight_multiplier = {
+		base = 3
+		modifier = {
+			add = 5
+			learning >= 15
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = mythology_formation }
+	}
+	
+	# Write the Chronicle of the Lost Era
+	option = {
+		name = murim_calamity_cycle.0007.a
+		
+		add_prestige = 400
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = chronicler_of_ages
+			years = -1
+		}
+		
+		hidden_effect = {
+			set_global_variable = { name = lost_era_chronicle_exists value = yes }
+		}
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Pass down oral traditions to disciples
+	option = {
+		name = murim_calamity_cycle.0007.b
+		
+		add_piety = 200
+		add_character_modifier = {
+			modifier = oral_tradition_keeper
+			years = -1
+		}
+		
+		hidden_effect = {
+			every_child = {
+				limit = { is_alive = yes }
+				add_character_modifier = {
+					modifier = heard_tales_of_old_masters
+					years = 20
+				}
+			}
+		}
+		
+		ai_chance = { base = 35 }
+	}
+	
+	# Let the old world be forgotten
+	option = {
+		name = murim_calamity_cycle.0007.c
+		add_stress = -20
+		add_prestige = -50
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# 0008 — New Sect Founding: From Ashes
+##############################
+murim_calamity_cycle.0008 = {
+	type = character_event
+	title = murim_calamity_cycle.0008.t
+	desc = murim_calamity_cycle.0008.desc
+	theme = martial_cultivation
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = calamity_survivor
+		has_trait_rank = { trait = martial_cultivation value >= 3 }
+		NOT = { has_character_flag = post_calamity_sect_founded }
+		NOT = { has_global_variable = calamity_active }
+	}
+	
+	weight_multiplier = {
+		base = 3
+		modifier = {
+			add = 5
+			has_trait = calamity_rebuilder
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = post_calamity_sect_founded }
+	}
+	
+	# Found an orthodox sect — carry the righteous flame
+	option = {
+		name = murim_calamity_cycle.0008.a
+		
+		add_trait_force_tooltip = calamity_rebuilder
+		add_prestige = 500
+		add_piety = 200
+		add_character_modifier = {
+			modifier = new_orthodox_sect_founder
+			years = -1
+		}
+		
+		hidden_effect = {
+			set_variable = { name = founded_sect_alignment value = flag:orthodox }
+		}
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Found an unorthodox sect — the old rules failed
+	option = {
+		name = murim_calamity_cycle.0008.b
+		
+		add_trait_force_tooltip = calamity_rebuilder
+		add_prestige = 500
+		add_dread = 30
+		add_character_modifier = {
+			modifier = new_unorthodox_sect_founder
+			years = -1
+		}
+		
+		hidden_effect = {
+			set_variable = { name = founded_sect_alignment value = flag:unorthodox }
+		}
+		
+		ai_chance = { base = 35 }
+	}
+	
+	# Found a neutral sect — beyond orthodox and unorthodox
+	option = {
+		name = murim_calamity_cycle.0008.c
+		
+		add_trait_force_tooltip = calamity_rebuilder
+		add_prestige = 400
+		add_piety = 100
+		add_character_modifier = {
+			modifier = new_neutral_sect_founder
+			years = -1
+		}
+		
+		ai_chance = { base = 25 }
+	}
+}
+
+##############################
+# 0009 — Cycle Warning: The Pattern Repeats
+##############################
+murim_calamity_cycle.0009 = {
+	type = character_event
+	title = murim_calamity_cycle.0009.t
+	desc = murim_calamity_cycle.0009.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		has_global_variable = previous_calamity_occurred
+		NOT = { has_global_variable = calamity_active }
+		has_trait_rank = { trait = martial_cultivation value >= 6 }
+		learning >= 20
+		NOT = { has_character_flag = cycle_pattern_discovered }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 10
+			has_global_variable = lost_era_chronicle_exists
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = cycle_pattern_discovered }
+	}
+	
+	# Attempt to break the cycle
+	option = {
+		name = murim_calamity_cycle.0009.a
+		
+		add_character_modifier = {
+			modifier = cycle_breaker_quest
+			years = -1
+		}
+		add_prestige = 300
+		
+		hidden_effect = {
+			set_global_variable = { name = cycle_breaker_active value = yes }
+		}
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Prepare for the next cycle — build shelters
+	option = {
+		name = murim_calamity_cycle.0009.b
+		
+		add_character_modifier = {
+			modifier = calamity_shelter_builder
+			years = -1
+		}
+		remove_short_term_gold = 200
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Accept the cycle as heaven's will
+	option = {
+		name = murim_calamity_cycle.0009.c
+		add_piety = 200
+		add_character_modifier = {
+			modifier = cycle_fatalist
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+##############################
+# 0010 — Dawn of the New Era
+##############################
+murim_calamity_cycle.0010 = {
+	type = character_event
+	title = murim_calamity_cycle.0010.t
+	desc = murim_calamity_cycle.0010.desc
+	theme = martial_cultivation
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	
+	trigger = {
+		has_trait = calamity_survivor
+		has_trait = calamity_rebuilder
+		NOT = { has_global_variable = calamity_active }
+		NOT = { has_character_flag = new_era_dawned }
+	}
+	
+	weight_multiplier = {
+		base = 5
+	}
+	
+	immediate = {
+		set_character_flag = { flag = new_era_dawned }
+	}
+	
+	# Declare the Dawn of the New Murim
+	option = {
+		name = murim_calamity_cycle.0010.a
+		
+		add_prestige = 1000
+		add_piety = 500
+		add_character_modifier = {
+			modifier = founder_of_new_murim
+			years = -1
+		}
+		
+		hidden_effect = {
+			set_global_variable = { name = new_murim_era value = yes }
+			every_ruler = {
+				limit = {
+					is_ai = yes
+					has_trait = calamity_survivor
+				}
+				add_opinion = {
+					target = root
+					modifier = grateful_opinion
+					opinion = 30
+				}
+			}
+		}
+		
+		ai_chance = { base = 70 }
+	}
+	
+	# Let the new era emerge naturally
+	option = {
+		name = murim_calamity_cycle.0010.b
+		add_piety = 300
+		add_prestige = 200
+		ai_chance = { base = 30 }
+	}
+}
