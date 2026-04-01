@@ -1,0 +1,1309 @@
+namespace = murim_mount_hua_expansion2
+
+# Mount Hua Sect Deep Expansion - Full Clan Event Chain
+# Heartbeat 69 - Sprint Build
+# 10 complete events with full option trees
+
+####################################
+# Mount Hua Plum Blossom Sword Trial
+####################################
+murim_mount_hua_expansion2.0001 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0001.t
+	desc = murim_mount_hua_expansion2.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:mount_hua_elder
+		animation = personality_rational
+	}
+	
+	trigger = {
+		has_trait = mount_hua_disciple
+		NOT = { has_character_flag = plum_blossom_trial_complete }
+		age >= 16
+		prowess >= 12
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = sword_prodigy
+		}
+		modifier = {
+			add = 1
+			prowess >= 18
+		}
+	}
+	
+	immediate = {
+		random_relation = {
+			type = mentor
+			save_scope_as = mount_hua_elder
+		}
+		if = {
+			limit = { NOT = { exists = scope:mount_hua_elder } }
+			random_courtier = {
+				limit = {
+					has_trait = mount_hua_elder
+					age >= 50
+				}
+				save_scope_as = mount_hua_elder
+			}
+		}
+		set_variable = {
+			name = plum_blossom_petals_cut
+			value = 0
+		}
+	}
+	
+	# Option A: Face the trial with pure sword technique
+	option = {
+		name = murim_mount_hua_expansion2.0001.a
+		
+		duel = {
+			skill = prowess
+			target = scope:mount_hua_elder
+			50 = {
+				desc = murim_mount_hua_expansion2.0001.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_mount_hua_expansion2.0001.a.success.toast
+					left_icon = root
+					add_character_modifier = {
+						modifier = plum_blossom_sword_initiate
+						years = 10
+					}
+					change_prowess = 2
+					add_prestige = 200
+				}
+				set_character_flag = plum_blossom_trial_complete
+			}
+			50 = {
+				desc = murim_mount_hua_expansion2.0001.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_mount_hua_expansion2.0001.a.failure.toast
+					left_icon = root
+					add_character_modifier = {
+						modifier = plum_blossom_trial_failed
+						years = 3
+					}
+					add_stress = 20
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				prowess >= 20
+			}
+		}
+	}
+	
+	# Option B: Use inner qi to enhance the sword
+	option = {
+		name = murim_mount_hua_expansion2.0001.b
+		trigger = {
+			has_trait = qi_cultivator
+		}
+		
+		add_character_modifier = {
+			modifier = qi_enhanced_plum_blossom
+			years = 5
+		}
+		change_prowess = 1
+		add_prestige = 150
+		set_character_flag = plum_blossom_trial_complete
+		
+		stress_impact = {
+			ambitious = medium_stress_loss
+			lazy = medium_stress_gain
+		}
+		
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Refuse the trial - not ready yet
+	option = {
+		name = murim_mount_hua_expansion2.0001.c
+		
+		add_stress = 10
+		add_character_flag = {
+			flag = plum_blossom_trial_refused
+			years = 2
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+####################################
+# Mount Hua Sword Manual Discovery
+####################################
+murim_mount_hua_expansion2.0002 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0002.t
+	desc = murim_mount_hua_expansion2.0002.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		has_trait = mount_hua_disciple
+		has_character_flag = plum_blossom_trial_complete
+		NOT = { has_character_flag = found_nine_sword_manual }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			learning >= 15
+		}
+	}
+	
+	immediate = {
+		set_character_flag = found_nine_sword_manual
+	}
+	
+	# Option A: Study the manual in secret
+	option = {
+		name = murim_mount_hua_expansion2.0002.a
+		
+		add_character_modifier = {
+			modifier = nine_sword_secret_student
+			years = 15
+		}
+		change_prowess = 3
+		add_intrigue = 1
+		add_character_flag = secret_manual_student
+		
+		hidden_effect = {
+			random = {
+				chance = 30
+				trigger_event = {
+					id = murim_mount_hua_expansion2.0003
+					days = { 90 180 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option B: Present it to the sect leader
+	option = {
+		name = murim_mount_hua_expansion2.0002.b
+		
+		add_prestige = 500
+		add_piety = 100
+		add_opinion = {
+			target = scope:mount_hua_elder
+			modifier = grateful_opinion
+			opinion = 30
+		}
+		add_character_modifier = {
+			modifier = mount_hua_loyal_disciple
+			years = 20
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option C: Trade it to another sect for favors
+	option = {
+		name = murim_mount_hua_expansion2.0002.c
+		trigger = {
+			has_trait = deceitful
+		}
+		
+		add_gold = 300
+		add_character_modifier = {
+			modifier = manual_trader_shame
+			years = 5
+		}
+		set_character_flag = betrayed_mount_hua_secret
+		
+		hidden_effect = {
+			trigger_event = {
+				id = murim_mount_hua_expansion2.0006
+				days = { 180 365 }
+			}
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+####################################
+# Mount Hua Secret Discovered - Sect Interrogation
+####################################
+murim_mount_hua_expansion2.0003 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0003.t
+	desc = murim_mount_hua_expansion2.0003.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	right_portrait = {
+		character = scope:sect_inquisitor
+		animation = personality_vengeful
+	}
+	
+	trigger = {
+		has_character_flag = secret_manual_student
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_elder
+				NOT = { this = root }
+			}
+			save_scope_as = sect_inquisitor
+		}
+	}
+	
+	# Option A: Confess and beg forgiveness
+	option = {
+		name = murim_mount_hua_expansion2.0003.a
+		
+		remove_character_modifier = nine_sword_secret_student
+		add_character_modifier = {
+			modifier = mount_hua_penitent
+			years = 5
+		}
+		add_stress = 30
+		add_prestige = -200
+		
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Fight the inquisitor
+	option = {
+		name = murim_mount_hua_expansion2.0003.b
+		
+		duel = {
+			skill = prowess
+			target = scope:sect_inquisitor
+			50 = {
+				desc = murim_mount_hua_expansion2.0003.b.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 100
+				add_dread = 15
+			}
+			50 = {
+				desc = murim_mount_hua_expansion2.0003.b.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_character_modifier = {
+					modifier = crippled_by_elder
+					years = 10
+				}
+				change_prowess = -3
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Flee Mount Hua
+	option = {
+		name = murim_mount_hua_expansion2.0003.c
+		
+		remove_trait = mount_hua_disciple
+		add_trait = rogue_swordsman
+		add_character_modifier = {
+			modifier = exiled_from_mount_hua
+			years = 20
+		}
+		add_prestige = -300
+		set_character_flag = mount_hua_exile
+		
+		hidden_effect = {
+			trigger_event = {
+				id = murim_mount_hua_expansion2.0007
+				days = { 365 730 }
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+####################################
+# Mount Hua Sword Conference - Sect vs Sect Tournament
+####################################
+murim_mount_hua_expansion2.0004 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0004.t
+	desc = murim_mount_hua_expansion2.0004.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = mount_hua_disciple
+		prowess >= 15
+		NOT = { has_character_flag = sword_conference_attended }
+		age >= 20
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_character_flag = plum_blossom_trial_complete
+		}
+	}
+	
+	immediate = {
+		set_character_flag = sword_conference_attended
+		random_courtier = {
+			limit = {
+				OR = {
+					has_trait = wudang_disciple
+					has_trait = shaolin_disciple
+				}
+				prowess >= 12
+			}
+			save_scope_as = conference_rival
+		}
+	}
+	
+	# Option A: Enter as Mount Hua champion
+	option = {
+		name = murim_mount_hua_expansion2.0004.a
+		
+		if = {
+			limit = { exists = scope:conference_rival }
+			duel = {
+				skill = prowess
+				target = scope:conference_rival
+				50 = {
+					desc = murim_mount_hua_expansion2.0004.a.win
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = sword_conference_champion
+						years = 10
+					}
+					change_prowess = 2
+				}
+				50 = {
+					desc = murim_mount_hua_expansion2.0004.a.lose
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					add_prestige = 100
+					add_stress = 15
+				}
+			}
+		}
+		else = {
+			add_prestige = 200
+			add_character_modifier = {
+				modifier = sword_conference_participant
+				years = 5
+			}
+		}
+		
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Observe and learn from others
+	option = {
+		name = murim_mount_hua_expansion2.0004.b
+		
+		add_learning = 2
+		change_prowess = 1
+		add_character_modifier = {
+			modifier = conference_observer_insight
+			years = 5
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Challenge the Wudang champion specifically
+	option = {
+		name = murim_mount_hua_expansion2.0004.c
+		trigger = {
+			any_courtier = {
+				has_trait = wudang_disciple
+				prowess >= 15
+			}
+		}
+		
+		random_courtier = {
+			limit = {
+				has_trait = wudang_disciple
+				prowess >= 15
+			}
+			save_scope_as = wudang_champion
+		}
+		
+		duel = {
+			skill = prowess
+			target = scope:wudang_champion
+			50 = {
+				desc = murim_mount_hua_expansion2.0004.c.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 600
+				add_character_modifier = {
+					modifier = defeated_wudang_champion
+					years = 15
+				}
+			}
+			50 = {
+				desc = murim_mount_hua_expansion2.0004.c.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -100
+				add_stress = 25
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+####################################
+# Mount Hua Internal Power Struggle - Sword vs Qi Faction
+####################################
+murim_mount_hua_expansion2.0005 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0005.t
+	desc = murim_mount_hua_expansion2.0005.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:qi_faction_leader
+		animation = personality_vengeful
+	}
+	
+	trigger = {
+		has_trait = mount_hua_disciple
+		age >= 25
+		NOT = { has_character_flag = mount_hua_faction_chosen }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			diplomacy >= 12
+		}
+	}
+	
+	immediate = {
+		set_character_flag = mount_hua_faction_chosen
+		random_courtier = {
+			limit = {
+				has_trait = qi_cultivator
+				has_trait = mount_hua_elder
+			}
+			save_scope_as = qi_faction_leader
+		}
+		random_courtier = {
+			limit = {
+				has_trait = sword_prodigy
+				has_trait = mount_hua_elder
+				NOT = { this = scope:qi_faction_leader }
+			}
+			save_scope_as = sword_faction_leader
+		}
+	}
+	
+	# Option A: Support the Sword Faction (traditional)
+	option = {
+		name = murim_mount_hua_expansion2.0005.a
+		
+		add_character_modifier = {
+			modifier = sword_faction_member
+			years = 20
+		}
+		change_prowess = 2
+		add_prestige = 200
+		if = {
+			limit = { exists = scope:sword_faction_leader }
+			add_opinion = {
+				target = scope:sword_faction_leader
+				modifier = allied_opinion
+				opinion = 30
+			}
+		}
+		if = {
+			limit = { exists = scope:qi_faction_leader }
+			add_opinion = {
+				target = scope:qi_faction_leader
+				modifier = rival_opinion
+				opinion = -20
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				prowess >= 18
+			}
+		}
+	}
+	
+	# Option B: Support the Qi Faction (reformist)
+	option = {
+		name = murim_mount_hua_expansion2.0005.b
+		
+		add_character_modifier = {
+			modifier = qi_faction_member
+			years = 20
+		}
+		add_learning = 2
+		add_prestige = 200
+		if = {
+			limit = { exists = scope:qi_faction_leader }
+			add_opinion = {
+				target = scope:qi_faction_leader
+				modifier = allied_opinion
+				opinion = 30
+			}
+		}
+		if = {
+			limit = { exists = scope:sword_faction_leader }
+			add_opinion = {
+				target = scope:sword_faction_leader
+				modifier = rival_opinion
+				opinion = -20
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				learning >= 15
+			}
+		}
+	}
+	
+	# Option C: Attempt to unite both factions
+	option = {
+		name = murim_mount_hua_expansion2.0005.c
+		trigger = {
+			diplomacy >= 15
+		}
+		
+		random = {
+			chance = 40
+			modifier = {
+				add = 20
+				diplomacy >= 20
+			}
+			add_character_modifier = {
+				modifier = mount_hua_unifier
+				years = 30
+			}
+			add_prestige = 500
+			change_diplomacy = 2
+		}
+		random = {
+			chance = 60
+			modifier = {
+				add = -20
+				diplomacy >= 20
+			}
+			add_stress = 30
+			add_prestige = -100
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+####################################
+# Mount Hua Betrayal Discovered - Manual Sold
+####################################
+murim_mount_hua_expansion2.0006 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0006.t
+	desc = murim_mount_hua_expansion2.0006.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	
+	trigger = {
+		has_character_flag = betrayed_mount_hua_secret
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_elder
+			}
+			save_scope_as = angry_elder
+		}
+	}
+	
+	# Option A: Accept punishment
+	option = {
+		name = murim_mount_hua_expansion2.0006.a
+		
+		add_character_modifier = {
+			modifier = meridians_sealed
+			years = 10
+		}
+		change_prowess = -5
+		add_stress = 40
+		remove_character_flag = betrayed_mount_hua_secret
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option B: Fight your way out
+	option = {
+		name = murim_mount_hua_expansion2.0006.b
+		
+		if = {
+			limit = { exists = scope:angry_elder }
+			duel = {
+				skill = prowess
+				target = scope:angry_elder
+				30 = {
+					desc = murim_mount_hua_expansion2.0006.b.escape
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					remove_trait = mount_hua_disciple
+					add_trait = rogue_swordsman
+					add_dread = 20
+					add_prestige = -500
+				}
+				70 = {
+					desc = murim_mount_hua_expansion2.0006.b.caught
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					add_character_modifier = {
+						modifier = crippled_traitor
+						years = 20
+					}
+					change_prowess = -8
+					add_stress = 50
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+	
+	# Option C: Blame someone else
+	option = {
+		name = murim_mount_hua_expansion2.0006.c
+		trigger = {
+			intrigue >= 15
+		}
+		
+		random = {
+			chance = 50
+			modifier = {
+				add = 20
+				intrigue >= 20
+			}
+			remove_character_flag = betrayed_mount_hua_secret
+			add_character_modifier = {
+				modifier = secret_schemer
+				years = 10
+			}
+		}
+		random = {
+			chance = 50
+			modifier = {
+				add = -20
+				intrigue >= 20
+			}
+			add_character_modifier = {
+				modifier = exposed_liar
+				years = 10
+			}
+			add_stress = 40
+			add_prestige = -400
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+####################################
+# Mount Hua Exile's Wandering - Rogue Arc
+####################################
+murim_mount_hua_expansion2.0007 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0007.t
+	desc = murim_mount_hua_expansion2.0007.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	
+	trigger = {
+		has_character_flag = mount_hua_exile
+		has_trait = rogue_swordsman
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = jianghu_wanderer
+				NOT = { this = root }
+			}
+			save_scope_as = fellow_wanderer
+		}
+	}
+	
+	# Option A: Seek a new master in another sect
+	option = {
+		name = murim_mount_hua_expansion2.0007.a
+		
+		random_list = {
+			30 = {
+				add_trait = wudang_disciple
+				remove_trait = rogue_swordsman
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = reborn_as_wudang
+					years = 10
+				}
+			}
+			30 = {
+				add_trait = shaolin_disciple
+				remove_trait = rogue_swordsman
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = reborn_as_shaolin
+					years = 10
+				}
+			}
+			40 = {
+				add_stress = 20
+				add_prestige = -100
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Become a lone wolf swordsman
+	option = {
+		name = murim_mount_hua_expansion2.0007.b
+		
+		add_character_modifier = {
+			modifier = lone_wolf_swordsman
+			years = 20
+		}
+		change_prowess = 3
+		add_intrigue = 2
+		add_dread = 10
+		
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Seek redemption and return to Mount Hua
+	option = {
+		name = murim_mount_hua_expansion2.0007.c
+		
+		set_character_flag = seeking_mount_hua_redemption
+		add_piety = 100
+		add_stress = -20
+		
+		hidden_effect = {
+			trigger_event = {
+				id = murim_mount_hua_expansion2.0008
+				days = { 365 730 }
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+####################################
+# Mount Hua Redemption Trial
+####################################
+murim_mount_hua_expansion2.0008 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0008.t
+	desc = murim_mount_hua_expansion2.0008.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	
+	trigger = {
+		has_character_flag = seeking_mount_hua_redemption
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_elder
+			}
+			save_scope_as = redemption_judge
+		}
+	}
+	
+	# Option A: Complete 100 acts of service
+	option = {
+		name = murim_mount_hua_expansion2.0008.a
+		
+		random = {
+			chance = 60
+			modifier = {
+				add = 20
+				piety >= 100
+			}
+			remove_trait = rogue_swordsman
+			add_trait = mount_hua_disciple
+			remove_character_flag = mount_hua_exile
+			add_character_modifier = {
+				modifier = redeemed_disciple
+				years = 15
+			}
+			add_prestige = 300
+		}
+		random = {
+			chance = 40
+			modifier = {
+				add = -20
+				piety >= 100
+			}
+			add_stress = 30
+			add_prestige = -100
+		}
+		
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Defeat three sect challenges
+	option = {
+		name = murim_mount_hua_expansion2.0008.b
+		trigger = {
+			prowess >= 18
+		}
+		
+		remove_trait = rogue_swordsman
+		add_trait = mount_hua_disciple
+		remove_character_flag = mount_hua_exile
+		add_character_modifier = {
+			modifier = warrior_redeemed
+			years = 10
+		}
+		change_prowess = 1
+		add_prestige = 400
+		
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Reject redemption - embrace the exile
+	option = {
+		name = murim_mount_hua_expansion2.0008.c
+		
+		add_trait = bitter_exile
+		add_character_modifier = {
+			modifier = permanent_exile
+			years = 50
+		}
+		change_prowess = 2
+		add_dread = 15
+		remove_character_flag = seeking_mount_hua_redemption
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+####################################
+# Mount Hua Sect Leader Succession
+####################################
+murim_mount_hua_expansion2.0009 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0009.t
+	desc = murim_mount_hua_expansion2.0009.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = mount_hua_disciple
+		age >= 35
+		prowess >= 20
+		NOT = { has_character_flag = mount_hua_succession_participated }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_character_flag = plum_blossom_trial_complete
+		}
+		modifier = {
+			add = 2
+			has_character_modifier = sword_conference_champion
+		}
+	}
+	
+	immediate = {
+		set_character_flag = mount_hua_succession_participated
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_disciple
+				prowess >= 15
+				NOT = { this = root }
+			}
+			save_scope_as = succession_rival
+		}
+	}
+	
+	# Option A: Challenge for leadership through combat
+	option = {
+		name = murim_mount_hua_expansion2.0009.a
+		
+		if = {
+			limit = { exists = scope:succession_rival }
+			duel = {
+				skill = prowess
+				target = scope:succession_rival
+				50 = {
+					desc = murim_mount_hua_expansion2.0009.a.win
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.5
+						min = -49
+					}
+					add_trait = mount_hua_sect_leader
+					add_prestige = 1000
+					add_character_modifier = {
+						modifier = new_sect_leader_authority
+						years = 20
+					}
+				}
+				50 = {
+					desc = murim_mount_hua_expansion2.0009.a.lose
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.5
+						min = -49
+					}
+					add_prestige = -200
+					add_stress = 30
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Gain support through diplomacy
+	option = {
+		name = murim_mount_hua_expansion2.0009.b
+		trigger = {
+			diplomacy >= 15
+		}
+		
+		random = {
+			chance = 50
+			modifier = {
+				add = 25
+				diplomacy >= 20
+			}
+			add_trait = mount_hua_sect_leader
+			add_prestige = 800
+			add_character_modifier = {
+				modifier = diplomatic_sect_leader
+				years = 20
+			}
+		}
+		random = {
+			chance = 50
+			modifier = {
+				add = -25
+				diplomacy >= 20
+			}
+			add_prestige = -100
+			add_stress = 20
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Support another candidate
+	option = {
+		name = murim_mount_hua_expansion2.0009.c
+		
+		if = {
+			limit = { exists = scope:succession_rival }
+			add_opinion = {
+				target = scope:succession_rival
+				modifier = grateful_opinion
+				opinion = 40
+			}
+		}
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = kingmaker_influence
+			years = 10
+		}
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+####################################
+# Mount Hua Ultimate Technique - Plum Blossom Sword God
+####################################
+murim_mount_hua_expansion2.0010 = {
+	type = character_event
+	title = murim_mount_hua_expansion2.0010.t
+	desc = murim_mount_hua_expansion2.0010.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = mount_hua_disciple
+		prowess >= 25
+		has_character_flag = plum_blossom_trial_complete
+		has_character_flag = sword_conference_attended
+		age >= 40
+		NOT = { has_character_flag = plum_blossom_god_attempted }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = mount_hua_sect_leader
+		}
+	}
+	
+	immediate = {
+		set_character_flag = plum_blossom_god_attempted
+	}
+	
+	# Option A: Attempt the forbidden final form
+	option = {
+		name = murim_mount_hua_expansion2.0010.a
+		
+		random_list = {
+			30 = {
+				desc = murim_mount_hua_expansion2.0010.a.success
+				modifier = {
+					add = 20
+					prowess >= 30
+				}
+				add_trait = plum_blossom_sword_god
+				change_prowess = 5
+				add_prestige = 2000
+				add_character_modifier = {
+					modifier = transcendent_swordsman
+					years = 50
+				}
+			}
+			40 = {
+				desc = murim_mount_hua_expansion2.0010.a.partial
+				change_prowess = 2
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = incomplete_transcendence
+					years = 20
+				}
+			}
+			30 = {
+				desc = murim_mount_hua_expansion2.0010.a.failure
+				modifier = {
+					add = -20
+					prowess >= 30
+				}
+				add_character_modifier = {
+					modifier = qi_deviation_severe
+					years = 10
+				}
+				change_prowess = -3
+				add_stress = 50
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Meditate for 10 years first
+	option = {
+		name = murim_mount_hua_expansion2.0010.b
+		
+		add_character_modifier = {
+			modifier = decade_meditation
+			years = 10
+		}
+		add_learning = 3
+		add_piety = 200
+		
+		hidden_effect = {
+			trigger_event = {
+				id = murim_mount_hua_expansion2.0010
+				days = { 3650 3650 }
+			}
+			remove_character_flag = plum_blossom_god_attempted
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Decide you are not worthy
+	option = {
+		name = murim_mount_hua_expansion2.0010.c
+		
+		add_piety = 100
+		add_stress = -20
+		add_character_modifier = {
+			modifier = humble_master
+			years = 20
+		}
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+}
