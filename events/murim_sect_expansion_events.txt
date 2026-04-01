@@ -1,0 +1,1125 @@
+# Murim Chronicles - Sect Events Expansion
+# Destruction, founding, missions, leaving, treasure vault, bullying, assembly, alliance
+# Cross-references: murim_duel, murim_ranking, murim_artifact, murim_cultivation, murim_jianghu, murim_training
+
+namespace = murim_sect
+
+######################################
+# SECT DESTRUCTION - Your sect is attacked and destroyed
+######################################
+
+murim_sect.0500 = {
+	type = character_event
+	title = murim_sect.0500.t
+	desc = murim_sect.0500.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+	right_portrait = {
+		character = scope:sect_destroyer
+		animation = personality_bold
+	}
+	override_background = {
+		reference = burning_building
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_member
+		NOT = { has_character_flag = murim_sect_destruction_cooldown }
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_character_flag = murim_sect_member
+			prowess >= 20
+			has_trait = ambitious
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.3
+			has_character_flag = murim_sect_leader
+			prowess >= 25
+		}
+	}
+
+	immediate = {
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				has_character_flag = murim_sect_member
+				prowess >= 20
+				has_trait = ambitious
+			}
+			save_scope_as = sect_destroyer
+		}
+		create_character_memory = {
+			type = murim_sect_destroyed_memory
+			participants = {
+				attacker = scope:sect_destroyer
+			}
+		}
+	}
+
+	# Fight to the death defending the sect
+	option = {
+		name = murim_sect.0500.a
+		custom_tooltip = murim_sect_fight_to_death_tt
+		duel = {
+			skill = prowess
+			target = scope:sect_destroyer
+			30 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				desc = murim_sect_heroic_defense_tt
+				add_prestige = 2000
+				add_character_modifier = {
+					modifier = murim_sect_savior
+					years = 10
+				}
+				scope:sect_destroyer = {
+					add_trait = wounded_3
+					add_prestige = -1000
+				}
+				create_character_memory = {
+					type = murim_heroic_sect_defense_memory
+					participants = {
+						defeated_enemy = scope:sect_destroyer
+					}
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_rank.0001 days = { 7 14 } }
+				}
+			}
+			30 = {
+				desc = murim_sect_mutual_destruction_tt
+				add_trait = wounded_2
+				scope:sect_destroyer = { add_trait = wounded_2 }
+				remove_character_flag = murim_sect_member
+				remove_character_flag = murim_sect_inner_disciple
+				remove_character_flag = murim_sect_core_disciple
+				remove_character_flag = murim_sect_leader
+				add_prestige = 500
+			}
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				desc = murim_sect_falls_tt
+				add_trait = wounded_3
+				remove_character_flag = murim_sect_member
+				remove_character_flag = murim_sect_inner_disciple
+				remove_character_flag = murim_sect_core_disciple
+				remove_character_flag = murim_sect_leader
+				add_prestige = -1000
+				add_character_modifier = {
+					modifier = murim_sect_destruction_survivor
+					years = -1
+				}
+				random = {
+					chance = 25
+					add_trait = incapable
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_training.0001 days = { 90 180 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+
+	# Flee with sect techniques and scrolls
+	option = {
+		name = murim_sect.0500.b
+		custom_tooltip = murim_sect_flee_with_scrolls_tt
+		remove_character_flag = murim_sect_member
+		remove_character_flag = murim_sect_inner_disciple
+		remove_character_flag = murim_sect_core_disciple
+		remove_character_flag = murim_sect_leader
+		add_character_modifier = {
+			modifier = murim_sect_destruction_survivor
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_stolen_sect_techniques
+			years = 5
+		}
+		add_prestige = -500
+		stress_impact = {
+			brave = major_stress_impact_gain
+			honest = major_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_artifact.0001 days = { 30 60 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+
+	# Surrender and join the conquering sect
+	option = {
+		name = murim_sect.0500.c
+		custom_tooltip = murim_sect_surrender_join_tt
+		remove_character_flag = murim_sect_inner_disciple
+		remove_character_flag = murim_sect_core_disciple
+		remove_character_flag = murim_sect_leader
+		set_character_flag = murim_sect_outer_disciple
+		add_opinion = {
+			target = scope:sect_destroyer
+			modifier = murim_conquered_submission_opinion
+		}
+		scope:sect_destroyer = {
+			add_opinion = {
+				target = root
+				modifier = murim_conquered_submission_opinion
+			}
+		}
+		add_prestige = -800
+		stress_impact = {
+			proud = major_stress_impact_gain
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_sect_destruction_cooldown
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = cynical }
+		}
+	}
+}
+
+######################################
+# SECT FOUNDING - Create your own sect
+######################################
+
+murim_sect.0600 = {
+	type = character_event
+	title = murim_sect.0600.t
+	desc = murim_sect.0600.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	override_background = {
+		reference = temple
+	}
+
+	trigger = {
+		is_alive = yes
+		NOT = { has_character_flag = murim_sect_member }
+		has_character_flag = murim_initiated
+		prowess >= 20
+		prestige >= 1500
+		age >= 25
+		OR = {
+			has_trait = cultivation_rank_core_formation
+			has_trait = cultivation_rank_nascent_soul
+			has_trait = cultivation_rank_spirit_severing
+			has_trait = cultivation_rank_dao_seeking
+			has_trait = cultivation_rank_tribulation
+			has_trait = cultivation_rank_immortal_ascension
+		}
+		NOT = { has_character_flag = murim_sect_founding_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 2
+			has_character_modifier = murim_sect_destruction_survivor
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = murim_founded_sect_memory
+		}
+	}
+
+	# Found a righteous orthodox sect
+	option = {
+		name = murim_sect.0600.a
+		custom_tooltip = murim_sect_found_orthodox_tt
+		set_character_flag = murim_sect_member
+		set_character_flag = murim_sect_leader
+		set_character_flag = murim_sect_orthodox
+		add_character_modifier = {
+			modifier = murim_sect_patriarch_status
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_orthodox_sect_founder
+			years = -1
+		}
+		add_prestige = 2000
+		add_piety = 500
+		add_gold = -200
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				opinion = { target = root value >= 20 }
+			}
+			set_character_flag = murim_sect_member
+			set_character_flag = murim_sect_outer_disciple
+			add_opinion = {
+				target = root
+				modifier = murim_sect_founder_devotion
+			}
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_politics.0001 days = { 60 120 } }
+			set_character_flag = {
+				flag = murim_sect_founding_cooldown
+				years = 20
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = zealous }
+		}
+	}
+
+	# Found a dark unorthodox sect
+	option = {
+		name = murim_sect.0600.b
+		custom_tooltip = murim_sect_found_unorthodox_tt
+		set_character_flag = murim_sect_member
+		set_character_flag = murim_sect_leader
+		set_character_flag = murim_sect_unorthodox
+		add_character_modifier = {
+			modifier = murim_sect_patriarch_status
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_unorthodox_sect_founder
+			years = -1
+		}
+		add_prestige = 1500
+		add_gold = -100
+		add_tyranny = 15
+		hidden_effect = {
+			trigger_event = { id = murim_jianghu.0001 days = { 30 60 } }
+			set_character_flag = {
+				flag = murim_sect_founding_cooldown
+				years = 20
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = sadistic }
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+
+	# Delay - not yet ready
+	option = {
+		name = murim_sect.0600.c
+		add_prestige = 100
+		set_character_flag = {
+			flag = murim_sect_founding_cooldown
+			years = 5
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# SECT MISSION ASSIGNMENT
+######################################
+
+murim_sect.0650 = {
+	type = character_event
+	title = murim_sect.0650.t
+	desc = murim_sect.0650.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	override_background = {
+		reference = throne_room
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_member
+		OR = {
+			has_character_flag = murim_sect_outer_disciple
+			has_character_flag = murim_sect_inner_disciple
+		}
+		NOT = { has_character_flag = murim_sect_on_mission }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_character_flag = murim_sect_inner_disciple
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = murim_sect_mission_memory
+		}
+	}
+
+	# Accept dangerous herb-gathering mission
+	option = {
+		name = murim_sect.0650.a
+		custom_tooltip = murim_sect_herb_mission_tt
+		set_character_flag = {
+			flag = murim_sect_on_mission
+			years = 1
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					modifier = { add = 15 learning >= 14 }
+					trigger_event = { id = murim_sect.0651 days = { 30 60 } }
+				}
+				35 = {
+					trigger_event = { id = murim_artifact.0001 days = { 30 60 } }
+				}
+				25 = {
+					modifier = { add = -10 prowess >= 16 }
+					add_trait = wounded_1
+					create_character_memory = {
+						type = murim_mission_ambushed_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 has_trait = diligent }
+		}
+	}
+
+	# Accept bounty-hunting mission
+	option = {
+		name = murim_sect.0650.b
+		custom_tooltip = murim_sect_bounty_mission_tt
+		set_character_flag = {
+			flag = murim_sect_on_mission
+			years = 1
+		}
+		hidden_effect = {
+			random_list = {
+				35 = {
+					modifier = { add = 20 prowess >= 16 }
+					add_gold = 150
+					add_prestige = 300
+					create_character_memory = {
+						type = murim_bounty_hunt_success_memory
+					}
+					trigger_event = { id = murim_duel.0001 days = { 7 14 } }
+				}
+				35 = {
+					add_gold = 50
+					add_prestige = 100
+				}
+				30 = {
+					modifier = { add = -15 prowess >= 18 }
+					add_trait = wounded_2
+					add_prestige = -200
+					random = {
+						chance = 15
+						add_trait = craven
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Decline the mission
+	option = {
+		name = murim_sect.0650.c
+		add_prestige = -50
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = lazy }
+		}
+	}
+}
+
+# Herb mission success follow-up
+murim_sect.0651 = {
+	type = character_event
+	title = murim_sect.0651.t
+	desc = murim_sect.0651.desc
+	theme = martial
+	left_portrait = { character = root animation = happiness }
+
+	trigger = {
+		is_alive = yes
+	}
+
+	option = {
+		name = murim_sect.0651.a
+		add_prestige = 200
+		add_gold = 100
+		remove_character_flag = murim_sect_on_mission
+		add_character_modifier = {
+			modifier = murim_rare_herb_collection
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_herb_mission_success_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation.0001 days = { 14 30 } }
+		}
+	}
+}
+
+######################################
+# LEAVE SECT VOLUNTARILY
+######################################
+
+murim_sect.0700 = {
+	type = character_event
+	title = murim_sect.0700.t
+	desc = murim_sect.0700.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	override_background = {
+		reference = corridor_night
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_member
+		NOT = { has_character_flag = murim_sect_leader }
+		NOT = { has_character_flag = murim_leaving_sect_cooldown }
+		OR = {
+			stress >= 50
+			has_trait = ambitious
+			has_trait = cynical
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			stress >= 80
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = murim_left_sect_memory
+		}
+	}
+
+	# Leave honorably - return sect badge
+	option = {
+		name = murim_sect.0700.a
+		custom_tooltip = murim_sect_leave_honorably_tt
+		remove_character_flag = murim_sect_member
+		remove_character_flag = murim_sect_outer_disciple
+		remove_character_flag = murim_sect_inner_disciple
+		remove_character_flag = murim_sect_core_disciple
+		add_prestige = -200
+		stress_impact = { base = -20 }
+		add_character_modifier = {
+			modifier = murim_former_sect_disciple
+			years = 5
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_leaving_sect_cooldown
+				years = 5
+			}
+			trigger_event = { id = murim_daily_life.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = honest }
+		}
+	}
+
+	# Desert in the night - steal techniques
+	option = {
+		name = murim_sect.0700.b
+		trigger = { intrigue >= 12 }
+		custom_tooltip = murim_sect_desert_steal_tt
+		remove_character_flag = murim_sect_member
+		remove_character_flag = murim_sect_outer_disciple
+		remove_character_flag = murim_sect_inner_disciple
+		remove_character_flag = murim_sect_core_disciple
+		set_character_flag = murim_sect_deserter
+		add_character_modifier = {
+			modifier = murim_stolen_sect_techniques
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_sect_traitor_brand
+			years = -1
+		}
+		add_prestige = -500
+		create_character_memory = {
+			type = murim_sect_betrayal_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_jianghu.0001 days = { 30 60 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+
+	# Stay - endure the hardship
+	option = {
+		name = murim_sect.0700.c
+		stress_impact = { base = 10 }
+		add_character_modifier = {
+			modifier = murim_enduring_sect_hardship
+			years = 2
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# SECT TREASURE VAULT DISCOVERY
+######################################
+
+murim_sect.0750 = {
+	type = character_event
+	title = murim_sect.0750.t
+	desc = murim_sect.0750.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	override_background = {
+		reference = dungeon
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_member
+		OR = {
+			has_character_flag = murim_sect_inner_disciple
+			has_character_flag = murim_sect_core_disciple
+			has_character_flag = murim_sect_leader
+		}
+		NOT = { has_character_flag = murim_sect_vault_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_character_flag = murim_sect_leader
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = murim_sect_vault_discovery_memory
+		}
+	}
+
+	# Take the ancient weapon
+	option = {
+		name = murim_sect.0750.a
+		custom_tooltip = murim_sect_vault_weapon_tt
+		add_prowess_skill = 2
+		add_character_modifier = {
+			modifier = murim_ancient_sect_weapon
+			years = -1
+		}
+		add_prestige = 500
+		hidden_effect = {
+			trigger_event = { id = murim_artifact.0001 days = { 7 14 } }
+			set_character_flag = {
+				flag = murim_sect_vault_cooldown
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Take the lost cultivation manual
+	option = {
+		name = murim_sect.0750.b
+		custom_tooltip = murim_sect_vault_manual_tt
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_lost_cultivation_manual
+			years = 5
+		}
+		add_prestige = 300
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation.0001 days = { 14 30 } }
+			set_character_flag = {
+				flag = murim_sect_vault_cooldown
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 learning >= 14 }
+		}
+	}
+
+	# Take the spirit pills
+	option = {
+		name = murim_sect.0750.c
+		custom_tooltip = murim_sect_vault_pills_tt
+		add_character_modifier = {
+			modifier = murim_spirit_pill_boost
+			years = 3
+		}
+		add_gold = 200
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_sect_vault_cooldown
+				years = 10
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+######################################
+# OUTER DISCIPLE BULLYING
+######################################
+
+murim_sect.0770 = {
+	type = character_event
+	title = murim_sect.0770.t
+	desc = murim_sect.0770.desc
+	theme = intrigue
+	left_portrait = {
+		character = scope:sect_bully
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_outer_disciple
+		any_courtier = {
+			has_character_flag = murim_sect_inner_disciple
+			OR = {
+				has_trait = arrogant
+				has_trait = sadistic
+				has_trait = callous
+			}
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_sect_inner_disciple
+				OR = {
+					has_trait = arrogant
+					has_trait = sadistic
+				}
+			}
+			save_scope_as = sect_bully
+		}
+		create_character_memory = {
+			type = murim_sect_bullied_memory
+			participants = {
+				bully = scope:sect_bully
+			}
+		}
+	}
+
+	# Challenge the bully to a duel
+	option = {
+		name = murim_sect.0770.a
+		custom_tooltip = murim_sect_challenge_bully_tt
+		duel = {
+			skill = prowess
+			target = scope:sect_bully
+			35 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_sect_bully_defeated_tt
+				add_prestige = 500
+				scope:sect_bully = {
+					add_prestige = -300
+					add_trait = wounded_1
+					add_opinion = {
+						target = root
+						modifier = murim_defeated_by_lesser_opinion
+					}
+				}
+				create_character_memory = {
+					type = murim_stood_up_to_bully_memory
+					participants = {
+						defeated = scope:sect_bully
+					}
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_rank.0001 days = { 7 14 } }
+				}
+			}
+			25 = {
+				desc = murim_sect_bully_draw_tt
+				add_prestige = 200
+				scope:sect_bully = {
+					add_opinion = {
+						target = root
+						modifier = murim_grudging_respect_opinion
+					}
+				}
+			}
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				desc = murim_sect_bully_wins_tt
+				add_trait = wounded_1
+				add_prestige = -200
+				stress_impact = { base = 15 }
+				random = {
+					chance = 20
+					add_trait = craven
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_training.0001 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 has_trait = wrathful }
+		}
+	}
+
+	# Report to sect elders
+	option = {
+		name = murim_sect.0770.b
+		trigger = { diplomacy >= 10 }
+		scope:sect_bully = {
+			add_character_modifier = {
+				modifier = murim_sect_disciplined
+				years = 2
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_reported_to_elders_opinion
+			}
+		}
+		add_prestige = 50
+		ai_chance = {
+			base = 30
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Endure in silence and train harder
+	option = {
+		name = murim_sect.0770.c
+		stress_impact = { base = 15 }
+		add_character_modifier = {
+			modifier = murim_burning_determination_modifier
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_training.0001 days = { 14 30 } }
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+######################################
+# SECT GRAND ASSEMBLY
+######################################
+
+murim_sect.0800 = {
+	type = character_event
+	title = murim_sect.0800.t
+	desc = murim_sect.0800.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	override_background = {
+		reference = throne_room
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_leader
+		NOT = { has_character_flag = murim_assembly_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			any_courtier = {
+				count >= 5
+				has_character_flag = murim_sect_member
+			}
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = murim_sect_grand_assembly_memory
+		}
+	}
+
+	# Announce a great tournament among disciples
+	option = {
+		name = murim_sect.0800.a
+		custom_tooltip = murim_sect_assembly_tournament_tt
+		add_prestige = 500
+		every_courtier = {
+			limit = { has_character_flag = murim_sect_member }
+			add_opinion = {
+				target = root
+				modifier = murim_inspiring_leader_opinion
+			}
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_duel.0001 days = { 14 30 } }
+			set_character_flag = {
+				flag = murim_assembly_cooldown
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Open the sect's sealed technique library
+	option = {
+		name = murim_sect.0800.b
+		custom_tooltip = murim_sect_assembly_library_tt
+		add_piety = 300
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_sect_member
+				OR = {
+					has_character_flag = murim_sect_inner_disciple
+					has_character_flag = murim_sect_core_disciple
+				}
+			}
+			add_character_modifier = {
+				modifier = murim_sect_technique_access
+				years = 2
+			}
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation.0001 days = { 30 60 } }
+			set_character_flag = {
+				flag = murim_assembly_cooldown
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 learning >= 14 }
+		}
+	}
+
+	# Declare war preparation against rival sect
+	option = {
+		name = murim_sect.0800.c
+		custom_tooltip = murim_sect_assembly_war_tt
+		add_character_modifier = {
+			modifier = murim_sect_war_footing
+			years = 2
+		}
+		add_prestige = 300
+		hidden_effect = {
+			trigger_event = { id = murim_sect.0200 days = { 30 60 } }
+			set_character_flag = {
+				flag = murim_assembly_cooldown
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = ambitious }
+		}
+	}
+}
+
+######################################
+# SECT ALLIANCE PROPOSAL
+######################################
+
+murim_sect.0850 = {
+	type = character_event
+	title = murim_sect.0850.t
+	desc = murim_sect.0850.desc
+	theme = diplomacy
+	left_portrait = {
+		character = scope:allied_sect_leader
+		animation = personality_honorable
+	}
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_leader
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_character_flag = murim_sect_leader
+			opinion = { target = root value >= 0 }
+			NOT = { dynasty = root.dynasty }
+		}
+		NOT = { has_character_flag = murim_sect_alliance_cooldown }
+	}
+
+	immediate = {
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				has_character_flag = murim_sect_leader
+				opinion = { target = root value >= 0 }
+				NOT = { dynasty = root.dynasty }
+			}
+			save_scope_as = allied_sect_leader
+		}
+		create_character_memory = {
+			type = murim_sect_alliance_proposal_memory
+			participants = {
+				ally_leader = scope:allied_sect_leader
+			}
+		}
+	}
+
+	# Accept alliance - mutual defense pact
+	option = {
+		name = murim_sect.0850.a
+		custom_tooltip = murim_sect_alliance_accept_tt
+		add_opinion = {
+			target = scope:allied_sect_leader
+			modifier = murim_sect_alliance_opinion
+		}
+		scope:allied_sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_sect_alliance_opinion
+			}
+		}
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_sect_alliance_active
+			years = 10
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_politics.0001 days = { 60 120 } }
+			set_character_flag = {
+				flag = murim_sect_alliance_cooldown
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = gregarious }
+			modifier = { add = 15 has_trait = trusting }
+		}
+	}
+
+	# Propose marriage alliance instead
+	option = {
+		name = murim_sect.0850.b
+		trigger = { diplomacy >= 14 }
+		custom_tooltip = murim_sect_marriage_alliance_tt
+		add_opinion = {
+			target = scope:allied_sect_leader
+			modifier = murim_sect_marriage_alliance_opinion
+		}
+		scope:allied_sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_sect_marriage_alliance_opinion
+			}
+		}
+		add_prestige = 800
+		hidden_effect = {
+			trigger_event = { id = murim_romance.0001 days = { 30 60 } }
+			set_character_flag = {
+				flag = murim_sect_alliance_cooldown
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 diplomacy >= 16 }
+		}
+	}
+
+	# Reject - maintain independence
+	option = {
+		name = murim_sect.0850.c
+		custom_tooltip = murim_sect_alliance_reject_tt
+		scope:allied_sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_alliance_rejected_opinion
+			}
+		}
+		add_prestige = 100
+		set_character_flag = {
+			flag = murim_sect_alliance_cooldown
+			years = 3
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+}
