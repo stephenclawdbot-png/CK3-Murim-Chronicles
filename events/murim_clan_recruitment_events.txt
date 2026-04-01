@@ -1,640 +1,646 @@
-# Murim Chronicles - Clan Youth Recruitment Events
-# Global scouting system: clans recruit talented children worldwide.
-# 10 events covering scouting, parent decisions, culture shock, rivalry, homecoming.
-# TRIGGER: yearly pulse. Fires when murim_clan_needs_recruits_trigger = yes (< 3 youth).
-# INTEGRATION: Uses murim_discovery_triggers.txt (murim_is_recruitable_youth_trigger)
-# INTEGRATION: Uses murim_clan_triggers.txt (rank checks for scouts)
-# INTEGRATION: Uses murim_clan_membership_effects.txt (join_sect effects)
-# INTEGRATION: Feeds into murim_youth_tournament_events.txt (recruited kids enter tournaments)
-# INTEGRATION: References murim_sect_politics_events.txt (recruited kid in succession later)
-# INTEGRATION: Cross-refs murim_training_events.txt (training after recruitment)
-# GENDER: ALL events fully gender-neutral. Boys AND girls equally scouted.
-# AI: AI clans auto-recruit. AI parents decide based on personality. AI kids generate stories.
-# GAME START NOTE: On game start, only 5-10 kids (age 8-15) have martial training.
-#                  This scarcity drives the recruitment system. Clans NEED to scout.
+# Murim Chronicles - Clan Recruitment Events (Dual-Mode System)
+# TWO MODES: Emergency (global scouting when youth < 3) and Normal (local opportunistic, always-on)
+# INTEGRATION: Uses murim_clan_triggers.txt (clan_needs_recruits, is_recruitable_youth)
+# INTEGRATION: Uses murim_discovery_triggers.txt (is_in_martial_region, martial_awareness checks)
+# INTEGRATION: Uses murim_clan_membership_effects.txt (join_sect_as_outer_disciple_effect)
+# INTEGRATION: Feeds murim_youth_tournament_events.txt (recruited kids enter Young Dragon Tournament)
+# INTEGRATION: Feeds murim_sect_politics_events.txt (recruited members rise through ranks)
+# Cross-refs: murim_training_events.txt (new recruits train), murim_mentor_events.txt (assigned masters),
+#             murim_clan_war_events.txt (recruits fight), murim_wandering_events.txt (wanderers recruited)
+# GENDER: Fully gender-neutral. Boys AND girls equally scouted. No restrictions.
+# AI: Both modes fire automatically for AI clans. AI parents decide based on personality.
 
 namespace = murim_recruit
 
-####################################
-# SCOUTING CHAIN
-####################################
+######################################################################
+# MODE 1: EMERGENCY RECRUITMENT — Global Scouting (youth < 3)
+######################################################################
 
-# 0001: Clan Sends Scouts Abroad
-# Auto-fires when clan has < 3 youth members. AI-driven.
+# murim_recruit.0001 — Clan Dispatches Scouts Abroad
+# Trigger: on_yearly_pulse, clan has < 3 members aged 8-15
+# The clan is desperate. Senior members are sent worldwide to find talent.
 murim_recruit.0001 = {
 	type = character_event
 	title = murim_recruit.0001.t
-	desc = murim_recruit.0001.desc
-	theme = diplomacy
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = mount_hua_disciple }
+				desc = murim_recruit.0001.desc.mount_hua
+			}
+			triggered_desc = {
+				trigger = { has_trait = shaolin_monk }
+				desc = murim_recruit.0001.desc.shaolin
+			}
+			triggered_desc = {
+				trigger = { has_trait = heavenly_demon_member }
+				desc = murim_recruit.0001.desc.demon
+			}
+			triggered_desc = {
+				trigger = { has_trait = tang_clan_member }
+				desc = murim_recruit.0001.desc.tang
+			}
+			triggered_desc = {
+				trigger = { has_trait = wudang_disciple }
+				desc = murim_recruit.0001.desc.wudang
+			}
+			triggered_desc = {
+				trigger = { has_trait = beggar_sect_member }
+				desc = murim_recruit.0001.desc.beggar
+			}
+			desc = murim_recruit.0001.desc.generic
+		}
+	}
+	theme = martial
 	
 	trigger = {
-		# This fires for the clan LEADER
-		murim_is_clan_member_trigger = yes
-		OR = {
-			is_sect_leader_trigger = yes
-			is_sect_elder_trigger = yes
-		}
+		# Must be a sect elder or leader to dispatch scouts
+		murim_is_sect_leadership_trigger = yes
+		# Clan needs recruits (fewer than 3 youth aged 8-15)
 		murim_clan_needs_recruits_trigger = yes
-		NOT = { has_character_flag = sent_scouts_this_year }
-		# Cooldown: once per year per clan
+		# Cooldown: don't spam scouting
+		NOT = { has_character_flag = murim_scouts_dispatched_recently }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		# More urgent if zero youth
+		modifier = {
+			add = 2
+			murim_clan_youth_count_value = 0
+		}
+		# Slightly more urgent if only 1
+		modifier = {
+			add = 1
+			murim_clan_youth_count_value = 1
+		}
 	}
 	
 	immediate = {
 		set_character_flag = {
-			flag = sent_scouts_this_year
-			years = 1
-		}
-		# Find an eligible scout from the clan
-		random_courtier_or_guest = {
-			limit = {
-				murim_is_eligible_scout_trigger = yes
-			}
-			save_scope_as = clan_scout
-		}
-		# Determine scouting region based on clan's reach
-		random_list = {
-			40 = { set_variable = { name = scout_region value = flag:korea } }
-			30 = { set_variable = { name = scout_region value = flag:china } }
-			15 = { set_variable = { name = scout_region value = flag:japan } }
-			5 = { set_variable = { name = scout_region value = flag:india } }
-			3 = { set_variable = { name = scout_region value = flag:persia } }
-			3 = { set_variable = { name = scout_region value = flag:steppe } }
-			2 = { set_variable = { name = scout_region value = flag:europe } }
-			2 = { set_variable = { name = scout_region value = flag:africa } }
+			flag = murim_scouts_dispatched_recently
+			years = 2
 		}
 	}
 	
-	# Option A: Send the scout — standard
+	# Option A: Send scouts to Korea and China (close range)
 	option = {
 		name = murim_recruit.0001.a
-		# Scout departs, results in 30-90 days
-		trigger_event = {
-			id = murim_recruit.0002
-			days = { 30 90 }
-		}
-		ai_chance = {
-			base = 80
-			# AI almost always sends scouts when they need recruits
-		}
-	}
-	
-	# Option B: Scout personally — the leader goes
-	option = {
-		name = murim_recruit.0001.b
-		# Leader travels — risky but finds better candidates
-		add_character_modifier = {
-			modifier = personal_scouting_trip_modifier
-			years = 1
-		}
-		trigger_event = {
-			id = murim_recruit.0002
-			days = { 14 60 }
-		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				add = 15
-				has_trait = diligent
-			}
-		}
-	}
-	
-	# Option C: Lower standards — accept any willing youth
-	option = {
-		name = murim_recruit.0001.c
-		# Faster but weaker recruits
-		add_character_modifier = {
-			modifier = lowered_recruitment_standards_modifier
-			years = 3
-		}
-		trigger_event = {
-			id = murim_recruit.0008
-			days = { 7 14 }
-		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				add = 20
-				# Desperation: no youth at all
-				NOT = {
-					any_courtier = {
-						murim_is_clan_member_trigger = yes
-						age >= 8
-						age < 16
-					}
+		# Search for talented youth in the core martial regions
+		# Finds random eligible youth in Goryeo/China courts
+		random_list = {
+			70 = {
+				# Success: found a promising candidate
+				trigger_event = {
+					id = murim_recruit.0002
+					days = { 30 90 }
 				}
 			}
-		}
-	}
-}
-
-# 0002: Scout Arrives at Foreign Court
-# Scout evaluates children for recruitment potential.
-murim_recruit.0002 = {
-	type = character_event
-	title = murim_recruit.0002.t
-	desc = murim_recruit.0002.desc
-	theme = education
-	
-	trigger = {
-		# Fires as follow-up from 0001
-		always = yes
-	}
-	
-	immediate = {
-		# Find a talented child in the scouted region
-		random_living_character = {
-			limit = {
-				murim_is_recruitable_youth_trigger = yes
-				age >= 8
-				age < 16
-				# Talent check: at least one strong indicator
-				OR = {
-					has_trait = brave
-					has_trait = strong
-					has_trait = rowdy
-					has_trait = genius
-					has_trait = quick
-					has_trait = intelligent
-					prowess >= 5
-					martial >= 6
+			30 = {
+				# Failure: no suitable candidates found nearby
+				trigger_event = {
+					id = murim_recruit.0008
+					days = { 60 120 }
 				}
 			}
-			weight = {
-				base = 1
-				# Korean/Chinese children more likely found
-				modifier = {
-					add = 3
-					murim_is_martial_culture_trigger = yes
-				}
-				# Genius/quick children stand out
-				modifier = {
-					add = 5
-					OR = {
-						has_trait = genius
-						has_trait = quick
-					}
-				}
-				# Strong/brave children noticed in physical activities
-				modifier = {
-					add = 3
-					OR = {
-						has_trait = strong
-						has_trait = brave
-					}
-				}
-				# High prowess for age
-				modifier = {
-					add = 2
-					prowess >= 8
-				}
-			}
-			save_scope_as = scouted_child
-		}
-		# Save the child's parent for the decision event
-		scope:scouted_child = {
-			if = {
-				limit = { exists = father }
-				father = { save_scope_as = child_parent }
-			}
-			else_if = {
-				limit = { exists = mother }
-				mother = { save_scope_as = child_parent }
-			}
-		}
-	}
-	
-	# Scout found a candidate — approach parent
-	option = {
-		name = murim_recruit.0002.a
-		# If parent is player, fire decision event
-		# If parent is AI, fire AI decision event
-		scope:child_parent = {
-			trigger_event = {
-				id = murim_recruit.0003
-				days = { 3 7 }
-			}
-		}
-		ai_chance = {
-			base = 90
-		}
-	}
-	
-	# Scout found nobody worthy — report back
-	option = {
-		name = murim_recruit.0002.b
-		trigger_event = {
-			id = murim_recruit.0008
-			days = { 7 14 }
-		}
-		ai_chance = {
-			base = 10
-		}
-	}
-}
-
-# 0003: Player's Child Scouted
-# "A representative of [Clan] wishes to take your child to train..."
-murim_recruit.0003 = {
-	type = character_event
-	title = murim_recruit.0003.t
-	desc = murim_recruit.0003.desc
-	theme = education
-	
-	trigger = {
-		any_child = {
-			murim_is_recruitable_youth_trigger = yes
-		}
-	}
-	
-	immediate = {
-		# scope:scouted_child and scope:clan_scout carried from previous event
-	}
-	
-	# Option A: Accept proudly
-	option = {
-		name = murim_recruit.0003.a
-		# "Go, my child. Make us proud."
-		scope:scouted_child = {
-			murim_join_sect_as_outer_disciple_effect = yes
-			add_trait = basic_martial_training
-			add_character_modifier = {
-				modifier = sent_abroad_for_training_modifier
-				years = 8
-			}
-		}
-		add_prestige = 20
-		# Child moves to clan HQ region
-		trigger_event = {
-			id = murim_recruit.0005
-			days = { 14 30 }
 		}
 		stress_impact = {
-			compassionate = minor_stress_impact_gain
-			ambitious = minor_stress_impact_loss
+			base = 5
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Send scouts GLOBALLY — expensive but wider net
+	option = {
+		name = murim_recruit.0001.b
+		# Global scouting: can find talent anywhere in the world
+		add_gold = -50
+		random_list = {
+			50 = {
+				# Found someone far away
+				trigger_event = {
+					id = murim_recruit.0002
+					days = { 90 180 }
+				}
+				# Set flag so the recruit event knows this is a foreign candidate
+				set_character_flag = {
+					flag = murim_global_scout_active
+					years = 1
+				}
+			}
+			30 = {
+				# Found multiple candidates — bidding war possible
+				trigger_event = {
+					id = murim_recruit.0007
+					days = { 90 180 }
+				}
+			}
+			20 = {
+				# Failed — nobody worthy found abroad
+				trigger_event = {
+					id = murim_recruit.0008
+					days = { 120 240 }
+				}
+			}
 		}
 		ai_chance = {
 			base = 30
 			modifier = {
 				add = 20
-				has_trait = ambitious
+				murim_clan_youth_count_value = 0
 			}
+		}
+	}
+	
+	# Option C: Lower standards — accept weaker candidates locally
+	option = {
+		name = murim_recruit.0001.c
+		# Desperate: accept anyone with even marginal potential
+		custom_tooltip = murim_recruit.0001.c.tt
+		# Guaranteed to find SOMEONE, but they're mediocre
+		trigger_event = {
+			id = murim_recruit.0002
+			days = { 15 30 }
+		}
+		set_character_flag = {
+			flag = murim_lowered_standards_recruit
+			years = 3
+		}
+		ai_chance = {
+			base = 10
 			modifier = {
-				add = 10
-				murim_is_martial_culture_trigger = yes
+				add = 30
+				murim_clan_youth_count_value = 0
+				# Only pick this if truly desperate AND already tried normal scouting
+				has_character_flag = murim_previous_scout_failed
 			}
-			# More kids = more willing to let one go
+		}
+	}
+}
+
+# murim_recruit.0002 — Scout Arrives, Evaluates Candidate
+# Fires after 0001 succeeds. Scout has found a promising youth.
+murim_recruit.0002 = {
+	type = character_event
+	title = murim_recruit.0002.t
+	desc = murim_recruit.0002.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_sect_leadership_trigger = yes
+	}
+	
+	immediate = {
+		# Find the best candidate in the region
+		# Priority: high prowess, brave/strong/genius traits, martial_awareness
+		random_character = {
+			limit = {
+				murim_is_recruitable_youth_trigger = yes
+				age >= 8
+				age < 16
+				NOR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_monk
+					has_trait = heavenly_demon_member
+					has_trait = tang_clan_member
+					has_trait = tang_clan_associate
+					has_trait = wudang_disciple
+					has_trait = beggar_sect_member
+				}
+				# If global scout, can be anywhere; otherwise must be in martial region
+				trigger_if = {
+					limit = {
+						prev = { NOT = { has_character_flag = murim_global_scout_active } }
+					}
+					murim_is_in_martial_region_trigger = yes
+				}
+			}
+			weight = {
+				base = 1
+				modifier = { add = 3 prowess >= 8 }
+				modifier = { add = 5 prowess >= 12 }
+				modifier = { add = 2 has_trait = brave }
+				modifier = { add = 2 has_trait = strong }
+				modifier = { add = 3 has_trait = genius }
+				modifier = { add = 2 has_trait = quick }
+				modifier = { add = 1 has_trait = ambitious }
+				modifier = { add = 2 has_trait = martial_awareness }
+				modifier = { add = 3 has_character_flag = murim_tournament_participant }
+				# If lowered standards, accept weaker candidates
+				modifier = {
+					add = 5
+					prev = { has_character_flag = murim_lowered_standards_recruit }
+				}
+			}
+			save_scope_as = recruit_candidate
+		}
+	}
+	
+	# Option A: Approach the candidate's parent/guardian
+	option = {
+		name = murim_recruit.0002.a
+		# Fires the parent notification event
+		scope:recruit_candidate = {
+			# If they have a parent alive, notify the parent
+			trigger_if = {
+				limit = {
+					any_parent = { is_alive = yes }
+				}
+				random_parent = {
+					limit = { is_alive = yes }
+					trigger_event = {
+						id = murim_recruit.0003
+						days = { 7 14 }
+					}
+				}
+			}
+			# If orphan, approach them directly
+			trigger_else = {
+				trigger_event = {
+					id = murim_recruit.0005
+					days = { 7 14 }
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	# Option B: Test them first before offering
+	option = {
+		name = murim_recruit.0002.b
+		custom_tooltip = murim_recruit.0002.b.tt
+		# Trial event — candidate must prove themselves
+		scope:recruit_candidate = {
+			trigger_event = {
+				id = murim_recruit.0006
+				days = { 7 14 }
+			}
+		}
+		ai_chance = {
+			base = 20
 			modifier = {
-				add = 15
-				num_of_children >= 3
+				add = 30
+				# Wudang and Mount Hua prefer testing first
+				OR = {
+					has_trait = wudang_disciple
+					has_trait = mount_hua_disciple
+				}
 			}
+		}
+	}
+}
+
+# murim_recruit.0003 — Player/AI Parent: Your Child Has Been Scouted
+# The key decision point for parents.
+murim_recruit.0003 = {
+	type = character_event
+	title = murim_recruit.0003.t
+	desc = murim_recruit.0003.desc
+	theme = martial
+	
+	trigger = {
+		any_child = {
+			is_alive = yes
+			age >= 8
+			age < 16
+		}
+	}
+	
+	# Option A: Accept proudly
+	option = {
+		name = murim_recruit.0003.a
+		# Child moves to clan, gains outer_disciple
+		custom_tooltip = murim_recruit.0003.a.tt
+		random_child = {
+			limit = {
+				murim_is_recruitable_youth_trigger = yes
+				age >= 8
+				age < 16
+			}
+			# Join the clan
+			murim_join_sect_as_outer_disciple_effect = yes
+			# Move to clan's region if needed
+			trigger_event = {
+				id = murim_recruit.0005
+				days = { 14 30 }
+			}
+		}
+		# Parent gains prestige — your child is special
+		add_prestige = 100
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 10 num_of_children >= 3 }
+			modifier = { add = 15 culture = { has_cultural_pillar = heritage_korean } }
+			modifier = { add = 15 culture = { has_cultural_pillar = heritage_chinese } }
+			modifier = { add = -20 has_trait = paranoid }
 		}
 	}
 	
 	# Option B: Accept reluctantly
 	option = {
 		name = murim_recruit.0003.b
-		# "I... suppose it's for the best."
-		scope:scouted_child = {
+		custom_tooltip = murim_recruit.0003.b.tt
+		random_child = {
+			limit = {
+				murim_is_recruitable_youth_trigger = yes
+				age >= 8
+				age < 16
+			}
 			murim_join_sect_as_outer_disciple_effect = yes
-			add_trait = basic_martial_training
 			add_character_modifier = {
-				modifier = homesick_recruit_modifier
+				modifier = murim_homesick_modifier
 				years = 3
 			}
+			trigger_event = {
+				id = murim_recruit.0005
+				days = { 14 30 }
+			}
 		}
-		add_opinion = {
-			modifier = reluctant_farewell_opinion
-			target = scope:scouted_child
-			opinion = -10
-		}
-		trigger_event = {
-			id = murim_recruit.0005
-			days = { 14 30 }
-		}
+		add_prestige = 50
 		stress_impact = {
-			compassionate = medium_stress_impact_gain
-		}
-		ai_chance = {
-			base = 25
-		}
-	}
-	
-	# Option C: Negotiate terms — demand compensation
-	option = {
-		name = murim_recruit.0003.c
-		# "My child is valuable. What do you offer in return?"
-		random_list = {
-			50 = {
-				# Clan agrees — gold and alliance
-				add_gold = 100
-				add_character_modifier = {
-					modifier = clan_patronage_agreement_modifier
-					years = 10
-				}
-				scope:scouted_child = {
-					murim_join_sect_as_outer_disciple_effect = yes
-					add_trait = basic_martial_training
-				}
-				trigger_event = {
-					id = murim_recruit.0005
-					days = { 14 30 }
-				}
-			}
-			50 = {
-				# Clan withdraws — too expensive
-				add_prestige = -10
-				# They may scout elsewhere
-			}
+			base = 20
 		}
 		ai_chance = {
 			base = 20
-			modifier = {
-				add = 15
-				has_trait = greedy
-			}
+			modifier = { add = 15 has_trait = compassionate }
 		}
 	}
 	
-	# Option D: Refuse
+	# Option C: Negotiate terms
 	option = {
-		name = murim_recruit.0003.d
-		# "My child stays with me."
-		scope:scouted_child = {
-			set_character_flag = {
-				flag = recruitment_rejected_recently
-				years = 2
-			}
-			# Child may resent the decision
-			random = {
-				chance = 30
-				add_opinion = {
-					modifier = denied_my_dream_opinion
-					target = root
-					opinion = -20
+		name = murim_recruit.0003.c
+		custom_tooltip = murim_recruit.0003.c.tt
+		# Demand gold/alliance in exchange
+		random_list = {
+			60 = {
+				# Clan agrees to terms
+				add_gold = 100
+				add_prestige = 50
+				random_child = {
+					limit = {
+						murim_is_recruitable_youth_trigger = yes
+						age >= 8
+						age < 16
+					}
+					murim_join_sect_as_outer_disciple_effect = yes
+					trigger_event = {
+						id = murim_recruit.0005
+						days = { 14 30 }
+					}
 				}
 			}
-		}
-		# 10% chance child runs away to join anyway
-		random = {
-			chance = 10
-			trigger_event = {
-				id = murim_recruit.0003_runaway
-				days = { 30 180 }
+			40 = {
+				# Clan withdraws — too demanding
+				custom_tooltip = murim_recruit.0003.c.fail.tt
+				add_prestige = -25
 			}
 		}
 		ai_chance = {
 			base = 15
-			modifier = {
-				add = 10
-				has_trait = paranoid
-			}
-			modifier = {
-				add = 15
-				num_of_children < 2
-				# Only child — harder to let go
-			}
+			modifier = { add = 20 has_trait = greedy }
+			modifier = { add = 10 has_trait = shrewd }
 		}
 	}
 	
-	# Option E: "Over my dead body" — hostile refusal
+	# Option D: Refuse politely
 	option = {
-		name = murim_recruit.0003.e
-		# "Get away from my family!"
-		add_character_modifier = {
-			modifier = hostile_to_sect_modifier
-			years = 20
-		}
-		# Clan remembers the insult
-		scope:scouted_child = {
-			set_character_flag = {
-				flag = recruitment_rejected_permanently
+		name = murim_recruit.0003.d
+		custom_tooltip = murim_recruit.0003.d.tt
+		# Child stays. Slight opinion penalty with clan.
+		# 10% chance child resents you / runs away
+		random_list = {
+			90 = {
+				# Child accepts your decision
+				custom_tooltip = murim_recruit.0003.d.stay.tt
+			}
+			10 = {
+				# Child runs away to join on their own!
+				custom_tooltip = murim_recruit.0003.d.runaway.tt
+				random_child = {
+					limit = {
+						murim_is_recruitable_youth_trigger = yes
+						age >= 8
+						age < 16
+						has_trait = ambitious
+					}
+					murim_join_sect_as_outer_disciple_effect = yes
+					add_opinion = {
+						target = prev
+						modifier = murim_prevented_my_dream
+						opinion = -30
+					}
+				}
 			}
 		}
 		ai_chance = {
-			base = 5
-			modifier = {
-				add = 15
-				has_trait = wrathful
-			}
+			base = 25
+			modifier = { add = 15 has_trait = paranoid }
+			modifier = { add = 10 num_of_children <= 1 }
+		}
+	}
+	
+	# Option E: "Over my dead body"
+	option = {
+		name = murim_recruit.0003.e
+		custom_tooltip = murim_recruit.0003.e.tt
+		# Hostile refusal. Clan won't ask again. Strong opinion penalty.
+		add_character_flag = {
+			flag = murim_hostile_to_recruitment
+			years = 20
+		}
+		# The recruiting clan remembers this insult
+		stress_impact = {
+			base = 10
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = wrathful }
+			modifier = { add = 10 has_trait = stubborn }
 		}
 	}
 }
 
-# 0004: AI Parent Decision (mirrors 0003 logic for AI)
-# This is the AI-specific handling that fires silently
+# murim_recruit.0004 — AI Parent Decision Logic
+# Hidden event: determines AI parent behavior for recruitment
 murim_recruit.0004 = {
 	type = character_event
 	title = murim_recruit.0004.t
 	desc = murim_recruit.0004.desc
-	theme = education
+	theme = martial
 	hidden = yes
-	# AI parents decide without player notification unless player has connection
 	
 	trigger = {
 		is_ai = yes
 		any_child = {
 			murim_is_recruitable_youth_trigger = yes
+			age >= 8
+			age < 16
 		}
 	}
 	
 	immediate = {
-		# AI decision logic
-	}
-	
-	# AI accepts — personality-weighted
-	option = {
-		name = murim_recruit.0004.a
-		scope:scouted_child = {
-			murim_join_sect_as_outer_disciple_effect = yes
-			add_trait = basic_martial_training
-		}
-		ai_chance = {
-			base = 40
-			modifier = {
-				add = 20
-				has_trait = ambitious
+		# AI decision weights based on personality
+		random_list = {
+			# Accept proudly
+			30 = {
+				modifier = { add = 20 has_trait = ambitious }
+				modifier = { add = 10 num_of_children >= 3 }
+				modifier = { add = 15 culture = { has_cultural_pillar = heritage_korean } }
+				modifier = { add = 15 culture = { has_cultural_pillar = heritage_chinese } }
+				random_child = {
+					limit = {
+						murim_is_recruitable_youth_trigger = yes
+						age >= 8
+						age < 16
+					}
+					murim_join_sect_as_outer_disciple_effect = yes
+				}
 			}
-			modifier = {
-				add = 15
-				murim_is_martial_culture_trigger = yes
+			# Accept reluctantly
+			20 = {
+				modifier = { add = 10 has_trait = compassionate }
+				random_child = {
+					limit = {
+						murim_is_recruitable_youth_trigger = yes
+						age >= 8
+						age < 16
+					}
+					murim_join_sect_as_outer_disciple_effect = yes
+					add_character_modifier = {
+						modifier = murim_homesick_modifier
+						years = 3
+					}
+				}
 			}
-			modifier = {
-				add = 10
-				num_of_children >= 3
+			# Refuse
+			40 = {
+				modifier = { add = 15 has_trait = paranoid }
+				modifier = { add = 20 num_of_children <= 1 }
+				modifier = { add = -15 has_trait = ambitious }
 			}
-			modifier = {
-				add = -20
-				has_trait = paranoid
-			}
-			modifier = {
-				add = -15
-				num_of_children < 2
-			}
-		}
-	}
-	
-	# AI refuses
-	option = {
-		name = murim_recruit.0004.b
-		scope:scouted_child = {
-			set_character_flag = {
-				flag = recruitment_rejected_recently
-				years = 2
-			}
-		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 20
-				has_trait = paranoid
-			}
-			modifier = {
-				add = 15
-				num_of_children < 2
+			# Hostile refusal
+			10 = {
+				modifier = { add = 15 has_trait = wrathful }
+				add_character_flag = {
+					flag = murim_hostile_to_recruitment
+					years = 20
+				}
 			}
 		}
 	}
 }
 
-# 0005: Child Arrives at Clan Headquarters
-# Culture shock event. Child is far from home.
+# murim_recruit.0005 — Recruited Child Arrives at Clan
+# Culture shock event for the recruited child.
 murim_recruit.0005 = {
 	type = character_event
 	title = murim_recruit.0005.t
 	desc = {
 		first_valid = {
 			triggered_desc = {
-				trigger = { murim_is_martial_culture_trigger = yes }
-				desc = murim_recruit.0005.desc_familiar
-				# Korean/Chinese child — culture is similar, less shock
+				trigger = {
+					NOT = { culture = { has_cultural_pillar = heritage_korean } }
+					NOT = { culture = { has_cultural_pillar = heritage_chinese } }
+				}
+				desc = murim_recruit.0005.desc.foreign
 			}
-			desc = murim_recruit.0005.desc_foreign
-			# Foreign child — everything is different
+			desc = murim_recruit.0005.desc.local
 		}
 	}
-	theme = education
+	theme = martial
 	
 	trigger = {
-		# Fires for the recruited child
 		age >= 8
 		age < 16
 		murim_is_clan_member_trigger = yes
-		has_character_modifier = sent_abroad_for_training_modifier
 	}
 	
-	# Option A: Adapt quickly — natural talent
+	# Option A: Adapt quickly
 	option = {
 		name = murim_recruit.0005.a
 		add_character_modifier = {
-			modifier = quick_adapter_modifier
-			years = 3
-		}
-		add_prowess_skill = 1
-		stress_impact = {
-			brave = minor_stress_impact_loss
-		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 20
-				has_trait = brave
-			}
-			modifier = {
-				add = 15
-				murim_is_martial_culture_trigger = yes
-			}
-		}
-	}
-	
-	# Option B: Struggle and train harder — determination
-	option = {
-		name = murim_recruit.0005.b
-		add_stress = 20
-		add_character_modifier = {
-			modifier = determined_outsider_modifier
-			years = 5
-		}
-		# Struggle now, stronger later
-		trigger_event = {
-			id = murim_recruit.0005_breakthrough
-			days = { 180 365 }
-		}
-		ai_chance = {
-			base = 35
-			modifier = {
-				add = 20
-				has_trait = diligent
-			}
-		}
-	}
-	
-	# Option C: Cry for home but persist — emotional but enduring
-	option = {
-		name = murim_recruit.0005.c
-		add_stress = 30
-		add_character_modifier = {
-			modifier = homesick_but_persistent_modifier
+			modifier = murim_quick_adapter_modifier
 			years = 2
 		}
-		# Homesickness fades, bonds form
-		trigger_event = {
-			id = murim_recruit.0005_bonds
-			days = { 90 180 }
-		}
+		# Small prowess boost from enthusiasm
+		add_prowess = 1
 		ai_chance = {
 			base = 30
-			modifier = {
-				add = 15
-				has_trait = compassionate
-			}
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 15 has_trait = gregarious }
 		}
 	}
 	
-	# Option D: Attempt to flee home — risky
+	# Option B: Struggle but train harder
+	option = {
+		name = murim_recruit.0005.b
+		add_character_modifier = {
+			modifier = murim_determined_outsider_modifier
+			years = 3
+		}
+		# Stress but builds character
+		stress_impact = { base = 10 }
+		# Delayed prowess boost — pays off later
+		trigger_event = {
+			id = murim_recruit.0009
+			days = { 365 730 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 10 has_trait = diligent }
+		}
+	}
+	
+	# Option C: Cry for home but persist
+	option = {
+		name = murim_recruit.0005.c
+		add_character_modifier = {
+			modifier = murim_homesick_modifier
+			years = 2
+		}
+		stress_impact = { base = 20 }
+		# Slight opinion bonus with compassionate sect members
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = compassionate }
+			modifier = { add = 10 age < 11 }
+		}
+	}
+	
+	# Option D: Attempt to flee home
 	option = {
 		name = murim_recruit.0005.d
+		custom_tooltip = murim_recruit.0005.d.tt
 		random_list = {
 			30 = {
-				# Escape successful — returns home, loses sect membership
+				# Escape succeeds — leave the clan
 				murim_leave_sect_voluntarily_effect = yes
-				add_character_modifier = {
-					modifier = fled_sect_training_modifier
-					years = 10
-				}
+				custom_tooltip = murim_recruit.0005.d.success.tt
 			}
-			50 = {
-				# Caught — punished but kept
-				add_stress = 40
+			70 = {
+				# Caught — brought back, punished, but earns grudging respect for trying
+				custom_tooltip = murim_recruit.0005.d.caught.tt
+				stress_impact = { base = 30 }
 				add_character_modifier = {
-					modifier = caught_fleeing_modifier
-					years = 2
-				}
-			}
-			20 = {
-				# Caught by bandits during escape — rescued by sect, bonding moment
-				trigger_event = {
-					id = murim_recruit.0005_rescued
-					days = { 1 3 }
+					modifier = murim_caught_fleeing_modifier
+					years = 1
 				}
 			}
 		}
 		ai_chance = {
 			base = 10
-			modifier = {
-				add = 15
-				has_trait = craven
-			}
-			modifier = {
-				add = 10
-				has_character_modifier = homesick_recruit_modifier
-			}
+			modifier = { add = 15 has_trait = craven }
+			modifier = { add = -10 has_trait = brave }
 		}
 	}
 }
 
-# 0006: Foreign Child in Young Dragon Tournament
-# The outsider competing against local kids. Classic underdog story.
+# murim_recruit.0006 — Foreign Child at Young Dragon Tournament
+# A recruited outsider enters the tournament. Outsider drama.
 murim_recruit.0006 = {
 	type = character_event
 	title = murim_recruit.0006.t
@@ -645,491 +651,1024 @@ murim_recruit.0006 = {
 		age >= 8
 		age < 16
 		murim_is_clan_member_trigger = yes
-		NOT = { murim_is_martial_culture_trigger = yes }
-		# Foreign-born clan member in the tournament
+		# Is a foreign recruit (not originally from martial region)
+		has_character_flag = murim_foreign_recruit
 	}
 	
-	# Option A: Face the bullies head-on
+	immediate = {
+		# Determine how other kids react to the outsider
+		random_list = {
+			40 = { set_variable = { name = murim_peer_reaction value = 1 } } # bullied
+			35 = { set_variable = { name = murim_peer_reaction value = 2 } } # befriended
+			25 = { set_variable = { name = murim_peer_reaction value = 3 } } # ignored
+		}
+	}
+	
+	# Option A: Prove yourself through skill
 	option = {
 		name = murim_recruit.0006.a
-		add_character_modifier = {
-			modifier = defiant_outsider_modifier
-			years = 3
-		}
-		add_prowess_skill = 1
-		# Earn grudging respect
-		ai_chance = {
-			base = 35
-			modifier = {
-				add = 25
-				has_trait = brave
+		custom_tooltip = murim_recruit.0006.a.tt
+		# Fight extra hard — if you win as a foreigner, it's legendary
+		duel = {
+			skill = prowess
+			target = scope:tournament_rival
+			50 = {
+				# Won! As a foreigner! Massive respect.
+				custom_tooltip = murim_recruit.0006.a.win.tt
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_foreign_champion_modifier
+					years = 10
+				}
+				# Clan fully adopts you
+				add_character_flag = murim_clan_fully_adopted
 			}
+			50 = {
+				# Lost but fought well
+				custom_tooltip = murim_recruit.0006.a.lose.tt
+				add_prestige = 50
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
 		}
 	}
 	
-	# Option B: Win them over with skill
+	# Option B: Win hearts with humility
 	option = {
 		name = murim_recruit.0006.b
-		# Let your training speak for itself
+		# Diplomacy approach — befriend opponents
 		add_character_modifier = {
-			modifier = proved_through_skill_modifier
-			years = 5
+			modifier = murim_humble_outsider_modifier
+			years = 3
 		}
-		# Friends made through mutual respect
 		ai_chance = {
-			base = 40
+			base = 30
+			modifier = { add = 20 has_trait = humble }
 		}
 	}
 	
-	# Option C: Find fellow outsiders — band together
+	# Option C: Use your foreign techniques
 	option = {
 		name = murim_recruit.0006.c
+		custom_tooltip = murim_recruit.0006.c.tt
+		# Surprise everyone with unfamiliar fighting style
+		# Bonus in tournament but some see it as dishonorable
 		add_character_modifier = {
-			modifier = outsider_bond_modifier
-			years = 5
+			modifier = murim_foreign_style_tournament_modifier
+			years = 2
 		}
-		# Form a friendship group of misfits
 		ai_chance = {
-			base = 25
-			modifier = {
-				add = 15
-				has_trait = gregarious
-			}
+			base = 20
+			modifier = { add = 15 has_trait = shrewd }
 		}
 	}
 }
 
-# 0007: Scouting Rivalry — Two Clans Want the Same Prodigy
+######################################################################
+# MODE 2: NORMAL RECRUITMENT — Local Opportunistic (Healthy Clans)
+######################################################################
+
+# murim_recruit.0007 — Scouting Rivalry: Two Clans Want the Same Prodigy
 murim_recruit.0007 = {
 	type = character_event
 	title = murim_recruit.0007.t
 	desc = murim_recruit.0007.desc
-	theme = intrigue
+	theme = martial
 	
 	trigger = {
-		# Fires for parent of scouted child
-		any_child = {
-			murim_is_recruitable_youth_trigger = yes
-			OR = {
-				has_trait = genius
-				has_trait = quick
-				prowess >= 8
-			}
-			# Exceptional child draws multiple offers
-		}
+		murim_is_sect_leadership_trigger = yes
 	}
 	
-	# Option A: Let the child choose
+	# Option A: Outbid the rival clan
 	option = {
 		name = murim_recruit.0007.a
-		# Child picks based on personality
-		trigger_event = {
-			id = murim_recruit.0007_child_choice
-			days = { 3 7 }
+		add_gold = -75
+		custom_tooltip = murim_recruit.0007.a.tt
+		random_list = {
+			60 = {
+				# Won the bidding war
+				custom_tooltip = murim_recruit.0007.a.win.tt
+				trigger_event = {
+					id = murim_recruit.0002
+					days = { 7 14 }
+				}
+			}
+			40 = {
+				# Lost — rival clan got them
+				custom_tooltip = murim_recruit.0007.a.lose.tt
+				add_prestige = -25
+			}
 		}
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 40 }
 	}
 	
-	# Option B: Auction — highest bidder wins
+	# Option B: Challenge the rival clan's scout to a duel
 	option = {
 		name = murim_recruit.0007.b
-		add_gold = 200
-		# Both clans bid, winner gets the child
-		add_character_modifier = {
-			modifier = sold_child_to_highest_bidder_modifier
-			years = 5
+		custom_tooltip = murim_recruit.0007.b.tt
+		# Duel for recruitment rights — winner takes the prodigy
+		trigger_event = {
+			id = murim_recruit.0002
+			days = { 14 30 }
 		}
-		stress_impact = {
-			compassionate = medium_stress_impact_gain
-			greedy = minor_stress_impact_loss
-		}
+		# But creates rivalry with the other clan
 		ai_chance = {
-			base = 20
-			modifier = {
-				add = 20
-				has_trait = greedy
-			}
+			base = 30
+			modifier = { add = 20 has_trait = wrathful }
 		}
 	}
 	
-	# Option C: Play clans against each other — political leverage
+	# Option C: Let them have this one
 	option = {
 		name = murim_recruit.0007.c
-		# Negotiate alliance with BOTH clans using child as leverage
-		add_character_modifier = {
-			modifier = clan_rivalry_leverage_modifier
-			years = 10
-		}
-		add_prestige = 30
-		# Risk: one or both clans may turn hostile
-		random = {
-			chance = 25
-			add_character_modifier = {
-				modifier = angered_rival_clan_modifier
-				years = 10
-			}
-		}
+		# Graceful retreat — preserve inter-clan relations
+		add_prestige = -10
+		stress_impact = { base = 5 }
 		ai_chance = {
-			base = 25
-			modifier = {
-				add = 20
-				has_trait = deceitful
-			}
+			base = 20
+			modifier = { add = 15 has_trait = patient }
 		}
 	}
 	
-	# Option D: Refuse both — child trains independently
+	# Option D: Sabotage the rival's recruitment
 	option = {
 		name = murim_recruit.0007.d
-		scope:scouted_child = {
-			set_character_flag = recruitment_rejected_permanently
-			add_trait = martial_awareness
+		custom_tooltip = murim_recruit.0007.d.tt
+		# Intrigue approach — discredit the rival clan to the family
+		random_list = {
+			50 = {
+				# Sabotage works — family rejects rival, you recruit
+				trigger_event = {
+					id = murim_recruit.0002
+					days = { 14 30 }
+				}
+			}
+			50 = {
+				# Caught! Both clans lose the recruit. Massive opinion penalty.
+				custom_tooltip = murim_recruit.0007.d.fail.tt
+				add_prestige = -100
+			}
 		}
 		ai_chance = {
-			base = 15
-			modifier = {
-				add = 15
-				has_trait = paranoid
-			}
+			base = 10
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 15 has_trait = heavenly_demon_member }
 		}
 	}
 }
 
-# 0008: Failed Recruitment Trip
-# Scouts found nobody worthy. Clan desperation event.
+# murim_recruit.0008 — Failed Recruitment Trip
 murim_recruit.0008 = {
 	type = character_event
 	title = murim_recruit.0008.t
 	desc = murim_recruit.0008.desc
-	theme = diplomacy
+	theme = martial
 	
 	trigger = {
-		murim_is_clan_member_trigger = yes
-		OR = {
-			is_sect_leader_trigger = yes
-			is_sect_elder_trigger = yes
-		}
+		murim_is_sect_leadership_trigger = yes
 	}
 	
-	# Option A: Lower standards — accept weaker candidates
+	# Option A: Try again next year
 	option = {
 		name = murim_recruit.0008.a
-		add_character_modifier = {
-			modifier = lowered_standards_recruits_modifier
-			years = 5
+		set_character_flag = {
+			flag = murim_previous_scout_failed
+			years = 2
 		}
-		# Find any willing youth, even without talent indicators
-		trigger_event = {
-			id = murim_recruit.0008_lower
-			days = { 14 30 }
-		}
-		ai_chance = {
-			base = 40
-		}
+		stress_impact = { base = 10 }
+		ai_chance = { base = 50 }
 	}
 	
-	# Option B: Try again next year — maintain standards
+	# Option B: Lower standards immediately
 	option = {
 		name = murim_recruit.0008.b
-		# Wait and hope
+		custom_tooltip = murim_recruit.0008.b.tt
+		# Accept anyone with marginal potential
+		set_character_flag = {
+			flag = murim_lowered_standards_recruit
+			years = 5
+		}
+		# Guaranteed recruit but they're weak
+		trigger_event = {
+			id = murim_recruit.0002
+			days = { 30 60 }
+		}
 		ai_chance = {
-			base = 35
+			base = 30
+			modifier = { add = 20 murim_clan_youth_count_value = 0 }
 		}
 	}
 	
-	# Option C: Recruit from other sects — poach disciples
+	# Option C: Poach from another clan
 	option = {
 		name = murim_recruit.0008.c
-		# Risky — other sects won't appreciate it
-		add_character_modifier = {
-			modifier = poaching_disciples_modifier
-			years = 5
-		}
-		# May cause inter-sect tension
-		trigger_event = {
-			id = murim_recruit.0008_poach
-			days = { 14 30 }
+		custom_tooltip = murim_recruit.0008.c.tt
+		# Risky — try to lure a youth from a rival clan
+		random_list = {
+			30 = {
+				# Success — poached a member
+				custom_tooltip = murim_recruit.0008.c.success.tt
+				trigger_event = {
+					id = murim_recruit.0002
+					days = { 30 60 }
+				}
+			}
+			70 = {
+				# Failed and caught — inter-clan incident
+				custom_tooltip = murim_recruit.0008.c.fail.tt
+				add_prestige = -75
+			}
 		}
 		ai_chance = {
 			base = 15
-			modifier = {
-				add = 20
-				has_trait = ambitious
-			}
+			modifier = { add = 20 has_trait = deceitful }
 		}
 	}
 	
-	# Option D: Focus on adult recruitment instead
+	# Option D: Accept the decline
 	option = {
 		name = murim_recruit.0008.d
-		# Skip youth, recruit grown martial artists
-		trigger_event = {
-			id = murim_recruit.0008_adult_recruit
-			days = { 7 14 }
-		}
+		# Do nothing. Let the clan shrink naturally.
+		custom_tooltip = murim_recruit.0008.d.tt
+		stress_impact = { base = 20 }
 		ai_chance = {
-			base = 10
+			base = 5
 		}
 	}
 }
 
-# 0009: Recruited Child Grows Up (Age 16 Follow-Up)
-# The child is now a full martial artist shaped by their clan.
+# murim_recruit.0009 — Recruited Child Grows Up (Age 16 Follow-Up)
 murim_recruit.0009 = {
 	type = character_event
 	title = murim_recruit.0009.t
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { murim_is_martial_culture_trigger = yes }
-				desc = murim_recruit.0009.desc_local
-			}
-			desc = murim_recruit.0009.desc_foreign
-		}
-	}
+	desc = murim_recruit.0009.desc
 	theme = martial
 	
 	trigger = {
 		age >= 16
 		age < 18
 		murim_is_clan_member_trigger = yes
-		has_character_modifier = sent_abroad_for_training_modifier
-		# Was recruited as a child
+		has_character_flag = murim_recruited_as_youth
 	}
 	
-	immediate = {
-		# Remove the training modifier — they're done growing up
-		remove_character_modifier = sent_abroad_for_training_modifier
-		# Promote from outer to inner disciple if they've trained well
-		if = {
-			limit = { prowess >= 10 }
-			murim_promote_to_inner_disciple_effect = yes
-		}
-	}
-	
-	# Option A: Stay loyal — dedicated clan member
+	# Option A: Stay loyal to the clan
 	option = {
 		name = murim_recruit.0009.a
-		add_character_modifier = {
-			modifier = loyal_clan_graduate_modifier
-			years = -1
+		# Full commitment — promoted to inner disciple if not already
+		trigger_if = {
+			limit = { has_character_modifier = sect_outer_disciple }
+			murim_promote_to_inner_disciple_effect = yes
 		}
-		add_prowess_skill = 2
+		add_character_modifier = {
+			modifier = murim_loyal_recruit_modifier
+			years = 10
+		}
 		ai_chance = {
 			base = 40
-			modifier = {
-				add = 20
-				has_trait = loyal  # If trait exists
-			}
+			modifier = { add = 20 has_trait = loyal }
+			modifier = { add = 10 NOT = { has_character_modifier = murim_homesick_modifier } }
 		}
 	}
 	
 	# Option B: Return to homeland as clan representative
 	option = {
 		name = murim_recruit.0009.b
-		# Bridge between two worlds
+		custom_tooltip = murim_recruit.0009.b.tt
+		# Bridge between two worlds — unique position
 		add_character_modifier = {
-			modifier = clan_representative_abroad_modifier
+			modifier = murim_clan_ambassador_modifier
 			years = -1
 		}
-		# Move back to home region but keep clan membership
+		# Trigger homecoming event chain
 		trigger_event = {
 			id = murim_recruit.0010
 			days = { 30 90 }
 		}
 		ai_chance = {
 			base = 25
-			modifier = {
-				add = 15
-				NOT = { murim_is_martial_culture_trigger = yes }
-				# Foreign-born more likely to want to go home
-			}
+			modifier = { add = 15 has_character_flag = murim_foreign_recruit }
 		}
 	}
 	
-	# Option C: Become a bridge between cultures
+	# Option C: Leave the clan and forge your own path
 	option = {
 		name = murim_recruit.0009.c
+		custom_tooltip = murim_recruit.0009.c.tt
+		# Become a wandering martial artist
+		murim_leave_sect_voluntarily_effect = yes
 		add_character_modifier = {
-			modifier = cultural_bridge_martial_artist_modifier
-			years = -1
+			modifier = murim_wandering_graduate_modifier
+			years = 5
 		}
-		add_diplomacy_skill = 2
-		# Unique cross-cultural events unlock
-		set_character_flag = cross_cultural_martial_artist
 		ai_chance = {
 			base = 20
-			modifier = {
-				add = 15
-				has_trait = gregarious
-			}
+			modifier = { add = 15 has_trait = ambitious }
+			modifier = { add = 10 has_trait = adventurer }
 		}
 	}
 	
-	# Option D: Defect — take clan secrets home
+	# Option D: Defect and take clan secrets home
 	option = {
 		name = murim_recruit.0009.d
-		# Betrayal! Leave clan with stolen knowledge
-		murim_betray_clan_effect = yes
+		custom_tooltip = murim_recruit.0009.d.tt
+		# Betrayal — steal techniques before leaving
+		murim_betray_sect_effect = yes
+		add_character_flag = murim_stole_clan_secrets
+		# Will be hunted
 		add_character_modifier = {
-			modifier = stolen_clan_techniques_modifier
-			years = -1
-		}
-		# The clan will hunt you
-		trigger_event = {
-			id = murim_sect_politics.0011
-			days = { 30 90 }
-		}
-		stress_impact = {
-			honest = major_stress_impact_gain
-			deceitful = minor_stress_impact_loss
+			modifier = murim_hunted_traitor_modifier
+			years = 20
 		}
 		ai_chance = {
 			base = 5
-			modifier = {
-				add = 15
-				has_trait = ambitious
-			}
-			modifier = {
-				add = 10
-				has_trait = deceitful
-			}
+			modifier = { add = 10 has_trait = deceitful }
+			modifier = { add = 10 has_trait = ambitious }
 		}
 	}
 }
 
-# 0010: Homecoming — Recruited Child Returns as Adult
-# Emotional reunion. They've changed. The family barely recognizes them.
+# murim_recruit.0010 — Homecoming Event
+# Recruited child (now adult) returns home after years away.
 murim_recruit.0010 = {
 	type = character_event
 	title = murim_recruit.0010.t
 	desc = murim_recruit.0010.desc
-	theme = diplomacy
+	theme = martial
 	
 	trigger = {
 		age >= 16
-		murim_is_clan_member_trigger = yes
-		has_character_flag = cross_cultural_martial_artist
-		OR = {
-			has_character_modifier = clan_representative_abroad_modifier
-			# Returning home
-		}
+		has_character_flag = murim_recruited_as_youth
 	}
 	
-	immediate = {
-		# Find parent if still alive
-		if = {
-			limit = {
-				exists = father
-				father = { is_alive = yes }
-			}
-			father = { save_scope_as = surviving_parent }
-		}
-		else_if = {
-			limit = {
-				exists = mother
-				mother = { is_alive = yes }
-			}
-			mother = { save_scope_as = surviving_parent }
-		}
-	}
-	
-	# Option A: Embrace the homecoming — stay and serve
+	# Option A: Emotional reunion — stay a while
 	option = {
 		name = murim_recruit.0010.a
-		# Stay in homeland, represent the clan here
-		if = {
-			limit = { exists = scope:surviving_parent }
-			scope:surviving_parent = {
-				add_opinion = {
-					modifier = joyful_reunion_opinion
-					target = root
-					opinion = 40
-				}
+		custom_tooltip = murim_recruit.0010.a.tt
+		# Visit family, reconnect
+		stress_impact = { base = -20 }
+		# If parents alive, opinion boost
+		every_parent = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = prev
+				modifier = murim_returned_home
+				opinion = 30
 			}
 		}
-		add_prestige = 30
-		add_character_modifier = {
-			modifier = returned_martial_hero_modifier
-			years = 10
-		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 40 }
 	}
 	
-	# Option B: Brief visit — go back to the clan
+	# Option B: Find you don't fit in anymore
 	option = {
 		name = murim_recruit.0010.b
-		# "This isn't my home anymore. The clan is."
-		if = {
-			limit = { exists = scope:surviving_parent }
-			scope:surviving_parent = {
-				add_opinion = {
-					modifier = bittersweet_farewell_opinion
-					target = root
-					opinion = -10
-				}
-			}
+		custom_tooltip = murim_recruit.0010.b.tt
+		# Identity crisis — you've changed too much
+		stress_impact = { base = 15 }
+		add_character_modifier = {
+			modifier = murim_between_two_worlds_modifier
+			years = 5
 		}
-		add_stress = 20
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 15
-				has_trait = loyal
-			}
-		}
+		ai_chance = { base = 30 }
 	}
 	
-	# Option C: Identity crisis — torn between two worlds
+	# Option C: Recruit for your clan while visiting
 	option = {
 		name = murim_recruit.0010.c
-		add_stress = 40
-		add_character_modifier = {
-			modifier = identity_crisis_modifier
-			years = 3
-		}
-		# Follow-up event chain about finding yourself
+		custom_tooltip = murim_recruit.0010.c.tt
+		# Use your homecoming to scout local talent
+		# Bridges the foreign and martial worlds
 		trigger_event = {
-			id = murim_recruit.0010_identity
-			days = { 30 90 }
+			id = murim_recruit.0001
+			days = { 30 60 }
 		}
 		ai_chance = {
 			base = 20
-			modifier = {
-				add = 15
-				NOT = { murim_is_martial_culture_trigger = yes }
-			}
+			modifier = { add = 15 has_trait = diligent }
 		}
 	}
 	
-	# Option D: Renounce the clan — become independent
+	# Option D: Never return to the clan
 	option = {
 		name = murim_recruit.0010.d
-		# Leave the clan, keep the skills, walk your own path
+		custom_tooltip = murim_recruit.0010.d.tt
+		# Abandon your martial life, return to normal
 		murim_leave_sect_voluntarily_effect = yes
-		add_character_modifier = {
-			modifier = independent_martial_artist_modifier
-			years = -1
-		}
-		# Become a wandering master in your homeland
+		# But you keep your martial skills
+		stress_impact = { base = -10 }
 		ai_chance = {
 			base = 10
-			modifier = {
-				add = 15
-				has_trait = independent  # If trait exists
-			}
+			modifier = { add = 15 has_character_modifier = murim_homesick_modifier }
 		}
 	}
 }
 
-# END OF CLAN RECRUITMENT EVENTS
-# Total: 10 events, 38 options
-# Complete lifecycle: scouting -> parent decision -> culture shock -> tournament -> growing up -> homecoming
-# AI fully automated: clans auto-scout when youth < 3, AI parents decide based on personality
-# Cross-cultural flavor: Persian Mount Hua swordsman, Norse Shaolin monk, Ethiopian Tang poison specialist
-# Feeds into: Youth Tournament, Sect Politics, Training, Wandering Masters
-# Gender: FULLY EQUAL. Boys and girls equally scouted and recruited.
+######################################################################
+# NORMAL MODE EVENTS — Opportunistic Local Recruitment
+######################################################################
+
+# murim_recruit.0020 — Clan Elder Spots Promising Local Talent
+# Fires yearly for healthy clans (3+ youth). 10-15% chance.
+# This is the bread-and-butter recruitment engine.
+murim_recruit.0020 = {
+	type = character_event
+	title = murim_recruit.0020.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = mount_hua_disciple }
+				desc = murim_recruit.0020.desc.mount_hua
+			}
+			triggered_desc = {
+				trigger = { has_trait = shaolin_monk }
+				desc = murim_recruit.0020.desc.shaolin
+			}
+			triggered_desc = {
+				trigger = { has_trait = heavenly_demon_member }
+				desc = murim_recruit.0020.desc.demon
+			}
+			triggered_desc = {
+				trigger = { has_trait = tang_clan_member }
+				desc = murim_recruit.0020.desc.tang
+			}
+			triggered_desc = {
+				trigger = { has_trait = wudang_disciple }
+				desc = murim_recruit.0020.desc.wudang
+			}
+			triggered_desc = {
+				trigger = { has_trait = beggar_sect_member }
+				desc = murim_recruit.0020.desc.beggar
+			}
+			desc = murim_recruit.0020.desc.generic
+		}
+	}
+	theme = martial
+	
+	trigger = {
+		murim_is_sect_leadership_trigger = yes
+		# Healthy clan — NOT emergency mode
+		NOT = { murim_clan_needs_recruits_trigger = yes }
+		# Cooldown per elder
+		NOT = { has_character_flag = murim_normal_recruit_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		# Higher chance for prestigious clans
+		modifier = {
+			add = 0.5
+			prestige_level >= 3
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = murim_normal_recruit_cooldown
+			years = 1
+		}
+		# Find a promising local candidate
+		random_character = {
+			limit = {
+				murim_is_recruitable_youth_trigger = yes
+				age >= 8
+				# Normal mode recruits any age, not just youth
+				NOR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_monk
+					has_trait = heavenly_demon_member
+					has_trait = tang_clan_member
+					has_trait = tang_clan_associate
+					has_trait = wudang_disciple
+					has_trait = beggar_sect_member
+				}
+				# Must be in the same region (local recruitment)
+				murim_is_in_martial_region_trigger = yes
+			}
+			weight = {
+				base = 1
+				# Talent indicators
+				modifier = { add = 3 prowess >= 8 }
+				modifier = { add = 5 prowess >= 12 }
+				modifier = { add = 2 has_trait = brave }
+				modifier = { add = 2 has_trait = strong }
+				modifier = { add = 3 has_trait = genius }
+				modifier = { add = 2 has_trait = quick }
+				modifier = { add = 1 has_trait = ambitious }
+				modifier = { add = 2 has_trait = martial_awareness }
+				modifier = { add = 3 has_character_flag = murim_tournament_participant }
+				# Clan-specific preferences
+				# Mount Hua: disciplined and honorable
+				modifier = {
+					add = 3
+					prev = { has_trait = mount_hua_disciple }
+					OR = {
+						has_trait = just
+						has_trait = honest
+						has_trait = diligent
+					}
+				}
+				# Shaolin: calm and spiritual
+				modifier = {
+					add = 3
+					prev = { has_trait = shaolin_monk }
+					OR = {
+						has_trait = patient
+						has_trait = temperate
+						has_trait = humble
+					}
+				}
+				# Heavenly Demon: ambitious and ruthless
+				modifier = {
+					add = 3
+					prev = { has_trait = heavenly_demon_member }
+					OR = {
+						has_trait = ambitious
+						has_trait = callous
+						has_trait = sadistic
+					}
+				}
+				# Tang Clan: only associates (non-blood members)
+				modifier = {
+					add = 3
+					prev = { has_trait = tang_clan_member }
+					OR = {
+						has_trait = shrewd
+						has_trait = patient
+					}
+				}
+				# Wudang: intelligent and patient
+				modifier = {
+					add = 3
+					prev = { has_trait = wudang_disciple }
+					OR = {
+						has_trait = genius
+						has_trait = intelligent
+						has_trait = patient
+					}
+				}
+				# Beggar Sect: egalitarian — recruits anyone, especially the downtrodden
+				modifier = {
+					add = 5
+					prev = { has_trait = beggar_sect_member }
+					OR = {
+						is_lowborn = yes
+						gold < 10
+						has_trait = compassionate
+					}
+				}
+				# 5% pure gut feeling — any decent character
+				modifier = {
+					add = 2
+					prowess >= 5
+				}
+			}
+			save_scope_as = normal_recruit_candidate
+		}
+	}
+	
+	# Option A: Extend formal invitation
+	option = {
+		name = murim_recruit.0020.a
+		custom_tooltip = murim_recruit.0020.a.tt
+		# Proper clan invitation with ceremony
+		scope:normal_recruit_candidate = {
+			trigger_if = {
+				limit = { age < 16 }
+				# Youth: approach parents
+				random_parent = {
+					limit = { is_alive = yes }
+					trigger_event = {
+						id = murim_recruit.0003
+						days = { 7 14 }
+					}
+				}
+			}
+			trigger_else = {
+				# Adult: approach directly
+				trigger_event = {
+					id = murim_recruit.0021
+					days = { 7 14 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_disciple
+					has_trait = shaolin_monk
+				}
+			}
+		}
+	}
+	
+	# Option B: Casual offer — no pressure
+	option = {
+		name = murim_recruit.0020.b
+		custom_tooltip = murim_recruit.0020.b.tt
+		scope:normal_recruit_candidate = {
+			trigger_event = {
+				id = murim_recruit.0021
+				days = { 7 14 }
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Test them first
+	option = {
+		name = murim_recruit.0020.c
+		custom_tooltip = murim_recruit.0020.c.tt
+		# Set up a trial before offering membership
+		scope:normal_recruit_candidate = {
+			trigger_event = {
+				id = murim_recruit.0022
+				days = { 7 14 }
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+	
+	# Option D: Pass — not interested enough
+	option = {
+		name = murim_recruit.0020.d
+		# Saw someone but decided not to recruit
+		stress_impact = { base = 0 }
+		ai_chance = { base = 5 }
+	}
+}
+
+# murim_recruit.0021 — Direct Invitation to Adult/Older Teen
+# Target receives recruitment offer directly.
+murim_recruit.0021 = {
+	type = character_event
+	title = murim_recruit.0021.t
+	desc = murim_recruit.0021.desc
+	theme = martial
+	
+	# Option A: Accept eagerly
+	option = {
+		name = murim_recruit.0021.a
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prestige = 50
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 10 has_trait = martial_awareness }
+		}
+	}
+	
+	# Option B: Negotiate terms
+	option = {
+		name = murim_recruit.0021.b
+		custom_tooltip = murim_recruit.0021.b.tt
+		random_list = {
+			60 = {
+				murim_join_sect_as_outer_disciple_effect = yes
+				add_gold = 50
+			}
+			40 = {
+				custom_tooltip = murim_recruit.0021.b.fail.tt
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = greedy }
+		}
+	}
+	
+	# Option C: Decline politely
+	option = {
+		name = murim_recruit.0021.c
+		add_prestige = -10
+		ai_chance = {
+			base = 30
+			modifier = { add = 10 has_trait = content }
+		}
+	}
+	
+	# Option D: Decline rudely
+	option = {
+		name = murim_recruit.0021.d
+		custom_tooltip = murim_recruit.0021.d.tt
+		# Makes an enemy of the clan
+		add_prestige = -25
+		ai_chance = {
+			base = 5
+			modifier = { add = 10 has_trait = wrathful }
+		}
+	}
+}
+
+# murim_recruit.0022 — Recruitment Trial
+# Candidate must pass a test before being offered membership.
+murim_recruit.0022 = {
+	type = character_event
+	title = murim_recruit.0022.t
+	desc = murim_recruit.0022.desc
+	theme = martial
+	
+	# Option A: Face the trial with courage
+	option = {
+		name = murim_recruit.0022.a
+		duel = {
+			skill = prowess
+			# Test difficulty varies by clan
+			50 = {
+				# Passed!
+				murim_join_sect_as_outer_disciple_effect = yes
+				add_prestige = 75
+				custom_tooltip = murim_recruit.0022.a.pass.tt
+			}
+			50 = {
+				# Failed but showed heart
+				custom_tooltip = murim_recruit.0022.a.fail.tt
+				add_character_modifier = {
+					modifier = murim_tried_and_failed_modifier
+					years = 2
+				}
+				# May get a second chance later
+				add_character_flag = {
+					flag = murim_failed_trial_once
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Use cunning instead of strength
+	option = {
+		name = murim_recruit.0022.b
+		# Intrigue/diplomacy approach to the trial
+		random_list = {
+			40 = {
+				# Clever solution impresses them
+				murim_join_sect_as_outer_disciple_effect = yes
+				add_prestige = 50
+			}
+			60 = {
+				# They wanted strength, not tricks
+				custom_tooltip = murim_recruit.0022.b.fail.tt
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = shrewd }
+		}
+	}
+	
+	# Option C: Refuse the trial — walk away
+	option = {
+		name = murim_recruit.0022.c
+		custom_tooltip = murim_recruit.0022.c.tt
+		stress_impact = { base = 5 }
+		ai_chance = {
+			base = 15
+			modifier = { add = 10 has_trait = craven }
+		}
+	}
+}
+
+# murim_recruit.0030 — Generational Talent Emerges
+# 5% chance a random recruit turns out to be extraordinary.
+# Fires 3-5 years after recruitment.
+murim_recruit.0030 = {
+	type = character_event
+	title = murim_recruit.0030.t
+	desc = murim_recruit.0030.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_flag = murim_recruited_as_youth
+		# 3+ years in the clan
+		has_character_flag = { flag = murim_recruitment_date days >= 1095 }
+		# High prowess development
+		prowess >= 15
+		# Not already flagged
+		NOT = { has_character_flag = murim_generational_talent }
+	}
+	
+	weight_multiplier = {
+		base = 0.05  # 5% chance when eligible
+		modifier = {
+			add = 0.05
+			has_trait = genius
+		}
+		modifier = {
+			add = 0.03
+			has_trait = quick
+		}
+	}
+	
+	immediate = {
+		set_character_flag = murim_generational_talent
+	}
+	
+	# Option A: Embrace your destiny
+	option = {
+		name = murim_recruit.0030.a
+		# Rapid promotion — inner disciple immediately, elder candidate in 5 years
+		murim_promote_to_inner_disciple_effect = yes
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = murim_generational_talent_modifier
+			years = -1
+		}
+		add_prestige = 300
+		# Notify the martial world
+		every_character = {
+			limit = { murim_is_martial_artist_trigger = yes }
+			trigger_event = {
+				id = murim_recruit.0031
+				days = { 7 30 }
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	# Option B: Stay humble
+	option = {
+		name = murim_recruit.0030.b
+		add_prowess = 2
+		add_character_modifier = {
+			modifier = murim_hidden_talent_modifier
+			years = 5
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+}
+
+# murim_recruit.0031 — The Martial World Watches
+# Notification event: a nobody has become someone extraordinary.
+murim_recruit.0031 = {
+	type = character_event
+	title = murim_recruit.0031.t
+	desc = murim_recruit.0031.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+	}
+	
+	# Just an awareness/notification event
+	option = {
+		name = murim_recruit.0031.a
+		custom_tooltip = murim_recruit.0031.a.tt
+	}
+}
+
+# murim_recruit.0040 — Failed Recruit Washes Out
+# A recruit who can't keep up gets expelled or demoted.
+murim_recruit.0040 = {
+	type = character_event
+	title = murim_recruit.0040.t
+	desc = murim_recruit.0040.desc
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_modifier = sect_outer_disciple
+		# Low prowess after 2+ years = not making it
+		prowess < 6
+		has_character_flag = { flag = murim_recruitment_date days >= 730 }
+	}
+	
+	weight_multiplier = {
+		base = 0.1  # 10% yearly chance for underperformers
+	}
+	
+	# Option A: Train harder (one more chance)
+	option = {
+		name = murim_recruit.0040.a
+		stress_impact = { base = 20 }
+		add_character_modifier = {
+			modifier = murim_last_chance_modifier
+			years = 1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Accept expulsion gracefully
+	option = {
+		name = murim_recruit.0040.b
+		murim_leave_sect_voluntarily_effect = yes
+		stress_impact = { base = 10 }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Beg to stay in any capacity
+	option = {
+		name = murim_recruit.0040.c
+		# Demoted to sect_associate — lowest rung, but still part of the clan
+		custom_tooltip = murim_recruit.0040.c.tt
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Leave and prove them wrong
+	option = {
+		name = murim_recruit.0040.d
+		murim_leave_sect_voluntarily_effect = yes
+		add_character_modifier = {
+			modifier = murim_driven_by_rejection_modifier
+			years = 10
+		}
+		# This person WILL come back stronger. Revenge arc.
+		add_character_flag = murim_revenge_arc_active
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 15 has_trait = vengeful }
+		}
+	}
+}
+
+# murim_recruit.0050 — Spy Recruit Revealed
+# A recruit who was actually a spy from another clan.
+murim_recruit.0050 = {
+	type = character_event
+	title = murim_recruit.0050.t
+	desc = murim_recruit.0050.desc
+	theme = intrigue
+	
+	trigger = {
+		murim_is_clan_member_trigger = yes
+		has_character_flag = murim_planted_spy
+		# Discovery chance increases over time
+		has_character_flag = { flag = murim_spy_plant_date days >= 365 }
+	}
+	
+	weight_multiplier = {
+		base = 0.05  # 5% yearly discovery chance
+		modifier = {
+			add = 0.05
+			any_character = {
+				murim_is_same_sect_trigger = yes
+				intrigue >= 15
+			}
+		}
+	}
+	
+	# Option A: Execute the spy
+	option = {
+		name = murim_recruit.0050.a
+		custom_tooltip = murim_recruit.0050.a.tt
+		# Harsh but sends a message
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = vengeful }
+		}
+	}
+	
+	# Option B: Turn them into a double agent
+	option = {
+		name = murim_recruit.0050.b
+		custom_tooltip = murim_recruit.0050.b.tt
+		# Feed false information back to their original clan
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+	
+	# Option C: Expel them publicly
+	option = {
+		name = murim_recruit.0050.c
+		custom_tooltip = murim_recruit.0050.c.tt
+		murim_expel_from_sect_effect = yes
+		add_prestige = 25
+		ai_chance = { base = 30 }
+	}
+	
+	# Option D: Forgive them — they've become loyal
+	option = {
+		name = murim_recruit.0050.d
+		trigger = {
+			# Only available if the spy has high opinion of the clan
+			scope:spy_character = {
+				opinion = {
+					target = prev
+					value >= 40
+				}
+			}
+		}
+		custom_tooltip = murim_recruit.0050.d.tt
+		# Risky but potentially creates the most loyal member
+		ai_chance = {
+			base = 10
+			modifier = { add = 15 has_trait = forgiving }
+		}
+	}
+}
