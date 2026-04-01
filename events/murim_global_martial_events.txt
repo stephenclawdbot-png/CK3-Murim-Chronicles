@@ -1,0 +1,1835 @@
+# Murim Chronicles - Global Martial Arts Events
+# Foreign masters are RARE: 1 appears every 10-20 years in the murim heartland
+# Danger comes from UNKNOWN style, not raw power — once fought, you learn their patterns
+# Use has_character_flag = fought_X_style to track familiarity (first fight disadvantage, subsequent normal)
+# Balance: every foreign style has a counter. No style dominates.
+# Cross-refs: murim_duel (foreign duels), murim_ranking (foreign challenger to Top 50),
+#             murim_training (learn foreign technique), murim_politics (foreign alliance),
+#             murim_tang_clan_events (Tang meets Greek Fire), murim_mount_hua_events (sword exchange),
+#             murim_heavenly_demon_events (Berserker vs Demon), murim_artifact (foreign weapons),
+#             murim_clan_war (foreign faction intervention), murim_daily_life (wandering master arrival),
+#             murim_injury_chance_values (foreign style modifier), murim_global_martial_traits (all traits)
+# All combat uses murim_injury_chance. Every event chains to 3+ other files.
+# WANDERING MASTER system: landless adventurers with martial traits trigger court arrival events.
+# AI vs AI: foreign masters duel AI martial artists automatically.
+
+namespace = murim_global
+
+# ============================================================
+# EVENT 0001: Foreign Martial Master Arrives in the Murim Heartland
+# ENTRY POINT for all global martial content
+# Chains to: duel, training, politics, daily_life, ranking
+# Fires from on_action yearly pulse with very low MTTH (~10-20 year cycle)
+# Also triggered by: wandering_martial_master arriving at court
+# ============================================================
+murim_global.0001 = {
+	type = character_event
+	title = murim_global.0001.t
+	desc = murim_global.0001.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		# Must have some martial awareness
+		OR = {
+			prowess >= 10
+			any_held_title = { tier >= tier_county }
+		}
+		NOT = { has_character_flag = foreign_master_arrival_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		# More likely in murim heartland (Korea/China)
+		modifier = {
+			add = 2.0
+			culture = { has_cultural_pillar = heritage_korean }
+		}
+		modifier = {
+			add = 2.0
+			culture = { has_cultural_pillar = heritage_chinese }
+		}
+		# Less likely elsewhere
+		modifier = {
+			add = -0.5
+			NOR = {
+				culture = { has_cultural_pillar = heritage_korean }
+				culture = { has_cultural_pillar = heritage_chinese }
+			}
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = foreign_master_arrival_cooldown
+			years = 10  # Rare: once per decade
+		}
+		# Determine what kind of foreign master arrives (random)
+		random_list = {
+			15 = { set_variable = { name = foreign_master_type value = 1 } }  # Japanese
+			12 = { set_variable = { name = foreign_master_type value = 2 } }  # Indian
+			10 = { set_variable = { name = foreign_master_type value = 3 } }  # Siam/Khmer
+			10 = { set_variable = { name = foreign_master_type value = 4 } }  # Persian
+			12 = { set_variable = { name = foreign_master_type value = 5 } }  # Mongol
+			10 = { set_variable = { name = foreign_master_type value = 6 } }  # Norse
+			8 = { set_variable = { name = foreign_master_type value = 7 } }   # Byzantine
+			8 = { set_variable = { name = foreign_master_type value = 8 } }   # African
+			15 = { set_variable = { name = foreign_master_type value = 9 } }  # Goryeo/Chinese wanderer
+		}
+	}
+	
+	# Option A: Challenge the foreign master — test their strength
+	option = {
+		name = murim_global.0001.a
+		
+		# First encounter penalty if you haven't fought this style before
+		# Chain to: DUEL — foreign style combat
+		duel = {
+			skill = prowess
+			value = high
+			
+			# Unknown style disadvantage: -10% success if first encounter
+			# Tracked by: fought_japanese_style, fought_indian_style, etc.
+			40 = {
+				desc = murim_global.0001.a.win
+				add_prestige = 400
+				# Learn the style — gain foreign_style_veteran trait
+				if = {
+					limit = {
+						NOT = { has_trait = foreign_style_veteran }
+					}
+					add_trait = foreign_style_veteran
+				}
+				# Set style familiarity flag based on type
+				if = {
+					limit = { var:foreign_master_type = 1 }
+					set_character_flag = { flag = fought_japanese_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 2 }
+					set_character_flag = { flag = fought_indian_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 3 }
+					set_character_flag = { flag = fought_southeast_asian_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 4 }
+					set_character_flag = { flag = fought_persian_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 5 }
+					set_character_flag = { flag = fought_mongol_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 6 }
+					set_character_flag = { flag = fought_norse_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 7 }
+					set_character_flag = { flag = fought_byzantine_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 8 }
+					set_character_flag = { flag = fought_african_style }
+				}
+				# Chain to: RANKING — defeating foreign master may boost rank
+				change_variable = {
+					name = murim_rank_prestige
+					add = 10
+				}
+				# Injury roll — foreign fights are dangerous due to unfamiliarity
+				random = {
+					chance = murim_injury_chance_honor_duel_winner
+					random_list = {
+						60 = { add_trait = wounded }
+						25 = { add_character_modifier = { modifier = foreign_combat_scar days = 365 } }
+						15 = { add_trait = one_eyed }
+					}
+				}
+				create_character_memory = {
+					type = defeated_foreign_master_memory
+				}
+			}
+			
+			60 = {
+				desc = murim_global.0001.a.lose
+				# Unknown style = higher loss chance first time
+				add_prestige = -100
+				stress_impact = {
+					base = 20
+					arrogant = 15
+				}
+				# Still learn from the loss
+				if = {
+					limit = {
+						NOT = { has_trait = foreign_style_veteran }
+					}
+					add_trait = foreign_style_veteran
+				}
+				# Injury — loser against unknown style, higher severity
+				random = {
+					chance = murim_injury_chance_honor_duel_loser
+					random_list = {
+						40 = { add_trait = wounded }
+						25 = { add_character_modifier = { modifier = mysterious_wound days = 365 } }
+						20 = { add_trait = one_eyed }
+						10 = { add_trait = disfigured }
+						5 = { add_character_modifier = { modifier = shattered_meridians days = 1825 } }
+					}
+				}
+				# Chain to: TRAINING — motivate to learn the foreign style
+				trigger_event = {
+					id = murim_training.0002  # Intense training after loss
+					days = { 14 30 }
+				}
+				create_character_memory = {
+					type = defeated_by_foreign_master_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -20
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option B: Welcome and recruit — offer a position at court
+	option = {
+		name = murim_global.0001.b
+		
+		add_gold = -100  # hosting costs
+		add_prestige = 100
+		# Recruit foreign master as courtier (wandering master joins court)
+		add_character_modifier = {
+			modifier = foreign_master_at_court
+			years = 5
+		}
+		# Chain to: TRAINING — foreign master can teach you
+		random = {
+			chance = 40
+			trigger_event = {
+				id = murim_global.0003  # Cross-cultural technique exchange
+				days = { 30 60 }
+			}
+		}
+		# Chain to: POLITICS — having a foreign master raises your prestige
+		add_character_modifier = {
+			modifier = cosmopolitan_court
+			years = 3
+		}
+		# Other sects notice
+		random = {
+			chance = 20
+			trigger_event = {
+				id = murim_politics.0008  # Neighbors concerned about foreign fighter
+				days = { 30 90 }
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				diplomacy >= 12
+			}
+		}
+	}
+	
+	# Option C: Spy on their techniques — observe from the shadows
+	option = {
+		name = murim_global.0001.c
+		
+		intrigue >= 8
+		
+		duel = {
+			skill = intrigue
+			value = average
+			
+			60 = {
+				desc = murim_global.0001.c.success
+				# Learn their weaknesses without fighting
+				add_intrigue = 1
+				add_character_flag = {
+					flag = studied_foreign_techniques
+					years = 5
+				}
+				# Chain to: JIANGHU — intelligence network gains
+				change_variable = {
+					name = jianghu_intelligence
+					add = 5
+				}
+				# Next encounter with this style: no disadvantage
+				if = {
+					limit = { var:foreign_master_type = 1 }
+					set_character_flag = { flag = fought_japanese_style }
+				}
+				if = {
+					limit = { var:foreign_master_type = 2 }
+					set_character_flag = { flag = fought_indian_style }
+				}
+				# (repeat for all types)
+			}
+			
+			40 = {
+				desc = murim_global.0001.c.failure
+				# Caught spying — foreign master is offended
+				add_prestige = -50
+				stress_impact = {
+					base = 15
+				}
+				# Chain to: DUEL — forced confrontation
+				random = {
+					chance = 50
+					trigger_event = {
+						id = murim_duel.0005  # Hostile encounter
+						days = { 1 3 }
+					}
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option D: Ignore — the murim world has enough problems
+	option = {
+		name = murim_global.0001.d
+		
+		stress_impact = {
+			base = -5
+		}
+		# Foreign master moves on — may appear at another court
+		# Chain to: DAILY LIFE — rumors about the foreign master spread
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = missed_opportunity_regret
+				years = 1
+			}
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 10
+				has_trait = content
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0002: Unknown Martial Style Encounter During Travel
+# Fires when traveling character meets unfamiliar fighting style
+# Chains to: training, duel, technique, daily_life
+# WANDERING encounter — also fires for landless adventurers
+# ============================================================
+murim_global.0002 = {
+	type = character_event
+	title = murim_global.0002.t
+	desc = murim_global.0002.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		is_alive = yes
+		prowess >= 8  # must be a fighter to notice
+		NOT = { has_character_flag = unknown_style_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = unknown_style_cooldown
+			years = 3
+		}
+	}
+	
+	# Option A: Engage and try to adapt mid-fight
+	option = {
+		name = murim_global.0002.a
+		
+		# DISADVANTAGE first round — can't read their moves
+		duel = {
+			skill = prowess
+			value = high  # harder because unknown
+			
+			35 = {
+				# Survived AND adapted — you're now experienced
+				desc = murim_global.0002.a.win
+				add_prowess = 2  # permanent growth from the experience
+				add_prestige = 200
+				if = {
+					limit = {
+						NOT = { has_trait = foreign_style_veteran }
+					}
+					add_trait = foreign_style_veteran
+				}
+				# Chain to: TECHNIQUE — possible hybrid technique insight
+				random = {
+					chance = 15
+					trigger_event = {
+						id = murim_global.0003  # Technique exchange
+						days = { 7 14 }
+					}
+				}
+				# Injury from unknown style — unpredictable
+				random = {
+					chance = murim_injury_chance_honor_duel_winner
+					random_list = {
+						50 = { add_trait = wounded }
+						30 = { add_character_modifier = { modifier = mysterious_wound days = 180 } }
+						20 = { add_trait = one_eyed }
+					}
+				}
+				create_character_memory = {
+					type = survived_unknown_style_memory
+				}
+			}
+			
+			65 = {
+				# Unknown style overwhelms you
+				desc = murim_global.0002.a.lose
+				add_prestige = -50
+				stress_impact = {
+					base = 20
+				}
+				# Still learn from the loss
+				add_prowess = 1
+				random = {
+					chance = murim_injury_chance_honor_duel_loser
+					random_list = {
+						40 = { add_trait = wounded }
+						30 = { add_character_modifier = { modifier = mysterious_wound days = 365 } }
+						15 = { add_trait = one_eyed }
+						10 = { add_trait = disfigured }
+						5 = { add_character_modifier = { modifier = shattered_meridians days = 1825 } }
+					}
+				}
+				# Chain to: TRAINING — defeat motivates study
+				trigger_event = {
+					id = murim_training.0001  # Training montage
+					days = { 14 30 }
+				}
+				create_character_memory = {
+					type = defeated_by_unknown_style_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Observe without engaging — learn their patterns first
+	option = {
+		name = murim_global.0002.b
+		
+		add_learning = 1
+		# Chain to: TRAINING — study the style before fighting
+		add_character_modifier = {
+			modifier = studying_unknown_style
+			years = 1
+		}
+		# Removes first-encounter disadvantage for future fights
+		add_character_flag = {
+			flag = observed_unknown_style
+			years = 5
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Flee — this is too dangerous
+	option = {
+		name = murim_global.0002.c
+		
+		stress_impact = {
+			base = 10
+			brave = 20
+			craven = -10
+		}
+		add_prestige = -50
+		# Chain to: DAILY LIFE — rumor spreads that you ran
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = reputation_for_cowardice
+				years = 2
+			}
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option D: Try to communicate — maybe they're friendly
+	option = {
+		name = murim_global.0002.d
+		
+		diplomacy >= 10
+		
+		duel = {
+			skill = diplomacy
+			value = average
+			
+			50 = {
+				desc = murim_global.0002.d.success
+				# Friendly exchange!
+				add_prestige = 100
+				# Chain to: TRAINING — mutual learning
+				trigger_event = {
+					id = murim_global.0003  # Technique exchange
+					days = { 3 7 }
+				}
+				# Possible long-term alliance
+				add_character_flag = {
+					flag = foreign_martial_friend
+					years = 10
+				}
+			}
+			
+			50 = {
+				desc = murim_global.0002.d.failure
+				# Misunderstanding — they attack
+				stress_impact = {
+					base = 10
+				}
+				# Chain to: DUEL — forced combat
+				trigger_event = {
+					id = murim_duel.0001
+					days = { 1 1 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = gregarious
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0003: Cross-Cultural Technique Exchange
+# Two martial masters from different traditions learn from each other
+# Chains to: technique, training, cultivation, romance
+# ============================================================
+murim_global.0003 = {
+	type = character_event
+	title = murim_global.0003.t
+	desc = murim_global.0003.desc
+	theme = learning
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		is_alive = yes
+		prowess >= 10
+		OR = {
+			has_trait = foreign_style_veteran
+			has_character_flag = foreign_martial_friend
+			has_character_flag = foreign_master_at_court
+		}
+		NOT = { has_character_flag = technique_exchange_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = technique_exchange_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Full mutual exchange — teach yours, learn theirs
+	option = {
+		name = murim_global.0003.a
+		
+		add_prowess = 2
+		add_learning = 1
+		add_prestige = 200
+		# Chain to: TECHNIQUE — hybrid technique created
+		random = {
+			chance = 25
+			trigger_event = {
+				id = murim_technique.0400  # Technique combination discovery
+				days = { 14 30 }
+			}
+		}
+		# Chain to: CULTIVATION — new perspective aids breakthrough
+		change_variable = {
+			name = cultivation_progress
+			add = 10
+		}
+		# Risk: your sect may disapprove of sharing techniques
+		random = {
+			chance = 20
+			trigger_event = {
+				id = murim_politics.0006  # Sect disapproves of technique sharing
+				days = { 30 60 }
+			}
+		}
+		create_character_memory = {
+			type = cross_cultural_exchange_memory
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = gregarious
+			}
+		}
+	}
+	
+	# Option B: Learn but don't teach — keep your techniques secret
+	option = {
+		name = murim_global.0003.b
+		
+		intrigue >= 10
+		
+		duel = {
+			skill = intrigue
+			value = average
+			
+			50 = {
+				desc = murim_global.0003.b.success
+				add_prowess = 1
+				add_intrigue = 1
+				# Learned without giving anything away
+				add_character_flag = {
+					flag = stolen_foreign_technique_knowledge
+					years = 5
+				}
+			}
+			
+			50 = {
+				desc = murim_global.0003.b.failure
+				# They noticed your deception — relationship damaged
+				stress_impact = {
+					base = 15
+					deceitful = -5
+				}
+				remove_character_flag = foreign_martial_friend
+				# Chain to: DUEL — offended master challenges you
+				random = {
+					chance = 40
+					trigger_event = {
+						id = murim_duel.0003  # Honor challenge from betrayed friend
+						days = { 1 7 }
+					}
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option C: Focus on philosophy, not techniques — spiritual exchange
+	option = {
+		name = murim_global.0003.c
+		
+		add_learning = 2
+		add_piety = 50
+		stress_impact = {
+			base = -15
+		}
+		# Chain to: CULTIVATION — philosophical insight
+		change_variable = {
+			name = cultivation_progress
+			add = 5
+		}
+		# Chain to: DAILY LIFE — enriched worldview
+		add_character_modifier = {
+			modifier = cosmopolitan_wisdom
+			years = 5
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = temperate
+			}
+		}
+	}
+	
+	# Option D: Spar together repeatedly — learn through combat
+	option = {
+		name = murim_global.0003.d
+		
+		add_prowess = 1
+		# Chain to: TRAINING — sparring partnership
+		add_character_modifier = {
+			modifier = foreign_sparring_partner
+			years = 3
+		}
+		# Low injury risk — friendly sparring
+		random = {
+			chance = murim_injury_chance_sparring
+			add_character_modifier = { modifier = minor_bruise days = 14 }
+		}
+		# Chain to: ROMANCE — bonds forged through combat
+		random = {
+			chance = 5
+			trigger_event = {
+				id = murim_romance.0004  # Warrior bond becomes deeper
+				days = { 30 90 }
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 10
+				has_trait = brave
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0004: Foreign Assassination Attempt
+# Hashashin or Shinobi sent after a ranked fighter
+# Unique stealth duel mechanics — intrigue vs awareness
+# Chains to: duel, ranking, jianghu, politics
+# ============================================================
+murim_global.0004 = {
+	type = character_event
+	title = murim_global.0004.t
+	desc = murim_global.0004.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		# Only targets ranked or important fighters
+		OR = {
+			prowess >= 15
+			has_variable = murim_rank
+		}
+		NOT = { has_character_flag = assassination_attempt_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = assassination_attempt_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Your instincts warn you — fight back (prowess check)
+	option = {
+		name = murim_global.0004.a
+		
+		duel = {
+			skill = prowess
+			value = very_hard  # assassin has surprise advantage
+			
+			35 = {
+				desc = murim_global.0004.a.win
+				add_prestige = 500
+				add_dread = 20
+				# Chain to: RANKING — surviving assassination boosts reputation
+				change_variable = {
+					name = murim_rank_prestige
+					add = 10
+				}
+				# Capture or kill assassin
+				random_list = {
+					50 = {
+						# Killed the assassin
+						add_prestige = 100
+						create_character_memory = {
+							type = killed_foreign_assassin_memory
+						}
+					}
+					50 = {
+						# Captured alive — can interrogate
+						# Chain to: JIANGHU — discover who sent them
+						trigger_event = {
+							id = murim_jianghu.0005  # Interrogation chain
+							days = { 3 7 }
+						}
+					}
+				}
+				# Injury from ambush — even if you win
+				random = {
+					chance = murim_injury_chance_ambush_defender_success
+					random_list = {
+						50 = { add_trait = wounded }
+						30 = { add_character_modifier = { modifier = assassin_poison_wound days = 180 } }
+						20 = { add_trait = one_eyed }
+					}
+				}
+			}
+			
+			65 = {
+				desc = murim_global.0004.a.lose
+				# Assassination partially succeeds
+				random_list = {
+					30 = {
+						# Near death — survived but badly hurt
+						add_trait = wounded
+						add_character_modifier = { modifier = near_death_experience days = 365 }
+						# Chain to: FATE — near death changes perspective
+						trigger_event = {
+							id = murim_fate.0001  # Brush with death
+							days = { 7 14 }
+						}
+					}
+					40 = {
+						# Poisoned wound — slow death unless treated
+						add_character_modifier = { modifier = assassin_slow_poison days = 365 }
+						# Chain to: DAILY LIFE — seek healer urgently
+						# Chain to: TANG CLAN — Tang can cure or worsen
+						trigger_event = {
+							id = murim_tang_clan.0003  # Seek antidote
+							days = { 3 7 }
+						}
+					}
+					20 = {
+						# Crippling wound
+						add_trait = wounded
+						add_trait = one_eyed
+						# Chain to: RANKING — may lose rank due to injury
+						change_variable = {
+							name = murim_rank_prestige
+							add = -15
+						}
+					}
+					10 = {
+						# Death
+						death = { death_reason = death_assassination }
+						# Chain to: RANKER DEATH — triggers world event if ranked
+					}
+				}
+				create_character_memory = {
+					type = assassination_victim_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Bodyguard intercepts — let your people handle it
+	option = {
+		name = murim_global.0004.b
+		
+		trigger = {
+			any_courtier = {
+				prowess >= 12
+			}
+		}
+		
+		# Bodyguard fights the assassin
+		random_list = {
+			60 = {
+				# Bodyguard succeeds
+				desc = murim_global.0004.b.success
+				add_prestige = 100
+				# Chain to: MENTOR — bodyguard proves their worth
+				random_courtier = {
+					limit = { prowess >= 12 }
+					add_prestige = 200
+					# Bodyguard may be injured
+					random = {
+						chance = 40
+						add_trait = wounded
+					}
+				}
+			}
+			40 = {
+				# Bodyguard fails — assassin gets through
+				desc = murim_global.0004.b.failure
+				random_courtier = {
+					limit = { prowess >= 12 }
+					random_list = {
+						50 = { add_trait = wounded }
+						30 = { add_trait = incapable }
+						20 = { death = { death_reason = death_assassination } }
+					}
+				}
+				# Now you must face the assassin yourself
+				stress_impact = {
+					base = 30
+				}
+				# Chain to: DUEL — forced combat
+				trigger_event = {
+					id = murim_duel.0005  # Ambush combat
+					days = { 1 1 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: You anticipated this — your trap is sprung
+	option = {
+		name = murim_global.0004.c
+		
+		trigger = {
+			intrigue >= 15
+			OR = {
+				has_trait = paranoid
+				has_character_flag = studied_foreign_techniques
+				has_trait = information_broker
+			}
+		}
+		
+		# Counter-assassination — you set a trap
+		add_prestige = 600
+		add_dread = 30
+		# Chain to: JIANGHU — your intelligence network knew
+		add_character_modifier = {
+			modifier = master_of_counter_intelligence
+			years = 5
+		}
+		# Capture assassin alive
+		trigger_event = {
+			id = murim_jianghu.0005  # Interrogation
+			days = { 1 3 }
+		}
+		# Chain to: POLITICS — send a message to whoever ordered this
+		trigger_event = {
+			id = murim_politics.0009  # Political warning
+			days = { 7 14 }
+		}
+		create_character_memory = {
+			type = foiled_assassination_memory
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = paranoid
+			}
+		}
+	}
+	
+	# Option D: Fake your own death — disappear
+	option = {
+		name = murim_global.0004.d
+		
+		trigger = {
+			intrigue >= 12
+		}
+		
+		# Chain to: DISGUISED RANKER path — hide your identity
+		add_trait = disguised_ranker
+		add_character_flag = {
+			flag = faked_death
+			years = 5
+		}
+		add_prestige = -300  # "dead" in the public eye
+		# Chain to: RANKING — removed from rankings (temporarily)
+		if = {
+			limit = { has_variable = murim_rank }
+			# Rank frozen — will return later
+			set_variable = {
+				name = murim_rank_frozen
+				value = var:murim_rank
+			}
+		}
+		# Chain to: DAILY LIFE — living in disguise
+		# Chain to: FATE — eventual dramatic return
+		random = {
+			chance = 80
+			trigger_event = {
+				id = murim_fate.0006  # Dramatic return event
+				days = { 365 1825 }  # 1-5 years later
+			}
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0005: World Martial Tournament — Grand Event Chain
+# Representatives from ALL regions. Ultimate champion gains world_greatest_fighter.
+# Massive event — chains to EVERYTHING
+# ============================================================
+murim_global.0005 = {
+	type = character_event
+	title = murim_global.0005.t
+	desc = murim_global.0005.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		prowess >= 15  # only top fighters
+		NOT = { has_character_flag = world_tournament_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = world_tournament_cooldown
+			years = 20  # Once per generation
+		}
+	}
+	
+	# Option A: Enter as a competitor — fight for the ultimate title
+	option = {
+		name = murim_global.0005.a
+		
+		# Multi-round tournament simulation
+		# Round 1: Regional qualifier
+		duel = {
+			skill = prowess
+			value = average
+			
+			60 = {
+				# Win round 1 — advance to semifinals
+				desc = murim_global.0005.a.round1_win
+				add_prestige = 200
+				# Chain to: Round 2 event (semifinal)
+				trigger_event = {
+					id = murim_global.0005  # Chain to itself or sub-event
+					# Actually chain to a follow-up
+				}
+				# Injury check — minor from first round
+				random = {
+					chance = murim_injury_chance_honor_duel_winner
+					add_character_modifier = { modifier = tournament_bruises days = 30 }
+				}
+				# Chain to: EVENT 0006 — semifinal vs legendary opponent
+				trigger_event = {
+					id = murim_global.0006  # Berserker vs Heavenly Demon
+					days = { 3 7 }
+				}
+			}
+			
+			40 = {
+				# Eliminated round 1
+				desc = murim_global.0005.a.round1_lose
+				add_prestige = 100  # still prestige for participating
+				stress_impact = {
+					base = 15
+					ambitious = 20
+				}
+				# Injury check
+				random = {
+					chance = murim_injury_chance_honor_duel_loser
+					random_list = {
+						60 = { add_trait = wounded }
+						30 = { add_trait = one_eyed }
+						10 = { add_trait = disfigured }
+					}
+				}
+				create_character_memory = {
+					type = world_tournament_eliminated_memory
+				}
+				# Chain to: TRAINING — motivate for next tournament
+				trigger_event = {
+					id = murim_training.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Attend as a spectator — observe all styles
+	option = {
+		name = murim_global.0005.b
+		
+		add_prestige = 50
+		add_learning = 2
+		# Chain to: TRAINING — observe all fighting styles
+		add_character_flag = {
+			flag = observed_world_tournament
+			years = 5
+		}
+		# Learn about every foreign style present
+		add_trait = foreign_style_veteran
+		# Chain to: POLITICS — networking at the tournament
+		add_character_modifier = {
+			modifier = tournament_observer_insights
+			years = 5
+		}
+		# Chain to: ROMANCE — meet fighters from around the world
+		random = {
+			chance = 10
+			trigger_event = {
+				id = murim_romance.0004
+				days = { 7 14 }
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				age >= 50
+			}
+		}
+	}
+	
+	# Option C: Send your best student to represent you
+	option = {
+		name = murim_global.0005.c
+		
+		trigger = {
+			any_courtier = {
+				prowess >= 12
+			}
+		}
+		
+		# Chain to: MENTOR — student represents master
+		add_prestige = 100
+		random_courtier = {
+			limit = { prowess >= 12 }
+			add_prestige = 200
+			add_character_flag = {
+				flag = world_tournament_representative
+				years = 1
+			}
+		}
+		# Chain to: TRAINING — student gains experience
+		trigger_event = {
+			id = murim_mentor.0002  # Student's big test
+			days = { 7 14 }
+		}
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+	
+	# Option D: Boycott — the tournament is beneath you / too dangerous
+	option = {
+		name = murim_global.0005.d
+		
+		stress_impact = {
+			base = -5
+			ambitious = 15
+		}
+		# Chain to: POLITICS — some see it as cowardice, some as wisdom
+		random_list = {
+			50 = {
+				add_prestige = -100
+				add_character_modifier = {
+					modifier = tournament_boycotter_coward
+					years = 3
+				}
+			}
+			50 = {
+				add_prestige = 50
+				add_character_modifier = {
+					modifier = above_petty_tournaments
+					years = 3
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0006: Berserker vs Heavenly Demon — Legendary Clash
+# Two terrifying fighters. Everyone watches in horror.
+# Winner gains massive dread. Spectators gain craven.
+# Chains to: ranking, clan_war, fate, duel
+# ============================================================
+murim_global.0006 = {
+	type = character_event
+	title = murim_global.0006.t
+	desc = murim_global.0006.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = berserker_champion
+			has_trait = heavenly_demon_body
+			has_trait = heavenly_demon_successor
+		}
+		NOT = { has_character_flag = legendary_clash_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = legendary_clash_cooldown
+			years = 10
+		}
+	}
+	
+	# Option A: FIGHT — unleash everything. Total destruction.
+	option = {
+		name = murim_global.0006.a
+		
+		# Balance: Berserker = raw power burst, Heavenly Demon = sustained terror
+		# Neither dominates — it's mutual destruction
+		duel = {
+			skill = prowess
+			value = very_hard
+			
+			50 = {
+				desc = murim_global.0006.a.win
+				add_prestige = 1000
+				add_dread = 50
+				# Chain to: RANKING — winner becomes legendary
+				change_variable = {
+					name = murim_rank_prestige
+					add = 25
+				}
+				# ALL spectators gain stress/craven from watching
+				every_courtier = {
+					limit = {
+						NOT = { this = root }
+					}
+					stress_impact = {
+						base = 20
+					}
+					random = {
+						chance = 15
+						add_trait = craven
+					}
+				}
+				# Winner is badly hurt regardless
+				random_list = {
+					40 = { add_trait = wounded }
+					30 = {
+						add_trait = wounded
+						add_trait = one_eyed
+					}
+					20 = {
+						add_trait = wounded
+						add_character_modifier = { modifier = berserker_demon_aftershock days = 365 }
+					}
+					10 = {
+						add_trait = wounded
+						add_trait = disfigured
+						add_character_modifier = { modifier = pyrrhic_victory days = 365 }
+					}
+				}
+				create_character_memory = {
+					type = legendary_clash_victory_memory
+				}
+				# Chain to: FATE — this fight becomes legend
+				trigger_event = {
+					id = murim_fate.0007  # Legendary battle aftermath
+					days = { 14 30 }
+				}
+			}
+			
+			50 = {
+				desc = murim_global.0006.a.lose
+				# Loser — devastating defeat
+				random_list = {
+					30 = {
+						add_trait = wounded
+						add_trait = one_eyed
+						add_trait = disfigured
+					}
+					30 = {
+						add_trait = incapable
+						# Chain to: MENTOR — students must avenge/continue
+						trigger_event = {
+							id = murim_mentor.0005
+							days = { 7 14 }
+						}
+					}
+					25 = {
+						add_character_modifier = { modifier = shattered_meridians days = 3650 }
+						add_trait = wounded
+					}
+					15 = {
+						death = { death_reason = death_duel }
+						# Chain to: RANKER DEATH — world event
+					}
+				}
+				create_character_memory = {
+					type = legendary_clash_defeat_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Refuse to fight — not worth mutual destruction
+	option = {
+		name = murim_global.0006.b
+		
+		stress_impact = {
+			base = 10
+			brave = 25
+		}
+		add_prestige = -200
+		# Chain to: POLITICS — seen as weakness
+		add_character_modifier = {
+			modifier = refused_legendary_fight
+			years = 5
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option C: Fight at reduced power — hold back (only if wise)
+	option = {
+		name = murim_global.0006.c
+		
+		trigger = {
+			learning >= 12
+		}
+		
+		# Controlled fight — less destructive but less impressive
+		add_prestige = 200
+		# Lower injury chance
+		random = {
+			chance = 30
+			add_trait = wounded
+		}
+		# Chain to: TRAINING — learned opponent's patterns
+		add_prowess = 1
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option D: Turn it into a teaching moment — narrate the fight
+	option = {
+		name = murim_global.0006.d
+		
+		trigger = {
+			age >= 50
+			learning >= 15
+		}
+		
+		# Elder perspective — explain what's happening to spectators
+		add_prestige = 300
+		add_learning = 1
+		# Chain to: MENTOR — spectators learn from your commentary
+		every_courtier = {
+			limit = {
+				prowess >= 5
+			}
+			add_prowess = 1
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0007: Tang Clan Meets Greek Fire Alchemist
+# Poison vs chemical warfare. Alliance or war.
+# Chains to: tang_clan, politics, technique, artifact
+# ============================================================
+murim_global.0007 = {
+	type = character_event
+	title = murim_global.0007.t
+	desc = murim_global.0007.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = tang_poison_master
+			has_trait = tang_hidden_weapon_expert
+			has_trait = tang_clan_heir
+		}
+		NOT = { has_character_flag = greek_fire_encounter_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = greek_fire_encounter_cooldown
+			years = 10
+		}
+	}
+	
+	# Option A: Propose alliance — combine poison and fire
+	option = {
+		name = murim_global.0007.a
+		
+		add_prestige = 200
+		add_gold = -50
+		# Chain to: TECHNIQUE — hybrid poison+fire weapon
+		add_character_modifier = {
+			modifier = poison_fire_research
+			years = 3
+		}
+		# Chain to: ARTIFACT — create a new weapon type
+		random = {
+			chance = 25
+			trigger_event = {
+				id = murim_artifact.0009  # Weapon forging event
+				days = { 60 180 }
+			}
+		}
+		# Chain to: POLITICS — other factions fear the alliance
+		trigger_event = {
+			id = murim_politics.0010  # Dangerous alliance rumors
+			days = { 30 60 }
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = gregarious
+			}
+		}
+	}
+	
+	# Option B: Rivalry — Tang poison is SUPERIOR. Prove it.
+	option = {
+		name = murim_global.0007.b
+		
+		# Chain to: DUEL — alchemy/poison contest
+		duel = {
+			skill = learning  # alchemy is knowledge-based
+			value = average
+			
+			50 = {
+				desc = murim_global.0007.b.tang_wins
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = supreme_alchemist
+					years = 5
+				}
+				# Tang clan reputation boost
+				change_variable = {
+					name = clan_prestige
+					add = 10
+				}
+			}
+			
+			50 = {
+				desc = murim_global.0007.b.greek_wins
+				add_prestige = -100
+				stress_impact = {
+					base = 15
+					arrogant = 20
+				}
+				# Chain to: TRAINING — study Greek fire to improve
+				trigger_event = {
+					id = murim_training.0005  # Study new alchemy
+					days = { 14 30 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = arrogant
+			}
+		}
+	}
+	
+	# Option C: Trade recipes — commercial exchange
+	option = {
+		name = murim_global.0007.c
+		
+		add_gold = 200
+		add_learning = 1
+		# Chain to: JIANGHU — black market gains new products
+		add_character_modifier = {
+			modifier = exotic_alchemy_trader
+			years = 5
+		}
+		# Chain to: TANG CLAN — clan profits from foreign knowledge
+		change_variable = {
+			name = clan_prestige
+			add = 5
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = greedy
+			}
+		}
+	}
+	
+	# Option D: Kill the alchemist — their knowledge is too dangerous
+	option = {
+		name = murim_global.0007.d
+		
+		# Chain to: ASSASSINATION — Tang specialty
+		duel = {
+			skill = intrigue
+			value = average
+			
+			70 = {
+				desc = murim_global.0007.d.success
+				add_dread = 20
+				add_piety = -50  # dishonorable kill
+				# Chain to: POLITICS — Byzantine Empire may seek revenge
+				add_character_flag = {
+					flag = killed_greek_alchemist
+					years = -1
+				}
+			}
+			
+			30 = {
+				desc = murim_global.0007.d.failure
+				# Greek Fire retaliation
+				add_trait = wounded
+				add_character_modifier = { modifier = greek_fire_burns days = 365 }
+				stress_impact = {
+					base = 20
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0008: Foreign Master Challenges the #1 Ranked Martial Artist
+# If they win, the murim world is shaken to its core
+# Chains to: ranking, duel, clan_war, fate, politics
+# ============================================================
+murim_global.0008 = {
+	type = character_event
+	title = murim_global.0008.t
+	desc = murim_global.0008.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		is_alive = yes
+		# Must be the #1 or close to it
+		OR = {
+			has_variable = murim_rank
+			prowess >= 20
+		}
+		NOT = { has_character_flag = foreign_challenge_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = foreign_challenge_cooldown
+			years = 15
+		}
+	}
+	
+	# Option A: Accept the challenge — defend the murim world's honor
+	option = {
+		name = murim_global.0008.a
+		
+		# THE challenge — winner takes all
+		duel = {
+			skill = prowess
+			value = very_hard  # foreign master is elite
+			
+			45 = {
+				desc = murim_global.0008.a.win
+				# Murim world SAVED. #1 title defended.
+				add_prestige = 2000
+				add_dread = 30
+				# Chain to: RANKING — #1 position cemented
+				change_variable = {
+					name = murim_rank_prestige
+					add = 50
+				}
+				# Chain to: POLITICS — all sects celebrate
+				every_courtier = {
+					add_opinion = {
+						target = root
+						modifier = saved_murim_honor
+						opinion = 30
+					}
+				}
+				# Chain to: GLOBAL — foreign martial world acknowledges murim superiority
+				add_character_modifier = {
+					modifier = defender_of_murim
+					years = 10
+				}
+				# Injury — even winning against the best foreign fighter hurts
+				random = {
+					chance = murim_injury_chance_death_match_winner
+					random_list = {
+						40 = { add_trait = wounded }
+						30 = { add_character_modifier = { modifier = foreign_combat_scar days = 365 } }
+						20 = { add_trait = one_eyed }
+						10 = { add_trait = disfigured }
+					}
+				}
+				create_character_memory = {
+					type = defended_murim_honor_memory
+				}
+			}
+			
+			55 = {
+				desc = murim_global.0008.a.lose
+				# SHAKEN. #1 defeated by outsider.
+				add_prestige = -500
+				# Chain to: RANKING — #1 is dethroned
+				if = {
+					limit = { has_variable = murim_rank }
+					change_variable = {
+						name = murim_rank
+						add = 10  # drops significantly
+					}
+				}
+				# Chain to: CLAN WAR — sects panic, blame each other
+				trigger_event = {
+					id = murim_clan_war.0005  # Crisis of faith in murim
+					days = { 7 14 }
+				}
+				# Chain to: FATE — world-shaking consequence
+				trigger_event = {
+					id = murim_fate.0008  # The day the murim world trembled
+					days = { 1 3 }
+				}
+				# Severe injury
+				random_list = {
+					30 = { add_trait = wounded }
+					30 = {
+						add_trait = wounded
+						add_trait = one_eyed
+					}
+					20 = {
+						add_character_modifier = { modifier = shattered_meridians days = 1825 }
+					}
+					10 = {
+						add_trait = incapable
+					}
+					10 = {
+						death = { death_reason = death_duel }
+					}
+				}
+				create_character_memory = {
+					type = murim_honor_lost_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Refuse — you have nothing to prove
+	option = {
+		name = murim_global.0008.b
+		
+		add_prestige = -300
+		stress_impact = {
+			base = 15
+			brave = 25
+		}
+		# Chain to: POLITICS — some sects are furious
+		add_character_modifier = {
+			modifier = refused_to_defend_murim
+			years = 5
+		}
+		# Another ranked fighter may step up
+		random = {
+			chance = 50
+			trigger_event = {
+				id = murim_ranking.0003  # Next ranked fighter steps up
+				days = { 3 7 }
+			}
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option C: Ask for time to prepare — stall
+	option = {
+		name = murim_global.0008.c
+		
+		# Chain to: TRAINING — intensive preparation
+		add_character_modifier = {
+			modifier = preparing_for_ultimate_challenge
+			days = 90
+		}
+		trigger_event = {
+			id = murim_training.0009  # Extreme conditioning
+			days = { 7 14 }
+		}
+		# The actual fight comes later
+		trigger_event = {
+			id = murim_global.0008  # Re-trigger with preparation bonus
+			days = { 60 90 }
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option D: Propose a different format — tournament instead of 1v1
+	option = {
+		name = murim_global.0008.d
+		
+		diplomacy >= 12
+		
+		# Chain to: WORLD TOURNAMENT — redirect to event 0005
+		trigger_event = {
+			id = murim_global.0005  # World martial tournament
+			days = { 30 60 }
+		}
+		add_prestige = 100
+		# Diplomatic resolution
+		add_character_modifier = {
+			modifier = diplomatic_martial_solution
+			years = 3
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				diplomacy >= 15
+			}
+		}
+	}
+}
