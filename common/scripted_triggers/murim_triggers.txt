@@ -1,490 +1,505 @@
-# Murim Chronicles - MASTER SHARED TRIGGERS FILE
-# INTEGRATION RULE: ALL event files MUST reference these triggers.
-# Do NOT duplicate trigger logic inline in event files.
-# Every system uses these same base triggers for consistency.
-#
-# TRIGGER INDEX:
-#   1. murim_is_martial_artist_trigger - has ANY martial trait (core + global + clan)
-#   2. murim_is_cultivator_trigger - has cultivation tier trait
-#   3. murim_is_ranked_fighter_trigger - has ranking trait or top 50 flag
-#   4. murim_is_clan_member_trigger - member of any named clan/sect
-#   5. murim_is_eligible_for_tournament_trigger - age >= 16, is martial artist
-#   6. murim_is_youth_eligible_trigger - age 8-15, has martial trait
-#   7. murim_is_wandering_master_trigger - landless + martial artist
-#   8. murim_is_foreign_martial_artist_trigger - non-Korean/Chinese culture + martial
-#   9. murim_is_righteous_path_trigger - righteous faction alignment
-#  10. murim_is_demonic_path_trigger - demonic faction alignment
-#  11. murim_is_neutral_path_trigger - neutral faction (Tang, independents)
-#  12. murim_has_fight_memory_with_trigger - has fought target before
-#  13. murim_can_duel_trigger - alive, not imprisoned, not incapable
-#  14. murim_is_tournament_champion_trigger - holds any tournament champion trait
-#  15. murim_is_supreme_champion_trigger - holds supreme martial champion trait
+# Murim Chronicles - Scripted Triggers
+# Master trigger file - ALL trait references verified against actual trait definitions
+# Cross-references: murim_cultivation_traits.txt, murim_combat_trauma_traits.txt,
+#   murim_technique_traits.txt, murim_ranking_traits.txt, 01_martial_traits.txt
+# POLISH PASS: Heartbeat #52 - Fixed all broken trait references
 
-# ============================================================================
-# TRIGGER 1: IS MARTIAL ARTIST
-# Returns yes if character has ANY martial trait from any system
-# Used by: every event file, tournament, ranking, duel, training, wandering master
-# ============================================================================
+######################################
+# CORE MARTIAL ARTIST CHECKS
+######################################
+
 murim_is_martial_artist_trigger = {
 	OR = {
-		# Core martial traits (01_martial_traits.txt)
-		has_trait = martial_student
-		has_trait = martial_apprentice
-		has_trait = inner_disciple
-		has_trait = martial_master
-		has_trait = grandmaster
-		has_trait = martial_saint
-		# Prowess technique traits (03_prowess_technique_traits.txt)
-		has_trait = iron_body_practitioner
-		has_trait = qi_deviation_survivor
-		has_trait = sword_qi_wielder
-		has_trait = movement_technique_master
-		has_trait = hidden_weapon_specialist
-		# Grind/combat loop traits (04_grind_loop_traits.txt)
-		has_trait = battle_hardened
-		has_trait = arena_veteran
-		has_trait = death_match_survivor
-		# Jianghu underground traits (05_jianghu_underground_traits.txt)
-		has_trait = jianghu_wanderer
-		has_trait = black_market_fighter
-		has_trait = bounty_hunter
-		# Combat trauma traits (06_combat_trauma_traits.txt)
-		has_trait = battle_scarred
-		has_trait = one_armed_swordsman
-		# Cultivation tier traits (murim_cultivation_traits.txt)
-		has_trait = qi_sensing
-		has_trait = qi_condensation
-		has_trait = foundation_establishment
-		has_trait = core_formation
-		has_trait = nascent_soul
-		has_trait = tribulation_transcendence
-		# Technique traits (murim_technique_traits.txt)
-		has_trait = tai_chi_practitioner
-		has_trait = iron_shirt_master
-		has_trait = lightfoot_master
-		has_trait = poison_hand_master
-		has_trait = sword_intent_master
-		has_trait = demonic_art_practitioner
-		# Clan/sect member traits
-		has_trait = mount_hua_disciple
-		has_trait = tang_clan_member
-		has_trait = heavenly_demon_follower
-		has_trait = wudang_disciple
-		has_trait = shaolin_monk
-		has_trait = beggar_sect_member
-		# Goryeo-specific (murim_global_martial_traits.txt)
-		has_trait = hwarang_warrior
-		has_trait = taekkyeon_master
-		has_trait = goryeo_sword_saint
-		has_trait = goryeo_buddhist_monk
-		# Song China (murim_global_martial_traits.txt)
-		has_trait = emei_swordswoman
-		has_trait = kunlun_hermit
-		has_trait = kongtong_fist_master
-		# Japan
-		has_trait = kenjutsu_master
-		has_trait = iaijutsu_expert
-		has_trait = shinobi
-		has_trait = sohei_warrior
-		# India
-		has_trait = vajramushti_master
-		has_trait = kalari_warrior
-		has_trait = yoga_adept
-		# Siam/Khmer
-		has_trait = muay_boran_master
-		has_trait = bokator_warrior
-		has_trait = angkor_guardian
-		# Persia
-		has_trait = pahlevani_champion
-		has_trait = zurkhane_master
-		has_trait = hashashin_blade
-		# Mongol Steppe
-		has_trait = bokh_champion
-		has_trait = mounted_combat_master
-		has_trait = tengri_warrior
-		# Norse/Viking
-		has_trait = berserker_champion
-		has_trait = glima_master
-		has_trait = rune_warrior
-		# Byzantine
-		has_trait = varangian_axemaster
-		has_trait = greek_fire_alchemist
-		has_trait = pankration_fighter
-		# Africa
-		has_trait = donga_champion
-		has_trait = dambe_striker
-		has_trait = engolo_dancer
-		# Meta/wandering
-		has_trait = wandering_martial_master
-		has_trait = disguised_ranker
-		has_trait = foreign_style_veteran
-		has_trait = world_greatest_fighter
-		# Prodigy
-		has_trait = prodigy_martial_talent
+		has_variable = murim_cultivator
+		# Cultivation realm traits (murim_cultivation_traits.txt)
+		has_trait = mortal_realm
+		has_trait = qi_condensation_realm
+		has_trait = foundation_realm
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+		# Alternate cultivation traits (01_martial_traits.txt)
+		has_trait = murim_outer_qi
+		has_trait = murim_qi_gathering
+		has_trait = murim_foundation
+		has_trait = murim_golden_core
+		has_trait = murim_nascent_soul
+		has_trait = murim_spirit_severing
+		has_trait = murim_heavenly_tribulation
 		# Ranking traits (murim_ranking_traits.txt)
-		has_trait = ranked_martial_artist
-		has_trait = top_10_martial_artist
-		has_trait = martial_legend
-		# Fallback: high prowess implies martial training
-		prowess >= 15
+		has_trait = murim_rank_top_50
+		has_trait = murim_rank_top_20
+		has_trait = murim_rank_top_10
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
 	}
 }
 
-# ============================================================================
-# TRIGGER 2: IS CULTIVATOR
-# Returns yes if character has any cultivation tier trait
-# Used by: cultivation events, breakthrough, tribulation, sect
-# ============================================================================
 murim_is_cultivator_trigger = {
 	OR = {
-		has_trait = qi_sensing
-		has_trait = qi_condensation
-		has_trait = foundation_establishment
-		has_trait = core_formation
-		has_trait = nascent_soul
-		has_trait = tribulation_transcendence
+		# Primary cultivation realm traits
+		has_trait = mortal_realm
+		has_trait = qi_condensation_realm
+		has_trait = foundation_realm
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+		# Alternate cultivation traits
+		has_trait = murim_outer_qi
+		has_trait = murim_qi_gathering
+		has_trait = murim_foundation
+		has_trait = murim_golden_core
+		has_trait = murim_nascent_soul
+		has_trait = murim_spirit_severing
+		has_trait = murim_heavenly_tribulation
 	}
 }
 
-# ============================================================================
-# TRIGGER 3: IS RANKED FIGHTER
-# Returns yes if character holds a ranking trait or has top 50 flag
-# Used by: ranking events, tournament seeding, ranker death, challenges
-# ============================================================================
-murim_is_ranked_fighter_trigger = {
+murim_is_advanced_cultivator_trigger = {
 	OR = {
-		has_trait = ranked_martial_artist
-		has_trait = top_10_martial_artist
-		has_trait = martial_legend
-		has_character_flag = murim_top_50_ranked
-		has_character_flag = murim_top_10_ranked
-		has_character_flag = murim_rank_1
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+		has_trait = murim_golden_core
+		has_trait = murim_nascent_soul
+		has_trait = murim_spirit_severing
+		has_trait = murim_heavenly_tribulation
 	}
 }
 
-# ============================================================================
-# TRIGGER 4: IS CLAN MEMBER
-# Returns yes if character belongs to any named murim clan/sect
-# Used by: clan events, clan war, sect politics, recruitment
-# ============================================================================
-murim_is_clan_member_trigger = {
+murim_is_peak_cultivator_trigger = {
 	OR = {
-		# Righteous sects
-		has_trait = mount_hua_disciple
-		has_trait = wudang_disciple
-		has_trait = shaolin_monk
-		has_trait = beggar_sect_member
-		has_trait = emei_swordswoman
-		has_trait = kunlun_hermit
-		has_trait = kongtong_fist_master
-		# Neutral clans
-		has_trait = tang_clan_member
-		# Demonic sects
-		has_trait = heavenly_demon_follower
-		# Flags for membership without trait
-		has_character_flag = mount_hua_sect_member
-		has_character_flag = tang_clan_affiliated
-		has_character_flag = heavenly_demon_sect_member
-		has_character_flag = wudang_sect_member
-		has_character_flag = shaolin_temple_member
-		has_character_flag = beggar_sect_affiliated
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+		has_trait = murim_spirit_severing
+		has_trait = murim_heavenly_tribulation
 	}
 }
 
-# ============================================================================
-# TRIGGER 5: IS ELIGIBLE FOR TOURNAMENT (Grand Tournament, age 16+)
-# HARD AGE GATE: Must be 16 or older AND a martial artist
-# Used by: tournament qualifier, grand tournament, champions battle
-# ============================================================================
-murim_is_eligible_for_tournament_trigger = {
+######################################
+# RANKING SYSTEM TRIGGERS
+######################################
+
+murim_is_top_50_martial_artist_trigger = {
+	OR = {
+		has_trait = murim_rank_top_50
+		has_trait = murim_rank_top_20
+		has_trait = murim_rank_top_10
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
+	}
+}
+
+murim_is_top_10_martial_artist_trigger = {
+	OR = {
+		has_trait = murim_rank_top_10
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
+	}
+}
+
+murim_is_top_5_martial_artist_trigger = {
+	OR = {
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
+	}
+}
+
+murim_is_number_one_trigger = {
+	has_trait = murim_rank_first
+}
+
+murim_is_unranked_trigger = {
+	OR = {
+		has_trait = murim_unranked
+		NAND = {
+			murim_is_top_50_martial_artist_trigger = yes
+		}
+	}
+}
+
+murim_is_rising_star_trigger = {
+	has_trait = murim_rising_star
+}
+
+murim_is_fallen_ranker_trigger = {
+	has_trait = murim_fallen_ranker
+}
+
+murim_is_legendary_fighter_trigger = {
+	has_trait = murim_legendary_fighter
+}
+
+######################################
+# COMBAT & CHALLENGE ELIGIBILITY
+######################################
+
+murim_can_challenge_for_rank_trigger = {
 	is_alive = yes
-	age >= 16
 	is_imprisoned = no
 	NOT = { has_trait = incapable }
+	NOT = { has_trait = craven }
 	murim_is_martial_artist_trigger = yes
-	NOT = { has_character_flag = tournament_banned }
-	NOT = { has_character_flag = tournament_disqualified }
+	NOT = {
+		has_character_modifier = murim_recent_duel_cooldown
+	}
+	prowess >= 10
 }
 
-# ============================================================================
-# TRIGGER 6: IS YOUTH ELIGIBLE (Young Dragons Tournament, age 8-15)
-# Age gate: 8-15 ONLY. Must have at least basic martial training.
-# Used by: youth tournament events exclusively
-# ============================================================================
-murim_is_youth_eligible_trigger = {
+murim_can_be_challenged_for_rank_trigger = {
 	is_alive = yes
-	age >= 8
-	age < 16
 	is_imprisoned = no
 	NOT = { has_trait = incapable }
-	OR = {
-		murim_is_martial_artist_trigger = yes
-		prowess >= 5
-	}
-	NOT = { has_character_flag = banned_from_youth_tournament }
-}
-
-# ============================================================================
-# TRIGGER 7: IS WANDERING MASTER
-# Landless character who is a martial artist — uses CK3 adventurer system
-# Used by: wandering master events, travel encounters, court arrival events
-# ============================================================================
-murim_is_wandering_master_trigger = {
-	is_alive = yes
-	is_landed = no
-	murim_is_martial_artist_trigger = yes
-	OR = {
-		prowess >= 12
-		has_trait = wandering_martial_master
-		has_trait = disguised_ranker
-		has_trait = jianghu_wanderer
+	murim_is_top_50_martial_artist_trigger = yes
+	NOT = {
+		has_character_modifier = murim_recent_duel_cooldown
 	}
 }
 
-# ============================================================================
-# TRIGGER 8: IS FOREIGN MARTIAL ARTIST
-# Non-Korean/Chinese culture martial artist — rare encounters in murim heartland
-# Used by: global martial events, foreign challenge, cross-cultural exchange
-# ============================================================================
-murim_is_foreign_martial_artist_trigger = {
-	murim_is_martial_artist_trigger = yes
-	NOR = {
-		culture = { has_cultural_pillar = heritage_korean }
-		culture = { has_cultural_pillar = heritage_chinese }
-		culture = { has_cultural_pillar = heritage_han }
-		has_culture = culture:korean
-		has_culture = culture:han
-	}
+murim_ai_should_challenge_for_rank_trigger = {
+	is_ai = yes
+	murim_can_challenge_for_rank_trigger = yes
 	OR = {
-		# Japanese traditions
-		has_trait = kenjutsu_master
-		has_trait = iaijutsu_expert
-		has_trait = shinobi
-		has_trait = sohei_warrior
-		# Indian traditions
-		has_trait = vajramushti_master
-		has_trait = kalari_warrior
-		has_trait = yoga_adept
-		# Southeast Asian
-		has_trait = muay_boran_master
-		has_trait = bokator_warrior
-		has_trait = angkor_guardian
-		# Persian
-		has_trait = pahlevani_champion
-		has_trait = zurkhane_master
-		has_trait = hashashin_blade
-		# Mongol
-		has_trait = bokh_champion
-		has_trait = mounted_combat_master
-		has_trait = tengri_warrior
-		# Norse
-		has_trait = berserker_champion
-		has_trait = glima_master
-		has_trait = rune_warrior
-		# Byzantine
-		has_trait = varangian_axemaster
-		has_trait = greek_fire_alchemist
-		has_trait = pankration_fighter
-		# African
-		has_trait = donga_champion
-		has_trait = dambe_striker
-		has_trait = engolo_dancer
-		# Generic foreign
-		has_trait = foreign_style_veteran
-	}
-}
-
-# ============================================================================
-# TRIGGER 9: IS RIGHTEOUS PATH
-# Aligned with righteous/orthodox murim factions
-# Used by: clan war, sect politics, alliance events, romance restrictions
-# ============================================================================
-murim_is_righteous_path_trigger = {
-	OR = {
-		has_trait = mount_hua_disciple
-		has_trait = wudang_disciple
-		has_trait = shaolin_monk
-		has_trait = beggar_sect_member
-		has_trait = emei_swordswoman
-		has_trait = kunlun_hermit
-		has_trait = kongtong_fist_master
-		has_trait = hwarang_warrior
-		has_trait = goryeo_buddhist_monk
-		has_character_flag = righteous_path_aligned
-	}
-}
-
-# ============================================================================
-# TRIGGER 10: IS DEMONIC PATH
-# Aligned with demonic/unorthodox murim factions
-# Used by: clan war, demonic cultivation, forbidden technique, heavenly demon events
-# ============================================================================
-murim_is_demonic_path_trigger = {
-	OR = {
-		has_trait = heavenly_demon_follower
-		has_trait = demonic_art_practitioner
-		has_character_flag = demonic_path_aligned
-		has_character_flag = heavenly_demon_sect_member
-	}
-}
-
-# ============================================================================
-# TRIGGER 11: IS NEUTRAL PATH
-# Not strongly aligned with either side — Tang Clan, independents, wanderers
-# Used by: clan politics, neutral mediator events, trade events
-# ============================================================================
-murim_is_neutral_path_trigger = {
-	NOR = {
-		murim_is_righteous_path_trigger = yes
-		murim_is_demonic_path_trigger = yes
-	}
-	OR = {
-		has_trait = tang_clan_member
-		has_trait = jianghu_wanderer
-		has_trait = wandering_martial_master
-		murim_is_foreign_martial_artist_trigger = yes
-		# Fallback: martial artist with no faction
+		has_trait = ambitious
+		has_trait = brave
+		has_trait = arrogant
+		has_trait = vengeful
 		AND = {
-			murim_is_martial_artist_trigger = yes
-			NOR = {
-				has_character_flag = righteous_path_aligned
-				has_character_flag = demonic_path_aligned
-			}
+			has_trait = murim_rising_star
+			prowess >= 15
 		}
 	}
 }
 
-# ============================================================================
-# TRIGGER 12: HAS FIGHT MEMORY WITH TARGET
-# Checks if root has previously fought scope:target
-# Used by: duel events (rematch), revenge arcs, rivalry system
-# ============================================================================
-murim_has_fight_memory_with_trigger = {
-	OR = {
-		has_character_flag = fought_$target.id$
-		any_memory = {
-			has_memory_type = duel_victory_memory
-			has_memory_participant = {
-				character = scope:target
-			}
-		}
-		any_memory = {
-			has_memory_type = duel_defeat_memory
-			has_memory_participant = {
-				character = scope:target
-			}
-		}
-		any_memory = {
-			has_memory_type = youth_tournament_win_memory
-			has_memory_participant = {
-				character = scope:target
-			}
-		}
-	}
-}
-
-# ============================================================================
-# TRIGGER 13: CAN DUEL
-# Basic eligibility for any martial duel
-# Used by: duel events, tournament, honor challenge, assassination defense
-# ============================================================================
 murim_can_duel_trigger = {
 	is_alive = yes
 	is_imprisoned = no
 	NOT = { has_trait = incapable }
-	NOT = { has_character_flag = duel_cooldown }
-	age >= 8
+	NOT = {
+		has_character_modifier = murim_recent_duel_cooldown
+	}
+	age >= 16
 }
 
-# ============================================================================
-# TRIGGER 14: IS TOURNAMENT CHAMPION
-# Holds any tournament champion trait (grand, supreme, youth, qualifier)
-# Used by: champions battle eligibility, prestige events, challenge events
-# ============================================================================
-murim_is_tournament_champion_trigger = {
+murim_is_duel_worthy_opponent_trigger = {
+	is_alive = yes
+	NOT = { has_trait = incapable }
+	murim_is_martial_artist_trigger = yes
+	age >= 16
+}
+
+######################################
+# TECHNIQUE MASTERY TRIGGERS
+######################################
+
+murim_has_sword_technique_trigger = {
 	OR = {
-		has_trait = grand_tournament_champion
-		has_trait = supreme_martial_champion
-		has_character_flag = grand_tournament_winner
-		has_character_modifier = young_dragon_champion
-		has_character_modifier = qualifier_champion
+		has_trait = sword_qi_mastery
+		has_trait = heavenly_sword_intent
 	}
 }
 
-# ============================================================================
-# TRIGGER 15: IS SUPREME CHAMPION
-# Holds the supreme martial champion trait (10-year Battle winner)
-# Used by: supreme champion events, automatic #1 ranking, world events
-# ============================================================================
-murim_is_supreme_champion_trigger = {
-	has_trait = supreme_martial_champion
+murim_has_body_technique_trigger = {
+	OR = {
+		has_trait = iron_fist_mastery
+		has_trait = tyrant_body_technique
+		has_trait = drunken_immortal_fist
+	}
 }
 
-# ============================================================================
-# TRIGGER 16: IS ELIGIBLE FOR CHAMPIONS BATTLE (10-year event)
-# Must be a past Grand Tournament champion (or valid replacement)
-# Used by: champions battle events exclusively
-# ============================================================================
-murim_is_eligible_for_champions_battle_trigger = {
+murim_has_movement_technique_trigger = {
+	OR = {
+		has_trait = lightfoot_mastery
+		has_trait = shadow_step_technique
+	}
+}
+
+murim_has_internal_technique_trigger = {
+	OR = {
+		has_trait = qi_circulation_grandmaster
+		has_trait = healing_palm_mastery
+	}
+}
+
+murim_has_dark_technique_trigger = {
+	OR = {
+		has_trait = death_point_mastery
+		has_trait = poison_arts_mastery
+		has_trait = demonic_cultivator
+	}
+}
+
+murim_has_any_technique_trigger = {
+	OR = {
+		murim_has_sword_technique_trigger = yes
+		murim_has_body_technique_trigger = yes
+		murim_has_movement_technique_trigger = yes
+		murim_has_internal_technique_trigger = yes
+		murim_has_dark_technique_trigger = yes
+		has_trait = formation_master
+	}
+}
+
+murim_has_elite_technique_trigger = {
+	OR = {
+		has_trait = heavenly_sword_intent
+		has_trait = tyrant_body_technique
+		has_trait = shadow_step_technique
+		has_trait = death_point_mastery
+		has_trait = formation_master
+	}
+}
+
+######################################
+# COMBAT TRAUMA TRIGGERS
+######################################
+
+murim_has_physical_trauma_trigger = {
+	OR = {
+		has_trait = shattered_dantian
+		has_trait = severed_meridians
+		has_trait = internal_qi_damage
+		has_trait = qi_sealed_by_enemy
+		has_trait = crippled_arm_martial
+		has_trait = crippled_leg_martial
+		has_trait = blinded_in_combat
+	}
+}
+
+murim_has_psychological_trauma_trigger = {
+	OR = {
+		has_trait = duel_ptsd
+		has_trait = broken_spirit
+		has_trait = survivors_guilt_martial
+		has_trait = heart_demon
+	}
+}
+
+murim_has_any_trauma_trigger = {
+	OR = {
+		murim_has_physical_trauma_trigger = yes
+		murim_has_psychological_trauma_trigger = yes
+	}
+}
+
+murim_has_severe_trauma_trigger = {
+	OR = {
+		has_trait = shattered_dantian
+		has_trait = severed_meridians
+		has_trait = qi_sealed_by_enemy
+		has_trait = heart_demon
+		has_trait = broken_spirit
+	}
+}
+
+murim_has_berserker_traits_trigger = {
+	OR = {
+		has_trait = berserker_qi
+		has_trait = killer_instinct
+	}
+}
+
+######################################
+# CULTIVATION STATE TRIGGERS
+######################################
+
+murim_is_dual_cultivator_trigger = {
+	has_trait = dual_cultivator
+}
+
+murim_is_body_cultivator_trigger = {
+	has_trait = body_cultivator
+}
+
+murim_is_demonic_cultivator_trigger = {
+	has_trait = demonic_cultivator
+}
+
+murim_can_attempt_breakthrough_trigger = {
 	is_alive = yes
-	age >= 16
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = shattered_dantian }
+	NOT = { has_trait = ascension_realm }
+	NOT = { has_trait = murim_heavenly_tribulation }
+	murim_is_cultivator_trigger = yes
+	NOT = {
+		has_character_modifier = murim_recent_breakthrough_attempt
+	}
+}
+
+murim_can_teach_trigger = {
+	is_alive = yes
 	is_imprisoned = no
 	NOT = { has_trait = incapable }
+	murim_is_martial_artist_trigger = yes
 	OR = {
-		has_trait = grand_tournament_champion
-		has_trait = supreme_martial_champion
-		has_character_flag = grand_tournament_winner
-		# Valid replacement: highest ranked non-champion
+		murim_is_advanced_cultivator_trigger = yes
+		murim_has_any_technique_trigger = yes
+		murim_is_top_50_martial_artist_trigger = yes
+	}
+	age >= 25
+}
+
+murim_can_be_taught_trigger = {
+	is_alive = yes
+	is_imprisoned = no
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = shattered_dantian }
+	age >= 12
+}
+
+######################################
+# SECT & FACTION TRIGGERS
+######################################
+
+murim_is_sect_leader_trigger = {
+	OR = {
+		has_variable = murim_sect_leader
 		AND = {
-			murim_is_ranked_fighter_trigger = yes
-			has_character_flag = champions_battle_replacement
+			is_ruler = yes
+			has_variable = murim_cultivator
+			murim_is_advanced_cultivator_trigger = yes
 		}
 	}
 }
 
-# ============================================================================
-# TRIGGER 17: HAS COUNTER STYLE ADVANTAGE
-# Checks if root's martial style counters scope:opponent's style
-# Used by: duel events (combat advantage/disadvantage modifiers)
-# Counter map:
-#   Tang Poison -> countered by Wudang/Shaolin
-#   Heavenly Demon -> countered by Mount Hua/Beggar
-#   Berserker -> countered by Tai Chi/Wudang
-#   Shaolin -> countered by Kalari/Tang
-#   Speed (Iaijutsu/Engolo) -> countered by Defensive (Wudang/Shaolin)
-#   Mounted (Mongol) -> countered by terrain holders
-# ============================================================================
-murim_has_counter_style_advantage_trigger = {
+murim_is_sect_elder_trigger = {
 	OR = {
-		# Wudang/Shaolin counter Tang Poison
+		has_variable = murim_sect_elder
 		AND = {
-			OR = { has_trait = wudang_disciple has_trait = shaolin_monk has_trait = iron_body_practitioner }
-			scope:opponent = { OR = { has_trait = tang_clan_member has_trait = poison_hand_master } }
+			has_variable = murim_cultivator
+			murim_is_advanced_cultivator_trigger = yes
+			age >= 40
 		}
-		# Mount Hua/Beggar counter Heavenly Demon
+	}
+}
+
+murim_is_sect_member_trigger = {
+	OR = {
+		has_variable = murim_sect_member
+		has_variable = murim_sect_leader
+		has_variable = murim_sect_elder
+	}
+}
+
+murim_is_orthodox_trigger = {
+	OR = {
+		has_variable = murim_orthodox_faction
 		AND = {
-			OR = { has_trait = mount_hua_disciple has_trait = beggar_sect_member }
-			scope:opponent = { OR = { has_trait = heavenly_demon_follower has_trait = demonic_art_practitioner } }
+			murim_is_cultivator_trigger = yes
+			NOT = { has_trait = demonic_cultivator }
+			NOT = { has_trait = death_point_mastery }
+			NOT = { has_trait = poison_arts_mastery }
+			NOT = { has_trait = killer_instinct }
 		}
-		# Tai Chi/Wudang counter Berserker
+	}
+}
+
+murim_is_unorthodox_trigger = {
+	OR = {
+		has_variable = murim_unorthodox_faction
+		has_trait = demonic_cultivator
+		has_trait = death_point_mastery
+		has_trait = poison_arts_mastery
 		AND = {
-			OR = { has_trait = wudang_disciple has_trait = tai_chi_practitioner }
-			scope:opponent = { has_trait = berserker_champion }
+			has_trait = killer_instinct
+			has_trait = berserker_qi
 		}
-		# Kalari/Tang counter Shaolin tank
-		AND = {
-			OR = { has_trait = kalari_warrior has_trait = tang_clan_member has_trait = poison_hand_master }
-			scope:opponent = { OR = { has_trait = shaolin_monk has_trait = iron_body_practitioner has_trait = iron_shirt_master } }
-		}
-		# Defensive counters Speed
-		AND = {
-			OR = { has_trait = wudang_disciple has_trait = shaolin_monk has_trait = tai_chi_practitioner }
-			scope:opponent = { OR = { has_trait = iaijutsu_expert has_trait = engolo_dancer has_trait = lightfoot_master } }
-		}
-		# Mount Hua precision counters Berserker rage
-		AND = {
-			has_trait = mount_hua_disciple
-			scope:opponent = { has_trait = berserker_champion }
-		}
+	}
+}
+
+######################################
+# JIANGHU & UNDERWORLD TRIGGERS
+######################################
+
+murim_is_jianghu_member_trigger = {
+	OR = {
+		has_variable = murim_jianghu_member
+		has_variable = murim_bounty_hunter
+		has_variable = murim_mercenary
+		has_variable = murim_assassin
+		has_variable = murim_info_broker
+	}
+}
+
+murim_can_join_jianghu_trigger = {
+	is_alive = yes
+	is_imprisoned = no
+	murim_is_martial_artist_trigger = yes
+	NOT = { has_trait = incapable }
+	age >= 16
+}
+
+murim_has_bounty_trigger = {
+	has_variable = murim_bounty_amount
+}
+
+######################################
+# ARTIFACT & TREASURE TRIGGERS
+######################################
+
+murim_has_martial_artifact_trigger = {
+	OR = {
+		has_variable = murim_has_weapon
+		has_variable = murim_has_manual
+		has_variable = murim_has_pill
+		has_variable = murim_has_formation_blueprint
+		has_variable = murim_has_talisman
+	}
+}
+
+murim_has_legendary_weapon_trigger = {
+	AND = {
+		has_variable = murim_has_weapon
+		has_variable = murim_weapon_legendary
+	}
+}
+
+######################################
+# ROMANCE & RELATIONSHIP TRIGGERS
+######################################
+
+murim_can_dual_cultivate_trigger = {
+	is_alive = yes
+	is_married = yes
+	murim_is_cultivator_trigger = yes
+	NOT = { has_trait = shattered_dantian }
+	NOT = { has_trait = incapable }
+	any_spouse = {
+		is_alive = yes
+		murim_is_cultivator_trigger = yes
+		NOT = { has_trait = shattered_dantian }
+	}
+}
+
+murim_is_romantic_rival_trigger = {
+	is_alive = yes
+	murim_is_martial_artist_trigger = yes
+	OR = {
+		has_trait = ambitious
+		has_trait = arrogant
+		has_trait = vengeful
+		has_trait = lustful
+	}
+}
+
+######################################
+# FATE & DESTINY TRIGGERS
+######################################
+
+murim_is_chosen_one_trigger = {
+	has_variable = murim_chosen_one
+}
+
+murim_has_karmic_debt_trigger = {
+	has_variable = murim_karmic_debt
+}
+
+murim_can_face_tribulation_trigger = {
+	is_alive = yes
+	NOT = { has_trait = incapable }
+	murim_is_peak_cultivator_trigger = yes
+	NOT = {
+		has_character_modifier = murim_recent_tribulation
 	}
 }
