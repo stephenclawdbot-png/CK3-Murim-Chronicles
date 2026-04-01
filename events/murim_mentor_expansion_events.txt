@@ -1,0 +1,692 @@
+###############################################################################
+# MURIM MENTOR EXPANSION EVENTS
+# Master's hidden past, graduation ceremony, master's sacrifice,
+# betraying the master, inheriting the legacy weapon
+# Cross-references: murim_mentor_events, murim_duel_events, murim_artifact_events,
+#                   murim_cultivation_events, murim_ranking_events, murim_fate_events
+###############################################################################
+
+namespace = murim_mentor_exp
+
+###############################################################################
+# 11. MASTER'S HIDDEN PAST REVEALED
+# Your master's true identity is exposed - they were once a feared killer
+###############################################################################
+murim_mentor_exp.0001 = {
+	type = character_event
+	title = murim_mentor_exp.0001.t
+	desc = murim_mentor_exp.0001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = has_martial_master
+		NOT = { has_character_flag = master_past_revealed }
+		age >= 20
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = curious }
+		modifier = { add = 0.5 intrigue >= 12 }
+	}
+
+	immediate = {
+		set_character_flag = master_past_revealed
+		create_character_memory = {
+			type = master_hidden_past_memory
+		}
+	}
+
+	# Accept master despite their dark past
+	option = {
+		name = murim_mentor_exp.0001.a
+		add_piety = 100
+		add_opinion = {
+			modifier = grateful_for_acceptance
+			opinion = 40
+		}
+		add_character_modifier = {
+			modifier = unwavering_loyalty_to_master
+			years = 5
+		}
+		create_character_memory = {
+			type = accepted_masters_dark_past_memory
+		}
+		hidden_effect = {
+			# Master teaches forbidden techniques as reward
+			random_list = {
+				60 = {
+					add_prowess_skill = 2
+					add_character_modifier = {
+						modifier = learned_forbidden_technique
+						years = 10
+					}
+				}
+				40 = {
+					add_prowess_skill = 1
+					add_intrigue_skill = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 15 has_trait = forgiving }
+		}
+	}
+
+	# Confront master and demand the truth
+	option = {
+		name = murim_mentor_exp.0001.b
+		add_stress = 20
+		duel = {
+			skill = prowess
+			target = root
+			30 = {
+				desc = murim_mentor_exp.0001.b.win
+				# Master respects your strength - teaches ultimate technique
+				add_prowess_skill = 3
+				add_prestige = 200
+				create_character_memory = {
+					type = confronted_master_earned_respect_memory
+				}
+				trigger_event = {
+					id = murim_mentor_exp.0005
+					days = { 30 60 }
+				}
+			}
+			40 = {
+				desc = murim_mentor_exp.0001.b.draw
+				add_prowess_skill = 1
+				add_stress = 15
+				create_character_memory = {
+					type = confronted_master_stalemate_memory
+				}
+			}
+			30 = {
+				desc = murim_mentor_exp.0001.b.lose
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { add_trait = craven }
+				}
+				add_prestige = -100
+				create_character_memory = {
+					type = crushed_by_master_confrontation_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Report master to authorities / rival sects
+	option = {
+		name = murim_mentor_exp.0001.c
+		trait = deceitful
+		add_dread = 20
+		add_prestige = 100
+		remove_character_flag = has_martial_master
+		add_character_modifier = {
+			modifier = betrayed_own_master
+			years = 10
+		}
+		create_character_memory = {
+			type = betrayed_master_to_authorities_memory
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_jianghu.0001
+				days = { 30 60 }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 15 has_trait = callous }
+		}
+	}
+}
+
+###############################################################################
+# 12. GRADUATION CEREMONY - DISCIPLE BECOMES A MASTER
+# After years of training, the master declares you ready
+###############################################################################
+murim_mentor_exp.0002 = {
+	type = character_event
+	title = murim_mentor_exp.0002.t
+	desc = murim_mentor_exp.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = has_martial_master
+		prowess >= 15
+		age >= 25
+		NOT = { has_character_flag = graduated_from_master }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 prowess >= 20 }
+		modifier = { add = 1 has_trait = patient }
+	}
+
+	immediate = {
+		set_character_flag = graduated_from_master
+		create_character_memory = {
+			type = graduation_ceremony_memory
+		}
+	}
+
+	# Accept graduation with honor - carry master's teachings forward
+	option = {
+		name = murim_mentor_exp.0002.a
+		add_prestige = 500
+		add_piety = 100
+		add_prowess_skill = 2
+		add_character_modifier = {
+			modifier = graduated_martial_master
+			years = -1
+		}
+		remove_character_flag = has_martial_master
+		add_character_flag = {
+			flag = is_graduated_disciple
+		}
+		create_character_memory = {
+			type = honored_graduation_memory
+		}
+		hidden_effect = {
+			# May trigger ranking entry
+			random_list = {
+				40 = {
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 30 90 }
+					}
+				}
+				60 = { }
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+
+	# Challenge master to final duel to prove superiority
+	option = {
+		name = murim_mentor_exp.0002.b
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = arrogant
+			}
+		}
+		duel = {
+			skill = prowess
+			target = root
+			35 = {
+				desc = murim_mentor_exp.0002.b.surpass
+				add_prestige = 800
+				add_prowess_skill = 3
+				add_character_modifier = {
+					modifier = surpassed_the_master
+					years = -1
+				}
+				create_character_memory = {
+					type = surpassed_master_in_combat_memory
+				}
+				# Cross-ref: triggers ranking challenge
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 14 30 }
+				}
+			}
+			35 = {
+				desc = murim_mentor_exp.0002.b.close
+				add_prestige = 300
+				add_prowess_skill = 1
+				random_list = {
+					70 = { add_trait = wounded_1 }
+					30 = { }
+				}
+				create_character_memory = {
+					type = close_fight_with_master_memory
+				}
+			}
+			30 = {
+				desc = murim_mentor_exp.0002.b.humbled
+				add_prestige = -100
+				random_list = {
+					40 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { add_trait = craven }
+					10 = { add_trait = incapable }
+				}
+				create_character_memory = {
+					type = humbled_by_master_final_duel_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = ambitious }
+		}
+	}
+
+	# Refuse graduation - stay as disciple forever
+	option = {
+		name = murim_mentor_exp.0002.c
+		add_stress = -30
+		add_piety = 50
+		create_character_memory = {
+			type = refused_graduation_stayed_with_master_memory
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+}
+
+###############################################################################
+# 13. MASTER'S SACRIFICE - MASTER DIES PROTECTING YOU
+# The ultimate price paid by a master for their disciple
+###############################################################################
+murim_mentor_exp.0003 = {
+	type = character_event
+	title = murim_mentor_exp.0003.t
+	desc = murim_mentor_exp.0003.desc
+	theme = death
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = has_martial_master
+		NOT = { has_character_flag = master_sacrificed }
+		age >= 20
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 has_character_flag = in_sect_war }
+		modifier = { add = 0.3 any_relation = { type = rival count >= 1 } }
+	}
+
+	immediate = {
+		set_character_flag = master_sacrificed
+		remove_character_flag = has_martial_master
+		create_character_memory = {
+			type = master_sacrificed_for_disciple_memory
+		}
+	}
+
+	# Swear revenge for master's death
+	option = {
+		name = murim_mentor_exp.0003.a
+		add_stress = 50
+		add_prowess_skill = 3
+		add_dread = 30
+		add_character_modifier = {
+			modifier = revenge_for_fallen_master
+			years = 10
+		}
+		create_character_memory = {
+			type = swore_revenge_for_master_memory
+		}
+		hidden_effect = {
+			# Revenge chain triggers duel events
+			trigger_event = {
+				id = murim_duel.0001
+				days = { 60 180 }
+			}
+			# Also triggers fate events - karmic weight
+			random_list = {
+				40 = {
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 90 180 }
+					}
+				}
+				60 = { }
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = vengeful }
+			modifier = { add = 15 has_trait = wrathful }
+		}
+	}
+
+	# Honor master's memory through peaceful cultivation
+	option = {
+		name = murim_mentor_exp.0003.b
+		add_stress = 30
+		add_piety = 200
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = mourning_master_peaceful_path
+			years = 5
+		}
+		create_character_memory = {
+			type = chose_peace_after_master_death_memory
+		}
+		hidden_effect = {
+			# Grief fuels cultivation breakthrough
+			trigger_event = {
+				id = murim_cultivation.0001
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 15 has_trait = calm }
+		}
+	}
+
+	# Abandon the martial path entirely - too much pain
+	option = {
+		name = murim_mentor_exp.0003.c
+		add_stress = -20
+		add_prestige = -200
+		add_character_modifier = {
+			modifier = abandoned_martial_path_grief
+			years = 5
+		}
+		create_character_memory = {
+			type = abandoned_martial_path_after_master_death_memory
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 15 has_trait = craven }
+		}
+	}
+}
+
+###############################################################################
+# 14. BETRAYING THE MASTER - STEALING FORBIDDEN SCROLLS
+# You have the chance to steal your master's secret technique scrolls
+###############################################################################
+murim_mentor_exp.0004 = {
+	type = character_event
+	title = murim_mentor_exp.0004.t
+	desc = murim_mentor_exp.0004.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = has_martial_master
+		NOT = { has_character_flag = betrayed_master }
+		intrigue >= 10
+		OR = {
+			has_trait = ambitious
+			has_trait = deceitful
+			has_trait = greedy
+		}
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 1 has_trait = deceitful }
+		modifier = { add = 0.5 has_trait = greedy }
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = tempted_to_betray_master_memory
+		}
+	}
+
+	# Steal the forbidden scrolls in the dead of night
+	option = {
+		name = murim_mentor_exp.0004.a
+		set_character_flag = betrayed_master
+		remove_character_flag = has_martial_master
+		duel = {
+			skill = intrigue
+			target = root
+			50 = {
+				desc = murim_mentor_exp.0004.a.success
+				add_prowess_skill = 4
+				add_dread = 30
+				add_character_modifier = {
+					modifier = stolen_masters_forbidden_arts
+					years = -1
+				}
+				create_character_memory = {
+					type = stole_master_scrolls_successfully_memory
+				}
+				# Cross-ref: artifact discovery chain
+				hidden_effect = {
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 14 30 }
+					}
+				}
+			}
+			30 = {
+				desc = murim_mentor_exp.0004.a.partial
+				add_prowess_skill = 2
+				add_dread = 15
+				add_character_modifier = {
+					modifier = partial_forbidden_knowledge
+					years = 5
+				}
+				create_character_memory = {
+					type = partial_scroll_theft_memory
+				}
+			}
+			20 = {
+				desc = murim_mentor_exp.0004.a.caught
+				add_prestige = -300
+				random_list = {
+					40 = { add_trait = wounded_2 }
+					30 = { add_trait = wounded_3 }
+					20 = { add_trait = incapable }
+					10 = { add_trait = craven }
+				}
+				add_character_modifier = {
+					modifier = disgraced_traitor_disciple
+					years = 10
+				}
+				create_character_memory = {
+					type = caught_stealing_master_scrolls_memory
+				}
+				# Master seals your meridians as punishment
+				hidden_effect = {
+					trigger_event = {
+						id = murim_cultivation.0005
+						days = { 3 7 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = deceitful }
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+
+	# Resist the temptation - loyalty prevails
+	option = {
+		name = murim_mentor_exp.0004.b
+		add_piety = 100
+		add_stress = -15
+		create_character_memory = {
+			type = resisted_temptation_loyal_to_master_memory
+		}
+		add_character_modifier = {
+			modifier = unshakeable_loyalty
+			years = 5
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = honest }
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Negotiate openly for the knowledge
+	option = {
+		name = murim_mentor_exp.0004.c
+		trigger = { diplomacy >= 12 }
+		add_prowess_skill = 1
+		add_diplomacy_skill = 1
+		create_character_memory = {
+			type = negotiated_for_forbidden_knowledge_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Master agrees - teaches partial technique
+					add_prowess_skill = 2
+				}
+				40 = {
+					# Master refuses but respects the honesty
+					add_prestige = 100
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 diplomacy >= 15 }
+		}
+	}
+}
+
+###############################################################################
+# 15. INHERITING THE LEGACY WEAPON
+# Master passes their legendary weapon to you before death/retirement
+###############################################################################
+murim_mentor_exp.0005 = {
+	type = character_event
+	title = murim_mentor_exp.0005.t
+	desc = murim_mentor_exp.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_character_flag = is_graduated_disciple
+			has_character_flag = master_sacrificed
+		}
+		NOT = { has_character_flag = received_legacy_weapon }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_character_flag = master_sacrificed }
+		modifier = { add = 0.5 prowess >= 18 }
+	}
+
+	immediate = {
+		set_character_flag = received_legacy_weapon
+		create_character_memory = {
+			type = inherited_masters_legacy_weapon_memory
+		}
+	}
+
+	# Accept the weapon with solemn oath to uphold master's honor
+	option = {
+		name = murim_mentor_exp.0005.a
+		add_prestige = 500
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = wielder_of_masters_legacy_weapon
+			years = -1
+		}
+		create_character_memory = {
+			type = swore_oath_on_legacy_weapon_memory
+		}
+		hidden_effect = {
+			# The weapon attracts challengers
+			trigger_event = {
+				id = murim_duel.0001
+				days = { 60 120 }
+			}
+			# Cross-ref: artifact chain
+			random_list = {
+				50 = {
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 30 90 }
+					}
+				}
+				50 = { }
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = honorable }
+		}
+	}
+
+	# Reforge the weapon into something new - forge your own path
+	option = {
+		name = murim_mentor_exp.0005.b
+		add_prestige = 300
+		add_prowess_skill = 2
+		add_martial_skill = 1
+		add_character_modifier = {
+			modifier = reforged_legacy_weapon
+			years = -1
+		}
+		create_character_memory = {
+			type = reforged_masters_weapon_memory
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_artifact.0001
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Seal the weapon away - too dangerous for the world
+	option = {
+		name = murim_mentor_exp.0005.c
+		add_piety = 200
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = sealed_dangerous_legacy_weapon
+			years = 10
+		}
+		create_character_memory = {
+			type = sealed_legacy_weapon_memory
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 15 has_trait = temperate }
+		}
+	}
+}
