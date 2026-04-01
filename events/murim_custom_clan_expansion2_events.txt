@@ -1,0 +1,1050 @@
+namespace = murim_custom_clan_exp2
+
+# Custom Clan Creation Expansion 2 — Vote Path + Supreme Path
+# 10 complete events for two major clan creation paths
+
+######################################
+# EVENT 0001 — Vote Path: Clan Assembly Called
+# Democratic clan creation — gather martial artists to vote on leadership
+######################################
+murim_custom_clan_exp2.0001 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0001.t
+	desc = murim_custom_clan_exp2.0001.desc
+	theme = diplomacy_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:first_supporter
+		animation = personality_compassionate
+	}
+	lower_left_portrait = {
+		character = scope:second_supporter
+		animation = idle
+	}
+
+	trigger = {
+		NOT = { has_variable = murim_clan_id }
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		diplomacy >= 14
+		NOT = { has_character_flag = custom_clan_vote_started }
+		any_known_character = {
+			count >= 5
+			NOT = { has_variable = murim_clan_id }
+			has_variable = murim_cultivation_level
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = gregarious
+		}
+		modifier = {
+			add = 2
+			diplomacy >= 18
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = custom_clan_vote_started }
+		random_known_character = {
+			limit = {
+				NOT = { has_variable = murim_clan_id }
+				has_variable = murim_cultivation_level
+			}
+			save_scope_as = first_supporter
+		}
+		random_known_character = {
+			limit = {
+				NOT = { has_variable = murim_clan_id }
+				has_variable = murim_cultivation_level
+				NOT = { this = scope:first_supporter }
+			}
+			save_scope_as = second_supporter
+		}
+	}
+
+	# Call the assembly — seek democratic mandate
+	option = {
+		name = murim_custom_clan_exp2.0001.a
+		add_character_modifier = {
+			modifier = clan_assembly_organizer
+			years = 3
+		}
+		add_prestige = 200
+		add_gold = -100
+		hidden_effect = {
+			trigger_event = {
+				id = murim_custom_clan_exp2.0002
+				days = { 30 60 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Skip the vote — just recruit directly
+	option = {
+		name = murim_custom_clan_exp2.0001.b
+		add_prestige = -50
+		hidden_effect = {
+			trigger_event = {
+				id = murim_custom_clan_exp2.0005
+				days = { 14 30 }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Abandon the idea
+	option = {
+		name = murim_custom_clan_exp2.0001.c
+		add_stress = 10
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0002 — Vote Path: The Election
+# Martial artists vote on who leads the new clan
+######################################
+murim_custom_clan_exp2.0002 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0002.t
+	desc = murim_custom_clan_exp2.0002.desc
+	theme = diplomacy_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:vote_rival
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_character_flag = custom_clan_vote_started
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_known_character = {
+					NOT = { has_variable = murim_clan_id }
+					has_variable = murim_cultivation_level
+					NOT = { this = root }
+					diplomacy >= 12
+				}
+			}
+			random_known_character = {
+				limit = {
+					NOT = { has_variable = murim_clan_id }
+					has_variable = murim_cultivation_level
+					NOT = { this = root }
+					diplomacy >= 12
+				}
+				save_scope_as = vote_rival
+			}
+		}
+	}
+
+	# Win the vote through charisma and speeches
+	option = {
+		name = murim_custom_clan_exp2.0002.a
+		duel = {
+			skill = diplomacy
+			target = scope:vote_rival
+			55 = {
+				desc = murim_custom_clan_exp2.0002.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				send_interface_toast = {
+					title = murim_custom_clan_exp2.0002.a.success.toast
+					left_icon = root
+					add_prestige = 500
+					set_variable = {
+						name = murim_clan_id
+						value = 10
+					}
+					set_variable = {
+						name = murim_custom_clan_name
+						value = flag:vote_clan
+					}
+					add_trait = vote_elected_leader
+					add_character_modifier = {
+						modifier = democratically_elected_clan_leader
+						years = 20
+					}
+					scope:vote_rival = {
+						add_opinion = {
+							target = root
+							modifier = lost_election_gracefully
+							opinion = -10
+						}
+						set_variable = {
+							name = murim_clan_id
+							value = 10
+						}
+					}
+				}
+			}
+			45 = {
+				desc = murim_custom_clan_exp2.0002.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				send_interface_toast = {
+					title = murim_custom_clan_exp2.0002.a.failure.toast
+					left_icon = root
+					add_prestige = -200
+					scope:vote_rival = {
+						add_trait = vote_elected_leader
+						set_variable = {
+							name = murim_clan_id
+							value = 10
+						}
+					}
+					set_variable = {
+						name = murim_clan_id
+						value = 10
+					}
+					add_character_modifier = {
+						modifier = lost_clan_election
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Rig the vote through bribery
+	option = {
+		name = murim_custom_clan_exp2.0002.b
+		trigger = {
+			gold >= 200
+			intrigue >= 12
+		}
+		add_gold = -200
+		add_prestige = 300
+		set_variable = {
+			name = murim_clan_id
+			value = 10
+		}
+		add_trait = vote_elected_leader
+		add_secret = {
+			type = secret_rigged_election
+			target = root
+		}
+		add_character_modifier = {
+			modifier = rigged_clan_election
+			years = 10
+		}
+		ai_chance = { base = 25 }
+	}
+
+	# Concede before the vote — let the rival lead
+	option = {
+		name = murim_custom_clan_exp2.0002.c
+		trigger = {
+			exists = scope:vote_rival
+		}
+		scope:vote_rival = {
+			add_opinion = {
+				target = root
+				modifier = graceful_concession
+				opinion = 30
+			}
+			add_trait = vote_elected_leader
+		}
+		set_variable = {
+			name = murim_clan_id
+			value = 10
+		}
+		add_prestige = 100
+		add_piety = 100
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0003 — Vote Path: First Clan Charter
+# Establishing the founding principles
+######################################
+murim_custom_clan_exp2.0003 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0003.t
+	desc = murim_custom_clan_exp2.0003.desc
+	theme = diplomacy_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = vote_elected_leader
+		NOT = { has_character_flag = clan_charter_written }
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		set_character_flag = clan_charter_written
+	}
+
+	# Orthodox principles — honor, righteousness, protect the weak
+	option = {
+		name = murim_custom_clan_exp2.0003.a
+		add_trait = orthodox_clan_founder
+		add_piety = 300
+		add_character_modifier = {
+			modifier = orthodox_clan_charter
+			years = 30
+		}
+		every_courtier = {
+			limit = { var:murim_clan_id = root.var:murim_clan_id }
+			add_opinion = {
+				target = root
+				modifier = noble_charter
+				opinion = 15
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Unorthodox principles — strength above all, survival of the fittest
+	option = {
+		name = murim_custom_clan_exp2.0003.b
+		add_trait = unorthodox_clan_founder
+		add_dread = 20
+		add_character_modifier = {
+			modifier = unorthodox_clan_charter
+			years = 30
+		}
+		add_prowess_skill = 2
+		ai_chance = { base = 30 }
+	}
+
+	# Neutral principles — balance, adaptability, pragmatism
+	option = {
+		name = murim_custom_clan_exp2.0003.c
+		add_trait = neutral_clan_founder
+		add_diplomacy_skill = 2
+		add_character_modifier = {
+			modifier = neutral_clan_charter
+			years = 30
+		}
+		add_prestige = 200
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# EVENT 0004 — Vote Path: Clan Technique Selection
+# The vote path clan chooses its signature martial art
+######################################
+murim_custom_clan_exp2.0004 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0004.t
+	desc = murim_custom_clan_exp2.0004.desc
+	theme = education_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = vote_elected_leader
+		has_character_flag = clan_charter_written
+		NOT = { has_character_flag = clan_technique_chosen }
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		set_character_flag = clan_technique_chosen
+	}
+
+	# Sword-based technique school
+	option = {
+		name = murim_custom_clan_exp2.0004.a
+		add_trait = custom_sword_school
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = founding_sword_technique
+			years = 20
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Internal energy / qi manipulation school
+	option = {
+		name = murim_custom_clan_exp2.0004.b
+		add_trait = custom_qi_school
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = founding_qi_technique
+			years = 20
+		}
+		change_variable = { name = murim_cultivation_level add = 1 }
+		ai_chance = { base = 30 }
+	}
+
+	# Deception / stealth school
+	option = {
+		name = murim_custom_clan_exp2.0004.c
+		add_trait = custom_shadow_school
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = founding_shadow_technique
+			years = 20
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Hybrid — combine multiple arts
+	option = {
+		name = murim_custom_clan_exp2.0004.d
+		trigger = {
+			var:murim_cultivation_level >= 6
+		}
+		add_trait = custom_hybrid_school
+		add_prowess_skill = 2
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = founding_hybrid_technique
+			years = 20
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0005 — Supreme Path: Declaration of Supremacy
+# Solo clan creation — one master forces others to follow
+######################################
+murim_custom_clan_exp2.0005 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0005.t
+	desc = murim_custom_clan_exp2.0005.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:first_challenge
+		animation = fear
+	}
+
+	trigger = {
+		NOT = { has_variable = murim_clan_id }
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 6
+		prowess >= 18
+		NOT = { has_character_flag = supreme_path_declared }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 3
+			prowess >= 22
+		}
+	}
+
+	immediate = {
+		set_character_flag = supreme_path_declared
+		random_known_character = {
+			limit = {
+				has_variable = murim_cultivation_level
+				NOT = { this = root }
+			}
+			save_scope_as = first_challenge
+		}
+	}
+
+	# Defeat all challengers to prove supremacy
+	option = {
+		name = murim_custom_clan_exp2.0005.a
+		duel = {
+			skill = prowess
+			target = scope:first_challenge
+			60 = {
+				desc = murim_custom_clan_exp2.0005.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				send_interface_toast = {
+					title = murim_custom_clan_exp2.0005.a.success.toast
+					left_icon = root
+					add_prestige = 800
+					add_dread = 50
+					set_variable = {
+						name = murim_clan_id
+						value = 11
+					}
+					add_trait = supreme_clan_founder
+					add_character_modifier = {
+						modifier = feared_supreme_leader
+						years = 30
+					}
+					scope:first_challenge = {
+						set_variable = {
+							name = murim_clan_id
+							value = 11
+						}
+						add_opinion = {
+							target = root
+							modifier = defeated_and_subjugated
+							opinion = -20
+						}
+					}
+				}
+			}
+			40 = {
+				desc = murim_custom_clan_exp2.0005.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				send_interface_toast = {
+					title = murim_custom_clan_exp2.0005.a.failure.toast
+					left_icon = root
+					add_prestige = -500
+					health = -2
+					add_character_modifier = {
+						modifier = supreme_path_humiliation
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Demonstrate overwhelming power without fighting
+	option = {
+		name = murim_custom_clan_exp2.0005.b
+		trigger = {
+			var:murim_cultivation_level >= 8
+		}
+		add_prestige = 1000
+		add_dread = 80
+		set_variable = {
+			name = murim_clan_id
+			value = 11
+		}
+		add_trait = supreme_clan_founder
+		add_character_modifier = {
+			modifier = awe_inspiring_supreme_leader
+			years = 30
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# EVENT 0006 — Supreme Path: Forced Recruitment
+# Supreme leader forces martial artists to join or die
+######################################
+murim_custom_clan_exp2.0006 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0006.t
+	desc = murim_custom_clan_exp2.0006.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:recruitment_target
+		animation = fear
+	}
+
+	trigger = {
+		has_trait = supreme_clan_founder
+		any_known_character = {
+			NOT = { has_variable = murim_clan_id }
+			has_variable = murim_cultivation_level
+			is_ai = yes
+		}
+		NOT = { has_character_flag = supreme_recruitment_done }
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		set_character_flag = { flag = supreme_recruitment_done days = 365 }
+		random_known_character = {
+			limit = {
+				NOT = { has_variable = murim_clan_id }
+				has_variable = murim_cultivation_level
+				is_ai = yes
+			}
+			save_scope_as = recruitment_target
+		}
+	}
+
+	# Submit or die
+	option = {
+		name = murim_custom_clan_exp2.0006.a
+		duel = {
+			skill = prowess
+			target = scope:recruitment_target
+			70 = {
+				desc = murim_custom_clan_exp2.0006.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				scope:recruitment_target = {
+					set_variable = {
+						name = murim_clan_id
+						value = root.var:murim_clan_id
+					}
+					add_opinion = {
+						target = root
+						modifier = forced_into_clan
+						opinion = -30
+					}
+				}
+				add_dread = 15
+			}
+			30 = {
+				desc = murim_custom_clan_exp2.0006.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				add_prestige = -100
+				scope:recruitment_target = {
+					add_character_modifier = {
+						modifier = escaped_supreme_recruitment
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Offer partnership instead
+	option = {
+		name = murim_custom_clan_exp2.0006.b
+		add_gold = -100
+		scope:recruitment_target = {
+			set_variable = {
+				name = murim_clan_id
+				value = root.var:murim_clan_id
+			}
+			add_opinion = {
+				target = root
+				modifier = offered_partnership
+				opinion = 15
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Let them go — not worth the effort
+	option = {
+		name = murim_custom_clan_exp2.0006.c
+		add_prestige = -50
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0007 — Supreme Path: Territory Seizure
+# Supreme clan takes territory by force
+######################################
+murim_custom_clan_exp2.0007 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0007.t
+	desc = murim_custom_clan_exp2.0007.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	trigger = {
+		has_trait = supreme_clan_founder
+		NOT = { has_character_flag = supreme_territory_seized }
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = supreme_territory_seized
+	}
+
+	# Seize a mountain stronghold
+	option = {
+		name = murim_custom_clan_exp2.0007.a
+		add_character_modifier = {
+			modifier = mountain_stronghold_base
+			years = 30
+		}
+		add_prestige = 500
+		add_gold = -200
+		ai_chance = { base = 40 }
+	}
+
+	# Claim an abandoned sect compound
+	option = {
+		name = murim_custom_clan_exp2.0007.b
+		add_character_modifier = {
+			modifier = reclaimed_sect_compound
+			years = 30
+		}
+		add_prestige = 300
+		ai_chance = { base = 35 }
+	}
+
+	# Build a hidden underground base
+	option = {
+		name = murim_custom_clan_exp2.0007.c
+		add_character_modifier = {
+			modifier = hidden_underground_base
+			years = 30
+		}
+		add_intrigue_skill = 2
+		add_gold = -300
+		ai_chance = { base = 25 }
+	}
+}
+
+######################################
+# EVENT 0008 — Both Paths: First Generation Disciples
+# New clan trains its founding disciples
+######################################
+murim_custom_clan_exp2.0008 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0008.t
+	desc = murim_custom_clan_exp2.0008.desc
+	theme = education_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:first_disciple
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		OR = {
+			has_trait = vote_elected_leader
+			has_trait = supreme_clan_founder
+		}
+		NOT = { has_character_flag = first_gen_disciples_trained }
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		set_character_flag = first_gen_disciples_trained
+		create_character = {
+			template = murim_young_disciple_template
+			save_scope_as = first_disciple
+		}
+	}
+
+	# Strict training regimen
+	option = {
+		name = murim_custom_clan_exp2.0008.a
+		scope:first_disciple = {
+			add_prowess_skill = 3
+			add_martial_skill = 2
+			add_character_modifier = {
+				modifier = strictly_trained_disciple
+				years = 10
+			}
+			set_variable = {
+				name = murim_clan_id
+				value = root.var:murim_clan_id
+			}
+		}
+		add_prestige = 200
+		ai_chance = { base = 40 }
+	}
+
+	# Nurturing approach — balanced development
+	option = {
+		name = murim_custom_clan_exp2.0008.b
+		scope:first_disciple = {
+			add_prowess_skill = 1
+			add_diplomacy_skill = 1
+			add_learning_skill = 1
+			add_intrigue_skill = 1
+			add_character_modifier = {
+				modifier = balanced_trained_disciple
+				years = 10
+			}
+			set_variable = {
+				name = murim_clan_id
+				value = root.var:murim_clan_id
+			}
+		}
+		add_prestige = 150
+		ai_chance = { base = 35 }
+	}
+
+	# Survival of the fittest — let them struggle
+	option = {
+		name = murim_custom_clan_exp2.0008.c
+		scope:first_disciple = {
+			random = {
+				chance = 70
+				add_prowess_skill = 5
+				add_trait = battle_hardened
+			}
+			random = {
+				chance = 30
+				health = -3
+			}
+			set_variable = {
+				name = murim_clan_id
+				value = root.var:murim_clan_id
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+######################################
+# EVENT 0009 — Both Paths: Rival Clan Challenge
+# Established clans challenge the legitimacy of the new clan
+######################################
+murim_custom_clan_exp2.0009 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0009.t
+	desc = murim_custom_clan_exp2.0009.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:challenger_clan_leader
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		OR = {
+			has_trait = vote_elected_leader
+			has_trait = supreme_clan_founder
+		}
+		NOT = { has_character_flag = rival_clan_challenge_faced }
+		any_ruler = {
+			OR = {
+				has_trait = mount_hua_member
+				has_trait = shaolin_member
+				has_trait = wudang_member
+				has_trait = iron_fist_member
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = rival_clan_challenge_faced
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+					has_trait = iron_fist_member
+				}
+			}
+			save_scope_as = challenger_clan_leader
+		}
+	}
+
+	# Accept the challenge and fight for legitimacy
+	option = {
+		name = murim_custom_clan_exp2.0009.a
+		duel = {
+			skill = prowess
+			target = scope:challenger_clan_leader
+			50 = {
+				desc = murim_custom_clan_exp2.0009.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				send_interface_toast = {
+					title = murim_custom_clan_exp2.0009.a.success.toast
+					left_icon = root
+					add_prestige = 800
+					add_character_modifier = {
+						modifier = proven_clan_legitimacy
+						years = 20
+					}
+					scope:challenger_clan_leader = {
+						add_opinion = {
+							target = root
+							modifier = earned_respect_in_combat
+							opinion = 20
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_custom_clan_exp2.0009.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				send_interface_toast = {
+					title = murim_custom_clan_exp2.0009.a.failure.toast
+					left_icon = root
+					add_prestige = -400
+					add_character_modifier = {
+						modifier = clan_legitimacy_questioned
+						years = 5
+					}
+					health = -1
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Negotiate through diplomacy
+	option = {
+		name = murim_custom_clan_exp2.0009.b
+		trigger = {
+			diplomacy >= 16
+		}
+		add_gold = -200
+		scope:challenger_clan_leader = {
+			add_opinion = {
+				target = root
+				modifier = diplomatic_resolution
+				opinion = 10
+			}
+		}
+		add_character_modifier = {
+			modifier = diplomatically_recognized_clan
+			years = 15
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Ignore the challenge — let time prove your worth
+	option = {
+		name = murim_custom_clan_exp2.0009.c
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = ignored_clan_challenge
+			years = 3
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0010 — Both Paths: Custom Clan Established
+# The new clan is fully recognized in Murim
+######################################
+murim_custom_clan_exp2.0010 = {
+	type = character_event
+	title = murim_custom_clan_exp2.0010.t
+	desc = murim_custom_clan_exp2.0010.desc
+	theme = diplomacy_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		OR = {
+			has_trait = vote_elected_leader
+			has_trait = supreme_clan_founder
+		}
+		has_character_flag = first_gen_disciples_trained
+		NOT = { has_character_flag = custom_clan_fully_established }
+	}
+
+	weight_multiplier = {
+		base = 8
+	}
+
+	immediate = {
+		set_character_flag = custom_clan_fully_established
+	}
+
+	# Grand establishment ceremony — invite all clans
+	option = {
+		name = murim_custom_clan_exp2.0010.a
+		add_gold = -300
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = grand_clan_establishment
+			years = 30
+		}
+		every_ruler = {
+			limit = { has_variable = murim_clan_id }
+			add_opinion = {
+				target = root
+				modifier = invited_to_establishment
+				opinion = 10
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Quiet establishment — actions speak louder than ceremonies
+	option = {
+		name = murim_custom_clan_exp2.0010.b
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = humble_clan_establishment
+			years = 20
+		}
+		add_piety = 200
+		ai_chance = { base = 30 }
+	}
+
+	# Establish through a martial demonstration
+	option = {
+		name = murim_custom_clan_exp2.0010.c
+		add_prestige = 700
+		add_dread = 30
+		add_character_modifier = {
+			modifier = martial_demonstration_establishment
+			years = 20
+		}
+		add_prowess_skill = 2
+		ai_chance = { base = 20 }
+	}
+}
