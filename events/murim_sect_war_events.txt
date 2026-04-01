@@ -1,0 +1,1090 @@
+###############################################################################
+# MURIM SECT WAR EVENTS
+# Large-scale inter-sect warfare, siege, betrayal in battle, alliance warfare
+# 1. Sect Fortress Siege - Attacking or defending a rival sect's compound
+# 2. Battlefield Betrayal - An ally switches sides mid-war
+# 3. War Council Strategy - Planning the next assault with elders
+# 4. Champion Duel Before Armies - Deciding war outcome via single combat
+# 5. Sect Annihilation Aftermath - Dealing with the ruins of a destroyed sect
+# Cross-references: murim_duel_events, murim_ranking_events, murim_politics_events,
+#                   murim_sect_events, murim_ranker_death_events, murim_fate_events,
+#                   murim_artifact_events, murim_faction_events
+###############################################################################
+
+namespace = murim_sect_war
+
+###############################################################################
+# 1. SECT FORTRESS SIEGE
+# Your forces assault a rival sect's mountain fortress
+###############################################################################
+murim_sect_war.0001 = {
+	type = character_event
+	title = murim_sect_war.0001.t
+	desc = murim_sect_war.0001.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:siege_defender
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		prowess >= 10
+		martial >= 8
+		NOT = { has_character_flag = leading_sect_siege }
+		NOT = { has_trait = incapable }
+		any_relation = {
+			type = rival
+			is_alive = yes
+			is_ruler = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 0.3
+		modifier = { add = 0.4 martial >= 15 }
+		modifier = { add = 0.3 has_trait = wrathful }
+		modifier = { add = 0.3 has_trait = ambitious }
+		modifier = { add = 0.2 prowess >= 20 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = leading_sect_siege
+			years = 5
+		}
+		random_relation = {
+			type = rival
+			limit = {
+				is_alive = yes
+				is_ruler = yes
+			}
+			save_scope_as = siege_defender
+		}
+		create_character_memory = {
+			type = led_sect_fortress_siege_memory
+		}
+	}
+
+	# Lead the charge personally - storm the gates
+	option = {
+		name = murim_sect_war.0001.a
+		add_martial_skill = 2
+		add_prowess_skill = 1
+		add_prestige = 500
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		add_character_modifier = {
+			modifier = siege_commander_fame
+			years = 10
+		}
+		create_character_memory = {
+			type = stormed_sect_fortress_gates_memory
+		}
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Overwhelming victory - fortress falls
+					add_prestige = 500
+					add_prowess_skill = 2
+					scope:siege_defender = {
+						add_prestige = -500
+						create_character_memory = {
+							type = fortress_fell_to_siege_memory
+						}
+						trigger_event = {
+							id = murim_sect.0003
+							days = { 7 14 }
+						}
+					}
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Victory but wounded in the assault
+					add_prestige = 300
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = scarred }
+					}
+					create_character_memory = {
+						type = wounded_storming_fortress_memory
+					}
+				}
+				20 = {
+					# Stalemate - both sides retreat to regroup
+					add_prestige = 100
+					add_stress = 30
+					create_character_memory = {
+						type = siege_stalemate_memory
+					}
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 30 60 }
+					}
+				}
+				15 = {
+					# Devastating defeat - formation arrays overwhelm
+					add_prestige = -300
+					add_trait = wounded_2
+					add_stress = 50
+					create_character_memory = {
+						type = siege_catastrophic_defeat_memory
+					}
+				}
+				5 = {
+					# Critical injury in the breach
+					add_trait = incapable
+					create_character_memory = {
+						type = crippled_in_fortress_breach_memory
+					}
+					trigger_event = {
+						id = murim_ranker_death.0003
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 prowess >= 20 }
+		}
+	}
+
+	# Send disciples first while directing from the rear
+	option = {
+		name = murim_sect_war.0001.b
+		add_martial_skill = 3
+		add_prestige = 300
+		add_tyranny = 10
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			callous = minor_stress_impact_loss
+		}
+		add_character_modifier = {
+			modifier = ruthless_war_commander
+			years = 5
+		}
+		create_character_memory = {
+			type = commanded_disciples_into_breach_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Disciples succeed but suffer heavy losses
+					add_prestige = 400
+					add_piety = -100
+					create_character_memory = {
+						type = disciples_paid_heavy_price_memory
+					}
+				}
+				30 = {
+					# Disciples are repelled - your reputation suffers
+					add_prestige = -200
+					add_stress = 40
+					create_character_memory = {
+						type = disciples_repelled_shame_memory
+					}
+				}
+				20 = {
+					# A disciple betrays you and opens gates for enemy
+					trigger_event = {
+						id = murim_sect_war.0002
+						days = { 3 7 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = callous }
+			modifier = { add = 15 martial >= 18 }
+		}
+	}
+
+	# Negotiate - offer terms before blood is spilled
+	option = {
+		name = murim_sect_war.0001.c
+		add_diplomacy_skill = 2
+		add_prestige = 150
+		add_piety = 50
+		stress_impact = {
+			wrathful = major_stress_impact_gain
+			forgiving = minor_stress_impact_loss
+		}
+		create_character_memory = {
+			type = offered_terms_before_siege_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Terms accepted - tribute paid
+					add_gold = 300
+					add_prestige = 200
+					trigger_event = {
+						id = murim_politics.0002
+						days = { 14 30 }
+					}
+				}
+				35 = {
+					# Terms rejected with insult
+					add_prestige = -100
+					add_stress = 25
+					scope:siege_defender = {
+						add_prestige = 100
+					}
+				}
+				25 = {
+					# Counter-offer leads to alliance against common enemy
+					trigger_event = {
+						id = murim_faction.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = diplomacy_lifestyle }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+}
+
+###############################################################################
+# 2. BATTLEFIELD BETRAYAL
+# An allied sect switches sides in the middle of a battle
+###############################################################################
+murim_sect_war.0002 = {
+	type = character_event
+	title = murim_sect_war.0002.t
+	desc = murim_sect_war.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		NOT = { has_character_flag = suffered_battlefield_betrayal }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.2
+		modifier = { add = 0.3 has_trait = trusting }
+		modifier = { add = 0.2 intrigue < 10 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = suffered_battlefield_betrayal
+			years = 10
+		}
+		create_character_memory = {
+			type = betrayed_on_battlefield_memory
+		}
+	}
+
+	# Fight your way out - cut through both armies
+	option = {
+		name = murim_sect_war.0002.a
+		add_prowess_skill = 3
+		add_prestige = 400
+		add_stress = 40
+		stress_impact = {
+			brave = minor_stress_impact_loss
+		}
+		add_character_modifier = {
+			modifier = survived_battlefield_betrayal
+			years = 10
+		}
+		create_character_memory = {
+			type = fought_through_double_army_memory
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Legendary escape - reputation soars
+					add_prestige = 500
+					add_prowess_skill = 2
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 7 14 }
+					}
+				}
+				30 = {
+					# Escape but gravely wounded
+					random_list = {
+						40 = { add_trait = wounded_2 }
+						30 = { add_trait = wounded_3 }
+						30 = { add_trait = scarred }
+					}
+					create_character_memory = {
+						type = gravely_wounded_escaping_betrayal_memory
+					}
+				}
+				25 = {
+					# Escape with loyal disciples, vow revenge
+					add_trait = vengeful
+					create_character_memory = {
+						type = swore_revenge_for_betrayal_memory
+					}
+					trigger_event = {
+						id = murim_duel.0005
+						days = { 30 90 }
+					}
+				}
+				15 = {
+					# Overwhelmed - captured
+					add_trait = incapable
+					add_prestige = -500
+					create_character_memory = {
+						type = captured_after_betrayal_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 45
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 prowess >= 20 }
+		}
+	}
+
+	# Use the chaos to fake your death and escape
+	option = {
+		name = murim_sect_war.0002.b
+		add_intrigue_skill = 3
+		add_prestige = -200
+		add_stress = 20
+		add_character_modifier = {
+			modifier = faked_death_on_battlefield
+			years = 5
+		}
+		create_character_memory = {
+			type = faked_death_during_betrayal_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Successfully disappear - world thinks you dead
+					add_intrigue_skill = 2
+					trigger_event = {
+						id = murim_ranker_death.0001
+						days = { 7 14 }
+					}
+				}
+				40 = {
+					# Deception discovered - hunted as coward
+					add_trait = craven
+					add_prestige = -300
+					create_character_memory = {
+						type = discovered_faking_death_shame_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 15 intrigue >= 15 }
+		}
+	}
+
+	# Rally remaining loyal forces for a desperate last stand
+	option = {
+		name = murim_sect_war.0002.c
+		add_martial_skill = 2
+		add_prowess_skill = 2
+		add_prestige = 300
+		add_piety = 100
+		stress_impact = {
+			craven = massive_stress_impact_gain
+		}
+		create_character_memory = {
+			type = rallied_last_stand_against_betrayal_memory
+		}
+		hidden_effect = {
+			random_list = {
+				25 = {
+					# Miraculous victory - turn the tide
+					add_prestige = 800
+					add_prowess_skill = 3
+					create_character_memory = {
+						type = turned_tide_against_betrayal_memory
+					}
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 7 14 }
+					}
+				}
+				35 = {
+					# Heroic stand but forced retreat
+					add_prestige = 200
+					add_trait = wounded_1
+				}
+				25 = {
+					# Devastating losses - most disciples fall
+					add_prestige = -100
+					add_stress = 60
+					add_trait = wounded_2
+					create_character_memory = {
+						type = disciples_fell_in_last_stand_memory
+					}
+					trigger_event = {
+						id = murim_fate.0002
+						days = { 14 30 }
+					}
+				}
+				15 = {
+					# Glorious death in battle
+					add_trait = incapable
+					create_character_memory = {
+						type = fell_in_glorious_last_stand_memory
+					}
+					trigger_event = {
+						id = murim_ranker_death.0005
+						days = { 3 7 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+}
+
+###############################################################################
+# 3. WAR COUNCIL STRATEGY
+# Elders gather to plan the next phase of sect warfare
+###############################################################################
+murim_sect_war.0003 = {
+	type = character_event
+	title = murim_sect_war.0003.t
+	desc = murim_sect_war.0003.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		martial >= 8
+		NOT = { has_character_flag = held_war_council }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.3
+		modifier = { add = 0.4 martial >= 15 }
+		modifier = { add = 0.3 has_trait = strategist }
+		modifier = { add = 0.2 diplomacy >= 12 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = held_war_council
+			years = 3
+		}
+		create_character_memory = {
+			type = held_sect_war_council_memory
+		}
+	}
+
+	# Aggressive strategy - full assault on enemy heartland
+	option = {
+		name = murim_sect_war.0003.a
+		add_martial_skill = 2
+		add_prestige = 300
+		add_stress = 20
+		add_character_modifier = {
+			modifier = aggressive_war_planner
+			years = 5
+		}
+		create_character_memory = {
+			type = planned_aggressive_war_strategy_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Strategy succeeds - crushing advance
+					add_prestige = 500
+					trigger_event = {
+						id = murim_sect_war.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Overextended - supply lines cut
+					add_prestige = -200
+					add_stress = 30
+					create_character_memory = {
+						type = overextended_war_supply_cut_memory
+					}
+				}
+				30 = {
+					# Enemy launches counter-attack
+					trigger_event = {
+						id = murim_duel_exp.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = wrathful }
+			modifier = { add = 15 martial >= 18 }
+		}
+	}
+
+	# Defensive strategy - fortify and wear them down
+	option = {
+		name = murim_sect_war.0003.b
+		add_martial_skill = 1
+		add_learning_skill = 1
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = patient_war_strategist
+			years = 5
+		}
+		create_character_memory = {
+			type = planned_defensive_attrition_strategy_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Enemy exhausts themselves - morale collapses
+					add_prestige = 400
+					trigger_event = {
+						id = murim_politics.0003
+						days = { 60 120 }
+					}
+				}
+				30 = {
+					# Stalemate drags on - your disciples grow restless
+					add_stress = 40
+					create_character_memory = {
+						type = disciples_restless_during_siege_memory
+					}
+				}
+				20 = {
+					# Enemy finds a weakness in your defenses
+					add_prestige = -150
+					trigger_event = {
+						id = murim_sect_war.0002
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 15 has_trait = temperate }
+		}
+	}
+
+	# Covert strategy - infiltrate and assassinate enemy leadership
+	option = {
+		name = murim_sect_war.0003.c
+		add_intrigue_skill = 3
+		add_prestige = 100
+		add_piety = -50
+		stress_impact = {
+			just = major_stress_impact_gain
+			honest = minor_stress_impact_gain
+		}
+		add_character_modifier = {
+			modifier = shadow_war_tactician
+			years = 5
+		}
+		create_character_memory = {
+			type = planned_shadow_assassination_strategy_memory
+		}
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Assassination succeeds - enemy sect in chaos
+					add_prestige = 600
+					add_intrigue_skill = 2
+					trigger_event = {
+						id = murim_jianghu.0005
+						days = { 14 30 }
+					}
+				}
+				35 = {
+					# Assassin discovered - war escalates
+					add_prestige = -300
+					add_stress = 30
+					create_character_memory = {
+						type = assassination_plot_discovered_memory
+					}
+				}
+				30 = {
+					# Double agent - your assassin was a spy
+					add_prestige = -400
+					trigger_event = {
+						id = murim_sect_war.0002
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 20 intrigue >= 18 }
+		}
+	}
+}
+
+###############################################################################
+# 4. CHAMPION DUEL BEFORE ARMIES
+# Two sects agree to settle war via single combat between champions
+###############################################################################
+murim_sect_war.0004 = {
+	type = character_event
+	title = murim_sect_war.0004.t
+	desc = murim_sect_war.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:enemy_champion
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 15
+		NOT = { has_character_flag = fought_champion_duel_for_sect }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.2
+		modifier = { add = 0.4 prowess >= 25 }
+		modifier = { add = 0.3 has_trait = brave }
+		modifier = { add = 0.2 has_trait = ambitious }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = fought_champion_duel_for_sect
+			years = 10
+		}
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				prowess >= 12
+				NOT = { this = root }
+			}
+			save_scope_as = enemy_champion
+		}
+		create_character_memory = {
+			type = fought_as_champion_before_armies_memory
+		}
+	}
+
+	# Fight with everything - hold nothing back
+	option = {
+		name = murim_sect_war.0004.a
+		add_prowess_skill = 2
+		add_prestige = 500
+		add_stress = 30
+		create_character_memory = {
+			type = unleashed_full_power_champion_duel_memory
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Decisive victory - enemy champion slain
+					add_prestige = 800
+					add_prowess_skill = 3
+					add_character_modifier = {
+						modifier = champion_of_the_sect_war
+						years = 15
+					}
+					scope:enemy_champion = {
+						add_trait = incapable
+						create_character_memory = {
+							type = slain_as_champion_in_sect_war_memory
+						}
+					}
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 7 14 }
+					}
+					trigger_event = {
+						id = murim_ranker_death.0001
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Hard-won victory but badly wounded
+					add_prestige = 500
+					add_trait = wounded_3
+					add_trait = scarred
+					create_character_memory = {
+						type = won_champion_duel_gravely_wounded_memory
+					}
+				}
+				20 = {
+					# Mutual destruction - both collapse
+					add_trait = wounded_3
+					add_prestige = 200
+					scope:enemy_champion = {
+						add_trait = wounded_3
+					}
+					create_character_memory = {
+						type = mutual_destruction_champion_duel_memory
+					}
+					trigger_event = {
+						id = murim_fate.0003
+						days = { 7 14 }
+					}
+				}
+				15 = {
+					# Defeated - your sect must surrender
+					add_prestige = -500
+					add_trait = wounded_2
+					add_trait = craven
+					add_stress = 60
+					create_character_memory = {
+						type = lost_champion_duel_sect_surrenders_memory
+					}
+				}
+				10 = {
+					# Fatal blow received
+					add_trait = incapable
+					create_character_memory = {
+						type = fell_as_champion_duel_fatality_memory
+					}
+					trigger_event = {
+						id = murim_ranker_death.0005
+						days = { 1 3 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 prowess >= 25 }
+		}
+	}
+
+	# Use secret technique - reveal hidden martial art
+	option = {
+		name = murim_sect_war.0004.b
+		add_prowess_skill = 3
+		add_prestige = 600
+		add_stress = 40
+		add_character_modifier = {
+			modifier = revealed_secret_technique_in_war
+			years = 10
+		}
+		create_character_memory = {
+			type = used_secret_technique_in_champion_duel_memory
+		}
+		hidden_effect = {
+			random_list = {
+				45 = {
+					# Secret technique overwhelms - instant victory
+					add_prestige = 700
+					add_prowess_skill = 2
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 3 7 }
+					}
+				}
+				30 = {
+					# Technique strains your body but wins
+					add_prestige = 400
+					add_trait = wounded_2
+					create_character_memory = {
+						type = body_strained_from_secret_technique_memory
+					}
+					trigger_event = {
+						id = murim_cultivation.0003
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Enemy counters your technique - devastating
+					add_prestige = -300
+					add_trait = wounded_3
+					add_stress = 50
+					create_character_memory = {
+						type = secret_technique_countered_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 learning >= 15 }
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+
+	# Refuse the duel - nominate another champion
+	option = {
+		name = murim_sect_war.0004.c
+		add_prestige = -200
+		add_diplomacy_skill = 1
+		add_stress = 15
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = refused_champion_duel_sent_another_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Your substitute wins
+					add_prestige = 200
+					create_character_memory = {
+						type = substitute_champion_won_memory
+					}
+				}
+				30 = {
+					# Your substitute loses
+					add_prestige = -400
+					add_stress = 50
+					create_character_memory = {
+						type = substitute_champion_lost_memory
+					}
+				}
+				20 = {
+					# Called a coward - all sects mock you
+					add_trait = craven
+					add_prestige = -300
+					create_character_memory = {
+						type = mocked_as_coward_for_refusing_duel_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = -20 has_trait = brave }
+		}
+	}
+}
+
+###############################################################################
+# 5. SECT ANNIHILATION AFTERMATH
+# Dealing with the ruins after a sect has been destroyed
+###############################################################################
+murim_sect_war.0005 = {
+	type = character_event
+	title = murim_sect_war.0005.t
+	desc = murim_sect_war.0005.desc
+	theme = skull
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		NOT = { has_character_flag = witnessed_sect_annihilation }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.15
+		modifier = { add = 0.2 has_trait = sadistic }
+		modifier = { add = 0.2 has_trait = vengeful }
+		modifier = { add = 0.15 martial >= 15 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = witnessed_sect_annihilation
+			years = 15
+		}
+		create_character_memory = {
+			type = witnessed_sect_completely_destroyed_memory
+		}
+	}
+
+	# Claim the ruins - absorb their territory and techniques
+	option = {
+		name = murim_sect_war.0005.a
+		add_prestige = 500
+		add_gold = 500
+		add_martial_skill = 1
+		add_learning_skill = 1
+		add_tyranny = 15
+		add_character_modifier = {
+			modifier = conqueror_of_destroyed_sect
+			years = 10
+		}
+		create_character_memory = {
+			type = claimed_ruins_of_destroyed_sect_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Find valuable technique manuals in the ruins
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 7 14 }
+					}
+				}
+				30 = {
+					# Survivors swear allegiance
+					add_prestige = 300
+					trigger_event = {
+						id = murim_sect.0001
+						days = { 14 30 }
+					}
+				}
+				30 = {
+					# Ruins are cursed - restless ghosts
+					add_stress = 40
+					add_piety = -100
+					create_character_memory = {
+						type = cursed_ruins_restless_ghosts_memory
+					}
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = greedy }
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+
+	# Show mercy - adopt surviving disciples into your sect
+	option = {
+		name = murim_sect_war.0005.b
+		add_piety = 200
+		add_prestige = 300
+		add_diplomacy_skill = 2
+		add_character_modifier = {
+			modifier = merciful_after_sect_destruction
+			years = 10
+		}
+		create_character_memory = {
+			type = showed_mercy_to_destroyed_sect_survivors_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Survivors become loyal - your sect grows stronger
+					add_prestige = 400
+					trigger_event = {
+						id = murim_mentor.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Some survivors plot revenge from within
+					trigger_event = {
+						id = murim_sect_war.0002
+						days = { 60 180 }
+					}
+				}
+				20 = {
+					# Other sects praise your compassion
+					add_prestige = 500
+					add_piety = 100
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 30 60 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Burn everything - leave nothing for anyone
+	option = {
+		name = murim_sect_war.0005.c
+		add_prestige = -100
+		add_tyranny = 25
+		add_dread = 50
+		add_piety = -200
+		stress_impact = {
+			compassionate = massive_stress_impact_gain
+			sadistic = major_stress_impact_loss
+		}
+		add_character_modifier = {
+			modifier = sect_destroyer_infamy
+			years = 20
+		}
+		create_character_memory = {
+			type = burned_destroyed_sect_to_ashes_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# World fears you - none dare challenge
+					add_dread = 50
+					add_prestige = 300
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 7 14 }
+					}
+				}
+				30 = {
+					# Alliance forms against you as common threat
+					trigger_event = {
+						id = murim_faction.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Karmic retribution - heavens judge you
+					trigger_event = {
+						id = murim_fate.0005
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = sadistic }
+			modifier = { add = 20 has_trait = vengeful }
+		}
+	}
+}
