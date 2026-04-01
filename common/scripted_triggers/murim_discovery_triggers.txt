@@ -1,0 +1,266 @@
+# Murim Chronicles - Discovery System Triggers
+# Eligibility checks for all martial world discovery events.
+# INTEGRATION: Referenced by murim_discovery_events.txt (all 20 events),
+#              murim_clan_recruitment_events.txt (scout eligibility),
+#              murim_on_actions.txt (yearly pulse filtering),
+#              murim_game_start_effects.txt (region checks for seeding)
+# Cross-refs: murim_triggers.txt (murim_is_martial_artist_trigger for exclusion),
+#             murim_awareness_trait.txt (martial_awareness trait definition)
+# GENDER: NO sex checks anywhere. All triggers are fully gender-neutral.
+
+####################################
+# CORE DISCOVERY ELIGIBILITY
+####################################
+
+# Master trigger: is this character eligible to discover the martial world?
+murim_is_eligible_for_discovery_trigger = {
+	age >= 8
+	is_alive = yes
+	is_imprisoned = no
+	NOT = { murim_is_martial_artist_trigger = yes }
+	# Characters who already have martial training can't "discover" it again
+	# martial_awareness is OK — they know about it but aren't trained yet
+	NOT = { has_trait = basic_martial_training }
+	NOT = { has_trait = intermediate_martial_training }
+	NOT = { has_trait = advanced_martial_training }
+	NOT = { has_trait = master_martial_artist }
+	NOT = { has_trait = grandmaster_martial_artist }
+	# Not already in a sect
+	NOT = { murim_is_clan_member_trigger = yes }
+	# Not incapable
+	NOT = { has_trait = incapable }
+}
+
+# Has the character already gained awareness but not training?
+murim_has_martial_awareness_trigger = {
+	has_trait = martial_awareness
+	NOT = { has_trait = basic_martial_training }
+	NOT = { murim_is_martial_artist_trigger = yes }
+}
+
+# Can gain awareness (doesn't have it yet, isn't already martial)
+murim_can_gain_awareness_trigger = {
+	murim_is_eligible_for_discovery_trigger = yes
+	NOT = { has_trait = martial_awareness }
+}
+
+####################################
+# REGION TRIGGERS
+####################################
+
+# Is the character in or from a martial-active region? (Korea/China)
+murim_is_in_martial_region_trigger = {
+	OR = {
+		location = {
+			OR = {
+				geographical_region = world_korea
+				geographical_region = custom_korea_region
+				geographical_region = world_china
+				geographical_region = custom_china_region
+				# Goryeo and Chinese provinces
+			}
+		}
+		# Culture-based fallback for characters whose location isn't set
+		culture = {
+			OR = {
+				has_cultural_pillar = heritage_korean
+				has_cultural_pillar = heritage_chinese
+				has_cultural_pillar = heritage_han
+			}
+		}
+	}
+}
+
+# Is the character from a martial-active culture? (regardless of location)
+murim_is_martial_culture_trigger = {
+	culture = {
+		OR = {
+			has_cultural_pillar = heritage_korean
+			has_cultural_pillar = heritage_chinese
+			has_cultural_pillar = heritage_han
+			has_cultural_pillar = heritage_japanese
+			# Japanese get slight exposure to martial world
+		}
+	}
+}
+
+# Is character in a foreign region (for foreign martial arts discovery)?
+murim_is_in_foreign_martial_region_trigger = {
+	NOT = { murim_is_in_martial_region_trigger = yes }
+	location = {
+		OR = {
+			geographical_region = world_india
+			geographical_region = world_japan
+			geographical_region = world_europe_north
+			geographical_region = world_middle_east
+			geographical_region = world_steppe
+			geographical_region = world_europe_south_east
+			geographical_region = world_africa
+		}
+	}
+}
+
+####################################
+# CHARACTER TYPE TRIGGERS (for path selection)
+####################################
+
+# Landless adventurer — gets 2x discovery chance
+murim_is_landless_adventurer_trigger = {
+	is_landed = no
+	OR = {
+		NOT = { exists = liege }
+		has_trait = adventurer
+		# Traveling without a fixed court
+	}
+}
+
+# Landed noble — political entry paths
+murim_is_landed_noble_trigger = {
+	is_landed = yes
+	highest_held_title_tier >= tier_county
+}
+
+# Unlanded courtier — court-based discovery
+murim_is_unlanded_courtier_trigger = {
+	is_landed = no
+	exists = liege
+	# Has a court to serve in
+}
+
+####################################
+# DISCOVERY CHANCE WEIGHT TRIGGERS
+####################################
+
+# High discovery potential — brave, curious, adventurous characters
+murim_has_high_discovery_potential_trigger = {
+	OR = {
+		has_trait = brave
+		has_trait = ambitious
+		has_trait = adventurer
+		has_trait = diligent
+		prowess >= 8
+	}
+}
+
+# Low discovery potential — cautious, content characters
+murim_has_low_discovery_potential_trigger = {
+	OR = {
+		has_trait = craven
+		has_trait = content
+		has_trait = lazy
+		has_trait = shy
+	}
+}
+
+# Youth discovery potential — children eligible for recruitment
+murim_is_youth_discovery_eligible_trigger = {
+	age >= 8
+	age < 16
+	is_alive = yes
+	NOT = { murim_is_martial_artist_trigger = yes }
+	NOT = { has_trait = incapable }
+	# Talent indicators
+	OR = {
+		has_trait = brave
+		has_trait = strong
+		has_trait = rowdy
+		has_trait = genius
+		has_trait = quick
+		has_trait = intelligent
+		prowess >= 5
+		martial >= 6
+	}
+}
+
+####################################
+# RECRUITMENT ELIGIBILITY TRIGGERS
+####################################
+
+# Can this child be recruited by a clan?
+murim_is_recruitable_youth_trigger = {
+	murim_is_youth_discovery_eligible_trigger = yes
+	NOT = { murim_is_clan_member_trigger = yes }
+	# Not already in a sect
+	NOT = { has_character_flag = recruitment_rejected_recently }
+	# Parent didn't refuse in the last 2 years
+}
+
+# Does this clan need recruits?
+murim_clan_needs_recruits_trigger = {
+	# Checked against a variable tracking youth count per clan
+	# If fewer than 3 members aged 8-15, clan needs recruits
+	# Implementation: each clan tracks youth_count variable
+	# This trigger is called in yearly pulse for each clan
+	trigger_if = {
+		limit = { has_variable = clan_youth_count }
+		var:clan_youth_count < 3
+	}
+	trigger_else = {
+		# Default: assume needs recruits if variable not set
+		always = yes
+	}
+}
+
+# Is this character eligible to be a scout for recruitment?
+murim_is_eligible_scout_trigger = {
+	murim_is_martial_artist_trigger = yes
+	age >= 25
+	NOT = { has_trait = incapable }
+	NOT = { is_imprisoned = yes }
+	OR = {
+		is_sect_elder_trigger = yes
+		is_inner_disciple_trigger = yes
+		is_sect_vice_leader_trigger = yes
+	}
+	# Must be a senior member to be trusted as a scout
+}
+
+####################################
+# SPECIAL DISCOVERY TRIGGERS
+####################################
+
+# Has this character had a significant martial encounter?
+murim_has_martial_encounter_trigger = {
+	OR = {
+		has_trait = martial_awareness
+		has_character_modifier = witnessed_martial_combat_modifier
+		has_character_modifier = saved_by_martial_master_modifier
+		has_character_modifier = cryptic_hint_from_master_modifier
+		has_character_modifier = overheard_martial_secrets_modifier
+	}
+}
+
+# Is this character on a self-taught path?
+murim_is_self_taught_trigger = {
+	has_variable = self_taught_martial_origin
+	OR = {
+		has_character_modifier = self_taught_fragments_modifier
+		has_character_modifier = self_taught_from_cave_manual_modifier
+		has_character_modifier = stolen_technique_modifier
+	}
+}
+
+# Can this character progress from awareness to actual training?
+murim_can_begin_training_trigger = {
+	has_trait = martial_awareness
+	NOT = { has_trait = basic_martial_training }
+	NOT = { murim_is_martial_artist_trigger = yes }
+	age >= 8
+	is_alive = yes
+	NOT = { has_trait = incapable }
+	# Either has a mentor, is self-taught, or has sect access
+	OR = {
+		any_relation = {
+			type = mentor
+			murim_is_martial_artist_trigger = yes
+		}
+		murim_is_self_taught_trigger = yes
+		murim_is_clan_member_trigger = yes
+		has_character_modifier = taught_basic_technique_modifier
+	}
+}
+
+# END OF DISCOVERY TRIGGERS
+# Total: 15+ triggers covering eligibility, regions, character types,
+# discovery chances, recruitment, and special conditions.
+# All gender-neutral. No sex checks anywhere.
