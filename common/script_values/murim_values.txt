@@ -1,0 +1,955 @@
+# Murim Chronicles - General Script Values
+# Core values for martial power calculation, cultivation checks, technique mastery,
+# duel resolution, sect management, and jianghu reputation
+# Cross-references: murim_triggers, murim_effects, murim_modifiers, all event files
+
+# ==========================================
+# MARTIAL POWER VALUES
+# ==========================================
+
+murim_base_martial_power_value = {
+	value = prowess
+	add = martial
+	if = {
+		limit = { has_trait = cultivation_body_tempering }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = cultivation_meridian_opening }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = cultivation_foundation }
+		add = 18
+	}
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 30
+	}
+	if = {
+		limit = { has_trait = cultivation_nascent_soul }
+		add = 50
+	}
+	# Technique bonuses
+	if = {
+		limit = { has_trait = technique_sword_mastery }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = technique_fist_mastery }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = technique_palm_mastery }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = technique_body_arts }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = technique_hidden_weapons }
+		add = 3
+	}
+	# Combat traits
+	if = {
+		limit = { has_trait = brave }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = craven }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = wounded_1 }
+		add = -3
+	}
+	if = {
+		limit = { has_trait = wounded_2 }
+		add = -8
+	}
+	if = {
+		limit = { has_trait = incapable }
+		add = -30
+	}
+	min = 0
+}
+
+murim_effective_combat_power_value = {
+	# Combat power including temporary modifiers and situational bonuses
+	value = murim_base_martial_power_value
+	if = {
+		limit = { has_character_modifier = breakthrough_euphoria }
+		add = 5
+	}
+	if = {
+		limit = { has_character_modifier = qi_circulation_boost }
+		add = 3
+	}
+	if = {
+		limit = { has_character_modifier = intense_training_regime }
+		add = 3
+	}
+	if = {
+		limit = { has_character_modifier = iron_body_tempering }
+		add = 4
+	}
+	if = {
+		limit = { has_character_modifier = combat_meditation_focus }
+		add = 4
+	}
+	if = {
+		limit = { has_character_modifier = ancient_weapon_wielder }
+		add = 6
+	}
+	if = {
+		limit = { has_character_modifier = spirit_beast_companion }
+		add = 5
+	}
+	if = {
+		limit = { has_character_modifier = qi_deviation_recovery }
+		add = -8
+	}
+	if = {
+		limit = { has_character_modifier = crippling_wound_lingering }
+		add = -10
+	}
+	if = {
+		limit = { has_character_modifier = revenge_obsession }
+		add = 3
+	}
+	min = 0
+}
+
+# ==========================================
+# CULTIVATION VALUES
+# ==========================================
+
+murim_cultivation_tier_value = {
+	# Numeric tier for comparison: 0=none, 1=body, 2=meridian, 3=foundation, 4=core, 5=nascent
+	value = 0
+	if = {
+		limit = { has_trait = cultivation_body_tempering }
+		add = 1
+	}
+	if = {
+		limit = { has_trait = cultivation_meridian_opening }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = cultivation_foundation }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = cultivation_nascent_soul }
+		add = 5
+	}
+}
+
+murim_breakthrough_difficulty_value = {
+	# Difficulty scales with current tier
+	value = 50
+	if = {
+		limit = { has_trait = cultivation_body_tempering }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = cultivation_meridian_opening }
+		add = 40
+	}
+	if = {
+		limit = { has_trait = cultivation_foundation }
+		add = 70
+	}
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 100
+	}
+	# Age penalty for breakthrough
+	if = {
+		limit = { age >= 40 }
+		add = 15
+	}
+	if = {
+		limit = { age >= 50 }
+		add = 20
+	}
+	if = {
+		limit = { age >= 60 }
+		add = 30
+	}
+	# Prodigy bonus
+	if = {
+		limit = { has_trait = cultivation_prodigy }
+		add = -25
+	}
+	if = {
+		limit = { has_trait = genius }
+		add = -15
+	}
+	if = {
+		limit = { has_trait = quick }
+		add = -5
+	}
+	# Patient cultivation helps
+	if = {
+		limit = { has_trait = patient }
+		add = -10
+	}
+	# Dual cultivation bonus
+	if = {
+		limit = { has_character_modifier = dual_cultivation_harmony }
+		add = -15
+	}
+	min = 20
+}
+
+murim_qi_deviation_risk_value = {
+	# Risk of qi deviation during breakthrough attempt
+	value = 20
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = reckless }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = impatient }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = wrathful }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = -10
+	}
+	if = {
+		limit = { has_trait = calm }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = waterfall_meditation_clarity }
+		add = -10
+	}
+	if = {
+		limit = { has_character_modifier = cultivation_seclusion }
+		add = -10
+	}
+	if = {
+		limit = { stress >= 75 }
+		add = 15
+	}
+	if = {
+		limit = { stress >= 50 }
+		add = 5
+	}
+	min = 5
+	max = 75
+}
+
+murim_cultivation_progress_rate_value = {
+	# Base rate of cultivation progress per cycle
+	value = 10
+	add = learning
+	if = {
+		limit = { has_trait = diligent }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = lazy }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = cultivation_seclusion }
+		multiply = 1.5
+	}
+	if = {
+		limit = { has_character_modifier = special_training_grounds_bonus }
+		multiply = 1.3
+	}
+	if = {
+		limit = { has_character_modifier = master_disciple_bond }
+		multiply = 1.2
+	}
+	min = 1
+}
+
+# ==========================================
+# DUEL VALUES
+# ==========================================
+
+murim_duel_victory_chance_value = {
+	# Chance of winning a duel - based on comparative martial power
+	value = 50
+	# Add own martial power
+	add = {
+		value = murim_effective_combat_power_value
+		multiply = 0.5
+	}
+	# Subtract opponent power (estimated)
+	if = {
+		limit = {
+			exists = scope:murim_duel_target
+		}
+		subtract = {
+			value = scope:murim_duel_target.murim_effective_combat_power_value
+			multiply = 0.5
+		}
+	}
+	# Terrain/situational bonuses
+	if = {
+		limit = { has_character_modifier = combat_meditation_focus }
+		add = 5
+	}
+	if = {
+		limit = { has_character_modifier = revenge_obsession }
+		add = 5
+	}
+	if = {
+		limit = { has_character_modifier = defeat_shame }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = ambush_trauma }
+		add = -5
+	}
+	min = 5
+	max = 95
+}
+
+murim_duel_injury_severity_value = {
+	# How severe injuries are in a duel - higher = worse
+	value = 30
+	if = {
+		limit = {
+			exists = scope:murim_duel_target
+			scope:murim_duel_target.prowess >= prowess
+		}
+		add = 15
+	}
+	if = {
+		limit = { has_variable = murim_death_match }
+		add = 25
+	}
+	if = {
+		limit = { has_trait = cultivation_body_tempering }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = iron_body_tempering }
+		add = -10
+	}
+	min = 5
+	max = 90
+}
+
+murim_duel_fame_reward_value = {
+	# Prestige gained from duel victory
+	value = 50
+	if = {
+		limit = {
+			exists = scope:murim_duel_target
+			scope:murim_duel_target = {
+				has_variable = murim_martial_rank
+				var:murim_martial_rank <= 10
+			}
+		}
+		add = 200
+	}
+	else_if = {
+		limit = {
+			exists = scope:murim_duel_target
+			scope:murim_duel_target = {
+				has_variable = murim_martial_rank
+				var:murim_martial_rank <= 30
+			}
+		}
+		add = 100
+	}
+	else_if = {
+		limit = {
+			exists = scope:murim_duel_target
+			scope:murim_duel_target = { has_variable = murim_martial_rank }
+		}
+		add = 50
+	}
+	# Tournament bonus
+	if = {
+		limit = { has_variable = murim_in_tournament }
+		multiply = 1.5
+	}
+}
+
+# ==========================================
+# SECT VALUES
+# ==========================================
+
+murim_sect_loyalty_value = {
+	# How loyal a character is to their sect
+	value = 50
+	add = {
+		value = opinion
+		target = liege
+		multiply = 0.3
+	}
+	if = {
+		limit = { has_trait = zealous }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = loyal }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = deceitful }
+		add = -10
+	}
+	if = {
+		limit = { has_trait = ambitious }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = sect_elder_authority }
+		add = 15
+	}
+	if = {
+		limit = { has_character_modifier = sect_betrayal_paranoia }
+		add = -20
+	}
+	if = {
+		limit = { has_character_modifier = sect_exile_stigma }
+		add = -50
+	}
+	min = 0
+	max = 100
+}
+
+murim_sect_promotion_chance_value = {
+	# Chance of being promoted within sect hierarchy
+	value = 20
+	add = prowess
+	add = {
+		value = learning
+		multiply = 0.5
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = ambitious }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = humble }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = arrogant }
+		add = -10
+	}
+	if = {
+		limit = { has_character_modifier = sect_inner_disciple }
+		add = 10
+	}
+	min = 5
+	max = 90
+}
+
+murim_sect_war_strength_value = {
+	# Sect's overall combat strength for sect wars
+	value = 0
+	add = {
+		value = domain_size
+		multiply = 10
+	}
+	add = {
+		value = martial
+		multiply = 5
+	}
+	add = {
+		value = number_of_knights
+		multiply = 15
+	}
+	if = {
+		limit = { has_character_modifier = sect_war_mobilization }
+		multiply = 1.3
+	}
+	if = {
+		limit = { has_character_modifier = sect_prosperity }
+		multiply = 1.2
+	}
+	if = {
+		limit = { has_character_modifier = sect_decline }
+		multiply = 0.7
+	}
+	min = 10
+}
+
+# ==========================================
+# JIANGHU VALUES
+# ==========================================
+
+murim_jianghu_reputation_value = {
+	# Overall jianghu reputation - positive = folk hero, negative = villain
+	value = 0
+	if = {
+		limit = { has_character_modifier = jianghu_folk_hero }
+		add = 50
+	}
+	if = {
+		limit = { has_character_modifier = jianghu_infamy }
+		add = -30
+	}
+	if = {
+		limit = { has_character_modifier = bounty_hunter_reputation }
+		add = 20
+	}
+	if = {
+		limit = { has_character_modifier = bounty_on_head }
+		add = -20
+	}
+	if = {
+		limit = { has_character_modifier = poison_master_aura }
+		add = -25
+	}
+	if = {
+		limit = { has_character_modifier = black_market_connections }
+		add = -10
+	}
+	if = {
+		limit = { has_trait = just }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = compassionate }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = sadistic }
+		add = -20
+	}
+	if = {
+		limit = { has_trait = callous }
+		add = -10
+	}
+}
+
+murim_black_market_price_value = {
+	# Price multiplier for black market goods
+	value = 100
+	if = {
+		limit = { has_character_modifier = black_market_connections }
+		multiply = 0.7
+	}
+	if = {
+		limit = { has_trait = greedy }
+		multiply = 1.2
+	}
+	if = {
+		limit = { stewardship >= 15 }
+		multiply = 0.85
+	}
+	if = {
+		limit = { has_character_modifier = jianghu_infamy }
+		multiply = 0.9
+	}
+	min = 50
+}
+
+murim_assassination_difficulty_value = {
+	# How hard it is to assassinate a target
+	value = 50
+	add = {
+		value = scope:murim_assassination_target.prowess
+		multiply = 2
+	}
+	if = {
+		limit = {
+			scope:murim_assassination_target = { has_trait = paranoid }
+		}
+		add = 20
+	}
+	if = {
+		limit = {
+			scope:murim_assassination_target = { has_character_modifier = assassination_target_paranoia }
+		}
+		add = 15
+	}
+	if = {
+		limit = {
+			scope:murim_assassination_target = {
+				has_variable = murim_martial_rank
+				var:murim_martial_rank <= 10
+			}
+		}
+		add = 30
+	}
+	subtract = {
+		value = intrigue
+		multiply = 1.5
+	}
+	if = {
+		limit = { has_character_modifier = poison_master_aura }
+		add = -20
+	}
+	min = 10
+	max = 95
+}
+
+# ==========================================
+# TECHNIQUE VALUES
+# ==========================================
+
+murim_technique_mastery_progress_value = {
+	# Rate of technique mastery improvement
+	value = 5
+	add = {
+		value = prowess
+		multiply = 0.3
+	}
+	add = {
+		value = learning
+		multiply = 0.2
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = genius }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = quick }
+		add = 2
+	}
+	if = {
+		limit = { has_character_modifier = master_disciple_bond }
+		multiply = 1.5
+	}
+	if = {
+		limit = { has_character_modifier = intense_training_regime }
+		multiply = 1.3
+	}
+	min = 1
+}
+
+murim_technique_compatibility_value = {
+	# How compatible a new technique is with existing ones
+	value = 50
+	# Same school bonus
+	if = {
+		limit = {
+			has_trait = technique_sword_mastery
+			has_variable = murim_learning_sword_technique
+		}
+		add = 25
+	}
+	if = {
+		limit = {
+			has_trait = technique_fist_mastery
+			has_variable = murim_learning_fist_technique
+		}
+		add = 25
+	}
+	# Opposing arts penalty
+	if = {
+		limit = {
+			has_trait = technique_sword_mastery
+			has_variable = murim_learning_fist_technique
+		}
+		add = -15
+	}
+	# Cultivation boost
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = cultivation_nascent_soul }
+		add = 30
+	}
+	min = 10
+	max = 95
+}
+
+# ==========================================
+# TRAINING VALUES
+# ==========================================
+
+murim_training_effectiveness_value = {
+	# How effective a training session is
+	value = 30
+	add = prowess
+	if = {
+		limit = { has_trait = diligent }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = lazy }
+		add = -15
+	}
+	if = {
+		limit = { has_character_modifier = special_training_grounds_bonus }
+		multiply = 1.5
+	}
+	if = {
+		limit = { has_character_modifier = master_disciple_bond }
+		multiply = 1.3
+	}
+	if = {
+		limit = { has_character_modifier = waterfall_meditation_clarity }
+		multiply = 1.2
+	}
+	if = {
+		limit = { health <= 0 }
+		multiply = 0.5
+	}
+	min = 5
+}
+
+murim_sparring_danger_value = {
+	# Risk of injury during sparring
+	value = 15
+	if = {
+		limit = {
+			exists = scope:murim_sparring_partner
+			scope:murim_sparring_partner.prowess >= 20
+		}
+		add = 10
+	}
+	if = {
+		limit = { has_trait = reckless }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = wrathful }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = calm }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = iron_body_tempering }
+		add = -5
+	}
+	min = 5
+	max = 50
+}
+
+# ==========================================
+# MENTOR VALUES
+# ==========================================
+
+murim_master_quality_value = {
+	# How good a master is at teaching
+	value = 0
+	add = {
+		value = prowess
+		multiply = 0.5
+	}
+	add = {
+		value = learning
+		multiply = 0.5
+	}
+	add = {
+		value = diplomacy
+		multiply = 0.2
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = impatient }
+		add = -10
+	}
+	if = {
+		limit = { has_character_modifier = proud_teacher }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = cultivation_nascent_soul }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 10
+	}
+	min = 1
+}
+
+murim_disciple_talent_value = {
+	# How talented a potential disciple is
+	value = 0
+	add = learning
+	add = {
+		value = prowess
+		multiply = 0.5
+	}
+	if = {
+		limit = { has_trait = genius }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = quick }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = cultivation_prodigy }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 10
+	}
+	if = {
+		limit = { age <= 20 }
+		add = 10
+	}
+	if = {
+		limit = { age <= 16 }
+		add = 10
+	}
+	min = 0
+}
+
+# ==========================================
+# POLITICS / ALLIANCE VALUES
+# ==========================================
+
+murim_alliance_acceptance_value = {
+	# How likely a character is to accept an alliance proposal
+	value = 30
+	add = {
+		value = opinion
+		target = scope:murim_alliance_proposer
+		multiply = 0.5
+	}
+	if = {
+		limit = { has_trait = trusting }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = paranoid }
+		add = -20
+	}
+	if = {
+		limit = { has_character_modifier = sect_war_mobilization }
+		add = 20
+	}
+	if = {
+		limit = { has_character_modifier = territory_dispute_tension }
+		add = -15
+	}
+	min = 5
+	max = 95
+}
+
+murim_marriage_alliance_desirability_value = {
+	# How desirable a marriage alliance is
+	value = 30
+	add = {
+		value = murim_base_martial_power_value
+		multiply = 0.3
+	}
+	if = {
+		limit = {
+			has_variable = murim_martial_rank
+			var:murim_martial_rank <= 20
+		}
+		add = 30
+	}
+	if = {
+		limit = { has_trait = cultivation_core_formation }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = cultivation_nascent_soul }
+		add = 30
+	}
+	if = {
+		limit = { has_character_modifier = sect_elder_authority }
+		add = 20
+	}
+	min = 5
+}
+
+# ==========================================
+# FATE / DESTINY VALUES
+# ==========================================
+
+murim_heavenly_tribulation_survival_value = {
+	# Chance of surviving heavenly tribulation
+	value = 40
+	add = {
+		value = prowess
+		multiply = 1.5
+	}
+	add = {
+		value = learning
+		multiply = 0.5
+	}
+	if = {
+		limit = { has_trait = brave }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = craven }
+		add = -15
+	}
+	if = {
+		limit = { health >= 3 }
+		add = 10
+	}
+	if = {
+		limit = { has_character_modifier = chosen_one_destiny }
+		add = 25
+	}
+	if = {
+		limit = { has_character_modifier = karmic_debt_burden }
+		add = -15
+	}
+	min = 10
+	max = 90
+}
+
+murim_karmic_debt_accumulation_value = {
+	# How much karmic debt a character accumulates
+	value = 0
+	if = {
+		limit = { has_character_modifier = killing_intent_aura }
+		add = 15
+	}
+	if = {
+		limit = { has_character_modifier = jianghu_infamy }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = sadistic }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = compassionate }
+		add = -10
+	}
+	if = {
+		limit = { has_trait = just }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = jianghu_folk_hero }
+		add = -10
+	}
+	min = 0
+}
