@@ -2,9 +2,9 @@
 
 > **A total conversion mod bringing the world of Murim (martial arts cultivation) to Crusader Kings 3**
 
-[![Version](https://img.shields.io/badge/version-0.9.1--alpha-blue)]()
+[![Version](https://img.shields.io/badge/version-0.9.2--alpha-blue)]()
 [![CK3](https://img.shields.io/badge/CK3-1.12+-green)]()
-[![Files](https://img.shields.io/badge/mod%20files-56-orange)]()
+[![Files](https://img.shields.io/badge/mod%20files-67-orange)]()
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
 [![Phase](https://img.shields.io/badge/phases%201--4-COMPLETE-brightgreen)]()
 
@@ -26,9 +26,10 @@ This mod integrates deeply with CK3's vanilla systems: council positions, wars, 
 | **Phase 2** | Grind Loop Systems | 11/11 | COMPLETE |
 | **Phase 3** | Advanced Mechanics | 9/9 | COMPLETE |
 | **Phase 4** | Wuxia Underground | 9/9 | COMPLETE |
-| **Total** | | **56 files** | **100% COMPLETE** |
+| **Continuous** | Deep Expansion | Ongoing | ACTIVE |
+| **Total** | | **67 files** | **100% COMPLETE + EXPANDING** |
 
-> **v0.9.1 Milestone: Government & Trait Deep Expansion.** Expanded government types from 3 to 8 (3.7KB->17.9KB, 4.8x) with Hidden Valley Sect, Murim Alliance, Imperial Cultivation Court, Demonic Cult, and Wandering Sword Pavilion. Expanded mixed martial traits from 11 to 45+ (4KB->22.3KB, 5.6x) across 8 new categories: Dual-Element Fusion, Body Cultivation Stages, Qi Deviation States, Martial Reputation Titles, Bloodline Awakening, and Cross-System Synergy. Total mod content now exceeds 1.05MB of PDX script.
+> **v0.9.2 Milestone: Decision & Legacy Deep Expansion.** Massively expanded martial decisions from 9 basic to 21 full-featured decisions (4.8KB->37.2KB, 7.7x) across 6 categories: Cultivation Path, Alchemy & Pills, Techniques, Body Tempering, Social/Jianghu, and Heavenly Tribulation. All decisions have proper PDX syntax, AI weights, exists=yes safety guards, and interconnected variable tracking. Dynasty legacies rewritten from 3 broken tracks to 6 complete legacy tracks with 5 levels each (30 total unlocks, 4.8KB->22.7KB, 4.7x): Azure Sword, Blood Moon Demonic, Iron Body, Celestial Qi, Shadow Arts, and Pill Master Alchemy. Total mod content now exceeds 1.1MB of PDX script.
 
 ---
 
@@ -48,7 +49,13 @@ This mod integrates deeply with CK3's vanilla systems: council positions, wars, 
   - *Wandering Sword Pavilion* -- Mercenary-style reputation-driven organization
 - **Martial Cultures**: Murim-specific cultural traditions and pillars
 - **Martial Religions**: Dao cultivation paths as religious frameworks
-- **Dynasty Legacies**: Bloodline inheritance and martial legacy tracks
+- **Dynasty Legacies**: 6 complete legacy tracks with 5 levels each (30 total unlocks):
+  - *Azure Sword Legacy* -- Sword Dao mastery from Foundation to Transcendence
+  - *Blood Moon Demonic Legacy* -- Dark cultivation path from Demonic Seed to Asura Ascension
+  - *Iron Body Legacy* -- Body tempering from Iron Skin to Diamond Body Perfection
+  - *Celestial Qi Legacy* -- Heavenly qi mastery from Qi Sense to Mandate of Heaven
+  - *Shadow Arts Legacy* -- Stealth/assassination mastery from Shadow Step to Void Shadow Sovereign
+  - *Pill Master Alchemy Legacy* -- Alchemy mastery from Herb Gathering to Immortality Pill
 - **Artifacts**: Legendary weapons, technique scrolls, and qi treasures
 - **Land Setup**: Asia-specific Murim geographic configuration
 - **Schemes**: 15+ cultivation-themed schemes (steal techniques, sabotage cultivation, poison qi, 33,486 bytes)
@@ -56,130 +63,54 @@ This mod integrates deeply with CK3's vanilla systems: council positions, wars, 
 - **Character Interactions**: 8 right-click interactions (spar, take disciple, request teaching, death match, steal technique, qi transfer healing, declare sect rivalry, offer protection)
 
 ### Phase 2 -- Grind Loop Systems (Complete)
-- **Script Values**: Cultivation, Jianghu, Sect, Celestial, Combat, and Grind calculation values (80,000+ bytes of formulas)
-- **Grind Effects**: Automated cultivation grinding with diminishing returns
-- **Grind Triggers**: 40+ conditional checks across 8 categories -- cultivation eligibility, duel readiness, technique prerequisites, sect membership, ranking eligibility, jianghu underground, trait safety checks, and cross-system integration (12,779 bytes)
-- **Grind Modifiers**: 55+ character modifiers across 9 categories -- cultivation states, duel aftermath, sect activities, technique mastery, ranking tiers, jianghu underground, body tempering, combat trauma, and cross-system integration (11,301 bytes)
-- **Grind Opinions**: 100+ opinion modifiers across 10 categories -- duels, cultivation, master-disciple, sects, techniques, ranking, jianghu underground, social dynamics, combat trauma, and cross-system integration (8,442 bytes)
-- **Technique On-Actions**: 15 on_action hooks (29,462 bytes) including:
-  - Yearly technique unlock pulse (Tier 1/2/3 with mastery)
-  - Prodigy discovery system
-  - Duel breakthrough revelations
-  - War enlightenment epiphanies
-  - Death inheritance (master -> disciple technique transfer)
-  - Marriage technique exchange between sects
-  - Monthly practice pulse with degradation
-  - AI sparring and teaching automation
-  - Technique theft detection and consequences
-  - Forbidden technique temptation system
-  - Body tempering synergy
-  - Cross-system breakthrough chains
+- **Script Values**: Cultivation, Jianghu, Sect, Celestial, Combat, Ranking, and Grind calculation values (90,000+ bytes of formulas)
+- **Grind Effects**: Cultivation progress, breakthrough calculations, and reward distribution
+- **Grind Triggers**: 40+ triggers across 8 sections for cultivation gates, combat checks, and sect requirements
+- **Grind Modifiers**: 55+ character modifiers across 9 sections for cultivation states, duel aftermath, sect activities
+- **Opinion Modifiers**: 100+ opinion modifiers across 10 sections for duels, master-disciple bonds, sect relations
+- **Grind Events**: Two tiers of grind events (basic + advanced) for cultivation loops
+- **Martial Decisions**: 21 full-featured decisions across 6 categories:
+  - *Cultivation Path* -- Abandon Mortal Coil, Seclude for Cultivation, Awaken Dormant Potential
+  - *Sect Leadership* -- Challenge Sect Master, Found Martial Sect, Recruit Close Disciple
+  - *Alchemy & Pills* -- Refine Cultivation Pill, Establish Pill Furnace
+  - *Techniques* -- Comprehend Advanced Technique, Study Enemy Technique
+  - *Body Tempering* -- Open Meridians, Body Tempering Ritual
+  - *Social/Jianghu* -- Host Grand Tournament, Declare Bounty, Recruit Wandering Expert, Seek Ancient Ruins, Activate Bloodline, Establish Trading Post
+  - *Dark Path* -- Enter Demon Path, Purge Demonic Qi
+  - *Ultimate* -- Challenge Heavenly Tribulation (20% transcendence, 20% death)
+- **Additional Decisions**: 70+ cultivation decisions, jianghu decisions, sect decisions, technique decisions (128,000+ bytes)
+- **On-Actions**: Yearly cultivation ticks, monthly AI decisions, technique learning hooks
 
 ### Phase 3 -- Advanced Mechanics (Complete)
-- **Celestial Effects**: 25+ scripted effects across 10 systems (31,723 bytes):
-  - Celestial Alignment with seasonal bonuses
-  - Five Elements generation and destruction cycles
-  - Yin-Yang Balance system (-100 to +100 scale)
-  - Meridian System with 20 channels
-  - Mandate of Heaven political legitimacy
-  - Heavenly Tribulation 9-stage survival
-  - Celestial Qi Absorption from environment
-  - Astral Projection reconnaissance
-  - Yearly Maintenance auto-cultivation
-  - Combat Effects and Heavenly Punishment
-- **Ranking System**: Top 50 Martial Artist rankings with hidden scores, death cascading, and player notifications
-- **Condition Triggers**: Advanced prerequisite checks for all cultivation actions
-- **Combat Values**: Detailed duel and battle calculations
-- **Penalty System**: Cultivation failure consequences and recovery paths
+- **Celestial Events**: Heavenly phenomena, tribulations, celestial alignment (29,804 bytes)
+- **Celestial Effects**: 25+ effects across 10 systems (Five Elements, Yin-Yang, Meridians, Mandate of Heaven, 31,723 bytes)
+- **Breakthrough Events**: 39,230 bytes of multi-stage cultivation breakthrough chains
+- **Combat Events**: 26,755 bytes of martial combat with real consequences
+- **Duel System**: Basic + Advanced duels (38,608 bytes combined) with incapable, craven, wounded, trauma outcomes
+- **Imperial Cultivator Events**: 27,976 bytes of court cultivation politics
+- **Artifact Events**: 32,268 bytes of legendary weapon discoveries and technique scroll events
+- **Combat Trauma System**: Full PTSD/trauma system with modifiers and traits (22,581 bytes combined)
+- **Penalty System**: Cultivation failure consequences with effects and modifiers (20,847 bytes combined)
 
 ### Phase 4 -- Wuxia Underground (Complete)
-- **Jianghu Events**: 82,032 bytes of underground martial world content
-- **Jianghu Interactions**: 41,082 bytes of character interactions (bounty hunting, information trading, underworld politics)
-- **Jianghu Triggers**: 24,545 bytes of conditional checks for underground activities
-- **Jianghu Effects**: 18,815 bytes of scripted effects for black market, assassination contracts, etc.
-- **Jianghu On-Actions**: 16,329 bytes of automated underground world events
-- **Jianghu Decisions**: 30,618 bytes of player choices in the shadow world
-- **AI Autonomy**: 42,387 bytes of AI behavior -- 7 duel types, monthly player challenges (~30%), quarterly tournaments, revenge chains, personality-weighted decisions
-- **AI Decision Making**: 11,405 bytes of AI cultivation path automation
-- **Combat Trauma**: Full trauma system with PTSD, battle scars, crippling injuries, and psychological consequences
+- **Jianghu Events**: 82,032 bytes -- the largest single event file, covering underground martial world
+- **Jianghu Interactions**: 41,082 bytes of right-click Jianghu character interactions
+- **Jianghu Decisions**: 30,618 bytes of underground world decisions
+- **Jianghu Effects**: 18,815 bytes of Jianghu scripted effects
+- **Jianghu Triggers**: 24,545 bytes of Jianghu condition checks
+- **Jianghu On-Actions**: 16,329 bytes of underground event hooks
+- **Jianghu Values**: 12,302 bytes of underground economy calculations
+- **Sect Events**: 18,140 bytes of sect politics and internal power struggles
+- **Sect Decisions**: 47,627 bytes of sect management and politics
 
----
-
-## Key Features
-
-### Trait Categories (90+ unique traits)
-| Category | Count | Description |
-|----------|-------|-------------|
-| Mixed Martial Skills | 7 | Dual-skill combinations (Shadow Blade, Iron Strategist, etc.) |
-| Celestial Practitioner | 4 | Seasonal alignment traits |
-| Dual-Element Fusion | 6 | Transcendent element combinations (Taiji Master, Primordial Awakened) |
-| Body Cultivation | 5 | Progressive stages (Iron Skin -> Vajra Immortal Body) |
-| Qi Deviation States | 5 | Cultivation failure consequences with increasing severity |
-| Martial Reputation | 8 | Legendary titles (Sword Saint, Fist Emperor, Heavenly Demon, etc.) |
-| Bloodline Awakening | 5 | Dynasty-tied ancestral power stages |
-| Cross-System Synergy | 5 | Multi-system mastery (Pill-Dao Master, Formation Battle Sage) |
-| Prowess Techniques | 13+ | Sword, fist, palm, spear, body technique trees |
-| Jianghu Underground | 20+ | Shadow world reputation and role traits |
-| Combat Trauma | 9+ | Battle scars, PTSD, crippling injuries |
-| Cultivation Markers | 9+ | Qi stages from condensation to void |
-
-### Government Types (8 total)
-| Government | Domain | Vassal | Key Bonus |
-|------------|--------|--------|-----------|
-| Orthodox Sect | 2 | 12 | Learning +3, Piety +0.5/mo |
-| Unorthodox Sect | 4 | 6 | Prowess +4, Dread +25 |
-| Free Cultivator | 1 | 3 | Health +0.5, XP +10% |
-| Hidden Valley | 2 | 5 | Learning +5, XP +20%, Defender +5 |
-| Murim Alliance | 3 | 20 | Diplomacy +5, Vassal Opinion +15 |
-| Imperial Court | 5 | 15 | Stewardship +3, Tax +15% |
-| Demonic Cult | 2 | 4 | Prowess +6, XP +25%, Dread +40 |
-| Wandering Sword | 2 | 8 | Prowess +5, Knight Eff. +25% |
-
----
-
-## Installation
-
-1. Clone or download this repository
-2. Copy to your CK3 mod directory:
-   - **Windows**: `%USERPROFILE%\Documents\Paradox Interactive\Crusader Kings III\mod\`
-   - **Linux**: `~/.local/share/Paradox Interactive/Crusader Kings III/mod/`
-   - **macOS**: `~/Documents/Paradox Interactive/Crusader Kings III/mod/`
-3. Enable "Murim Chronicles" in the CK3 launcher
-
----
-
-## Changelog
-
-### v0.9.1-alpha (2026-04-01)
-- **Government Expansion**: 3 -> 8 government types (3.7KB -> 17.9KB, 4.8x)
-  - NEW: Hidden Valley Sect (isolationist, secret knowledge)
-  - NEW: Murim Alliance (coalition, rotating leadership)
-  - NEW: Imperial Cultivation Court (bureaucratic, state-sponsored)
-  - NEW: Demonic Cult (sacrifice, corruption, rapid power)
-  - NEW: Wandering Sword Pavilion (mercenary, reputation-driven)
-- **Trait Expansion**: 11 -> 45+ mixed martial traits (4KB -> 22.3KB, 5.6x)
-  - NEW: Dual-Element Fusion (6 traits)
-  - NEW: Body Cultivation Stages (5 progressive stages)
-  - NEW: Qi Deviation States (5 severity levels)
-  - NEW: Martial Reputation Titles (8 legendary titles)
-  - NEW: Bloodline Awakening (5 progressive stages)
-  - NEW: Cross-System Synergy (5 polymath traits)
-
-### v0.9.0-alpha (2026-04-01)
-- Celestial Effects expanded 9.9x (3KB -> 31KB) with Five Elements, Yin-Yang, Meridian System, Heavenly Tribulation, Astral Projection
-- Technique On-Actions expanded 6.7x (4KB -> 29KB) with 15 on_action hooks
-
-### v0.8.0-alpha (2026-04-01)
-- Foundation Hardening: opinions 18.5x, modifiers 9.2x, triggers 4.2x expansion
-- Character Interactions expanded to 8 types with full event chains
-- Interaction Events expanded 3.6x with Death Match, Steal Technique, Qi Transfer, Sect Rivalry, Protection Contract chains
-
-### v0.7.0-alpha (2026-03-31)
-- AI Duel System: 7 duel types, monthly player challenges, quarterly tournaments, revenge chains
-- 42,387 bytes of AI autonomy scripting
-
-### v0.6.0-alpha and earlier
-- Core systems, grind loops, advanced mechanics, jianghu underground
+### Advanced Systems (Continuous Expansion)
+- **Top 50 Martial Ranking System**: Hidden rank scores for all martial artists, public Top 50 leaderboard, death cascading, player notifications (58,000+ bytes across values/effects/triggers/events/on-actions/localization)
+- **AI Autonomy System**: 42,387 bytes of AI-driven cultivation, dueling, and sect management with 7 AI duel types, quarterly tournaments, revenge chains
+- **AI Decision System**: 11,405 bytes of AI cultivation decision-making
+- **Technique System**: On-actions (29,462 bytes), events (12,349 bytes), triggers (10,887 bytes), decisions (10,643 bytes)
+- **Interaction Events**: 40,871 bytes of event chains for all 8 character interactions
+- **AI War Behavior**: 12,190 bytes of Murim-flavored AI aggression patterns
+- **Localization**: 6 English localization files (106,000+ bytes) covering all systems
 
 ---
 
@@ -187,34 +118,145 @@ This mod integrates deeply with CK3's vanilla systems: council positions, wars, 
 
 ```
 CK3-Murim-Chronicles/
-  common/
-    ai_war_behavior/       # AI martial aggression (12KB)
-    artifacts/             # Legendary weapons & scrolls (7.7KB)
-    character_interactions/ # 8+ right-click interactions (62KB)
-    character_modifiers/   # Combat trauma, grind, penalty mods (33KB)
-    cultures/              # Martial cultures (8.3KB)
-    decisions/             # 5 decision files (133KB)
-    dynasty_legacies/      # Bloodline inheritance (10KB)
-    governments/           # 8 government types (17.9KB)
-    lands/                 # Asia Murim setup (13.3KB)
-    on_actions/            # 6 on_action files (142KB)
-    opinion_modifiers/     # 100+ opinion mods (8.4KB)
-    religions/             # Dao cultivation paths (12.8KB)
-    schemes/               # 15+ cultivation schemes (33.5KB)
-    script_values/         # 7 value calculation files (89KB)
-    scripted_effects/      # 6 effect files (103KB)
-    scripted_triggers/     # 5 trigger files (67KB)
-    traits/                # 6 trait files (86KB)
-  events/                  # 15 event files (453KB)
-  localization/english/    # 6 localization files (106KB)
+|-- README.md
+|-- descriptor.mod / murim.mod
+|-- common/
+|   |-- ai_war_behavior/murim_ai_aggression.txt
+|   |-- artifacts/00_martial_artifacts.txt
+|   |-- character_interactions/
+|   |   |-- murim_character_interactions.txt (21,386b - 8 interactions)
+|   |   |-- murim_jianghu_interactions.txt (41,082b)
+|   |-- character_modifiers/
+|   |   |-- murim_combat_trauma_modifiers.txt (12,715b)
+|   |   |-- murim_grind_modifiers.txt (11,301b - 55+ modifiers)
+|   |   |-- murim_penalty_modifiers.txt (8,673b)
+|   |-- cultures/01_martial_cultures.txt
+|   |-- decisions/
+|   |   |-- 00_martial_decisions.txt (37,158b - 21 decisions)
+|   |   |-- murim_cultivation_decisions.txt (39,561b)
+|   |   |-- murim_jianghu_decisions.txt (30,618b)
+|   |   |-- murim_sect_decisions.txt (47,627b)
+|   |   |-- murim_technique_decisions.txt (10,643b)
+|   |-- dynasty_legacies/
+|   |   |-- 01_martial_legacies.txt (22,696b - 6 tracks, 30 unlocks)
+|   |   |-- 02_bloodline_inheritance.txt (5,211b)
+|   |-- governments/celestial_governments.txt (17,865b - 8 types)
+|   |-- lands/00_asia_murim_setup.txt (13,293b)
+|   |-- on_actions/
+|   |   |-- murim_ai_autonomy_on_actions.txt (42,387b)
+|   |   |-- murim_ai_decision_on_actions.txt (11,405b)
+|   |   |-- murim_jianghu_on_actions.txt (16,329b)
+|   |   |-- murim_on_actions.txt (29,857b)
+|   |   |-- murim_ranking_on_actions.txt (13,157b)
+|   |   |-- murim_technique_on_actions.txt (29,462b)
+|   |-- opinion_modifiers/murim_grind_opinions.txt (8,442b - 100+ opinions)
+|   |-- religions/01_martial_religions.txt (12,771b)
+|   |-- schemes/murim_schemes.txt (33,486b)
+|   |-- script_values/ (7 files, 89,201b total)
+|   |-- scripted_effects/ (6 files, 103,103b total)
+|   |-- scripted_triggers/ (5 files, 67,311b total)
+|   |-- traits/ (6 files, 82,320b total)
+|-- events/ (16 files, 487,000+ bytes total)
+|   |-- murim_cultivation_events.txt (72,010b - largest cultivation file)
+|   |-- murim_jianghu_events.txt (82,032b - largest overall event file)
+|   |-- murim_interaction_events.txt (40,871b)
+|   |-- murim_breakthrough_events.txt (39,230b)
+|   |-- murim_artifact_events.txt (32,268b)
+|   |-- murim_celestial_events.txt (29,804b)
+|   |-- murim_imperial_cultivator_events.txt (27,976b)
+|   |-- murim_combat_events.txt (26,755b)
+|   |-- murim_duel_events.txt (20,614b)
+|   |-- murim_grind_advanced_events.txt (20,629b)
+|   |-- murim_sect_events.txt (18,140b)
+|   |-- murim_duel_advanced_events.txt (17,994b)
+|   |-- murim_ranking_events.txt (16,745b)
+|   |-- murim_technique_events.txt (12,349b)
+|   |-- murim_grind_events.txt (12,296b)
+|   |-- 00_cultivation_story.txt (9,558b)
+|   |-- 00_region_interactions.txt (6,173b)
+|-- localization/english/ (6 files, 106,612b total)
 ```
 
 ---
 
-## Contributing
+## Total Content Summary
 
-This mod is under active development. Contributions welcome via pull requests.
+| Category | Files | Bytes | Key Metric |
+|----------|-------|-------|------------|
+| Decisions | 5 | 165,607 | 91+ decisions |
+| Events | 16 | 487,000+ | 200+ event chains |
+| On-Actions | 6 | 142,597 | 50+ hooks |
+| Script Values | 7 | 89,201 | 500+ formulas |
+| Scripted Effects | 6 | 103,103 | 100+ effects |
+| Scripted Triggers | 5 | 67,311 | 80+ triggers |
+| Traits | 6 | 82,320 | 90+ traits |
+| Interactions | 2 | 62,468 | 8+ interactions |
+| Schemes | 1 | 33,486 | 15+ schemes |
+| Legacies | 2 | 27,907 | 30 dynasty unlocks |
+| Other | 11 | ~100,000 | Govts, cultures, etc. |
+| **TOTAL** | **67** | **~1.1MB** | **Full Murim world** |
+
+---
+
+## Installation
+
+1. Clone or download this repository
+2. Copy the `CK3-Murim-Chronicles` folder to your CK3 mod directory:
+   - **Windows**: `%USERPROFILE%\Documents\Paradox Interactive\Crusader Kings III\mod\`
+   - **Linux**: `~/.local/share/Paradox Interactive/Crusader Kings III/mod/`
+   - **macOS**: `~/Documents/Paradox Interactive/Crusader Kings III/mod/`
+3. Copy `murim.mod` to the same mod directory
+4. Enable "Murim Chronicles" in the CK3 launcher
+
+---
+
+## Changelog
+
+### v0.9.2-alpha (2026-04-01)
+- **Martial Decisions Deep Expansion**: 9 -> 21 decisions (4.8KB -> 37.2KB, 7.7x increase)
+  - Added: Open Meridians, Body Tempering Ritual, Establish Pill Furnace, Study Enemy Technique, Host Grand Tournament, Declare Jianghu Bounty, Recruit Wandering Expert, Seek Ancient Ruins, Activate Bloodline Power, Awaken Dormant Potential, Establish Trading Post, Purge Demonic Qi
+  - All decisions have proper AI weights, exists=yes safety checks, variable tracking
+- **Dynasty Legacy Complete Rewrite**: 3 broken tracks -> 6 proper tracks with 5 levels each (30 unlocks)
+  - New tracks: Azure Sword, Blood Moon Demonic, Iron Body, Celestial Qi, Shadow Arts, Pill Master Alchemy
+  - Fixed all syntax errors from previous version (invalid `stage_age`, broken `add Martial_Prowess`)
+
+### v0.9.1-alpha (2026-04-01)
+- Government & Trait Deep Expansion
+- 3 -> 8 government types, 11 -> 45+ mixed martial traits
+
+### v0.9.0-alpha (2026-04-01)
+- Foundation Hardening Pass: opinions (18.5x), modifiers (9.2x), triggers (4.2x)
+- Character Interactions: 3 -> 8 interactions, full event chains
+- AI Duel System: 7 duel types, quarterly tournaments, revenge chains
+
+### v0.8.0-alpha (2026-03-31)
+- Phase 4 Jianghu Underground complete
+- Ranking system with Top 50 leaderboard
+- AI autonomy deep expansion
+
+### v0.7.0-alpha (2026-03-31)
+- Phase 3 Advanced Mechanics complete
+- Celestial system, breakthrough events, combat trauma
+
+### Pre-v0.7.0
+- Phases 1-2 foundation and grind loop systems
+
+---
+
+## Design Philosophy
+
+1. **Interconnected Systems**: Every system references and feeds into others. Cultivation affects dueling, dueling affects ranking, ranking affects sect politics, sect politics affects cultivation access.
+
+2. **AI Parity**: AI characters walk the same cultivation path as the player. They challenge each other to duels, pursue breakthroughs, compete for rankings, and form master-disciple bonds.
+
+3. **Real Consequences**: Duels can result in death, incapacitation, craven traits, PTSD, and permanent cultivation damage. Failed breakthroughs cause qi deviation. Heavenly tribulations have a 20% death chance.
+
+4. **Safety First**: All events use `exists = yes` checks before referencing variables/traits. Graceful degradation ensures no crashes from missing data. All files are interrupt-safe.
+
+5. **Scale**: 1.1MB+ of PDX script, 200+ event chains, 90+ decisions, 90+ traits, 30 dynasty unlocks, 8 government types, 100+ opinion modifiers -- a complete Murim world.
+
+---
 
 ## License
 
-MIT License -- see LICENSE file for details.
+MIT License - See LICENSE file for details.
