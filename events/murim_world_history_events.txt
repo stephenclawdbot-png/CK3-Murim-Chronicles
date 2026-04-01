@@ -1,0 +1,746 @@
+namespace = murim_world_history
+
+# World History Events - Ancient legacies, fallen martial empires, forgotten techniques
+# Cross-references: murim_artifact, murim_fate, murim_cultivation, murim_ranking, murim_sect, murim_duel
+
+######################################
+# murim_world_history.0001 - Discovery of Ancient Battlefield
+# A character discovers the remnants of a legendary battle from centuries past
+######################################
+murim_world_history.0001 = {
+	type = character_event
+	title = murim_world_history.0001.t
+	desc = murim_world_history.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		has_variable = murim_cultivation_level
+		NOT = { has_character_flag = found_ancient_battlefield }
+		var:murim_cultivation_level >= 3
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = curious
+		}
+		modifier = {
+			factor = 1.5
+			var:murim_cultivation_level >= 5
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = found_ancient_battlefield
+			days = 3650
+		}
+		create_character_memory = {
+			type = murim_discovered_ancient_battlefield
+		}
+	}
+	
+	# Option A: Search the battlefield for relics
+	option = {
+		name = murim_world_history.0001.a
+		
+		random_list = {
+			40 = {
+				desc = murim_world_history.0001.a.success
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = ancient_battlefield_insights
+					years = 10
+				}
+				trigger_event = {
+					id = murim_artifact.0001
+					days = { 15 45 }
+				}
+			}
+			30 = {
+				desc = murim_world_history.0001.a.partial
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = ancient_qi_residue_exposure
+					years = 5
+				}
+			}
+			30 = {
+				desc = murim_world_history.0001.a.trap
+				add_trait = wounded
+				add_prestige = -100
+				create_character_memory = {
+					type = murim_wounded_by_ancient_formation
+				}
+				trigger_event = {
+					id = murim_fate.0001
+					days = { 30 90 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 1.5
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Commune with the lingering spirits
+	option = {
+		name = murim_world_history.0001.b
+		
+		random_list = {
+			35 = {
+				desc = murim_world_history.0001.b.vision
+				add_piety = 300
+				change_variable = {
+					name = murim_cultivation_level
+					add = 1
+				}
+				create_character_memory = {
+					type = murim_vision_of_ancient_masters
+				}
+				trigger_event = {
+					id = murim_cultivation.0003
+					days = { 10 30 }
+				}
+			}
+			35 = {
+				desc = murim_world_history.0001.b.haunted
+				add_stress = 40
+				add_character_modifier = {
+					modifier = haunted_by_ancient_warriors
+					years = 5
+				}
+			}
+			30 = {
+				desc = murim_world_history.0001.b.possessed
+				add_trait = lunatic
+				add_prowess = 8
+				create_character_memory = {
+					type = murim_possessed_by_ancient_warrior
+				}
+				trigger_event = {
+					id = murim_duel.0001
+					days = { 5 20 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 2
+				has_trait = zealous
+			}
+		}
+	}
+	
+	# Option C: Seal the battlefield and warn others
+	option = {
+		name = murim_world_history.0001.c
+		
+		add_piety = 200
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = guardian_of_ancient_sites
+			years = 15
+		}
+		create_character_memory = {
+			type = murim_sealed_ancient_battlefield
+		}
+		trigger_event = {
+			id = murim_sect.0003
+			days = { 60 180 }
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 3
+				has_trait = just
+			}
+		}
+	}
+}
+
+######################################
+# murim_world_history.0002 - The Fallen Sect's Last Testament
+# Discovery of a destroyed sect's final records
+######################################
+murim_world_history.0002 = {
+	type = character_event
+	title = murim_world_history.0002.t
+	desc = murim_world_history.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		NOT = { has_character_flag = found_fallen_sect_testament }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = scholar
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = found_fallen_sect_testament
+			days = 3650
+		}
+		create_character_memory = {
+			type = murim_discovered_fallen_sect_records
+		}
+	}
+	
+	# Option A: Study the forbidden techniques recorded within
+	option = {
+		name = murim_world_history.0002.a
+		
+		random_list = {
+			30 = {
+				desc = murim_world_history.0002.a.mastery
+				add_prowess = 6
+				add_character_modifier = {
+					modifier = forbidden_technique_student
+					years = 10
+				}
+				create_character_memory = {
+					type = murim_learned_forbidden_technique
+				}
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 30 90 }
+				}
+			}
+			35 = {
+				desc = murim_world_history.0002.a.backlash
+				add_prowess = 3
+				add_trait = wounded
+				add_stress = 30
+				create_character_memory = {
+					type = murim_technique_backlash_injury
+				}
+			}
+			35 = {
+				desc = murim_world_history.0002.a.corruption
+				add_trait = sadistic
+				add_prowess = 10
+				add_character_modifier = {
+					modifier = corrupted_by_forbidden_arts
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_corrupted_by_dark_technique
+				}
+				trigger_event = {
+					id = murim_jianghu.0001
+					days = { 10 60 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Return the testament to the sect's descendants
+	option = {
+		name = murim_world_history.0002.b
+		
+		add_prestige = 400
+		add_piety = 200
+		add_character_modifier = {
+			modifier = honored_by_fallen_sect_descendants
+			years = 15
+		}
+		create_character_memory = {
+			type = murim_returned_sect_legacy
+		}
+		random_list = {
+			60 = {
+				trigger_event = {
+					id = murim_mentor.0001
+					days = { 30 90 }
+				}
+			}
+			40 = {
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 60 180 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option C: Burn the records - some knowledge should stay dead
+	option = {
+		name = murim_world_history.0002.c
+		
+		add_piety = 500
+		add_stress = -20
+		create_character_memory = {
+			type = murim_destroyed_dangerous_knowledge
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_trait = content
+			}
+		}
+	}
+}
+
+######################################
+# murim_world_history.0003 - Prophecy of the Returning Emperor
+# Ancient prophecy about a martial emperor's return found in ruins
+######################################
+murim_world_history.0003 = {
+	type = character_event
+	title = murim_world_history.0003.t
+	desc = murim_world_history.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 5
+		NOT = { has_character_flag = found_emperor_prophecy }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 3
+			has_trait = ambitious
+		}
+		modifier = {
+			factor = 2
+			var:murim_cultivation_level >= 7
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = found_emperor_prophecy
+			days = 7300
+		}
+		create_character_memory = {
+			type = murim_discovered_emperor_prophecy
+		}
+	}
+	
+	# Option A: Claim to be the prophesied emperor
+	option = {
+		name = murim_world_history.0003.a
+		
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = self_proclaimed_martial_emperor
+			years = 20
+		}
+		create_character_memory = {
+			type = murim_claimed_emperor_title
+		}
+		# This triggers massive political upheaval
+		random_list = {
+			40 = {
+				trigger_event = {
+					id = murim_politics.0002
+					days = { 10 30 }
+				}
+			}
+			30 = {
+				trigger_event = {
+					id = murim_duel.0005
+					days = { 5 15 }
+				}
+			}
+			30 = {
+				trigger_event = {
+					id = murim_sect.0001
+					days = { 15 60 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_trait = arrogant
+			}
+		}
+	}
+	
+	# Option B: Search for the true heir
+	option = {
+		name = murim_world_history.0003.b
+		
+		add_prestige = 300
+		add_piety = 200
+		add_character_modifier = {
+			modifier = seeker_of_the_martial_emperor
+			years = 15
+		}
+		create_character_memory = {
+			type = murim_searching_for_emperor_heir
+		}
+		trigger_event = {
+			id = murim_fate.0002
+			days = { 60 180 }
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 1.5
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option C: Suppress the prophecy to prevent chaos
+	option = {
+		name = murim_world_history.0003.c
+		
+		add_piety = 300
+		add_character_modifier = {
+			modifier = keeper_of_dangerous_prophecy
+			years = 20
+		}
+		add_intrigue = 3
+		create_character_memory = {
+			type = murim_hid_emperor_prophecy
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 2
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+######################################
+# murim_world_history.0004 - Resurrection of a Sealed Demonic Art
+# An ancient demonic cultivation method resurfaces
+######################################
+murim_world_history.0004 = {
+	type = character_event
+	title = murim_world_history.0004.t
+	desc = murim_world_history.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		NOT = { has_character_flag = found_demonic_art }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_trait = callous
+		}
+		modifier = {
+			factor = 2
+			has_trait = sadistic
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = found_demonic_art
+			days = 3650
+		}
+		create_character_memory = {
+			type = murim_discovered_demonic_cultivation
+		}
+	}
+	
+	# Option A: Practice the demonic art in secret
+	option = {
+		name = murim_world_history.0004.a
+		
+		random_list = {
+			25 = {
+				desc = murim_world_history.0004.a.power
+				add_prowess = 12
+				change_variable = {
+					name = murim_cultivation_level
+					add = 2
+				}
+				add_character_modifier = {
+					modifier = demonic_cultivation_master
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_mastered_demonic_art
+				}
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 30 90 }
+				}
+			}
+			35 = {
+				desc = murim_world_history.0004.a.corruption
+				add_prowess = 6
+				add_trait = lunatic
+				add_trait = sadistic
+				add_character_modifier = {
+					modifier = demonic_qi_corruption
+					years = 15
+				}
+				create_character_memory = {
+					type = murim_corrupted_by_demonic_qi
+				}
+				trigger_event = {
+					id = murim_jianghu.0003
+					days = { 20 60 }
+				}
+			}
+			40 = {
+				desc = murim_world_history.0004.a.devoured
+				add_trait = incapable
+				create_character_memory = {
+					type = murim_devoured_by_demonic_art
+				}
+				trigger_event = {
+					id = murim_ranker_death.0001
+					days = { 5 30 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 3
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Report the demonic art to the Orthodox Alliance
+	option = {
+		name = murim_world_history.0004.b
+		
+		add_prestige = 500
+		add_piety = 300
+		add_character_modifier = {
+			modifier = orthodox_alliance_hero
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_reported_demonic_art_to_alliance
+		}
+		trigger_event = {
+			id = murim_politics.0003
+			days = { 30 90 }
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 2
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option C: Destroy the demonic scripture utterly
+	option = {
+		name = murim_world_history.0004.c
+		
+		add_piety = 500
+		add_stress = -30
+		create_character_memory = {
+			type = murim_destroyed_demonic_scripture
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 3
+				has_trait = temperate
+			}
+		}
+	}
+}
+
+######################################
+# murim_world_history.0005 - The Lost City of Martial Saints
+# Legend speaks of a hidden city where ancient masters ascended
+######################################
+murim_world_history.0005 = {
+	type = character_event
+	title = murim_world_history.0005.t
+	desc = murim_world_history.0005.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 6
+		NOT = { has_character_flag = searched_lost_city }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 3
+			var:murim_cultivation_level >= 8
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = searched_lost_city
+			days = 7300
+		}
+		create_character_memory = {
+			type = murim_heard_legend_of_lost_city
+		}
+	}
+	
+	# Option A: Mount a grand expedition to find the city
+	option = {
+		name = murim_world_history.0005.a
+		
+		add_gold = -300
+		
+		random_list = {
+			20 = {
+				desc = murim_world_history.0005.a.found
+				add_prestige = 2000
+				change_variable = {
+					name = murim_cultivation_level
+					add = 3
+				}
+				add_character_modifier = {
+					modifier = blessed_by_martial_saints
+					years = 30
+				}
+				create_character_memory = {
+					type = murim_found_lost_city_of_saints
+				}
+				trigger_event = {
+					id = murim_artifact.0003
+					days = { 5 15 }
+				}
+			}
+			30 = {
+				desc = murim_world_history.0005.a.partial
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = glimpsed_city_of_saints
+					years = 10
+				}
+				trigger_event = {
+					id = murim_fate.0003
+					days = { 30 120 }
+				}
+			}
+			25 = {
+				desc = murim_world_history.0005.a.lost
+				add_prestige = -200
+				add_stress = 50
+				add_trait = wounded
+				create_character_memory = {
+					type = murim_lost_in_wilderness_seeking_city
+				}
+			}
+			25 = {
+				desc = murim_world_history.0005.a.ambush
+				add_trait = scarred
+				create_character_memory = {
+					type = murim_ambushed_during_expedition
+				}
+				trigger_event = {
+					id = murim_duel.0003
+					days = { 1 5 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = adventurer
+			}
+		}
+	}
+	
+	# Option B: Meditate on the legend's meaning
+	option = {
+		name = murim_world_history.0005.b
+		
+		add_piety = 400
+		change_variable = {
+			name = murim_cultivation_level
+			add = 1
+		}
+		add_character_modifier = {
+			modifier = enlightened_by_saint_legend
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_meditated_on_saint_legend
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 2
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Dismiss it as myth
+	option = {
+		name = murim_world_history.0005.c
+		
+		add_stress = -10
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 2
+				has_trait = cynical
+			}
+		}
+	}
+}
