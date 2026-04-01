@@ -1,0 +1,202 @@
+# Murim Chronicles - Master Decisions File
+# Redirects to specific decision files for clean loading.
+# Cross-refs: murim_ledger_decisions.txt (Murim Ledger UI),
+#   murim_custom_clan_events.txt (clan founding),
+#   murim_ranking_events.txt (challenge ranking)
+# GENDER: All decisions equally available to men and women.
+
+# ============================================================
+# OPEN THE MURIM LEDGER
+# See murim_ledger_decisions.txt for full implementation.
+# ============================================================
+# open_murim_ledger_decision (defined in murim_ledger_decisions.txt)
+# murim_challenge_ranked_decision (defined in murim_ledger_decisions.txt)
+# murim_request_clan_membership_decision (defined in murim_ledger_decisions.txt)
+
+# ============================================================
+# CREATE A NEW CLAN (Custom Clan Creation)
+# ============================================================
+murim_create_custom_clan_decision = {
+	title = murim_create_custom_clan_decision_title
+	desc = murim_create_custom_clan_decision_desc
+
+	ai_check_interval = 60
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		NOT = {
+			OR = {
+				has_trait = mount_hua_disciple
+				has_trait = wudang_disciple
+				has_trait = shaolin_monk
+				has_trait = heavenly_demon_disciple
+				has_trait = beggar_sect_member
+				has_trait = iron_fist_disciple
+				has_trait = poison_flower_disciple
+				has_trait = phantom_blade_disciple
+			}
+		}
+		prowess >= 20
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		prowess >= 20
+		prestige >= 500
+		NOT = { has_character_flag = murim_already_founded_clan }
+	}
+
+	cost = {
+		prestige = 500
+		gold = 200
+	}
+
+	cooldown = {
+		years = 10
+	}
+
+	effect = {
+		# Hard path: need 6/9 existing clan leader votes
+		# Supreme path: if #1 ranked, just declare
+		if = {
+			limit = {
+				has_variable = murim_ranking_position
+				var:murim_ranking_position <= 1
+			}
+			# Supreme path - #1 ranked just declares
+			trigger_event = { id = murim_custom_clan.0002 }
+		}
+		else = {
+			# Hard path - need clan leader votes
+			trigger_event = { id = murim_custom_clan.0001 }
+		}
+		add_character_flag = { flag = murim_clan_founding_in_progress }
+	}
+
+	ai_potential = {
+		prowess >= 25
+		has_trait = ambitious
+		prestige >= 1000
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { add = 15 prowess >= 30 }
+		modifier = { add = 10 has_trait = arrogant }
+	}
+}
+
+# ============================================================
+# BEGIN MARTIAL TRAINING (for new martial artists)
+# ============================================================
+murim_begin_training_decision = {
+	title = murim_begin_training_decision_title
+	desc = murim_begin_training_decision_desc
+
+	ai_check_interval = 30
+
+	is_shown = {
+		has_trait = martial_artist
+		NOT = { has_character_modifier = murim_active_training }
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_modifier = murim_active_training }
+	}
+
+	cost = { }
+
+	cooldown = {
+		days = 180
+	}
+
+	effect = {
+		add_character_modifier = { modifier = murim_active_training years = 1 }
+		trigger_event = { id = murim_training.0001 days = { 15 30 } }
+	}
+
+	ai_potential = {
+		has_trait = martial_artist
+		has_trait = diligent
+	}
+
+	ai_will_do = {
+		base = 20
+		modifier = { add = 20 has_trait = diligent }
+		modifier = { add = -30 has_trait = lazy }
+	}
+}
+
+# ============================================================
+# SEEK MURIM ENTRY (for non-martial characters)
+# ============================================================
+murim_seek_entry_decision = {
+	title = murim_seek_entry_decision_title
+	desc = murim_seek_entry_decision_desc
+
+	ai_check_interval = 120
+
+	is_shown = {
+		NOT = { has_trait = martial_artist }
+		NOT = { has_character_flag = murim_entry_attempted }
+		NOT = { has_character_flag = murim_rejected_martial_path }
+		age >= 14
+		age <= 50
+		OR = {
+			prowess >= 8
+			has_trait = brave
+			has_trait = ambitious
+			has_trait = curious
+			any_courtier = { has_trait = martial_artist }
+		}
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+	}
+
+	cost = {
+		prestige = 25
+	}
+
+	cooldown = {
+		years = 5
+	}
+
+	effect = {
+		# Route to appropriate entry path
+		if = {
+			limit = { is_landed = no is_courtier = no }
+			trigger_event = { id = murim_entry.0001 }
+		}
+		else_if = {
+			limit = { is_landed = yes }
+			trigger_event = { id = murim_entry.0002 }
+		}
+		else_if = {
+			limit = { is_courtier = yes }
+			trigger_event = { id = murim_entry.0003 }
+		}
+		else = {
+			trigger_event = { id = murim_entry.0004 }
+		}
+	}
+
+	ai_potential = {
+		OR = {
+			prowess >= 10
+			has_trait = ambitious
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { add = 10 has_trait = brave }
+		modifier = { add = 10 has_trait = ambitious }
+		modifier = { add = -20 has_trait = craven }
+	}
+}

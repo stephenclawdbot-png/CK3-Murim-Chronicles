@@ -1,0 +1,577 @@
+############################################
+# MURIM TOURNAMENT EVENTS
+# Young Dragon Tournament, Grand Tournament,
+# Champion Coronation, Global Recruitment.
+# Cross-refs: murim_ranking_effects.txt,
+#   murim_on_actions.txt (5yr/10yr pulse),
+#   murim_clan_membership_effects.txt (recruitment),
+#   murim_modifiers.txt (tournament modifiers)
+# All 9 clans send representatives.
+# GENDER: Men and women compete equally.
+# GEOGRAPHY: Hosted in China/Goryeo heartland.
+############################################
+
+namespace = murim_tournament
+
+############################################
+# YOUNG DRAGON TOURNAMENT (every 5 years)
+# For martial artists under 30.
+# Global recruitment pipeline - clan scouts
+# invite promising outsiders.
+############################################
+
+murim_tournament.0001 = {
+	type = character_event
+	title = murim_tournament.0001.t
+	desc = murim_tournament.0001.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		age >= 14
+		age <= 30
+		is_alive = yes
+		NOT = { has_character_modifier = murim_young_dragon_cooldown }
+	}
+
+	immediate = {
+		# Find opponent from different clan
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				age >= 14
+				age <= 30
+				is_alive = yes
+				NOT = { this = root }
+				NOT = { has_character_modifier = murim_young_dragon_cooldown }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 prowess >= 14 }
+				modifier = { add = 15 OR = { has_trait = mount_hua_disciple has_trait = shaolin_monk has_trait = heavenly_demon_disciple } }
+			}
+			save_scope_as = tournament_opponent
+		}
+	}
+
+	# Fight with full power
+	option = {
+		name = murim_tournament.0001.a
+		trigger = { exists = scope:tournament_opponent }
+		duel = {
+			skill = prowess
+			target = scope:tournament_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_tournament.0001.a.victory
+				# Victory - advance to next round
+				add_prestige = 100
+				add_character_modifier = { modifier = murim_young_dragon_victor years = 5 }
+				add_character_flag = { flag = murim_young_dragon_winner }
+				# Memory of glorious victory
+				add_character_flag = { flag = murim_tournament_memory_win }
+				# Clan scouts notice your prowess
+				if = {
+					limit = {
+						NOR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_disciple
+							has_trait = shaolin_monk
+							has_trait = heavenly_demon_disciple
+							has_trait = beggar_sect_member
+							has_trait = iron_fist_disciple
+							has_trait = poison_flower_disciple
+							has_trait = phantom_blade_disciple
+							has_trait = tang_clan_member
+						}
+					}
+					# Unaffiliated winner gets scouted
+					trigger_event = { id = murim_tournament.0010 days = { 15 30 } }
+				}
+				trigger_event = { id = murim_tournament.0002 days = { 3 7 } }
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:tournament_opponent }
+				desc = murim_tournament.0001.a.defeat
+				# Defeat - eliminated from tournament
+				add_prestige = 25
+				add_stress = 10
+				add_character_flag = { flag = murim_tournament_memory_loss }
+				# Injuries possible
+				random_list = {
+					60 = { }
+					25 = { add_trait = wounded_1 }
+					10 = { add_trait = wounded_2 }
+					5 = { add_trait = scarred }
+				}
+			}
+		}
+		add_character_modifier = { modifier = murim_young_dragon_cooldown years = 5 }
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 70 modifier = { add = 20 has_trait = brave } modifier = { add = -40 has_trait = craven } }
+	}
+
+	# Forfeit - preserve your body
+	option = {
+		name = murim_tournament.0001.b
+		add_prestige = -50
+		add_character_modifier = { modifier = murim_young_dragon_cooldown years = 5 }
+		add_character_flag = { flag = murim_tournament_forfeit }
+		ai_chance = { base = 30 modifier = { add = 40 has_trait = craven } }
+	}
+}
+
+# Young Dragon - Semi-Finals
+murim_tournament.0002 = {
+	type = character_event
+	title = murim_tournament.0002.t
+	desc = murim_tournament.0002.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				age >= 14
+				age <= 30
+				prowess >= 14
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 30 prowess >= 18 }
+			}
+			save_scope_as = semifinal_opponent
+		}
+	}
+
+	# Fight the semifinal
+	option = {
+		name = murim_tournament.0002.a
+		trigger = { exists = scope:semifinal_opponent }
+		duel = {
+			skill = prowess
+			target = scope:semifinal_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2.5 }
+				desc = murim_tournament.0002.a.victory
+				add_prestige = 200
+				trigger_event = { id = murim_tournament.0003 days = { 3 7 } }
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2.5 target = scope:semifinal_opponent }
+				desc = murim_tournament.0002.a.defeat
+				add_prestige = 75
+				add_stress = 15
+				random_list = {
+					50 = { }
+					30 = { add_trait = wounded_1 }
+					15 = { add_trait = wounded_2 }
+					5 = { add_trait = scarred }
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+}
+
+# Young Dragon - FINALS (Champion Coronation)
+murim_tournament.0003 = {
+	type = character_event
+	title = murim_tournament.0003.t
+	desc = murim_tournament.0003.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				age >= 14
+				age <= 30
+				prowess >= 16
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 40 prowess >= 20 }
+			}
+			save_scope_as = final_opponent
+		}
+	}
+
+	option = {
+		name = murim_tournament.0003.a
+		trigger = { exists = scope:final_opponent }
+		duel = {
+			skill = prowess
+			target = scope:final_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 }
+				desc = murim_tournament.0003.a.victory
+				# YOUNG DRAGON CHAMPION!
+				add_prestige = 500
+				add_character_modifier = { modifier = murim_young_dragon_champion years = 10 }
+				add_character_flag = { flag = murim_young_dragon_champion_flag }
+				# All clans take notice
+				if = {
+					limit = {
+						NOR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_disciple
+							has_trait = shaolin_monk
+							has_trait = heavenly_demon_disciple
+							has_trait = beggar_sect_member
+							has_trait = iron_fist_disciple
+							has_trait = poison_flower_disciple
+							has_trait = phantom_blade_disciple
+							has_trait = tang_clan_member
+						}
+					}
+					trigger_event = { id = murim_tournament.0011 days = { 7 14 } }
+				}
+				# Ranking boost
+				change_variable = { name = murim_ranking_score add = 50 }
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 target = scope:final_opponent }
+				desc = murim_tournament.0003.a.defeat
+				add_prestige = 200
+				add_character_modifier = { modifier = murim_young_dragon_finalist years = 5 }
+				add_stress = 20
+				random_list = {
+					40 = { }
+					30 = { add_trait = wounded_1 }
+					20 = { add_trait = wounded_2 }
+					10 = { add_trait = scarred }
+				}
+			}
+		}
+		ai_chance = { base = 90 }
+	}
+}
+
+############################################
+# GRAND TOURNAMENT (every 10 years)
+# Open to all martial artists. No age limit.
+# Orthodox vs Unorthodox faction tension.
+############################################
+
+murim_tournament.0004 = {
+	type = character_event
+	title = murim_tournament.0004.t
+	desc = murim_tournament.0004.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		is_alive = yes
+		prowess >= 10
+		NOT = { has_character_modifier = murim_grand_tournament_cooldown }
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				prowess >= 12
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 30 prowess >= 20 }
+				modifier = { add = 20 OR = { has_trait = heavenly_demon_disciple has_trait = mount_hua_disciple has_trait = shaolin_monk } }
+			}
+			save_scope_as = grand_opponent
+		}
+	}
+
+	# Enter the Grand Tournament
+	option = {
+		name = murim_tournament.0004.a
+		trigger = { exists = scope:grand_opponent }
+		duel = {
+			skill = prowess
+			target = scope:grand_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_tournament.0004.a.victory
+				add_prestige = 150
+				add_character_flag = { flag = murim_grand_tournament_advancing }
+				# Check for faction clash
+				if = {
+					limit = {
+						has_character_flag = murim_is_orthodox
+						scope:grand_opponent = { has_character_flag = murim_is_unorthodox }
+					}
+					add_character_flag = { flag = murim_orthodox_defeated_unorthodox }
+					add_prestige = 50
+				}
+				else_if = {
+					limit = {
+						has_character_flag = murim_is_unorthodox
+						scope:grand_opponent = { has_character_flag = murim_is_orthodox }
+					}
+					add_character_flag = { flag = murim_unorthodox_defeated_orthodox }
+					add_prestige = 50
+				}
+				trigger_event = { id = murim_tournament.0005 days = { 3 7 } }
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:grand_opponent }
+				desc = murim_tournament.0004.a.defeat
+				add_prestige = 50
+				add_stress = 15
+				random_list = {
+					50 = { }
+					25 = { add_trait = wounded_1 }
+					15 = { add_trait = wounded_2 }
+					10 = { add_trait = scarred }
+				}
+			}
+		}
+		add_character_modifier = { modifier = murim_grand_tournament_cooldown years = 10 }
+		ai_chance = { base = 70 }
+	}
+
+	# Observe only
+	option = {
+		name = murim_tournament.0004.b
+		add_character_modifier = { modifier = murim_grand_tournament_cooldown years = 10 }
+		add_prestige = 10
+		ai_chance = { base = 30 }
+	}
+}
+
+# Grand Tournament Finals
+murim_tournament.0005 = {
+	type = character_event
+	title = murim_tournament.0005.t
+	desc = murim_tournament.0005.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				prowess >= 18
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 50 prowess >= 25 }
+			}
+			save_scope_as = grand_final_opponent
+		}
+	}
+
+	option = {
+		name = murim_tournament.0005.a
+		trigger = { exists = scope:grand_final_opponent }
+		duel = {
+			skill = prowess
+			target = scope:grand_final_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 }
+				desc = murim_tournament.0005.a.victory
+				# GRAND CHAMPION!
+				add_prestige = 1000
+				add_character_modifier = { modifier = murim_grand_champion years = 15 }
+				add_character_flag = { flag = murim_grand_champion_flag }
+				change_variable = { name = murim_ranking_score add = 100 }
+				# This is a massive faction prestige event
+				if = {
+					limit = { has_character_flag = murim_is_orthodox }
+					set_global_variable = { name = murim_last_grand_champion_faction value = flag:orthodox }
+				}
+				else_if = {
+					limit = { has_character_flag = murim_is_unorthodox }
+					set_global_variable = { name = murim_last_grand_champion_faction value = flag:unorthodox }
+				}
+				trigger_event = { id = murim_tournament.0006 days = 1 }
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 target = scope:grand_final_opponent }
+				desc = murim_tournament.0005.a.defeat
+				add_prestige = 300
+				add_character_modifier = { modifier = murim_grand_finalist years = 10 }
+				add_stress = 25
+				random_list = {
+					30 = { }
+					30 = { add_trait = wounded_1 }
+					25 = { add_trait = wounded_2 }
+					10 = { add_trait = scarred }
+					5 = { add_trait = one_eyed }
+				}
+			}
+		}
+		ai_chance = { base = 90 }
+	}
+}
+
+# Grand Champion Coronation Ceremony
+murim_tournament.0006 = {
+	type = character_event
+	title = murim_tournament.0006.t
+	desc = murim_tournament.0006.desc
+	theme = martial
+	override_background = { reference = throne_room }
+
+	immediate = { }
+
+	# Accept the title with grace
+	option = {
+		name = murim_tournament.0006.a
+		# "I accept this honor on behalf of my clan and the martial world."
+		add_prestige = 200
+		add_character_flag = { flag = murim_humble_champion }
+		ai_chance = { base = 60 modifier = { add = 20 has_trait = humble } }
+	}
+
+	# Declare dominance - challenge the #1 ranking directly
+	option = {
+		name = murim_tournament.0006.b
+		# "This title means nothing unless I stand at the peak."
+		add_prestige = 100
+		add_character_flag = { flag = murim_ambitious_champion }
+		trigger_event = { id = murim_rank.0001 days = { 30 60 } }
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = ambitious } }
+	}
+}
+
+############################################
+# SCOUT RECRUITMENT AT TOURNAMENT
+# Unaffiliated fighters get approached
+# by clan scouts after strong showing.
+############################################
+
+murim_tournament.0010 = {
+	type = character_event
+	title = murim_tournament.0010.t
+	desc = murim_tournament.0010.desc
+	theme = diplomacy
+	override_background = { reference = tavern }
+
+	immediate = { }
+
+	# Accept Mount Hua's offer
+	option = {
+		name = murim_tournament.0010.a
+		save_scope_value_as = { name = sect_type value = flag:mount_hua }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 100
+		ai_chance = { base = 20 }
+	}
+
+	# Accept Shaolin's offer
+	option = {
+		name = murim_tournament.0010.b
+		save_scope_value_as = { name = sect_type value = flag:shaolin }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 100
+		ai_chance = { base = 15 }
+	}
+
+	# Accept Wudang's offer
+	option = {
+		name = murim_tournament.0010.c
+		save_scope_value_as = { name = sect_type value = flag:wudang }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 100
+		ai_chance = { base = 15 }
+	}
+
+	# Accept Iron Fist Gate's offer
+	option = {
+		name = murim_tournament.0010.d
+		save_scope_value_as = { name = sect_type value = flag:iron_fist }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 75
+		ai_chance = { base = 10 }
+	}
+
+	# Accept Heavenly Demon Sect (secret offer)
+	option = {
+		name = murim_tournament.0010.e
+		save_scope_value_as = { name = sect_type value = flag:heavenly_demon }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 50
+		add_character_modifier = { modifier = murim_dark_path_chosen years = 3 }
+		ai_chance = { base = 10 modifier = { add = 20 has_trait = ambitious } modifier = { add = 15 has_trait = wrathful } }
+	}
+
+	# Accept Phantom Blade Sect (shadowy approach)
+	option = {
+		name = murim_tournament.0010.f
+		save_scope_value_as = { name = sect_type value = flag:phantom_blade }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 50
+		ai_chance = { base = 8 modifier = { add = 20 intrigue >= 14 } }
+	}
+
+	# Refuse all offers - stay independent
+	option = {
+		name = murim_tournament.0010.g
+		add_character_flag = { flag = murim_independent_martial_artist }
+		add_prestige = 25
+		ai_chance = { base = 22 }
+	}
+}
+
+# Champion gets ALL clans bidding (higher stakes)
+murim_tournament.0011 = {
+	type = character_event
+	title = murim_tournament.0011.t
+	desc = murim_tournament.0011.desc
+	theme = diplomacy
+	override_background = { reference = throne_room }
+
+	immediate = { }
+
+	# Join the Orthodox Alliance's strongest clan
+	option = {
+		name = murim_tournament.0011.a
+		# "Mount Hua's legacy calls to me."
+		save_scope_value_as = { name = sect_type value = flag:mount_hua }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 200
+		ai_chance = { base = 25 }
+	}
+
+	# Join Beggar Sect - the people's champion
+	option = {
+		name = murim_tournament.0011.b
+		save_scope_value_as = { name = sect_type value = flag:beggar }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 150
+		ai_chance = { base = 15 modifier = { add = 20 has_trait = compassionate } }
+	}
+
+	# Join Poison Flower Palace (seductive offer)
+	option = {
+		name = murim_tournament.0011.c
+		save_scope_value_as = { name = sect_type value = flag:poison_flower }
+		murim_join_sect_as_inner_disciple_effect = yes
+		add_prestige = 100
+		ai_chance = { base = 10 modifier = { add = 15 has_trait = lustful } }
+	}
+
+	# Forge your own path
+	option = {
+		name = murim_tournament.0011.d
+		# "I bow to no clan. I AM the new power."
+		add_character_flag = { flag = murim_independent_champion }
+		add_prestige = 300
+		# This might trigger custom clan creation later
+		trigger_event = { id = murim_custom_clan.0001 days = { 90 180 } }
+		ai_chance = { base = 25 modifier = { add = 30 has_trait = arrogant } }
+	}
+}
