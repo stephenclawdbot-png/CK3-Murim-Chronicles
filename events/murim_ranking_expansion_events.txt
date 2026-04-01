@@ -1,0 +1,582 @@
+# Murim Chronicles - Ranking Events Expansion
+# Reputation challenges, rank manipulation, cross-realm duels, ceremonies
+# Cross-references: murim_duel, murim_sect, murim_jianghu, murim_training, murim_artifact
+
+namespace = murim_rank
+
+######################################
+# 0008 - REPUTATION CHALLENGE
+# Someone publicly questions your ranking
+######################################
+
+murim_rank.0008 = {
+	type = character_event
+	title = murim_rank.0008.t
+	desc = murim_rank.0008.desc
+	theme = martial
+	left_portrait = {
+		character = scope:reputation_challenger
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = root
+		animation = anger
+	}
+	override_background = {
+		reference = market
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_martial_rank_position
+		var:murim_martial_rank_position <= 50
+		any_living_character = {
+			has_character_flag = murim_initiated
+			prowess >= 15
+			NOT = { this = root }
+			OR = {
+				has_trait = arrogant
+				has_trait = ambitious
+			}
+		}
+		NOT = { has_character_flag = murim_reputation_challenge_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			var:murim_martial_rank_position <= 10
+		}
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_character_flag = murim_initiated
+				prowess >= 15
+				NOT = { this = root }
+				OR = {
+					has_trait = arrogant
+					has_trait = ambitious
+				}
+			}
+			save_scope_as = reputation_challenger
+		}
+		create_character_memory = {
+			type = murim_reputation_challenged_memory
+			participants = {
+				challenger = scope:reputation_challenger
+			}
+		}
+	}
+
+	# Silence them with a public duel
+	option = {
+		name = murim_rank.0008.a
+		custom_tooltip = murim_rank_silence_duel_tt
+		duel = {
+			skill = prowess
+			target = scope:reputation_challenger
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				desc = murim_rank_silenced_doubter_tt
+				add_prestige = 500
+				scope:reputation_challenger = {
+					add_trait = wounded_1
+					add_prestige = -300
+					add_opinion = {
+						target = root
+						modifier = murim_defeated_by_ranked_opinion
+					}
+				}
+				create_character_memory = {
+					type = murim_defended_ranking_memory
+					participants = {
+						defeated = scope:reputation_challenger
+					}
+				}
+			}
+			20 = {
+				desc = murim_rank_inconclusive_tt
+				add_prestige = 100
+				scope:reputation_challenger = {
+					add_opinion = {
+						target = root
+						modifier = murim_grudging_respect_opinion
+					}
+				}
+			}
+			30 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				desc = murim_rank_reputation_damaged_tt
+				add_trait = wounded_1
+				add_prestige = -500
+				add_character_modifier = {
+					modifier = murim_ranking_questioned_modifier
+					years = 3
+				}
+				random = {
+					chance = 20
+					add_trait = craven
+				}
+			}
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_reputation_challenge_cooldown
+				years = 2
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+
+	# Ignore the insult - actions speak louder
+	option = {
+		name = murim_rank.0008.b
+		add_prestige = -100
+		stress_impact = {
+			proud = minor_stress_impact_gain
+			arrogant = major_stress_impact_gain
+		}
+		add_character_modifier = {
+			modifier = murim_above_petty_challenges_modifier
+			years = 2
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_reputation_challenge_cooldown
+				years = 2
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Have your disciples deal with them
+	option = {
+		name = murim_rank.0008.c
+		trigger = {
+			has_character_flag = murim_sect_leader
+			any_courtier = {
+				has_character_flag = murim_sect_member
+				prowess >= 12
+			}
+		}
+		custom_tooltip = murim_rank_disciples_handle_tt
+		scope:reputation_challenger = {
+			add_trait = wounded_1
+			add_opinion = {
+				target = root
+				modifier = murim_sent_lackeys_opinion
+			}
+		}
+		add_tyranny = 5
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_reputation_challenge_cooldown
+				years = 2
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = callous }
+		}
+	}
+}
+
+######################################
+# 0009 - RANK MANIPULATION
+# Someone tries to artificially boost/lower rankings
+######################################
+
+murim_rank.0009 = {
+	type = character_event
+	title = murim_rank.0009.t
+	desc = murim_rank.0009.desc
+	theme = intrigue
+	left_portrait = {
+		character = scope:rank_manipulator
+		animation = scheme
+	}
+	override_background = {
+		reference = corridor_night
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_martial_rank_position
+		var:murim_martial_rank_position <= 50
+		any_living_character = {
+			has_character_flag = murim_initiated
+			intrigue >= 14
+			OR = {
+				has_trait = deceitful
+				has_trait = ambitious
+			}
+			NOT = { this = root }
+		}
+		NOT = { has_character_flag = murim_rank_manipulation_cooldown }
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_character_flag = murim_initiated
+				intrigue >= 14
+				OR = {
+					has_trait = deceitful
+					has_trait = ambitious
+				}
+				NOT = { this = root }
+			}
+			save_scope_as = rank_manipulator
+		}
+		create_character_memory = {
+			type = murim_rank_manipulation_discovered_memory
+			participants = {
+				manipulator = scope:rank_manipulator
+			}
+		}
+	}
+
+	# Expose the manipulation publicly
+	option = {
+		name = murim_rank.0009.a
+		custom_tooltip = murim_rank_expose_manipulation_tt
+		add_prestige = 300
+		scope:rank_manipulator = {
+			add_prestige = -500
+			add_character_modifier = {
+				modifier = murim_exposed_cheater_modifier
+				years = 5
+			}
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_rank_manipulation_cooldown
+				years = 5
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 15 has_trait = honest }
+		}
+	}
+
+	# Blackmail the manipulator for personal gain
+	option = {
+		name = murim_rank.0009.b
+		trigger = { intrigue >= 12 }
+		custom_tooltip = murim_rank_blackmail_manipulator_tt
+		add_gold = 200
+		scope:rank_manipulator = {
+			add_opinion = {
+				target = root
+				modifier = murim_blackmailed_opinion
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_blackmail_leverage
+			years = 3
+		}
+		stress_impact = {
+			honest = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_rank_manipulation_cooldown
+				years = 5
+			}
+			trigger_event = { id = murim_jianghu.0001 days = { 30 60 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+
+	# Ignore it - rankings sort themselves out
+	option = {
+		name = murim_rank.0009.c
+		add_piety = 50
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_rank_manipulation_cooldown
+				years = 5
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# 0010 - CROSS-REALM RANKING DUEL
+# A foreign martial artist challenges for your rank
+######################################
+
+murim_rank.0010 = {
+	type = character_event
+	title = murim_rank.0010.t
+	desc = murim_rank.0010.desc
+	theme = martial
+	left_portrait = {
+		character = scope:foreign_challenger
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	override_background = {
+		reference = market
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_martial_rank_position
+		var:murim_martial_rank_position <= 30
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_character_flag = murim_initiated
+			prowess >= 18
+			NOT = { top_liege = root.top_liege }
+		}
+		NOT = { has_character_flag = murim_cross_realm_duel_cooldown }
+	}
+
+	immediate = {
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				has_character_flag = murim_initiated
+				prowess >= 18
+				NOT = { top_liege = root.top_liege }
+			}
+			save_scope_as = foreign_challenger
+		}
+		create_character_memory = {
+			type = murim_cross_realm_duel_memory
+			participants = {
+				foreigner = scope:foreign_challenger
+			}
+		}
+	}
+
+	# Accept - defend your realm's honor
+	option = {
+		name = murim_rank.0010.a
+		custom_tooltip = murim_rank_defend_realm_honor_tt
+		duel = {
+			skill = prowess
+			target = scope:foreign_challenger
+			45 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				desc = murim_rank_defended_realm_tt
+				add_prestige = 800
+				scope:foreign_challenger = {
+					add_trait = wounded_2
+					add_prestige = -500
+				}
+				create_character_memory = {
+					type = murim_defeated_foreigner_memory
+					participants = {
+						defeated = scope:foreign_challenger
+					}
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_rank.0004 days = { 7 14 } }
+				}
+			}
+			20 = {
+				desc = murim_rank_draw_foreigner_tt
+				add_prestige = 300
+				add_opinion = {
+					target = scope:foreign_challenger
+					modifier = murim_duel_respect
+				}
+			}
+			35 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				desc = murim_rank_lost_to_foreigner_tt
+				add_trait = wounded_2
+				add_prestige = -800
+				add_character_modifier = {
+					modifier = murim_national_shame_modifier
+					years = 5
+				}
+				random = {
+					chance = 25
+					add_trait = craven
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_training.0001 days = { 30 90 } }
+				}
+			}
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_cross_realm_duel_cooldown
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+
+	# Decline - diplomatic incident
+	option = {
+		name = murim_rank.0010.b
+		add_prestige = -500
+		scope:foreign_challenger = {
+			add_prestige = 300
+		}
+		add_character_modifier = {
+			modifier = murim_declined_foreign_challenge_modifier
+			years = 3
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_cross_realm_duel_cooldown
+				years = 3
+			}
+			trigger_event = { id = murim_politics.0001 days = { 14 30 } }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+######################################
+# 0011 - ANNUAL RANKING CEREMONY
+# Formal ceremony to honor top ranked fighters
+######################################
+
+murim_rank.0011 = {
+	type = character_event
+	title = murim_rank.0011.t
+	desc = murim_rank.0011.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	override_background = {
+		reference = throne_room
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_martial_rank_position
+		var:murim_martial_rank_position <= 50
+		NOT = { has_character_flag = murim_ranking_ceremony_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			var:murim_martial_rank_position <= 10
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = murim_ranking_ceremony_memory
+		}
+	}
+
+	# Attend with pride and display power
+	option = {
+		name = murim_rank.0011.a
+		custom_tooltip = murim_rank_ceremony_display_tt
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_ranking_ceremony_honored
+			years = 1
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_ranking_ceremony_cooldown
+				years = 1
+			}
+			# Chance of someone challenging you at ceremony
+			random = {
+				chance = 30
+				trigger_event = { id = murim_rank.0005 days = { 1 3 } }
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = arrogant }
+		}
+	}
+
+	# Use the ceremony for networking
+	option = {
+		name = murim_rank.0011.b
+		custom_tooltip = murim_rank_ceremony_network_tt
+		add_prestige = 200
+		add_diplomacy_skill = 1
+		add_character_modifier = {
+			modifier = murim_martial_world_connections
+			years = 3
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = murim_ranking_ceremony_cooldown
+				years = 1
+			}
+			trigger_event = { id = murim_sect.0850 days = { 14 30 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+
+	# Challenge someone higher-ranked during ceremony
+	option = {
+		name = murim_rank.0011.c
+		trigger = {
+			has_trait = ambitious
+			prowess >= 18
+		}
+		custom_tooltip = murim_rank_ceremony_challenge_tt
+		hidden_effect = {
+			trigger_event = { id = murim_rank.0005 days = { 1 3 } }
+			set_character_flag = {
+				flag = murim_ranking_ceremony_cooldown
+				years = 1
+			}
+		}
+		stress_impact = {
+			calm = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+}
