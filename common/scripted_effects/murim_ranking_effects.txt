@@ -1,0 +1,563 @@
+# Murim Chronicles - Top 50 Martial Ranking Effects
+# Recalculation, entry/exit, death removal, duel updates
+# Load-safe: all effects check exists before variable access
+
+######################################
+# RECALCULATE MARTIAL RANK
+# Yearly pulse - recalculates score for a single character
+######################################
+
+murim_recalculate_martial_rank_effect = {
+	# Safety check
+	if = {
+		limit = {
+			exists = this
+			is_alive = yes
+			murim_is_martial_artist_trigger = yes
+		}
+		# Calculate new score using the formula from murim_ranking_values
+		set_variable = {
+			name = murim_martial_rank_score
+			value = murim_martial_rank_score
+		}
+		# Check if score crosses top 50 threshold
+		if = {
+			limit = {
+				var:murim_martial_rank_score >= murim_rank_threshold_top_50
+				NOT = { has_character_modifier = murim_ranked_top_50_modifier }
+			}
+			# New entry into Top 50
+			murim_enter_top_50_effect = yes
+		}
+		# Check if dropped below threshold
+		if = {
+			limit = {
+				var:murim_martial_rank_score < murim_rank_threshold_top_50
+				has_character_modifier = murim_ranked_top_50_modifier
+			}
+			# Dropped out of Top 50
+			murim_leave_top_50_effect = yes
+		}
+		# Update tier modifiers
+		murim_update_rank_tier_modifiers_effect = yes
+	}
+}
+
+######################################
+# ENTER TOP 50
+# Character crosses threshold, gains modifier, notification fires
+######################################
+
+murim_enter_top_50_effect = {
+	# Add ranked fighter modifier
+	add_character_modifier = {
+		modifier = murim_ranked_top_50_modifier
+		years = 1
+	}
+	# Notification to the character
+	if = {
+		limit = { is_ai = no }
+		trigger_event = {
+			id = murim_rank.0001
+			days = 1
+		}
+	}
+	# Prestige boost for entering rankings
+	add_prestige = 200
+	# Set initial rank position variable if not set
+	if = {
+		limit = {
+			NOT = { has_variable = murim_martial_rank_position }
+		}
+		set_variable = {
+			name = murim_martial_rank_position
+			value = 50
+		}
+	}
+	# Court notification for liege
+	if = {
+		limit = {
+			exists = liege
+			liege = { is_ai = no }
+		}
+		liege = {
+			send_interface_message = {
+				type = event_generic_neutral
+				title = murim_rank_new_entry_notification
+				left_icon = root
+				desc = murim_rank_new_entry_notification_desc
+			}
+		}
+	}
+	# Stress relief from glory
+	add_stress = -15
+}
+
+######################################
+# LEAVE TOP 50
+# Dropped out, loses modifier, shame
+######################################
+
+murim_leave_top_50_effect = {
+	# Remove ranked modifier
+	if = {
+		limit = { has_character_modifier = murim_ranked_top_50_modifier }
+		remove_character_modifier = murim_ranked_top_50_modifier
+	}
+	# Notification to the character
+	if = {
+		limit = { is_ai = no }
+		trigger_event = {
+			id = murim_rank.0002
+			days = 1
+		}
+	}
+	# Shame modifier
+	add_character_modifier = {
+		modifier = murim_fallen_from_rankings_modifier
+		years = 2
+	}
+	# Prestige loss
+	add_prestige = -100
+	# Stress from public failure
+	add_stress = 20
+	# Remove position variable
+	if = {
+		limit = { has_variable = murim_martial_rank_position }
+		remove_variable = murim_martial_rank_position
+	}
+}
+
+######################################
+# REMOVE FROM RANKINGS ON DEATH
+# Dead fighters removed, next in line promoted
+######################################
+
+murim_remove_from_rankings_on_death_effect = {
+	# Only process if was a ranked fighter
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_position
+		}
+		# Store the dead fighter's rank for promotion logic
+		save_temporary_scope_as = dead_ranked_fighter
+		# Was this the #1?
+		if = {
+			limit = {
+				var:murim_martial_rank_position = 1
+			}
+			# Realm-wide notification: #1 has fallen
+			every_ruler = {
+				limit = {
+					is_ai = no
+					is_alive = yes
+				}
+				trigger_event = {
+					id = murim_rank.0003
+					days = { 1 5 }
+				}
+			}
+		}
+		# Remove all ranking variables and modifiers
+		if = {
+			limit = { has_character_modifier = murim_ranked_top_50_modifier }
+			remove_character_modifier = murim_ranked_top_50_modifier
+		}
+		if = {
+			limit = { has_character_modifier = murim_ranked_top_20_modifier }
+			remove_character_modifier = murim_ranked_top_20_modifier
+		}
+		if = {
+			limit = { has_character_modifier = murim_ranked_top_10_modifier }
+			remove_character_modifier = murim_ranked_top_10_modifier
+		}
+		if = {
+			limit = { has_character_modifier = murim_ranked_top_5_modifier }
+			remove_character_modifier = murim_ranked_top_5_modifier
+		}
+		if = {
+			limit = { has_character_modifier = murim_number_one_modifier }
+			remove_character_modifier = murim_number_one_modifier
+		}
+		remove_variable = murim_martial_rank_position
+		remove_variable = murim_martial_rank_score
+	}
+}
+
+######################################
+# UPDATE RANKINGS AFTER DUEL
+# Winner gains rank points, loser drops
+######################################
+
+murim_update_rankings_after_duel_effect = {
+	# Winner processing (this = winner, scope:loser = loser)
+	if = {
+		limit = {
+			exists = this
+			is_alive = yes
+		}
+		# Track duel wins
+		if = {
+			limit = { has_variable = murim_duel_wins }
+			change_variable = {
+				name = murim_duel_wins
+				add = 1
+			}
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_duel_wins } }
+			set_variable = {
+				name = murim_duel_wins
+				value = 1
+			}
+		}
+		# Add recent combat modifier (stacks injury risk)
+		add_character_modifier = {
+			modifier = murim_recent_combat_modifier
+			days = 30
+		}
+		# Add rank challenge cooldown
+		add_character_modifier = {
+			modifier = murim_rank_challenge_cooldown
+			days = 180
+		}
+		# Recalculate rank
+		murim_recalculate_martial_rank_effect = yes
+	}
+	# Loser processing
+	if = {
+		limit = {
+			exists = scope:loser
+			scope:loser = { is_alive = yes }
+		}
+		scope:loser = {
+			# Track duel losses
+			if = {
+				limit = { has_variable = murim_duel_losses }
+				change_variable = {
+					name = murim_duel_losses
+					add = 1
+				}
+			}
+			if = {
+				limit = { NOT = { has_variable = murim_duel_losses } }
+				set_variable = {
+					name = murim_duel_losses
+					value = 1
+				}
+			}
+			# Add recent combat modifier
+			add_character_modifier = {
+				modifier = murim_recent_combat_modifier
+				days = 30
+			}
+			# Roll for injuries (graduated by fight severity)
+			murim_roll_combat_injuries_effect = yes
+			# Roll for mental trauma
+			murim_roll_combat_trauma_effect = yes
+			# Recalculate rank
+			murim_recalculate_martial_rank_effect = yes
+		}
+	}
+}
+
+######################################
+# UPDATE RANK TIER MODIFIERS
+# Adds/removes tier-specific modifiers based on current score
+######################################
+
+murim_update_rank_tier_modifiers_effect = {
+	# Top 20
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score >= murim_rank_threshold_top_20
+			NOT = { has_character_modifier = murim_ranked_top_20_modifier }
+		}
+		add_character_modifier = {
+			modifier = murim_ranked_top_20_modifier
+			years = 1
+		}
+	}
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score < murim_rank_threshold_top_20
+			has_character_modifier = murim_ranked_top_20_modifier
+		}
+		remove_character_modifier = murim_ranked_top_20_modifier
+	}
+	# Top 10
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score >= murim_rank_threshold_top_10
+			NOT = { has_character_modifier = murim_ranked_top_10_modifier }
+		}
+		add_character_modifier = {
+			modifier = murim_ranked_top_10_modifier
+			years = 1
+		}
+	}
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score < murim_rank_threshold_top_10
+			has_character_modifier = murim_ranked_top_10_modifier
+		}
+		remove_character_modifier = murim_ranked_top_10_modifier
+	}
+	# Top 5
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score >= murim_rank_threshold_top_5
+			NOT = { has_character_modifier = murim_ranked_top_5_modifier }
+		}
+		add_character_modifier = {
+			modifier = murim_ranked_top_5_modifier
+			years = 1
+		}
+	}
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score < murim_rank_threshold_top_5
+			has_character_modifier = murim_ranked_top_5_modifier
+		}
+		remove_character_modifier = murim_ranked_top_5_modifier
+	}
+	# Number One
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score >= murim_rank_threshold_number_one
+			NOT = { has_character_modifier = murim_number_one_modifier }
+		}
+		add_character_modifier = {
+			modifier = murim_number_one_modifier
+			years = 1
+		}
+		# New #1 announcement
+		if = {
+			limit = { is_ai = no }
+			trigger_event = {
+				id = murim_rank.0004
+				days = 1
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score < murim_rank_threshold_number_one
+			has_character_modifier = murim_number_one_modifier
+		}
+		remove_character_modifier = murim_number_one_modifier
+		# Dethroned modifier
+		add_character_modifier = {
+			modifier = murim_dethroned_number_one_modifier
+			years = 3
+		}
+	}
+}
+
+######################################
+# ROLL COMBAT INJURIES
+# Graduated injury rolls after losing a duel
+# Severity: sparring < honor < death match < ambush
+######################################
+
+murim_roll_combat_injuries_effect = {
+	# Check for devastating injury first (rarest)
+	if = {
+		limit = {
+			murim_rank_duel_devastating_injury_trigger = yes
+		}
+		random_list = {
+			30 = {
+				# Incapable - fighting career is OVER
+				add_trait = incapable
+				add_character_modifier = {
+					modifier = murim_career_ending_injury_modifier
+					years = 100
+				}
+			}
+			25 = {
+				# Blind from qi explosion
+				add_trait = blind
+			}
+			25 = {
+				# One-legged from crippling technique
+				add_trait = one_legged
+			}
+			20 = {
+				# Shattered meridians
+				add_trait = shattered_meridians
+			}
+		}
+	}
+	# Major injury check
+	else_if = {
+		limit = {
+			murim_rank_duel_major_injury_trigger = yes
+		}
+		random_list = {
+			30 = {
+				add_trait = severely_wounded
+			}
+			20 = {
+				add_trait = one_eyed
+			}
+			20 = {
+				add_trait = disfigured
+			}
+			15 = {
+				add_trait = brutally_wounded
+			}
+			15 = {
+				# Qi crippled from technique backfire
+				add_trait = qi_crippled
+			}
+		}
+	}
+	# Minor injury check
+	else_if = {
+		limit = {
+			murim_rank_duel_minor_injury_trigger = yes
+		}
+		random_list = {
+			50 = {
+				add_trait = wounded
+			}
+			25 = {
+				# Phantom pain from old wound aggravated
+				add_trait = phantom_pain
+			}
+			25 = {
+				# Combat scarred from accumulation
+				add_trait = combat_scarred
+			}
+		}
+	}
+	# Winner can also get hurt (lower chance)
+	if = {
+		limit = {
+			random_chance = { chance = 10 }
+		}
+		random_list = {
+			60 = {
+				add_trait = wounded
+			}
+			25 = {
+				add_trait = combat_scarred
+			}
+			15 = {
+				add_trait = phantom_pain
+			}
+		}
+	}
+}
+
+######################################
+# ROLL COMBAT TRAUMA
+# Mental/emotional consequences after brutal loss
+######################################
+
+murim_roll_combat_trauma_effect = {
+	if = {
+		limit = {
+			murim_rank_duel_mental_trauma_trigger = yes
+		}
+		random_list = {
+			25 = {
+				# Craven - afraid to fight again
+				trigger = {
+					NOT = { has_trait = brave }
+				}
+				add_trait = craven
+				add_stress = 30
+			}
+			20 = {
+				# Broken spirit - lost to someone weaker
+				add_trait = broken_spirit
+				add_stress = 40
+			}
+			15 = {
+				# Stressed/depressed
+				if = {
+					limit = { NOT = { has_trait = depressed } }
+					add_trait = depressed
+				}
+				add_stress = 50
+			}
+			15 = {
+				# Flinch reflex against technique type
+				add_trait = flinch_reflex
+				add_stress = 20
+			}
+			10 = {
+				# Paranoid (especially after ambush)
+				if = {
+					limit = { NOT = { has_trait = paranoid } }
+					add_trait = paranoid
+				}
+				add_stress = 25
+			}
+			10 = {
+				# Battle madness (snapped under pressure)
+				trigger = {
+					NOT = { has_trait = broken_spirit }
+				}
+				add_trait = battle_madness
+				add_stress = 35
+			}
+			5 = {
+				# Lunatic from qi deviation during combat
+				if = {
+					limit = { NOT = { has_trait = lunatic } }
+					add_trait = lunatic
+				}
+				add_stress = 60
+			}
+		}
+	}
+}
+
+######################################
+# INITIALIZE RANKING VARIABLES
+# Called on new martial artists to set up tracking
+######################################
+
+murim_initialize_ranking_variables_effect = {
+	if = {
+		limit = {
+			exists = this
+			NOT = { has_variable = murim_duel_wins }
+		}
+		set_variable = {
+			name = murim_duel_wins
+			value = 0
+		}
+	}
+	if = {
+		limit = {
+			exists = this
+			NOT = { has_variable = murim_duel_losses }
+		}
+		set_variable = {
+			name = murim_duel_losses
+			value = 0
+		}
+	}
+	if = {
+		limit = {
+			exists = this
+			NOT = { has_variable = murim_martial_rank_score }
+		}
+		set_variable = {
+			name = murim_martial_rank_score
+			value = 0
+		}
+	}
+}
