@@ -1,0 +1,435 @@
+# Murim Chronicles - VANILLA SEPARATION DOCTRINE
+# ===============================================
+# THE MOST IMPORTANT DESIGN PRINCIPLE OF THE ENTIRE MOD.
+# ===============================================
+#
+# The martial world is a PARALLEL LAYER on top of vanilla CK3.
+# It does NOT interfere with ANY vanilla system:
+#   - Titles, succession, inheritance — UNTOUCHED
+#   - Wars, alliances, marriages — UNTOUCHED  
+#   - Laws, culture, religion — UNTOUCHED
+#   - Economy, buildings, council — UNTOUCHED
+#
+# The martial world is its OWN thing:
+#   - King of France AND Mount Hua swordsman = separate identities
+#   - Martial rank != feudal rank. A duke can be Outer Disciple. A nobody can be #1 fighter.
+#   - Martial duels do NOT trigger wars.
+#   - Clan membership does NOT affect feudal obligations.
+#   - Martial travel is separate from political travel.
+#
+# IMPLEMENTATION RULES FOR ALL FILES:
+#   1. All martial events use THEIR OWN opinion modifiers (martial_respect, martial_rivalry)
+#      that are SEPARATE from vanilla opinion
+#   2. Martial interactions are in THEIR OWN interaction category
+#   3. Martial traits give prowess/martial bonuses but do NOT affect stewardship,
+#      diplomacy, intrigue, learning (unless specifically earned through cultivation events)
+#   4. The martial world has its own "economy" — reputation, clan prestige, ranking position
+#      NONE of which convert directly to political power (but can be LEVERAGED through events)
+#
+# EXAMPLES THAT MUST WORK:
+#   - French prince travels to Persia for martial challenge. Returns home still French prince.
+#   - Clanless African fighter challenges #30 ranked in China. Neither realm goes to war.
+#   - Shaolin monk serves as Song Emperor's courtier. Elder in Shaolin AND court physician.
+#   - Heavenly Demon member is also a Norse jarl. Vassals don't care about sect.
+#
+# INTEGRATION: This doctrine is referenced by EVERY event file, EVERY trigger file,
+#              EVERY effect file. It is the foundational rule.
+# ===============================================
+
+# ===========================
+# MARTIAL OPINION MODIFIERS
+# Separate from vanilla opinion. Used ONLY for martial interactions.
+# These do NOT affect vassal opinion, council support, or alliance willingness.
+# ===========================
+
+# --- Positive Martial Opinions ---
+
+murim_martial_respect = {
+    opinion = 15
+    years = 10
+    # "This person has earned my respect through martial skill."
+    # Does NOT make them more loyal as a vassal.
+}
+
+murim_martial_deep_respect = {
+    opinion = 30
+    years = 20
+    # "A truly formidable martial artist. I am honored to know them."
+}
+
+murim_shared_clan_bond = {
+    opinion = 20
+    years = 100    # Permanent while in same clan
+    # "We share the bond of [Clan Name]. Brothers/sisters in arms."
+    # Does NOT create a feudal alliance.
+}
+
+murim_master_disciple_bond = {
+    opinion = 40
+    years = 100
+    # "My master/disciple. The deepest bond in the martial world."
+    # Does NOT affect inheritance or succession.
+}
+
+murim_tournament_rivalry_respect = {
+    opinion = 10
+    years = 5
+    # "We fought well in the tournament. Worthy opponents."
+}
+
+murim_saved_my_life_martial = {
+    opinion = 50
+    years = 30
+    # "They saved me during a martial battle."
+    # Does NOT create a political alliance.
+}
+
+murim_righteous_reputation = {
+    opinion = 10
+    years = 10
+    # "Known as righteous in the martial world."
+    # Does NOT affect piety or religious opinion.
+}
+
+# --- Negative Martial Opinions ---
+
+murim_martial_rivalry = {
+    opinion = -20
+    years = 10
+    # "A rival in the martial world."
+    # Does NOT cause political hostility or war.
+}
+
+murim_martial_bitter_enemy = {
+    opinion = -50
+    years = 30
+    # "A hated enemy in the martial world."
+    # Does NOT trigger assassination plots or war declarations.
+}
+
+murim_betrayed_clan = {
+    opinion = -75
+    years = 50
+    # "They betrayed the clan. Unforgivable."
+    # Does NOT affect feudal betrayal mechanics.
+}
+
+murim_killed_my_master = {
+    opinion = -100
+    years = 100    # Permanent grudge
+    # "They killed my master. I will never forgive."
+    # Does NOT trigger a vanilla vendetta or feud.
+}
+
+murim_demonic_practitioner = {
+    opinion = -30
+    years = 20
+    # "They practice demonic martial arts."
+    # Does NOT affect religious relations.
+}
+
+murim_dishonorable_fighter = {
+    opinion = -25
+    years = 15
+    # "They fight without honor — poison, ambush, dirty tricks."
+}
+
+murim_coward_in_battle = {
+    opinion = -15
+    years = 10
+    # "They fled from a martial challenge."
+}
+
+# ===========================
+# MARTIAL INTERACTION CATEGORY
+# Separate interaction set from vanilla diplomacy/intrigue/etc.
+# Accessed through the Murim Ledger or right-click martial character.
+# ===========================
+
+# Note: CK3 interaction categories are defined in common/character_interactions/
+# These would be registered under a custom "martial" category.
+# For now, martial interactions fire through events/decisions, keeping them
+# completely isolated from vanilla interaction menus.
+
+# ===========================
+# VANILLA SEPARATION ENFORCEMENT EFFECTS
+# Called by martial events to ensure no vanilla contamination.
+# ===========================
+
+# murim_verify_no_vanilla_contamination_effect
+# Audit check: ensures a martial event hasn't accidentally modified vanilla systems.
+# Called at the end of complex martial event chains as a safety net.
+
+murim_verify_no_vanilla_contamination_effect = {
+    # This effect exists as DOCUMENTATION and a reminder to modders.
+    # In practice, separation is maintained by never CALLING vanilla effects
+    # from martial events in the first place.
+    #
+    # CHECKLIST for every martial event:
+    # [ ] No add_claim effects
+    # [ ] No press_claim effects  
+    # [ ] No start_war effects
+    # [ ] No title creation/destruction
+    # [ ] No succession law changes
+    # [ ] No vassal contract changes
+    # [ ] No vanilla alliance creation
+    # [ ] No culture/religion changes (unless earned through years of cultivation)
+    # [ ] No building construction/destruction
+    # [ ] No council position changes
+    # [ ] No law changes
+    # [ ] No de jure drift
+    #
+    # ALLOWED vanilla interactions from martial events:
+    # [x] add_gold (payment for services, tournament prizes)
+    # [x] add_prestige (limited, for major martial achievements)
+    # [x] add_piety (limited, for spiritual martial paths like Shaolin)
+    # [x] add_stress (martial events cause stress)
+    # [x] add_trait (martial traits only)
+    # [x] add_character_modifier (martial modifiers only)
+    # [x] create_character_memory (martial memories)
+    # [x] kill/imprison (ONLY from martial duels/captures, NOT political)
+    # [x] move_to_pool (recruited characters moving to clan region)
+    # [x] Prowess/Martial stat changes (core martial stats)
+    # [x] create_character (spawning martial characters: scouts, wanderers, masters)
+    #
+    # BRIDGE EVENTS (the ONLY way martial and vanilla connect):
+    # These are OPTIONAL events the player can CHOOSE to trigger.
+    # The martial world does NOT automatically affect vanilla.
+    # Examples:
+    #   - "Use your martial reputation to intimidate your vassals" (player choice)
+    #   - "Your clan offers military support in your war" (player request, not automatic)
+    #   - "A martial master offers to train your army" (event option, not forced)
+    #   - "Your martial fame attracts courtiers" (passive flavor, no mechanical effect)
+    
+    # Placeholder effect body — exists for documentation
+    custom_tooltip = murim_vanilla_separation_verified_tt
+}
+
+# ===========================
+# MARTIAL ECONOMY SYSTEM
+# Completely separate from vanilla gold/prestige/piety.
+# ===========================
+
+# Martial Reputation — earned through fights, tournaments, rankings
+# Stored as character variable: murim_martial_reputation (0-1000)
+# Does NOT convert to prestige. Can be LEVERAGED through bridge events.
+
+murim_add_martial_reputation_effect = {
+    # amount is passed as a variable or hardcoded per event
+    if = {
+        limit = { NOT = { has_variable = murim_martial_reputation } }
+        set_variable = { name = murim_martial_reputation value = 0 }
+    }
+    change_variable = { name = murim_martial_reputation add = $amount$ }
+    # Cap at 1000
+    if = {
+        limit = { var:murim_martial_reputation > 1000 }
+        set_variable = { name = murim_martial_reputation value = 1000 }
+    }
+}
+
+murim_remove_martial_reputation_effect = {
+    change_variable = { name = murim_martial_reputation add = { -$amount$ } }
+    if = {
+        limit = { var:murim_martial_reputation < 0 }
+        set_variable = { name = murim_martial_reputation value = 0 }
+    }
+}
+
+# Clan Prestige — earned by the clan collectively through member achievements
+# Stored as global variable: murim_[clan]_prestige (0-500)
+# Does NOT convert to realm prestige. Affects recruitment success, tournament seeding.
+
+murim_add_clan_prestige_effect = {
+    # $clan$ = clan flag, $amount$ = prestige amount
+    if = {
+        limit = { NOT = { has_global_variable = murim_$clan$_prestige } }
+        set_global_variable = { name = murim_$clan$_prestige value = 0 }
+    }
+    change_global_variable = { name = murim_$clan$_prestige add = $amount$ }
+    if = {
+        limit = { global_var:murim_$clan$_prestige > 500 }
+        set_global_variable = { name = murim_$clan$_prestige value = 500 }
+    }
+}
+
+# Ranking Position — maintained by the Murim Alliance in China
+# Stored as character variable: murim_ranking_position (1-50, 0 = unranked)
+# Does NOT convert to any vanilla stat. Is the martial world's power hierarchy.
+
+murim_update_ranking_position_effect = {
+    set_variable = { name = murim_ranking_position value = $new_rank$ }
+    # Ranking changes trigger notification events
+    if = {
+        limit = { var:murim_ranking_position <= 10 }
+        add_character_modifier = {
+            modifier = murim_top_ten_ranked
+            years = 1    # Refreshed yearly at ranking ceremony
+        }
+    }
+    if = {
+        limit = { var:murim_ranking_position <= 50 var:murim_ranking_position > 10 }
+        add_character_modifier = {
+            modifier = murim_ranked_fighter
+            years = 1
+        }
+    }
+}
+
+# ===========================
+# BRIDGE EVENT HELPERS
+# These effects are used by OPTIONAL bridge events that let players
+# CHOOSE to connect their martial identity with their political life.
+# The martial world NEVER forces this connection.
+# ===========================
+
+# murim_leverage_martial_fame_effect — player CHOOSES to use martial fame politically
+murim_leverage_martial_fame_effect = {
+    # Only works if you have significant martial reputation
+    if = {
+        limit = { var:murim_martial_reputation >= 200 }
+        add_prestige = 100
+        custom_tooltip = murim_used_martial_fame_for_politics_tt
+    }
+    if = {
+        limit = { var:murim_martial_reputation >= 500 }
+        add_prestige = 300
+        # Vassals hear rumors of your martial prowess
+        every_vassal = {
+            add_opinion = {
+                target = root
+                modifier = murim_impressed_by_martial_fame
+                opinion = 5    # SMALL. This is flavor, not game-breaking.
+            }
+        }
+    }
+}
+
+murim_impressed_by_martial_fame = {
+    opinion = 5
+    years = 3
+    # "They say our liege is a formidable martial artist."
+    # INTENTIONALLY SMALL. Martial fame is NOT a replacement for good governance.
+}
+
+# murim_request_clan_military_support_effect — player ASKS clan for help in a war
+# This is a FAVOR CALL, not automatic. Requires built-up clan prestige and rank.
+murim_request_clan_military_support_effect = {
+    # Only available to high-ranked clan members
+    if = {
+        limit = {
+            OR = {
+                has_trait = sect_elder
+                has_trait = vice_sect_leader
+                has_trait = sect_leader
+            }
+            var:murim_martial_reputation >= 300
+        }
+        # Clan sends a small elite force (5-15 martial artists)
+        # NOT a full army. NOT a declaration of war. Just skilled fighters.
+        custom_tooltip = murim_clan_sends_martial_support_tt
+        add_character_modifier = {
+            modifier = murim_clan_martial_support
+            years = 2
+        }
+    }
+}
+
+murim_clan_martial_support = {
+    # Small elite force supporting your military
+    prowess = 5    # YOU are more effective in combat
+    martial = 3    # Better tactical advice
+    # Does NOT add troops, levy, or men-at-arms directly.
+    # Represents martial artists fighting alongside you in key moments.
+}
+
+# ===========================
+# RANKING MODIFIERS
+# ===========================
+
+murim_top_ten_ranked = {
+    prowess = 3
+    martial = 1
+    monthly_prestige = 0    # ZERO vanilla prestige. This is martial-layer only.
+}
+
+murim_ranked_fighter = {
+    prowess = 1
+    monthly_prestige = 0    # ZERO vanilla prestige.
+}
+
+# ===========================
+# MARTIAL TRAVEL SYSTEM
+# Separate from vanilla travel. Characters "go to China" for martial purposes
+# without actually moving their court or triggering political events.
+# ===========================
+
+# murim_martial_travel_to_china_effect — initiates a martial journey
+# DOES NOT move the character's court. DOES NOT trigger vanilla travel events.
+# Adds a modifier representing the journey. Duration based on distance.
+
+murim_martial_travel_to_china_effect = {
+    # Determine travel time by origin region
+    if = {
+        limit = { murim_is_in_goryeo_trigger = yes }
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 3    # Short trip from Korea
+        }
+    }
+    else_if = {
+        limit = { murim_is_in_japan_trigger = yes }
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 6    # Sea crossing
+        }
+    }
+    else_if = {
+        limit = { murim_is_in_india_trigger = yes }
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 9    # Long overland journey
+        }
+    }
+    else_if = {
+        limit = { murim_is_in_persia_trigger = yes }
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 12    # Silk Road journey
+        }
+    }
+    else_if = {
+        limit = { murim_is_in_europe_trigger = yes }
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 18    # Epic journey from Europe
+        }
+    }
+    else_if = {
+        limit = { murim_is_in_africa_trigger = yes }
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 18    # Epic journey from Africa
+        }
+    }
+    else = {
+        # Default: China-local travel
+        add_character_modifier = {
+            modifier = murim_traveling_to_china
+            months = 1    # Already in China region
+        }
+    }
+    
+    set_variable = { name = murim_on_martial_journey value = yes }
+    # Travel events fire based on modifier duration
+    trigger_event = { id = murim_travel.0001 days = { 30 90 } }
+}
+
+murim_traveling_to_china = {
+    # Character is on a martial journey to China
+    # VANILLA SEPARATION: Character stays at their court politically.
+    # They're "away" for martial purposes only.
+    prowess = -1    # Fatigued from travel
+    martial = -1
+    # Cannot participate in other martial events while traveling
+}
