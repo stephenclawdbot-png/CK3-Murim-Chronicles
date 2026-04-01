@@ -1,0 +1,1432 @@
+###############################################################################
+# MURIM TRAINING EVENTS
+# Events for martial arts training, sparring, technique practice, conditioning
+# Covers: montage, sparring, technique practice, conditioning, meditation
+#         retreat, master teaching, special training grounds, waterfall
+#         meditation, iron body tempering, mountain peak training
+# Cross-references: murim_cultivation_events, murim_duel_events,
+#                   murim_mentor_events, murim_technique_events
+###############################################################################
+
+namespace = murim_training
+
+###############################################################################
+# 1. TRAINING MONTAGE - INTENSIVE DAILY PRACTICE
+###############################################################################
+murim_training.0001 = {
+	type = character_event
+	title = murim_training.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_cultivation_stage
+					var:murim_cultivation_stage >= 5
+				}
+				desc = murim_training.0001.desc_advanced
+			}
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_cultivation_stage
+					var:murim_cultivation_stage >= 3
+				}
+				desc = murim_training.0001.desc_intermediate
+			}
+			desc = murim_training.0001.desc_beginner
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = diligent
+		}
+		modifier = {
+			add = 2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -2
+			has_trait = lazy
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = training_montage_memory
+		}
+	}
+
+	# Grueling 100-day training montage
+	option = {
+		name = murim_training.0001.a
+		add_prowess_skill = 2
+		add_character_modifier = {
+			modifier = training_montage_active_modifier
+			years = 1
+		}
+		random_list = {
+			60 = {
+				# Successful training
+				add_prestige = 100
+				create_character_memory = {
+					type = training_breakthrough_memory
+				}
+			}
+			25 = {
+				# Overtraining injury
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = overtraining_exhaustion_modifier
+					years = 1
+				}
+				create_character_memory = {
+					type = overtraining_injury_memory
+				}
+			}
+			15 = {
+				# Exceptional results - prowess surge
+				add_prowess_skill = 3
+				add_prestige = 300
+				create_character_memory = {
+					type = exceptional_training_results_memory
+				}
+				# Cross-reference: may trigger cultivation breakthrough
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		stress_impact = {
+			diligent = medium_stress_impact_loss
+			lazy = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = diligent
+			}
+		}
+	}
+
+	# Moderate daily practice
+	option = {
+		name = murim_training.0001.b
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = steady_training_modifier
+			years = 2
+		}
+		stress_impact = {
+			patient = medium_stress_impact_loss
+			impatient = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Skip training - too lazy
+	option = {
+		name = murim_training.0001.c
+		trigger = {
+			has_trait = lazy
+		}
+		add_prestige = -50
+		add_character_modifier = {
+			modifier = skipped_training_shame_modifier
+			years = 1
+		}
+		stress_impact = {
+			lazy = medium_stress_impact_loss
+			diligent = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 30
+				has_trait = lazy
+			}
+		}
+	}
+}
+
+###############################################################################
+# 2. SPARRING PARTNER ENCOUNTER
+###############################################################################
+murim_training.0002 = {
+	type = character_event
+	title = murim_training.0002.t
+	desc = murim_training.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:sparring_partner
+		animation = fight
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		is_imprisoned = no
+		any_relation = {
+			type = friend
+			has_variable = murim_cultivation_stage
+			is_alive = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = gregarious
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = friend
+			limit = {
+				has_variable = murim_cultivation_stage
+				is_alive = yes
+			}
+			save_scope_as = sparring_partner
+		}
+		create_character_memory = {
+			type = sparring_session_memory
+			participants = {
+				partner = scope:sparring_partner
+			}
+		}
+	}
+
+	# Friendly sparring - both improve
+	option = {
+		name = murim_training.0002.a
+		trigger = {
+			exists = scope:sparring_partner
+		}
+		duel = {
+			skill = prowess
+			target = scope:sparring_partner
+			50 = {
+				compare_modifier = {
+					value = prowess
+					target = scope:sparring_partner
+					multiplier = 1
+				}
+				desc = murim_training.0002.a.you_win
+				add_prowess_skill = 1
+				scope:sparring_partner = {
+					add_prowess_skill = 1
+				}
+				add_opinion = {
+					target = scope:sparring_partner
+					modifier = good_sparring_session_opinion
+					opinion = 10
+				}
+				add_character_modifier = {
+					modifier = sparring_partner_synergy_modifier
+					years = 2
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = prowess
+					target = scope:sparring_partner
+					multiplier = -1
+				}
+				desc = murim_training.0002.a.they_win
+				add_prowess_skill = 2
+				scope:sparring_partner = {
+					add_prowess_skill = 1
+				}
+				add_opinion = {
+					target = scope:sparring_partner
+					modifier = humbling_sparring_lesson_opinion
+					opinion = 15
+				}
+				create_character_memory = {
+					type = learned_from_sparring_defeat_memory
+					participants = {
+						teacher_partner = scope:sparring_partner
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Go all out - risk injury but bigger gains
+	option = {
+		name = murim_training.0002.b
+		trigger = {
+			exists = scope:sparring_partner
+		}
+		duel = {
+			skill = prowess
+			target = scope:sparring_partner
+			40 = {
+				compare_modifier = {
+					value = prowess
+					target = scope:sparring_partner
+					multiplier = 2
+				}
+				desc = murim_training.0002.b.dominate
+				add_prowess_skill = 3
+				add_prestige = 150
+				create_character_memory = {
+					type = dominated_sparring_memory
+					participants = {
+						outmatched = scope:sparring_partner
+					}
+				}
+			}
+			30 = {
+				desc = murim_training.0002.b.mutual_injury
+				add_prowess_skill = 2
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					50 = {
+						scope:sparring_partner = { add_trait = wounded_1 }
+					}
+				}
+				create_character_memory = {
+					type = sparring_gone_wrong_memory
+					participants = {
+						injured_partner = scope:sparring_partner
+					}
+				}
+			}
+			30 = {
+				compare_modifier = {
+					value = prowess
+					target = scope:sparring_partner
+					multiplier = -2
+				}
+				desc = murim_training.0002.b.crushed
+				add_trait = wounded_1
+				add_prestige = -100
+				add_opinion = {
+					target = scope:sparring_partner
+					modifier = sparring_rivalry_born_opinion
+					opinion = -20
+				}
+			}
+		}
+		stress_impact = {
+			brave = medium_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Decline - train alone
+	option = {
+		name = murim_training.0002.c
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = solo_training_isolation_modifier
+			years = 1
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+###############################################################################
+# 3. WATERFALL MEDITATION
+###############################################################################
+murim_training.0003 = {
+	type = character_event
+	title = murim_training.0003.t
+	desc = murim_training.0003.desc
+	theme = faith
+	left_portrait = {
+		character = root
+		animation = pray
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = temperate
+		}
+		modifier = {
+			add = 2
+			learning >= 15
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = waterfall_meditation_memory
+		}
+	}
+
+	# Endure the waterfall for 7 days
+	option = {
+		name = murim_training.0003.a
+		random_list = {
+			40 = {
+				# Perfect clarity achieved
+				add_learning_skill = 2
+				add_prowess_skill = 1
+				add_piety = 200
+				add_character_modifier = {
+					modifier = waterfall_meditation_clarity_modifier
+					years = 3
+				}
+				create_character_memory = {
+					type = waterfall_enlightenment_memory
+				}
+				# Cross-reference: may trigger cultivation breakthrough
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 15 30 }
+				}
+			}
+			35 = {
+				# Moderate benefit
+				add_learning_skill = 1
+				add_piety = 100
+				add_character_modifier = {
+					modifier = waterfall_calm_modifier
+					years = 1
+				}
+			}
+			15 = {
+				# Hypothermia and illness
+				add_trait = ill
+				add_character_modifier = {
+					modifier = waterfall_hypothermia_modifier
+					years = 1
+				}
+				create_character_memory = {
+					type = waterfall_nearly_died_memory
+				}
+			}
+			10 = {
+				# Qi deviation under the waterfall
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = qi_deviation_under_waterfall_modifier
+					years = 2
+				}
+				create_character_memory = {
+					type = waterfall_qi_deviation_memory
+				}
+				# Cross-reference: cultivation events for qi deviation
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 5 15 }
+				}
+			}
+		}
+		stress_impact = {
+			patient = medium_stress_impact_loss
+			impatient = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Meditate at the base for 3 days (safer)
+	option = {
+		name = murim_training.0003.b
+		add_learning_skill = 1
+		add_piety = 100
+		add_character_modifier = {
+			modifier = gentle_waterfall_meditation_modifier
+			years = 1
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# The waterfall is too cold - leave
+	option = {
+		name = murim_training.0003.c
+		add_prestige = -30
+		stress_impact = {
+			craven = medium_stress_impact_loss
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+###############################################################################
+# 4. IRON BODY TEMPERING
+###############################################################################
+murim_training.0004 = {
+	type = character_event
+	title = murim_training.0004.t
+	desc = murim_training.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		prowess >= 10
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = brave
+		}
+		modifier = {
+			add = 2
+			prowess >= 20
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = iron_body_tempering_memory
+		}
+	}
+
+	# Full iron body tempering - strike yourself with iron rods
+	option = {
+		name = murim_training.0004.a
+		random_list = {
+			35 = {
+				# Iron body achieved
+				add_prowess_skill = 3
+				add_character_modifier = {
+					modifier = iron_body_achieved_modifier
+					years = 5
+				}
+				create_character_memory = {
+					type = iron_body_success_memory
+				}
+				add_prestige = 200
+			}
+			35 = {
+				# Partial success - tougher but bruised
+				add_prowess_skill = 1
+				add_character_modifier = {
+					modifier = partial_iron_body_modifier
+					years = 2
+				}
+			}
+			20 = {
+				# Bone fractures from excessive tempering
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = bone_fracture_from_tempering_modifier
+					years = 2
+				}
+				create_character_memory = {
+					type = tempering_bone_fracture_memory
+				}
+			}
+			10 = {
+				# Critical failure - permanent damage
+				random_list = {
+					50 = { add_trait = wounded_2 }
+					50 = { add_trait = incapable }
+				}
+				create_character_memory = {
+					type = tempering_catastrophic_failure_memory
+				}
+			}
+		}
+		stress_impact = {
+			brave = medium_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Herbal bath tempering (safer, less effective)
+	option = {
+		name = murim_training.0004.b
+		remove_short_term_gold = 50
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = herbal_bath_tempering_modifier
+			years = 2
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Refuse - preserve your body
+	option = {
+		name = murim_training.0004.c
+		add_prestige = -20
+		stress_impact = {
+			craven = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+###############################################################################
+# 5. MOUNTAIN PEAK TRAINING - HIGH ALTITUDE CONDITIONING
+###############################################################################
+murim_training.0005 = {
+	type = character_event
+	title = murim_training.0005.t
+	desc = murim_training.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		is_imprisoned = no
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = athletic
+		}
+		modifier = {
+			add = 2
+			has_trait = diligent
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = mountain_peak_training_memory
+		}
+	}
+
+	# Train at the summit for 30 days
+	option = {
+		name = murim_training.0005.a
+		random_list = {
+			40 = {
+				# Endurance breakthrough
+				add_prowess_skill = 2
+				add_martial_skill = 1
+				add_character_modifier = {
+					modifier = mountain_peak_endurance_modifier
+					years = 3
+				}
+				create_character_memory = {
+					type = mountain_summit_breakthrough_memory
+				}
+			}
+			30 = {
+				# Solid improvement
+				add_prowess_skill = 1
+				add_character_modifier = {
+					modifier = high_altitude_conditioning_modifier
+					years = 2
+				}
+			}
+			20 = {
+				# Altitude sickness
+				add_trait = ill
+				create_character_memory = {
+					type = altitude_sickness_memory
+				}
+			}
+			10 = {
+				# Fall from a cliff during training
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					10 = { add_trait = incapable }
+				}
+				create_character_memory = {
+					type = fell_from_cliff_training_memory
+				}
+			}
+		}
+		stress_impact = {
+			brave = medium_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 45
+		}
+	}
+
+	# Train at the mountain base (safer)
+	option = {
+		name = murim_training.0005.b
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = mountain_base_training_modifier
+			years = 1
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# The mountain is too dangerous
+	option = {
+		name = murim_training.0005.c
+		add_prestige = -30
+		stress_impact = {
+			craven = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+###############################################################################
+# 6. MASTER'S SPECIAL TEACHING SESSION
+###############################################################################
+murim_training.0006 = {
+	type = character_event
+	title = murim_training.0006.t
+	desc = murim_training.0006.desc
+	theme = education
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	right_portrait = {
+		character = scope:training_master
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		any_relation = {
+			type = mentor
+			is_alive = yes
+			has_variable = murim_cultivation_stage
+			prowess >= root.prowess
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = humble
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = mentor
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_stage
+				prowess >= root.prowess
+			}
+			save_scope_as = training_master
+		}
+		create_character_memory = {
+			type = masters_special_teaching_memory
+			participants = {
+				master = scope:training_master
+			}
+		}
+	}
+
+	# Listen carefully and absorb the teaching
+	option = {
+		name = murim_training.0006.a
+		trigger = {
+			exists = scope:training_master
+		}
+		add_prowess_skill = 2
+		add_learning_skill = 1
+		add_opinion = {
+			target = scope:training_master
+			modifier = grateful_student_opinion
+			opinion = 20
+		}
+		add_character_modifier = {
+			modifier = masters_wisdom_absorbed_modifier
+			years = 3
+		}
+		random = {
+			chance = 25
+			# Cross-reference: technique mastery event
+			trigger_event = {
+				id = murim_technique.0001
+				days = { 15 30 }
+			}
+		}
+		stress_impact = {
+			humble = medium_stress_impact_loss
+			arrogant = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Challenge the master's methods
+	option = {
+		name = murim_training.0006.b
+		trigger = {
+			exists = scope:training_master
+			has_trait = arrogant
+		}
+		add_prowess_skill = 1
+		add_opinion = {
+			target = scope:training_master
+			modifier = disrespectful_student_opinion
+			opinion = -25
+		}
+		random = {
+			chance = 40
+			# Master disciplines you with a beating
+			duel = {
+				skill = prowess
+				target = scope:training_master
+				80 = {
+					desc = murim_training.0006.b.master_wins
+					add_trait = wounded_1
+					add_prowess_skill = 2
+					create_character_memory = {
+						type = disciplined_by_master_memory
+						participants = {
+							disciplining_master = scope:training_master
+						}
+					}
+				}
+				20 = {
+					desc = murim_training.0006.b.student_surprises
+					add_prestige = 300
+					add_prowess_skill = 3
+					scope:training_master = {
+						add_opinion = {
+							target = root
+							modifier = impressed_by_student_opinion
+							opinion = 30
+						}
+					}
+					create_character_memory = {
+						type = surpassed_master_moment_memory
+						participants = {
+							surpassed_master = scope:training_master
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = arrogant
+			}
+		}
+	}
+
+	# Ask for a secret technique
+	option = {
+		name = murim_training.0006.c
+		trigger = {
+			exists = scope:training_master
+		}
+		random_list = {
+			40 = {
+				# Master shares a secret
+				add_prowess_skill = 3
+				add_character_modifier = {
+					modifier = secret_technique_learned_modifier
+					years = 5
+				}
+				create_character_memory = {
+					type = learned_secret_technique_memory
+					participants = {
+						technique_master = scope:training_master
+					}
+				}
+			}
+			40 = {
+				# Not yet worthy
+				add_prestige = -50
+				scope:training_master = {
+					add_opinion = {
+						target = root
+						modifier = premature_request_opinion
+						opinion = -10
+					}
+				}
+			}
+			20 = {
+				# Master tests you first
+				trigger_event = {
+					id = murim_training.0007
+					days = { 5 15 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+###############################################################################
+# 7. MASTER'S TEST - PROVE YOUR WORTH
+###############################################################################
+murim_training.0007 = {
+	type = character_event
+	title = murim_training.0007.t
+	desc = murim_training.0007.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = masters_test_memory
+		}
+	}
+
+	# Physical endurance test
+	option = {
+		name = murim_training.0007.a
+		random_list = {
+			50 = {
+				# Pass the test
+				add_prowess_skill = 2
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = passed_masters_test_modifier
+					years = 3
+				}
+				create_character_memory = {
+					type = passed_masters_test_memory
+				}
+			}
+			30 = {
+				# Barely fail - master gives you another chance
+				add_prowess_skill = 1
+				trigger_event = {
+					id = murim_training.0001
+					days = { 30 60 }
+				}
+			}
+			20 = {
+				# Collapse from exhaustion
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = failed_masters_test_shame_modifier
+					years = 2
+				}
+				create_character_memory = {
+					type = failed_masters_test_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Mental wisdom test
+	option = {
+		name = murim_training.0007.b
+		random_list = {
+			40 = {
+				# Wisdom shines through
+				add_learning_skill = 3
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = wisdom_test_passed_modifier
+					years = 3
+				}
+			}
+			40 = {
+				# Partial understanding
+				add_learning_skill = 1
+				add_piety = 100
+			}
+			20 = {
+				# Completely wrong answer
+				add_prestige = -100
+				add_character_modifier = {
+					modifier = wisdom_test_failed_modifier
+					years = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Refuse the test - not ready
+	option = {
+		name = murim_training.0007.c
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = refused_masters_test_modifier
+			years = 2
+		}
+		stress_impact = {
+			humble = minor_stress_impact_loss
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+###############################################################################
+# 8. SPECIAL TRAINING GROUNDS DISCOVERED
+###############################################################################
+murim_training.0008 = {
+	type = character_event
+	title = murim_training.0008.t
+	desc = murim_training.0008.desc
+	theme = hunt_activity
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		is_imprisoned = no
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			learning >= 15
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = discovered_special_training_grounds_memory
+		}
+	}
+
+	# Train at the spirit-rich grounds for maximum benefit
+	option = {
+		name = murim_training.0008.a
+		add_prowess_skill = 2
+		add_learning_skill = 1
+		add_piety = 100
+		add_character_modifier = {
+			modifier = spirit_rich_training_grounds_modifier
+			years = 5
+		}
+		random = {
+			chance = 30
+			# Cross-reference: artifact discovery at the grounds
+			trigger_event = {
+				id = murim_artifact.0001
+				days = { 10 30 }
+			}
+		}
+		random = {
+			chance = 20
+			# Cross-reference: cultivation breakthrough from spirit energy
+			trigger_event = {
+				id = murim_cultivation.0001
+				days = { 30 60 }
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Set up a permanent training camp
+	option = {
+		name = murim_training.0008.b
+		remove_short_term_gold = 200
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = permanent_training_camp_modifier
+			years = -1
+		}
+		# Future training events will be more effective
+		every_vassal = {
+			limit = {
+				has_variable = murim_cultivation_stage
+			}
+			add_opinion = {
+				target = root
+				modifier = established_training_grounds_opinion
+				opinion = 20
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				gold >= 500
+			}
+		}
+	}
+
+	# Keep it secret for personal use
+	option = {
+		name = murim_training.0008.c
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = secret_training_grounds_modifier
+			years = 10
+		}
+		add_intrigue = 1
+		stress_impact = {
+			greedy = medium_stress_impact_loss
+			generous = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+###############################################################################
+# 9. EXTREME CONDITIONING - BOULDER CARRYING
+###############################################################################
+murim_training.0009 = {
+	type = character_event
+	title = murim_training.0009.t
+	desc = murim_training.0009.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		prowess >= 8
+		is_imprisoned = no
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			prowess >= 20
+		}
+		modifier = {
+			add = 2
+			has_trait = strong
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = boulder_carrying_conditioning_memory
+		}
+	}
+
+	# Carry the heaviest boulder up the mountain
+	option = {
+		name = murim_training.0009.a
+		random_list = {
+			30 = {
+				# Incredible feat of strength
+				add_prowess_skill = 3
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = boulder_master_modifier
+					years = 5
+				}
+				create_character_memory = {
+					type = boulder_triumph_memory
+				}
+			}
+			35 = {
+				# Completed but exhausted
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = endurance_training_results_modifier
+					years = 2
+				}
+			}
+			25 = {
+				# Back injury from overexertion
+				add_trait = wounded_1
+				add_prowess_skill = 1
+				create_character_memory = {
+					type = boulder_back_injury_memory
+				}
+			}
+			10 = {
+				# Crushed under the boulder
+				random_list = {
+					60 = { add_trait = wounded_2 }
+					30 = { add_trait = incapable }
+					10 = {
+						# Cross-reference: near-death may trigger fate event
+						trigger_event = {
+							id = murim_cultivation.0001
+							days = { 5 10 }
+						}
+						add_trait = wounded_2
+					}
+				}
+				create_character_memory = {
+					type = crushed_by_boulder_memory
+				}
+			}
+		}
+		stress_impact = {
+			brave = medium_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Medium boulder - reasonable challenge
+	option = {
+		name = murim_training.0009.b
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = moderate_conditioning_modifier
+			years = 1
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# This is insane - refuse
+	option = {
+		name = murim_training.0009.c
+		add_prestige = -50
+		stress_impact = {
+			craven = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+###############################################################################
+# 10. MEDITATION RETREAT - SECLUDED CULTIVATION
+###############################################################################
+murim_training.0010 = {
+	type = character_event
+	title = murim_training.0010.t
+	desc = murim_training.0010.desc
+	theme = faith
+	left_portrait = {
+		character = root
+		animation = pray
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_stage
+		is_imprisoned = no
+		gold >= 50
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = temperate
+		}
+		modifier = {
+			add = 2
+			learning >= 15
+		}
+		modifier = {
+			add = 2
+			has_trait = patient
+		}
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = meditation_retreat_memory
+		}
+	}
+
+	# 100-day secluded meditation retreat
+	option = {
+		name = murim_training.0010.a
+		remove_short_term_gold = 100
+		random_list = {
+			35 = {
+				# Enlightenment achieved
+				add_learning_skill = 3
+				add_piety = 500
+				add_character_modifier = {
+					modifier = meditation_retreat_enlightenment_modifier
+					years = 5
+				}
+				create_character_memory = {
+					type = meditation_enlightenment_memory
+				}
+				# Cross-reference: cultivation breakthrough
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 10 30 }
+				}
+			}
+			30 = {
+				# Deep inner peace
+				add_learning_skill = 2
+				add_piety = 200
+				add_character_modifier = {
+					modifier = inner_peace_modifier
+					years = 3
+				}
+				remove_trait = stressed
+				remove_trait = depressed
+			}
+			20 = {
+				# Disturbed by inner demons
+				add_stress = 50
+				add_character_modifier = {
+					modifier = inner_demon_encounter_modifier
+					years = 2
+				}
+				create_character_memory = {
+					type = inner_demon_confrontation_memory
+				}
+			}
+			15 = {
+				# Qi deviation during deep meditation
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = meditation_qi_deviation_modifier
+					years = 2
+				}
+				create_character_memory = {
+					type = meditation_qi_deviation_memory
+				}
+			}
+		}
+		stress_impact = {
+			patient = major_stress_impact_loss
+			impatient = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Week-long silent meditation
+	option = {
+		name = murim_training.0010.b
+		remove_short_term_gold = 50
+		add_learning_skill = 1
+		add_piety = 100
+		add_character_modifier = {
+			modifier = brief_meditation_calm_modifier
+			years = 1
+		}
+		stress_impact = {
+			patient = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Cannot afford the time away
+	option = {
+		name = murim_training.0010.c
+		add_stress = 20
+		stress_impact = {
+			ambitious = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
