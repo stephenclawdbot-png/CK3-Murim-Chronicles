@@ -1,6 +1,8 @@
 # Murim Chronicles - General Scripted Effects
 # Core effects for cultivation, duels, memories, injuries, and cross-system integration
 # Cross-references: murim_modifiers, murim_triggers, murim_ranking_effects, all event files
+# FIXED: All trait references now match actual trait definitions in 01_martial_traits.txt
+# Uses OR blocks for backward compatibility with alternate trait names
 
 # ==========================================
 # CULTIVATION EFFECTS
@@ -10,9 +12,12 @@ murim_gain_qi_effect = {
 	# Gain qi cultivation progress based on learning and piety
 	if = {
 		limit = {
-			has_trait = cultivation_nascent_soul
+			OR = {
+				has_trait = murim_nascent_soul
+				has_trait = cultivation_nascent_soul
+			}
 		}
-		# Already at max cultivation, minor benefit
+		# Already at high cultivation, minor benefit
 		add_piety = 50
 		create_character_memory = {
 			type = murim_qi_cultivation_memory
@@ -20,7 +25,10 @@ murim_gain_qi_effect = {
 	}
 	else_if = {
 		limit = {
-			has_trait = cultivation_core_formation
+			OR = {
+				has_trait = murim_golden_core
+				has_trait = cultivation_core_formation
+			}
 		}
 		change_variable = {
 			name = murim_cultivation_progress
@@ -30,7 +38,10 @@ murim_gain_qi_effect = {
 	}
 	else_if = {
 		limit = {
-			has_trait = cultivation_foundation
+			OR = {
+				has_trait = murim_foundation
+				has_trait = cultivation_foundation
+			}
 		}
 		change_variable = {
 			name = murim_cultivation_progress
@@ -57,10 +68,13 @@ murim_attempt_breakthrough_effect = {
 			}
 			modifier = {
 				factor = 1.5
-				has_trait = cultivation_prodigy
+				OR = {
+					has_trait = cultivation_prodigy
+					has_trait = genius
+				}
 			}
 			# Breakthrough success
-			run_interaction = murim_cultivation_breakthrough_success_effect
+			murim_cultivation_breakthrough_success_effect = yes
 			trigger_event = {
 				id = murim_cultivation.0100
 				days = 1
@@ -90,7 +104,7 @@ murim_attempt_breakthrough_effect = {
 				has_trait = patient
 			}
 			# Qi deviation - dangerous failure
-			run_interaction = murim_qi_deviation_effect
+			murim_qi_deviation_effect = yes
 			trigger_event = {
 				id = murim_cultivation.0200
 				days = 1
@@ -101,45 +115,58 @@ murim_attempt_breakthrough_effect = {
 
 murim_cultivation_breakthrough_success_effect = {
 	# Promote to next cultivation tier
+	# Uses correct trait names from 01_martial_traits.txt
 	if = {
 		limit = {
 			NOR = {
-				has_trait = cultivation_body_tempering
-				has_trait = cultivation_meridian_opening
-				has_trait = cultivation_foundation
-				has_trait = cultivation_core_formation
-				has_trait = cultivation_nascent_soul
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+				has_trait = murim_heavenly_tribulation
 			}
 		}
-		add_trait = cultivation_body_tempering
+		add_trait = murim_outer_qi
 	}
 	else_if = {
-		limit = { has_trait = cultivation_body_tempering }
-		remove_trait = cultivation_body_tempering
-		add_trait = cultivation_meridian_opening
+		limit = { has_trait = murim_outer_qi }
+		remove_trait = murim_outer_qi
+		add_trait = murim_qi_gathering
 	}
 	else_if = {
-		limit = { has_trait = cultivation_meridian_opening }
-		remove_trait = cultivation_meridian_opening
-		add_trait = cultivation_foundation
+		limit = { has_trait = murim_qi_gathering }
+		remove_trait = murim_qi_gathering
+		add_trait = murim_foundation
 	}
 	else_if = {
-		limit = { has_trait = cultivation_foundation }
-		remove_trait = cultivation_foundation
-		add_trait = cultivation_core_formation
+		limit = { has_trait = murim_foundation }
+		remove_trait = murim_foundation
+		add_trait = murim_golden_core
 		add_character_modifier = {
 			modifier = core_formation_radiance
 			years = 3
 		}
 	}
 	else_if = {
-		limit = { has_trait = cultivation_core_formation }
-		remove_trait = cultivation_core_formation
-		add_trait = cultivation_nascent_soul
+		limit = { has_trait = murim_golden_core }
+		remove_trait = murim_golden_core
+		add_trait = murim_nascent_soul
 		add_character_modifier = {
 			modifier = nascent_soul_presence
 			years = 5
 		}
+	}
+	else_if = {
+		limit = { has_trait = murim_nascent_soul }
+		remove_trait = murim_nascent_soul
+		add_trait = murim_spirit_severing
+	}
+	else_if = {
+		limit = { has_trait = murim_spirit_severing }
+		remove_trait = murim_spirit_severing
+		add_trait = murim_heavenly_tribulation
 	}
 	add_character_modifier = {
 		modifier = breakthrough_euphoria
@@ -166,7 +193,10 @@ murim_qi_deviation_effect = {
 		40 = {
 			# Minor deviation - just pain
 			add_stress = 30
-			add_prowess_skill = -2
+			add_character_modifier = {
+				modifier = meridian_opening_strain
+				years = 1
+			}
 		}
 		35 = {
 			# Moderate deviation - wounded
@@ -179,17 +209,25 @@ murim_qi_deviation_effect = {
 		20 = {
 			# Severe deviation - seriously wounded
 			add_trait = wounded_2
-			add_stress = 75
-			change_variable = {
-				name = murim_cultivation_progress
-				add = -50
+			add_stress = 80
+			create_character_memory = {
+				type = murim_qi_deviation_severe_memory
 			}
 		}
 		5 = {
-			# Critical deviation - incapacitated
-			add_trait = incapable
-			create_character_memory = {
-				type = murim_qi_deviation_critical_memory
+			# Critical deviation - incapable or death
+			random_list = {
+				60 = {
+					add_trait = incapable
+					create_character_memory = {
+						type = murim_qi_deviation_crippled_memory
+					}
+				}
+				40 = {
+					death = {
+						death_reason = death_qi_deviation
+					}
+				}
 			}
 		}
 	}
@@ -199,233 +237,168 @@ murim_qi_deviation_effect = {
 # DUEL EFFECTS
 # ==========================================
 
-murim_initiate_duel_effect = {
-	# Set up duel variables and trigger duel event chain
-	save_scope_as = murim_duel_challenger
-	set_variable = {
-		name = murim_in_duel
-		value = yes
-	}
-	scope:murim_duel_target = {
-		set_variable = {
-			name = murim_in_duel
-			value = yes
-		}
-	}
-	create_character_memory = {
-		type = murim_duel_initiated_memory
-		participants = {
-			opponent = scope:murim_duel_target
-		}
-	}
-}
-
-murim_resolve_duel_victory_effect = {
-	# Duel winner consequences
+murim_duel_victory_effect = {
+	# Apply effects of winning a duel
 	add_prestige = 100
-	add_character_modifier = {
-		modifier = duel_champion_fame
-		years = 2
+	add_stress = -10
+	# Track duel wins
+	if = {
+		limit = {
+			NOT = { has_variable = murim_duel_wins }
+		}
+		set_variable = {
+			name = murim_duel_wins
+			value = 1
+		}
 	}
-	change_variable = {
-		name = murim_duel_wins
-		add = 1
+	else = {
+		change_variable = {
+			name = murim_duel_wins
+			add = 1
+		}
 	}
 	create_character_memory = {
 		type = murim_duel_victory_memory
-		participants = {
-			defeated = scope:murim_duel_loser
-		}
 	}
-	# Check if this victory should trigger ranking update
+	# Check for ranking impact
+	murim_recalculate_martial_rank_effect = yes
+}
+
+murim_duel_defeat_effect = {
+	# Apply effects of losing a duel
+	add_prestige = -50
+	add_stress = 25
+	# Track duel losses
 	if = {
 		limit = {
-			has_variable = murim_martial_rank
+			NOT = { has_variable = murim_duel_losses }
 		}
-		trigger_event = {
-			id = murim_ranking.0100
-			days = 3
+		set_variable = {
+			name = murim_duel_losses
+			value = 1
 		}
+	}
+	else = {
+		change_variable = {
+			name = murim_duel_losses
+			add = 1
+		}
+	}
+	# Random injury from combat
+	random_list = {
+		50 = {
+			# No lasting injury
+		}
+		25 = {
+			add_trait = wounded_1
+		}
+		15 = {
+			add_trait = wounded_2
+		}
+		7 = {
+			# Serious injury - scarred
+			add_trait = scarred_1
+		}
+		3 = {
+			# Crippling defeat
+			add_trait = incapable
+		}
+	}
+	add_character_modifier = {
+		modifier = defeat_shame
+		years = 2
+	}
+	create_character_memory = {
+		type = murim_duel_defeat_memory
+	}
+	# Check for ranking impact
+	murim_recalculate_martial_rank_effect = yes
+}
+
+murim_duel_death_effect = {
+	# Character died in a duel
+	# Remove from rankings first
+	murim_remove_from_rankings_on_death_effect = yes
+	# Create memories for witnesses
+	every_close_family_member = {
+		limit = { is_alive = yes }
+		create_character_memory = {
+			type = murim_family_member_killed_in_duel_memory
+			participants = {
+				dead_fighter = root
+			}
+		}
+		add_stress = 40
 	}
 }
 
-murim_resolve_duel_defeat_effect = {
-	# Duel loser consequences
-	add_character_modifier = {
-		modifier = defeat_shame
-		years = 1
-	}
-	change_variable = {
-		name = murim_duel_losses
-		add = 1
-	}
-	add_stress = 25
-	# Combat injury roll
+# ==========================================
+# INJURY & TRAUMA EFFECTS
+# ==========================================
+
+murim_apply_combat_wound_effect = {
+	# Roll for combat injuries based on combat power differential
 	random_list = {
-		50 = {
-			# Minor injuries, just bruised
-			add_character_modifier = {
-				modifier = sparring_bruises
-				days = 30
+		40 = {
+			# Light wound
+			add_trait = wounded_1
+			create_character_memory = {
+				type = murim_combat_wound_memory
 			}
 		}
 		30 = {
-			# Wounded from the duel
-			add_trait = wounded_1
+			# Serious wound
+			add_trait = wounded_2
+			add_stress = 20
 			create_character_memory = {
-				type = murim_duel_wounded_memory
-				participants = {
-					victor = scope:murim_duel_winner
-				}
+				type = murim_serious_combat_wound_memory
 			}
 		}
 		15 = {
-			# Seriously wounded
-			add_trait = wounded_2
-			add_character_modifier = {
-				modifier = crippling_wound_lingering
-				years = 3
-			}
-		}
-		5 = {
-			modifier = {
-				factor = 2
-				has_variable = murim_death_match
-			}
-			# Death match risk - potentially fatal
-			add_trait = incapable
+			# Scarring wound
+			add_trait = scarred_1
 			create_character_memory = {
-				type = murim_duel_crippled_memory
-				participants = {
-					victor = scope:murim_duel_winner
-				}
-			}
-		}
-	}
-	# Potential craven gain from traumatic defeat
-	random = {
-		chance = 15
-		modifier = {
-			factor = 2
-			has_trait = wounded_2
-		}
-		add_trait = craven
-		create_character_memory = {
-			type = murim_combat_trauma_craven_memory
-		}
-	}
-}
-
-murim_death_match_kill_effect = {
-	# Death match killing consequences
-	add_character_modifier = {
-		modifier = killing_intent_aura
-		years = 3
-	}
-	add_prestige = 200
-	add_stress = 20
-	create_character_memory = {
-		type = murim_killed_in_death_match_memory
-		participants = {
-			victim = scope:murim_duel_loser
-		}
-	}
-	# May trigger ranker death events if victim was ranked
-	scope:murim_duel_loser = {
-		if = {
-			limit = {
-				has_variable = murim_martial_rank
-				var:murim_martial_rank <= 50
-			}
-			trigger_event = {
-				id = murim_ranker_death.0001
-				days = 1
-			}
-		}
-		death = {
-			death_reason = death_duel
-			killer = scope:murim_duel_winner
-		}
-	}
-}
-
-# ==========================================
-# INJURY / COMBAT CONSEQUENCE EFFECTS
-# ==========================================
-
-murim_apply_combat_injuries_effect = {
-	# General combat injury roll - used by many event files
-	# Severity scales with prowess difference
-	random_list = {
-		40 = {
-			modifier = {
-				factor = 1.5
-				prowess >= 15
-			}
-			# No injury - skilled enough to avoid
-			add_stress = 5
-		}
-		30 = {
-			# Light wound
-			add_trait = wounded_1
-			add_stress = 15
-			create_character_memory = {
-				type = murim_combat_wounded_memory
-			}
-		}
-		20 = {
-			modifier = {
-				factor = 0.5
-				prowess >= 20
-			}
-			# Serious wound
-			add_trait = wounded_2
-			add_stress = 30
-			add_character_modifier = {
-				modifier = crippling_wound_lingering
-				years = 2
+				type = murim_scarring_wound_memory
 			}
 		}
 		10 = {
-			modifier = {
-				factor = 0.25
-				prowess >= 20
+			# Blinding injury
+			add_trait = one_eyed
+			add_stress = 40
+			create_character_memory = {
+				type = murim_blinding_injury_memory
 			}
-			# Devastating injury - incapacitated
+		}
+		5 = {
+			# Crippling wound
 			add_trait = incapable
 			add_stress = 60
 			create_character_memory = {
-				type = murim_combat_incapacitated_memory
+				type = murim_crippled_in_combat_memory
 			}
 		}
 	}
 }
 
 murim_apply_craven_check_effect = {
-	# Check if traumatic experience causes craven trait
-	if = {
-		limit = {
-			NOT = { has_trait = brave }
-			NOT = { has_trait = craven }
+	# After a devastating defeat, check for becoming craven
+	random = {
+		chance = 25
+		modifier = {
+			factor = 2
+			has_trait = shy
 		}
-		random = {
-			chance = 10
-			modifier = {
-				add = 10
-				has_trait = wounded_2
-			}
-			modifier = {
-				add = 20
-				has_trait = incapable
-			}
-			modifier = {
-				add = 5
-				stress >= 75
-			}
-			add_trait = craven
-			create_character_memory = {
-				type = murim_developed_craven_memory
-			}
+		modifier = {
+			factor = 0.5
+			has_trait = brave
+		}
+		modifier = {
+			factor = 1.5
+			stress >= 80
+		}
+		add_trait = craven
+		create_character_memory = {
+			type = murim_spirit_broken_memory
 		}
 	}
 }
@@ -435,39 +408,22 @@ murim_apply_craven_check_effect = {
 # ==========================================
 
 murim_create_fight_memory_effect = {
-	# Create a memory of a fight with another character
+	# Create a memory of fighting someone
+	# Scope: root = self, scope:target = opponent
 	create_character_memory = {
 		type = murim_fight_memory
 		participants = {
-			opponent = scope:murim_fight_opponent
+			opponent = scope:target
 		}
 	}
-}
-
-murim_create_training_memory_effect = {
-	# Create a training memory
-	create_character_memory = {
-		type = murim_training_session_memory
+	scope:target = {
+		create_character_memory = {
+			type = murim_fight_memory
+			participants = {
+				opponent = root
+			}
+		}
 	}
-	add_character_modifier = {
-		modifier = intense_training_regime
-		days = 60
-	}
-}
-
-murim_create_sect_event_memory_effect = {
-	# Memory for significant sect events
-	create_character_memory = {
-		type = murim_sect_event_memory
-	}
-}
-
-murim_create_artifact_discovery_memory_effect = {
-	# Memory for finding a martial artifact
-	create_character_memory = {
-		type = murim_artifact_found_memory
-	}
-	add_prestige = 50
 }
 
 # ==========================================
@@ -475,337 +431,72 @@ murim_create_artifact_discovery_memory_effect = {
 # ==========================================
 
 murim_join_sect_effect = {
-	# Character joins a sect
+	# Join a sect - set variables and modifiers
 	set_variable = {
 		name = murim_sect_member
 		value = yes
 	}
-	add_character_modifier = {
-		modifier = sect_outer_disciple
-		years = 5
-	}
-	add_piety = 25
+	add_prestige = 50
 	create_character_memory = {
 		type = murim_joined_sect_memory
 	}
 }
 
-murim_promote_to_inner_disciple_effect = {
-	# Promote from outer to inner disciple
-	remove_character_modifier = sect_outer_disciple
-	add_character_modifier = {
-		modifier = sect_inner_disciple
-		years = 10
+murim_leave_sect_effect = {
+	# Leave or be expelled from sect
+	if = {
+		limit = { has_variable = murim_sect_member }
+		remove_variable = murim_sect_member
 	}
-	add_prestige = 100
-	add_piety = 50
+	add_character_modifier = {
+		modifier = murim_sect_exile_shame
+		years = 3
+	}
+	add_stress = 30
 	create_character_memory = {
-		type = murim_inner_disciple_promotion_memory
+		type = murim_left_sect_memory
 	}
 }
 
-murim_promote_to_elder_effect = {
-	# Promote to sect elder
-	remove_character_modifier = sect_inner_disciple
+# ==========================================
+# ARTIFACT EFFECTS
+# ==========================================
+
+murim_gain_ancient_weapon_effect = {
+	# Gain a powerful ancient weapon
 	add_character_modifier = {
-		modifier = sect_elder_authority
-		years = 20
+		modifier = ancient_weapon_wielder
+		years = -1
 	}
-	add_prestige = 300
+	add_prestige = 150
+	create_character_memory = {
+		type = murim_gained_ancient_weapon_memory
+	}
+	# Trigger jealousy from rivals
+	every_known_character = {
+		limit = {
+			murim_is_martial_artist_trigger = yes
+			NOT = { this = root }
+			is_alive = yes
+		}
+		random = {
+			chance = 15
+			trigger_event = {
+				id = murim_artifact.0010
+				days = { 15 60 }
+			}
+		}
+	}
+}
+
+murim_gain_cultivation_manual_effect = {
+	# Found a rare cultivation manual
+	change_variable = {
+		name = murim_cultivation_progress
+		add = 50
+	}
 	add_piety = 100
 	create_character_memory = {
-		type = murim_elder_promotion_memory
-	}
-}
-
-murim_exile_from_sect_effect = {
-	# Exile from sect
-	remove_variable = murim_sect_member
-	remove_character_modifier = sect_outer_disciple
-	remove_character_modifier = sect_inner_disciple
-	remove_character_modifier = sect_elder_authority
-	add_character_modifier = {
-		modifier = sect_exile_stigma
-		years = 10
-	}
-	add_stress = 50
-	add_prestige = -200
-	create_character_memory = {
-		type = murim_sect_exile_memory
-	}
-}
-
-# ==========================================
-# JIANGHU EFFECTS
-# ==========================================
-
-murim_gain_jianghu_infamy_effect = {
-	# Increase jianghu infamy
-	change_variable = {
-		name = murim_jianghu_infamy
-		add = 10
-	}
-	add_character_modifier = {
-		modifier = jianghu_infamy
-		years = 3
-	}
-	create_character_memory = {
-		type = murim_gained_infamy_memory
-	}
-}
-
-murim_become_folk_hero_effect = {
-	# Become a folk hero of the jianghu
-	add_character_modifier = {
-		modifier = jianghu_folk_hero
-		years = 5
-	}
-	add_prestige = 200
-	create_character_memory = {
-		type = murim_folk_hero_memory
-	}
-}
-
-murim_black_market_access_effect = {
-	# Gain access to black market
-	set_variable = {
-		name = murim_black_market_access
-		value = yes
-	}
-	add_character_modifier = {
-		modifier = black_market_connections
-		years = 5
-	}
-	create_character_memory = {
-		type = murim_black_market_access_memory
-	}
-}
-
-murim_place_bounty_effect = {
-	# Place a bounty on target
-	scope:murim_bounty_target = {
-		add_character_modifier = {
-			modifier = bounty_on_head
-			years = 5
-		}
-		create_character_memory = {
-			type = murim_bounty_placed_on_me_memory
-			participants = {
-				bounty_placer = root
-			}
-		}
-	}
-	add_gold = -100
-	create_character_memory = {
-		type = murim_placed_bounty_memory
-		participants = {
-			target = scope:murim_bounty_target
-		}
-	}
-}
-
-# ==========================================
-# MENTOR / DISCIPLE EFFECTS
-# ==========================================
-
-murim_accept_disciple_effect = {
-	# Accept someone as disciple
-	set_relation_murim_master = scope:murim_new_disciple
-	add_character_modifier = {
-		modifier = proud_teacher
-		years = 10
-	}
-	scope:murim_new_disciple = {
-		add_character_modifier = {
-			modifier = master_disciple_bond
-			years = 10
-		}
-		create_character_memory = {
-			type = murim_accepted_as_disciple_memory
-			participants = {
-				master = root
-			}
-		}
-	}
-	create_character_memory = {
-		type = murim_accepted_disciple_memory
-		participants = {
-			disciple = scope:murim_new_disciple
-		}
-	}
-}
-
-murim_master_death_effect = {
-	# Master has died - disciple receives legacy
-	add_character_modifier = {
-		modifier = master_death_grief
-		years = 3
-	}
-	add_character_modifier = {
-		modifier = master_legacy_weight
-		years = 10
-	}
-	add_stress = 50
-	add_piety = 50
-	create_character_memory = {
-		type = murim_master_died_memory
-		participants = {
-			master = scope:murim_dead_master
-		}
-	}
-	# Trigger potential revenge chain
-	if = {
-		limit = {
-			exists = scope:murim_master_killer
-		}
-		add_character_modifier = {
-			modifier = revenge_obsession
-			years = 10
-		}
-		trigger_event = {
-			id = murim_mentor.0500
-			days = 7
-		}
-	}
-}
-
-# ==========================================
-# RANKING INTEGRATION EFFECTS
-# ==========================================
-
-murim_check_ranking_eligibility_effect = {
-	# Check if character qualifies for murim ranking
-	if = {
-		limit = {
-			prowess >= 15
-			OR = {
-				has_trait = cultivation_foundation
-				has_trait = cultivation_core_formation
-				has_trait = cultivation_nascent_soul
-			}
-			NOT = { has_variable = murim_martial_rank }
-		}
-		set_variable = {
-			name = murim_martial_rank
-			value = 50
-		}
-		add_character_modifier = {
-			modifier = newly_ranked_confidence
-			years = 1
-		}
-		create_character_memory = {
-			type = murim_entered_rankings_memory
-		}
-		trigger_event = {
-			id = murim_ranking.0001
-			days = 3
-		}
-	}
-}
-
-murim_update_rank_after_victory_effect = {
-	# Update ranking after defeating a ranked opponent
-	if = {
-		limit = {
-			scope:murim_duel_loser = {
-				has_variable = murim_martial_rank
-			}
-			OR = {
-				NOT = { has_variable = murim_martial_rank }
-				var:murim_martial_rank > scope:murim_duel_loser.var:murim_martial_rank
-			}
-		}
-		# Take the defeated's rank
-		set_variable = {
-			name = murim_martial_rank
-			value = scope:murim_duel_loser.var:murim_martial_rank
-		}
-		scope:murim_duel_loser = {
-			change_variable = {
-				name = murim_martial_rank
-				add = 1
-			}
-			add_character_modifier = {
-				modifier = fallen_ranker_despair
-				years = 1
-			}
-		}
-		create_character_memory = {
-			type = murim_rank_climbed_memory
-		}
-	}
-}
-
-# ==========================================
-# CROSS-SYSTEM TRIGGER EFFECTS
-# ==========================================
-
-murim_daily_life_to_adventure_hook_effect = {
-	# Hook from daily life events into adventure chains
-	random_list = {
-		25 = {
-			# Tea house rumor leads to artifact hunt
-			trigger_event = {
-				id = murim_artifact.0001
-				days = { 7 14 }
-			}
-		}
-		25 = {
-			# Encounter leads to duel
-			trigger_event = {
-				id = murim_duel.0001
-				days = { 3 7 }
-			}
-		}
-		25 = {
-			# Street leads to jianghu opportunity
-			trigger_event = {
-				id = murim_jianghu.0001
-				days = { 5 10 }
-			}
-		}
-		25 = {
-			# Wandering master leads to mentorship
-			trigger_event = {
-				id = murim_mentor.0001
-				days = { 3 7 }
-			}
-		}
-	}
-}
-
-murim_artifact_triggers_chain_effect = {
-	# Artifact discovery can trigger duel chains and ranking events
-	random_list = {
-		40 = {
-			# Artifact attracts challengers
-			trigger_event = {
-				id = murim_duel.0300
-				days = { 14 30 }
-			}
-		}
-		30 = {
-			# Artifact draws sect attention
-			trigger_event = {
-				id = murim_sect.0200
-				days = { 7 21 }
-			}
-		}
-		30 = {
-			# Artifact attracts jianghu thieves
-			trigger_event = {
-				id = murim_jianghu.0400
-				days = { 10 20 }
-			}
-		}
-	}
-}
-
-murim_remove_duel_variables_effect = {
-	# Clean up after duel ends
-	remove_variable = murim_in_duel
-	remove_variable = murim_death_match
-	scope:murim_duel_target = {
-		remove_variable = murim_in_duel
+		type = murim_gained_cultivation_manual_memory
 	}
 }
