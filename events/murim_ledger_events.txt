@@ -1,0 +1,627 @@
+# Murim Chronicles - Murim Ledger Events (Player UI)
+# Event-based martial world overview. Player-only. AI never fires these.
+# Triggered by open_murim_ledger_decision (common/decisions/murim_ledger_decisions.txt)
+# INTEGRATION: Reads murim_ranking_values.txt (top 50 rankings)
+# INTEGRATION: Reads murim_harmony_values.txt (clan stability)
+# INTEGRATION: Reads murim_clan_triggers.txt (clan membership checks)
+# INTEGRATION: Reads murim_tournament_values.txt (tournament schedule)
+# DESIGN: VANILLA SEPARATION — pure martial layer UI. No feudal titles, no political data.
+# GENDER: No gender restrictions. All martial characters access equally.
+
+namespace = murim_ledger
+
+# ============================================================
+# MAIN MENU (0001)
+# ============================================================
+
+murim_ledger.0001 = {
+	type = character_event
+	title = murim_ledger.0001.t
+	# "The Murim Ledger"
+	
+	desc = murim_ledger.0001.desc
+	# "Before you lies the Murim Ledger — a compilation of records maintained 
+	#  by the information networks of the six great clans, updated by wandering 
+	#  scribes who track the deeds of martial artists across the known world.
+	#  
+	#  Its pages contain the rankings of the mightiest fighters, the state of 
+	#  each great clan, your own martial record, recent events that have shaken 
+	#  the martial world, and the schedule of upcoming tournaments.
+	#  
+	#  What would you like to review?"
+	
+	theme = diplomacy
+	
+	# Tab 1: Rankings
+	option = {
+		name = murim_ledger.0001.a
+		# "View the Top 50 Rankings"
+		trigger_event = {
+			id = murim_ledger.0010
+		}
+	}
+	
+	# Tab 2: Clans
+	option = {
+		name = murim_ledger.0001.b
+		# "View the Six Great Clans"
+		trigger_event = {
+			id = murim_ledger.0020
+		}
+	}
+	
+	# Tab 3: Profile
+	option = {
+		name = murim_ledger.0001.c
+		# "View My Martial Profile"
+		trigger_event = {
+			id = murim_ledger.0030
+		}
+	}
+	
+	# Tab 4: Recent Events
+	option = {
+		name = murim_ledger.0001.d
+		# "View Recent Martial Events"
+		trigger_event = {
+			id = murim_ledger.0040
+		}
+	}
+	
+	# Tab 5: Tournaments
+	option = {
+		name = murim_ledger.0001.e
+		# "View the Tournament Schedule"
+		trigger_event = {
+			id = murim_ledger.0050
+		}
+	}
+	
+	# Close
+	option = {
+		name = murim_ledger.0001.f
+		# "Close the Ledger"
+		# No effect — just closes the event window
+	}
+}
+
+# ============================================================
+# TOP 50 RANKINGS (0010)
+# ============================================================
+
+murim_ledger.0010 = {
+	type = character_event
+	title = murim_ledger.0010.t
+	# "The Martial Rankings — Top 50"
+	
+	desc = {
+		desc = murim_ledger.0010.desc_header
+		# "The rankings are determined by accumulated combat reputation,
+		#  prowess, tournament victories, and the judgments of clan elders.
+		#  They shift constantly as new challengers rise and old masters fade."
+		
+		# Dynamic description: builds list from ranking variables
+		# Top 10 shown individually with name, clan, prowess, title
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_1_holder
+			}
+			desc = murim_ledger.0010.desc_rank1
+			# "#1: [RANK 1 NAME] — [CLAN/CLANLESS] — Prowess [X]
+			#  [TITLE: e.g., 'The Undefeated Sword Saint', 'Heaven-Splitting Fist']"
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_2_holder
+			}
+			desc = murim_ledger.0010.desc_rank2
+			# "#2: [RANK 2 NAME] — [CLAN/CLANLESS] — Prowess [X]"
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_3_holder
+			}
+			desc = murim_ledger.0010.desc_rank3
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_4_holder
+			}
+			desc = murim_ledger.0010.desc_rank4
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_5_holder
+			}
+			desc = murim_ledger.0010.desc_rank5
+		}
+		# Ranks 6-10 similarly
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_6_holder
+			}
+			desc = murim_ledger.0010.desc_rank6
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_7_holder
+			}
+			desc = murim_ledger.0010.desc_rank7
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_8_holder
+			}
+			desc = murim_ledger.0010.desc_rank8
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_9_holder
+			}
+			desc = murim_ledger.0010.desc_rank9
+		}
+		triggered_desc = {
+			trigger = {
+				exists = global_var:murim_rank_10_holder
+			}
+			desc = murim_ledger.0010.desc_rank10
+		}
+		
+		desc = murim_ledger.0010.desc_summary
+		# "Ranks 11-50 include a mix of clan elders, independent masters, 
+		#  wandering swordsmen, and rising young talents. The lower ranks 
+		#  shift frequently as new challengers emerge from tournaments 
+		#  and reputation-building duels."
+		
+		# Player's own ranking shown
+		triggered_desc = {
+			trigger = {
+				has_variable = murim_ranking_position
+			}
+			desc = murim_ledger.0010.desc_your_rank
+			# "Your current ranking: #[RANK]. [TREND: rising/stable/falling]"
+		}
+		triggered_desc = {
+			trigger = {
+				NOT = { has_variable = murim_ranking_position }
+			}
+			desc = murim_ledger.0010.desc_unranked
+			# "You are currently unranked. Win ranked duels or perform 
+			#  impressively in tournaments to earn a position."
+		}
+	}
+	
+	theme = martial
+	
+	option = {
+		name = murim_ledger.0010.a
+		# "Challenge a ranked fighter"
+		trigger = {
+			murim_is_martial_artist_trigger = yes
+			NOT = { has_character_modifier = murim_recent_challenge_cooldown }
+		}
+		trigger_event = {
+			id = murim_ranking.0001  # Ranking challenge event
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0010.b
+		# "Study a specific ranked fighter's style"
+		# Provides insight into a ranked fighter's techniques — useful for preparation
+		trigger = {
+			murim_is_martial_artist_trigger = yes
+		}
+		trigger_event = {
+			id = murim_ledger.0011  # Fighter study sub-event
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0010.c
+		# "Back to main menu"
+		trigger_event = {
+			id = murim_ledger.0001
+		}
+	}
+}
+
+# ============================================================
+# THE SIX GREAT CLANS (0020)
+# ============================================================
+
+murim_ledger.0020 = {
+	type = character_event
+	title = murim_ledger.0020.t
+	# "The Six Great Clans"
+	
+	desc = {
+		desc = murim_ledger.0020.desc_header
+		# "The six pillars of the martial world. Their rivalries, alliances, 
+		#  and internal politics shape the fate of every martial artist alive."
+		
+		# Mount Hua
+		desc = murim_ledger.0020.desc_mount_hua
+		# "MOUNT HUA SECT — The Righteous Sword
+		#  Leader: [NAME] | Members: [COUNT] | Harmony: [STATUS]
+		#  Specialty: Plum Blossom Swordsmanship
+		#  Recent: [Last major event — e.g., 'New leader elected after succession crisis']
+		#  Standing: [Strongest/Weakening/Rebuilding/At War]"
+		
+		# Shaolin
+		desc = murim_ledger.0020.desc_shaolin
+		# "SHAOLIN TEMPLE — The Iron Fist of Buddhism
+		#  Leader: [NAME] | Members: [COUNT] | Harmony: [STATUS]
+		#  Specialty: 72 Arts of Shaolin, Buddhist Palm
+		#  Recent: [Last major event]
+		#  Standing: [STATUS]"
+		
+		# Heavenly Demon
+		desc = murim_ledger.0020.desc_heavenly_demon
+		# "HEAVENLY DEMON SECT — The Dark Throne
+		#  Leader: [NAME] | Members: [COUNT] | Harmony: [STATUS]
+		#  Specialty: Heavenly Demon Divine Art, Soul-Reaping techniques
+		#  Recent: [Last major event]
+		#  Standing: [STATUS]"
+		
+		# Tang Clan
+		desc = murim_ledger.0020.desc_tang
+		# "TANG CLAN — The Poison Dynasty
+		#  Leader: [NAME] | Members (Blood): [COUNT] | Associates: [COUNT]
+		#  Harmony: [STATUS]
+		#  Specialty: Hidden Weapons, Poison Arts, Alchemy
+		#  Recent: [Last major event]
+		#  Standing: [STATUS]
+		#  Note: Full membership by blood only. Associates serve but cannot lead."
+		
+		# Wudang
+		desc = murim_ledger.0020.desc_wudang
+		# "WUDANG SECT — The Scholar's Blade
+		#  Leader: [NAME] | Members: [COUNT] | Harmony: [STATUS]
+		#  Specialty: Tai Chi Sword, Internal Energy cultivation
+		#  Recent: [Last major event]
+		#  Standing: [STATUS]"
+		
+		# Beggar Sect
+		desc = murim_ledger.0020.desc_beggar
+		# "BEGGAR SECT — The People's Army
+		#  Leader: [NAME] | Members: [COUNT] | Harmony: [STATUS]
+		#  Specialty: Dog-Beating Staff, Dragon-Subduing Palm, Intelligence Network
+		#  Recent: [Last major event]
+		#  Standing: [STATUS]
+		#  Note: Largest membership. Most geographically dispersed."
+	}
+	
+	theme = diplomacy
+	
+	option = {
+		name = murim_ledger.0020.a
+		# "Request to join a clan"
+		trigger = {
+			murim_is_martial_artist_trigger = yes
+			NOT = { murim_is_any_clan_member_trigger = yes }
+		}
+		trigger_event = {
+			id = murim_recruit.0020  # Self-initiated recruitment
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0020.b
+		# "View my clan's details"
+		trigger = {
+			murim_is_any_clan_member_trigger = yes
+		}
+		trigger_event = {
+			id = murim_ledger.0021  # Detailed clan view
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0020.c
+		# "Back to main menu"
+		trigger_event = {
+			id = murim_ledger.0001
+		}
+	}
+}
+
+# ============================================================
+# MY MARTIAL PROFILE (0030)
+# ============================================================
+
+murim_ledger.0030 = {
+	type = character_event
+	title = murim_ledger.0030.t
+	# "My Martial Profile"
+	
+	desc = {
+		desc = murim_ledger.0030.desc_header
+		# "Your personal record in the martial world."
+		
+		# Cultivation tier
+		triggered_desc = {
+			trigger = { has_variable = murim_cultivation_tier }
+			desc = murim_ledger.0030.desc_cultivation
+			# "Cultivation Tier: [TIER NAME]
+			#  (e.g., 'Third-Rate → Second-Rate → First-Rate → Peak → Transcendent → Absolute')
+			#  Progress to next tier: [X]%"
+		}
+		
+		# Clan membership
+		triggered_desc = {
+			trigger = { murim_is_any_clan_member_trigger = yes }
+			desc = murim_ledger.0030.desc_clan
+			# "Clan: [CLAN NAME] | Rank: [outer_disciple/inner_disciple/elder/vice_leader/leader]
+			#  Years of service: [X] | Contributions: [LIST]"
+		}
+		triggered_desc = {
+			trigger = { NOT = { murim_is_any_clan_member_trigger = yes } }
+			desc = murim_ledger.0030.desc_clanless
+			# "Clan: None (Independent martial artist)
+			#  You walk your own path. Some admire your independence. Others see you as prey."
+		}
+		
+		# Ranking
+		triggered_desc = {
+			trigger = { has_variable = murim_ranking_position }
+			desc = murim_ledger.0030.desc_ranking
+			# "Ranking: #[RANK] | Trend: [rising/stable/falling]
+			#  Highest rank achieved: #[X] | Current streak: [X] wins"
+		}
+		
+		# Fight record (from character memories)
+		desc = murim_ledger.0030.desc_fights
+		# "Fight Record:
+		#  Duels Won: [X] | Duels Lost: [X] | Draws: [X]
+		#  Tournaments Won: [X] | Tournament Appearances: [X]
+		#  Notable Victories: [LIST of significant wins]
+		#  Notable Defeats: [LIST of significant losses]"
+		
+		# Techniques known
+		desc = murim_ledger.0030.desc_techniques
+		# "Known Techniques:
+		#  [LIST of techniques — e.g., 'Plum Blossom Sword Form (mastered)',
+		#   'Iron Shirt Qi (learning)', 'Hidden Weapon Throw (basic)']"
+		
+		# Master/Disciple relationships
+		desc = murim_ledger.0030.desc_relationships
+		# "Master: [NAME or 'Self-taught']
+		#  Disciples: [LIST or 'None yet']"
+		
+		# Injuries
+		triggered_desc = {
+			trigger = { has_variable = murim_permanent_injury }
+			desc = murim_ledger.0030.desc_injuries
+			# "Injuries:
+			#  [LIST — e.g., 'Scarred left hand (duel with [NAME])',
+			#   'Damaged meridian (failed breakthrough attempt)']"
+		}
+		
+		# Origin story
+		triggered_desc = {
+			trigger = { has_variable = murim_foreign_origin }
+			desc = murim_ledger.0030.desc_foreign
+			# "Origin: [HOMELAND] — recruited by [CLAN] at age [X]
+			#  You are one of the rare cross-cultural martial artists, 
+			#  carrying the traditions of two worlds."
+		}
+	}
+	
+	theme = martial
+	
+	option = {
+		name = murim_ledger.0030.a
+		# "Train"
+		trigger = {
+			NOT = { has_character_modifier = murim_currently_training }
+		}
+		trigger_event = {
+			id = murim_training.0001
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0030.b
+		# "Challenge someone"
+		trigger = {
+			NOT = { has_character_modifier = murim_recent_challenge_cooldown }
+		}
+		trigger_event = {
+			id = murim_ranking.0001
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0030.c
+		# "Back to main menu"
+		trigger_event = {
+			id = murim_ledger.0001
+		}
+	}
+}
+
+# ============================================================
+# RECENT MARTIAL EVENTS (0040)
+# ============================================================
+
+murim_ledger.0040 = {
+	type = character_event
+	title = murim_ledger.0040.t
+	# "Recent Martial Events — Last 5 Years"
+	
+	desc = {
+		desc = murim_ledger.0040.desc_header
+		# "The martial world never sleeps. Here are the most significant 
+		#  events of the last five years, as recorded by the wandering scribes."
+		
+		# Uses global variables to track last 5-10 major events
+		# Each event stored as: murim_recent_event_1 through murim_recent_event_10
+		# Contains: event type, characters involved, outcome, date
+		
+		triggered_desc = {
+			trigger = { exists = global_var:murim_recent_event_1 }
+			desc = murim_ledger.0040.desc_event_1
+			# "[DATE]: [EVENT DESCRIPTION]
+			#  e.g., 'Year 870: Mount Hua's leader was assassinated by a Heavenly Demon agent.
+			#  The sect fell into succession crisis. A new leader has yet to emerge.'"
+		}
+		triggered_desc = {
+			trigger = { exists = global_var:murim_recent_event_2 }
+			desc = murim_ledger.0040.desc_event_2
+		}
+		triggered_desc = {
+			trigger = { exists = global_var:murim_recent_event_3 }
+			desc = murim_ledger.0040.desc_event_3
+		}
+		triggered_desc = {
+			trigger = { exists = global_var:murim_recent_event_4 }
+			desc = murim_ledger.0040.desc_event_4
+		}
+		triggered_desc = {
+			trigger = { exists = global_var:murim_recent_event_5 }
+			desc = murim_ledger.0040.desc_event_5
+		}
+		
+		# If no events recorded yet
+		triggered_desc = {
+			trigger = {
+				NOT = { exists = global_var:murim_recent_event_1 }
+			}
+			desc = murim_ledger.0040.desc_no_events
+			# "The scribes have not yet begun recording. As the martial world 
+			#  awakens, events will be chronicled here."
+		}
+	}
+	
+	theme = intrigue
+	
+	option = {
+		name = murim_ledger.0040.a
+		# "Investigate an event"
+		trigger = {
+			exists = global_var:murim_recent_event_1
+		}
+		trigger_event = {
+			id = murim_ledger.0041  # Investigation sub-event — pick which event to investigate
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0040.b
+		# "Back to main menu"
+		trigger_event = {
+			id = murim_ledger.0001
+		}
+	}
+}
+
+# ============================================================
+# TOURNAMENT SCHEDULE (0050)
+# ============================================================
+
+murim_ledger.0050 = {
+	type = character_event
+	title = murim_ledger.0050.t
+	# "Tournament Schedule"
+	
+	desc = {
+		desc = murim_ledger.0050.desc_header
+		# "The tournament circuit is the heartbeat of the martial world.
+		#  Here you'll find the schedule of upcoming events and your 
+		#  eligibility status."
+		
+		# Young Dragon Tournament (ages 8-15)
+		desc = murim_ledger.0050.desc_youth
+		# "YOUNG DRAGON TOURNAMENT (Ages 8-15)
+		#  Next occurrence: [YEAR] | Location: [LOCATION]
+		#  Format: Single-elimination, non-lethal
+		#  Your eligible children: [LIST or 'None']
+		#  Open to ALL martial youth worldwide — clan-affiliated or independent.
+		#  Clans use this as primary scouting ground."
+		
+		# Regional Qualifiers (ages 16+)
+		desc = murim_ledger.0050.desc_qualifier
+		# "REGIONAL QUALIFIERS (Ages 16+)
+		#  Next occurrence: [YEAR] | Locations: Korea, China, Foreign
+		#  Format: Round-robin groups, top performers advance
+		#  Your qualification status: [Qualified/Not qualified/Exempt by rank]
+		#  Winners earn the right to compete in the Grand Tournament."
+		
+		# Grand Tournament (ages 16+, qualified or top 50 ranked)
+		desc = murim_ledger.0050.desc_grand
+		# "GRAND TOURNAMENT (Ages 16+, Qualified)
+		#  Next occurrence: [YEAR] | Location: [LOCATION]
+		#  Format: Bracket elimination, best of 3
+		#  Your qualification status: [STATUS]
+		#  The pinnacle of martial competition. Winners earn ranking jumps,
+		#  clan prestige, and the attention of every master in the world."
+		
+		# Champions Battle (top 10 only)
+		desc = murim_ledger.0050.desc_champions
+		# "CHAMPIONS BATTLE (Top 10 Ranked Only)
+		#  Next occurrence: [YEAR] | Location: Summit of [MOUNTAIN]
+		#  Format: Challenge-style exhibition matches
+		#  Your eligibility: [Eligible/Not ranked high enough]
+		#  The rarest tournament. Only the 10 strongest martial artists alive 
+		#  are invited. Battles that reshape the ranking for years to come."
+		
+		# Post-tournament recruitment note
+		desc = murim_ledger.0050.desc_recruitment_note
+		# "NOTE: After every tournament, clan scouts approach top performers 
+		#  who are not yet affiliated. Expect 2-3 recruitment offers if you 
+		#  or your children perform well."
+	}
+	
+	theme = martial
+	
+	option = {
+		name = murim_ledger.0050.a
+		# "Begin training for next tournament"
+		trigger = {
+			murim_is_martial_artist_trigger = yes
+			NOT = { has_character_modifier = murim_currently_training }
+		}
+		trigger_event = {
+			id = murim_training.0001
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0050.b
+		# "Register for the next qualifier"
+		trigger = {
+			murim_is_martial_artist_trigger = yes
+			age >= 16
+			NOT = { has_variable = murim_tournament_registered }
+		}
+		# Set registration variable
+		set_variable = {
+			name = murim_tournament_registered
+			value = yes
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0050.c
+		# "Register my child for the Young Dragon Tournament"
+		trigger = {
+			any_child = {
+				age >= 8
+				age <= 15
+				murim_is_martial_artist_trigger = yes
+			}
+		}
+		trigger_event = {
+			id = murim_ledger.0051  # Child registration sub-event
+		}
+	}
+	
+	option = {
+		name = murim_ledger.0050.d
+		# "Back to main menu"
+		trigger_event = {
+			id = murim_ledger.0001
+		}
+	}
+}
