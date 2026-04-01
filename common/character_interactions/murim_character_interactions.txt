@@ -1,0 +1,643 @@
+# Murim Chronicles Phase 2 - Character Interactions
+# Right-click menu interactions for martial artists
+
+######################################
+# SPAR INTERACTION
+######################################
+
+murim_spar_interaction = {
+	category = interaction_category_friendly
+	icon = icon_combat
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			prowess >= 8
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			prowess >= 8
+		}
+		NOT = { scope:actor = scope:recipient }
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_trait = murim_qi_deviation_crippling }
+			NOT = { has_character_flag = murim_sparring_cooldown }
+		}
+		scope:recipient = {
+			NOT = { has_trait = murim_qi_deviation_crippling }
+		}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			save_scope_as = partner
+		}
+		scope:actor = {
+			trigger_event = { id = murim_interact.0001 }
+		}
+	}
+
+	ai_accept = {
+		base = 20
+		modifier = {
+			add = 20
+			opinion = {
+				target = scope:actor
+				value >= 0
+			}
+		}
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = 10
+			has_trait = wrathful
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+		modifier = {
+			add = -10
+			has_trait = lazy
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+	ai_targets = {
+		ai_recipients = vassals
+	}
+	ai_targets = {
+		ai_recipients = liege
+	}
+
+	ai_frequency = 24
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		prowess >= 8
+		NOT = { has_trait = murim_qi_deviation_crippling }
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# TAKE DISCIPLE INTERACTION
+######################################
+
+murim_take_disciple_interaction = {
+	category = interaction_category_friendly
+	icon = icon_education
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			prowess >= 15
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			age <= 30
+			prowess >= 5
+			NOR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+		NOT = { scope:actor = scope:recipient }
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_flag = murim_training_disciple }
+		}
+		scope:recipient = {
+			NOT = { has_character_flag = murim_has_master }
+		}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			save_scope_as = disciple
+		}
+		scope:actor = {
+			trigger_event = { id = murim_interact.0010 }
+		}
+		scope:recipient = {
+			add_opinion = {
+				modifier = murim_master_disciple_bond
+				target = scope:actor
+			}
+		}
+	}
+
+	ai_accept = {
+		base = 30
+		modifier = {
+			add = 20
+			opinion = {
+				target = scope:actor
+				value >= 20
+			}
+		}
+		modifier = {
+			add = 20
+			scope:actor = { prowess >= 20 }
+		}
+		modifier = {
+			add = -20
+			opinion = {
+				target = scope:actor
+				value < 0
+			}
+		}
+		modifier = {
+			add = 10
+			has_trait = humble
+		}
+		modifier = {
+			add = -15
+			has_trait = arrogant
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+
+	ai_frequency = 36
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		prowess >= 15
+		OR = {
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+		}
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# REQUEST TEACHING INTERACTION
+######################################
+
+murim_request_teaching_interaction = {
+	category = interaction_category_friendly
+	icon = icon_education
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+			prowess > scope:actor.prowess
+		}
+		NOT = { scope:actor = scope:recipient }
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_flag = murim_has_master }
+		}
+		scope:recipient = {
+			NOT = { has_character_flag = murim_training_disciple }
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			save_scope_as = disciple
+		}
+		scope:recipient = {
+			trigger_event = { id = murim_interact.0010 }
+		}
+	}
+
+	ai_accept = {
+		base = -10
+		modifier = {
+			add = 30
+			opinion = {
+				target = scope:actor
+				value >= 20
+			}
+		}
+		modifier = {
+			add = 15
+			opinion = {
+				target = scope:actor
+				value >= 0
+			}
+		}
+		modifier = {
+			add = 10
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -20
+			has_trait = arrogant
+		}
+		modifier = {
+			add = -15
+			has_trait = lazy
+		}
+		modifier = {
+			add = 10
+			has_trait = murim_master_teacher
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+	ai_targets = {
+		ai_recipients = liege
+	}
+
+	ai_frequency = 36
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		NOR = {
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+		}
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# DECLARE RIVALRY INTERACTION
+######################################
+
+murim_declare_rivalry_interaction = {
+	category = interaction_category_hostile
+	icon = icon_combat
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			prowess >= 10
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			prowess >= 10
+		}
+		NOT = { scope:actor = scope:recipient }
+		NOT = { scope:actor = { has_relation_friend = scope:recipient } }
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_relation_rival = scope:recipient }
+		}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			save_scope_as = target
+		}
+		scope:actor = {
+			trigger_event = { id = murim_interact.0030 }
+		}
+	}
+
+	ai_accept = {
+		base = -20
+		modifier = {
+			add = 40
+			opinion = {
+				target = scope:actor
+				value < -20
+			}
+		}
+		modifier = {
+			add = 30
+			has_trait = wrathful
+		}
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = -30
+			has_trait = craven
+		}
+		modifier = {
+			add = -20
+			has_trait = content
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+	ai_targets = {
+		ai_recipients = vassals
+	}
+
+	ai_frequency = 48
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		prowess >= 10
+		OR = {
+			has_trait = wrathful
+			has_trait = ambitious
+			has_trait = brave
+		}
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# STEAL TECHNIQUE INTERACTION
+######################################
+
+murim_steal_technique_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	send_name = murim_steal_technique_interaction
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			intrigue >= 10
+			prowess >= 8
+		}
+		scope:recipient = {
+			is_alive = yes
+			OR = {
+				has_trait = murim_harmonious_palm
+				has_trait = murim_iron_hegemon
+				has_trait = murim_venom_needle
+				has_trait = murim_void_sight
+				has_trait = murim_jade_treasury
+				has_trait = murim_shadow_executioner
+			}
+		}
+		NOT = { scope:actor = scope:recipient }
+		# Target must have a technique the actor doesn't
+		OR = {
+			AND = {
+				scope:recipient = { has_trait = murim_harmonious_palm }
+				scope:actor = { NOT = { has_trait = murim_harmonious_palm } }
+			}
+			AND = {
+				scope:recipient = { has_trait = murim_iron_hegemon }
+				scope:actor = { NOT = { has_trait = murim_iron_hegemon } }
+			}
+			AND = {
+				scope:recipient = { has_trait = murim_venom_needle }
+				scope:actor = { NOT = { has_trait = murim_venom_needle } }
+			}
+			AND = {
+				scope:recipient = { has_trait = murim_void_sight }
+				scope:actor = { NOT = { has_trait = murim_void_sight } }
+			}
+			AND = {
+				scope:recipient = { has_trait = murim_jade_treasury }
+				scope:actor = { NOT = { has_trait = murim_jade_treasury } }
+			}
+			AND = {
+				scope:recipient = { has_trait = murim_shadow_executioner }
+				scope:actor = { NOT = { has_trait = murim_shadow_executioner } }
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_flag = murim_theft_cooldown }
+		}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			save_scope_as = target
+		}
+		scope:actor = {
+			trigger_event = { id = murim_interact.0040 }
+		}
+	}
+
+	# Always hostile - target never consents
+	ai_accept = {
+		base = -1000
+	}
+
+	auto_accept = yes
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+	ai_targets = {
+		ai_recipients = vassals
+	}
+
+	ai_frequency = 60
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		intrigue >= 10
+		prowess >= 8
+		OR = {
+			has_trait = deceitful
+			has_trait = ambitious
+			has_trait = sadistic
+		}
+		NOT = { has_character_flag = murim_theft_cooldown }
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# QI EXCHANGE INTERACTION
+######################################
+
+murim_qi_exchange_interaction = {
+	category = interaction_category_friendly
+	icon = icon_diplomacy
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+		NOT = { scope:actor = scope:recipient }
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			murim_can_qi_exchange_trigger = yes
+		}
+	}
+
+	on_accept = {
+		scope:recipient = {
+			save_scope_as = target
+		}
+		scope:actor = {
+			trigger_event = { id = murim_interact.0050 }
+		}
+	}
+
+	ai_accept = {
+		base = -10
+		modifier = {
+			add = 30
+			opinion = {
+				target = scope:actor
+				value >= 30
+			}
+		}
+		modifier = {
+			add = 20
+			opinion = {
+				target = scope:actor
+				value >= 10
+			}
+		}
+		modifier = {
+			add = 30
+			scope:actor = { has_relation_friend = scope:recipient }
+		}
+		modifier = {
+			add = 10
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -30
+			opinion = {
+				target = scope:actor
+				value < -10
+			}
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+	ai_targets = {
+		ai_recipients = liege
+	}
+
+	ai_frequency = 48
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		OR = {
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+		}
+		OR = {
+			has_trait = compassionate
+			has_trait = generous
+		}
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
