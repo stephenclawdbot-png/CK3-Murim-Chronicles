@@ -1,0 +1,723 @@
+############################################
+# MURIM GRAND TOURNAMENT EVENTS
+# 10-year cycle open to ALL martial artists.
+# Cross-refs: murim_ranking_effects.txt,
+#   murim_on_actions.txt (10yr pulse),
+#   murim_clan_membership_effects.txt,
+#   murim_modifiers.txt, murim_tournament_events.txt
+# All 9 clans send champions.
+# GENDER: Men and women compete equally.
+# GEOGRAPHY: Hosted in China heartland,
+#   Goryeo as secondary venue.
+############################################
+
+namespace = murim_grand_tournament
+
+############################################
+# 0001 - GRAND TOURNAMENT BEGINS
+# Fired by murim_on_actions.txt 10yr pulse.
+# All ranked martial artists are eligible.
+############################################
+
+murim_grand_tournament.0001 = {
+	type = character_event
+	title = murim_grand_tournament.0001.t
+	desc = murim_grand_tournament.0001.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_modifier = murim_grand_tournament_cooldown }
+	}
+
+	immediate = {
+		# Find a worthy opponent from a different clan
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { this = root }
+				NOT = { has_character_modifier = murim_grand_tournament_cooldown }
+				prowess >= 10
+			}
+			weight = {
+				base = 10
+				modifier = { add = 30 prowess >= 20 }
+				modifier = { add = 20 prowess >= 15 }
+				modifier = { add = 15 has_trait = heavenly_demon_disciple }
+				modifier = { add = 15 has_trait = mount_hua_disciple }
+				modifier = { add = 10 has_trait = shaolin_monk }
+				modifier = { add = 10 has_trait = wudang_disciple }
+				modifier = { add = 10 has_trait = iron_fist_disciple }
+				modifier = { add = 10 has_trait = phantom_blade_disciple }
+				modifier = { add = 8 has_trait = poison_flower_disciple }
+				modifier = { add = 8 has_trait = tang_clan_member }
+				modifier = { add = 8 has_trait = beggar_sect_member }
+			}
+			save_scope_as = grand_opponent
+		}
+	}
+
+	# Fight with everything you have
+	option = {
+		name = murim_grand_tournament.0001.a
+		trigger = { exists = scope:grand_opponent }
+		duel = {
+			skill = prowess
+			target = scope:grand_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 }
+				desc = murim_grand_tournament.0001.a.victory
+				add_prestige = 200
+				add_character_modifier = { modifier = murim_grand_tournament_victor years = 10 }
+				add_character_flag = { flag = murim_grand_tournament_winner }
+				# Memory of glorious grand tournament victory
+				add_character_flag = { flag = murim_grand_victory_memory }
+				# Advance to next round
+				trigger_event = { id = murim_grand_tournament.0002 days = { 5 10 } }
+				# Fame spreads - clans take notice
+				every_living_character = {
+					limit = {
+						has_trait = martial_artist
+						NOT = { this = root }
+						OR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_disciple
+							has_trait = shaolin_monk
+							has_trait = heavenly_demon_disciple
+							has_trait = beggar_sect_member
+							has_trait = iron_fist_disciple
+							has_trait = poison_flower_disciple
+							has_trait = phantom_blade_disciple
+							has_trait = tang_clan_member
+						}
+						has_variable = murim_clan_rank
+						var:murim_clan_rank >= 4
+					}
+					limit = { count <= 3 }
+					add_opinion = { target = root modifier = murim_tournament_impressed opinion = 15 }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 target = scope:grand_opponent }
+				desc = murim_grand_tournament.0001.a.defeat
+				add_prestige = 50
+				add_stress = 15
+				add_character_flag = { flag = murim_grand_defeat_memory }
+				# Injuries more likely in Grand Tournament - higher stakes
+				random_list = {
+					40 = { }
+					30 = { add_trait = wounded_1 }
+					15 = { add_trait = wounded_2 }
+					10 = { add_trait = scarred }
+					5 = {
+						add_trait = one_eyed
+						trigger_event = { id = murim_grand_tournament.0006 days = { 3 7 } }
+					}
+				}
+			}
+		}
+		add_character_modifier = { modifier = murim_grand_tournament_cooldown years = 10 }
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 has_trait = ambitious }
+			modifier = { add = -50 has_trait = craven }
+		}
+	}
+
+	# Withdraw - you are not ready for this level
+	option = {
+		name = murim_grand_tournament.0001.b
+		add_prestige = -100
+		add_character_modifier = { modifier = murim_grand_tournament_cooldown years = 10 }
+		add_character_flag = { flag = murim_grand_tournament_withdrew }
+		stress_impact = {
+			brave = minor_stress_impact_gain
+			craven = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 50 has_trait = craven }
+			modifier = { add = -30 has_trait = brave }
+		}
+	}
+}
+
+############################################
+# 0002 - GRAND TOURNAMENT SEMI-FINALS
+# Advanced round - tougher opponents.
+############################################
+
+murim_grand_tournament.0002 = {
+	type = character_event
+	title = murim_grand_tournament.0002.t
+	desc = murim_grand_tournament.0002.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	trigger = {
+		has_character_flag = murim_grand_tournament_winner
+		is_alive = yes
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { this = root }
+				prowess >= 15
+				has_character_flag = murim_grand_tournament_winner
+			}
+			weight = {
+				base = 10
+				modifier = { add = 40 prowess >= 25 }
+				modifier = { add = 20 has_trait = heavenly_demon_disciple }
+				modifier = { add = 20 has_trait = mount_hua_disciple }
+			}
+			save_scope_as = semi_final_opponent
+		}
+	}
+
+	# Unleash your full power
+	option = {
+		name = murim_grand_tournament.0002.a
+		trigger = { exists = scope:semi_final_opponent }
+		duel = {
+			skill = prowess
+			target = scope:semi_final_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 4 }
+				desc = murim_grand_tournament.0002.a.victory
+				add_prestige = 400
+				add_character_flag = { flag = murim_grand_finalist }
+				# Proceed to Champion Coronation
+				trigger_event = { id = murim_grand_tournament.0003 days = { 7 14 } }
+				# Combat memory - semi-final triumph
+				add_character_flag = { flag = murim_semifinal_triumph_memory }
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 4 target = scope:semi_final_opponent }
+				desc = murim_grand_tournament.0002.a.defeat
+				add_prestige = 100
+				add_stress = 20
+				# Semi-final defeat is honorable
+				add_character_modifier = { modifier = murim_tournament_honorable_defeat years = 5 }
+				random_list = {
+					50 = { }
+					25 = { add_trait = wounded_1 }
+					15 = { add_trait = wounded_2 }
+					10 = { add_trait = scarred }
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+
+	# Concede to your opponent
+	option = {
+		name = murim_grand_tournament.0002.b
+		add_prestige = -50
+		add_character_flag = { flag = murim_grand_concession }
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = content } }
+	}
+}
+
+############################################
+# 0003 - CHAMPION CORONATION
+# The Grand Tournament winner is crowned
+# Supreme Champion of the Martial World.
+############################################
+
+murim_grand_tournament.0003 = {
+	type = character_event
+	title = murim_grand_tournament.0003.t
+	desc = murim_grand_tournament.0003.desc
+	theme = martial
+	override_background = { reference = throne_room }
+
+	trigger = {
+		has_character_flag = murim_grand_finalist
+		is_alive = yes
+	}
+
+	immediate = {
+		# Set ranking to #1
+		set_variable = { name = murim_ranking_position value = 1 }
+		set_variable = { name = murim_grand_champion value = yes }
+	}
+
+	# Accept the title with humility
+	option = {
+		name = murim_grand_tournament.0003.a
+		add_prestige = 1000
+		add_piety = 100
+		add_character_modifier = { modifier = murim_supreme_champion years = 10 }
+		# All 9 clans acknowledge you
+		every_living_character = {
+			limit = {
+				has_trait = martial_artist
+				NOT = { this = root }
+			}
+			limit = { count <= 20 }
+			add_opinion = { target = root modifier = murim_champion_awe opinion = 25 }
+		}
+		# Memory of coronation
+		add_character_flag = { flag = murim_champion_coronation_memory }
+		# Recruitment offers flood in
+		trigger_event = { id = murim_grand_tournament.0007 days = { 30 60 } }
+		stress_impact = {
+			humble = minor_stress_impact_loss
+			arrogant = minor_stress_impact_loss
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Declare dominance - assert supremacy
+	option = {
+		name = murim_grand_tournament.0003.b
+		add_prestige = 1200
+		add_character_modifier = { modifier = murim_supreme_champion years = 10 }
+		add_character_modifier = { modifier = murim_arrogant_champion years = 5 }
+		# Some clans are offended by arrogance
+		every_living_character = {
+			limit = {
+				has_trait = martial_artist
+				OR = {
+					has_trait = shaolin_monk
+					has_trait = wudang_disciple
+				}
+				NOT = { this = root }
+			}
+			limit = { count <= 5 }
+			add_opinion = { target = root modifier = murim_arrogant_champion_opinion opinion = -15 }
+		}
+		# Heavenly Demon Sect approves of dominance
+		every_living_character = {
+			limit = {
+				has_trait = heavenly_demon_disciple
+				NOT = { this = root }
+			}
+			limit = { count <= 5 }
+			add_opinion = { target = root modifier = murim_champion_strength opinion = 20 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 has_trait = arrogant }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+}
+
+############################################
+# 0004 - INTER-CLAN CHALLENGE MATCH
+# Two clans settle a dispute through
+# their champions in the tournament arena.
+############################################
+
+murim_grand_tournament.0004 = {
+	type = character_event
+	title = murim_grand_tournament.0004.t
+	desc = murim_grand_tournament.0004.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		is_alive = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_monk
+			has_trait = heavenly_demon_disciple
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+			has_trait = tang_clan_member
+		}
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+	}
+
+	immediate = {
+		# Find rival clan champion
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { this = root }
+				prowess >= 12
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_disciple
+					has_trait = shaolin_monk
+					has_trait = heavenly_demon_disciple
+					has_trait = beggar_sect_member
+					has_trait = iron_fist_disciple
+					has_trait = poison_flower_disciple
+					has_trait = phantom_blade_disciple
+					has_trait = tang_clan_member
+				}
+				# Different faction alignment
+				NOT = {
+					has_variable = murim_faction_alignment
+					root = {
+						has_variable = murim_faction_alignment
+						var:murim_faction_alignment = prev.var:murim_faction_alignment
+					}
+				}
+			}
+			weight = {
+				base = 10
+				modifier = { add = 25 prowess >= 20 }
+			}
+			save_scope_as = rival_champion
+		}
+	}
+
+	# Fight for clan honor
+	option = {
+		name = murim_grand_tournament.0004.a
+		trigger = { exists = scope:rival_champion }
+		duel = {
+			skill = prowess
+			target = scope:rival_champion
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 }
+				desc = murim_grand_tournament.0004.a.victory
+				add_prestige = 300
+				# Clan harmony boost
+				if = {
+					limit = { has_variable = murim_clan_harmony }
+					change_variable = { name = murim_clan_harmony add = 10 }
+				}
+				add_character_flag = { flag = murim_clan_champion_victory_memory }
+				# Rival clan loses face
+				scope:rival_champion = {
+					add_prestige = -100
+					add_stress = 20
+					if = {
+						limit = { has_variable = murim_clan_harmony }
+						change_variable = { name = murim_clan_harmony add = -5 }
+					}
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 3 target = scope:rival_champion }
+				desc = murim_grand_tournament.0004.a.defeat
+				add_prestige = -100
+				add_stress = 25
+				if = {
+					limit = { has_variable = murim_clan_harmony }
+					change_variable = { name = murim_clan_harmony add = -10 }
+				}
+				add_character_flag = { flag = murim_clan_champion_defeat_memory }
+				random_list = {
+					50 = { }
+					30 = { add_trait = wounded_1 }
+					15 = { add_trait = wounded_2 }
+					5 = { add_trait = scarred }
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+
+	# Decline - diplomacy over combat
+	option = {
+		name = murim_grand_tournament.0004.b
+		add_prestige = -50
+		add_diplomacy_skill = 1
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = content } }
+	}
+}
+
+############################################
+# 0005 - CLAN REPRESENTATIVE SELECTION
+# Your clan elder asks you to represent
+# the clan in the upcoming tournament.
+############################################
+
+murim_grand_tournament.0005 = {
+	type = character_event
+	title = murim_grand_tournament.0005.t
+	desc = murim_grand_tournament.0005.desc
+	theme = martial
+	override_background = { reference = temple }
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		is_alive = yes
+		prowess >= 14
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_monk
+			has_trait = heavenly_demon_disciple
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+			has_trait = tang_clan_member
+		}
+	}
+
+	# Accept with pride
+	option = {
+		name = murim_grand_tournament.0005.a
+		add_prestige = 100
+		add_character_modifier = { modifier = murim_clan_representative years = 1 }
+		add_character_flag = { flag = murim_representing_clan }
+		# Train harder before the tournament
+		trigger_event = { id = murim_grand_tournament.0001 days = { 30 60 } }
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			ambitious = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 70
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+
+	# Decline - you are not worthy
+	option = {
+		name = murim_grand_tournament.0005.b
+		add_prestige = -25
+		add_stress = 10
+		stress_impact = {
+			humble = minor_stress_impact_loss
+			craven = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 has_trait = craven }
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+
+	# Suggest someone else from the clan
+	option = {
+		name = murim_grand_tournament.0005.c
+		add_diplomacy_skill = 1
+		add_character_flag = { flag = murim_deferred_to_clanmate }
+		ai_chance = { base = 20 }
+	}
+}
+
+############################################
+# 0006 - TOURNAMENT INJURY RECOVERY
+# Severe injury from tournament combat.
+# Choices affect recovery and future path.
+############################################
+
+murim_grand_tournament.0006 = {
+	type = character_event
+	title = murim_grand_tournament.0006.t
+	desc = murim_grand_tournament.0006.desc
+	theme = martial
+	override_background = { reference = bedchamber }
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = wounded_1
+			has_trait = wounded_2
+			has_trait = one_eyed
+			has_trait = scarred
+		}
+		has_character_flag = murim_grand_defeat_memory
+	}
+
+	# Seek healing from Poison Flower Palace herbalists
+	option = {
+		name = murim_grand_tournament.0006.a
+		random_list = {
+			60 = {
+				# Successful treatment
+				if = {
+					limit = { has_trait = wounded_2 }
+					remove_trait = wounded_2
+					add_trait = wounded_1
+				}
+				else_if = {
+					limit = { has_trait = wounded_1 }
+					remove_trait = wounded_1
+				}
+				add_character_flag = { flag = murim_poison_flower_healed_memory }
+			}
+			30 = {
+				# Partial recovery
+				add_character_modifier = { modifier = murim_lingering_injury years = 3 }
+			}
+			10 = {
+				# Treatment fails - qi disruption
+				add_character_modifier = { modifier = murim_qi_disruption years = 2 }
+				add_stress = 20
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Meditate and self-heal with internal qi
+	option = {
+		name = murim_grand_tournament.0006.b
+		add_character_modifier = { modifier = murim_meditation_recovery years = 1 }
+		random_list = {
+			40 = {
+				if = {
+					limit = { has_trait = wounded_1 }
+					remove_trait = wounded_1
+				}
+				add_prowess_skill = 1
+				add_character_flag = { flag = murim_self_healed_stronger_memory }
+			}
+			40 = {
+				# Slow but steady
+				add_character_modifier = { modifier = murim_lingering_injury years = 2 }
+			}
+			20 = {
+				# Breakthrough during recovery!
+				add_prowess_skill = 2
+				add_character_flag = { flag = murim_injury_breakthrough_memory }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Accept the scars - they tell your story
+	option = {
+		name = murim_grand_tournament.0006.c
+		add_prestige = 50
+		add_character_modifier = { modifier = murim_battle_scarred_veteran years = 10 }
+		add_character_flag = { flag = murim_accepted_scars_memory }
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			content = minor_stress_impact_loss
+		}
+		ai_chance = { base = 30 modifier = { add = 30 has_trait = brave } }
+	}
+}
+
+############################################
+# 0007 - SPECTATOR GETS RECRUITED
+# A non-martial spectator at the tournament
+# is noticed by a clan scout and offered
+# entry into the martial world.
+############################################
+
+murim_grand_tournament.0007 = {
+	type = character_event
+	title = murim_grand_tournament.0007.t
+	desc = murim_grand_tournament.0007.desc
+	theme = martial
+	override_background = { reference = market }
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_champion_coronation_memory
+	}
+
+	immediate = {
+		# Find a promising non-martial character nearby
+		random_living_character = {
+			limit = {
+				NOT = { has_trait = martial_artist }
+				is_alive = yes
+				age >= 12
+				age <= 25
+				prowess >= 8
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 prowess >= 12 }
+				modifier = { add = 10 has_trait = brave }
+				modifier = { add = 10 has_trait = ambitious }
+			}
+			save_scope_as = promising_recruit
+		}
+	}
+
+	# Offer them a place in your clan
+	option = {
+		name = murim_grand_tournament.0007.a
+		trigger = { exists = scope:promising_recruit }
+		scope:promising_recruit = {
+			add_trait = martial_artist
+			set_variable = { name = murim_ranking_position value = 99 }
+			add_character_flag = { flag = murim_tournament_recruit_memory }
+			# Assign to champion's clan if applicable
+			trigger_event = { id = murim_grand_tournament.0008 days = { 7 14 } }
+		}
+		add_prestige = 50
+		add_character_flag = { flag = murim_recruited_at_tournament_memory }
+		ai_chance = { base = 60 }
+	}
+
+	# Let them find their own path
+	option = {
+		name = murim_grand_tournament.0007.b
+		add_character_flag = { flag = murim_let_talent_go_memory }
+		ai_chance = { base = 40 }
+	}
+}
+
+############################################
+# 0008 - LEGACY OF CHAMPIONS
+# Stories of past Grand Tournament champions
+# inspire the current generation.
+# Fired as follow-up to recruitment.
+############################################
+
+murim_grand_tournament.0008 = {
+	type = character_event
+	title = murim_grand_tournament.0008.t
+	desc = murim_grand_tournament.0008.desc
+	theme = martial
+	override_background = { reference = temple }
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_character_flag = murim_tournament_recruit_memory
+	}
+
+	# Study the champion's techniques
+	option = {
+		name = murim_grand_tournament.0008.a
+		add_prowess_skill = 1
+		add_character_modifier = { modifier = murim_inspired_by_champion years = 3 }
+		add_character_flag = { flag = murim_champion_student_memory }
+		ai_chance = { base = 50 }
+	}
+
+	# Forge your own path - reject imitation
+	option = {
+		name = murim_grand_tournament.0008.b
+		add_prowess_skill = 1
+		add_intrigue_skill = 1
+		add_character_flag = { flag = murim_independent_path_memory }
+		stress_impact = {
+			ambitious = minor_stress_impact_loss
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = ambitious } }
+	}
+
+	# Seek out the champion as a mentor
+	option = {
+		name = murim_grand_tournament.0008.c
+		trigger_event = { id = murim_mentor.0001 days = { 30 60 } }
+		add_character_flag = { flag = murim_seeking_champion_mentor_memory }
+		ai_chance = { base = 20 }
+	}
+}
