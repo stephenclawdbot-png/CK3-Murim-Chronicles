@@ -1,0 +1,861 @@
+# Murim Chronicles Phase 3 - Sect Events
+# Recruitment, initiation, promotion, betrayal, sect wars, elder politics
+
+namespace = murim_sect
+
+######################################
+# SECT RECRUITMENT OFFER
+######################################
+
+murim_sect.0001 = {
+	type = character_event
+	title = murim_sect.0001.t
+	desc = murim_sect.0001.desc
+	theme = diplomacy
+	left_portrait = {
+		character = scope:sect_recruiter
+		animation = personality_honorable
+	}
+	right_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 14
+		prowess >= 8
+		NOT = { has_character_flag = murim_sect_member }
+		NOT = { has_character_flag = murim_sect_recruitment_cooldown }
+		has_character_flag = murim_initiated
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			prowess >= 15
+		}
+		modifier = {
+			add = 1
+			has_trait = brave
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_sect_member
+				prowess >= 12
+				opinion = { target = root value >= 0 }
+			}
+			alternative = global
+			save_scope_as = sect_recruiter
+		}
+	}
+
+	# Accept recruitment eagerly
+	option = {
+		name = murim_sect.0001.a
+		set_character_flag = murim_sect_member
+		set_character_flag = murim_sect_outer_disciple
+		add_opinion = {
+			target = scope:sect_recruiter
+			modifier = murim_grateful_recruitment_opinion
+		}
+		scope:sect_recruiter = {
+			add_opinion = {
+				target = root
+				modifier = murim_recruited_disciple_opinion
+			}
+		}
+		add_prestige = 100
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect.0010
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 15 has_trait = gregarious }
+		}
+	}
+
+	# Accept but demand better terms
+	option = {
+		name = murim_sect.0001.b
+		trigger = { diplomacy >= 12 }
+		custom_tooltip = murim_sect_negotiate_terms_tt
+		set_character_flag = murim_sect_member
+		set_character_flag = murim_sect_outer_disciple
+		add_prestige = 200
+		add_gold = 50
+		scope:sect_recruiter = {
+			add_opinion = {
+				target = root
+				modifier = murim_demanding_recruit_opinion
+			}
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect.0010
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = greedy }
+		}
+	}
+
+	# Refuse - walk the solo path
+	option = {
+		name = murim_sect.0001.c
+		set_character_flag = {
+			flag = murim_sect_recruitment_cooldown
+			years = 5
+		}
+		add_prestige = 50
+		stress_impact = { base = -5 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = shy }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
+
+######################################
+# SECT INITIATION TRIAL
+######################################
+
+murim_sect.0010 = {
+	type = character_event
+	title = murim_sect.0010.t
+	desc = murim_sect.0010.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_outer_disciple
+	}
+
+	# Trial of combat - defeat the guardian
+	option = {
+		name = murim_sect.0010.a
+		custom_tooltip = murim_sect_trial_combat_tt
+		hidden_effect = {
+			random_list = {
+				50 = {
+					modifier = { add = 30 prowess >= 15 }
+					trigger_event = { id = murim_sect.0011 days = 1 }
+				}
+				30 = {
+					trigger_event = { id = murim_sect.0012 days = 1 }
+				}
+				20 = {
+					modifier = { add = -10 prowess >= 15 }
+					trigger_event = { id = murim_sect.0013 days = 1 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 prowess >= 15 }
+		}
+	}
+
+	# Trial of wisdom - solve the elder's riddle
+	option = {
+		name = murim_sect.0010.b
+		trigger = { learning >= 10 }
+		custom_tooltip = murim_sect_trial_wisdom_tt
+		hidden_effect = {
+			random_list = {
+				50 = {
+					modifier = { add = 25 learning >= 16 }
+					trigger_event = { id = murim_sect.0011 days = 1 }
+				}
+				30 = {
+					trigger_event = { id = murim_sect.0012 days = 1 }
+				}
+				20 = {
+					trigger_event = { id = murim_sect.0013 days = 1 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 learning >= 14 }
+		}
+	}
+
+	# Trial of endurance - climb the Hundred Steps
+	option = {
+		name = murim_sect.0010.c
+		custom_tooltip = murim_sect_trial_endurance_tt
+		hidden_effect = {
+			random_list = {
+				40 = {
+					modifier = { add = 20 has_trait = brave }
+					modifier = { add = 15 has_trait = patient }
+					trigger_event = { id = murim_sect.0011 days = 3 }
+				}
+				35 = {
+					trigger_event = { id = murim_sect.0012 days = 3 }
+				}
+				25 = {
+					trigger_event = { id = murim_sect.0013 days = 3 }
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+# Trial passed
+murim_sect.0011 = {
+	type = character_event
+	title = murim_sect.0011.t
+	desc = murim_sect.0011.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_honorable }
+
+	option = {
+		name = murim_sect.0011.a
+		remove_character_flag = murim_sect_outer_disciple
+		set_character_flag = murim_sect_inner_disciple
+		add_prestige = 200
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = murim_sect_inner_disciple_status
+			years = -1
+		}
+	}
+}
+
+# Trial partial pass
+murim_sect.0012 = {
+	type = character_event
+	title = murim_sect.0012.t
+	desc = murim_sect.0012.desc
+	theme = martial
+	left_portrait = { character = root animation = worry }
+
+	option = {
+		name = murim_sect.0012.a
+		add_character_modifier = {
+			modifier = murim_sect_probationary_status
+			years = 2
+		}
+		add_prestige = 50
+	}
+}
+
+# Trial failed
+murim_sect.0013 = {
+	type = character_event
+	title = murim_sect.0013.t
+	desc = murim_sect.0013.desc
+	theme = martial
+	left_portrait = { character = root animation = shame }
+
+	# Accept defeat
+	option = {
+		name = murim_sect.0013.a
+		remove_character_flag = murim_sect_member
+		remove_character_flag = murim_sect_outer_disciple
+		add_prestige = -100
+		stress_impact = { base = 20 }
+		ai_chance = { base = 70 }
+	}
+
+	# Demand a rematch
+	option = {
+		name = murim_sect.0013.b
+		trigger = { has_trait = stubborn }
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect.0010
+				days = { 60 120 }
+			}
+		}
+		stress_impact = { base = 10 }
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# INNER DISCIPLE PROMOTION
+######################################
+
+murim_sect.0020 = {
+	type = character_event
+	title = murim_sect.0020.t
+	desc = murim_sect.0020.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_inner_disciple
+		prowess >= 18
+		OR = {
+			has_trait = cultivation_rank_core_formation
+			has_trait = cultivation_rank_nascent_soul
+			has_trait = cultivation_rank_spirit_severing
+			has_trait = cultivation_rank_dao_seeking
+			has_trait = cultivation_rank_tribulation
+			has_trait = cultivation_rank_immortal_ascension
+		}
+	}
+
+	# Accept the promotion humbly
+	option = {
+		name = murim_sect.0020.a
+		remove_character_flag = murim_sect_inner_disciple
+		set_character_flag = murim_sect_core_disciple
+		add_prestige = 500
+		remove_character_modifier = murim_sect_inner_disciple_status
+		add_character_modifier = {
+			modifier = murim_sect_core_disciple_status
+			years = -1
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Demand elder recognition
+	option = {
+		name = murim_sect.0020.b
+		trigger = { diplomacy >= 14 }
+		remove_character_flag = murim_sect_inner_disciple
+		set_character_flag = murim_sect_core_disciple
+		add_prestige = 800
+		remove_character_modifier = murim_sect_inner_disciple_status
+		add_character_modifier = {
+			modifier = murim_sect_core_disciple_status
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_sect_elder_recognition
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+}
+
+######################################
+# SECT BETRAYAL
+######################################
+
+murim_sect.0100 = {
+	type = character_event
+	title = murim_sect.0100.t
+	desc = murim_sect.0100.desc
+	theme = intrigue
+	left_portrait = {
+		character = scope:betrayer
+		animation = scheme
+	}
+	right_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_member
+		any_courtier = {
+			has_character_flag = murim_sect_member
+			has_trait = deceitful
+			opinion = { target = root value < -20 }
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_sect_member
+				has_trait = deceitful
+				opinion = { target = root value < -20 }
+			}
+			save_scope_as = betrayer
+		}
+	}
+
+	# Confront the betrayer
+	option = {
+		name = murim_sect.0100.a
+		custom_tooltip = murim_sect_confront_betrayer_tt
+		hidden_effect = {
+			random_list = {
+				50 = {
+					modifier = { add = 20 prowess > scope:betrayer.prowess }
+					scope:betrayer = {
+						remove_character_flag = murim_sect_member
+						imprison = { target = root type = house_arrest }
+					}
+					add_prestige = 300
+				}
+				30 = {
+					add_opinion = {
+						target = scope:betrayer
+						modifier = murim_bitter_rivalry
+					}
+					scope:betrayer = {
+						add_opinion = {
+							target = root
+							modifier = murim_bitter_rivalry
+						}
+					}
+				}
+				20 = {
+					add_trait = wounded_1
+					scope:betrayer = {
+						add_prestige = 200
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Report to sect elders
+	option = {
+		name = murim_sect.0100.b
+		trigger = { diplomacy >= 10 }
+		scope:betrayer = {
+			remove_character_flag = murim_sect_member
+			add_character_modifier = {
+				modifier = murim_sect_exile_brand
+				years = -1
+			}
+			add_prestige = -500
+		}
+		add_prestige = 200
+		add_piety = 100
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Counter-betray - use this for your own gain
+	option = {
+		name = murim_sect.0100.c
+		trigger = { intrigue >= 14 }
+		custom_tooltip = murim_sect_counter_betray_tt
+		add_intrigue_skill = 1
+		scope:betrayer = {
+			add_opinion = {
+				target = root
+				modifier = murim_mutual_blackmail
+			}
+		}
+		add_gold = 100
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+}
+
+######################################
+# SECT WAR DECLARATION
+######################################
+
+murim_sect.0200 = {
+	type = character_event
+	title = murim_sect.0200.t
+	desc = murim_sect.0200.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:rival_sect_leader
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_core_disciple
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_character_flag = murim_sect_member
+			NOT = { dynasty = root.dynasty }
+		}
+	}
+
+	immediate = {
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				has_character_flag = murim_sect_member
+				NOT = { dynasty = root.dynasty }
+			}
+			save_scope_as = rival_sect_leader
+		}
+	}
+
+	# All-out sect war
+	option = {
+		name = murim_sect.0200.a
+		custom_tooltip = murim_sect_war_total_tt
+		add_character_modifier = {
+			modifier = murim_sect_war_footing
+			years = 3
+		}
+		hidden_effect = {
+			start_war = {
+				cb = murim_sect_dominance_cb
+				target = scope:rival_sect_leader
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 15 has_trait = wrathful }
+		}
+	}
+
+	# Challenge their leader to single combat
+	option = {
+		name = murim_sect.0200.b
+		trigger = { prowess >= 16 }
+		custom_tooltip = murim_sect_war_duel_tt
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect.0210
+				days = 14
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 prowess >= 20 }
+		}
+	}
+
+	# Seek peace through negotiation
+	option = {
+		name = murim_sect.0200.c
+		trigger = { diplomacy >= 14 }
+		add_opinion = {
+			target = scope:rival_sect_leader
+			modifier = murim_peace_offering_opinion
+		}
+		scope:rival_sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_peace_offering_opinion
+			}
+		}
+		add_prestige = 150
+		add_piety = 200
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = compassionate }
+		}
+	}
+}
+
+# Sect war duel
+murim_sect.0210 = {
+	type = character_event
+	title = murim_sect.0210.t
+	desc = murim_sect.0210.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+	right_portrait = { character = scope:rival_sect_leader animation = personality_bold }
+
+	trigger = {
+		is_alive = yes
+		exists = scope:rival_sect_leader
+		scope:rival_sect_leader = { is_alive = yes }
+	}
+
+	option = {
+		name = murim_sect.0210.a
+		custom_tooltip = murim_sect_duel_fight_tt
+		duel = {
+			skill = prowess
+			target = scope:rival_sect_leader
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				desc = murim_sect_duel_victory_tt
+				add_prestige = 1000
+				scope:rival_sect_leader = {
+					add_prestige = -500
+					add_trait = wounded_2
+					remove_character_flag = murim_sect_core_disciple
+				}
+			}
+			10 = {
+				desc = murim_sect_duel_draw_tt
+				add_prestige = 200
+				scope:rival_sect_leader = { add_prestige = 200 }
+			}
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				desc = murim_sect_duel_defeat_tt
+				add_prestige = -500
+				add_trait = wounded_2
+			}
+		}
+	}
+}
+
+######################################
+# ELDER COUNCIL POLITICS
+######################################
+
+murim_sect.0300 = {
+	type = character_event
+	title = murim_sect.0300.t
+	desc = murim_sect.0300.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_core_disciple
+		diplomacy >= 12
+		age >= 30
+	}
+
+	# Rally support among younger disciples
+	option = {
+		name = murim_sect.0300.a
+		custom_tooltip = murim_elder_rally_youth_tt
+		add_character_modifier = {
+			modifier = murim_reformist_elder
+			years = 5
+		}
+		add_prestige = 300
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_sect_member
+				age < 30
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_reformist_approval
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+
+	# Align with traditionalist elders
+	option = {
+		name = murim_sect.0300.b
+		custom_tooltip = murim_elder_traditionalist_tt
+		add_character_modifier = {
+			modifier = murim_traditionalist_elder
+			years = 5
+		}
+		add_piety = 300
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+
+	# Play both sides
+	option = {
+		name = murim_sect.0300.c
+		trigger = { intrigue >= 14 }
+		custom_tooltip = murim_elder_play_sides_tt
+		add_intrigue_skill = 1
+		add_character_modifier = {
+			modifier = murim_political_mastermind
+			years = 3
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+
+	# Challenge for sect leadership
+	option = {
+		name = murim_sect.0300.d
+		trigger = {
+			prowess >= 20
+			OR = {
+				has_trait = ambitious
+				prestige >= 2000
+			}
+		}
+		custom_tooltip = murim_elder_challenge_leader_tt
+		set_character_flag = murim_sect_leadership_challenger
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect.0310
+				days = 30
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+}
+
+# Sect leadership challenge outcome
+murim_sect.0310 = {
+	type = character_event
+	title = murim_sect.0310.t
+	desc = murim_sect.0310.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_leadership_challenger
+	}
+
+	immediate = {
+		remove_character_flag = murim_sect_leadership_challenger
+	}
+
+	option = {
+		name = murim_sect.0310.a
+		hidden_effect = {
+			random_list = {
+				40 = {
+					modifier = { add = 20 prowess >= 22 }
+					modifier = { add = 15 diplomacy >= 16 }
+					set_character_flag = murim_sect_leader
+					remove_character_flag = murim_sect_core_disciple
+					add_character_modifier = {
+						modifier = murim_sect_patriarch_status
+						years = -1
+					}
+					add_prestige = 2000
+					add_piety = 500
+				}
+				35 = {
+					add_prestige = -300
+					add_character_modifier = {
+						modifier = murim_failed_usurper
+						years = 5
+					}
+				}
+				25 = {
+					add_trait = wounded_2
+					remove_character_flag = murim_sect_member
+					add_character_modifier = {
+						modifier = murim_sect_exile_brand
+						years = -1
+					}
+					add_prestige = -1000
+				}
+			}
+		}
+	}
+}
+
+######################################
+# SECRET DISCIPLE REVELATION
+######################################
+
+murim_sect.0400 = {
+	type = character_event
+	title = murim_sect.0400.t
+	desc = murim_sect.0400.desc
+	theme = intrigue
+	left_portrait = {
+		character = scope:secret_disciple
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_sect_leader
+		any_courtier = {
+			has_secret_type = secret_lover
+			has_character_flag = murim_initiated
+			NOT = { has_character_flag = murim_sect_member }
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_secret_type = secret_lover
+				has_character_flag = murim_initiated
+			}
+			save_scope_as = secret_disciple
+		}
+	}
+
+	# Welcome them into the sect
+	option = {
+		name = murim_sect.0400.a
+		scope:secret_disciple = {
+			set_character_flag = murim_sect_member
+			set_character_flag = murim_sect_inner_disciple
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_acceptance
+			}
+		}
+		add_piety = 100
+		ai_chance = { base = 50 }
+	}
+
+	# Exploit their secret
+	option = {
+		name = murim_sect.0400.b
+		trigger = { intrigue >= 12 }
+		add_hook = {
+			target = scope:secret_disciple
+			type = blackmail_hook
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+
+	# Expose them publicly
+	option = {
+		name = murim_sect.0400.c
+		scope:secret_disciple = {
+			add_prestige = -300
+			stress_impact = { base = 40 }
+		}
+		add_prestige = 100
+		add_tyranny = 10
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = cruel }
+		}
+	}
+}
