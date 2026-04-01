@@ -1,0 +1,825 @@
+# Murim Chronicles - Wudang Expansion Events
+# Deeper Wudang content: Tai Chi mastery, philosophical combat, inter-sect diplomacy,
+# internal balance crises, hermit discoveries, and successor selection.
+# INTEGRATION: murim_wudang_events.txt, murim_faction_war_events.txt, murim_mentor_events.txt
+# INTEGRATION: murim_ranking_events.txt, murim_cultivation_events.txt, murim_training_events.txt
+# GENDER: Fully equal. Wudang accepts both men and women as disciples and leaders.
+
+namespace = murim_wudang_exp
+
+##############################
+# EVENT 1: TAI CHI GRANDMASTER ENLIGHTENMENT
+# The ultimate Wudang achievement: mastering the unity of yin and yang in combat.
+# Decades of meditation and practice condensed into a single moment of clarity.
+# The practitioner's movements become water - soft yet unstoppable.
+##############################
+murim_wudang_exp.0001 = {
+	type = character_event
+	title = murim_wudang_exp.0001.t
+	desc = murim_wudang_exp.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_wudang_member_trigger = yes
+		prowess >= 22
+		learning >= 14
+		age >= 35
+		NOT = { has_character_flag = wudang_tai_chi_enlightenment }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			prowess >= 26
+		}
+		modifier = {
+			add = 2
+			has_trait = patient
+		}
+		modifier = {
+			add = 2
+			has_trait = calm
+		}
+	}
+	
+	immediate = {
+		set_character_flag = wudang_tai_chi_enlightenment
+		create_character_memory = {
+			type = wudang_tai_chi_enlightenment_memory
+		}
+	}
+	
+	# Option A: Embrace the moment of perfect stillness
+	option = {
+		name = murim_wudang_exp.0001.a
+		random_list = {
+			40 = {
+				modifier = {
+					add = 15
+					prowess >= 28
+				}
+				modifier = {
+					add = 10
+					learning >= 18
+				}
+				# True Tai Chi Grandmaster!
+				add_prowess_xp = 1200
+				add_learning_xp = 600
+				add_trait = tai_chi_grandmaster
+				add_character_modifier = {
+					modifier = wudang_tai_chi_transcendence_modifier
+					years = -1
+				}
+				add_prestige = 700
+				create_character_memory = {
+					type = wudang_tai_chi_mastery_memory
+				}
+				# All martial artists know
+				every_living_character = {
+					limit = {
+						murim_is_martial_artist_trigger = yes
+					}
+					add_opinion = {
+						modifier = wudang_tai_chi_master_awe_opinion
+						target = root
+						opinion = 15
+					}
+				}
+				# Cross-ref: ranking challenge
+				trigger_event = {
+					id = murim_rank.0001
+					days = { 30 90 }
+				}
+			}
+			35 = {
+				# Partial enlightenment - close but not complete
+				add_prowess_xp = 600
+				add_learning_xp = 300
+				add_character_modifier = {
+					modifier = wudang_near_enlightenment_modifier
+					years = 10
+				}
+			}
+			25 = {
+				# Qi deviation during meditation - internal injury
+				add_stress = 40
+				add_character_modifier = {
+					modifier = wudang_qi_deviation_modifier
+					years = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+		}
+	}
+	
+	# Option B: Seek a sparring partner to test the insight in combat
+	option = {
+		name = murim_wudang_exp.0001.b
+		# Find a worthy opponent to test Tai Chi in combat
+		random_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				prowess >= 18
+				NOT = { is_wudang_member_trigger = yes }
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = { add = 2 is_shaolin_member_trigger = yes }
+				modifier = { add = 2 is_iron_fist_member_trigger = yes }
+			}
+			save_scope_as = test_opponent
+		}
+		duel = {
+			skill = prowess
+			target = scope:test_opponent
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min_compared_to = root.prowess
+				# Tai Chi proves supreme
+				add_prowess_xp = 1000
+				add_trait = tai_chi_grandmaster
+				add_prestige = 500
+				create_character_memory = {
+					type = wudang_tai_chi_combat_proof_memory
+					participants = { defeated = scope:test_opponent }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:test_opponent.prowess
+				# Enlightenment fades under pressure
+				add_prowess_xp = 400
+				add_stress = 30
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Return to meditation - not yet ready
+	option = {
+		name = murim_wudang_exp.0001.c
+		add_learning_xp = 200
+		add_stress = -15
+		remove_character_flag = wudang_tai_chi_enlightenment
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+##############################
+# EVENT 2: SWORD VS PALM - PHILOSOPHICAL DEBATE DUEL
+# Wudang's internal debate: is the sword or empty palm the true way?
+# Sword faction believes Wudang sword is the sect's soul.
+# Palm faction believes Tai Chi palm negates all weapons.
+# Resolved through combat demonstration.
+##############################
+murim_wudang_exp.0002 = {
+	type = character_event
+	title = murim_wudang_exp.0002.t
+	desc = murim_wudang_exp.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_wudang_member_trigger = yes
+		OR = {
+			murim_is_clan_leader_trigger = yes
+			murim_is_clan_elder_trigger = yes
+		}
+		NOT = { has_character_flag = wudang_sword_palm_debate }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = just
+		}
+	}
+	
+	immediate = {
+		set_character_flag = wudang_sword_palm_debate
+		random_courtier = {
+			limit = {
+				is_wudang_member_trigger = yes
+				prowess >= 14
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = { add = 2 prowess >= 18 }
+			}
+			save_scope_as = debate_opponent
+		}
+		create_character_memory = {
+			type = wudang_sword_palm_debate_memory
+			participants = { opponent = scope:debate_opponent }
+		}
+	}
+	
+	# Option A: Champion the sword tradition
+	option = {
+		name = murim_wudang_exp.0002.a
+		duel = {
+			skill = prowess
+			target = scope:debate_opponent
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				add_prowess_xp = 600
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = wudang_sword_champion_modifier
+					years = 10
+				}
+				change_variable = {
+					name = murim_clan_harmony
+					add = -5
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:debate_opponent.prowess
+				add_prowess_xp = 200
+				add_stress = 20
+				scope:debate_opponent = {
+					add_prestige = 300
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Champion the palm tradition
+	option = {
+		name = murim_wudang_exp.0002.b
+		duel = {
+			skill = prowess
+			target = scope:debate_opponent
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				add_prowess_xp = 600
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = wudang_palm_champion_modifier
+					years = 10
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:debate_opponent.prowess
+				add_prowess_xp = 200
+				add_stress = 20
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Declare both paths equally valid (unity)
+	option = {
+		name = murim_wudang_exp.0002.c
+		add_diplomacy_xp = 500
+		add_learning_xp = 300
+		add_character_modifier = {
+			modifier = wudang_unified_path_modifier
+			years = -1
+		}
+		scope:debate_opponent = {
+			add_opinion = {
+				modifier = wudang_wise_leader_opinion
+				target = root
+				opinion = 20
+			}
+		}
+		change_variable = {
+			name = murim_clan_harmony
+			add = 10
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+##############################
+# EVENT 3: WUDANG-SHAOLIN SUMMIT
+# The two greatest orthodox sects meet to coordinate against unorthodox threats.
+# Political maneuvering between the most prestigious orthodox clans.
+# Who leads the Orthodox Alliance - Wudang's wisdom or Shaolin's tradition?
+##############################
+murim_wudang_exp.0003 = {
+	type = character_event
+	title = murim_wudang_exp.0003.t
+	desc = murim_wudang_exp.0003.desc
+	theme = diplomacy
+	
+	trigger = {
+		is_wudang_member_trigger = yes
+		murim_is_clan_leader_trigger = yes
+		any_living_character = {
+			is_shaolin_member_trigger = yes
+			murim_is_clan_leader_trigger = yes
+		}
+		NOT = { has_character_flag = wudang_shaolin_summit_recent }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			any_living_character = {
+				murim_is_unorthodox_trigger = yes
+				prowess >= 20
+			}
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = wudang_shaolin_summit_recent
+			years = 5
+		}
+		random_living_character = {
+			limit = {
+				is_shaolin_member_trigger = yes
+				murim_is_clan_leader_trigger = yes
+			}
+			save_scope_as = shaolin_leader
+		}
+		create_character_memory = {
+			type = wudang_shaolin_summit_memory
+			participants = { shaolin_counterpart = scope:shaolin_leader }
+		}
+	}
+	
+	# Option A: Propose joint military action against Heavenly Demon
+	option = {
+		name = murim_wudang_exp.0003.a
+		add_diplomacy_xp = 500
+		scope:shaolin_leader = {
+			add_opinion = {
+				modifier = wudang_shaolin_war_ally_opinion
+				target = root
+				opinion = 25
+			}
+		}
+		add_character_modifier = {
+			modifier = orthodox_alliance_war_council_modifier
+			years = 5
+		}
+		# Cross-ref: may trigger faction war
+		trigger_event = {
+			id = murim_faction_war.0001
+			days = { 90 180 }
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Propose a shared training exchange program
+	option = {
+		name = murim_wudang_exp.0003.b
+		add_diplomacy_xp = 300
+		add_prowess_xp = 300
+		scope:shaolin_leader = {
+			add_opinion = {
+				modifier = wudang_shaolin_exchange_opinion
+				target = root
+				opinion = 15
+			}
+		}
+		add_character_modifier = {
+			modifier = wudang_shaolin_exchange_modifier
+			years = 5
+		}
+		# Cross-ref: mentor assignment event
+		trigger_event = {
+			id = murim_mentor.0001
+			days = { 30 60 }
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Assert Wudang's right to lead the alliance
+	option = {
+		name = murim_wudang_exp.0003.c
+		trigger = {
+			prowess >= 20
+		}
+		add_prestige = 300
+		scope:shaolin_leader = {
+			add_opinion = {
+				modifier = wudang_arrogant_claim_opinion
+				target = root
+				opinion = -15
+			}
+		}
+		add_character_modifier = {
+			modifier = wudang_alliance_leader_claim_modifier
+			years = 5
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+##############################
+# EVENT 4: INTERNAL YIN-YANG IMBALANCE CRISIS
+# A Wudang elder's cultivation goes wrong - too much yang, not enough yin.
+# Their qi becomes violent and destructive. They lash out at fellow disciples.
+# The sect must handle this before the elder destroys themselves or others.
+##############################
+murim_wudang_exp.0004 = {
+	type = character_event
+	title = murim_wudang_exp.0004.t
+	desc = murim_wudang_exp.0004.desc
+	theme = intrigue
+	
+	trigger = {
+		is_wudang_member_trigger = yes
+		OR = {
+			murim_is_clan_leader_trigger = yes
+			murim_is_clan_elder_trigger = yes
+		}
+		NOT = { has_character_flag = wudang_yinyang_crisis }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			any_courtier = {
+				is_wudang_member_trigger = yes
+				stress >= 50
+			}
+		}
+	}
+	
+	immediate = {
+		set_character_flag = wudang_yinyang_crisis
+		# Find the afflicted elder
+		random_courtier = {
+			limit = {
+				is_wudang_member_trigger = yes
+				age >= 30
+				prowess >= 12
+			}
+			weight = {
+				base = 1
+				modifier = { add = 3 stress >= 50 }
+				modifier = { add = 2 has_trait = wrathful }
+			}
+			save_scope_as = afflicted_elder
+		}
+		create_character_memory = {
+			type = wudang_yinyang_crisis_memory
+			participants = { elder = scope:afflicted_elder }
+		}
+	}
+	
+	# Option A: Use Tai Chi to realign their qi (healing approach)
+	option = {
+		name = murim_wudang_exp.0004.a
+		random_list = {
+			50 = {
+				modifier = {
+					add = 15
+					learning >= 16
+				}
+				# Successfully rebalance their qi
+				scope:afflicted_elder = {
+					add_stress = -40
+					add_opinion = {
+						modifier = wudang_healer_opinion
+						target = root
+						opinion = 30
+					}
+				}
+				add_learning_xp = 500
+				add_prestige = 200
+				change_variable = {
+					name = murim_clan_harmony
+					add = 10
+				}
+			}
+			30 = {
+				# Partial success - elder stabilized but weakened
+				scope:afflicted_elder = {
+					add_stress = -20
+					add_character_modifier = {
+						modifier = wudang_qi_weakened_modifier
+						years = 5
+					}
+				}
+				add_learning_xp = 300
+			}
+			20 = {
+				# Qi feedback - both of you are injured
+				scope:afflicted_elder = { add_trait = wounded_2 }
+				add_trait = wounded_1
+				add_stress = 30
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Seal their meridians to contain the damage
+	option = {
+		name = murim_wudang_exp.0004.b
+		scope:afflicted_elder = {
+			add_character_modifier = {
+				modifier = wudang_sealed_meridians_modifier
+				years = -1
+			}
+			add_opinion = {
+				modifier = wudang_sealed_my_power_opinion
+				target = root
+				opinion = -20
+			}
+		}
+		add_intrigue_xp = 300
+		change_variable = {
+			name = murim_clan_harmony
+			add = -5
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Let nature take its course (harsh but pragmatic)
+	option = {
+		name = murim_wudang_exp.0004.c
+		scope:afflicted_elder = {
+			random_list = {
+				40 = {
+					# Elder recovers on their own
+					add_stress = -10
+				}
+				60 = {
+					# Elder's qi deviation worsens
+					add_trait = wounded_3
+					add_character_modifier = {
+						modifier = wudang_qi_deviation_severe_modifier
+						years = -1
+					}
+				}
+			}
+		}
+		change_variable = {
+			name = murim_clan_harmony
+			add = -10
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# EVENT 5: MOUNTAIN HERMIT DISCOVERY
+# A mysterious hermit is found living on Wudang Mountain.
+# They possess ancient techniques lost to the sect centuries ago.
+# Could be a blessing or a trap.
+##############################
+murim_wudang_exp.0005 = {
+	type = character_event
+	title = murim_wudang_exp.0005.t
+	desc = murim_wudang_exp.0005.desc
+	theme = learning
+	
+	trigger = {
+		is_wudang_member_trigger = yes
+		NOT = { has_character_flag = wudang_hermit_discovery }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			learning >= 14
+		}
+	}
+	
+	immediate = {
+		set_character_flag = wudang_hermit_discovery
+		create_character_memory = {
+			type = wudang_hermit_discovery_memory
+		}
+	}
+	
+	# Option A: Invite the hermit to teach at Wudang
+	option = {
+		name = murim_wudang_exp.0005.a
+		random_list = {
+			40 = {
+				# Hermit shares ancient knowledge
+				add_learning_xp = 800
+				add_prowess_xp = 500
+				add_character_modifier = {
+					modifier = wudang_ancient_technique_learned_modifier
+					years = -1
+				}
+				add_prestige = 300
+				# Cross-ref: artifact discovery
+				trigger_event = {
+					id = murim_artifact.0001
+					days = { 30 60 }
+				}
+			}
+			30 = {
+				# Hermit teaches some but withholds the deepest secrets
+				add_learning_xp = 400
+				add_prowess_xp = 200
+			}
+			30 = {
+				# Hermit is actually a Heavenly Demon spy!
+				add_stress = 40
+				add_character_modifier = {
+					modifier = wudang_infiltrated_modifier
+					years = 3
+				}
+				# Cross-ref: shadow politics
+				trigger_event = {
+					id = murim_shadow.0003
+					days = { 15 30 }
+				}
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Challenge the hermit to prove their skill
+	option = {
+		name = murim_wudang_exp.0005.b
+		trigger = {
+			prowess >= 16
+		}
+		add_prowess_xp = 500
+		add_character_modifier = {
+			modifier = wudang_hermit_tested_modifier
+			years = 5
+		}
+		create_character_memory = {
+			type = wudang_hermit_sparring_memory
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Drive the hermit away (protect Wudang's secrets)
+	option = {
+		name = murim_wudang_exp.0005.c
+		add_prestige = -100
+		add_stress = 10
+		ai_chance = { base = 20 }
+	}
+}
+
+##############################
+# EVENT 6: WUDANG SUCCESSOR SELECTION
+# The Sect Master of Wudang chooses their successor.
+# Unlike violent sects, Wudang favors wisdom and balance.
+# But not everyone agrees with the selection.
+##############################
+murim_wudang_exp.0006 = {
+	type = character_event
+	title = murim_wudang_exp.0006.t
+	desc = murim_wudang_exp.0006.desc
+	theme = diplomacy
+	
+	trigger = {
+		is_wudang_member_trigger = yes
+		murim_is_clan_leader_trigger = yes
+		age >= 50
+		NOT = { has_character_flag = wudang_successor_selected }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			age >= 60
+		}
+	}
+	
+	immediate = {
+		set_character_flag = wudang_successor_selected
+		# Find the best candidate
+		random_courtier = {
+			limit = {
+				is_wudang_member_trigger = yes
+				age >= 20
+				age <= 40
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = { add = 3 learning >= 14 }
+				modifier = { add = 2 prowess >= 16 }
+				modifier = { add = 2 has_trait = patient }
+				modifier = { add = 2 has_trait = just }
+			}
+			save_scope_as = chosen_successor
+		}
+		# Find a rival candidate
+		random_courtier = {
+			limit = {
+				is_wudang_member_trigger = yes
+				has_trait = ambitious
+				NOT = { this = root }
+				NOT = { this = scope:chosen_successor }
+			}
+			save_scope_as = rival_candidate
+		}
+		create_character_memory = {
+			type = wudang_successor_selection_memory
+			participants = {
+				chosen = scope:chosen_successor
+				rival = scope:rival_candidate
+			}
+		}
+	}
+	
+	# Option A: Announce successor publicly (transparent, may cause jealousy)
+	option = {
+		name = murim_wudang_exp.0006.a
+		scope:chosen_successor = {
+			add_character_modifier = {
+				modifier = wudang_designated_successor_modifier
+				years = -1
+			}
+			add_prestige = 300
+		}
+		scope:rival_candidate = {
+			add_opinion = {
+				modifier = wudang_passed_over_opinion
+				target = root
+				opinion = -25
+			}
+			add_stress = 30
+		}
+		add_diplomacy_xp = 300
+		change_variable = {
+			name = murim_clan_harmony
+			add = -5
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Train both candidates and let merit decide
+	option = {
+		name = murim_wudang_exp.0006.b
+		scope:chosen_successor = {
+			add_prowess_xp = 400
+			add_learning_xp = 400
+		}
+		scope:rival_candidate = {
+			add_prowess_xp = 400
+			add_learning_xp = 400
+			add_opinion = {
+				modifier = wudang_fair_chance_opinion
+				target = root
+				opinion = 10
+			}
+		}
+		add_character_modifier = {
+			modifier = wudang_wise_selection_modifier
+			years = 5
+		}
+		change_variable = {
+			name = murim_clan_harmony
+			add = 10
+		}
+		# Trigger training event
+		trigger_event = {
+			id = murim_training.0001
+			days = { 30 60 }
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Delay the decision (avoid conflict for now)
+	option = {
+		name = murim_wudang_exp.0006.c
+		add_stress = 20
+		remove_character_flag = wudang_successor_selected
+		ai_chance = { base = 20 }
+	}
+}
