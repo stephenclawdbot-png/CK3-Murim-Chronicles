@@ -1,0 +1,1055 @@
+###############################################################################
+# MURIM CULTIVATION EXPANSION EVENTS
+# Deep cultivation mechanics: inner demons, pill refining, meridian awakening,
+# forbidden techniques, qi sea expansion
+# Cross-references: murim_cultivation_events, murim_fate_events, murim_duel_events,
+#                   murim_artifact_events, murim_training_events, murim_mentor_events
+###############################################################################
+
+namespace = murim_cult_exp
+
+##############################
+# 1. Inner Demon Tribulation
+# During meditation, cultivator's inner demons manifest as a spiritual trial.
+# Must confront past sins, fears, and desires to advance.
+##############################
+murim_cult_exp.0001 = {
+	type = character_event
+	title = murim_cult_exp.0001.t
+	desc = murim_cult_exp.0001.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+		NOT = { has_character_modifier = inner_demon_tribulation_cooldown }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = wrathful
+		}
+		modifier = {
+			add = 0.5
+			has_trait = lustful
+		}
+		modifier = {
+			add = 0.3
+			has_trait = vengeful
+		}
+		modifier = {
+			add = 0.5
+			stress >= 50
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = inner_demon_tribulation_cooldown
+			years = 5
+		}
+	}
+
+	# Face the inner demon head-on with iron will
+	option = {
+		name = murim_cult_exp.0001.a
+		duel = {
+			skill = learning
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min = 5
+				desc = murim_cult_exp.0001.a.success
+				# Demons conquered - massive cultivation breakthrough
+				add_piety = 500
+				add_learning_skill = 2
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 300
+				}
+				add_character_modifier = {
+					modifier = inner_demon_conquered
+					years = 10
+				}
+				if = {
+					limit = { has_trait = wrathful }
+					remove_trait = wrathful
+					add_trait = calm
+				}
+				create_character_memory = {
+					type = murim_inner_demon_conquered_memory
+				}
+				# Chain: breakthrough attempt after conquering demons
+				trigger_event = { id = murim_cult.0003 days = { 30 60 } }
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min = 5
+				desc = murim_cult_exp.0001.a.failure
+				# Inner demon overwhelms - qi deviation
+				add_stress = 80
+				random_list = {
+					40 = {
+						add_trait = lunatic
+						create_character_memory = {
+							type = murim_inner_demon_possession_memory
+						}
+					}
+					35 = {
+						add_trait = wounded_2
+						add_character_modifier = {
+							modifier = qi_deviation_recovery
+							years = 3
+						}
+					}
+					15 = {
+						add_trait = incapable
+						create_character_memory = {
+							type = murim_inner_demon_shattered_mind_memory
+						}
+					}
+					10 = {
+						# Demon takes partial control - gain dark power at cost
+						add_trait = sadistic
+						add_prowess = 5
+						change_variable = {
+							name = murim_cultivation_xp
+							add = -200
+						}
+						create_character_memory = {
+							type = murim_demon_pact_memory
+						}
+						# Chain: may trigger jianghu dark path
+						trigger_event = { id = murim_jianghu.0001 days = { 60 120 } }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	# Seek a master's guidance to suppress the demons
+	option = {
+		name = murim_cult_exp.0001.b
+		trigger = {
+			any_relation = {
+				type = mentor
+				is_alive = yes
+			}
+		}
+		random_relation = {
+			type = mentor
+			save_scope_as = guiding_master
+		}
+		add_piety = 100
+		add_stress = -30
+		scope:guiding_master = {
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_disciple_opinion
+				opinion = 30
+			}
+		}
+		random_list = {
+			70 = {
+				# Master helps suppress demons
+				add_character_modifier = {
+					modifier = demons_suppressed_not_conquered
+					years = 5
+				}
+				create_character_memory = {
+					type = murim_master_demon_suppression_memory
+					participants = { master = scope:guiding_master }
+				}
+			}
+			30 = {
+				# Master's method backfires - both injured
+				add_trait = wounded_1
+				scope:guiding_master = {
+					add_trait = wounded_1
+				}
+				create_character_memory = {
+					type = murim_demon_suppression_backfire_memory
+					participants = { master = scope:guiding_master }
+				}
+				# Chain: mentor relationship strained
+				trigger_event = { id = murim_mentor.0005 days = { 14 30 } }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+
+	# Use forbidden demonic cultivation to absorb the demon
+	option = {
+		name = murim_cult_exp.0001.c
+		add_piety = -300
+		add_prowess = 3
+		add_intrigue_skill = 2
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 150
+		}
+		add_trait = deviant
+		add_character_modifier = {
+			modifier = demonic_cultivation_taint
+			years = 15
+		}
+		create_character_memory = {
+			type = murim_demonic_absorption_memory
+		}
+		# Reputation destroyed if discovered
+		hidden_effect = {
+			random_list = {
+				50 = {
+					every_courtier = {
+						limit = { is_alive = yes }
+						add_opinion = {
+							target = root
+							modifier = murim_demonic_cultivator_discovered_opinion
+							opinion = -40
+						}
+					}
+				}
+				50 = { }
+			}
+		}
+		# Chain: jianghu underworld notices
+		trigger_event = { id = murim_jianghu.0005 days = { 30 90 } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 15 has_trait = sadistic }
+		}
+	}
+
+	# Abandon the tribulation and retreat
+	option = {
+		name = murim_cult_exp.0001.d
+		add_stress = 40
+		change_variable = {
+			name = murim_cultivation_xp
+			add = -100
+		}
+		add_character_modifier = {
+			modifier = qi_stagnation
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_inner_demon_fled_memory
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+##############################
+# 2. Pill Refining Catastrophe
+# Attempting to refine a cultivation pill goes wrong.
+# Alchemical explosion with cascading consequences.
+##############################
+murim_cult_exp.0002 = {
+	type = character_event
+	title = murim_cult_exp.0002.t
+	desc = murim_cult_exp.0002.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		learning >= 8
+		NOT = { has_character_modifier = pill_refining_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			learning >= 15
+		}
+		modifier = {
+			add = 0.3
+			has_trait = diligent
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = pill_refining_cooldown
+			years = 3
+		}
+	}
+
+	# Attempt emergency containment of the explosion
+	option = {
+		name = murim_cult_exp.0002.a
+		duel = {
+			skill = learning
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min = 5
+				desc = murim_cult_exp.0002.a.success
+				# Contained and salvaged - produce breakthrough pill
+				add_prestige = 200
+				add_gold = 100
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 200
+				}
+				add_character_modifier = {
+					modifier = breakthrough_pill_refined
+					years = 2
+				}
+				create_character_memory = {
+					type = murim_pill_masterwork_memory
+				}
+				# Chain: artifact event for legendary pill
+				trigger_event = { id = murim_artifact.0001 days = { 7 14 } }
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				min = 5
+				desc = murim_cult_exp.0002.a.failure
+				# Explosion injures cultivator
+				add_gold = -50
+				random_list = {
+					50 = {
+						add_trait = wounded_1
+						add_character_modifier = {
+							modifier = alchemical_burns
+							years = 2
+						}
+					}
+					30 = {
+						add_trait = wounded_2
+						add_trait = scarred
+					}
+					20 = {
+						add_trait = one_eyed
+						add_character_modifier = {
+							modifier = alchemical_burns
+							years = 5
+						}
+					}
+				}
+				create_character_memory = {
+					type = murim_pill_explosion_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Shield nearby disciples and absorb the blast personally
+	option = {
+		name = murim_cult_exp.0002.b
+		add_prestige = 150
+		add_piety = 100
+		random_list = {
+			40 = {
+				add_trait = wounded_2
+				create_character_memory = {
+					type = murim_pill_sacrifice_protection_memory
+				}
+			}
+			40 = {
+				add_trait = wounded_1
+				add_trait = scarred
+			}
+			20 = {
+				# Miraculously unharmed - pill energy absorbed into body
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 250
+				}
+				add_character_modifier = {
+					modifier = pill_energy_absorbed
+					years = 5
+				}
+				create_character_memory = {
+					type = murim_pill_accidental_absorption_memory
+				}
+			}
+		}
+		every_courtier = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_self_sacrifice_opinion
+				opinion = 25
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+
+	# Flee the laboratory immediately
+	option = {
+		name = murim_cult_exp.0002.c
+		add_stress = 20
+		add_gold = -30
+		# Lab destroyed, random courtier may be caught in blast
+		hidden_effect = {
+			random_courtier = {
+				limit = { is_alive = yes }
+				weight = {
+					base = 1
+				}
+				save_scope_as = blast_victim
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					25 = { add_trait = wounded_2 }
+					15 = { death = { death_reason = death_accident } }
+				}
+			}
+		}
+		create_character_memory = {
+			type = murim_pill_lab_fled_memory
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+##############################
+# 3. Dual Meridian Awakening
+# A rare cultivation phenomenon where two conflicting meridian paths
+# activate simultaneously, threatening to tear the body apart.
+##############################
+murim_cult_exp.0003 = {
+	type = character_event
+	title = murim_cult_exp.0003.t
+	desc = murim_cult_exp.0003.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		var:murim_cultivation_rank <= 4
+		NOT = { has_character_modifier = dual_meridian_cooldown }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = {
+			add = 0.5
+			has_variable = murim_meridians_opened
+			var:murim_meridians_opened >= 6
+		}
+		modifier = {
+			add = 0.3
+			has_trait = genius
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = dual_meridian_cooldown
+			years = 10
+		}
+	}
+
+	# Force both meridians open simultaneously - all or nothing
+	option = {
+		name = murim_cult_exp.0003.a
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				min = 3
+				desc = murim_cult_exp.0003.a.success
+				# Dual meridians harmonized - unprecedented power
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 500
+				}
+				change_variable = {
+					name = murim_meridians_opened
+					add = 2
+				}
+				add_prowess = 4
+				add_learning_skill = 2
+				add_character_modifier = {
+					modifier = dual_meridian_harmony
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_dual_meridian_success_memory
+				}
+				# Chain: ranking system notices this prodigy
+				trigger_event = { id = murim_ranking.0001 days = { 14 30 } }
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				min = 3
+				desc = murim_cult_exp.0003.a.failure
+				# Meridians clash and shatter - devastating injury
+				random_list = {
+					30 = {
+						add_trait = wounded_3
+						change_variable = {
+							name = murim_cultivation_xp
+							add = -300
+						}
+						create_character_memory = {
+							type = murim_meridian_shattered_memory
+						}
+					}
+					40 = {
+						add_trait = incapable
+						create_character_memory = {
+							type = murim_meridian_collapse_memory
+						}
+						# Chain: fate event - possible reincarnation/second chance
+						trigger_event = { id = murim_fate.0001 days = { 180 365 } }
+					}
+					30 = {
+						# One meridian seals, other survives
+						add_trait = wounded_2
+						change_variable = {
+							name = murim_meridians_opened
+							add = 1
+						}
+						change_variable = {
+							name = murim_cultivation_xp
+							add = -100
+						}
+						add_character_modifier = {
+							modifier = sealed_meridian_path
+							years = 10
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = -20 has_trait = content }
+		}
+	}
+
+	# Suppress one meridian and stabilize the other
+	option = {
+		name = murim_cult_exp.0003.b
+		change_variable = {
+			name = murim_meridians_opened
+			add = 1
+		}
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 100
+		}
+		add_character_modifier = {
+			modifier = suppressed_meridian_potential
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_meridian_suppression_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Seek emergency assistance from a healer
+	option = {
+		name = murim_cult_exp.0003.c
+		add_gold = -100
+		add_stress = 30
+		random_list = {
+			60 = {
+				# Healer stabilizes both meridians safely
+				change_variable = {
+					name = murim_meridians_opened
+					add = 2
+				}
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 150
+				}
+				create_character_memory = {
+					type = murim_healer_meridian_save_memory
+				}
+			}
+			40 = {
+				# Healer fails partially
+				add_trait = wounded_1
+				change_variable = {
+					name = murim_meridians_opened
+					add = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+##############################
+# 4. Forbidden Technique Backlash
+# Character practiced a forbidden technique in secret.
+# Now the price comes due - body begins breaking down.
+##############################
+murim_cult_exp.0004 = {
+	type = character_event
+	title = murim_cult_exp.0004.t
+	desc = murim_cult_exp.0004.desc
+	theme = skull
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		prowess >= 12
+		OR = {
+			has_trait = ambitious
+			has_trait = sadistic
+			has_trait = vengeful
+			has_character_modifier = demonic_cultivation_taint
+		}
+		NOT = { has_character_modifier = forbidden_technique_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = {
+			add = 0.5
+			has_character_modifier = demonic_cultivation_taint
+		}
+		modifier = {
+			add = 0.3
+			stress >= 40
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = forbidden_technique_cooldown
+			years = 5
+		}
+	}
+
+	# Endure the backlash through sheer willpower
+	option = {
+		name = murim_cult_exp.0004.a
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min = 5
+				desc = murim_cult_exp.0004.a.success
+				# Willpower overcomes - technique permanently integrated
+				add_prowess = 3
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = forbidden_technique_mastered
+					years = 15
+				}
+				create_character_memory = {
+					type = murim_forbidden_technique_mastered_memory
+				}
+				# Chain: rankers notice forbidden technique user
+				trigger_event = { id = murim_ranking.0005 days = { 30 60 } }
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min = 5
+				desc = murim_cult_exp.0004.a.failure
+				# Body begins breaking down
+				random_list = {
+					35 = {
+						add_trait = wounded_2
+						add_prowess = -3
+						add_character_modifier = {
+							modifier = meridian_damage_from_forbidden_art
+							years = 5
+						}
+					}
+					35 = {
+						add_trait = incapable
+						create_character_memory = {
+							type = murim_forbidden_technique_crippled_memory
+						}
+					}
+					20 = {
+						# Lifespan shortened drastically
+						add_trait = wounded_3
+						add_character_modifier = {
+							modifier = burning_lifeforce
+							years = 3
+						}
+					}
+					10 = {
+						# Immediate death from technique backlash
+						death = { death_reason = death_mystery }
+						create_character_memory = {
+							type = murim_forbidden_technique_death_memory
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Purge the forbidden energy from your system entirely
+	option = {
+		name = murim_cult_exp.0004.b
+		add_prowess = -4
+		change_variable = {
+			name = murim_cultivation_xp
+			add = -200
+		}
+		add_stress = -40
+		if = {
+			limit = { has_character_modifier = demonic_cultivation_taint }
+			remove_character_modifier = demonic_cultivation_taint
+		}
+		add_character_modifier = {
+			modifier = purified_cultivation_base
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_forbidden_purge_memory
+		}
+		# Chain: training needed to rebuild
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Seek a forbidden arts master in the jianghu underworld
+	option = {
+		name = murim_cult_exp.0004.c
+		add_gold = -150
+		add_piety = -200
+		random_list = {
+			50 = {
+				# Underworld master stabilizes the technique
+				add_prowess = 2
+				add_intrigue_skill = 2
+				add_character_modifier = {
+					modifier = underworld_forbidden_pact
+					years = 10
+				}
+				create_character_memory = {
+					type = murim_underworld_master_pact_memory
+				}
+				# Chain: jianghu underworld entanglement
+				trigger_event = { id = murim_jianghu.0003 days = { 30 60 } }
+			}
+			30 = {
+				# Master betrays and steals your cultivation
+				change_variable = {
+					name = murim_cultivation_xp
+					add = -300
+				}
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_underworld_betrayal_memory
+				}
+			}
+			20 = {
+				# Master turns out to be a hidden righteous cultivator testing you
+				add_piety = 300
+				remove_trait_if_present = {
+					trait = sadistic
+				}
+				add_character_modifier = {
+					modifier = righteous_path_restored
+					years = 5
+				}
+				create_character_memory = {
+					type = murim_hidden_righteous_master_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+}
+
+##############################
+# 5. Qi Sea Expansion Ritual
+# A rare opportunity to expand one's qi sea through a dangerous
+# ancient ritual at a sacred cultivation ground.
+##############################
+murim_cult_exp.0005 = {
+	type = character_event
+	title = murim_cult_exp.0005.t
+	desc = murim_cult_exp.0005.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		has_variable = murim_qi_reserves
+		piety >= 200
+		NOT = { has_character_modifier = qi_sea_ritual_cooldown }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.7
+		modifier = {
+			add = 0.5
+			learning >= 15
+		}
+		modifier = {
+			add = 0.3
+			has_trait = zealous
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = qi_sea_ritual_cooldown
+			years = 10
+		}
+	}
+
+	# Perform the full ancient ritual at the sacred ground
+	option = {
+		name = murim_cult_exp.0005.a
+		add_piety = -200
+		add_gold = -100
+		duel = {
+			skill = learning
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min = 5
+				desc = murim_cult_exp.0005.a.success
+				# Qi sea dramatically expanded
+				change_variable = {
+					name = murim_qi_reserves
+					add = 500
+				}
+				change_variable = {
+					name = murim_cultivation_xp
+					add = 400
+				}
+				add_learning_skill = 3
+				add_character_modifier = {
+					modifier = expanded_qi_sea
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_qi_sea_expansion_success_memory
+				}
+				# Chain: potential breakthrough
+				trigger_event = { id = murim_cult.0003 days = { 60 120 } }
+				# Chain: ranking movement
+				trigger_event = { id = murim_ranking.0001 days = { 30 60 } }
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min = 5
+				desc = murim_cult_exp.0005.a.failure
+				# Qi sea ruptures
+				random_list = {
+					40 = {
+						add_trait = wounded_2
+						change_variable = {
+							name = murim_qi_reserves
+							add = -200
+						}
+						add_character_modifier = {
+							modifier = ruptured_qi_sea
+							years = 5
+						}
+						create_character_memory = {
+							type = murim_qi_sea_rupture_memory
+						}
+					}
+					30 = {
+						# Complete qi sea collapse
+						add_trait = incapable
+						change_variable = {
+							name = murim_cultivation_xp
+							add = -500
+						}
+						create_character_memory = {
+							type = murim_qi_sea_collapse_memory
+						}
+						# Chain: fate intervention possible
+						trigger_event = { id = murim_fate.0002 days = { 90 180 } }
+					}
+					30 = {
+						# Partial success - unstable expansion
+						change_variable = {
+							name = murim_qi_reserves
+							add = 200
+						}
+						add_trait = wounded_1
+						add_character_modifier = {
+							modifier = unstable_qi_sea
+							years = 3
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Perform a partial ritual - safer but lesser results
+	option = {
+		name = murim_cult_exp.0005.b
+		add_piety = -100
+		change_variable = {
+			name = murim_qi_reserves
+			add = 150
+		}
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 100
+		}
+		add_character_modifier = {
+			modifier = modest_qi_expansion
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_qi_sea_partial_expansion_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Meditate at the ground without performing the ritual
+	option = {
+		name = murim_cult_exp.0005.c
+		add_piety = 100
+		add_stress = -30
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 50
+		}
+		create_character_memory = {
+			type = murim_sacred_ground_meditation_memory
+		}
+		# Chain: daily life - spiritual encounter
+		trigger_event = { id = murim_daily.0003 days = { 7 14 } }
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+
+	# Sell the location to the highest bidder
+	option = {
+		name = murim_cult_exp.0005.d
+		add_gold = 300
+		add_prestige = -100
+		add_piety = -150
+		create_character_memory = {
+			type = murim_sacred_ground_sold_memory
+		}
+		stress_impact = {
+			zealous = major_stress_impact_gain
+		}
+		# Chain: jianghu market values information
+		trigger_event = { id = murim_jianghu.0008 days = { 14 30 } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+}
