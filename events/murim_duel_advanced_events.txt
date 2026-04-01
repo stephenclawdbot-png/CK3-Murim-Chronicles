@@ -1,0 +1,723 @@
+# Murim Chronicles - Advanced Duel Events
+# Fight Memory System, Ranker Death Memorials, Revenge Chains
+# Supplements murim_duel_events.txt with deeper combat narrative
+# All events use murim_duel namespace for consistency
+
+namespace = murim_duel
+
+######################################
+# 3000 - FIGHT MEMORY: REMEMBERED DEFEAT
+# Triggers when encountering someone who defeated you before
+# Uses murim_defeated_by_X character flag system
+######################################
+
+murim_duel.3000 = {
+	type = character_event
+	title = murim_duel.3000.t
+	desc = murim_duel.3000.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:old_enemy
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_initiated
+		any_known_character = {
+			is_alive = yes
+			has_character_flag = murim_initiated
+			root = { has_opinion_modifier = { target = prev modifier = murim_defeated_by } }
+			in_diplomatic_range = root
+		}
+	}
+
+	immediate = {
+		random_known_character = {
+			limit = {
+				is_alive = yes
+				has_character_flag = murim_initiated
+				root = { has_opinion_modifier = { target = prev modifier = murim_defeated_by } }
+				in_diplomatic_range = root
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 has_relation_rival = root }
+				modifier = { add = 10 prowess <= root.prowess }
+			}
+			save_scope_as = old_enemy
+		}
+	}
+
+	# Challenge for revenge - the burning desire
+	option = {
+		name = murim_duel.3000.a
+		trigger_event = { id = murim_duel.3001 days = 3 }
+		add_character_modifier = { modifier = murim_revenge_focus days = 30 }
+		stress_impact = {
+			base = -10
+			wrathful = -15
+			vengeful = -20
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 30 has_trait = wrathful }
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 15 prowess >= scope:old_enemy.prowess }
+			modifier = { add = -25 has_trait = craven }
+			modifier = { add = -15 has_trait = forgiving }
+		}
+	}
+
+	# Use the memory as training fuel
+	option = {
+		name = murim_duel.3000.b
+		change_variable = { name = murim_cultivation_xp add = 5 }
+		add_character_modifier = { modifier = murim_bitter_motivation days = 90 }
+		add_stress = 10
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = patient }
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Let it go - forgive and move on
+	option = {
+		name = murim_duel.3000.c
+		remove_opinion = { target = scope:old_enemy modifier = murim_defeated_by }
+		stress_impact = {
+			base = -15
+			vengeful = 25
+			wrathful = 15
+		}
+		# Small chance of gaining forgiving trait
+		random = {
+			chance = 10
+			if = {
+				limit = { NOT = { has_trait = forgiving } }
+				add_trait = forgiving
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = forgiving }
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = -25 has_trait = vengeful }
+		}
+	}
+}
+
+######################################
+# 3001 - REVENGE DUEL CONFRONTATION
+# The actual revenge fight - duel with old enemy
+######################################
+
+murim_duel.3001 = {
+	type = character_event
+	title = murim_duel.3001.t
+	desc = murim_duel.3001.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:old_enemy
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		exists = scope:old_enemy
+		scope:old_enemy = { is_alive = yes }
+	}
+
+	# Honor duel - structured revenge
+	option = {
+		name = murim_duel.3001.a
+		duel = {
+			skill = prowess
+			target = scope:old_enemy
+			50 = {
+				desc = murim_duel.3001.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				# Sweet revenge - remove defeat memory, add victory
+				root = {
+					remove_opinion = { target = scope:old_enemy modifier = murim_defeated_by }
+					add_opinion = { target = scope:old_enemy modifier = murim_revenge_taken opinion = 20 }
+					change_variable = { name = murim_duel_wins add = 1 }
+					change_variable = { name = murim_cultivation_xp add = 10 }
+					add_prestige = 100
+					add_character_modifier = { modifier = murim_revenge_complete days = 365 }
+					stress_impact = { base = -30 }
+				}
+				scope:old_enemy = {
+					change_variable = { name = murim_duel_losses add = 1 }
+					add_stress = 25
+					add_character_modifier = { modifier = murim_defeated_twice days = 180 }
+				}
+			}
+			15 = {
+				desc = murim_duel.3001.a.draw
+				root = {
+					change_variable = { name = murim_cultivation_xp add = 5 }
+					add_character_modifier = { modifier = murim_unfinished_business days = 180 }
+				}
+				scope:old_enemy = {
+					change_variable = { name = murim_cultivation_xp add = 5 }
+				}
+			}
+			35 = {
+				desc = murim_duel.3001.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				# Defeated again - devastating to morale
+				root = {
+					change_variable = { name = murim_duel_losses add = 1 }
+					add_stress = 40
+					add_prestige = -50
+					add_character_modifier = { modifier = murim_crushed_spirit days = 365 }
+					# Risk of gaining craven from repeated defeat
+					random = {
+						chance = 20
+						if = {
+							limit = { NOT = { has_trait = craven } }
+							add_trait = craven
+						}
+					}
+				}
+				scope:old_enemy = {
+					change_variable = { name = murim_duel_wins add = 1 }
+					add_prestige = 75
+					add_character_modifier = { modifier = murim_dominant_fighter days = 180 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Death match - no rules, lethal
+	option = {
+		name = murim_duel.3001.b
+		duel = {
+			skill = prowess
+			target = scope:old_enemy
+			50 = {
+				desc = murim_duel.3001.b.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				root = {
+					remove_opinion = { target = scope:old_enemy modifier = murim_defeated_by }
+					change_variable = { name = murim_duel_wins add = 1 }
+					change_variable = { name = murim_cultivation_xp add = 15 }
+					add_prestige = 200
+					add_dread = 25
+					add_character_modifier = { modifier = murim_killed_in_revenge days = 730 }
+				}
+				scope:old_enemy = {
+					# Lethal outcome
+					random = {
+						chance = 60
+						death = { death_reason = death_duel killer = root }
+					}
+					random = {
+						chance = 40
+						add_trait = maimed
+						add_character_modifier = { modifier = murim_devastating_injuries days = 730 }
+					}
+				}
+			}
+			10 = {
+				desc = murim_duel.3001.b.draw
+				root = {
+					add_character_modifier = { modifier = murim_combat_injuries_moderate days = 120 }
+					change_variable = { name = murim_cultivation_xp add = 8 }
+				}
+				scope:old_enemy = {
+					add_character_modifier = { modifier = murim_combat_injuries_moderate days = 120 }
+				}
+			}
+			40 = {
+				desc = murim_duel.3001.b.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				root = {
+					random = {
+						chance = 60
+						death = { death_reason = death_duel killer = scope:old_enemy }
+					}
+					random = {
+						chance = 40
+						add_trait = maimed
+						add_character_modifier = { modifier = murim_devastating_injuries days = 730 }
+					}
+				}
+				scope:old_enemy = {
+					change_variable = { name = murim_duel_wins add = 1 }
+					add_prestige = 150
+					add_dread = 20
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 30 has_trait = wrathful }
+			modifier = { add = 25 has_trait = sadistic }
+			modifier = { add = -30 has_trait = compassionate }
+		}
+	}
+
+	# Walk away - swallow pride
+	option = {
+		name = murim_duel.3001.c
+		add_stress = 30
+		add_prestige = -75
+		add_character_modifier = { modifier = murim_swallowed_pride days = 365 }
+		ai_chance = {
+			base = 10
+			modifier = { add = 35 has_trait = craven }
+		}
+	}
+}
+
+######################################
+# 4000 - RANKED FIGHTER DEATH MEMORIAL
+# When a Top 50 martial artist dies, the world reacts
+######################################
+
+murim_duel.4000 = {
+	type = character_event
+	title = murim_duel.4000.t
+	desc = murim_duel.4000.desc
+	theme = death
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_initiated
+		exists = scope:dead_ranker
+	}
+
+	# Honor their memory - pay respects
+	option = {
+		name = murim_duel.4000.a
+		add_piety = 50
+		stress_impact = {
+			base = 10
+			compassionate = 15
+		}
+		add_character_modifier = { modifier = murim_mourning_warrior days = 60 }
+		# If they were your rival, complex emotions
+		if = {
+			limit = { has_relation_rival = scope:dead_ranker }
+			stress_impact = { base = -10 }
+			add_character_modifier = { modifier = murim_rival_fallen days = 180 }
+		}
+		# If they were your friend
+		if = {
+			limit = { has_relation_friend = scope:dead_ranker }
+			add_stress = 20
+			add_character_modifier = { modifier = murim_lost_martial_brother days = 365 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Seize the opening - advance in rankings
+	option = {
+		name = murim_duel.4000.b
+		add_prestige = 25
+		add_character_modifier = { modifier = murim_ranking_ambition days = 90 }
+		change_variable = { name = murim_cultivation_xp add = 3 }
+		# Others notice your cold ambition
+		if = {
+			limit = {
+				any_courtier = {
+					has_character_flag = murim_initiated
+					NOT = { this = root }
+				}
+			}
+			random_courtier = {
+				limit = {
+					has_character_flag = murim_initiated
+					NOT = { this = root }
+				}
+				add_opinion = { target = root modifier = murim_cold_ambition opinion = -10 }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = callous }
+			modifier = { add = -20 has_trait = compassionate }
+		}
+	}
+
+	# Investigate their death - was it murder?
+	option = {
+		name = murim_duel.4000.c
+		trigger = {
+			OR = {
+				has_trait = just
+				has_trait = paranoid
+				intrigue >= 10
+			}
+		}
+		add_character_modifier = { modifier = murim_investigating_death days = 90 }
+		# Chance to discover foul play
+		random_list = {
+			40 = {
+				desc = murim_duel.4000.c.foul_play
+				trigger_event = { id = murim_duel.4001 days = { 15 60 } }
+			}
+			60 = {
+				desc = murim_duel.4000.c.natural
+				# No foul play found
+				add_character_modifier = { modifier = murim_peace_of_mind days = 30 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 20 has_trait = paranoid }
+			modifier = { add = 15 intrigue >= 14 }
+		}
+	}
+}
+
+######################################
+# 4001 - DEATH INVESTIGATION: FOUL PLAY DISCOVERED
+# Discovered that a ranked fighter was murdered
+######################################
+
+murim_duel.4001 = {
+	type = character_event
+	title = murim_duel.4001.t
+	desc = murim_duel.4001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+	}
+
+	immediate = {
+		# Find a plausible suspect
+		random_living_character = {
+			limit = {
+				is_alive = yes
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+				intrigue >= 8
+				in_diplomatic_range = root
+				OR = {
+					has_trait = deceitful
+					has_trait = sadistic
+					has_trait = ambitious
+					has_trait = callous
+				}
+			}
+			weight = {
+				base = 10
+				modifier = { add = 30 has_trait = sadistic }
+				modifier = { add = 20 has_trait = deceitful }
+				modifier = { add = 15 intrigue >= 15 }
+			}
+			save_scope_as = murder_suspect
+		}
+	}
+
+	# Publicly accuse the suspect
+	option = {
+		name = murim_duel.4001.a
+		trigger = { exists = scope:murder_suspect }
+		add_prestige = 50
+		scope:murder_suspect = {
+			add_opinion = { target = root modifier = murim_accused_of_murder opinion = -40 }
+			add_character_modifier = { modifier = murim_murder_suspect days = 365 }
+		}
+		# Risk: if wrong, backlash
+		random = {
+			chance = 30
+			add_prestige = -100
+			add_character_modifier = { modifier = murim_false_accuser days = 180 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	# Confront privately - demand confession
+	option = {
+		name = murim_duel.4001.b
+		trigger = { exists = scope:murder_suspect }
+		# Private confrontation
+		scope:murder_suspect = {
+			add_opinion = { target = root modifier = murim_knows_secret opinion = -25 }
+		}
+		# Leverage for schemes later
+		add_character_modifier = { modifier = murim_holds_dark_secret days = 730 }
+		add_intrigue_skill = 1
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = deceitful }
+			modifier = { add = 20 intrigue >= 12 }
+		}
+	}
+
+	# Keep the knowledge secret - too dangerous
+	option = {
+		name = murim_duel.4001.c
+		add_stress = 15
+		add_character_modifier = { modifier = murim_burden_of_knowledge days = 365 }
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+
+	# Seek vengeance personally
+	option = {
+		name = murim_duel.4001.d
+		trigger = {
+			exists = scope:murder_suspect
+			OR = {
+				has_trait = wrathful
+				has_trait = just
+				has_trait = brave
+			}
+		}
+		# Set up a revenge arc
+		set_relation_rival = scope:murder_suspect
+		add_opinion = { target = scope:murder_suspect modifier = murim_murderer opinion = -50 }
+		add_character_modifier = { modifier = murim_vengeance_sworn days = 730 }
+		# This will trigger the revenge duel chain later
+		add_character_flag = {
+			flag = murim_seeking_vengeance
+			days = 730
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 35 has_trait = wrathful }
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+}
+
+######################################
+# 5000 - FIGHT MEMORY: LEGENDARY BATTLE RECALLED
+# Years later, people still talk about an epic duel
+######################################
+
+murim_duel.5000 = {
+	type = character_event
+	title = murim_duel.5000.t
+	desc = murim_duel.5000.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_initiated
+		has_variable = murim_duel_wins
+		var:murim_duel_wins >= 5
+		age >= 30
+		NOT = { has_character_flag = murim_legendary_battle_recalled }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_legendary_battle_recalled
+			days = 1825
+		}
+	}
+
+	# Revel in the glory - tell the tale
+	option = {
+		name = murim_duel.5000.a
+		add_prestige = 150
+		add_character_modifier = { modifier = murim_legendary_reputation days = 365 }
+		stress_impact = {
+			base = -15
+			gregarious = -10
+		}
+		# Attract disciples who heard the story
+		random = {
+			chance = 30
+			if = {
+				limit = {
+					any_courtier = {
+						age <= 25
+						has_character_flag = murim_initiated
+					}
+				}
+				random_courtier = {
+					limit = {
+						age <= 25
+						has_character_flag = murim_initiated
+					}
+					add_opinion = { target = root modifier = murim_hero_worship opinion = 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = gregarious }
+			modifier = { add = 15 has_trait = arrogant }
+		}
+	}
+
+	# Humble deflection - the past is the past
+	option = {
+		name = murim_duel.5000.b
+		add_piety = 100
+		add_character_modifier = { modifier = murim_humble_master days = 365 }
+		stress_impact = { base = -10 }
+		# Gain more respect through humility
+		random = {
+			chance = 40
+			add_prestige = 75
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 30 has_trait = humble }
+			modifier = { add = 20 has_trait = temperate }
+		}
+	}
+
+	# Use the reputation strategically
+	option = {
+		name = murim_duel.5000.c
+		add_prestige = 75
+		add_dread = 15
+		add_character_modifier = { modifier = murim_fearsome_reputation days = 365 }
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+}
+
+######################################
+# 5010 - VETERAN'S SCAR STORY
+# Old wounds tell tales - random flavor for experienced fighters
+######################################
+
+murim_duel.5010 = {
+	type = character_event
+	title = murim_duel.5010.t
+	desc = murim_duel.5010.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_initiated
+		age >= 35
+		OR = {
+			has_trait = scarred
+			has_trait = one_eyed
+			has_trait = maimed
+			has_variable_equal = { name = murim_combat_wounds value >= 3 }
+		}
+	}
+
+	# The scars made me stronger
+	option = {
+		name = murim_duel.5010.a
+		add_prowess_skill = 1
+		add_character_modifier = { modifier = murim_battle_hardened days = 365 }
+		stress_impact = { base = -10 }
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 has_trait = stubborn }
+		}
+	}
+
+	# Pass wisdom to the young - teach through pain
+	option = {
+		name = murim_duel.5010.b
+		if = {
+			limit = {
+				any_courtier = {
+					age <= 25
+					has_character_flag = murim_initiated
+				}
+			}
+			random_courtier = {
+				limit = {
+					age <= 25
+					has_character_flag = murim_initiated
+				}
+				change_variable = { name = murim_cultivation_xp add = 5 }
+				add_opinion = { target = root modifier = murim_wise_elder opinion = 20 }
+			}
+		}
+		add_piety = 50
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Regret the violence
+	option = {
+		name = murim_duel.5010.c
+		stress_impact = {
+			base = 10
+			compassionate = 15
+		}
+		add_piety = 75
+		# Chance to start walking a peaceful path
+		random = {
+			chance = 15
+			add_character_modifier = { modifier = murim_path_of_peace days = 730 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 25 has_trait = content }
+		}
+	}
+}
