@@ -1,0 +1,1199 @@
+namespace = murim_poison_flower_exp3
+
+# Poison Flower Palace Expansion 3 — Deep clan chain completion
+# 10 complete events: advanced poison arts, palace politics, flower trials, forbidden gardens
+
+######################################
+# EVENT 0001 — Thousand Petal Poison Trial
+# Palace disciple must survive exposure to 1000 different poisons
+######################################
+murim_poison_flower_exp3.0001 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0001.t
+	desc = murim_poison_flower_exp3.0001.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	right_portrait = {
+		character = scope:poison_master
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_member
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 3
+		NOT = { has_character_flag = completed_thousand_petal_trial }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = poison_resistance
+		}
+		modifier = {
+			add = 1.5
+			has_trait = poison_flower_inner_disciple
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = attempting_thousand_petal_trial days = 365 }
+		if = {
+			limit = {
+				any_courtier = {
+					has_trait = poison_flower_elder
+				}
+			}
+			random_courtier = {
+				limit = { has_trait = poison_flower_elder }
+				save_scope_as = poison_master
+			}
+		}
+		else = {
+			create_character = {
+				template = murim_poison_elder_template
+				save_scope_as = poison_master
+			}
+		}
+	}
+
+	# Endure the full trial
+	option = {
+		name = murim_poison_flower_exp3.0001.a
+		duel = {
+			skill = learning
+			target = scope:poison_master
+			50 = {
+				desc = murim_poison_flower_exp3.0001.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0001.a.success.toast
+					left_icon = root
+					add_trait = poison_immunity
+					add_character_modifier = {
+						modifier = thousand_petal_survivor
+						years = 10
+					}
+					set_character_flag = completed_thousand_petal_trial
+					add_prestige = 500
+					if = {
+						limit = { has_variable = murim_cultivation_level }
+						change_variable = { name = murim_cultivation_level add = 1 }
+					}
+				}
+			}
+			50 = {
+				desc = murim_poison_flower_exp3.0001.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0001.a.failure.toast
+					left_icon = root
+					add_trait = poison_scarred
+					add_character_modifier = {
+						modifier = failed_petal_trial_recovery
+						years = 3
+					}
+					health = -2
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Use antidote secretly
+	option = {
+		name = murim_poison_flower_exp3.0001.b
+		trigger = {
+			has_trait = deceitful
+		}
+		add_character_modifier = {
+			modifier = cheated_petal_trial
+			years = 5
+		}
+		set_character_flag = completed_thousand_petal_trial
+		add_secret = {
+			type = secret_cheated_trial
+			target = root
+		}
+		add_prestige = 200
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+
+	# Refuse the trial
+	option = {
+		name = murim_poison_flower_exp3.0001.c
+		add_prestige = -200
+		add_character_modifier = {
+			modifier = refused_palace_trial
+			years = 2
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+######################################
+# EVENT 0002 — Forbidden Garden Infiltration
+# Disciple discovers the Palace's hidden garden of extinct poison flowers
+######################################
+murim_poison_flower_exp3.0002 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0002.t
+	desc = murim_poison_flower_exp3.0002.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:garden_keeper
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_member
+		has_character_flag = completed_thousand_petal_trial
+		NOT = { has_character_flag = discovered_forbidden_garden }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = curious
+		}
+		modifier = {
+			add = 2
+			intrigue >= 15
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = discovered_forbidden_garden }
+		if = {
+			limit = {
+				any_courtier = {
+					has_trait = poison_flower_palace_leader
+				}
+			}
+			random_courtier = {
+				limit = { has_trait = poison_flower_palace_leader }
+				save_scope_as = garden_keeper
+			}
+		}
+		else = {
+			create_character = {
+				template = murim_poison_palace_leader_template
+				save_scope_as = garden_keeper
+			}
+		}
+	}
+
+	# Study the forbidden flowers secretly
+	option = {
+		name = murim_poison_flower_exp3.0002.a
+		add_character_modifier = {
+			modifier = forbidden_garden_knowledge
+			years = 15
+		}
+		add_trait = forbidden_poison_arts
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_secret = {
+			type = secret_forbidden_garden
+			target = root
+		}
+		stress_impact = {
+			honest = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Report the garden to the Palace Mistress
+	option = {
+		name = murim_poison_flower_exp3.0002.b
+		reverse_add_opinion = {
+			target = scope:garden_keeper
+			modifier = reported_secret_garden
+			opinion = 30
+		}
+		add_prestige = 300
+		add_piety = 100
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = honest
+			}
+		}
+	}
+
+	# Destroy the garden
+	option = {
+		name = murim_poison_flower_exp3.0002.c
+		trigger = {
+			has_trait = zealous
+		}
+		add_piety = 500
+		add_prestige = -200
+		scope:garden_keeper = {
+			add_opinion = {
+				target = root
+				modifier = destroyed_sacred_garden
+				opinion = -50
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0003 — Poison Flower Succession Crisis
+# The Palace Mistress is dying — who inherits the throne?
+######################################
+murim_poison_flower_exp3.0003 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0003.t
+	desc = murim_poison_flower_exp3.0003.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:dying_mistress
+		animation = sick
+	}
+	lower_left_portrait = {
+		character = scope:rival_candidate
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = poison_flower_inner_disciple
+		NOT = { has_character_flag = palace_succession_started }
+		any_courtier = {
+			has_trait = poison_flower_palace_leader
+			health <= 1
+		}
+	}
+
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 3
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = palace_succession_started }
+		random_courtier = {
+			limit = {
+				has_trait = poison_flower_palace_leader
+				health <= 1
+			}
+			save_scope_as = dying_mistress
+		}
+		if = {
+			limit = {
+				any_courtier = {
+					has_trait = poison_flower_inner_disciple
+					NOT = { this = root }
+				}
+			}
+			random_courtier = {
+				limit = {
+					has_trait = poison_flower_inner_disciple
+					NOT = { this = root }
+				}
+				save_scope_as = rival_candidate
+			}
+		}
+	}
+
+	# Claim the throne by right of strength
+	option = {
+		name = murim_poison_flower_exp3.0003.a
+		trigger = {
+			exists = scope:rival_candidate
+		}
+		duel = {
+			skill = intrigue
+			target = scope:rival_candidate
+			50 = {
+				desc = murim_poison_flower_exp3.0003.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0003.a.success.toast
+					left_icon = root
+					add_trait = poison_flower_palace_leader
+					remove_trait = poison_flower_inner_disciple
+					add_prestige = 1000
+					add_character_modifier = {
+						modifier = new_palace_mistress
+						years = 20
+					}
+				}
+			}
+			50 = {
+				desc = murim_poison_flower_exp3.0003.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0003.a.failure.toast
+					left_icon = root
+					add_prestige = -500
+					add_character_modifier = {
+						modifier = failed_succession_bid
+						years = 5
+					}
+					scope:rival_candidate = {
+						add_trait = poison_flower_palace_leader
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Support the rival and serve as advisor
+	option = {
+		name = murim_poison_flower_exp3.0003.b
+		trigger = {
+			exists = scope:rival_candidate
+		}
+		scope:rival_candidate = {
+			add_trait = poison_flower_palace_leader
+			add_opinion = {
+				target = root
+				modifier = supported_succession
+				opinion = 40
+			}
+		}
+		add_trait = poison_flower_elder
+		add_prestige = 300
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+
+	# Poison both candidates and seize power in chaos
+	option = {
+		name = murim_poison_flower_exp3.0003.c
+		trigger = {
+			intrigue >= 18
+			has_trait = deceitful
+		}
+		add_trait = poison_flower_palace_leader
+		add_tyranny = 30
+		add_dread = 50
+		add_character_modifier = {
+			modifier = seized_power_through_poison
+			years = 10
+		}
+		if = {
+			limit = { exists = scope:rival_candidate }
+			scope:rival_candidate = {
+				death = {
+					death_reason = death_murder_known
+					killer = root
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+		}
+	}
+}
+
+######################################
+# EVENT 0004 — Flower Maiden Assassin Training
+# Elite Poison Flower assassin program
+######################################
+murim_poison_flower_exp3.0004 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0004.t
+	desc = murim_poison_flower_exp3.0004.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_member
+		intrigue >= 12
+		NOT = { has_character_flag = flower_assassin_training }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = poison_flower_inner_disciple
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = flower_assassin_training days = 730 }
+	}
+
+	# Accept the shadow training
+	option = {
+		name = murim_poison_flower_exp3.0004.a
+		add_character_modifier = {
+			modifier = flower_assassin_in_training
+			years = 2
+		}
+		add_intrigue_skill = 3
+		add_prowess_skill = 2
+		add_trait = flower_maiden_assassin
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_poison_flower_exp3.0005
+				days = { 180 365 }
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Refuse — too dark a path
+	option = {
+		name = murim_poison_flower_exp3.0004.b
+		add_prestige = -100
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Propose a different role — poison healer instead
+	option = {
+		name = murim_poison_flower_exp3.0004.c
+		trigger = {
+			learning >= 14
+		}
+		add_trait = poison_healer
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = flower_palace_healer_path
+			years = 5
+		}
+		add_prestige = 200
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+######################################
+# EVENT 0005 — First Assassination Contract
+# Flower Maiden's first kill mission
+######################################
+murim_poison_flower_exp3.0005 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0005.t
+	desc = murim_poison_flower_exp3.0005.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	right_portrait = {
+		character = scope:target_victim
+		animation = idle
+	}
+
+	trigger = {
+		has_trait = flower_maiden_assassin
+		has_character_flag = flower_assassin_training
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				NOT = { this = root }
+				NOT = { has_trait = poison_flower_palace_member }
+				is_ai = yes
+			}
+			save_scope_as = target_victim
+		}
+	}
+
+	# Execute the contract flawlessly
+	option = {
+		name = murim_poison_flower_exp3.0005.a
+		duel = {
+			skill = intrigue
+			target = scope:target_victim
+			60 = {
+				desc = murim_poison_flower_exp3.0005.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0005.a.success.toast
+					left_icon = root
+					scope:target_victim = {
+						death = {
+							death_reason = death_murder
+							killer = root
+						}
+					}
+					add_gold = 300
+					add_prestige = 200
+					add_dread = 20
+					add_character_modifier = {
+						modifier = successful_flower_assassination
+						years = 5
+					}
+				}
+			}
+			40 = {
+				desc = murim_poison_flower_exp3.0005.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0005.a.failure.toast
+					left_icon = root
+					add_prestige = -300
+					add_character_modifier = {
+						modifier = botched_assassination_wounded
+						years = 3
+					}
+					health = -1
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Warn the target instead and betray the Palace
+	option = {
+		name = murim_poison_flower_exp3.0005.b
+		scope:target_victim = {
+			add_opinion = {
+				target = root
+				modifier = saved_my_life
+				opinion = 50
+			}
+		}
+		add_prestige = -100
+		remove_trait = flower_maiden_assassin
+		add_trait = poison_flower_defector
+		add_character_modifier = {
+			modifier = palace_betrayer_hunted
+			years = 10
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Fake the death and let the target escape
+	option = {
+		name = murim_poison_flower_exp3.0005.c
+		trigger = {
+			intrigue >= 16
+		}
+		add_gold = 150
+		add_secret = {
+			type = secret_faked_assassination
+			target = scope:target_victim
+		}
+		add_character_modifier = {
+			modifier = double_agent_flower_palace
+			years = 5
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0006 — Poison Flower vs Orthodox Alliance
+# Palace declared enemy by orthodox sects
+######################################
+murim_poison_flower_exp3.0006 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0006.t
+	desc = murim_poison_flower_exp3.0006.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:orthodox_leader
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_leader
+		any_ruler = {
+			has_trait = orthodox_alliance_leader
+		}
+		NOT = { has_character_flag = orthodox_declared_war_palace }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_character_modifier = seized_power_through_poison
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = orthodox_declared_war_palace }
+		random_ruler = {
+			limit = { has_trait = orthodox_alliance_leader }
+			save_scope_as = orthodox_leader
+		}
+	}
+
+	# Rally the palace for war
+	option = {
+		name = murim_poison_flower_exp3.0006.a
+		add_character_modifier = {
+			modifier = palace_war_footing
+			years = 5
+		}
+		every_courtier = {
+			limit = { has_trait = poison_flower_palace_member }
+			add_opinion = {
+				target = root
+				modifier = rallied_for_defense
+				opinion = 20
+			}
+		}
+		add_prestige = 500
+		add_dread = 30
+		ai_chance = { base = 60 }
+	}
+
+	# Seek alliance with Heavenly Demon Sect
+	option = {
+		name = murim_poison_flower_exp3.0006.b
+		trigger = {
+			any_ruler = {
+				has_trait = heavenly_demon_member
+			}
+		}
+		add_character_modifier = {
+			modifier = unorthodox_alliance_pact
+			years = 10
+		}
+		random_ruler = {
+			limit = { has_trait = heavenly_demon_member }
+			add_opinion = {
+				target = root
+				modifier = alliance_against_orthodox
+				opinion = 30
+			}
+		}
+		add_prestige = 300
+		ai_chance = { base = 40 }
+	}
+
+	# Negotiate peace through poison threat
+	option = {
+		name = murim_poison_flower_exp3.0006.c
+		trigger = {
+			intrigue >= 20
+		}
+		scope:orthodox_leader = {
+			add_character_modifier = {
+				modifier = poisoned_as_warning
+				years = 2
+			}
+		}
+		add_dread = 50
+		add_tyranny = 10
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0007 — Petal Rain Technique Mastery
+# Ultimate poison flower combat art
+######################################
+murim_poison_flower_exp3.0007 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0007.t
+	desc = murim_poison_flower_exp3.0007.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = poison_flower_inner_disciple
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 5
+		NOT = { has_trait = petal_rain_master }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = poison_immunity
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = attempting_petal_rain days = 180 }
+	}
+
+	# Meditate among the Thousand Petal Garden
+	option = {
+		name = murim_poison_flower_exp3.0007.a
+		duel = {
+			skill = learning
+			value = 60
+			50 = {
+				desc = murim_poison_flower_exp3.0007.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0007.a.success.toast
+					left_icon = root
+					add_trait = petal_rain_master
+					add_prowess_skill = 4
+					add_intrigue_skill = 3
+					add_character_modifier = {
+						modifier = petal_rain_technique_active
+						years = 20
+					}
+					change_variable = { name = murim_cultivation_level add = 1 }
+				}
+			}
+			50 = {
+				desc = murim_poison_flower_exp3.0007.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0007.a.failure.toast
+					left_icon = root
+					add_character_modifier = {
+						modifier = petal_rain_backlash
+						years = 3
+					}
+					health = -1
+					add_stress = 30
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Use forbidden shortcut with Dark Petal extract
+	option = {
+		name = murim_poison_flower_exp3.0007.b
+		trigger = {
+			has_trait = forbidden_poison_arts
+		}
+		add_trait = petal_rain_master
+		add_trait = dark_petal_corruption
+		add_prowess_skill = 5
+		add_intrigue_skill = 4
+		add_character_modifier = {
+			modifier = corrupted_petal_rain
+			years = 15
+		}
+		health = -2
+		ai_chance = { base = 30 }
+	}
+
+	# Abandon the attempt — not ready
+	option = {
+		name = murim_poison_flower_exp3.0007.c
+		add_prestige = -100
+		add_stress = -20
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0008 — Palace Spy Network Expansion
+# Poison Flower builds intelligence network across Murim
+######################################
+murim_poison_flower_exp3.0008 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0008.t
+	desc = murim_poison_flower_exp3.0008.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_leader
+		NOT = { has_character_flag = palace_spy_network_built }
+	}
+
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 2
+			intrigue >= 20
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = palace_spy_network_built }
+	}
+
+	# Plant spies in all 9 clans
+	option = {
+		name = murim_poison_flower_exp3.0008.a
+		add_gold = -500
+		add_character_modifier = {
+			modifier = palace_spy_network_all_clans
+			years = 20
+		}
+		add_intrigue_skill = 2
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+					has_trait = tang_clan_member
+					has_trait = iron_fist_member
+					has_trait = beggar_sect_member
+					has_trait = heavenly_demon_member
+					has_trait = phantom_blade_member
+				}
+			}
+			add_opinion = {
+				target = root
+				modifier = spied_upon_unknowingly
+				opinion = 0
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Focus on orthodox clans only
+	option = {
+		name = murim_poison_flower_exp3.0008.b
+		add_gold = -250
+		add_character_modifier = {
+			modifier = palace_spy_network_orthodox
+			years = 15
+		}
+		add_intrigue_skill = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Spy on the Heavenly Demon Sect specifically
+	option = {
+		name = murim_poison_flower_exp3.0008.c
+		add_gold = -300
+		add_character_modifier = {
+			modifier = palace_spy_on_demon_sect
+			years = 10
+		}
+		add_dread = 15
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0009 — Flower Palace Forbidden Romance
+# Palace rule: no romantic attachments — but love finds a way
+######################################
+murim_poison_flower_exp3.0009 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0009.t
+	desc = murim_poison_flower_exp3.0009.desc
+	theme = seduction_theme
+	left_portrait = {
+		character = root
+		animation = flirtation
+	}
+	right_portrait = {
+		character = scope:forbidden_love
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_member
+		is_attracted_to_women = no
+		NOT = { has_character_flag = forbidden_palace_romance }
+		any_known_character = {
+			NOT = { has_trait = poison_flower_palace_member }
+			reverse_has_relation_potential_lover = root
+			is_ai = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = lustful
+		}
+		modifier = {
+			add = 2
+			diplomacy >= 14
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = forbidden_palace_romance }
+		random_known_character = {
+			limit = {
+				NOT = { has_trait = poison_flower_palace_member }
+				reverse_has_relation_potential_lover = root
+				is_ai = yes
+			}
+			save_scope_as = forbidden_love
+		}
+	}
+
+	# Pursue the relationship in secret
+	option = {
+		name = murim_poison_flower_exp3.0009.a
+		set_relation_lover = scope:forbidden_love
+		add_secret = {
+			type = secret_lover
+			target = scope:forbidden_love
+		}
+		add_character_modifier = {
+			modifier = forbidden_palace_love_affair
+			years = 10
+		}
+		stress_impact = {
+			honest = major_stress_impact_gain
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Suppress your feelings for the Palace
+	option = {
+		name = murim_poison_flower_exp3.0009.b
+		add_stress = 40
+		add_piety = 100
+		add_character_modifier = {
+			modifier = suppressed_heart_palace_duty
+			years = 5
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Leave the Palace for love
+	option = {
+		name = murim_poison_flower_exp3.0009.c
+		remove_trait = poison_flower_palace_member
+		remove_trait = poison_flower_inner_disciple
+		set_relation_lover = scope:forbidden_love
+		add_trait = poison_flower_defector
+		add_character_modifier = {
+			modifier = abandoned_palace_for_love
+			years = 15
+		}
+		add_prestige = -500
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+}
+
+######################################
+# EVENT 0010 — Palace Mistress Ultimate Technique: Eternal Bloom
+# Final technique — transcends mortal poison arts
+######################################
+murim_poison_flower_exp3.0010 = {
+	type = character_event
+	title = murim_poison_flower_exp3.0010.t
+	desc = murim_poison_flower_exp3.0010.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = poison_flower_palace_leader
+		has_trait = petal_rain_master
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 7
+		NOT = { has_trait = eternal_bloom_master }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			var:murim_cultivation_level >= 9
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = attempting_eternal_bloom }
+	}
+
+	# Attempt the Eternal Bloom transcendence
+	option = {
+		name = murim_poison_flower_exp3.0010.a
+		duel = {
+			skill = learning
+			value = 80
+			40 = {
+				desc = murim_poison_flower_exp3.0010.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 5.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0010.a.success.toast
+					left_icon = root
+					add_trait = eternal_bloom_master
+					add_prowess_skill = 6
+					add_intrigue_skill = 5
+					add_learning_skill = 4
+					add_character_modifier = {
+						modifier = eternal_bloom_transcendence
+						years = 50
+					}
+					change_variable = { name = murim_cultivation_level add = 2 }
+					add_prestige = 2000
+				}
+			}
+			60 = {
+				desc = murim_poison_flower_exp3.0010.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -5.0
+				}
+				send_interface_toast = {
+					title = murim_poison_flower_exp3.0010.a.failure.toast
+					left_icon = root
+					add_character_modifier = {
+						modifier = eternal_bloom_backlash_near_death
+						years = 5
+					}
+					health = -4
+					add_stress = 80
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Sacrifice disciples to fuel the technique
+	option = {
+		name = murim_poison_flower_exp3.0010.b
+		trigger = {
+			has_trait = sadistic
+		}
+		add_trait = eternal_bloom_master
+		add_tyranny = 50
+		add_dread = 80
+		add_character_modifier = {
+			modifier = eternal_bloom_dark_sacrifice
+			years = 30
+		}
+		random_courtier = {
+			limit = { has_trait = poison_flower_palace_member }
+			death = {
+				death_reason = death_murder_known
+				killer = root
+			}
+		}
+		ai_chance = { base = 15 }
+	}
+
+	# Wait for natural readiness
+	option = {
+		name = murim_poison_flower_exp3.0010.c
+		add_character_modifier = {
+			modifier = patient_cultivation_path
+			years = 5
+		}
+		add_stress = -20
+		ai_chance = { base = 25 }
+	}
+}
