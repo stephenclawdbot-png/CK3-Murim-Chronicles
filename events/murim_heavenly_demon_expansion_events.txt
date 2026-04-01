@@ -1,0 +1,819 @@
+############################################
+# MURIM HEAVENLY DEMON EXPANSION EVENTS
+# Dark qi corruption spread, demon lord
+# coronation, heretic inquisition, demonic
+# artifact awakening, shadow disciple betrayal,
+# demon sect schism.
+# Cross-refs: murim_heavenly_demon_events.txt,
+#   murim_shadow_politics_events.txt,
+#   murim_faction_war_events.txt,
+#   murim_artifact_events.txt, murim_ranking_events.txt
+# All 9 clans referenced. GENDER: Equal.
+############################################
+
+namespace = murim_demon_exp
+
+############################################
+# DARK QI CORRUPTION SPREAD
+# Heavenly Demon practitioner's dark qi
+# begins corrupting those around them.
+############################################
+murim_demon_exp.0001 = {
+	type = character_event
+	title = murim_demon_exp.0001.t
+	desc = murim_demon_exp.0001.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+		prowess >= 16
+		NOT = { has_character_modifier = murim_dark_qi_spread_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = cultivation_stage_4 }
+		modifier = { add = 2 prowess >= 20 }
+		modifier = { add = 1 dread >= 40 }
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_dark_qi_spread_cooldown years = 5 }
+		# Find someone nearby being corrupted
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { has_trait = heavenly_demon_disciple }
+				NOT = { this = root }
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_monk
+					has_trait = wudang_disciple
+					has_trait = tang_clan_member
+					has_trait = beggar_sect_member
+					has_trait = iron_fist_disciple
+					has_trait = poison_flower_disciple
+					has_trait = phantom_blade_disciple
+				}
+			}
+			weight = {
+				base = 10
+				modifier = { add = 10 age <= 25 }
+				modifier = { add = 5 has_trait = ambitious }
+				modifier = { add = 5 has_trait = wrathful }
+			}
+			save_scope_as = corruption_target
+		}
+	}
+
+	# Actively corrupt them - recruit to the dark path
+	option = {
+		name = murim_demon_exp.0001.a
+		trigger = { exists = scope:corruption_target }
+		random_list = {
+			40 = {
+				modifier = { add = 15 intrigue >= 16 }
+				modifier = { add = 10 scope:corruption_target = { has_trait = ambitious } }
+				desc = murim_demon_exp.0001.a.success
+				# Target is corrupted - joins Heavenly Demon
+				scope:corruption_target = {
+					# Remove old clan trait
+					if = { limit = { has_trait = mount_hua_disciple } remove_trait = mount_hua_disciple }
+					if = { limit = { has_trait = shaolin_monk } remove_trait = shaolin_monk }
+					if = { limit = { has_trait = wudang_disciple } remove_trait = wudang_disciple }
+					if = { limit = { has_trait = tang_clan_member } remove_trait = tang_clan_member }
+					if = { limit = { has_trait = beggar_sect_member } remove_trait = beggar_sect_member }
+					if = { limit = { has_trait = iron_fist_disciple } remove_trait = iron_fist_disciple }
+					if = { limit = { has_trait = poison_flower_disciple } remove_trait = poison_flower_disciple }
+					if = { limit = { has_trait = phantom_blade_disciple } remove_trait = phantom_blade_disciple }
+					add_trait = heavenly_demon_disciple
+					set_variable = { name = murim_faction value = flag:unorthodox }
+					set_variable = { name = murim_clan_rank value = 1 }
+					add_opinion = { target = root modifier = respect_martial_prowess opinion = 20 }
+				}
+				add_prestige = 200
+				add_dread = 15
+				# Cross-ref: faction war escalation
+				trigger_event = { id = murim_faction_war.0002 days = { 30 60 } }
+			}
+			35 = {
+				desc = murim_demon_exp.0001.a.resist
+				# Target resists but is weakened
+				scope:corruption_target = {
+					add_stress = 30
+					add_character_modifier = { modifier = murim_dark_qi_tainted years = 3 }
+					add_opinion = { target = root modifier = insult_opinion opinion = -30 }
+				}
+				add_prestige = 50
+			}
+			25 = {
+				desc = murim_demon_exp.0001.a.backfire
+				# Backfire - dark qi rebounds
+				add_stress = 30
+				add_trait = wounded_1
+				add_prestige = -100
+				scope:corruption_target = {
+					add_opinion = { target = root modifier = insult_opinion opinion = -50 }
+					# They report you to their clan
+					trigger_event = { id = murim_faction_war.0004 days = { 5 15 } }
+				}
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:dark_qi_corruption_attempted }
+		}
+		stress_impact = { compassionate = major_stress_impact_gain sadistic = minor_stress_impact_loss }
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = sadistic } }
+	}
+
+	# Contain the dark qi - prevent uncontrolled spread
+	option = {
+		name = murim_demon_exp.0001.b
+		add_prowess_skill = 1
+		add_stress = 15
+		add_character_modifier = { modifier = murim_dark_qi_contained years = 5 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:dark_qi_contained }
+		}
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = patient } }
+	}
+
+	# Embrace the chaos - let it spread freely
+	option = {
+		name = murim_demon_exp.0001.c
+		add_dread = 25
+		add_prowess_skill = 2
+		add_stress = -10
+		add_character_modifier = { modifier = murim_dark_qi_unleashed years = 3 }
+		# Multiple people tainted
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:dark_qi_chaos_unleashed }
+		}
+		stress_impact = { compassionate = major_stress_impact_gain sadistic = minor_stress_impact_loss }
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = sadistic } }
+	}
+}
+
+############################################
+# DEMON LORD CORONATION
+# The current Heavenly Demon Lord dies or
+# retires. A new one must be crowned.
+############################################
+murim_demon_exp.0002 = {
+	type = character_event
+	title = murim_demon_exp.0002.t
+	desc = murim_demon_exp.0002.desc
+	theme = martial
+	override_background = { reference = throne_room }
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 4
+		prowess >= 18
+		NOT = { has_character_flag = demon_lord_coronation_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 prowess >= 22 }
+		modifier = { add = 2 has_trait = ambitious }
+		modifier = { add = 2 dread >= 50 }
+	}
+
+	immediate = {
+		add_character_flag = { flag = demon_lord_coronation_done }
+		# Find rival claimant
+		random_living_character = {
+			limit = {
+				has_trait = heavenly_demon_disciple
+				has_trait = martial_artist
+				is_alive = yes
+				has_variable = murim_clan_rank
+				var:murim_clan_rank >= 4
+				prowess >= 16
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 prowess >= 20 }
+				modifier = { add = 10 has_trait = ambitious }
+			}
+			save_scope_as = demon_rival
+		}
+	}
+
+	# Challenge for the throne through ritual combat
+	option = {
+		name = murim_demon_exp.0002.a
+		trigger = { exists = scope:demon_rival }
+		duel = {
+			skill = prowess
+			target = scope:demon_rival
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_demon_exp.0002.a.crowned
+				add_prestige = 1000
+				add_dread = 30
+				add_prowess_skill = 3
+				set_variable = { name = murim_clan_rank value = 5 }
+				add_character_modifier = { modifier = murim_heavenly_demon_lord years = -1 }
+				scope:demon_rival = {
+					random_list = {
+						40 = { add_trait = wounded_2 }
+						30 = { add_trait = maimed }
+						30 = { death = { death_reason = death_duel killer = root } }
+					}
+				}
+				# Cross-ref: shadow politics - new demon lord claims puppet emperor
+				trigger_event = { id = murim_shadow.0001 days = { 30 60 } }
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:demon_lord_coronation_victory }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:demon_rival }
+				desc = murim_demon_exp.0002.a.defeated
+				add_prestige = -300
+				random_list = {
+					30 = { add_trait = wounded_2 }
+					30 = { add_trait = maimed }
+					20 = { death = { death_reason = death_duel killer = scope:demon_rival } }
+					20 = {
+						add_character_modifier = { modifier = murim_demon_lord_exile years = 10 }
+						change_variable = { name = murim_clan_rank add = -2 }
+					}
+				}
+				scope:demon_rival = {
+					set_variable = { name = murim_clan_rank value = 5 }
+					add_character_modifier = { modifier = murim_heavenly_demon_lord years = -1 }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:demon_lord_coronation_defeat }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 60 modifier = { add = 20 has_trait = ambitious } }
+	}
+
+	# Political maneuvering - secure votes from elders
+	option = {
+		name = murim_demon_exp.0002.b
+		random_list = {
+			50 = {
+				modifier = { add = 20 diplomacy >= 16 }
+				modifier = { add = 15 intrigue >= 16 }
+				desc = murim_demon_exp.0002.b.political_win
+				add_prestige = 700
+				add_dread = 20
+				set_variable = { name = murim_clan_rank value = 5 }
+				add_character_modifier = { modifier = murim_heavenly_demon_lord years = -1 }
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:demon_lord_political_coronation }
+				}
+			}
+			50 = {
+				modifier = { add = 15 scope:demon_rival = { diplomacy >= 14 } }
+				desc = murim_demon_exp.0002.b.political_loss
+				add_prestige = -200
+				add_stress = 30
+				scope:demon_rival = {
+					set_variable = { name = murim_clan_rank value = 5 }
+					add_character_modifier = { modifier = murim_heavenly_demon_lord years = -1 }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:demon_lord_political_defeat }
+				}
+			}
+		}
+		stress_impact = { ambitious = minor_stress_impact_loss content = medium_stress_impact_gain }
+		ai_chance = { base = 30 modifier = { add = 20 diplomacy >= 14 } }
+	}
+
+	# Step aside - not ready for this burden
+	option = {
+		name = murim_demon_exp.0002.c
+		add_prestige = -100
+		add_stress = -20
+		if = {
+			limit = { exists = scope:demon_rival }
+			scope:demon_rival = {
+				set_variable = { name = murim_clan_rank value = 5 }
+				add_character_modifier = { modifier = murim_heavenly_demon_lord years = -1 }
+				add_opinion = { target = root modifier = respect_martial_prowess opinion = 15 }
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:demon_lord_stepped_aside }
+		}
+		ai_chance = { base = 10 modifier = { add = 30 has_trait = content } }
+	}
+}
+
+############################################
+# HERETIC INQUISITION
+# Orthodox sects launch coordinated purge
+# of Heavenly Demon practitioners.
+############################################
+murim_demon_exp.0003 = {
+	type = character_event
+	title = murim_demon_exp.0003.t
+	desc = murim_demon_exp.0003.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_disciple
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_modifier = murim_inquisition_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 dread >= 30 }
+		modifier = { add = 2 has_character_modifier = murim_dark_qi_unleashed }
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_inquisition_cooldown years = 5 }
+		# Orthodox inquisitor
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				prowess >= 16
+				OR = {
+					has_trait = shaolin_monk
+					has_trait = wudang_disciple
+					has_trait = mount_hua_disciple
+				}
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 has_trait = zealous }
+				modifier = { add = 10 prowess >= 20 }
+			}
+			save_scope_as = inquisitor
+		}
+	}
+
+	# Fight the inquisition head-on
+	option = {
+		name = murim_demon_exp.0003.a
+		trigger = { exists = scope:inquisitor }
+		duel = {
+			skill = prowess
+			target = scope:inquisitor
+			45 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_demon_exp.0003.a.survive
+				add_prestige = 300
+				add_dread = 20
+				scope:inquisitor = {
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = maimed }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:inquisition_survived }
+				}
+			}
+			55 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:inquisitor }
+				desc = murim_demon_exp.0003.a.captured
+				add_prestige = -200
+				random_list = {
+					30 = { add_trait = wounded_2 }
+					30 = { add_trait = maimed }
+					20 = {
+						add_character_modifier = { modifier = murim_captured_by_orthodox years = 3 }
+					}
+					20 = { death = { death_reason = death_duel killer = scope:inquisitor } }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:inquisition_captured }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 50 modifier = { add = 20 has_trait = brave } }
+	}
+
+	# Go into hiding - Phantom Step techniques
+	option = {
+		name = murim_demon_exp.0003.b
+		random_list = {
+			60 = {
+				modifier = { add = 15 intrigue >= 16 }
+				desc = murim_demon_exp.0003.b.hidden
+				add_character_modifier = { modifier = murim_demon_in_hiding years = 3 }
+				add_intrigue_skill = 1
+			}
+			40 = {
+				modifier = { add = 10 scope:inquisitor = { intrigue >= 14 } }
+				desc = murim_demon_exp.0003.b.found
+				# Found anyway - forced confrontation
+				add_trait = wounded_1
+				add_prestige = -100
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:inquisition_fled }
+		}
+		ai_chance = { base = 30 modifier = { add = 20 intrigue >= 14 } }
+	}
+
+	# Rally the unorthodox - call for united defense
+	option = {
+		name = murim_demon_exp.0003.c
+		add_prestige = 200
+		add_dread = 10
+		add_character_modifier = { modifier = murim_unorthodox_rally_leader years = 5 }
+		# Cross-ref: full faction war
+		trigger_event = { id = murim_faction_war.0001 days = { 5 15 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:inquisition_rallied_unorthodox }
+		}
+		stress_impact = { brave = minor_stress_impact_loss }
+		ai_chance = { base = 20 modifier = { add = 20 diplomacy >= 14 } }
+	}
+}
+
+############################################
+# DEMONIC ARTIFACT AWAKENING
+# An ancient Heavenly Demon artifact stirs
+# with malevolent power.
+############################################
+murim_demon_exp.0004 = {
+	type = character_event
+	title = murim_demon_exp.0004.t
+	desc = murim_demon_exp.0004.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+		NOT = { has_character_flag = demonic_artifact_awakened }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = cultivation_stage_4 }
+		modifier = { add = 2 learning >= 14 }
+	}
+
+	immediate = {
+		add_character_flag = { flag = demonic_artifact_awakened }
+	}
+
+	# Bond with the artifact - gain immense power at a cost
+	option = {
+		name = murim_demon_exp.0004.a
+		add_prowess_skill = 4
+		add_dread = 25
+		add_stress = 30
+		add_character_modifier = { modifier = murim_demonic_artifact_bonded years = -1 }
+		random_list = {
+			60 = { }
+			25 = { add_trait = lunatic }
+			15 = { add_trait = possessed }
+		}
+		# Cross-ref: artifact events
+		trigger_event = { id = murim_artifact.0003 days = { 30 60 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:demonic_artifact_bonded }
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = ambitious } }
+	}
+
+	# Seal the artifact - too dangerous even for demons
+	option = {
+		name = murim_demon_exp.0004.b
+		add_piety = 200
+		add_prestige = 100
+		add_character_modifier = { modifier = murim_artifact_sealer years = 5 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:demonic_artifact_sealed }
+		}
+		stress_impact = { zealous = minor_stress_impact_loss }
+		ai_chance = { base = 35 modifier = { add = 20 has_trait = patient } }
+	}
+
+	# Offer it to the Demon Lord as tribute
+	option = {
+		name = murim_demon_exp.0004.c
+		add_prestige = 300
+		if = {
+			limit = { var:murim_clan_rank < 4 }
+			change_variable = { name = murim_clan_rank add = 1 }
+		}
+		add_character_modifier = { modifier = murim_demon_lord_favor years = 5 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:demonic_artifact_offered }
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+############################################
+# SHADOW DISCIPLE BETRAYAL
+# A trusted disciple of the Heavenly Demon
+# Sect betrays them to the Orthodox.
+############################################
+murim_demon_exp.0005 = {
+	type = character_event
+	title = murim_demon_exp.0005.t
+	desc = murim_demon_exp.0005.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+		NOT = { has_character_modifier = murim_betrayal_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 has_character_modifier = murim_heavenly_demon_lord }
+		modifier = { add = 1 intrigue >= 14 }
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_betrayal_cooldown years = 5 }
+		# The betrayer
+		random_living_character = {
+			limit = {
+				has_trait = heavenly_demon_disciple
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 has_trait = deceitful }
+				modifier = { add = 10 has_trait = ambitious }
+			}
+			save_scope_as = sect_betrayer
+		}
+	}
+
+	# Hunt them down personally
+	option = {
+		name = murim_demon_exp.0005.a
+		trigger = { exists = scope:sect_betrayer }
+		duel = {
+			skill = prowess
+			target = scope:sect_betrayer
+			55 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_demon_exp.0005.a.caught
+				add_prestige = 200
+				add_dread = 25
+				scope:sect_betrayer = {
+					random_list = {
+						40 = { death = { death_reason = death_duel killer = root } }
+						30 = { add_trait = maimed }
+						30 = { add_trait = wounded_2 }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:betrayer_hunted_killed }
+				}
+			}
+			45 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:sect_betrayer }
+				desc = murim_demon_exp.0005.a.escaped
+				add_prestige = -100
+				add_stress = 20
+				# Betrayer escapes to Orthodox side
+				scope:sect_betrayer = {
+					remove_trait = heavenly_demon_disciple
+					random_list = {
+						34 = { add_trait = mount_hua_disciple }
+						33 = { add_trait = shaolin_monk }
+						33 = { add_trait = wudang_disciple }
+					}
+					set_variable = { name = murim_faction value = flag:orthodox }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:betrayer_escaped }
+				}
+			}
+		}
+		stress_impact = { wrathful = minor_stress_impact_loss calm = medium_stress_impact_gain }
+		ai_chance = { base = 50 modifier = { add = 20 has_trait = wrathful } }
+	}
+
+	# Send assassins - Phantom Blade allies
+	option = {
+		name = murim_demon_exp.0005.b
+		trigger = { exists = scope:sect_betrayer }
+		random_list = {
+			60 = {
+				modifier = { add = 15 intrigue >= 16 }
+				desc = murim_demon_exp.0005.b.assassinated
+				add_dread = 20
+				scope:sect_betrayer = {
+					death = { death_reason = death_murder killer = root }
+				}
+			}
+			40 = {
+				desc = murim_demon_exp.0005.b.failed
+				add_prestige = -150
+				# Betrayer warns Orthodox - cross-ref faction war
+				trigger_event = { id = murim_faction_war.0007 days = { 10 30 } }
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:betrayer_assassination_ordered }
+		}
+		stress_impact = { compassionate = major_stress_impact_gain sadistic = minor_stress_impact_loss }
+		ai_chance = { base = 30 modifier = { add = 20 intrigue >= 14 } }
+	}
+
+	# Let them go - the sect is stronger without traitors
+	option = {
+		name = murim_demon_exp.0005.c
+		add_prestige = -50
+		add_stress = 20
+		if = {
+			limit = { exists = scope:sect_betrayer }
+			scope:sect_betrayer = {
+				remove_trait = heavenly_demon_disciple
+				add_trait = shaolin_monk
+				set_variable = { name = murim_faction value = flag:orthodox }
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:betrayer_released }
+		}
+		ai_chance = { base = 20 modifier = { add = 20 has_trait = compassionate } }
+	}
+}
+
+############################################
+# DEMON SECT SCHISM
+# Internal disagreement splits Heavenly Demon
+# into two factions - traditionalists vs reformers.
+############################################
+murim_demon_exp.0006 = {
+	type = character_event
+	title = murim_demon_exp.0006.t
+	desc = murim_demon_exp.0006.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		has_trait = heavenly_demon_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+		NOT = { has_character_flag = demon_schism_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 has_character_modifier = murim_heavenly_demon_lord }
+		modifier = { add = 1 diplomacy >= 14 }
+	}
+
+	immediate = {
+		add_character_flag = { flag = demon_schism_done }
+		# Opposing faction leader
+		random_living_character = {
+			limit = {
+				has_trait = heavenly_demon_disciple
+				has_trait = martial_artist
+				is_alive = yes
+				has_variable = murim_clan_rank
+				var:murim_clan_rank >= 3
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 10 diplomacy >= 14 }
+				modifier = { add = 10 has_trait = ambitious }
+			}
+			save_scope_as = schism_leader
+		}
+	}
+
+	# Side with traditionalists - preserve demon arts purity
+	option = {
+		name = murim_demon_exp.0006.a
+		add_prestige = 150
+		add_dread = 15
+		add_prowess_skill = 1
+		add_character_modifier = { modifier = murim_demon_traditionalist years = 10 }
+		if = {
+			limit = { exists = scope:schism_leader }
+			scope:schism_leader = {
+				add_opinion = { target = root modifier = insult_opinion opinion = -30 }
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:demon_schism_traditional }
+		}
+		stress_impact = { zealous = minor_stress_impact_loss }
+		ai_chance = { base = 40 }
+	}
+
+	# Side with reformers - modernize the sect
+	option = {
+		name = murim_demon_exp.0006.b
+		add_prestige = 100
+		add_diplomacy_skill = 1
+		add_intrigue_skill = 1
+		add_character_modifier = { modifier = murim_demon_reformer years = 10 }
+		if = {
+			limit = { exists = scope:schism_leader }
+			scope:schism_leader = {
+				add_opinion = { target = root modifier = respect_martial_prowess opinion = 15 }
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:demon_schism_reform }
+		}
+		ai_chance = { base = 35 modifier = { add = 15 diplomacy >= 14 } }
+	}
+
+	# Unite both factions by force - crush dissent
+	option = {
+		name = murim_demon_exp.0006.c
+		trigger = { exists = scope:schism_leader }
+		duel = {
+			skill = prowess
+			target = scope:schism_leader
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_demon_exp.0006.c.unite
+				add_prestige = 400
+				add_dread = 30
+				add_character_modifier = { modifier = murim_demon_unifier years = -1 }
+				scope:schism_leader = {
+					add_opinion = { target = root modifier = grudging_respect_opinion opinion = 10 }
+					random_list = {
+						50 = { }
+						30 = { add_trait = wounded_1 }
+						20 = { add_trait = wounded_2 }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:demon_schism_united_by_force }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:schism_leader }
+				desc = murim_demon_exp.0006.c.fail
+				add_prestige = -200
+				add_stress = 30
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { change_variable = { name = murim_clan_rank add = -1 } }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:demon_schism_force_failed }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 25 modifier = { add = 20 has_trait = wrathful } }
+	}
+}
