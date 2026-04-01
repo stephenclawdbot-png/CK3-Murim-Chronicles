@@ -1,0 +1,303 @@
+# Murim Chronicles - Clan/Sect Hierarchy Triggers
+# INTEGRATION: Shared triggers for sect rank checks.
+# All sect politics events, clan events, and membership effects reference these.
+# Cross-refs: murim_triggers.txt (murim_is_clan_member_trigger - base membership),
+#             murim_clan_membership_effects.txt (uses these for validation),
+#             murim_sect_politics_events.txt (all 14 events use these),
+#             murim_tang_birthright_effects.txt (Tang-specific checks),
+#             murim_harmony_values.txt (harmony checks reference rank)
+# GENDER: NO gender restrictions on ANY rank trigger. All open to all.
+
+########################################
+# RANK TRIGGERS (mutually exclusive ranks)
+########################################
+
+# Is this character the sect leader?
+murim_is_sect_leader_trigger = {
+	has_character_modifier = sect_leader
+	is_alive = yes
+}
+
+# Is this character a sect vice leader?
+murim_is_sect_vice_leader_trigger = {
+	has_character_modifier = sect_vice_leader
+	is_alive = yes
+}
+
+# Is this character a sect elder?
+murim_is_sect_elder_trigger = {
+	has_character_modifier = sect_elder
+	is_alive = yes
+}
+
+# Is this character an inner disciple?
+murim_is_inner_disciple_trigger = {
+	has_character_modifier = sect_inner_disciple
+	is_alive = yes
+}
+
+# Is this character an outer disciple?
+murim_is_outer_disciple_trigger = {
+	has_character_modifier = sect_outer_disciple
+	is_alive = yes
+}
+
+# Is this character a sect associate? (limited membership, used by Tang for outsiders)
+murim_is_sect_associate_trigger = {
+	has_character_modifier = sect_associate
+	is_alive = yes
+}
+
+########################################
+# COMPOUND RANK TRIGGERS
+########################################
+
+# Is this character in sect leadership? (leader, vice leader, or elder)
+murim_is_sect_leadership_trigger = {
+	OR = {
+		has_character_modifier = sect_leader
+		has_character_modifier = sect_vice_leader
+		has_character_modifier = sect_elder
+	}
+	is_alive = yes
+}
+
+# Is this character a full sect member? (any rank except associate)
+murim_is_full_sect_member_trigger = {
+	OR = {
+		has_character_modifier = sect_leader
+		has_character_modifier = sect_vice_leader
+		has_character_modifier = sect_elder
+		has_character_modifier = sect_inner_disciple
+		has_character_modifier = sect_outer_disciple
+	}
+	is_alive = yes
+}
+
+# Is this character eligible for promotion?
+murim_is_eligible_for_promotion_trigger = {
+	murim_is_clan_member_trigger = yes
+	is_alive = yes
+	is_imprisoned = no
+	NOT = { has_character_modifier = sect_leader }
+	NOT = { has_character_modifier = promotion_trial_cooldown }
+}
+
+# Is this character eligible for elder nomination?
+murim_is_eligible_for_elder_trigger = {
+	has_character_modifier = sect_inner_disciple
+	NOT = { has_character_modifier = sect_elder }
+	age >= 30
+	prowess >= 15
+	martial >= 10
+	is_alive = yes
+	is_imprisoned = no
+}
+
+# Is this character eligible for vice leader?
+murim_is_eligible_for_vice_leader_trigger = {
+	has_character_modifier = sect_elder
+	NOT = { has_character_modifier = sect_vice_leader }
+	NOT = { has_character_modifier = sect_leader }
+	prowess >= 18
+	is_alive = yes
+	is_imprisoned = no
+}
+
+# Is this character eligible for sect leader?
+murim_is_eligible_for_sect_leader_trigger = {
+	OR = {
+		has_character_modifier = sect_vice_leader
+		has_character_modifier = sect_elder
+	}
+	NOT = { has_character_modifier = sect_leader }
+	prowess >= 20
+	is_alive = yes
+	is_imprisoned = no
+}
+
+########################################
+# TANG CLAN SPECIFIC TRIGGERS
+########################################
+
+# Is this character Tang blood? (permanent, cannot be removed)
+murim_is_tang_bloodline_trigger = {
+	has_trait = tang_clan_member
+}
+
+# Is this character a Tang associate? (outsider with limited access)
+murim_is_tang_associate_trigger = {
+	has_trait = tang_clan_associate
+	NOT = { has_trait = tang_clan_member }
+}
+
+# Can this character learn Tang secret techniques?
+# ONLY Tang blood members - associates are excluded
+murim_can_learn_tang_secrets_trigger = {
+	has_trait = tang_clan_member
+	age >= 16
+	has_character_flag = tang_full_training_access
+}
+
+# Is this character a Tang child in training?
+murim_is_tang_child_in_training_trigger = {
+	has_trait = tang_clan_member
+	age >= 6
+	age < 16
+	OR = {
+		has_character_flag = tang_birth_training_pending
+		has_character_flag = tang_basic_training_complete
+		has_character_flag = tang_intermediate_training_complete
+	}
+}
+
+########################################
+# SECT-SPECIFIC MEMBERSHIP TRIGGERS
+########################################
+
+# Mount Hua Sect member (any rank)
+murim_is_mount_hua_member_trigger = {
+	has_trait = mount_hua_disciple
+	is_alive = yes
+}
+
+# Wudang Sect member
+murim_is_wudang_member_trigger = {
+	has_trait = wudang_disciple
+	is_alive = yes
+}
+
+# Shaolin Temple member
+murim_is_shaolin_member_trigger = {
+	has_trait = shaolin_monk
+	is_alive = yes
+}
+
+# Heavenly Demon Sect member
+murim_is_heavenly_demon_member_trigger = {
+	has_trait = heavenly_demon_disciple
+	is_alive = yes
+}
+
+# Beggar Sect member
+murim_is_beggar_sect_member_trigger = {
+	has_trait = beggar_sect_member
+	is_alive = yes
+}
+
+# Emei Sect member
+murim_is_emei_member_trigger = {
+	has_trait = emei_disciple
+	is_alive = yes
+}
+
+########################################
+# FACTION ALIGNMENT TRIGGERS
+########################################
+
+# Is in a righteous sect?
+murim_is_in_righteous_sect_trigger = {
+	OR = {
+		has_trait = mount_hua_disciple
+		has_trait = wudang_disciple
+		has_trait = shaolin_monk
+		has_trait = emei_disciple
+	}
+}
+
+# Is in a demonic/unorthodox sect?
+murim_is_in_demonic_sect_trigger = {
+	has_trait = heavenly_demon_disciple
+}
+
+# Is in a neutral sect?
+murim_is_in_neutral_sect_trigger = {
+	OR = {
+		has_trait = tang_clan_member
+		has_trait = tang_clan_associate
+		has_trait = beggar_sect_member
+	}
+}
+
+########################################
+# BETRAYAL/STATUS TRIGGERS
+########################################
+
+# Has this character betrayed a sect?
+murim_is_sect_traitor_trigger = {
+	OR = {
+		has_character_modifier = sect_traitor
+		has_character_modifier = sect_defector
+		has_character_modifier = traitor_to_the_sect
+		has_character_modifier = fallen_to_darkness
+	}
+}
+
+# Is this character a former sect member? (left or expelled)
+murim_is_former_sect_member_trigger = {
+	OR = {
+		has_character_modifier = former_sect_member
+		has_character_modifier = sect_exile
+		has_character_modifier = sect_deserter
+	}
+}
+
+# Is this character currently under suspicion? (double agent investigation)
+murim_is_under_sect_suspicion_trigger = {
+	OR = {
+		has_character_modifier = sect_double_agent
+		has_character_modifier = undercover_in_demon_sect
+		has_character_modifier = tang_former_associate_watched
+	}
+}
+
+# Can this character be recruited by a sect?
+murim_can_be_recruited_by_sect_trigger = {
+	murim_is_martial_artist_trigger = yes
+	is_alive = yes
+	is_imprisoned = no
+	# Not already in a sect (except Tang blood, who can't leave)
+	NOR = {
+		has_trait = mount_hua_disciple
+		has_trait = wudang_disciple
+		has_trait = shaolin_monk
+		has_trait = heavenly_demon_disciple
+		has_trait = beggar_sect_member
+		has_trait = emei_disciple
+	}
+	# Not recently expelled or deserted
+	NOR = {
+		has_character_modifier = sect_exile
+		has_character_modifier = sect_deserter
+		has_character_modifier = promotion_trial_cooldown
+	}
+}
+
+########################################
+# SUCCESSION TRIGGERS
+########################################
+
+# Is this sect currently in a succession crisis?
+murim_sect_in_succession_crisis_trigger = {
+	# At least one member has the succession-related modifier
+	OR = {
+		has_character_modifier = contested_elder_nomination
+		has_character_modifier = sect_schism_participant
+	}
+}
+
+# Can this character participate in succession?
+murim_can_participate_in_succession_trigger = {
+	murim_is_clan_member_trigger = yes
+	OR = {
+		has_character_modifier = sect_vice_leader
+		has_character_modifier = sect_elder
+		AND = {
+			has_character_modifier = sect_inner_disciple
+			prowess >= 18
+			has_trait = ambitious
+		}
+	}
+	is_alive = yes
+	is_imprisoned = no
+}
