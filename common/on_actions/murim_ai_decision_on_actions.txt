@@ -1,6 +1,25 @@
 # Murim Chronicles Phase 3 - AI Decision On Actions
 # AI NPCs autonomously: attempt breakthroughs, join/leave sects, challenge rivals,
-# pursue forbidden arts, teach disciples. Personality-driven behavior.
+# pursue forbidden arts, teach disciples, learn techniques, gather herbs, brew
+# alchemy, compete in rankings, enter tournaments, pursue treasure, train weapons.
+#
+# Personality-driven behavior: ambitious AI tries harder, lazy AI does less,
+# greedy AI pursues wealth paths, zealous AI avoids forbidden arts.
+#
+# CATEGORIES:
+#   - Breakthrough Attempts
+#   - Sect Joining / Departure
+#   - Challenge Rivals
+#   - Forbidden Arts Pursuit
+#   - Technique Learning (NEW)
+#   - Alchemy & Pill Refining (NEW)
+#   - Herb Gathering (NEW)
+#   - Training & Meditation (NEW)
+#   - Ranking Challenges (NEW)
+#   - Teaching Disciples (NEW)
+#   - Tournament Entry (NEW)
+#   - Treasure Hunting (NEW)
+#   - Sect Promotion Pursuit (NEW)
 
 ######################################
 # YEARLY AI DECISION PULSE
@@ -177,7 +196,7 @@ on_yearly_pulse = {
 					}
 					modifier = {
 						add = 10
-						has_trait = ambitious
+						has_trait = arrogant
 					}
 					random_relation = {
 						type = rival
@@ -185,7 +204,7 @@ on_yearly_pulse = {
 							has_character_flag = murim_initiated
 							is_alive = yes
 						}
-						save_scope_as = duel_challenger
+						save_scope_as = duel_target
 					}
 					trigger_event = {
 						id = murim_duel.0001
@@ -195,351 +214,1299 @@ on_yearly_pulse = {
 			}
 
 			# ==============================
-			# PURSUE FORBIDDEN ARTS
+			# FORBIDDEN ARTS PURSUIT
 			# ==============================
 			if = {
 				limit = {
-					NOT = { has_trait = murim_forbidden_art_consumed }
 					OR = {
-						# Already corrupted, may deepen
-						has_trait = murim_forbidden_art_initiate
-						has_trait = murim_forbidden_art_practitioner
-						has_trait = murim_forbidden_art_master
-						# Personality makes them seek dark arts
-						AND = {
-							has_trait = ambitious
-							intrigue >= 12
-						}
-						AND = {
-							has_trait = deceitful
-							intrigue >= 14
-						}
-						AND = {
-							has_trait = sadistic
-							prowess >= 10
-						}
+						has_trait = sadistic
+						has_trait = callous
+						has_trait = vengeful
+						has_character_flag = murim_demonic_cultivator
 					}
+					NOT = { has_trait = just }
+					NOT = { has_trait = compassionate }
+					NOT = { has_character_flag = murim_forbidden_cooldown }
+					NOT = { murim_has_any_forbidden_technique_trigger = yes }
+					prowess >= 16
 				}
 				random = {
-					chance = 8
-					modifier = {
-						add = 15
-						has_trait = ambitious
-					}
-					modifier = {
-						add = 10
-						has_trait = deceitful
-					}
+					chance = 10
 					modifier = {
 						add = 20
 						has_trait = sadistic
 					}
 					modifier = {
-						add = -15
-						has_trait = just
-					}
-					modifier = {
-						add = -20
-						has_trait = compassionate
-					}
-					modifier = {
-						add = -10
-						has_trait = zealous
+						add = 15
+						has_trait = ambitious
 					}
 					modifier = {
 						add = 10
-						has_trait = murim_forbidden_art_practitioner
+						has_character_flag = murim_demonic_cultivator
 					}
 					modifier = {
-						add = 15
-						has_trait = murim_forbidden_art_master
+						add = -15
+						has_trait = zealous
 					}
-					# Deepen corruption
-					murim_apply_forbidden_corruption_effect = yes
+					modifier = {
+						add = -10
+						has_trait = honest
+					}
+					trigger_event = {
+						id = murim_cultivation.0050
+						days = { 30 180 }
+					}
 				}
 			}
 
 			# ==============================
-			# TEACH DISCIPLES
+			# TECHNIQUE LEARNING (AI picks best technique for stats)
 			# ==============================
 			if = {
 				limit = {
-					prowess >= 16
-					age >= 30
-					OR = {
-						has_trait = compassionate
-						has_trait = patient
-						has_trait = zealous
-						has_character_flag = murim_sect_core_disciple
-						has_character_flag = murim_sect_leader
+					NOT = { murim_has_any_tier1_technique_trigger = yes }
+					NOT = { has_character_flag = murim_technique_learning_cooldown }
+					prowess >= 15
+				}
+				# Diplomacy-focused AI learns Harmonious Palm
+				if = {
+					limit = {
+						diplomacy >= 15
+						diplomacy >= martial
+						diplomacy >= intrigue
+						diplomacy >= learning
+						diplomacy >= stewardship
+						murim_can_unlock_harmonious_palm_trigger = yes
 					}
-					any_courtier = {
-						has_character_flag = murim_initiated
-						age < root.age
-						prowess < root.prowess
+					random = {
+						chance = 35
+						modifier = {
+							add = 20
+							has_trait = gregarious
+						}
+						modifier = {
+							add = 15
+							has_trait = compassionate
+						}
+						modifier = {
+							add = -10
+							has_trait = lazy
+						}
+						add_trait = murim_harmonious_palm
+						set_character_flag = {
+							flag = murim_technique_learning_cooldown
+							years = 2
+						}
 					}
 				}
-				random = {
-					chance = 30
-					modifier = {
-						add = 25
-						has_trait = compassionate
+				# Martial-focused AI learns Iron Hegemon
+				else_if = {
+					limit = {
+						martial >= 15
+						martial >= diplomacy
+						martial >= intrigue
+						murim_can_unlock_iron_hegemon_trigger = yes
 					}
-					modifier = {
-						add = 20
-						has_trait = patient
-					}
-					modifier = {
-						add = 15
-						has_character_flag = murim_sect_leader
-					}
-					modifier = {
-						add = -15
-						has_trait = callous
-					}
-					modifier = {
-						add = -20
-						has_trait = paranoid
-					}
-					# Teach a random disciple
-					random_courtier = {
-						limit = {
-							has_character_flag = murim_initiated
-							age < root.age
-							prowess < root.prowess
-						}
-						change_variable = {
-							name = murim_cultivation_xp
+					random = {
+						chance = 35
+						modifier = {
 							add = 25
+							has_trait = brave
 						}
-						add_opinion = {
-							target = root
-							modifier = murim_grateful_student
+						modifier = {
+							add = 15
+							has_trait = ambitious
+						}
+						modifier = {
+							add = -10
+							has_trait = craven
+						}
+						add_trait = murim_iron_hegemon
+						set_character_flag = {
+							flag = murim_technique_learning_cooldown
+							years = 2
 						}
 					}
-					add_piety = 50
-					add_prestige = 25
+				}
+				# Intrigue-focused AI learns Venom Needle
+				else_if = {
+					limit = {
+						intrigue >= 15
+						intrigue >= diplomacy
+						intrigue >= martial
+						murim_can_unlock_venom_needle_trigger = yes
+					}
+					random = {
+						chance = 35
+						modifier = {
+							add = 20
+							has_trait = deceitful
+						}
+						modifier = {
+							add = 15
+							has_trait = sadistic
+						}
+						modifier = {
+							add = -15
+							has_trait = honest
+						}
+						add_trait = murim_venom_needle
+						set_character_flag = {
+							flag = murim_technique_learning_cooldown
+							years = 2
+						}
+					}
+				}
+				# Learning-focused AI learns Void Sight
+				else_if = {
+					limit = {
+						learning >= 15
+						learning >= diplomacy
+						learning >= martial
+						murim_can_unlock_void_sight_trigger = yes
+					}
+					random = {
+						chance = 35
+						modifier = {
+							add = 20
+							has_trait = patient
+						}
+						modifier = {
+							add = 15
+							has_trait = diligent
+						}
+						modifier = {
+							add = -15
+							has_trait = impatient
+						}
+						add_trait = murim_void_sight
+						set_character_flag = {
+							flag = murim_technique_learning_cooldown
+							years = 2
+						}
+					}
+				}
+				# Stewardship-focused AI learns Jade Treasury
+				else_if = {
+					limit = {
+						stewardship >= 15
+						murim_can_unlock_jade_treasury_trigger = yes
+					}
+					random = {
+						chance = 35
+						modifier = {
+							add = 20
+							has_trait = greedy
+						}
+						modifier = {
+							add = 15
+							has_trait = ambitious
+						}
+						add_trait = murim_jade_treasury
+						set_character_flag = {
+							flag = murim_technique_learning_cooldown
+							years = 2
+						}
+					}
 				}
 			}
 
 			# ==============================
-			# SECT LEADERSHIP CHALLENGE
+			# WEAPON DAO LEARNING (AI picks weapon based on stats)
 			# ==============================
 			if = {
 				limit = {
-					has_character_flag = murim_sect_core_disciple
-					NOT = { has_character_flag = murim_sect_leader }
-					prowess >= 20
-					has_trait = ambitious
-					age >= 30
+					NOT = { murim_has_any_weapon_dao_trigger = yes }
+					NOT = { has_character_flag = murim_weapon_learning_cooldown }
+					prowess >= 14
+					martial >= 12
 				}
-				random = {
-					chance = 5
-					modifier = {
-						add = 15
-						has_trait = ambitious
+				# Brave/patient -> Sword
+				if = {
+					limit = {
+						murim_has_natural_sword_talent_trigger = yes
+						murim_can_learn_sword_dao_trigger = yes
 					}
-					modifier = {
-						add = 10
-						prowess >= 25
+					random = {
+						chance = 25
+						modifier = {
+							add = 15
+							has_trait = patient
+						}
+						modifier = {
+							add = 10
+							has_trait = brave
+						}
+						add_trait = murim_sword_dao
+						set_character_flag = {
+							flag = murim_weapon_learning_cooldown
+							years = 3
+						}
 					}
-					modifier = {
-						add = -10
-						has_trait = content
+				}
+				# Wrathful/athletic -> Fist
+				else_if = {
+					limit = {
+						murim_has_natural_fist_talent_trigger = yes
+						murim_can_learn_fist_dao_trigger = yes
 					}
-					modifier = {
-						add = -15
-						has_trait = loyal
+					random = {
+						chance = 25
+						modifier = {
+							add = 15
+							has_trait = wrathful
+						}
+						modifier = {
+							add = 10
+							prowess >= 18
+						}
+						add_trait = murim_fist_dao
+						set_character_flag = {
+							flag = murim_weapon_learning_cooldown
+							years = 3
+						}
 					}
-					set_character_flag = murim_sect_leadership_challenger
-					trigger_event = {
-						id = murim_sect.0310
-						days = { 30 90 }
+				}
+				# Martial heavy -> Spear
+				else_if = {
+					limit = {
+						martial >= 14
+						murim_can_learn_spear_dao_trigger = yes
+					}
+					random = {
+						chance = 20
+						modifier = {
+							add = 15
+							has_trait = brave
+						}
+						modifier = {
+							add = 10
+							martial >= 18
+						}
+						add_trait = murim_spear_dao
+						set_character_flag = {
+							flag = murim_weapon_learning_cooldown
+							years = 3
+						}
+					}
+				}
+				# Intrigue heavy -> Hidden Weapons
+				else_if = {
+					limit = {
+						intrigue >= 14
+						murim_can_learn_hidden_weapon_dao_trigger = yes
+					}
+					random = {
+						chance = 20
+						modifier = {
+							add = 15
+							has_trait = deceitful
+						}
+						modifier = {
+							add = 10
+							has_trait = callous
+						}
+						add_trait = murim_hidden_weapon_dao
+						set_character_flag = {
+							flag = murim_weapon_learning_cooldown
+							years = 3
+						}
 					}
 				}
 			}
 
 			# ==============================
-			# HOST TOURNAMENT (rulers only)
+			# ALCHEMY & PILL REFINING
 			# ==============================
 			if = {
 				limit = {
-					is_ruler = yes
-					prestige >= 500
-					gold >= 100
-					NOT = { has_character_flag = murim_tournament_cooldown }
+					learning >= 14
+					NOT = { has_character_flag = murim_alchemy_cooldown }
 					OR = {
-						has_trait = gregarious
-						has_trait = ambitious
-						diplomacy >= 14
+						has_character_flag = murim_alchemist
+						AND = {
+							learning >= 16
+							has_trait = diligent
+						}
+						AND = {
+							has_character_flag = murim_sect_member
+							learning >= 14
+						}
 					}
 				}
-				random = {
-					chance = 10
-					modifier = {
-						add = 15
-						has_trait = gregarious
-					}
-					modifier = {
-						add = 10
-						has_trait = ambitious
-					}
-					modifier = {
-						add = 10
-						diplomacy >= 16
-					}
-					trigger_event = {
-						id = murim_duel.1000
-						days = { 60 180 }
-					}
-				}
-			}
-
-			# ==============================
-			# BODY TEMPERING PURSUIT
-			# ==============================
-			if = {
-				limit = {
-					murim_has_body_tempering_trigger = yes
-					NOT = { has_trait = murim_body_temper_9_void_body }
-				}
+				# Attempt to refine a cultivation pill
 				random = {
 					chance = 20
 					modifier = {
+						add = 20
+						has_character_flag = murim_alchemist
+					}
+					modifier = {
 						add = 15
-						has_trait = brave
+						has_trait = diligent
 					}
 					modifier = {
 						add = 10
+						learning >= 18
+					}
+					modifier = {
+						add = -10
+						has_trait = impatient
+					}
+					modifier = {
+						add = -15
+						has_trait = lazy
+					}
+					modifier = {
+						add = 10
+						has_character_flag = murim_has_rare_herbs
+					}
+					# Alchemy result
+					set_character_flag = {
+						flag = murim_alchemy_cooldown
+						years = 1
+					}
+					random_list = {
+						60 = {
+							# Success: gain cultivation XP
+							if = {
+								limit = { exists = var:murim_cultivation_xp }
+								change_variable = {
+									name = murim_cultivation_xp
+									add = 30
+								}
+							}
+							else = {
+								set_variable = {
+									name = murim_cultivation_xp
+									value = 30
+								}
+							}
+						}
+						25 = {
+							# Partial success: small gain
+							if = {
+								limit = { exists = var:murim_cultivation_xp }
+								change_variable = {
+									name = murim_cultivation_xp
+									add = 10
+								}
+							}
+						}
+						15 = {
+							# Explosion! Take damage
+							add_character_modifier = {
+								modifier = murim_alchemy_burn_scars
+								years = 2
+							}
+						}
+					}
+				}
+			}
+
+			# ==============================
+			# HERB GATHERING
+			# ==============================
+			if = {
+				limit = {
+					NOT = { has_character_flag = murim_herb_gathering_cooldown }
+					learning >= 10
+					OR = {
+						has_character_flag = murim_alchemist
+						has_character_flag = murim_healer
 						has_trait = diligent
+						has_trait = temperate
+					}
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 15
+						has_character_flag = murim_alchemist
+					}
+					modifier = {
+						add = 10
+						learning >= 16
+					}
+					modifier = {
+						add = 10
+						has_trait = patient
 					}
 					modifier = {
 						add = -10
 						has_trait = lazy
 					}
 					modifier = {
-						add = -15
-						has_trait = craven
+						add = -10
+						has_trait = impatient
 					}
-					murim_apply_body_tempering_effect = yes
+					set_character_flag = {
+						flag = murim_herb_gathering_cooldown
+						months = 6
+					}
+					random_list = {
+						50 = {
+							# Common herbs found
+							set_character_flag = {
+								flag = murim_has_common_herbs
+								years = 3
+							}
+						}
+						30 = {
+							# Rare herbs found
+							set_character_flag = {
+								flag = murim_has_rare_herbs
+								years = 3
+							}
+							add_prestige = 25
+						}
+						15 = {
+							# Nothing found
+						}
+						5 = {
+							# Encountered danger while gathering
+							trigger_event = {
+								id = murim_grind.0010
+								days = { 3 14 }
+							}
+						}
+					}
 				}
 			}
 
 			# ==============================
-			# SEEK REVENGE (after duel loss)
+			# TRAINING & MEDITATION (daily practice)
 			# ==============================
 			if = {
 				limit = {
-					has_character_modifier = murim_vengeance_sworn
-					any_relation = {
-						type = rival
-						is_alive = yes
-						has_character_flag = murim_initiated
-					}
-					prowess >= 14
-					NOT = { has_character_flag = murim_duel_cooldown }
+					NOT = { has_character_flag = murim_training_cooldown }
+					NOT = { has_character_flag = murim_in_seclusion }
 				}
+				# Intensive training pulse
 				random = {
-					chance = 40
+					chance = 30
 					modifier = {
 						add = 25
-						has_trait = vengeful
+						has_trait = diligent
+					}
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = patient
+					}
+					modifier = {
+						add = -25
+						has_trait = lazy
+					}
+					modifier = {
+						add = -10
+						has_trait = content
+					}
+					modifier = {
+						add = 10
+						has_character_flag = murim_sect_member
+					}
+					set_character_flag = {
+						flag = murim_training_cooldown
+						months = 6
+					}
+					# Gain small cultivation XP from daily practice
+					if = {
+						limit = { exists = var:murim_cultivation_xp }
+						change_variable = {
+							name = murim_cultivation_xp
+							add = 15
+						}
+					}
+					else = {
+						set_variable = {
+							name = murim_cultivation_xp
+							value = 15
+						}
+					}
+					# Chance for prowess gain from training
+					random = {
+						chance = 15
+						modifier = {
+							add = 10
+							has_trait = athletic
+						}
+						modifier = {
+							add = 10
+							age < 30
+						}
+						add_prowess_skill = 1
+					}
+				}
+			}
+
+			# ==============================
+			# MEDITATION SESSIONS
+			# ==============================
+			if = {
+				limit = {
+					NOT = { has_character_flag = murim_meditation_cooldown }
+					learning >= 12
+					OR = {
+						has_trait = patient
+						has_trait = calm
+						has_trait = temperate
+						has_trait = diligent
+						has_character_flag = murim_meditation_master
+					}
+				}
+				random = {
+					chance = 20
+					modifier = {
+						add = 20
+						has_trait = patient
+					}
+					modifier = {
+						add = 15
+						has_trait = calm
+					}
+					modifier = {
+						add = -20
+						has_trait = wrathful
+					}
+					modifier = {
+						add = -15
+						has_trait = impatient
+					}
+					modifier = {
+						add = 10
+						has_character_flag = murim_sect_member
+					}
+					set_character_flag = {
+						flag = murim_meditation_cooldown
+						months = 4
+					}
+					# Track meditation sessions
+					if = {
+						limit = { exists = var:murim_meditation_sessions }
+						change_variable = {
+							name = murim_meditation_sessions
+							add = 1
+						}
+					}
+					else = {
+						set_variable = {
+							name = murim_meditation_sessions
+							value = 1
+						}
+					}
+					# Cultivation XP from meditation
+					if = {
+						limit = { exists = var:murim_cultivation_xp }
+						change_variable = {
+							name = murim_cultivation_xp
+							add = 20
+						}
+					}
+					else = {
+						set_variable = {
+							name = murim_cultivation_xp
+							value = 20
+						}
+					}
+					# Rare: deep trance enlightenment
+					random = {
+						chance = 5
+						modifier = {
+							add = 10
+							learning >= 20
+						}
+						modifier = {
+							add = 5
+							has_character_flag = murim_nascent_soul
+						}
+						trigger_event = {
+							id = murim_cultivation.0030
+							days = { 7 30 }
+						}
+					}
+				}
+			}
+
+			# ==============================
+			# RANKING CHALLENGES (AI competes for Top 50)
+			# ==============================
+			if = {
+				limit = {
+					prowess >= 14
+					NOT = { has_character_flag = murim_ranking_challenge_cooldown }
+					NOT = { has_character_flag = murim_duel_cooldown }
+					OR = {
+						has_trait = ambitious
+						has_trait = arrogant
+						has_trait = brave
+						has_trait = wrathful
+					}
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 25
+						has_trait = ambitious
 					}
 					modifier = {
 						add = 20
-						has_trait = wrathful
-					}
-					random_relation = {
-						type = rival
-						limit = {
-							has_character_flag = murim_initiated
-							is_alive = yes
-						}
-						save_scope_as = duel_challenger
-					}
-					trigger_event = {
-						id = murim_duel.0001
-						days = { 7 30 }
-					}
-				}
-			}
-		}
-	}
-}
-
-######################################
-# ON DEATH - SECT SUCCESSION
-######################################
-
-on_death = {
-	effect = {
-		if = {
-			limit = {
-				has_character_flag = murim_sect_leader
-			}
-			# Find strongest sect member to succeed
-			random_courtier = {
-				limit = {
-					has_character_flag = murim_sect_member
-					prowess >= 14
-					is_alive = yes
-				}
-				weight = {
-					base = 1
-					modifier = {
-						add = 5
-						has_character_flag = murim_sect_core_disciple
+						has_trait = arrogant
 					}
 					modifier = {
-						add = 3
+						add = 15
 						prowess >= 20
 					}
 					modifier = {
-						add = 2
-						diplomacy >= 12
+						add = 10
+						has_trait = brave
+					}
+					modifier = {
+						add = -20
+						has_trait = craven
+					}
+					modifier = {
+						add = -15
+						has_trait = content
+					}
+					modifier = {
+						add = 10
+						exists = var:murim_duel_wins
+						var:murim_duel_wins >= 5
+					}
+					set_character_flag = {
+						flag = murim_ranking_challenge_cooldown
+						years = 1
+					}
+					trigger_event = {
+						id = murim_ranking.0010
+						days = { 14 60 }
 					}
 				}
-				set_character_flag = murim_sect_leader
-				remove_character_flag = murim_sect_core_disciple
-				remove_character_flag = murim_sect_inner_disciple
-				add_character_modifier = {
-					modifier = murim_sect_patriarch_status
-					years = -1
+			}
+
+			# ==============================
+			# TEACHING DISCIPLES
+			# ==============================
+			if = {
+				limit = {
+					murim_can_teach_technique_trigger = yes
+					age >= 30
+					prowess >= 18
+					OR = {
+						has_trait = compassionate
+						has_trait = gregarious
+						has_trait = patient
+						has_character_flag = murim_sect_elder
+						has_character_flag = murim_sect_leader
+					}
 				}
-				add_prestige = 500
+				random = {
+					chance = 15
+					modifier = {
+						add = 20
+						has_trait = compassionate
+					}
+					modifier = {
+						add = 15
+						has_trait = patient
+					}
+					modifier = {
+						add = 15
+						has_character_flag = murim_sect_elder
+					}
+					modifier = {
+						add = -15
+						has_trait = callous
+					}
+					modifier = {
+						add = -10
+						has_trait = shy
+					}
+					# Find a suitable student
+					if = {
+						limit = {
+							any_child = {
+								is_alive = yes
+								age >= 12
+								age < 25
+								has_character_flag = murim_initiated
+							}
+						}
+						random_child = {
+							limit = {
+								is_alive = yes
+								age >= 12
+								has_character_flag = murim_initiated
+							}
+							save_scope_as = student_target
+						}
+						trigger_event = {
+							id = murim_interaction.0040
+							days = { 7 30 }
+						}
+					}
+					else_if = {
+						limit = {
+							has_character_flag = murim_sect_member
+							any_courtier = {
+								is_alive = yes
+								age >= 14
+								has_character_flag = murim_initiated
+								NOT = { murim_has_any_tier1_technique_trigger = yes }
+							}
+						}
+						random_courtier = {
+							limit = {
+								is_alive = yes
+								age >= 14
+								has_character_flag = murim_initiated
+								NOT = { murim_has_any_tier1_technique_trigger = yes }
+							}
+							save_scope_as = student_target
+						}
+						trigger_event = {
+							id = murim_interaction.0040
+							days = { 7 30 }
+						}
+					}
+				}
 			}
-		}
-	}
-}
 
-######################################
-# ON BIRTHDAY - CULTIVATION XP GAIN
-######################################
+			# ==============================
+			# TOURNAMENT ENTRY
+			# ==============================
+			if = {
+				limit = {
+					prowess >= 14
+					NOT = { has_character_flag = murim_tournament_cooldown }
+					NOT = { has_character_flag = murim_in_seclusion }
+					NOT = { has_trait = incapable }
+					OR = {
+						has_trait = ambitious
+						has_trait = brave
+						has_trait = arrogant
+						has_trait = gregarious
+					}
+				}
+				random = {
+					chance = 12
+					modifier = {
+						add = 20
+						has_trait = brave
+					}
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 15
+						has_trait = arrogant
+					}
+					modifier = {
+						add = 10
+						prowess >= 20
+					}
+					modifier = {
+						add = -20
+						has_trait = craven
+					}
+					modifier = {
+						add = -15
+						has_trait = shy
+					}
+					modifier = {
+						add = 10
+						age < 35
+					}
+					set_character_flag = {
+						flag = murim_tournament_cooldown
+						years = 2
+					}
+					trigger_event = {
+						id = murim_combat.0020
+						days = { 30 90 }
+					}
+				}
+			}
 
-on_birthday = {
-	effect = {
-		if = {
-			limit = {
-				has_character_flag = murim_initiated
-				is_alive = yes
-				is_ai = yes
-			}
-			# Passive annual XP gain based on diligence
-			change_variable = {
-				name = murim_cultivation_xp
-				add = 10
-			}
+			# ==============================
+			# TREASURE HUNTING
+			# ==============================
 			if = {
-				limit = { has_trait = diligent }
-				change_variable = { name = murim_cultivation_xp add = 10 }
+				limit = {
+					NOT = { has_character_flag = murim_treasure_hunting_cooldown }
+					NOT = { has_character_flag = murim_in_seclusion }
+					OR = {
+						has_trait = ambitious
+						has_trait = greedy
+						has_trait = adventurer
+						AND = {
+							prowess >= 16
+							has_trait = brave
+						}
+					}
+				}
+				random = {
+					chance = 10
+					modifier = {
+						add = 20
+						has_trait = greedy
+					}
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = brave
+					}
+					modifier = {
+						add = -15
+						has_trait = craven
+					}
+					modifier = {
+						add = -10
+						has_trait = content
+					}
+					modifier = {
+						add = 10
+						learning >= 16
+					}
+					set_character_flag = {
+						flag = murim_treasure_hunting_cooldown
+						years = 2
+					}
+					random_list = {
+						40 = {
+							# Found nothing of value
+							add_stress = 10
+						}
+						25 = {
+							# Found minor treasure
+							add_gold = 50
+							add_prestige = 30
+						}
+						15 = {
+							# Found cultivation resource
+							if = {
+								limit = { exists = var:murim_cultivation_xp }
+								change_variable = {
+									name = murim_cultivation_xp
+									add = 50
+								}
+							}
+							else = {
+								set_variable = {
+									name = murim_cultivation_xp
+									value = 50
+								}
+							}
+						}
+						10 = {
+							# Found rare herb stash
+							set_character_flag = {
+								flag = murim_has_rare_herbs
+								years = 5
+							}
+							add_prestige = 50
+						}
+						7 = {
+							# Encountered danger
+							trigger_event = {
+								id = murim_jianghu.0060
+								days = { 3 14 }
+							}
+						}
+						3 = {
+							# Found ancient technique manual
+							trigger_event = {
+								id = murim_technique.0010
+								days = { 7 30 }
+							}
+						}
+					}
+				}
 			}
+
+			# ==============================
+			# SECT PROMOTION PURSUIT
+			# ==============================
 			if = {
-				limit = { has_character_flag = murim_sect_member }
-				change_variable = { name = murim_cultivation_xp add = 5 }
+				limit = {
+					has_character_flag = murim_sect_member
+					NOT = { has_character_flag = murim_sect_promotion_cooldown }
+					OR = {
+						has_character_flag = murim_sect_outer_disciple
+						has_character_flag = murim_sect_inner_disciple
+					}
+					NOT = { has_character_flag = murim_sect_core_disciple }
+					NOT = { has_character_flag = murim_sect_elder }
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 25
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 15
+						has_trait = diligent
+					}
+					modifier = {
+						add = 10
+						prowess >= 18
+					}
+					modifier = {
+						add = -15
+						has_trait = lazy
+					}
+					modifier = {
+						add = -10
+						has_trait = content
+					}
+					modifier = {
+						add = 10
+						has_trait = gregarious
+					}
+					# Outer -> Inner promotion
+					if = {
+						limit = {
+							has_character_flag = murim_sect_outer_disciple
+							prowess >= 14
+							OR = {
+								AND = {
+									exists = var:murim_cultivation_xp
+									var:murim_cultivation_xp >= 100
+								}
+								murim_has_any_tier1_technique_trigger = yes
+							}
+						}
+						remove_character_flag = murim_sect_outer_disciple
+						set_character_flag = murim_sect_inner_disciple
+						add_character_modifier = {
+							modifier = murim_sect_inner_disciple_status
+							years = 100
+						}
+						add_prestige = 100
+						set_character_flag = {
+							flag = murim_sect_promotion_cooldown
+							years = 3
+						}
+					}
+					# Inner -> Core promotion
+					else_if = {
+						limit = {
+							has_character_flag = murim_sect_inner_disciple
+							prowess >= 18
+							OR = {
+								murim_has_any_tier2_technique_trigger = yes
+								AND = {
+									exists = var:murim_cultivation_xp
+									var:murim_cultivation_xp >= 300
+								}
+							}
+						}
+						remove_character_flag = murim_sect_inner_disciple
+						remove_character_modifier = murim_sect_inner_disciple_status
+						set_character_flag = murim_sect_core_disciple
+						add_character_modifier = {
+							modifier = murim_sect_core_disciple_status
+							years = 100
+						}
+						add_prestige = 200
+						set_character_flag = {
+							flag = murim_sect_promotion_cooldown
+							years = 5
+						}
+					}
+				}
 			}
+
+			# ==============================
+			# RANDOM NON-COMBAT ENCOUNTERS
+			# ==============================
 			if = {
-				limit = { has_trait = lazy }
-				change_variable = { name = murim_cultivation_xp add = -5 }
+				limit = {
+					NOT = { has_character_flag = murim_encounter_cooldown }
+				}
+				random = {
+					chance = 8
+					modifier = {
+						add = 10
+						has_trait = gregarious
+					}
+					modifier = {
+						add = 5
+						prowess >= 16
+					}
+					modifier = {
+						add = -10
+						has_trait = shy
+					}
+					set_character_flag = {
+						flag = murim_encounter_cooldown
+						months = 6
+					}
+					random_list = {
+						30 = {
+							# Meet a fellow cultivator on the road
+							trigger_event = {
+								id = murim_jianghu.0001
+								days = { 7 60 }
+							}
+						}
+						25 = {
+							# Discover a cultivation spot
+							trigger_event = {
+								id = murim_cultivation.0020
+								days = { 7 30 }
+							}
+						}
+						20 = {
+							# Hear rumors of a treasure
+							trigger_event = {
+								id = murim_jianghu.0030
+								days = { 14 60 }
+							}
+						}
+						15 = {
+							# Witness a technique demonstration
+							if = {
+								limit = { exists = var:murim_techniques_witnessed }
+								change_variable = {
+									name = murim_techniques_witnessed
+									add = 1
+								}
+							}
+							else = {
+								set_variable = {
+									name = murim_techniques_witnessed
+									value = 1
+								}
+							}
+						}
+						10 = {
+							# Challenged by a stranger
+							trigger_event = {
+								id = murim_duel.0010
+								days = { 3 14 }
+							}
+						}
+					}
+				}
+			}
+
+			# ==============================
+			# TIER 2 TECHNIQUE PURSUIT (for AI with Tier 1)
+			# ==============================
+			if = {
+				limit = {
+					murim_has_any_tier1_technique_trigger = yes
+					NOT = { murim_has_any_tier2_technique_trigger = yes }
+					NOT = { has_character_flag = murim_tier2_pursuit_cooldown }
+					prowess >= 20
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 20
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 15
+						has_trait = diligent
+					}
+					modifier = {
+						add = 10
+						learning >= 18
+					}
+					modifier = {
+						add = -15
+						has_trait = lazy
+					}
+					set_character_flag = {
+						flag = murim_tier2_pursuit_cooldown
+						years = 2
+					}
+					# Check each T2 technique the AI qualifies for
+					if = {
+						limit = { murim_can_unlock_shadow_executioner_trigger = yes }
+						add_trait = murim_shadow_executioner
+					}
+					else_if = {
+						limit = { murim_can_unlock_sage_commander_trigger = yes }
+						add_trait = murim_sage_commander
+					}
+					else_if = {
+						limit = { murim_can_unlock_silken_blade_trigger = yes }
+						add_trait = murim_silken_blade
+					}
+					else_if = {
+						limit = { murim_can_unlock_sutra_fist_trigger = yes }
+						add_trait = murim_sutra_fist
+					}
+					else_if = {
+						limit = { murim_can_unlock_phantom_meridian_trigger = yes }
+						add_trait = murim_phantom_meridian
+					}
+					else_if = {
+						limit = { murim_can_unlock_golden_merchant_trigger = yes }
+						add_trait = murim_golden_merchant
+					}
+					else_if = {
+						limit = { murim_can_unlock_coin_and_dagger_trigger = yes }
+						add_trait = murim_coin_and_dagger
+					}
+					else_if = {
+						limit = { murim_can_unlock_jade_emperor_palm_trigger = yes }
+						add_trait = murim_jade_emperor_palm
+					}
+					else_if = {
+						limit = { murim_can_unlock_mountain_sage_trigger = yes }
+						add_trait = murim_mountain_sage
+					}
+					else_if = {
+						limit = { murim_can_unlock_tyrant_fist_trigger = yes }
+						add_trait = murim_tyrant_fist
+					}
+				}
+			}
+
+			# ==============================
+			# WEAPON MASTERY ADVANCEMENT
+			# ==============================
+			if = {
+				limit = {
+					murim_has_any_weapon_dao_trigger = yes
+					NOT = { has_character_flag = murim_weapon_advanced_mastery }
+					NOT = { has_character_flag = murim_weapon_advancement_cooldown }
+					murim_can_advance_weapon_mastery_trigger = yes
+				}
+				random = {
+					chance = 12
+					modifier = {
+						add = 15
+						has_trait = diligent
+					}
+					modifier = {
+						add = 15
+						has_trait = patient
+					}
+					modifier = {
+						add = 10
+						prowess >= 22
+					}
+					modifier = {
+						add = -15
+						has_trait = lazy
+					}
+					set_character_flag = murim_weapon_advanced_mastery
+					add_prowess_skill = 2
+					add_prestige = 150
+					set_character_flag = {
+						flag = murim_weapon_advancement_cooldown
+						years = 5
+					}
+				}
+			}
+
+			# ==============================
+			# TECHNIQUE EVOLUTION (AI evolves mastered T1)
+			# ==============================
+			if = {
+				limit = {
+					NOT = { has_character_flag = murim_technique_evolution_cooldown }
+					prowess >= 22
+				}
+				# Check each evolution path
+				if = {
+					limit = { murim_can_evolve_harmonious_palm_trigger = yes }
+					random = {
+						chance = 10
+						modifier = {
+							add = 15
+							has_trait = compassionate
+						}
+						set_character_flag = murim_harmonious_palm_evolved
+						add_prowess_skill = 2
+						add_diplomacy_skill = 1
+						set_character_flag = {
+							flag = murim_technique_evolution_cooldown
+							years = 3
+						}
+					}
+				}
+				else_if = {
+					limit = { murim_can_evolve_iron_hegemon_trigger = yes }
+					random = {
+						chance = 10
+						modifier = {
+							add = 15
+							has_trait = brave
+						}
+						set_character_flag = murim_iron_hegemon_evolved
+						add_prowess_skill = 3
+						set_character_flag = {
+							flag = murim_technique_evolution_cooldown
+							years = 3
+						}
+					}
+				}
+				else_if = {
+					limit = { murim_can_evolve_venom_needle_trigger = yes }
+					random = {
+						chance = 10
+						modifier = {
+							add = 15
+							has_trait = sadistic
+						}
+						set_character_flag = murim_venom_needle_evolved
+						add_prowess_skill = 2
+						add_intrigue_skill = 1
+						set_character_flag = {
+							flag = murim_technique_evolution_cooldown
+							years = 3
+						}
+					}
+				}
+				else_if = {
+					limit = { murim_can_evolve_void_sight_trigger = yes }
+					random = {
+						chance = 10
+						modifier = {
+							add = 15
+							has_trait = patient
+						}
+						set_character_flag = murim_void_sight_evolved
+						add_prowess_skill = 2
+						add_learning_skill = 1
+						set_character_flag = {
+							flag = murim_technique_evolution_cooldown
+							years = 3
+						}
+					}
+				}
+				else_if = {
+					limit = { murim_can_evolve_jade_treasury_trigger = yes }
+					random = {
+						chance = 10
+						modifier = {
+							add = 15
+							has_trait = greedy
+						}
+						set_character_flag = murim_jade_treasury_evolved
+						add_prowess_skill = 2
+						add_stewardship_skill = 1
+						set_character_flag = {
+							flag = murim_technique_evolution_cooldown
+							years = 3
+						}
+					}
+				}
 			}
 		}
 	}
