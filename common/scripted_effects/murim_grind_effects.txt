@@ -1,5 +1,10 @@
 # Murim Chronicles Phase 2 - Grind Loop Scripted Effects
 # Reusable effects called by events and AI on_actions
+# EXPANDED: Meditation, Qi Gathering, Technique Practice, Herb Gathering, Sparring, Cultivation Cycling, Sect Contribution, Alchemy, Formation, Weapon Mastery
+
+######################################
+# BODY TEMPERING EFFECTS
+######################################
 
 murim_apply_body_tempering_effect = {
 	# Remove current body temper trait and add next level
@@ -118,199 +123,1069 @@ murim_apply_tempering_failure_effect = {
 		}
 	}
 	else = {
-		# Levels 1-3: Minor damage
+		# Levels 1-3: Minor setback
 		add_stress = 20
+		add_character_modifier = { modifier = murim_body_tempering_recovery months = 1 }
 		random = {
-			chance = 20
+			chance = 10
 			add_trait = wounded_1
 		}
 	}
+	send_interface_toast = {
+		title = murim_body_tempering_failure_toast
+		left_icon = root
+	}
 }
 
-murim_apply_minor_qi_deviation = {
-	# Escalating qi deviation
+######################################
+# MEDITATION GRIND EFFECTS
+######################################
+
+murim_apply_meditation_session_effect = {
+	# Standard meditation session -- accumulates meditation XP
 	if = {
-		limit = { has_trait = murim_qi_deviation_crippling }
-		# Already crippling - chance of death
-		random = {
-			chance = 50
-			death = { death_reason = death_accident }
+		limit = {
+			NOT = { exists = var:murim_meditation_xp }
 		}
+		set_variable = { name = murim_meditation_xp value = 0 }
+	}
+	# XP gain scales with learning stat
+	if = {
+		limit = { learning >= 15 }
+		change_variable = { name = murim_meditation_xp add = 5 }
 	}
 	else_if = {
-		limit = { has_trait = murim_qi_deviation_major }
-		remove_trait = murim_qi_deviation_major
-		add_trait = murim_qi_deviation_crippling
-	}
-	else_if = {
-		limit = { has_trait = murim_qi_deviation_minor }
-		remove_trait = murim_qi_deviation_minor
-		add_trait = murim_qi_deviation_major
+		limit = { learning >= 10 }
+		change_variable = { name = murim_meditation_xp add = 3 }
 	}
 	else = {
-		add_trait = murim_qi_deviation_minor
+		change_variable = { name = murim_meditation_xp add = 2 }
 	}
-	trigger_event = { id = murim_grind.0060 days = 3 }
-}
-
-murim_attempt_breakthrough_effect = {
-	add_character_flag = { flag = murim_attempting_breakthrough days = 1 }
-	random = {
-		chance = murim_breakthrough_success_chance
-		# SUCCESS
-		change_variable = { name = murim_cultivation_rank add = 1 }
-		set_variable = { name = murim_cultivation_xp value = 0 }
-		# Swap cultivation trait
-		if = {
-			limit = { has_trait = murim_outer_qi }
-			remove_trait = murim_outer_qi
-			add_trait = murim_qi_gathering
-		}
-		else_if = {
-			limit = { has_trait = murim_qi_gathering }
-			remove_trait = murim_qi_gathering
-			add_trait = murim_foundation
-		}
-		else_if = {
-			limit = { has_trait = murim_foundation }
-			remove_trait = murim_foundation
-			add_trait = murim_golden_core
-		}
-		else_if = {
-			limit = { has_trait = murim_golden_core }
-			remove_trait = murim_golden_core
-			add_trait = murim_nascent_soul
-		}
-		else_if = {
-			limit = { has_trait = murim_nascent_soul }
-			remove_trait = murim_nascent_soul
-			add_trait = murim_spirit_severing
-		}
-		add_prestige = 200
-		send_interface_toast = {
-			title = murim_breakthrough_success_toast
-			left_icon = root
-		}
-	}
-	modifier = {
-		# FAILURE
-		factor = 0
-	}
-	fallback = {
-		add_trait = murim_breakthrough_failure
-		add_stress = 50
-		random = {
-			chance = 20
-			murim_apply_minor_qi_deviation = yes
-		}
-		add_character_flag = { flag = murim_breakthrough_cooldown days = 730 }
-		send_interface_toast = {
-			title = murim_breakthrough_failure_toast
-			left_icon = root
-		}
-	}
-}
-
-murim_grant_sparring_xp_effect = {
-	change_variable = { name = murim_cultivation_xp add = murim_sparring_xp_gain }
-	if = {
-		limit = { NOT = { exists = var:murim_duels_won } }
-		set_variable = { name = murim_duels_won value = 0 }
-	}
-	change_variable = { name = murim_duels_won add = 1 }
+	# Bonus for cultivation traits
 	if = {
 		limit = {
-			var:murim_duels_won >= 20
-			NOT = { has_trait = murim_sparring_addict }
-			NOT = { has_trait = murim_hermit_cultivator }
-		}
-		random = {
-			chance = 40
-			add_trait = murim_sparring_addict
-		}
-	}
-	add_character_flag = { flag = murim_sparring_cooldown days = 30 }
-}
-
-murim_apply_forbidden_study_effect = {
-	change_variable = { name = murim_cultivation_xp add = 5 }
-	add_character_flag = { flag = murim_studying_forbidden days = 1 }
-	if = {
-		limit = { NOT = { murim_has_forbidden_mark_trigger = yes } }
-		add_trait = murim_forbidden_mark_1
-	}
-	else_if = {
-		limit = { has_trait = murim_forbidden_mark_1 }
-		random = {
-			chance = 30
-			remove_trait = murim_forbidden_mark_1
-			add_trait = murim_forbidden_mark_2
-		}
-	}
-	else_if = {
-		limit = { has_trait = murim_forbidden_mark_2 }
-		random = {
-			chance = 40
-			remove_trait = murim_forbidden_mark_2
-			add_trait = murim_forbidden_mark_3
-		}
-	}
-	else_if = {
-		limit = { has_trait = murim_forbidden_mark_3 }
-		random = {
-			chance = 25
-			add_trait = lunatic
-		}
-	}
-	add_character_flag = { flag = murim_forbidden_study_cooldown days = 90 }
-}
-
-murim_apply_disciple_training_effect = {
-	scope:disciple = {
-		change_variable = { name = murim_cultivation_xp add = murim_disciple_training_xp }
-		add_character_flag = { flag = murim_has_master days = -1 }
-	}
-	if = {
-		limit = { NOT = { exists = var:murim_disciples_trained } }
-		set_variable = { name = murim_disciples_trained value = 0 }
-	}
-	change_variable = { name = murim_disciples_trained add = 1 }
-	if = {
-		limit = {
-			var:murim_disciples_trained >= 3
-			NOT = { has_trait = murim_master_teacher }
-		}
-		add_trait = murim_master_teacher
-	}
-	add_character_flag = { flag = murim_training_disciple days = 180 }
-	scope:disciple = {
-		add_character_flag = { flag = murim_training_disciple days = 180 }
-	}
-}
-
-murim_apply_qi_exchange_effect = {
-	change_variable = { name = murim_qi_reserves add = -20 }
-	add_character_modifier = { modifier = murim_qi_exchange_given months = 3 }
-	scope:target = {
-		if = {
-			limit = { has_trait = murim_qi_deviation_minor }
-			random = {
-				chance = 30
-				remove_trait = murim_qi_deviation_minor
+			OR = {
+				has_trait = murim_cultivation_nascent_soul
+				has_trait = murim_cultivation_soul_formation
+				has_trait = murim_cultivation_dao_seeking
 			}
 		}
-		add_character_modifier = { modifier = murim_qi_exchange_received months = 6 }
-		add_opinion = {
-			modifier = murim_qi_exchange_gratitude
-			target = root
+		change_variable = { name = murim_meditation_xp add = 2 }
+	}
+	# Stress relief from meditation
+	add_stress = -10
+	# Small chance of enlightenment
+	random = {
+		chance = 5
+		add_character_modifier = { modifier = murim_bottleneck_enlightenment_near months = 3 }
+	}
+	add_character_flag = { flag = murim_meditation_cooldown days = 30 }
+}
+
+murim_apply_deep_meditation_effect = {
+	# Extended meditation -- higher rewards but longer cooldown
+	if = {
+		limit = {
+			NOT = { exists = var:murim_meditation_xp }
+		}
+		set_variable = { name = murim_meditation_xp value = 0 }
+	}
+	if = {
+		limit = { learning >= 18 }
+		change_variable = { name = murim_meditation_xp add = 10 }
+	}
+	else_if = {
+		limit = { learning >= 12 }
+		change_variable = { name = murim_meditation_xp add = 7 }
+	}
+	else = {
+		change_variable = { name = murim_meditation_xp add = 4 }
+	}
+	add_stress = -25
+	add_piety = 25
+	# Risk of heart demon during deep meditation
+	random = {
+		chance = 10
+		add_character_modifier = { modifier = murim_bottleneck_inner_demons months = 6 }
+		add_stress = 30
+	}
+	# Higher enlightenment chance
+	random = {
+		chance = 12
+		add_character_modifier = { modifier = murim_bottleneck_enlightenment_near months = 6 }
+		add_learning_skill = 1
+	}
+	add_character_flag = { flag = murim_meditation_cooldown days = 90 }
+}
+
+murim_apply_meditation_failure_effect = {
+	# Meditation interrupted or went wrong
+	add_stress = 20
+	random_list = {
+		30 = {
+			# Minor qi disturbance
+			add_character_modifier = { modifier = murim_qi_deviation_mild months = 3 }
+		}
+		40 = {
+			# Heart demon intrusion
+			add_character_modifier = { modifier = murim_bottleneck_inner_demons months = 6 }
+			add_stress = 15
+		}
+		30 = {
+			# Just wasted time
+			add_stress = 10
 		}
 	}
 }
 
-murim_remove_breakthrough_failure_effect = {
+######################################
+# QI GATHERING EFFECTS
+######################################
+
+murim_apply_qi_gathering_effect = {
+	# Gather ambient qi to build cultivation progress
 	if = {
-		limit = { has_trait = murim_breakthrough_failure }
-		remove_trait = murim_breakthrough_failure
+		limit = {
+			NOT = { exists = var:murim_qi_gathered }
+		}
+		set_variable = { name = murim_qi_gathered value = 0 }
 	}
-	remove_character_flag = murim_breakthrough_cooldown
+	# Gathering efficiency based on prowess and martial
+	if = {
+		limit = { prowess >= 20 }
+		change_variable = { name = murim_qi_gathered add = 6 }
+	}
+	else_if = {
+		limit = { prowess >= 12 }
+		change_variable = { name = murim_qi_gathered add = 4 }
+	}
+	else = {
+		change_variable = { name = murim_qi_gathered add = 2 }
+	}
+	# Location bonus -- check for sacred ground
+	if = {
+		limit = {
+			exists = var:murim_at_sacred_ground
+			var:murim_at_sacred_ground >= 1
+		}
+		change_variable = { name = murim_qi_gathered add = 3 }
+	}
+	# Threshold check for cultivation progress
+	if = {
+		limit = {
+			exists = var:murim_qi_gathered
+			var:murim_qi_gathered >= 30
+		}
+		set_variable = { name = murim_qi_gathered value = 0 }
+		if = {
+			limit = {
+				NOT = { exists = var:murim_cultivation_progress }
+			}
+			set_variable = { name = murim_cultivation_progress value = 0 }
+		}
+		change_variable = { name = murim_cultivation_progress add = 1 }
+		send_interface_toast = {
+			title = murim_qi_gathering_milestone_toast
+			left_icon = root
+		}
+	}
+	add_character_flag = { flag = murim_qi_gathering_cooldown days = 15 }
+}
+
+murim_apply_qi_gathering_surge_effect = {
+	# Rare surge of qi -- massive boost but dangerous
+	if = {
+		limit = {
+			NOT = { exists = var:murim_qi_gathered }
+		}
+		set_variable = { name = murim_qi_gathered value = 0 }
+	}
+	change_variable = { name = murim_qi_gathered add = 15 }
+	# Surge risks
+	random_list = {
+		50 = {
+			# Handled successfully
+			add_prestige = 50
+			send_interface_toast = {
+				title = murim_qi_surge_success_toast
+				left_icon = root
+			}
+		}
+		30 = {
+			# Partial overflow -- stress and minor damage
+			add_stress = 25
+			add_character_modifier = { modifier = murim_qi_deviation_mild months = 2 }
+		}
+		20 = {
+			# Dangerous overflow -- meridian strain
+			add_stress = 40
+			add_character_modifier = { modifier = murim_meridian_strain months = 4 }
+			random = {
+				chance = 20
+				add_trait = wounded_1
+			}
+		}
+	}
+}
+
+murim_apply_qi_gathering_failure_effect = {
+	# Failed to gather qi properly
+	add_stress = 15
+	random_list = {
+		50 = {
+			# Just ineffective
+			add_stress = 5
+		}
+		30 = {
+			# Disturbed qi flow
+			add_character_modifier = { modifier = murim_qi_flow_disrupted months = 2 }
+		}
+		20 = {
+			# Attracted hostile qi
+			add_character_modifier = { modifier = murim_exposed_to_demonic_qi months = 3 }
+		}
+	}
+}
+
+######################################
+# TECHNIQUE PRACTICE EFFECTS
+######################################
+
+murim_apply_technique_practice_effect = {
+	# Daily technique practice -- builds mastery
+	if = {
+		limit = {
+			NOT = { exists = var:murim_technique_practice_count }
+		}
+		set_variable = { name = murim_technique_practice_count value = 0 }
+	}
+	change_variable = { name = murim_technique_practice_count add = 1 }
+	# Prowess improvement chance
+	random = {
+		chance = 15
+		add_prowess_skill = 1
+	}
+	# Martial improvement at milestones
+	if = {
+		limit = {
+			exists = var:murim_technique_practice_count
+			var:murim_technique_practice_count >= 20
+		}
+		set_variable = { name = murim_technique_practice_count value = 0 }
+		random = {
+			chance = 30
+			add_martial_skill = 1
+		}
+		send_interface_toast = {
+			title = murim_technique_mastery_milestone_toast
+			left_icon = root
+		}
+	}
+	# Injury risk from training
+	random = {
+		chance = 5
+		add_character_modifier = { modifier = murim_overtraining_exhaustion months = 1 }
+	}
+	add_character_flag = { flag = murim_technique_practice_cooldown days = 7 }
+}
+
+murim_apply_technique_breakthrough_effect = {
+	# Successfully comprehend a new technique application
+	add_prestige = 100
+	add_prowess_skill = 1
+	random = {
+		chance = 40
+		add_martial_skill = 1
+	}
+	# Check for trait upgrade possibility
+	if = {
+		limit = {
+			has_trait = murim_sword_aptitude_basic
+			NOT = { has_trait = murim_sword_aptitude_advanced }
+		}
+		random = {
+			chance = 25
+			remove_trait = murim_sword_aptitude_basic
+			add_trait = murim_sword_aptitude_advanced
+			send_interface_toast = {
+				title = murim_sword_technique_advancement_toast
+				left_icon = root
+			}
+		}
+	}
+	send_interface_toast = {
+		title = murim_technique_breakthrough_toast
+		left_icon = root
+	}
+}
+
+murim_apply_technique_practice_failure_effect = {
+	# Training accident or wrong form
+	add_stress = 15
+	random_list = {
+		40 = {
+			# Minor strain
+			add_character_modifier = { modifier = murim_muscle_tear_recovery months = 1 }
+		}
+		30 = {
+			# Internal force misfire
+			add_character_modifier = { modifier = murim_internal_force_backlash months = 2 }
+		}
+		20 = {
+			# Weapon accident
+			add_character_modifier = { modifier = murim_weapon_practice_injury months = 2 }
+			random = {
+				chance = 30
+				add_trait = wounded_1
+			}
+		}
+		10 = {
+			# Severe accident
+			add_trait = wounded_1
+			add_character_modifier = { modifier = murim_broken_rib_training months = 3 }
+		}
+	}
+}
+
+######################################
+# HERB GATHERING EFFECTS
+######################################
+
+murim_apply_herb_gathering_effect = {
+	# Forage for medicinal herbs and cultivation resources
+	if = {
+		limit = {
+			NOT = { exists = var:murim_herb_stockpile }
+		}
+		set_variable = { name = murim_herb_stockpile value = 0 }
+	}
+	# Gathering success based on learning
+	if = {
+		limit = { learning >= 15 }
+		change_variable = { name = murim_herb_stockpile add = 4 }
+	}
+	else_if = {
+		limit = { learning >= 10 }
+		change_variable = { name = murim_herb_stockpile add = 3 }
+	}
+	else = {
+		change_variable = { name = murim_herb_stockpile add = 1 }
+	}
+	# Rare find chance
+	random = {
+		chance = 8
+		change_variable = { name = murim_herb_stockpile add = 5 }
+		send_interface_toast = {
+			title = murim_rare_herb_found_toast
+			left_icon = root
+		}
+	}
+	# Danger while gathering
+	random = {
+		chance = 5
+		add_character_modifier = { modifier = murim_mild_poison_affliction months = 1 }
+	}
+	# Convert stockpile to health/cultivation at threshold
+	if = {
+		limit = {
+			exists = var:murim_herb_stockpile
+			var:murim_herb_stockpile >= 20
+		}
+		set_variable = { name = murim_herb_stockpile value = 0 }
+		random_list = {
+			50 = {
+				# Healing herbs
+				add_character_modifier = { modifier = murim_herbal_recovery_boost months = 3 }
+			}
+			30 = {
+				# Cultivation aid herbs
+				if = {
+					limit = {
+						NOT = { exists = var:murim_cultivation_progress }
+					}
+					set_variable = { name = murim_cultivation_progress value = 0 }
+				}
+				change_variable = { name = murim_cultivation_progress add = 1 }
+			}
+			20 = {
+				# Sell for gold
+				add_gold = 50
+			}
+		}
+	}
+	add_character_flag = { flag = murim_herb_gathering_cooldown days = 30 }
+}
+
+murim_apply_herb_gathering_danger_effect = {
+	# Encountered danger while gathering
+	random_list = {
+		30 = {
+			# Poisonous plant contact
+			add_character_modifier = { modifier = murim_moderate_poison_affliction months = 2 }
+			add_stress = 15
+		}
+		25 = {
+			# Spirit beast encounter
+			add_character_modifier = { modifier = murim_spirit_beast_territory_curse months = 3 }
+			random = {
+				chance = 20
+				add_trait = wounded_1
+			}
+		}
+		25 = {
+			# Rival cultivator ambush
+			add_stress = 25
+			random = {
+				chance = 30
+				add_trait = wounded_1
+			}
+		}
+		20 = {
+			# Natural hazard
+			add_character_modifier = { modifier = murim_death_valley_miasma months = 2 }
+		}
+	}
+}
+
+######################################
+# SPARRING TRAINING EFFECTS
+######################################
+
+murim_apply_sparring_session_effect = {
+	# Friendly sparring for skill improvement
+	if = {
+		limit = {
+			NOT = { exists = var:murim_sparring_sessions }
+		}
+		set_variable = { name = murim_sparring_sessions value = 0 }
+	}
+	change_variable = { name = murim_sparring_sessions add = 1 }
+	# Prowess improvement from combat practice
+	random = {
+		chance = 20
+		add_prowess_skill = 1
+	}
+	# Martial insight
+	random = {
+		chance = 10
+		add_martial_skill = 1
+	}
+	# Sparring milestone bonuses
+	if = {
+		limit = {
+			exists = var:murim_sparring_sessions
+			var:murim_sparring_sessions >= 15
+		}
+		set_variable = { name = murim_sparring_sessions value = 0 }
+		add_prestige = 50
+		random = {
+			chance = 25
+			add_prowess_skill = 1
+		}
+		send_interface_toast = {
+			title = murim_sparring_milestone_toast
+			left_icon = root
+		}
+	}
+	# Risk of sparring injury
+	random = {
+		chance = 8
+		add_character_modifier = { modifier = murim_sparring_concussion months = 1 }
+	}
+	# Build rivalry or friendship with partner
+	random = {
+		chance = 15
+		add_opinion = {
+			target = scope:sparring_partner
+			modifier = murim_sparring_respect_opinion
+			opinion = 10
+		}
+	}
+	add_character_flag = { flag = murim_sparring_cooldown days = 14 }
+}
+
+murim_apply_sparring_victory_effect = {
+	# Won a sparring match
+	add_prestige = 25
+	add_stress = -5
+	if = {
+		limit = {
+			NOT = { exists = var:murim_duel_wins }
+		}
+		set_variable = { name = murim_duel_wins value = 0 }
+	}
+	# Sparring wins count as half a real duel win for ranking
+	random = {
+		chance = 50
+		change_variable = { name = murim_duel_wins add = 1 }
+	}
+}
+
+murim_apply_sparring_defeat_effect = {
+	# Lost a sparring match -- less severe than real duel
+	add_stress = 10
+	# Learning from defeat
+	random = {
+		chance = 25
+		add_prowess_skill = 1
+		send_interface_toast = {
+			title = murim_learned_from_defeat_toast
+			left_icon = root
+		}
+	}
+}
+
+######################################
+# CULTIVATION CYCLING EFFECTS
+######################################
+
+murim_apply_cultivation_cycling_effect = {
+	# Standard cultivation cycle -- the core grind loop
+	if = {
+		limit = {
+			NOT = { exists = var:murim_cultivation_progress }
+		}
+		set_variable = { name = murim_cultivation_progress value = 0 }
+	}
+	# Progress gain based on current realm
+	if = {
+		limit = {
+			OR = {
+				has_trait = murim_cultivation_nascent_soul
+				has_trait = murim_cultivation_soul_formation
+				has_trait = murim_cultivation_dao_seeking
+			}
+		}
+		# High realm -- slow but steady
+		change_variable = { name = murim_cultivation_progress add = 1 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_trait = murim_cultivation_core_formation
+				has_trait = murim_cultivation_golden_core
+			}
+		}
+		# Mid realm -- moderate pace
+		change_variable = { name = murim_cultivation_progress add = 2 }
+	}
+	else = {
+		# Low realm -- fast early progress
+		change_variable = { name = murim_cultivation_progress add = 3 }
+	}
+	# Bonus from high learning
+	if = {
+		limit = { learning >= 15 }
+		change_variable = { name = murim_cultivation_progress add = 1 }
+	}
+	# Risk of qi deviation during cycling
+	random = {
+		chance = 3
+		add_character_modifier = { modifier = murim_qi_deviation_mild months = 2 }
+		add_stress = 15
+	}
+	# Breakthrough check
+	if = {
+		limit = {
+			exists = var:murim_cultivation_progress
+			var:murim_cultivation_progress >= 50
+		}
+		set_variable = { name = murim_cultivation_progress value = 0 }
+		add_character_flag = { flag = murim_breakthrough_ready days = 365 }
+		send_interface_toast = {
+			title = murim_cultivation_breakthrough_ready_toast
+			left_icon = root
+		}
+	}
+	add_character_flag = { flag = murim_cycling_cooldown days = 7 }
+}
+
+murim_apply_forced_cultivation_cycling_effect = {
+	# Dangerous forced cultivation -- faster but risky
+	if = {
+		limit = {
+			NOT = { exists = var:murim_cultivation_progress }
+		}
+		set_variable = { name = murim_cultivation_progress value = 0 }
+	}
+	# Double progress but high risk
+	change_variable = { name = murim_cultivation_progress add = 6 }
+	# Much higher qi deviation risk
+	random = {
+		chance = 15
+		add_character_modifier = { modifier = murim_qi_deviation_moderate months = 3 }
+		add_stress = 30
+	}
+	random = {
+		chance = 5
+		add_character_modifier = { modifier = murim_qi_deviation_severe months = 6 }
+		add_stress = 50
+		random = {
+			chance = 10
+			add_trait = wounded_1
+		}
+	}
+	add_character_flag = { flag = murim_cycling_cooldown days = 30 }
+}
+
+######################################
+# SECT CONTRIBUTION EFFECTS
+######################################
+
+murim_apply_sect_contribution_effect = {
+	# Contribute to sect duties for merit points
+	if = {
+		limit = {
+			NOT = { exists = var:murim_sect_merit }
+		}
+		set_variable = { name = murim_sect_merit value = 0 }
+	}
+	change_variable = { name = murim_sect_merit add = 3 }
+	# Stewardship bonus for efficient contribution
+	if = {
+		limit = { stewardship >= 12 }
+		change_variable = { name = murim_sect_merit add = 2 }
+	}
+	add_prestige = 10
+	# Sect rank advancement check
+	if = {
+		limit = {
+			exists = var:murim_sect_merit
+			var:murim_sect_merit >= 50
+		}
+		set_variable = { name = murim_sect_merit value = 0 }
+		add_prestige = 100
+		send_interface_toast = {
+			title = murim_sect_merit_milestone_toast
+			left_icon = root
+		}
+	}
+	add_character_flag = { flag = murim_sect_duty_cooldown days = 14 }
+}
+
+murim_apply_sect_mission_complete_effect = {
+	# Completed a sect mission
+	if = {
+		limit = {
+			NOT = { exists = var:murim_sect_merit }
+		}
+		set_variable = { name = murim_sect_merit value = 0 }
+	}
+	change_variable = { name = murim_sect_merit add = 10 }
+	add_prestige = 50
+	add_gold = 25
+	# Reputation boost within sect
+	random = {
+		chance = 20
+		add_piety = 25
+	}
+}
+
+murim_apply_sect_mission_failed_effect = {
+	# Failed a sect mission -- reputation loss
+	if = {
+		limit = {
+			exists = var:murim_sect_merit
+			var:murim_sect_merit >= 5
+		}
+		change_variable = { name = murim_sect_merit add = -5 }
+	}
+	add_stress = 20
+	add_prestige = -25
+}
+
+######################################
+# ALCHEMY PRACTICE EFFECTS
+######################################
+
+murim_apply_alchemy_practice_effect = {
+	# Practice alchemy to create pills and elixirs
+	if = {
+		limit = {
+			NOT = { exists = var:murim_alchemy_xp }
+		}
+		set_variable = { name = murim_alchemy_xp value = 0 }
+	}
+	# XP based on learning
+	if = {
+		limit = { learning >= 18 }
+		change_variable = { name = murim_alchemy_xp add = 5 }
+	}
+	else_if = {
+		limit = { learning >= 12 }
+		change_variable = { name = murim_alchemy_xp add = 3 }
+	}
+	else = {
+		change_variable = { name = murim_alchemy_xp add = 1 }
+	}
+	# Require herb stockpile
+	if = {
+		limit = {
+			exists = var:murim_herb_stockpile
+			var:murim_herb_stockpile >= 3
+		}
+		change_variable = { name = murim_herb_stockpile add = -3 }
+		change_variable = { name = murim_alchemy_xp add = 2 }
+	}
+	# Accident risk
+	random = {
+		chance = 8
+		add_character_modifier = { modifier = murim_mild_poison_affliction months = 1 }
+		add_stress = 10
+	}
+	# Mastery milestone
+	if = {
+		limit = {
+			exists = var:murim_alchemy_xp
+			var:murim_alchemy_xp >= 30
+		}
+		set_variable = { name = murim_alchemy_xp value = 0 }
+		add_learning_skill = 1
+		send_interface_toast = {
+			title = murim_alchemy_mastery_milestone_toast
+			left_icon = root
+		}
+	}
+	add_character_flag = { flag = murim_alchemy_cooldown days = 14 }
+}
+
+murim_apply_pill_refinement_success_effect = {
+	# Successfully refined a pill
+	add_prestige = 30
+	random_list = {
+		40 = {
+			# Healing pill
+			if = {
+				limit = { has_trait = wounded_1 }
+				remove_trait = wounded_1
+			}
+			else = {
+				add_stress = -15
+			}
+		}
+		30 = {
+			# Cultivation pill
+			if = {
+				limit = {
+					NOT = { exists = var:murim_cultivation_progress }
+				}
+				set_variable = { name = murim_cultivation_progress value = 0 }
+			}
+			change_variable = { name = murim_cultivation_progress add = 3 }
+		}
+		20 = {
+			# Strength pill
+			add_prowess_skill = 1
+		}
+		10 = {
+			# Rare pill -- major boost
+			add_prestige = 100
+			if = {
+				limit = {
+					NOT = { exists = var:murim_cultivation_progress }
+				}
+				set_variable = { name = murim_cultivation_progress value = 0 }
+			}
+			change_variable = { name = murim_cultivation_progress add = 5 }
+		}
+	}
+}
+
+murim_apply_pill_refinement_failure_effect = {
+	# Failed pill refinement -- explosion or toxic fumes
+	add_stress = 20
+	random_list = {
+		40 = {
+			# Furnace explosion
+			add_character_modifier = { modifier = murim_heavenly_fire_burns months = 2 }
+			random = {
+				chance = 15
+				add_trait = wounded_1
+			}
+		}
+		35 = {
+			# Toxic fumes
+			add_character_modifier = { modifier = murim_moderate_poison_affliction months = 2 }
+		}
+		25 = {
+			# Material wasted
+			add_gold = -15
+		}
+	}
+}
+
+######################################
+# FORMATION STUDY EFFECTS
+######################################
+
+murim_apply_formation_study_effect = {
+	# Study battle formations and arrays
+	if = {
+		limit = {
+			NOT = { exists = var:murim_formation_knowledge }
+		}
+		set_variable = { name = murim_formation_knowledge value = 0 }
+	}
+	# Knowledge gain based on learning and martial
+	if = {
+		limit = {
+			learning >= 12
+			martial >= 12
+		}
+		change_variable = { name = murim_formation_knowledge add = 4 }
+	}
+	else_if = {
+		limit = { learning >= 10 }
+		change_variable = { name = murim_formation_knowledge add = 2 }
+	}
+	else = {
+		change_variable = { name = murim_formation_knowledge add = 1 }
+	}
+	# Comprehension overload risk
+	random = {
+		chance = 5
+		add_character_modifier = { modifier = murim_dao_comprehension_overload months = 2 }
+		add_stress = 15
+	}
+	# Formation mastery milestone
+	if = {
+		limit = {
+			exists = var:murim_formation_knowledge
+			var:murim_formation_knowledge >= 25
+		}
+		set_variable = { name = murim_formation_knowledge value = 0 }
+		add_martial_skill = 1
+		add_learning_skill = 1
+		send_interface_toast = {
+			title = murim_formation_mastery_toast
+			left_icon = root
+		}
+	}
+	add_character_flag = { flag = murim_formation_study_cooldown days = 21 }
+}
+
+######################################
+# WEAPON MASTERY GRIND EFFECTS
+######################################
+
+murim_apply_weapon_mastery_practice_effect = {
+	# Practice weapon arts for mastery
+	if = {
+		limit = {
+			NOT = { exists = var:murim_weapon_practice_xp }
+		}
+		set_variable = { name = murim_weapon_practice_xp value = 0 }
+	}
+	# XP gain based on prowess
+	if = {
+		limit = { prowess >= 18 }
+		change_variable = { name = murim_weapon_practice_xp add = 5 }
+	}
+	else_if = {
+		limit = { prowess >= 12 }
+		change_variable = { name = murim_weapon_practice_xp add = 3 }
+	}
+	else = {
+		change_variable = { name = murim_weapon_practice_xp add = 2 }
+	}
+	# Injury risk
+	random = {
+		chance = 7
+		add_character_modifier = { modifier = murim_weapon_practice_injury months = 1 }
+	}
+	# Mastery milestone
+	if = {
+		limit = {
+			exists = var:murim_weapon_practice_xp
+			var:murim_weapon_practice_xp >= 25
+		}
+		set_variable = { name = murim_weapon_practice_xp value = 0 }
+		add_prowess_skill = 1
+		random = {
+			chance = 30
+			add_martial_skill = 1
+		}
+		send_interface_toast = {
+			title = murim_weapon_mastery_milestone_toast
+			left_icon = root
+		}
+	}
+	add_character_flag = { flag = murim_weapon_practice_cooldown days = 10 }
+}
+
+murim_apply_weapon_breakthrough_effect = {
+	# Achieved a weapon mastery breakthrough
+	add_prowess_skill = 2
+	add_prestige = 75
+	random = {
+		chance = 40
+		add_martial_skill = 1
+	}
+	# Notify ranking system
+	if = {
+		limit = {
+			exists = var:murim_hidden_rank_score
+		}
+		change_variable = { name = murim_hidden_rank_score add = 5 }
+	}
+	send_interface_toast = {
+		title = murim_weapon_breakthrough_toast
+		left_icon = root
+	}
+}
+
+######################################
+# MENTAL CULTIVATION EFFECTS
+######################################
+
+murim_apply_dao_comprehension_effect = {
+	# Study the Dao for spiritual advancement
+	add_piety = 15
+	add_learning_skill = 0
+	random = {
+		chance = 15
+		add_learning_skill = 1
+	}
+	# Chance to reduce bottleneck
+	if = {
+		limit = {
+			has_character_modifier = murim_bottleneck_frustration
+		}
+		random = {
+			chance = 20
+			remove_character_modifier = murim_bottleneck_frustration
+			send_interface_toast = {
+				title = murim_bottleneck_overcome_toast
+				left_icon = root
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_character_modifier = murim_bottleneck_stagnation
+		}
+		random = {
+			chance = 15
+			remove_character_modifier = murim_bottleneck_stagnation
+		}
+	}
+	add_stress = -5
+	add_character_flag = { flag = murim_dao_study_cooldown days = 30 }
+}
+
+murim_apply_dao_enlightenment_effect = {
+	# Major Dao enlightenment -- rare and powerful
+	add_piety = 100
+	add_learning_skill = 1
+	random = {
+		chance = 30
+		add_prowess_skill = 1
+	}
+	add_stress = -40
+	# Remove bottleneck modifiers
+	if = {
+		limit = { has_character_modifier = murim_bottleneck_frustration }
+		remove_character_modifier = murim_bottleneck_frustration
+	}
+	if = {
+		limit = { has_character_modifier = murim_bottleneck_desperation }
+		remove_character_modifier = murim_bottleneck_desperation
+	}
+	if = {
+		limit = { has_character_modifier = murim_bottleneck_stagnation }
+		remove_character_modifier = murim_bottleneck_stagnation
+	}
+	if = {
+		limit = { has_character_modifier = murim_bottleneck_inner_demons }
+		remove_character_modifier = murim_bottleneck_inner_demons
+	}
+	# Cultivation progress boost
+	if = {
+		limit = {
+			NOT = { exists = var:murim_cultivation_progress }
+		}
+		set_variable = { name = murim_cultivation_progress value = 0 }
+	}
+	change_variable = { name = murim_cultivation_progress add = 10 }
+	send_interface_toast = {
+		title = murim_dao_enlightenment_toast
+		left_icon = root
+	}
+}
+
+######################################
+# RECOVERY AND HEALING EFFECTS
+######################################
+
+murim_apply_healing_meditation_effect = {
+	# Healing meditation to recover from injuries
+	add_stress = -15
+	# Attempt to heal wounds
+	if = {
+		limit = { has_trait = wounded_1 }
+		random = {
+			chance = 25
+			remove_trait = wounded_1
+			send_interface_toast = {
+				title = murim_wound_healed_toast
+				left_icon = root
+			}
+		}
+	}
+	# Remove minor penalties
+	if = {
+		limit = { has_character_modifier = murim_overtraining_exhaustion }
+		random = {
+			chance = 40
+			remove_character_modifier = murim_overtraining_exhaustion
+		}
+	}
+	if = {
+		limit = { has_character_modifier = murim_muscle_tear_recovery }
+		random = {
+			chance = 35
+			remove_character_modifier = murim_muscle_tear_recovery
+		}
+	}
+	if = {
+		limit = { has_character_modifier = murim_sparring_concussion }
+		random = {
+			chance = 30
+			remove_character_modifier = murim_sparring_concussion
+		}
+	}
+	add_character_flag = { flag = murim_healing_cooldown days = 30 }
+}
+
+murim_apply_qi_deviation_recovery_effect = {
+	# Attempt to recover from qi deviation
+	if = {
+		limit = { has_character_modifier = murim_qi_deviation_mild }
+		random = {
+			chance = 40
+			remove_character_modifier = murim_qi_deviation_mild
+			send_interface_toast = {
+				title = murim_qi_deviation_recovered_toast
+				left_icon = root
+			}
+		}
+	}
+	else_if = {
+		limit = { has_character_modifier = murim_qi_deviation_moderate }
+		random = {
+			chance = 25
+			remove_character_modifier = murim_qi_deviation_moderate
+			add_character_modifier = { modifier = murim_qi_deviation_mild months = 3 }
+		}
+	}
+	else_if = {
+		limit = { has_character_modifier = murim_qi_deviation_severe }
+		random = {
+			chance = 15
+			remove_character_modifier = murim_qi_deviation_severe
+			add_character_modifier = { modifier = murim_qi_deviation_moderate months = 6 }
+		}
+	}
+	add_stress = -10
+	add_character_flag = { flag = murim_qi_recovery_cooldown days = 60 }
 }
