@@ -1,0 +1,1085 @@
+###############################################################################
+# MURIM CLAN HARMONY EVENTS
+# Internal clan politics: harmony score, succession crises, coups,
+# betrayals, elder councils, loyalty tests, faction splits.
+# All 9 clans: Mount Hua, Shaolin, Wudang, Tang Clan, Beggar Sect,
+#   Iron Fist Gate, Heavenly Demon Sect, Poison Flower Palace, Phantom Blade Sect
+# Cross-refs: murim_sect_politics_events, murim_faction_war_events,
+#   murim_succession_crisis_events, murim_clan_effects.txt,
+#   murim_on_actions.txt (monthly pulse)
+# GENDER: Men and women equally in all clan roles.
+# HIERARCHY: Leader > Vice Leader > Elder > Inner Disciple > Outer Disciple
+###############################################################################
+
+namespace = murim_harmony
+
+###############################################################################
+# 1. CLAN HARMONY ASSESSMENT
+# Monthly pulse event - clan leader evaluates internal harmony
+# Harmony score affects recruitment, training speed, defection rate
+###############################################################################
+murim_harmony.0001 = {
+	type = character_event
+	title = murim_harmony.0001.t
+	desc = murim_harmony.0001.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_disciple
+			has_trait = beggar_sect_disciple
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = murim_harmony_assessed_recently }
+	}
+
+	weight_multiplier = {
+		base = 1.0
+		modifier = { add = 0.5 diplomacy >= 14 }
+	}
+
+	immediate = {
+		set_character_flag = { flag = murim_harmony_assessed_recently days = 90 }
+		# Count loyal disciples vs dissatisfied ones
+		set_local_variable = { name = harmony_score value = 50 }
+		if = {
+			limit = { diplomacy >= 16 }
+			change_local_variable = { name = harmony_score add = 15 }
+		}
+		if = {
+			limit = { has_trait = just }
+			change_local_variable = { name = harmony_score add = 10 }
+		}
+		if = {
+			limit = { has_trait = generous }
+			change_local_variable = { name = harmony_score add = 10 }
+		}
+		if = {
+			limit = { has_trait = cruel }
+			change_local_variable = { name = harmony_score add = -15 }
+		}
+		if = {
+			limit = { has_trait = arbitrary }
+			change_local_variable = { name = harmony_score add = -10 }
+		}
+		if = {
+			limit = { has_trait = greedy }
+			change_local_variable = { name = harmony_score add = -10 }
+		}
+		set_variable = { name = murim_clan_harmony value = local_var:harmony_score }
+	}
+
+	# High harmony - reward loyal disciples, strengthen bonds
+	option = {
+		name = murim_harmony.0001.a
+		trigger = {
+			scope:harmony_score >= 65
+		}
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_harmonious_clan_leadership
+			years = 1
+		}
+		create_character_memory = {
+			type = clan_harmony_high_memory
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Address grievances - hold an open forum for complaints
+	option = {
+		name = murim_harmony.0001.b
+		add_diplomacy_skill = 1
+		add_stress = 15
+		add_character_modifier = {
+			modifier = murim_open_leadership
+			years = 1
+		}
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 10 }
+		}
+		create_character_memory = {
+			type = held_clan_grievance_forum_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = just }
+		}
+	}
+
+	# Rule with iron fist - silence dissent
+	option = {
+		name = murim_harmony.0001.c
+		add_dread = 25
+		add_stress = -10
+		add_character_modifier = {
+			modifier = murim_iron_rule_clan_leader
+			years = 1
+		}
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = -15 }
+			random_list = {
+				60 = { # Dissent suppressed for now }
+				40 = {
+					trigger_event = { id = murim_harmony.0003 days = { 60 120 } }
+				}
+			}
+		}
+		create_character_memory = {
+			type = silenced_clan_dissent_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = cruel }
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+}
+
+###############################################################################
+# 2. ELDER COUNCIL DISAGREEMENT
+# Clan elders disagree on a major decision - leader must mediate
+###############################################################################
+murim_harmony.0002 = {
+	type = character_event
+	title = murim_harmony.0002.t
+	desc = murim_harmony.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:dissenting_elder
+		animation = personality_dishonorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_disciple
+			has_trait = beggar_sect_disciple
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = elder_council_disagreement_recent }
+	}
+
+	weight_multiplier = {
+		base = 0.7
+		modifier = { add = 0.5 has_trait = arbitrary }
+		modifier = { add = -0.3 has_trait = just }
+	}
+
+	immediate = {
+		set_character_flag = { flag = elder_council_disagreement_recent years = 2 }
+		random_courtier = {
+			limit = {
+				has_trait = martial_artist
+				age >= 45
+				prowess >= 10
+				NOT = { this = root }
+			}
+			save_scope_as = dissenting_elder
+		}
+		create_character_memory = {
+			type = elder_council_disagreement_memory
+		}
+	}
+
+	# Side with the dissenting elder - compromise
+	option = {
+		name = murim_harmony.0002.a
+		trigger = { exists = scope:dissenting_elder }
+		add_diplomacy_skill = 1
+		add_stress = 10
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 10 }
+			scope:dissenting_elder = {
+				add_opinion = { modifier = grateful_opinion target = root opinion = 20 }
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_diplomatic_clan_leader
+			years = 2
+		}
+		create_character_memory = {
+			type = compromised_with_elder_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = diplomatic }
+		}
+	}
+
+	# Override the elder - your word is law
+	option = {
+		name = murim_harmony.0002.b
+		trigger = { exists = scope:dissenting_elder }
+		add_prestige = 100
+		add_dread = 15
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = -10 }
+			scope:dissenting_elder = {
+				add_opinion = { modifier = angry_opinion target = root opinion = -30 }
+			}
+			random_list = {
+				70 = { # Elder submits }
+				30 = {
+					# Elder begins plotting
+					trigger_event = { id = murim_harmony.0004 days = { 90 180 } }
+				}
+			}
+		}
+		create_character_memory = {
+			type = overruled_clan_elder_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = ambitious }
+		}
+	}
+
+	# Challenge the elder to a duel to settle the matter
+	option = {
+		name = murim_harmony.0002.c
+		trigger = {
+			exists = scope:dissenting_elder
+			prowess >= 14
+		}
+		add_prestige = 50
+		add_stress = 20
+		hidden_effect = {
+			trigger_event = { id = murim_duel.0001 days = { 3 7 } }
+		}
+		create_character_memory = {
+			type = challenged_elder_to_settle_dispute_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = wrathful }
+		}
+	}
+}
+
+###############################################################################
+# 3. COUP ATTEMPT - DISCIPLE REBELLION
+# A powerful inner disciple attempts to seize clan leadership by force
+###############################################################################
+murim_harmony.0003 = {
+	type = character_event
+	title = murim_harmony.0003.t
+	desc = murim_harmony.0003.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:coup_leader
+		animation = personality_dishonorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_disciple
+			has_trait = beggar_sect_disciple
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = survived_coup_attempt_recently }
+	}
+
+	weight_multiplier = {
+		base = 0.3
+		modifier = { add = 0.5 has_variable_value = { name = murim_clan_harmony value <= 30 } }
+		modifier = { add = 0.3 has_trait = cruel }
+		modifier = { add = -0.3 has_trait = just }
+	}
+
+	immediate = {
+		set_character_flag = { flag = survived_coup_attempt_recently years = 5 }
+		random_courtier = {
+			limit = {
+				has_trait = martial_artist
+				has_trait = ambitious
+				prowess >= 14
+				NOT = { this = root }
+				NOT = { has_opinion_modifier = { modifier = grateful_opinion target = root } }
+			}
+			save_scope_as = coup_leader
+		}
+		create_character_memory = {
+			type = coup_attempt_against_leadership_memory
+		}
+	}
+
+	# Face the coup leader in single combat - traditional succession duel
+	option = {
+		name = murim_harmony.0003.a
+		trigger = { exists = scope:coup_leader }
+		add_stress = 30
+		hidden_effect = {
+			random_list = {
+				50 = {
+					modifier = { add = prowess }
+					# Victory - crush the coup
+					add_prowess_skill = 2
+					add_prestige = 500
+					add_dread = 30
+					scope:coup_leader = {
+						add_trait = wounded_2
+						add_prestige = -300
+					}
+					change_variable = { name = murim_clan_harmony add = 15 }
+					create_character_memory = {
+						type = crushed_coup_in_single_combat_memory
+					}
+					trigger_event = { id = murim_rank.0001 days = { 7 14 } }
+				}
+				30 = {
+					# Pyrrhic victory - won but badly injured
+					add_trait = wounded_2
+					add_prestige = 300
+					scope:coup_leader = {
+						add_trait = wounded_3
+					}
+					create_character_memory = {
+						type = pyrrhic_coup_victory_memory
+					}
+				}
+				20 = {
+					modifier = { add = scope:coup_leader.prowess }
+					# Defeat - lose leadership
+					add_trait = wounded_3
+					add_prestige = -500
+					remove_variable = murim_clan_leader
+					set_variable = { name = murim_clan_rank value = 3 }
+					scope:coup_leader = {
+						set_variable = { name = murim_clan_leader value = 1 }
+						add_prestige = 500
+					}
+					create_character_memory = {
+						type = lost_leadership_to_coup_memory
+					}
+					trigger_event = { id = murim_harmony.0005 days = { 14 30 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 prowess >= 20 }
+		}
+	}
+
+	# Rally loyal elders and disciples to surround the traitor
+	option = {
+		name = murim_harmony.0003.b
+		trigger = { exists = scope:coup_leader }
+		add_prestige = 200
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Loyal disciples surround and capture the rebel
+					scope:coup_leader = {
+						imprison = { target = root type = house_arrest }
+					}
+					add_prestige = 300
+					change_variable = { name = murim_clan_harmony add = 5 }
+					create_character_memory = {
+						type = loyal_disciples_captured_rebel_memory
+					}
+				}
+				40 = {
+					# Rebel escapes with supporters - clan splits
+					change_variable = { name = murim_clan_harmony add = -25 }
+					create_character_memory = {
+						type = rebel_escaped_clan_split_memory
+					}
+					trigger_event = { id = murim_faction_war.0001 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 diplomacy >= 16 }
+		}
+	}
+
+	# Offer to step down peacefully - avoid bloodshed
+	option = {
+		name = murim_harmony.0003.c
+		add_prestige = -200
+		add_piety = 200
+		add_stress = -20
+		remove_variable = murim_clan_leader
+		set_variable = { name = murim_clan_rank value = 2 }
+		add_character_modifier = {
+			modifier = murim_graceful_abdication
+			years = 5
+		}
+		create_character_memory = {
+			type = stepped_down_peacefully_memory
+		}
+		hidden_effect = {
+			if = {
+				limit = { exists = scope:coup_leader }
+				scope:coup_leader = {
+					set_variable = { name = murim_clan_leader value = 1 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = content }
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+}
+
+###############################################################################
+# 4. BETRAYAL FROM WITHIN - ELDER SELLS CLAN SECRETS
+# An elder has been caught passing clan techniques to outsiders
+###############################################################################
+murim_harmony.0004 = {
+	type = character_event
+	title = murim_harmony.0004.t
+	desc = murim_harmony.0004.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:traitor_elder
+		animation = personality_dishonorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		NOT = { has_character_flag = dealt_with_traitor_recently }
+	}
+
+	weight_multiplier = {
+		base = 0.4
+		modifier = { add = 0.4 has_variable_value = { name = murim_clan_harmony value <= 40 } }
+	}
+
+	immediate = {
+		set_character_flag = { flag = dealt_with_traitor_recently years = 5 }
+		random_courtier = {
+			limit = {
+				has_trait = martial_artist
+				age >= 40
+				OR = {
+					has_trait = greedy
+					has_trait = deceitful
+					has_trait = arbitrary
+				}
+				NOT = { this = root }
+			}
+			save_scope_as = traitor_elder
+		}
+		create_character_memory = {
+			type = discovered_clan_traitor_memory
+		}
+	}
+
+	# Execute the traitor publicly - send a message
+	option = {
+		name = murim_harmony.0004.a
+		trigger = { exists = scope:traitor_elder }
+		add_dread = 40
+		add_prestige = 100
+		hidden_effect = {
+			scope:traitor_elder = {
+				death = { death_reason = death_execution killer = root }
+			}
+			change_variable = { name = murim_clan_harmony add = -5 }
+		}
+		add_character_modifier = {
+			modifier = murim_executed_clan_traitor
+			years = 5
+		}
+		create_character_memory = {
+			type = executed_clan_traitor_publicly_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 30 has_trait = cruel }
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+
+	# Seal their meridians and banish them - cripple and exile
+	option = {
+		name = murim_harmony.0004.b
+		trigger = { exists = scope:traitor_elder }
+		add_prestige = 200
+		hidden_effect = {
+			scope:traitor_elder = {
+				add_prowess_skill = -10
+				add_trait = incapable
+				add_prestige = -500
+			}
+			change_variable = { name = murim_clan_harmony add = 5 }
+		}
+		add_character_modifier = {
+			modifier = murim_meridian_sealed_traitor
+			years = 3
+		}
+		create_character_memory = {
+			type = sealed_traitor_meridians_banished_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Show mercy - demote to outer disciple under strict watch
+	option = {
+		name = murim_harmony.0004.c
+		trigger = { exists = scope:traitor_elder }
+		add_piety = 150
+		add_stress = 15
+		hidden_effect = {
+			scope:traitor_elder = {
+				set_variable = { name = murim_clan_rank value = 5 }
+				add_opinion = { modifier = grateful_opinion target = root opinion = 15 }
+			}
+			change_variable = { name = murim_clan_harmony add = 10 }
+			random_list = {
+				50 = { # Traitor is reformed }
+				50 = {
+					# Traitor betrays again later
+					trigger_event = { id = murim_harmony.0004 days = { 365 730 } }
+				}
+			}
+		}
+		create_character_memory = {
+			type = showed_mercy_to_traitor_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 20 has_trait = forgiving }
+		}
+	}
+}
+
+###############################################################################
+# 5. SUCCESSION CRISIS - LEADER AGING / INJURED
+# The clan leader is growing old or was badly injured - who succeeds?
+###############################################################################
+murim_harmony.0005 = {
+	type = character_event
+	title = murim_harmony.0005.t
+	desc = murim_harmony.0005.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		OR = {
+			age >= 60
+			has_trait = wounded_3
+			has_trait = incapable
+		}
+		NOT = { has_character_flag = succession_crisis_handled }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 age >= 70 }
+		modifier = { add = 0.5 has_trait = wounded_3 }
+	}
+
+	immediate = {
+		set_character_flag = { flag = succession_crisis_handled years = 5 }
+		random_courtier = {
+			limit = {
+				has_trait = martial_artist
+				age >= 20
+				age <= 45
+				prowess >= 14
+				NOT = { this = root }
+			}
+			save_scope_as = strongest_candidate
+		}
+		random_courtier = {
+			limit = {
+				has_trait = martial_artist
+				age >= 20
+				diplomacy >= 14
+				NOT = { this = root }
+				NOT = { this = scope:strongest_candidate }
+			}
+			save_scope_as = wisest_candidate
+		}
+		create_character_memory = {
+			type = succession_crisis_began_memory
+		}
+	}
+
+	# Choose the strongest fighter as successor
+	option = {
+		name = murim_harmony.0005.a
+		trigger = { exists = scope:strongest_candidate }
+		add_prestige = 100
+		hidden_effect = {
+			remove_variable = murim_clan_leader
+			set_variable = { name = murim_clan_rank value = 2 }
+			scope:strongest_candidate = {
+				set_variable = { name = murim_clan_leader value = 1 }
+				add_prestige = 400
+			}
+			change_variable = { name = murim_clan_harmony add = 5 }
+		}
+		add_character_modifier = {
+			modifier = murim_retired_leader_advisor
+			years = 10
+		}
+		create_character_memory = {
+			type = chose_strongest_successor_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Choose the wisest candidate for stability
+	option = {
+		name = murim_harmony.0005.b
+		trigger = { exists = scope:wisest_candidate }
+		add_prestige = 100
+		add_piety = 100
+		hidden_effect = {
+			remove_variable = murim_clan_leader
+			set_variable = { name = murim_clan_rank value = 2 }
+			scope:wisest_candidate = {
+				set_variable = { name = murim_clan_leader value = 1 }
+				add_prestige = 400
+			}
+			change_variable = { name = murim_clan_harmony add = 15 }
+		}
+		add_character_modifier = {
+			modifier = murim_retired_leader_advisor
+			years = 10
+		}
+		create_character_memory = {
+			type = chose_wisest_successor_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = just }
+		}
+	}
+
+	# Hold a succession tournament - let fate decide
+	option = {
+		name = murim_harmony.0005.c
+		add_prestige = 200
+		add_stress = 10
+		hidden_effect = {
+			trigger_event = { id = murim_tournament.0001 days = { 30 60 } }
+		}
+		create_character_memory = {
+			type = called_succession_tournament_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+}
+
+###############################################################################
+# 6. LOYALTY TEST - DISCIPLE TEMPTED BY RIVAL CLAN
+# A promising disciple was approached by a rival clan with lavish offers
+###############################################################################
+murim_harmony.0006 = {
+	type = character_event
+	title = murim_harmony.0006.t
+	desc = murim_harmony.0006.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:tempted_disciple
+		animation = personality_dishonorable
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		NOT = { has_character_flag = handled_loyalty_temptation }
+	}
+
+	weight_multiplier = {
+		base = 0.6
+		modifier = { add = 0.4 has_variable_value = { name = murim_clan_harmony value <= 40 } }
+	}
+
+	immediate = {
+		set_character_flag = { flag = handled_loyalty_temptation years = 3 }
+		random_courtier = {
+			limit = {
+				has_trait = martial_artist
+				age >= 16
+				age <= 30
+				prowess >= 12
+				NOT = { this = root }
+			}
+			save_scope_as = tempted_disciple
+		}
+		create_character_memory = {
+			type = discovered_disciple_tempted_by_rivals_memory
+		}
+	}
+
+	# Confront the disciple - demand loyalty or leave
+	option = {
+		name = murim_harmony.0006.a
+		trigger = { exists = scope:tempted_disciple }
+		add_prestige = 50
+		add_dread = 10
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Disciple chooses to stay - loyalty renewed
+					scope:tempted_disciple = {
+						add_opinion = { modifier = grateful_opinion target = root opinion = 15 }
+					}
+					change_variable = { name = murim_clan_harmony add = 5 }
+					create_character_memory = {
+						type = disciple_renewed_loyalty_memory
+					}
+				}
+				40 = {
+					# Disciple defects to rival clan
+					change_variable = { name = murim_clan_harmony add = -10 }
+					create_character_memory = {
+						type = disciple_defected_to_rival_memory
+					}
+					trigger_event = { id = murim_faction_war.0001 days = { 60 120 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = honest }
+		}
+	}
+
+	# Increase their rank and responsibilities to counter the offer
+	option = {
+		name = murim_harmony.0006.b
+		trigger = { exists = scope:tempted_disciple }
+		add_prestige = -50
+		hidden_effect = {
+			scope:tempted_disciple = {
+				change_variable = { name = murim_clan_rank add = -1 }
+				add_opinion = { modifier = grateful_opinion target = root opinion = 25 }
+			}
+			change_variable = { name = murim_clan_harmony add = 5 }
+		}
+		add_character_modifier = {
+			modifier = murim_invested_in_disciple_loyalty
+			years = 2
+		}
+		create_character_memory = {
+			type = promoted_disciple_to_retain_loyalty_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = generous }
+		}
+	}
+
+	# Let them go - a disciple who can be bought is not worth keeping
+	option = {
+		name = murim_harmony.0006.c
+		add_piety = 50
+		add_stress = 10
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = -5 }
+		}
+		create_character_memory = {
+			type = let_disloyal_disciple_leave_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = stoic }
+		}
+	}
+}
+
+###############################################################################
+# 7. CLAN FESTIVAL - ANNUAL GATHERING STRENGTHENS BONDS
+# Yearly event where clan members gather, compete, and celebrate
+###############################################################################
+murim_harmony.0007 = {
+	type = character_event
+	title = murim_harmony.0007.t
+	desc = murim_harmony.0007.desc
+	theme = feast
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		OR = {
+			has_variable = murim_clan_leader
+			has_variable_value = { name = murim_clan_rank value <= 2 }
+		}
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_disciple
+			has_trait = beggar_sect_disciple
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = held_clan_festival_recently }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = { add = 0.3 has_trait = gregarious }
+	}
+
+	immediate = {
+		set_character_flag = { flag = held_clan_festival_recently years = 1 }
+		create_character_memory = {
+			type = annual_clan_festival_memory
+		}
+	}
+
+	# Grand festival with internal martial tournament
+	option = {
+		name = murim_harmony.0007.a
+		add_prestige = 200
+		add_gold = -50
+		add_character_modifier = {
+			modifier = murim_grand_clan_festival
+			years = 1
+		}
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 20 }
+			trigger_event = { id = murim_tournament.0001 days = { 7 14 } }
+		}
+		create_character_memory = {
+			type = hosted_grand_clan_festival_memory
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = generous }
+		}
+	}
+
+	# Modest gathering - save resources for training
+	option = {
+		name = murim_harmony.0007.b
+		add_prestige = 50
+		add_gold = -10
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 10 }
+		}
+		add_character_modifier = {
+			modifier = murim_modest_clan_gathering
+			years = 1
+		}
+		create_character_memory = {
+			type = held_modest_clan_gathering_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = temperate }
+		}
+	}
+
+	# Cancel the festival - times are too dangerous
+	option = {
+		name = murim_harmony.0007.c
+		add_stress = 10
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = -10 }
+		}
+		create_character_memory = {
+			type = cancelled_clan_festival_memory
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+}
+
+###############################################################################
+# 8. FACTION SPLIT THREAT - ORTHODOX VS UNORTHODOX WITHIN CLAN
+# Some disciples want to adopt unorthodox methods / orthodox purists rebel
+###############################################################################
+murim_harmony.0008 = {
+	type = character_event
+	title = murim_harmony.0008.t
+	desc = murim_harmony.0008.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_disciple
+			has_trait = beggar_sect_disciple
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = handled_faction_split_threat }
+	}
+
+	weight_multiplier = {
+		base = 0.4
+		modifier = { add = 0.4 has_variable_value = { name = murim_clan_harmony value <= 35 } }
+		modifier = { add = 0.3 has_character_flag = murim_faction_unorthodox }
+	}
+
+	immediate = {
+		set_character_flag = { flag = handled_faction_split_threat years = 5 }
+		create_character_memory = {
+			type = faction_split_threat_within_clan_memory
+		}
+	}
+
+	# Unite the clan - address root grievances through reform
+	option = {
+		name = murim_harmony.0008.a
+		add_diplomacy_skill = 1
+		add_stress = 25
+		add_prestige = 200
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 20 }
+		}
+		add_character_modifier = {
+			modifier = murim_reformed_clan_unity
+			years = 3
+		}
+		create_character_memory = {
+			type = united_clan_through_reform_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 20 diplomacy >= 16 }
+		}
+	}
+
+	# Purge the dissenters - expel those who resist the orthodox/unorthodox way
+	option = {
+		name = murim_harmony.0008.b
+		add_dread = 30
+		add_prestige = 100
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = -15 }
+			random_list = {
+				50 = {
+					# Purge succeeds - dissent crushed
+					create_character_memory = {
+						type = purged_dissenters_successfully_memory
+					}
+				}
+				50 = {
+					# Purged members join rival faction - war escalates
+					create_character_memory = {
+						type = purged_members_joined_enemy_faction_memory
+					}
+					trigger_event = { id = murim_faction_war.0001 days = { 30 90 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = cruel }
+		}
+	}
+
+	# Allow a controlled split - create a branch school
+	option = {
+		name = murim_harmony.0008.c
+		add_prestige = 50
+		add_piety = 100
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 5 }
+			trigger_event = { id = murim_custom_clan.0001 days = { 60 120 } }
+		}
+		add_character_modifier = {
+			modifier = murim_branch_school_founded
+			years = 5
+		}
+		create_character_memory = {
+			type = allowed_branch_school_split_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = 15 has_trait = diplomatic }
+		}
+	}
+}
