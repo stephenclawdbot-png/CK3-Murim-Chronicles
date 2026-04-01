@@ -1,0 +1,789 @@
+# Murim Chronicles Phase 4 - Jianghu Underground AI On Actions
+# AI NPCs autonomously: join underground, plant spies, manipulate politics, rig exams,
+# run protection rackets, control trade, assassinate rivals
+# Personality-driven: ambitious=power grab, intrigue=spy network, honor=expose corruption
+
+######################################
+# YEARLY AI JIANGHU PULSE
+######################################
+
+on_yearly_pulse = {
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				age >= 16
+				is_ai = yes
+				is_imprisoned = no
+				NOT = { has_trait = incapable }
+			}
+
+			# ==========================================
+			# AI: CONSIDER JOINING THE UNDERGROUND
+			# ==========================================
+			if = {
+				limit = {
+					murim_is_valid_jianghu_recruit_trigger = yes
+					NOT = { murim_is_jianghu_member_trigger = yes }
+					OR = {
+						has_trait = ambitious
+						has_trait = deceitful
+						has_trait = schemer
+						AND = {
+							intrigue >= 14
+							has_trait = cynical
+						}
+						AND = {
+							gold < 20
+							has_trait = greedy
+						}
+					}
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = deceitful
+					}
+					modifier = {
+						add = 5
+						intrigue >= 16
+					}
+					modifier = {
+						add = -10
+						has_trait = honest
+					}
+					modifier = {
+						add = -15
+						has_trait = just
+					}
+					set_character_flag = murim_jianghu_inducted
+					set_variable = {
+						name = murim_jianghu_influence
+						value = 5
+					}
+					set_variable = {
+						name = murim_underground_rep
+						value = 0
+					}
+					# Assign starting role based on strongest skill
+					if = {
+						limit = { intrigue >= martial }
+						add_trait = sect_spy
+					}
+					else_if = {
+						limit = { martial >= stewardship }
+						add_trait = jianghu_enforcer
+					}
+					else = {
+						add_trait = black_market_dealer
+					}
+					trigger_event = {
+						id = murim_jianghu.0001
+						days = { 5 30 }
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: PLANT SPIES (Intrigue-focused)
+			# ==========================================
+			if = {
+				limit = {
+					murim_is_jianghu_member_trigger = yes
+					intrigue >= 14
+					gold >= 100
+					NOT = { has_character_flag = murim_has_planted_spy }
+					OR = {
+						has_trait = sect_spy
+						has_trait = shadow_broker
+						has_trait = deceitful
+					}
+				}
+				random = {
+					chance = 20
+					modifier = {
+						add = 15
+						has_trait = shadow_broker
+					}
+					modifier = {
+						add = 10
+						intrigue >= 18
+					}
+					modifier = {
+						add = -10
+						has_trait = lazy
+					}
+					# Find a nearby ruler to spy on
+					random_neighboring_and_across_water_top_liege_realm_owner = {
+						limit = {
+							is_ruler = yes
+							NOT = { murim_is_jianghu_member_trigger = yes }
+						}
+						save_scope_as = spy_target_ruler
+					}
+					if = {
+						limit = { exists = scope:spy_target_ruler }
+						trigger_event = {
+							id = murim_jianghu.0010
+							days = { 10 60 }
+						}
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: MANIPULATE POLITICS (Ambitious power grab)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_influence_court_trigger = yes
+					has_trait = ambitious
+					OR = {
+						has_trait = shadow_broker
+						has_trait = puppet_official
+						intrigue >= 16
+					}
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 15
+						has_trait = shadow_broker
+					}
+					modifier = {
+						add = 10
+						diplomacy >= 16
+					}
+					modifier = {
+						add = 10
+						has_trait = schemer
+					}
+					modifier = {
+						add = -10
+						has_trait = content
+					}
+					trigger_event = {
+						id = murim_jianghu.0020
+						days = { 15 90 }
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: RIG EXAMINATIONS (Scholar-types)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_rig_examination_trigger = yes
+					learning >= 14
+					gold >= 100
+				}
+				random = {
+					chance = 12
+					modifier = {
+						add = 10
+						has_trait = scholar
+					}
+					modifier = {
+						add = 8
+						has_trait = shadow_broker
+					}
+					modifier = {
+						add = -15
+						has_trait = honest
+					}
+					modifier = {
+						add = -20
+						has_trait = just
+					}
+					trigger_event = {
+						id = murim_jianghu.0060
+						days = { 10 45 }
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: RUN PROTECTION RACKETS (Enforcer-types)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_run_protection_racket_trigger = yes
+					OR = {
+						has_trait = jianghu_enforcer
+						has_trait = greedy
+						AND = {
+							has_trait = shadow_broker
+							gold < 100
+						}
+					}
+				}
+				random = {
+					chance = 18
+					modifier = {
+						add = 12
+						has_trait = jianghu_enforcer
+					}
+					modifier = {
+						add = 10
+						prowess >= 16
+					}
+					modifier = {
+						add = 8
+						has_trait = greedy
+					}
+					modifier = {
+						add = -15
+						has_trait = compassionate
+					}
+					trigger_event = {
+						id = murim_jianghu.0030
+						days = { 5 30 }
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: SEIZE TRADE ROUTES (Stewardship-focused)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_seize_trade_route_trigger = yes
+					NOT = { murim_controls_trade_route_trigger = yes }
+					OR = {
+						stewardship >= 14
+						has_trait = greedy
+						has_trait = ambitious
+					}
+				}
+				random = {
+					chance = 10
+					modifier = {
+						add = 10
+						stewardship >= 18
+					}
+					modifier = {
+						add = 8
+						has_trait = greedy
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					modifier = {
+						add = -5
+						has_trait = content
+					}
+					trigger_event = {
+						id = murim_jianghu.0040
+						days = { 20 90 }
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: ASSASSINATE RIVALS (High intrigue + rival)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_commission_assassination_trigger = yes
+					any_relation = {
+						type = rival
+						is_alive = yes
+					}
+				}
+				random = {
+					chance = 8
+					modifier = {
+						add = 10
+						has_trait = sadistic
+					}
+					modifier = {
+						add = 8
+						has_trait = vengeful
+					}
+					modifier = {
+						add = 10
+						has_trait = wrathful
+					}
+					modifier = {
+						add = -20
+						has_trait = forgiving
+					}
+					modifier = {
+						add = -15
+						has_trait = compassionate
+					}
+					random_relation = {
+						type = rival
+						limit = { is_alive = yes }
+						save_scope_as = assassination_target
+					}
+					if = {
+						limit = { exists = scope:assassination_target }
+						murim_assassinate_via_sect_effect = yes
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: EXPOSE CORRUPTION (Honor-driven)
+			# ==========================================
+			if = {
+				limit = {
+					NOT = { murim_is_jianghu_member_trigger = yes }
+					OR = {
+						has_trait = just
+						has_trait = zealous
+						has_trait = honest
+					}
+					intrigue >= 10
+					any_courtier = {
+						murim_can_be_exposed_as_cultivator_trigger = yes
+					}
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 15
+						has_trait = just
+					}
+					modifier = {
+						add = 10
+						has_trait = zealous
+					}
+					modifier = {
+						add = 8
+						has_trait = honest
+					}
+					random_courtier = {
+						limit = {
+							murim_can_be_exposed_as_cultivator_trigger = yes
+						}
+						save_scope_as = exposed_cultivator
+					}
+					if = {
+						limit = { exists = scope:exposed_cultivator }
+						murim_expose_cultivator_effect = yes
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: SHADOW BROKER PROMOTION
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_become_shadow_broker_trigger = yes
+				}
+				random = {
+					chance = 10
+					modifier = {
+						add = 10
+						intrigue >= 20
+					}
+					modifier = {
+						add = 8
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 5
+						gold >= 500
+					}
+					add_trait = shadow_broker
+					trigger_event = {
+						id = murim_jianghu.0050
+						days = { 5 15 }
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: JIANGHU INFLUENCE DECAY / GROWTH
+			# ==========================================
+			if = {
+				limit = {
+					murim_is_jianghu_member_trigger = yes
+					has_variable = murim_jianghu_influence
+				}
+				# Active operatives gain influence
+				if = {
+					limit = {
+						murim_is_active_jianghu_operative_trigger = yes
+						OR = {
+							has_trait = ambitious
+							has_trait = diligent
+						}
+					}
+					change_variable = {
+						name = murim_jianghu_influence
+						add = 3
+					}
+				}
+				# Inactive ones lose it
+				else_if = {
+					limit = {
+						OR = {
+							has_trait = lazy
+							has_trait = content
+							is_imprisoned = yes
+						}
+					}
+					change_variable = {
+						name = murim_jianghu_influence
+						add = -5
+					}
+				}
+				# Natural slow growth for active members
+				else = {
+					change_variable = {
+						name = murim_jianghu_influence
+						add = 1
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: UNDERGROUND REPUTATION EFFECTS
+			# ==========================================
+			if = {
+				limit = {
+					murim_is_jianghu_member_trigger = yes
+					has_variable = murim_underground_rep
+					var:murim_underground_rep >= 50
+				}
+				# High rep members attract followers
+				random = {
+					chance = 10
+					random_courtier = {
+						limit = {
+							murim_is_valid_jianghu_recruit_trigger = yes
+						}
+						save_scope_as = potential_recruit
+					}
+					if = {
+						limit = { exists = scope:potential_recruit }
+						scope:potential_recruit = {
+							set_character_flag = murim_jianghu_inducted
+							add_opinion = {
+								target = root
+								modifier = murim_recruited_me_to_jianghu
+							}
+						}
+						change_variable = {
+							name = murim_jianghu_influence
+							add = 3
+						}
+					}
+				}
+			}
+
+			# ==========================================
+			# AI: LAUNCH IMPERIAL CRACKDOWN (Rulers)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_launch_imperial_crackdown_trigger = yes
+					OR = {
+						has_trait = just
+						has_trait = zealous
+						has_character_flag = murim_discovered_underground
+					}
+				}
+				random = {
+					chance = 8
+					modifier = {
+						add = 12
+						has_trait = zealous
+					}
+					modifier = {
+						add = 10
+						has_character_flag = murim_discovered_underground
+					}
+					modifier = {
+						add = 8
+						has_trait = just
+					}
+					modifier = {
+						add = -10
+						has_trait = lazy
+					}
+					murim_launch_imperial_crackdown_effect = yes
+				}
+			}
+
+			# ==========================================
+			# AI: JOIN WULIN ALLIANCE (Righteous cultivators)
+			# ==========================================
+			if = {
+				limit = {
+					murim_can_join_wulin_alliance_trigger = yes
+					OR = {
+						has_trait = just
+						has_trait = brave
+						has_trait = honest
+					}
+				}
+				random = {
+					chance = 12
+					modifier = {
+						add = 10
+						has_trait = just
+					}
+					modifier = {
+						add = 8
+						has_trait = brave
+					}
+					modifier = {
+						add = 5
+						prowess >= 18
+					}
+					murim_join_wulin_alliance_effect = yes
+				}
+			}
+
+			# ==========================================
+			# AI: PUPPET REVOLT (Puppets sometimes rebel)
+			# ==========================================
+			if = {
+				limit = {
+					has_trait = puppet_official
+					OR = {
+						has_trait = brave
+						has_trait = ambitious
+						stress >= 60
+						AND = {
+							martial >= 14
+							prowess >= 14
+						}
+					}
+				}
+				random = {
+					chance = 10
+					modifier = {
+						add = 10
+						has_trait = brave
+					}
+					modifier = {
+						add = 8
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 5
+						stress >= 80
+					}
+					modifier = {
+						add = -10
+						has_trait = craven
+					}
+					murim_puppet_revolt_effect = yes
+					trigger_event = {
+						id = murim_jianghu.0045
+						days = { 1 5 }
+					}
+				}
+			}
+		}
+	}
+}
+
+######################################
+# ON DEATH: UNDERGROUND SUCCESSION
+######################################
+
+on_death = {
+	on_actions = {
+		murim_jianghu_leader_death_succession
+	}
+}
+
+murim_jianghu_leader_death_succession = {
+	effect = {
+		if = {
+			limit = {
+				root = { murim_is_jianghu_leader_trigger = yes }
+			}
+			# Find successor among operatives
+			random_living_character = {
+				limit = {
+					murim_is_jianghu_member_trigger = yes
+					is_alive = yes
+					age >= 20
+					NOT = { this = root }
+				}
+				alternative_limit = {
+					murim_is_jianghu_member_trigger = yes
+					is_alive = yes
+				}
+				weight = {
+					base = 1
+					modifier = {
+						add = 10
+						has_trait = shadow_broker
+					}
+					modifier = {
+						add = 8
+						has_trait = hidden_master
+					}
+					modifier = {
+						add = 5
+						intrigue >= 16
+					}
+					modifier = {
+						add = 3
+						has_trait = ambitious
+					}
+				}
+				save_scope_as = jianghu_successor
+			}
+			if = {
+				limit = { exists = scope:jianghu_successor }
+				scope:jianghu_successor = {
+					change_variable = {
+						name = murim_jianghu_influence
+						add = 20
+					}
+					add_character_modifier = {
+						modifier = murim_inherited_network
+						years = 5
+					}
+					trigger_event = {
+						id = murim_jianghu.0055
+						days = { 5 15 }
+					}
+				}
+			}
+		}
+	}
+}
+
+######################################
+# ON WAR STARTED: UNDERGROUND OPPORTUNISM
+######################################
+
+on_war_started = {
+	effect = {
+		# Jianghu operatives see war as opportunity
+		every_living_character = {
+			limit = {
+				murim_is_active_jianghu_operative_trigger = yes
+				OR = {
+					is_vassal_of = root.primary_attacker
+					is_vassal_of = root.primary_defender
+				}
+			}
+			random = {
+				chance = 25
+				modifier = {
+					add = 15
+					has_trait = ambitious
+				}
+				modifier = {
+					add = 10
+					has_trait = shadow_broker
+				}
+				trigger_event = {
+					id = murim_jianghu.0075
+					days = { 10 30 }
+				}
+			}
+		}
+	}
+}
+
+######################################
+# ON TITLE GAINED: CHECK FOR PUPPET
+######################################
+
+on_title_gain = {
+	effect = {
+		if = {
+			limit = {
+				root = { has_trait = puppet_official }
+			}
+			# Notify the puppet's controller
+			every_living_character = {
+				limit = {
+					has_character_modifier = murim_puppet_master
+				}
+				trigger_event = {
+					id = murim_jianghu.0046
+					days = { 1 3 }
+				}
+			}
+		}
+	}
+}
+
+######################################
+# FIVE-YEAR PULSE: MAJOR JIANGHU SHIFTS
+######################################
+
+on_five_year_pulse = {
+	effect = {
+		# Underground tournament cycle
+		random_living_character = {
+			limit = {
+				murim_is_jianghu_leader_trigger = yes
+				gold >= 500
+				NOT = { has_character_modifier = murim_tournament_host_prestige }
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 has_trait = shadow_broker }
+				modifier = { add = 3 var:murim_jianghu_influence >= 60 }
+			}
+			random = {
+				chance = 30
+				murim_host_underground_tournament_effect = yes
+			}
+		}
+
+		# Wulin Alliance summit cycle
+		random_living_character = {
+			limit = {
+				murim_can_call_wulin_summit_trigger = yes
+			}
+			random = {
+				chance = 40
+				murim_call_wulin_summit_effect = yes
+			}
+		}
+
+		# Shadow broker market shift
+		every_living_character = {
+			limit = {
+				murim_is_active_shadow_broker_trigger = yes
+			}
+			random_list = {
+				40 = {
+					# Business is good
+					add_gold = 100
+					change_variable = { name = murim_jianghu_influence add = 5 }
+				}
+				30 = {
+					# Steady
+					add_gold = 50
+				}
+				20 = {
+					# Rival network encroaching
+					change_variable = { name = murim_jianghu_influence add = -5 }
+					add_stress = 10
+				}
+				10 = {
+					# Network partially compromised
+					add_character_modifier = {
+						modifier = murim_network_compromised
+						years = 2
+					}
+					change_variable = { name = murim_jianghu_influence add = -15 }
+				}
+			}
+		}
+	}
+}
