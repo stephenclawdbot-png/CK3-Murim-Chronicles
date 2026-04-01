@@ -2,7 +2,9 @@ version = "0.3.0"
 tags = {
 	"Total Conversion"
 	"Gameplay"
+	"Culture"
 	"Events"
+	"Decisions"
 	"Character Interactions"
 }
 name = "Murim Chronicles"
