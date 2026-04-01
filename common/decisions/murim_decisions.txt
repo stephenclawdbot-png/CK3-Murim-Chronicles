@@ -5,6 +5,7 @@
 #   murim_ranking_events.txt (challenge ranking)
 # GENDER: All decisions equally available to men and women.
 # POLISH FIX HB#58: Fixed tang_clan check to use BOTH tang_clan_member AND tang_clan_disciple
+# HB#59: Added faction allegiance, mentor request, clan audience, seclusion training
 
 # ============================================================
 # OPEN THE MURIM LEDGER
@@ -147,21 +148,23 @@ murim_seek_entry_decision = {
 	is_shown = {
 		NOT = { has_trait = martial_artist }
 		NOT = { has_character_flag = murim_entry_rejected }
-		age >= 14
-		age <= 45
 		OR = {
 			prowess >= 8
-			learning >= 12
+			has_trait = brave
+			has_trait = ambitious
+			has_trait = curious
 		}
 	}
 
 	is_valid = {
 		is_alive = yes
 		is_imprisoned = no
+		age >= 12
+		NOT = { has_character_flag = murim_entry_in_progress }
 	}
 
 	cost = {
-		prestige = 100
+		prestige = 50
 	}
 
 	cooldown = {
@@ -169,55 +172,52 @@ murim_seek_entry_decision = {
 	}
 
 	effect = {
+		add_character_flag = { flag = murim_entry_in_progress }
 		# Determine entry path based on character status
 		if = {
 			limit = {
 				is_landed = no
-				NOT = { exists = liege }
+				is_ruler = no
 			}
 			# Landless adventurer path
-			trigger_event = { id = murim_entry.0002 days = { 5 15 } }
+			trigger_event = { id = murim_entry.0001 days = { 10 30 } }
 		}
 		else_if = {
 			limit = {
-				is_landed = yes
+				is_ruler = yes
+				highest_held_title_tier >= tier_county
 			}
 			# Landed noble path
-			trigger_event = { id = murim_entry.0004 days = { 10 30 } }
+			trigger_event = { id = murim_entry.0003 days = { 10 30 } }
 		}
 		else_if = {
 			limit = {
-				exists = liege
-				is_landed = no
+				is_courtier = yes
 			}
-			# Courtier path
-			trigger_event = { id = murim_entry.0006 days = { 7 20 } }
+			# Courtier exposure path
+			trigger_event = { id = murim_entry.0005 days = { 10 30 } }
 		}
 		else = {
-			# Exploration/discovery path
-			trigger_event = { id = murim_entry.0008 days = { 15 45 } }
+			# Exploration discovery path
+			trigger_event = { id = murim_entry.0007 days = { 10 30 } }
 		}
 	}
 
 	ai_potential = {
 		prowess >= 10
-		OR = {
-			has_trait = brave
-			has_trait = ambitious
-			has_trait = curious
-		}
+		has_trait = brave
 	}
 
 	ai_will_do = {
 		base = 5
-		modifier = { add = 10 prowess >= 14 }
+		modifier = { add = 10 has_trait = ambitious }
 		modifier = { add = 10 has_trait = brave }
-		modifier = { add = 5 has_trait = ambitious }
+		modifier = { add = -20 has_trait = craven }
 	}
 }
 
 # ============================================================
-# CHALLENGE RANKING POSITION
+# CHALLENGE RANKING (quick access for martial artists)
 # ============================================================
 murim_challenge_ranking_decision = {
 	title = murim_challenge_ranking_decision_title
@@ -227,19 +227,197 @@ murim_challenge_ranking_decision = {
 
 	is_shown = {
 		murim_is_martial_artist_trigger = yes
-		has_variable = murim_martial_rank_position
-		var:murim_martial_rank_position >= 2
+		has_variable = murim_ranking_position
 	}
 
 	is_valid = {
 		is_alive = yes
 		is_imprisoned = no
 		NOT = { has_character_modifier = murim_recent_challenge_cooldown }
-		NOT = { has_character_modifier = murim_recent_duel_cooldown }
+		NOT = { has_variable = murim_active_duel }
 	}
 
 	cost = {
-		prestige = 200
+		prestige = 25
+	}
+
+	cooldown = {
+		days = 365
+	}
+
+	effect = {
+		trigger_event = { id = murim_rank.0001 }
+		add_character_modifier = { modifier = murim_recent_challenge_cooldown years = 1 }
+	}
+
+	ai_potential = {
+		prowess >= 15
+		has_trait = ambitious
+	}
+
+	ai_will_do = {
+		base = 10
+		modifier = { add = 15 has_trait = brave }
+		modifier = { add = 10 has_trait = ambitious }
+		modifier = { add = -30 has_trait = craven }
+	}
+}
+
+# ============================================================
+# DECLARE FACTION ALLEGIANCE (Orthodox vs Unorthodox)
+# Choose between Murim Alliance (orthodox) and
+# Heavenly Demon Cult (unorthodox). Affects all
+# future faction war events and clan politics.
+# ============================================================
+murim_declare_faction_allegiance_decision = {
+	title = murim_declare_faction_allegiance_decision_title
+	desc = murim_declare_faction_allegiance_decision_desc
+
+	ai_check_interval = 120
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_variable = murim_faction_alignment }
+		# Must be in a clan to declare
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_monk
+			has_trait = heavenly_demon_disciple
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+			has_trait = tang_clan_member
+			has_trait = tang_clan_disciple
+		}
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+	}
+
+	cost = { }
+
+	cooldown = {
+		years = 20
+	}
+
+	effect = {
+		trigger_event = { id = murim_faction_war.0010 }
+	}
+
+	ai_potential = {
+		always = yes
+	}
+
+	ai_will_do = {
+		base = 40
+		modifier = { add = 20 has_trait = ambitious }
+		modifier = { add = 10 has_trait = zealous }
+	}
+}
+
+# ============================================================
+# REQUEST MENTOR ASSIGNMENT
+# Ask your clan to assign you a senior martial artist
+# as a personal mentor. Triggers mentor chain.
+# ============================================================
+murim_request_mentor_decision = {
+	title = murim_request_mentor_decision_title
+	desc = murim_request_mentor_decision_desc
+
+	ai_check_interval = 60
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_variable = murim_current_mentor }
+		NOT = { has_character_modifier = murim_mentor_cooldown }
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_monk
+			has_trait = heavenly_demon_disciple
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+			has_trait = tang_clan_member
+			has_trait = tang_clan_disciple
+		}
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		age <= 35
+		NOT = { has_variable = murim_current_mentor }
+	}
+
+	cost = {
+		prestige = 25
+	}
+
+	cooldown = {
+		years = 3
+	}
+
+	effect = {
+		trigger_event = { id = murim_mentor.0001 days = { 7 14 } }
+		add_character_modifier = { modifier = murim_mentor_cooldown years = 3 }
+	}
+
+	ai_potential = {
+		has_trait = diligent
+		prowess <= 15
+	}
+
+	ai_will_do = {
+		base = 30
+		modifier = { add = 20 has_trait = diligent }
+		modifier = { add = 15 has_trait = humble }
+		modifier = { add = -20 has_trait = arrogant }
+	}
+}
+
+# ============================================================
+# SEEK CLAN AUDIENCE (for unaffiliated martial artists)
+# Request an audience with a clan leader to petition
+# for membership. All 9 clans available.
+# ============================================================
+murim_seek_clan_audience_decision = {
+	title = murim_seek_clan_audience_decision_title
+	desc = murim_seek_clan_audience_decision_desc
+
+	ai_check_interval = 60
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		NOR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_monk
+			has_trait = heavenly_demon_disciple
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+			has_trait = tang_clan_member
+			has_trait = tang_clan_disciple
+		}
+		NOT = { has_character_flag = murim_audience_rejected }
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		prowess >= 8
+	}
+
+	cost = {
+		prestige = 50
+		gold = 25
 	}
 
 	cooldown = {
@@ -247,19 +425,89 @@ murim_challenge_ranking_decision = {
 	}
 
 	effect = {
-		trigger_event = { id = murim_rank.0001 days = { 5 15 } }
-		add_character_modifier = { modifier = murim_recent_challenge_cooldown years = 2 }
+		# Random clan selection weighted by geography and alignment
+		trigger_event = { id = murim_clan_recruit.0001 days = { 7 30 } }
+		add_character_flag = { flag = murim_seeking_clan_audience }
 	}
 
 	ai_potential = {
-		has_trait = ambitious
-		prowess >= 16
+		prowess >= 10
+	}
+
+	ai_will_do = {
+		base = 30
+		modifier = { add = 20 has_trait = gregarious }
+		modifier = { add = 15 has_trait = ambitious }
+		modifier = { add = -20 has_trait = shy }
+	}
+}
+
+# ============================================================
+# ANNOUNCE SECLUSION TRAINING
+# Enter deep cultivation seclusion for 1-3 years.
+# High risk, high reward - breakthrough or qi deviation.
+# Cannot be disturbed during seclusion.
+# ============================================================
+murim_announce_seclusion_decision = {
+	title = murim_announce_seclusion_decision_title
+	desc = murim_announce_seclusion_decision_desc
+
+	ai_check_interval = 120
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_modifier = murim_in_seclusion }
+		NOT = { has_character_modifier = murim_seclusion_cooldown }
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_modifier = murim_in_seclusion }
+		NOT = { is_at_war = yes }
+	}
+
+	cost = {
+		gold = 50
+	}
+
+	cooldown = {
+		years = 5
+	}
+
+	effect = {
+		add_character_modifier = { modifier = murim_in_seclusion years = 2 }
+		add_character_modifier = { modifier = murim_seclusion_cooldown years = 5 }
+		add_character_flag = { flag = murim_entered_seclusion }
+		# Seclusion outcome events fire after 1-2 years
+		trigger_event = { id = murim_cultivation.0020 days = { 365 730 } }
+		# Risk of qi deviation during seclusion
+		random_list = {
+			70 = {
+				# Peaceful seclusion
+				custom_tooltip = murim_seclusion_peaceful_tt
+			}
+			20 = {
+				# Minor qi disruption
+				trigger_event = { id = murim_cultivation.0021 days = { 180 365 } }
+			}
+			10 = {
+				# Major qi deviation - dangerous
+				trigger_event = { id = murim_cultivation.0022 days = { 90 180 } }
+			}
+		}
+	}
+
+	ai_potential = {
+		prowess >= 15
+		has_trait = patient
 	}
 
 	ai_will_do = {
 		base = 10
-		modifier = { add = 20 has_trait = ambitious }
-		modifier = { add = 15 has_trait = brave }
-		modifier = { add = -30 has_trait = craven }
+		modifier = { add = 20 has_trait = patient }
+		modifier = { add = 15 has_trait = diligent }
+		modifier = { add = -30 has_trait = impatient }
+		modifier = { add = -20 has_trait = gregarious }
 	}
 }
