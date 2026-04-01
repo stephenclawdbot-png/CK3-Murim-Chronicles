@@ -1,0 +1,986 @@
+# Murim Chronicles - Game Start World Seeding Effects
+# Fires ONCE on on_game_start. Seeds the entire martial world from turn 1.
+# Bookmark-agnostic: works on 867, 1066, or any custom start date.
+# Uses culture/region triggers (NOT character names) for maximum compatibility.
+# Cross-refs: murim_triggers.txt (shared triggers), murim_seeding_values.txt (power score),
+#             murim_on_actions.txt (yearly talent discovery), murim_ranking_events (initial rankings),
+#             murim_traits.txt (all martial/clan/cultivation traits)
+#
+# INTEGRATION: This effect calls shared triggers from murim_triggers.txt:
+#   is_martial_artist, is_cultivator, is_ranked_fighter, is_clan_member
+# INTEGRATION: This effect calls shared effects from murim_effects.txt:
+#   update_ranking_effect, notify_martial_world_effect
+
+##############################
+# MASTER SEEDING EFFECT
+# Called by murim_game_start_on_actions.txt
+##############################
+
+murim_seed_martial_world_effect = {
+	# ============================
+	# PHASE 1: SEED CORE MURIM HEARTLAND (Goryeo & China)
+	# Target: 80-100 existing characters get martial traits
+	# ============================
+	
+	every_living_character = {
+		limit = {
+			OR = {
+				has_culture_group = korean_group
+				has_culture_group = chinese_group
+				culture = { has_cultural_pillar = heritage_chinese }
+				culture = { has_cultural_pillar = heritage_korean }
+			}
+			age >= 14
+			age <= 65
+			is_alive = yes
+			NOR = {
+				has_trait = martial_artist
+				has_trait = incapable
+				has_trait = infirm
+			}
+		}
+		# Weighted random assignment -- most get nothing, some get martial traits
+		random_list = {
+			# 49% -- no martial talent (majority of population is normal)
+			490 = {
+				# Do nothing -- this character is not a martial artist
+			}
+			# 30% of selected -- basic martial artist (1 technique)
+			300 = {
+				modifier = {
+					factor = 1.5
+					has_trait = brave
+				}
+				modifier = {
+					factor = 1.5
+					prowess >= 10
+				}
+				modifier = {
+					factor = 0.5
+					age >= 50
+				}
+				add_trait = martial_artist
+				# Assign 1 random technique
+				random_list = {
+					10 = { add_trait = basic_sword_technique }
+					10 = { add_trait = basic_fist_technique }
+					10 = { add_trait = basic_internal_arts }
+					10 = { add_trait = basic_body_tempering }
+					10 = { add_trait = basic_qigong }
+					5 = { add_trait = basic_movement_technique }
+					5 = { add_trait = basic_palm_technique }
+				}
+				# Small prowess bump
+				add_prowess_skill = 2
+			}
+			# 15% of selected -- intermediate (2 techniques + cultivation)
+			150 = {
+				modifier = {
+					factor = 2.0
+					prowess >= 14
+				}
+				modifier = {
+					factor = 1.5
+					has_trait = brave
+				}
+				modifier = {
+					factor = 1.3
+					has_trait = ambitious
+				}
+				add_trait = martial_artist
+				# Assign cultivation tier
+				random_list = {
+					60 = { add_trait = qi_condensation }
+					30 = { add_trait = foundation_establishment }
+					10 = { add_trait = core_formation }
+				}
+				# Assign 2 random techniques
+				random_list = {
+					10 = { add_trait = intermediate_sword_technique }
+					10 = { add_trait = intermediate_fist_technique }
+					10 = { add_trait = intermediate_internal_arts }
+					5 = { add_trait = intermediate_body_tempering }
+					5 = { add_trait = intermediate_qigong }
+					5 = { add_trait = intermediate_palm_technique }
+					5 = { add_trait = intermediate_movement_technique }
+				}
+				random_list = {
+					10 = { add_trait = basic_sword_technique }
+					10 = { add_trait = basic_fist_technique }
+					10 = { add_trait = basic_internal_arts }
+					10 = { add_trait = basic_body_tempering }
+					10 = { add_trait = basic_qigong }
+				}
+				add_prowess_skill = 5
+			}
+			# 5% of selected -- advanced (3 techniques + high cultivation + sect)
+			50 = {
+				modifier = {
+					factor = 2.5
+					prowess >= 18
+				}
+				modifier = {
+					factor = 2.0
+					has_trait = brave
+				}
+				modifier = {
+					factor = 1.5
+					has_trait = ambitious
+				}
+				add_trait = martial_artist
+				# High cultivation
+				random_list = {
+					40 = { add_trait = core_formation }
+					40 = { add_trait = nascent_soul }
+					20 = { add_trait = spirit_severing }
+				}
+				# Assign 3 techniques (advanced + intermediate + basic)
+				random_list = {
+					10 = { add_trait = advanced_sword_technique }
+					10 = { add_trait = advanced_fist_technique }
+					10 = { add_trait = advanced_internal_arts }
+					5 = { add_trait = advanced_body_tempering }
+					5 = { add_trait = advanced_qigong }
+				}
+				random_list = {
+					10 = { add_trait = intermediate_sword_technique }
+					10 = { add_trait = intermediate_fist_technique }
+					10 = { add_trait = intermediate_internal_arts }
+				}
+				random_list = {
+					10 = { add_trait = basic_movement_technique }
+					10 = { add_trait = basic_palm_technique }
+					10 = { add_trait = basic_qigong }
+				}
+				add_prowess_skill = 10
+				# Random sect assignment
+				random_list = {
+					20 = { add_trait = mount_hua_disciple }
+					15 = { add_trait = wudang_disciple }
+					15 = { add_trait = shaolin_disciple }
+					15 = { add_trait = tang_clan_member }
+					10 = { add_trait = beggar_sect_member }
+					10 = { add_trait = heavenly_demon_sect_member }
+					15 = { } # Independent -- no sect
+				}
+			}
+			# 1% of selected -- elite (full loadout, Top 50 candidate)
+			10 = {
+				modifier = {
+					factor = 3.0
+					prowess >= 20
+				}
+				modifier = {
+					factor = 2.0
+					age >= 30
+					age <= 55
+				}
+				add_trait = martial_artist
+				# Highest cultivation
+				random_list = {
+					30 = { add_trait = spirit_severing }
+					50 = { add_trait = nascent_soul }
+					20 = { add_trait = dao_seeking }
+				}
+				# Full technique suite
+				add_trait = advanced_sword_technique
+				add_trait = advanced_internal_arts
+				random_list = {
+					10 = { add_trait = advanced_fist_technique }
+					10 = { add_trait = advanced_body_tempering }
+					10 = { add_trait = advanced_qigong }
+				}
+				add_prowess_skill = 18
+				# Elite sect position
+				random_list = {
+					20 = {
+						add_trait = mount_hua_elder
+						add_trait = mount_hua_disciple
+					}
+					15 = {
+						add_trait = wudang_elder
+						add_trait = wudang_disciple
+					}
+					15 = {
+						add_trait = shaolin_elder
+						add_trait = shaolin_disciple
+					}
+					15 = {
+						add_trait = tang_clan_elder
+						add_trait = tang_clan_member
+					}
+					10 = {
+						add_trait = heavenly_demon_sect_elder
+						add_trait = heavenly_demon_sect_member
+					}
+					10 = {
+						add_trait = beggar_sect_elder
+						add_trait = beggar_sect_member
+					}
+					15 = {
+						# Supreme independent master
+						add_trait = wandering_martial_master
+					}
+				}
+				# Mark as Top 50 candidate
+				add_character_flag = top_50_ranking_candidate
+				set_variable = {
+					name = murim_power_score
+					value = 100 # Will be recalculated by ranking system
+				}
+			}
+		}
+	}
+	
+	# ============================
+	# PHASE 2: PRE-POPULATE 6 MAJOR CLANS
+	# Each clan gets 10-15 dedicated members
+	# ============================
+	
+	# --- MOUNT HUA SECT (Righteous, Scholarly, Swordsmanship) ---
+	murim_seed_clan_effect = {
+		CLAN_TRAIT = mount_hua_disciple
+		ELDER_TRAIT = mount_hua_elder
+		INNER_TRAIT = mount_hua_inner_disciple
+		TECHNIQUE_1 = plum_blossom_sword
+		TECHNIQUE_2 = mount_hua_sword_art
+		CULTURE_BIAS = chinese_group
+		ALIGNMENT = righteous
+		TARGET_COUNT = 12
+	}
+	
+	# --- TANG CLAN (Poison, Hidden Weapons, Secretive) ---
+	murim_seed_clan_effect = {
+		CLAN_TRAIT = tang_clan_member
+		ELDER_TRAIT = tang_clan_elder
+		INNER_TRAIT = tang_clan_inner_member
+		TECHNIQUE_1 = tang_poison_mastery
+		TECHNIQUE_2 = tang_hidden_weapons
+		CULTURE_BIAS = chinese_group
+		ALIGNMENT = neutral
+		TARGET_COUNT = 12
+	}
+	
+	# --- HEAVENLY DEMON SECT (Demonic, Ruthless, Raw Power) ---
+	murim_seed_clan_effect = {
+		CLAN_TRAIT = heavenly_demon_sect_member
+		ELDER_TRAIT = heavenly_demon_sect_elder
+		INNER_TRAIT = heavenly_demon_inner_disciple
+		TECHNIQUE_1 = heavenly_demon_art
+		TECHNIQUE_2 = demonic_qi_cultivation
+		CULTURE_BIAS = chinese_group
+		ALIGNMENT = demonic
+		TARGET_COUNT = 10
+	}
+	
+	# --- WUDANG SECT (Taoist, Tai Chi, Internal Arts) ---
+	murim_seed_clan_effect = {
+		CLAN_TRAIT = wudang_disciple
+		ELDER_TRAIT = wudang_elder
+		INNER_TRAIT = wudang_inner_disciple
+		TECHNIQUE_1 = tai_chi_mastery
+		TECHNIQUE_2 = wudang_sword_art
+		CULTURE_BIAS = chinese_group
+		ALIGNMENT = righteous
+		TARGET_COUNT = 12
+	}
+	
+	# --- SHAOLIN TEMPLE (Buddhist, Body Tempering, Discipline) ---
+	murim_seed_clan_effect = {
+		CLAN_TRAIT = shaolin_disciple
+		ELDER_TRAIT = shaolin_elder
+		INNER_TRAIT = shaolin_inner_disciple
+		TECHNIQUE_1 = iron_body_technique
+		TECHNIQUE_2 = shaolin_72_arts
+		CULTURE_BIAS = chinese_group
+		ALIGNMENT = righteous
+		TARGET_COUNT = 14
+	}
+	
+	# --- BEGGAR SECT (Informants, Street Fighting, Everywhere) ---
+	murim_seed_clan_effect = {
+		CLAN_TRAIT = beggar_sect_member
+		ELDER_TRAIT = beggar_sect_elder
+		INNER_TRAIT = beggar_sect_inner_member
+		TECHNIQUE_1 = eighteen_dragon_palms
+		TECHNIQUE_2 = dog_beating_staff
+		CULTURE_BIAS = chinese_group
+		ALIGNMENT = righteous
+		TARGET_COUNT = 15
+	}
+	
+	# ============================
+	# PHASE 3: FILL TOP 50 RANKINGS
+	# Calculate power score for every martial character, assign rank traits
+	# ============================
+	
+	# First pass: calculate power scores for all martial characters
+	every_living_character = {
+		limit = {
+			has_trait = martial_artist
+			is_alive = yes
+			age >= 16
+		}
+		# Calculate hidden power score using murim_seeding_values.txt
+		set_variable = {
+			name = murim_power_score
+			value = murim_calculate_power_score_value
+		}
+	}
+	
+	# Assign Top 10 -- find the 10 highest power score martial artists
+	# CK3 doesn't have native sorting, so we use threshold-based assignment
+	# Elite tier (power score 90+) = Top 10
+	every_living_character = {
+		limit = {
+			has_trait = martial_artist
+			is_alive = yes
+			age >= 16
+			has_variable = murim_power_score
+			var:murim_power_score >= 90
+		}
+		add_trait = top_ten_martial_ranker
+		add_character_flag = murim_ranked_fighter
+		add_character_flag = murim_top_10
+	}
+	
+	# Strong tier (power score 65-89) = Top 50
+	every_living_character = {
+		limit = {
+			has_trait = martial_artist
+			is_alive = yes
+			age >= 16
+			has_variable = murim_power_score
+			var:murim_power_score >= 65
+			var:murim_power_score < 90
+			NOT = { has_trait = top_ten_martial_ranker }
+		}
+		add_trait = top_fifty_martial_ranker
+		add_character_flag = murim_ranked_fighter
+		add_character_flag = murim_top_50
+	}
+	
+	# ============================
+	# PHASE 4: SCATTER WANDERING MASTERS
+	# 8-10 landless adventurers with strong martial traits
+	# ============================
+	
+	# Find existing landless characters and convert them
+	random_living_character = {
+		limit = {
+			is_landed = no
+			OR = {
+				has_culture_group = korean_group
+				has_culture_group = chinese_group
+			}
+			age >= 25
+			age <= 55
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		count = 8
+		weight = {
+			base = 10
+			modifier = {
+				factor = 2
+				prowess >= 12
+			}
+			modifier = {
+				factor = 1.5
+				has_trait = brave
+			}
+		}
+		# Apply wandering master traits
+		add_trait = martial_artist
+		add_trait = wandering_martial_master
+		random_list = {
+			30 = { add_trait = nascent_soul }
+			50 = { add_trait = core_formation }
+			20 = { add_trait = spirit_severing }
+		}
+		random_list = {
+			10 = { add_trait = advanced_sword_technique }
+			10 = { add_trait = advanced_fist_technique }
+			10 = { add_trait = advanced_internal_arts }
+			10 = { add_trait = advanced_body_tempering }
+		}
+		random_list = {
+			10 = { add_trait = intermediate_movement_technique }
+			10 = { add_trait = intermediate_qigong }
+			10 = { add_trait = intermediate_palm_technique }
+		}
+		add_prowess_skill = 12
+		add_character_flag = murim_wandering_master
+		# Some are disguised rankers
+		random_list = {
+			30 = { add_trait = disguised_ranker }
+			70 = { } # Not disguised
+		}
+	}
+	
+	# ============================
+	# PHASE 5: GLOBAL FOREIGN MASTERS (rare, scattered worldwide)
+	# ============================
+	
+	# --- JAPAN: 2-3 masters ---
+	random_living_character = {
+		limit = {
+			has_culture_group = japanese_group
+			age >= 20
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		count = 2
+		weight = {
+			base = 10
+			modifier = { factor = 2 prowess >= 12 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			40 = { add_trait = kenjutsu_master }
+			25 = { add_trait = iaijutsu_expert }
+			20 = { add_trait = shinobi }
+			15 = { add_trait = sohei_warrior }
+		}
+		add_prowess_skill = 8
+		add_character_flag = murim_foreign_master
+	}
+	
+	# --- INDIA: 1-2 masters ---
+	random_living_character = {
+		limit = {
+			OR = {
+				has_culture_group = indo_aryan_group
+				has_culture_group = dravidian_group
+			}
+			age >= 20
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		count = 1
+		weight = {
+			base = 10
+			modifier = { factor = 2 prowess >= 12 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			40 = { add_trait = kalari_warrior }
+			35 = { add_trait = vajramushti_master }
+			25 = { add_trait = yoga_adept }
+		}
+		add_prowess_skill = 8
+		add_character_flag = murim_foreign_master
+	}
+	
+	# --- PERSIA: 1 master ---
+	random_living_character = {
+		limit = {
+			has_culture_group = iranian_group
+			age >= 20
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		weight = {
+			base = 10
+			modifier = { factor = 2 prowess >= 12 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			40 = { add_trait = pahlevani_champion }
+			30 = { add_trait = zurkhane_master }
+			30 = { add_trait = hashashin_blade }
+		}
+		add_prowess_skill = 8
+		add_character_flag = murim_foreign_master
+	}
+	
+	# --- MONGOL STEPPE: 1-2 masters ---
+	random_living_character = {
+		limit = {
+			has_culture_group = mongolic_group
+			age >= 18
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		count = 2
+		weight = {
+			base = 10
+			modifier = { factor = 2 prowess >= 14 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			40 = { add_trait = bokh_champion }
+			35 = { add_trait = mounted_combat_master }
+			25 = { add_trait = tengri_warrior }
+		}
+		add_prowess_skill = 10
+		add_character_flag = murim_foreign_master
+	}
+	
+	# --- NORSE: 1 master ---
+	random_living_character = {
+		limit = {
+			has_culture_group = north_germanic_group
+			age >= 18
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		weight = {
+			base = 10
+			modifier = { factor = 3 has_trait = berserker }
+			modifier = { factor = 2 prowess >= 14 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			50 = { add_trait = berserker_champion }
+			30 = { add_trait = glima_master }
+			20 = { add_trait = rune_warrior }
+		}
+		add_prowess_skill = 10
+		add_character_flag = murim_foreign_master
+	}
+	
+	# --- BYZANTINE: 1 master ---
+	random_living_character = {
+		limit = {
+			has_culture_group = byzantine_group
+			age >= 20
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		weight = {
+			base = 10
+			modifier = { factor = 2 prowess >= 12 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			40 = { add_trait = varangian_axemaster }
+			30 = { add_trait = greek_fire_alchemist }
+			30 = { add_trait = pankration_fighter }
+		}
+		add_prowess_skill = 8
+		add_character_flag = murim_foreign_master
+	}
+	
+	# --- AFRICA: 1 master ---
+	random_living_character = {
+		limit = {
+			OR = {
+				has_culture_group = west_african_group
+				has_culture_group = east_african_group
+				has_culture_group = central_african_group
+			}
+			age >= 18
+			age <= 50
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+		}
+		weight = {
+			base = 10
+			modifier = { factor = 2 prowess >= 12 }
+		}
+		add_trait = martial_artist
+		random_list = {
+			35 = { add_trait = donga_champion }
+			35 = { add_trait = dambe_striker }
+			30 = { add_trait = engolo_dancer }
+		}
+		add_prowess_skill = 8
+		add_character_flag = murim_foreign_master
+	}
+	
+	# ============================
+	# PHASE 6: SET INITIAL CLAN RELATIONSHIPS
+	# ============================
+	
+	# Righteous alliance: Mount Hua, Wudang, Shaolin get mutual +20
+	every_living_character = {
+		limit = {
+			OR = {
+				has_trait = mount_hua_disciple
+				has_trait = wudang_disciple
+				has_trait = shaolin_disciple
+			}
+		}
+		# +50 opinion with same clan
+		every_living_character = {
+			limit = {
+				OR = {
+					AND = {
+						prev = { has_trait = mount_hua_disciple }
+						has_trait = mount_hua_disciple
+					}
+					AND = {
+						prev = { has_trait = wudang_disciple }
+						has_trait = wudang_disciple
+					}
+					AND = {
+						prev = { has_trait = shaolin_disciple }
+						has_trait = shaolin_disciple
+					}
+				}
+				NOT = { this = prev }
+			}
+			add_opinion = {
+				target = prev
+				modifier = same_clan_opinion
+				opinion = 50
+			}
+		}
+		# +20 with other righteous sects
+		every_living_character = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_disciple
+					has_trait = shaolin_disciple
+				}
+				NOT = { this = prev }
+				# Not same clan (already handled above)
+				NOR = {
+					AND = {
+						prev = { has_trait = mount_hua_disciple }
+						has_trait = mount_hua_disciple
+					}
+					AND = {
+						prev = { has_trait = wudang_disciple }
+						has_trait = wudang_disciple
+					}
+					AND = {
+						prev = { has_trait = shaolin_disciple }
+						has_trait = shaolin_disciple
+					}
+				}
+			}
+			add_opinion = {
+				target = prev
+				modifier = righteous_alliance_opinion
+				opinion = 20
+			}
+		}
+		# -30 with Heavenly Demon
+		every_living_character = {
+			limit = {
+				has_trait = heavenly_demon_sect_member
+			}
+			add_opinion = {
+				target = prev
+				modifier = righteous_vs_demonic_opinion
+				opinion = -30
+			}
+		}
+	}
+	
+	# Heavenly Demon: -20 with all righteous
+	every_living_character = {
+		limit = {
+			has_trait = heavenly_demon_sect_member
+		}
+		every_living_character = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_disciple
+					has_trait = shaolin_disciple
+				}
+			}
+			add_opinion = {
+				target = prev
+				modifier = demonic_vs_righteous_opinion
+				opinion = -20
+			}
+		}
+		# +50 within demon sect
+		every_living_character = {
+			limit = {
+				has_trait = heavenly_demon_sect_member
+				NOT = { this = prev }
+			}
+			add_opinion = {
+				target = prev
+				modifier = same_clan_opinion
+				opinion = 50
+			}
+		}
+	}
+	
+	# Beggar Sect: +10 with everyone
+	every_living_character = {
+		limit = {
+			has_trait = beggar_sect_member
+		}
+		every_living_character = {
+			limit = {
+				has_trait = martial_artist
+				NOT = { this = prev }
+			}
+			add_opinion = {
+				target = prev
+				modifier = beggar_sect_goodwill_opinion
+				opinion = 10
+			}
+		}
+		# +50 within beggar sect
+		every_living_character = {
+			limit = {
+				has_trait = beggar_sect_member
+				NOT = { this = prev }
+			}
+			add_opinion = {
+				target = prev
+				modifier = same_clan_opinion
+				opinion = 40 # 10 from goodwill + 40 = 50 total
+			}
+		}
+	}
+	
+	# Tang Clan: +50 within clan, neutral outside
+	every_living_character = {
+		limit = {
+			has_trait = tang_clan_member
+		}
+		every_living_character = {
+			limit = {
+				has_trait = tang_clan_member
+				NOT = { this = prev }
+			}
+			add_opinion = {
+				target = prev
+				modifier = same_clan_opinion
+				opinion = 50
+			}
+		}
+	}
+	
+	# Ranking rivals: fighters within 2 ranks of each other get rivalry
+	every_living_character = {
+		limit = {
+			has_trait = top_ten_martial_ranker
+		}
+		every_living_character = {
+			limit = {
+				has_trait = top_ten_martial_ranker
+				NOT = { this = prev }
+			}
+			# Competitive tension among Top 10
+			add_opinion = {
+				target = prev
+				modifier = ranking_rival_opinion
+				opinion = -15
+			}
+		}
+	}
+}
+
+##############################
+# CLAN SEEDING SUB-EFFECT
+# Called by master seeding for each clan
+##############################
+
+murim_seed_clan_effect = {
+	# Parameters: CLAN_TRAIT, ELDER_TRAIT, INNER_TRAIT, TECHNIQUE_1, TECHNIQUE_2, CULTURE_BIAS, ALIGNMENT, TARGET_COUNT
+	# This is a parameterized effect -- each clan calls it with different values
+	
+	# Find eligible characters for this clan
+	# In practice, each clan block above passes its own traits
+	# The master seeding effect handles this through the random_list in Phase 1
+	# This sub-effect ensures clan structure (elder/inner/outer hierarchy)
+	
+	# After Phase 1 random assignment, enforce hierarchy:
+	# 1 elder (highest prowess in clan)
+	# 3-4 inner disciples
+	# Rest are outer disciples
+	
+	# Find the strongest clan member, make them elder
+	random_living_character = {
+		limit = {
+			has_trait = $CLAN_TRAIT$
+			is_alive = yes
+			NOT = { has_trait = $ELDER_TRAIT$ }
+		}
+		weight = {
+			base = 1
+			modifier = { factor = 10 prowess >= 20 }
+			modifier = { factor = 5 prowess >= 16 }
+			modifier = { factor = 3 age >= 40 }
+		}
+		add_trait = $ELDER_TRAIT$
+		add_trait = $TECHNIQUE_1$
+		add_trait = $TECHNIQUE_2$
+		add_prowess_skill = 8
+	}
+	
+	# Find 3-4 strong members, make them inner disciples
+	random_living_character = {
+		limit = {
+			has_trait = $CLAN_TRAIT$
+			is_alive = yes
+			NOT = { has_trait = $ELDER_TRAIT$ }
+			NOT = { has_trait = $INNER_TRAIT$ }
+		}
+		count = 3
+		weight = {
+			base = 1
+			modifier = { factor = 5 prowess >= 14 }
+			modifier = { factor = 2 age >= 25 }
+		}
+		add_trait = $INNER_TRAIT$
+		add_trait = $TECHNIQUE_1$
+		add_prowess_skill = 4
+	}
+}
+
+##############################
+# ONGOING MARTIAL TALENT DISCOVERY
+# Added to on_yearly_pulse via murim_on_actions.txt
+##############################
+
+murim_yearly_talent_discovery_effect = {
+	# 2% chance for young characters in Korean/Chinese culture
+	every_living_character = {
+		limit = {
+			OR = {
+				has_culture_group = korean_group
+				has_culture_group = chinese_group
+			}
+			age >= 8
+			age <= 16
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+			NOT = { has_trait = incapable }
+		}
+		random = {
+			chance = 2
+			modifier = {
+				factor = 2
+				any_parent = { has_trait = martial_artist }
+			}
+			modifier = {
+				factor = 1.5
+				prowess >= 6
+			}
+			add_trait = martial_artist
+			random_list = {
+				60 = { add_trait = basic_sword_technique }
+				20 = { add_trait = basic_fist_technique }
+				20 = { add_trait = basic_internal_arts }
+			}
+			add_prowess_skill = 1
+			# Notify parents
+			if = {
+				limit = {
+					any_parent = {
+						is_alive = yes
+						has_trait = martial_artist
+					}
+				}
+				random_parent = {
+					limit = {
+						is_alive = yes
+						has_trait = martial_artist
+					}
+					trigger_event = {
+						id = murim_mentor.0001
+						days = 30
+					}
+				}
+			}
+		}
+	}
+	
+	# 0.5% chance for young characters in OTHER cultures globally
+	every_living_character = {
+		limit = {
+			NOR = {
+				has_culture_group = korean_group
+				has_culture_group = chinese_group
+			}
+			age >= 8
+			age <= 16
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+			NOT = { has_trait = incapable }
+		}
+		random = {
+			chance = 1 # ~0.5% effective with modifiers
+			modifier = {
+				factor = 0.5 # Halves to ~0.5%
+			}
+			modifier = {
+				factor = 3
+				any_parent = { has_trait = martial_artist }
+			}
+			modifier = {
+				factor = 2
+				prowess >= 8
+			}
+			add_trait = martial_artist
+			# Culture-appropriate technique
+			random_list = {
+				20 = {
+					trigger = { has_culture_group = japanese_group }
+					add_trait = basic_sword_technique
+				}
+				20 = {
+					trigger = {
+						OR = {
+							has_culture_group = indo_aryan_group
+							has_culture_group = dravidian_group
+						}
+					}
+					add_trait = basic_fist_technique
+				}
+				20 = {
+					trigger = { has_culture_group = mongolic_group }
+					add_trait = basic_body_tempering
+				}
+				20 = {
+					trigger = { has_culture_group = north_germanic_group }
+					add_trait = basic_body_tempering
+				}
+				20 = {
+					# Default for other cultures
+					add_trait = basic_fist_technique
+				}
+			}
+			add_prowess_skill = 1
+		}
+	}
+	
+	# Wandering master natural spawn (every 10-20 years)
+	random = {
+		chance = 7 # ~1 every 14 years on average
+		random_living_character = {
+			limit = {
+				is_landed = no
+				has_trait = martial_artist
+				age >= 30
+				age <= 55
+				is_alive = yes
+				NOT = { has_trait = wandering_martial_master }
+				OR = {
+					has_trait = core_formation
+					has_trait = nascent_soul
+					has_trait = spirit_severing
+				}
+			}
+			weight = {
+				base = 1
+				modifier = { factor = 3 prowess >= 16 }
+			}
+			add_trait = wandering_martial_master
+			add_character_flag = murim_wandering_master
+			# Trigger wandering master event chain
+			trigger_event = {
+				id = murim_daily_life.0005
+				days = { 30 180 }
+			}
+		}
+	}
+}
