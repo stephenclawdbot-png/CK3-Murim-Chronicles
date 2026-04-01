@@ -1,0 +1,444 @@
+# Murim Chronicles - Clan/Sect Membership Management Effects
+# INTEGRATION: ALL sect/clan operations go through these effects.
+# Do NOT add/remove sect traits directly in event files - call these effects.
+# Cross-refs: murim_triggers.txt (murim_is_clan_member_trigger),
+#             murim_clan_triggers.txt (rank checks),
+#             murim_sect_politics_events.txt (promotions/betrayal),
+#             murim_game_start_effects.txt (initial clan seeding),
+#             murim_harmony_values.txt (harmony updates on membership changes)
+# GENDER: No gender restrictions on any membership operation.
+# TANG EXCEPTION: Tang Clan bloodline membership handled separately
+#                 in murim_tang_birthright_effects.txt
+
+########################################
+# JOIN SECT EFFECTS
+########################################
+
+# Join any sect as outer disciple (standard recruitment)
+# Scope: character joining
+# Parameters: uses saved scope sect_type (mount_hua/wudang/shaolin/heavenly_demon/beggar/emei)
+murim_join_sect_as_outer_disciple_effect = {
+	# Verify not already in a sect (no dual membership except Tang associate)
+	if = {
+		limit = {
+			NOR = {
+				has_trait = mount_hua_disciple
+				has_trait = wudang_disciple
+				has_trait = shaolin_monk
+				has_trait = heavenly_demon_disciple
+				has_trait = beggar_sect_member
+				has_trait = emei_disciple
+			}
+		}
+		# Assign sect trait based on type
+		if = {
+			limit = { scope:sect_type = flag:mount_hua }
+			add_trait = mount_hua_disciple
+		}
+		if = {
+			limit = { scope:sect_type = flag:wudang }
+			add_trait = wudang_disciple
+		}
+		if = {
+			limit = { scope:sect_type = flag:shaolin }
+			add_trait = shaolin_monk
+		}
+		if = {
+			limit = { scope:sect_type = flag:heavenly_demon }
+			add_trait = heavenly_demon_disciple
+		}
+		if = {
+			limit = { scope:sect_type = flag:beggar }
+			add_trait = beggar_sect_member
+		}
+		if = {
+			limit = { scope:sect_type = flag:emei }
+			add_trait = emei_disciple
+		}
+		# Assign outer disciple rank
+		add_character_modifier = {
+			modifier = sect_outer_disciple
+		}
+		# Set join date flag for tenure tracking
+		set_variable = {
+			name = sect_join_year
+			value = current_year
+		}
+		# Opinion boost with same-sect members
+		add_character_modifier = {
+			modifier = new_sect_member_enthusiasm
+			years = 1
+		}
+		# Harmony contribution (new member = positive)
+		add_character_flag = {
+			flag = recent_sect_joiner
+		}
+	}
+}
+
+# Join sect as inner disciple (direct recruitment of proven fighter)
+# Used for: established martial artists recruited directly to inner circle
+murim_join_sect_as_inner_disciple_effect = {
+	if = {
+		limit = {
+			NOR = {
+				has_trait = mount_hua_disciple
+				has_trait = wudang_disciple
+				has_trait = shaolin_monk
+				has_trait = heavenly_demon_disciple
+				has_trait = beggar_sect_member
+				has_trait = emei_disciple
+			}
+			prowess >= 12
+		}
+		# Assign sect trait (same logic as outer but skip outer rank)
+		if = {
+			limit = { scope:sect_type = flag:mount_hua }
+			add_trait = mount_hua_disciple
+		}
+		if = {
+			limit = { scope:sect_type = flag:wudang }
+			add_trait = wudang_disciple
+		}
+		if = {
+			limit = { scope:sect_type = flag:shaolin }
+			add_trait = shaolin_monk
+		}
+		if = {
+			limit = { scope:sect_type = flag:heavenly_demon }
+			add_trait = heavenly_demon_disciple
+		}
+		if = {
+			limit = { scope:sect_type = flag:beggar }
+			add_trait = beggar_sect_member
+		}
+		if = {
+			limit = { scope:sect_type = flag:emei }
+			add_trait = emei_disciple
+		}
+		# Direct to inner disciple
+		add_character_modifier = {
+			modifier = sect_inner_disciple
+		}
+		set_variable = {
+			name = sect_join_year
+			value = current_year
+		}
+		add_prestige = 100
+	}
+}
+
+# Tang Clan associate (non-blood allies only)
+# Outsiders can NEVER be tang_clan_member - only tang_clan_associate
+murim_join_tang_as_associate_effect = {
+	if = {
+		limit = {
+			NOT = { has_trait = tang_clan_member }
+			NOT = { has_trait = tang_clan_associate }
+		}
+		add_trait = tang_clan_associate
+		add_character_modifier = {
+			modifier = sect_associate
+		}
+		# Associates get limited technique access
+		add_character_modifier = {
+			modifier = tang_limited_access
+			years = -1
+		}
+		set_variable = {
+			name = sect_join_year
+			value = current_year
+		}
+	}
+}
+
+########################################
+# PROMOTION EFFECTS
+########################################
+
+# Promote outer disciple to inner disciple
+murim_promote_to_inner_disciple_effect = {
+	if = {
+		limit = {
+			has_character_modifier = sect_outer_disciple
+			NOT = { has_character_modifier = sect_inner_disciple }
+		}
+		remove_character_modifier = sect_outer_disciple
+		add_character_modifier = {
+			modifier = sect_inner_disciple
+		}
+		add_prestige = 200
+		# Notify sect leader
+		if = {
+			limit = { exists = scope:sect_leader }
+			scope:sect_leader = {
+				send_interface_toast = {
+					title = murim_promotion_notification
+				}
+			}
+		}
+	}
+}
+
+# Promote inner disciple to elder
+murim_promote_to_elder_effect = {
+	if = {
+		limit = {
+			has_character_modifier = sect_inner_disciple
+			NOT = { has_character_modifier = sect_elder }
+			age >= 30
+			prowess >= 15
+		}
+		remove_character_modifier = sect_inner_disciple
+		add_character_modifier = {
+			modifier = sect_elder
+		}
+		add_prestige = 500
+		add_piety = 100
+	}
+}
+
+# Promote to vice leader
+murim_promote_to_vice_leader_effect = {
+	if = {
+		limit = {
+			has_character_modifier = sect_elder
+			NOT = { has_character_modifier = sect_vice_leader }
+		}
+		remove_character_modifier = sect_elder
+		add_character_modifier = {
+			modifier = sect_vice_leader
+		}
+		add_prestige = 800
+	}
+}
+
+# Promote to sect leader
+murim_promote_to_sect_leader_effect = {
+	if = {
+		limit = {
+			OR = {
+				has_character_modifier = sect_vice_leader
+				has_character_modifier = sect_elder
+			}
+			NOT = { has_character_modifier = sect_leader }
+		}
+		remove_character_modifier = sect_vice_leader
+		remove_character_modifier = sect_elder
+		remove_character_modifier = sect_inner_disciple
+		add_character_modifier = {
+			modifier = sect_leader
+		}
+		add_prestige = 1500
+		add_piety = 300
+		# Cross-ref: notify martial world
+		# Cross-ref: ranking update (leaders are often ranked fighters)
+	}
+}
+
+########################################
+# DEMOTION EFFECTS
+########################################
+
+# Demote inner disciple to outer
+murim_demote_to_outer_disciple_effect = {
+	if = {
+		limit = { has_character_modifier = sect_inner_disciple }
+		remove_character_modifier = sect_inner_disciple
+		add_character_modifier = {
+			modifier = sect_outer_disciple
+		}
+		add_prestige = -200
+		stress_impact = {
+			ambitious = major_stress_gain
+			humble = minor_stress_loss
+		}
+	}
+}
+
+# Demote elder to inner disciple (rare, usually political)
+murim_demote_elder_to_inner_effect = {
+	if = {
+		limit = { has_character_modifier = sect_elder }
+		remove_character_modifier = sect_elder
+		add_character_modifier = {
+			modifier = sect_inner_disciple
+		}
+		add_prestige = -500
+		stress_impact = {
+			ambitious = major_stress_gain
+			proud = major_stress_gain
+		}
+	}
+}
+
+########################################
+# LEAVE / EXPEL EFFECTS
+########################################
+
+# Voluntarily leave sect (peaceful departure)
+murim_leave_sect_voluntarily_effect = {
+	# Remove ALL rank modifiers
+	remove_character_modifier = sect_leader
+	remove_character_modifier = sect_vice_leader
+	remove_character_modifier = sect_elder
+	remove_character_modifier = sect_inner_disciple
+	remove_character_modifier = sect_outer_disciple
+	remove_character_modifier = sect_associate
+	# Remove sect traits
+	if = { limit = { has_trait = mount_hua_disciple } remove_trait = mount_hua_disciple }
+	if = { limit = { has_trait = wudang_disciple } remove_trait = wudang_disciple }
+	if = { limit = { has_trait = shaolin_monk } remove_trait = shaolin_monk }
+	if = { limit = { has_trait = heavenly_demon_disciple } remove_trait = heavenly_demon_disciple }
+	if = { limit = { has_trait = beggar_sect_member } remove_trait = beggar_sect_member }
+	if = { limit = { has_trait = emei_disciple } remove_trait = emei_disciple }
+	if = { limit = { has_trait = tang_clan_associate } remove_trait = tang_clan_associate }
+	# NOTE: tang_clan_member is NEVER removed - blood is blood
+	# Mark as former member
+	add_character_modifier = {
+		modifier = former_sect_member
+		years = 10
+	}
+	add_prestige = -100
+	# Clear tenure variable
+	remove_variable = sect_join_year
+}
+
+# Expelled from sect (dishonorable removal)
+murim_expel_from_sect_effect = {
+	# Same trait/modifier removal as voluntary
+	remove_character_modifier = sect_leader
+	remove_character_modifier = sect_vice_leader
+	remove_character_modifier = sect_elder
+	remove_character_modifier = sect_inner_disciple
+	remove_character_modifier = sect_outer_disciple
+	remove_character_modifier = sect_associate
+	if = { limit = { has_trait = mount_hua_disciple } remove_trait = mount_hua_disciple }
+	if = { limit = { has_trait = wudang_disciple } remove_trait = wudang_disciple }
+	if = { limit = { has_trait = shaolin_monk } remove_trait = shaolin_monk }
+	if = { limit = { has_trait = heavenly_demon_disciple } remove_trait = heavenly_demon_disciple }
+	if = { limit = { has_trait = beggar_sect_member } remove_trait = beggar_sect_member }
+	if = { limit = { has_trait = emei_disciple } remove_trait = emei_disciple }
+	if = { limit = { has_trait = tang_clan_associate } remove_trait = tang_clan_associate }
+	# Expelled mark - much harsher than voluntary departure
+	add_character_modifier = {
+		modifier = sect_exile
+		years = -1
+	}
+	add_prestige = -500
+	add_piety = -100
+	# Former sect members hostile
+	add_character_modifier = {
+		modifier = expelled_sect_stigma
+		years = 20
+	}
+	remove_variable = sect_join_year
+}
+
+########################################
+# BETRAYAL EFFECTS
+########################################
+
+# Mark character as traitor (used by sect_politics events)
+murim_mark_as_sect_traitor_effect = {
+	add_character_modifier = {
+		modifier = sect_traitor
+		years = -1
+	}
+	# All former sect members get opinion penalty
+	add_character_modifier = {
+		modifier = traitor_to_the_sect
+		years = -1
+	}
+	add_prestige = -1000
+	# Righteous sects all get negative opinion if traitor from righteous
+	# Heavenly Demon gets positive if traitor joins them
+}
+
+# Defect to another sect (leave one, join another)
+murim_defect_to_rival_sect_effect = {
+	# First: leave current sect (expelled-level departure)
+	remove_character_modifier = sect_leader
+	remove_character_modifier = sect_vice_leader
+	remove_character_modifier = sect_elder
+	remove_character_modifier = sect_inner_disciple
+	remove_character_modifier = sect_outer_disciple
+	if = { limit = { has_trait = mount_hua_disciple } remove_trait = mount_hua_disciple }
+	if = { limit = { has_trait = wudang_disciple } remove_trait = wudang_disciple }
+	if = { limit = { has_trait = shaolin_monk } remove_trait = shaolin_monk }
+	if = { limit = { has_trait = heavenly_demon_disciple } remove_trait = heavenly_demon_disciple }
+	if = { limit = { has_trait = beggar_sect_member } remove_trait = beggar_sect_member }
+	if = { limit = { has_trait = emei_disciple } remove_trait = emei_disciple }
+	# Mark as defector
+	add_character_modifier = {
+		modifier = sect_defector
+		years = -1
+	}
+	add_prestige = -300
+	# Then: join new sect is handled by the calling event
+	# (it will call murim_join_sect_as_outer_disciple_effect or similar)
+}
+
+########################################
+# SECT TRANSFER (AI yearly pulse)
+########################################
+
+# AI character considers switching sects (~2% yearly chance)
+# Used by on_yearly_pulse in murim_on_actions.txt
+murim_ai_consider_sect_transfer_effect = {
+	# Only AI, not player
+	if = {
+		limit = {
+			is_ai = yes
+			murim_is_clan_member_trigger = yes
+			NOT = { has_character_modifier = sect_leader }
+			NOT = { has_character_modifier = sect_vice_leader }
+			NOT = { has_trait = tang_clan_member } # Blood Tang can never leave
+		}
+		random_list = {
+			98 = { } # No transfer (98% stay)
+			2 = {
+				# Trigger sect politics betrayal/defection consideration
+				trigger_event = {
+					id = murim_sect_politics.0010
+					days = { 1 30 }
+				}
+			}
+		}
+	}
+}
+
+########################################
+# AI SECT LEADER RETIREMENT (yearly pulse)
+########################################
+
+# AI sect leaders consider retirement at age 60+
+murim_ai_leader_retirement_check_effect = {
+	if = {
+		limit = {
+			is_ai = yes
+			has_character_modifier = sect_leader
+			age >= 60
+		}
+		random_list = {
+			90 = { } # Continue leading (90%)
+			10 = {
+				# Retirement - triggers succession
+				remove_character_modifier = sect_leader
+				add_character_modifier = {
+					modifier = sect_elder
+				}
+				add_character_modifier = {
+					modifier = retired_sect_leader
+					years = -1
+				}
+				add_prestige = 500
+				# Cross-ref: succession crisis
+				trigger_event = {
+					id = murim_sect_politics.0004
+					days = { 7 30 }
+				}
+			}
+		}
+	}
+}
