@@ -1,110 +1,152 @@
 # Murim Chronicles - Iron Fist Gate Clan Events
-# THE IMMOVABLE FORTRESS. Pure physical martial arts. No qi tricks, just fists.
-# SIGNATURE: Iron Fist, Stone Body, Thousand Pound Drop, Earthquake Stomp
-# PHILOSOPHY: The body IS the weapon. External cultivation over internal.
-# INTERNAL POLITICS: Traditionalists (fists only) vs Modernists (incorporate weapons).
-# INTEGRATION: murim_clan_triggers.txt (is_iron_fist_member), murim_faction_war_events.txt
-# UNIQUE: Only clan where prowess matters more than learning for ALL advancement.
-# Orthodox faction. Smallest orthodox clan but most feared in direct combat.
+# ORTHODOX. Pure external martial arts. Body cultivation over qi cultivation.
+# SIGNATURE: Iron Body Art, Vajra Fist, Mountain Splitting Palm, Iron Shirt
+# PHILOSOPHY: The body IS the weapon. No sword, no staff, only fists.
+# INTERNAL POLITICS: Traditionalists (pure body) vs Reformists (mix body + qi).
+# UNIQUE: Only clan that values prowess ABOVE cultivation tier. Brute force path.
+# INTEGRATION: murim_combat_events.txt, murim_training_events.txt, murim_ranking_events.txt
 
 namespace = murim_iron_fist
 
-# IRON_FIST.0001 - The Thousand Strikes Trial
-# Every Iron Fist disciple must complete 1000 strikes against the stone pillar.
+##############################
+# EVENT 1: THE IRON BODY TRIAL
+# Every Iron Fist disciple must endure the Iron Body Trial.
+# Stand under a waterfall while elders strike you with iron rods.
+# If you don't break, you become a true member.
+##############################
 murim_iron_fist.0001 = {
 	type = character_event
 	title = murim_iron_fist.0001.t
 	desc = murim_iron_fist.0001.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
+		is_iron_fist_member_trigger = yes
+		NOT = { has_character_flag = iron_fist_body_trial }
+		age >= 15
 	}
-
-	# Complete all thousand strikes
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			prowess >= 12
+		}
+		modifier = {
+			add = 1
+			has_trait = brave
+		}
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_body_trial
+		create_character_memory = {
+			type = iron_fist_body_trial_memory
+		}
+	}
+	
+	# Option A: Endure through sheer willpower (pure grit)
 	option = {
 		name = murim_iron_fist.0001.a
 		random_list = {
 			50 = {
-				add_prowess_skill = 4
+				# Body holds - you pass
+				add_prowess_xp = 500
 				add_character_modifier = {
-					modifier = iron_fist_thousand_strikes_complete
+					modifier = iron_fist_iron_body_stage_one_modifier
 					years = -1
 				}
+				add_trait = brave
 				create_character_memory = {
-					type = iron_fist_trial_success_memory
+					type = iron_fist_trial_passed_memory
 				}
 			}
 			30 = {
-				add_prowess_skill = 2
+				# Body breaks but you don't scream - partial pass
+				add_prowess_xp = 200
 				add_trait = wounded_1
-			}
-			20 = {
-				add_trait = wounded_2
 				add_character_modifier = {
-					modifier = iron_fist_shattered_hands
+					modifier = iron_fist_trial_partial_modifier
 					years = 3
 				}
-				create_character_memory = {
-					type = iron_fist_trial_injury_memory
+			}
+			20 = {
+				# Collapse - must retake the trial later
+				add_trait = wounded_2
+				add_stress = 40
+				add_character_modifier = {
+					modifier = iron_fist_trial_failed_modifier
+					years = 1
 				}
 			}
 		}
 		ai_chance = {
-			base = 60
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
 		}
 	}
-
-	# Push beyond - attempt 2000 strikes
+	
+	# Option B: Channel internal qi to reinforce your body (reformist technique)
 	option = {
 		name = murim_iron_fist.0001.b
+		trigger = {
+			has_trait = qi_cultivator
+		}
 		random_list = {
-			25 = {
-				add_prowess_skill = 7
+			70 = {
+				# Qi reinforcement works perfectly
+				add_prowess_xp = 400
 				add_character_modifier = {
-					modifier = iron_fist_double_trial_legend
+					modifier = iron_fist_qi_reinforced_body_modifier
 					years = -1
 				}
-				add_prestige = 300
-				create_character_memory = {
-					type = iron_fist_double_trial_memory
-				}
 			}
-			35 = {
-				add_prowess_skill = 3
-				add_trait = wounded_1
-			}
-			40 = {
-				add_trait = wounded_3
+			30 = {
+				# Traditionalist elder detects qi use - you're punished
+				add_prowess_xp = 100
 				add_character_modifier = {
-					modifier = iron_fist_crippled_hands
+					modifier = iron_fist_cheater_stigma_modifier
 					years = 5
+				}
+				every_courtier = {
+					limit = {
+						is_iron_fist_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = iron_fist_qi_cheater_opinion
+						target = root
+						opinion = -25
+					}
 				}
 			}
 		}
 		ai_chance = {
-			base = 20
+			base = 25
 			modifier = {
-				add = 30
-				has_trait = ambitious
+				add = 15
+				has_trait = deceitful
 			}
 		}
 	}
-
-	# Quit halfway - too painful
+	
+	# Option C: Refuse the trial (coward's path - shame but safety)
 	option = {
 		name = murim_iron_fist.0001.c
+		add_trait = craven
+		add_stress = -20
 		add_prestige = -200
-		add_character_modifier = {
-			modifier = iron_fist_quitter_shame
-			years = 5
-		}
-		stress_impact = {
-			brave = major_stress_impact_gain
+		every_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+			}
+			add_opinion = {
+				modifier = iron_fist_coward_opinion
+				target = root
+				opinion = -30
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -112,907 +154,1011 @@ murim_iron_fist.0001 = {
 	}
 }
 
-# IRON_FIST.0002 - The Stone Body Tempering
-# Disciples harden their bodies by being struck repeatedly with iron rods.
+##############################
+# EVENT 2: VAJRA FIST AWAKENING
+# The Iron Fist Gate's supreme external technique.
+# Your fists become harder than steel. Literal weapon-breaking punches.
+##############################
 murim_iron_fist.0002 = {
 	type = character_event
 	title = murim_iron_fist.0002.t
 	desc = murim_iron_fist.0002.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		prowess >= 14
+		is_iron_fist_member_trigger = yes
+		OR = {
+			has_character_modifier = iron_fist_iron_body_stage_one_modifier
+			has_character_modifier = iron_fist_qi_reinforced_body_modifier
+		}
+		prowess >= 16
+		NOT = { has_character_flag = iron_fist_vajra_attempted }
 	}
-
-	# Endure the full tempering (3 months)
+	
+	immediate = {
+		set_character_flag = iron_fist_vajra_attempted
+		create_character_memory = {
+			type = iron_fist_vajra_awakening_memory
+		}
+	}
+	
+	# Option A: Shatter the Iron Monument (traditional test)
 	option = {
 		name = murim_iron_fist.0002.a
 		random_list = {
-			45 = {
+			40 = {
+				# Monument shatters - Vajra Fist awakened
+				add_prowess_xp = 800
+				add_trait = vajra_fist_master
 				add_character_modifier = {
-					modifier = iron_fist_stone_body
+					modifier = iron_fist_vajra_stage_one_modifier
 					years = -1
 				}
-				add_prowess_skill = 4
-				add_health = 0.5
-				create_character_memory = {
-					type = iron_fist_stone_body_memory
+				# News spreads - ranking attention
+				trigger_event = {
+					id = murim_rank.0005
+					days = { 30 60 }
 				}
 			}
-			30 = {
-				add_prowess_skill = 2
-				add_trait = scarred
-			}
-			25 = {
-				add_trait = wounded_2
-				add_trait = scarred
+			40 = {
+				# Crack but don't shatter - partial awakening
+				add_prowess_xp = 400
 				add_character_modifier = {
-					modifier = iron_fist_tempering_damage
+					modifier = iron_fist_vajra_partial_modifier
 					years = 5
 				}
 			}
+			20 = {
+				# Fist shatters instead of monument
+				add_trait = wounded_2
+				add_trait = one_eyed
+				add_stress = 60
+				create_character_memory = {
+					type = iron_fist_hand_destroyed_memory
+				}
+			}
 		}
-		ai_chance = {
-			base = 50
-		}
+		ai_chance = { base = 45 }
 	}
-
-	# Use herbal baths to speed the process (hybrid method)
+	
+	# Option B: Train by punching iron sand for 100 days first (slower, safer)
 	option = {
 		name = murim_iron_fist.0002.b
-		random_list = {
-			55 = {
-				add_character_modifier = {
-					modifier = iron_fist_herbal_tempered
-					years = 10
-				}
-				add_prowess_skill = 3
-			}
-			25 = {
-				add_prowess_skill = 1
-			}
-			20 = {
-				add_character_modifier = {
-					modifier = iron_fist_allergic_reaction
-					years = 2
-				}
-				add_health = -0.5
-			}
+		add_prowess_xp = 600
+		add_trait = vajra_fist_master
+		add_character_modifier = {
+			modifier = iron_fist_vajra_methodical_modifier
+			years = -1
 		}
-		ai_chance = {
-			base = 30
+		stress_impact = {
+			impatient = medium_stress_impact_gain
 		}
+		ai_chance = { base = 35 }
 	}
-
-	# Refuse the tempering - train your way
+	
+	# Option C: Combine with forbidden blood tempering (dangerous, supreme power)
 	option = {
 		name = murim_iron_fist.0002.c
-		add_opinion = {
-			target = scope:iron_fist_master
-			modifier = disappointed_opinion
-			opinion = -25
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = sadistic
+			}
 		}
-		add_character_modifier = {
-			modifier = iron_fist_independent_trainee
-			years = 5
+		random_list = {
+			25 = {
+				# Blood-tempered Vajra Fist - terrifying power
+				add_prowess_xp = 1500
+				add_trait = vajra_fist_master
+				add_character_modifier = {
+					modifier = iron_fist_blood_vajra_modifier
+					years = -1
+				}
+				add_dread = 30
+				add_secret = {
+					type = secret_blood_tempering
+					target = root
+				}
+			}
+			45 = {
+				# Blood qi poisons your meridians
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = blood_qi_poisoning_modifier
+					years = 5
+				}
+			}
+			30 = {
+				# Berserker state - lose control
+				add_trait = lunatic
+				add_prowess_xp = 500
+				add_dread = 50
+				create_character_memory = {
+					type = iron_fist_berserker_rampage_memory
+				}
+			}
 		}
-		add_prowess_skill = 1
-		ai_chance = {
-			base = 15
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# IRON_FIST.0003 - Traditionalists vs Modernists
-# Should Iron Fist Gate adopt weapons training or remain pure fist fighters?
+##############################
+# EVENT 3: TRADITIONALIST VS REFORMIST SCHISM
+# Iron Fist Gate's core political conflict.
+# Traditionalists: body-only cultivation. Reformists: body + qi hybrid.
+##############################
 murim_iron_fist.0003 = {
 	type = character_event
 	title = murim_iron_fist.0003.t
 	desc = murim_iron_fist.0003.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		OR = {
-			has_trait = inner_disciple
-			has_trait = elder_rank
+		is_iron_fist_member_trigger = yes
+		is_adult = yes
+		NOT = { has_character_flag = iron_fist_schism_event }
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_schism_event
+		create_character_memory = {
+			type = iron_fist_schism_memory
 		}
 	}
-
-	# Support Traditionalists - fists are everything
+	
+	# Option A: Support Traditionalists (body purity)
 	option = {
 		name = murim_iron_fist.0003.a
-		add_prowess_skill = 3
+		add_prowess_xp = 300
 		add_character_modifier = {
-			modifier = iron_fist_purist
-			years = 5
+			modifier = iron_fist_traditionalist_champion_modifier
+			years = 10
 		}
-		add_opinion = {
-			target = scope:modernist_leader
-			modifier = iron_fist_faction_opposition
-			opinion = -35
+		random_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+				has_trait = qi_cultivator
+			}
+			add_opinion = {
+				modifier = iron_fist_faction_enemy_opinion
+				target = root
+				opinion = -30
+			}
 		}
-		create_character_memory = {
-			type = iron_fist_traditionalist_memory
+		random_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+				NOT = { has_trait = qi_cultivator }
+				prowess >= 14
+			}
+			add_opinion = {
+				modifier = iron_fist_faction_ally_opinion
+				target = root
+				opinion = 25
+			}
 		}
 		ai_chance = {
 			base = 40
 			modifier = {
-				add = 25
-				prowess >= 20
+				add = 15
+				NOT = { has_trait = qi_cultivator }
 			}
 		}
 	}
-
-	# Support Modernists - evolve or die
+	
+	# Option B: Support Reformists (body + qi hybrid)
 	option = {
 		name = murim_iron_fist.0003.b
-		add_martial_skill = 3
+		add_prowess_xp = 200
+		add_internal_qi_experience = 200
 		add_character_modifier = {
-			modifier = iron_fist_modernist
-			years = 5
+			modifier = iron_fist_reformist_leader_modifier
+			years = 10
 		}
-		add_opinion = {
-			target = scope:traditionalist_leader
-			modifier = iron_fist_faction_opposition
-			opinion = -35
-		}
-		create_character_memory = {
-			type = iron_fist_modernist_memory
+		random_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+				NOT = { has_trait = qi_cultivator }
+				prowess >= 16
+			}
+			add_opinion = {
+				modifier = iron_fist_faction_enemy_opinion
+				target = root
+				opinion = -35
+			}
 		}
 		ai_chance = {
-			base = 35
+			base = 30
 			modifier = {
-				add = 25
-				martial >= 12
+				add = 20
+				has_trait = qi_cultivator
 			}
 		}
 	}
-
-	# Challenge both faction leaders to prove your way is best
+	
+	# Option C: Prove body cultivation is supreme through a public demonstration
 	option = {
 		name = murim_iron_fist.0003.c
+		trigger = {
+			prowess >= 20
+		}
+		# Publicly fight a qi cultivator using only fists
 		random_list = {
-			25 = {
-				add_prowess_skill = 5
-				add_prestige = 500
+			60 = {
+				# Crush the qi user - traditionalists vindicated
+				add_prowess_xp = 500
+				add_prestige = 400
 				add_character_modifier = {
-					modifier = iron_fist_supreme_fighter
-					years = 10
+					modifier = iron_fist_body_supremacy_proven_modifier
+					years = -1
 				}
 			}
 			40 = {
-				add_trait = wounded_1
-				add_prestige = 200
-			}
-			35 = {
-				add_trait = wounded_2
+				# Qi user outmaneuvers you - reformists gain ground
+				add_prowess_xp = 200
+				add_stress = 30
 				add_prestige = -200
 			}
 		}
-		ai_chance = {
-			base = 20
-			modifier = {
-				add = 30
-				has_trait = brave
-			}
-		}
+		ai_chance = { base = 20 }
 	}
-
-	# Propose a trial by combat to settle the debate
+	
+	# Option D: Secretly study qi cultivation while publicly supporting traditionalists
 	option = {
 		name = murim_iron_fist.0003.d
-		trigger_event = {
-			id = murim_duel.0001
-			days = { 7 30 }
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				intrigue >= 12
+			}
+		}
+		add_prowess_xp = 200
+		add_internal_qi_experience = 300
+		add_secret = {
+			type = secret_qi_cultivation
+			target = root
 		}
 		add_character_modifier = {
-			modifier = iron_fist_trial_proposer
-			years = 3
+			modifier = iron_fist_secret_qi_student_modifier
+			years = 10
 		}
-		ai_chance = {
-			base = 15
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# IRON_FIST.0004 - The Earthquake Stomp Technique
-# The legendary technique that can shatter the ground itself.
+##############################
+# EVENT 4: MOUNTAIN SPLITTING PALM TRAINING
+# Iron Fist Gate's devastating area-of-effect technique.
+# Literally splits rock. Ultimate demonstration of external power.
+##############################
 murim_iron_fist.0004 = {
 	type = character_event
 	title = murim_iron_fist.0004.t
 	desc = murim_iron_fist.0004.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		prowess >= 20
-		has_character_modifier = iron_fist_stone_body
+		is_iron_fist_member_trigger = yes
+		prowess >= 18
+		has_trait = vajra_fist_master
+		NOT = { has_character_flag = iron_fist_mountain_palm }
 	}
-
-	# Train the Earthquake Stomp through months of leg conditioning
+	
+	immediate = {
+		set_character_flag = iron_fist_mountain_palm
+		create_character_memory = {
+			type = iron_fist_mountain_palm_memory
+		}
+	}
+	
+	# Option A: Train at the Cliff of Ten Thousand Strikes
 	option = {
 		name = murim_iron_fist.0004.a
 		random_list = {
-			35 = {
+			45 = {
+				add_prowess_xp = 1000
 				add_character_modifier = {
-					modifier = iron_fist_earthquake_stomp
+					modifier = iron_fist_mountain_splitting_palm_modifier
 					years = -1
 				}
-				add_prowess_skill = 6
-				create_character_memory = {
-					type = iron_fist_earthquake_stomp_memory
-				}
-				trigger_event = {
-					id = murim_ranking.0001
-					days = { 7 14 }
-				}
 			}
 			35 = {
-				add_prowess_skill = 3
-				add_character_modifier = {
-					modifier = iron_fist_stomp_partial
-					years = 5
-				}
+				add_prowess_xp = 500
+				add_trait = wounded_1
 			}
-			30 = {
-				add_trait = wounded_3
+			20 = {
+				# Arms shattered from the training
+				add_trait = wounded_2
 				add_character_modifier = {
-					modifier = iron_fist_shattered_legs
-					years = 5
+					modifier = iron_fist_shattered_arms_modifier
+					years = 3
+				}
+				create_character_memory = {
+					type = iron_fist_arms_destroyed_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 50
-		}
+		ai_chance = { base = 40 }
 	}
-
-	# Combine with Iron Fist for a dual technique
+	
+	# Option B: Study the technique scroll and adapt it to your body type
 	option = {
 		name = murim_iron_fist.0004.b
-		random_list = {
-			25 = {
-				add_character_modifier = {
-					modifier = iron_fist_heaven_earth_strike
-					years = -1
-				}
-				add_prowess_skill = 8
-				add_prestige = 500
-			}
-			35 = {
-				add_prowess_skill = 3
-			}
-			40 = {
-				add_trait = wounded_2
-				add_trait = scarred
-			}
+		trigger = {
+			learning >= 14
 		}
-		ai_chance = {
-			base = 30
+		add_prowess_xp = 700
+		add_learning_xp = 300
+		add_character_modifier = {
+			modifier = iron_fist_adapted_mountain_palm_modifier
+			years = -1
 		}
+		ai_chance = { base = 35 }
 	}
-
-	# Wait until you're stronger
+	
+	# Option C: Combine Mountain Palm with Vajra Fist (ultimate external technique)
 	option = {
 		name = murim_iron_fist.0004.c
-		add_prowess_skill = 1
-		stress_impact = {
-			ambitious = minor_stress_impact_gain
+		trigger = {
+			prowess >= 22
 		}
-		ai_chance = {
-			base = 20
+		random_list = {
+			30 = {
+				# Supreme fusion - you become a walking siege weapon
+				add_prowess_xp = 2000
+				add_character_modifier = {
+					modifier = iron_fist_vajra_mountain_fusion_modifier
+					years = -1
+				}
+				# Top ranking material
+				trigger_event = {
+					id = murim_rank.0010
+					days = { 30 60 }
+				}
+			}
+			70 = {
+				# Body can't handle the combined stress
+				add_prowess_xp = 400
+				add_trait = wounded_1
+				add_stress = 40
+			}
 		}
+		ai_chance = { base = 20 }
 	}
 }
 
-# IRON_FIST.0005 - The Gate Master Challenge
-# Any disciple can challenge the Gate Master for leadership. Pure combat decides.
+##############################
+# EVENT 5: THE IRON GATE CHALLENGE
+# Anyone can challenge an Iron Fist Gate member to a bare-handed fight.
+# If the challenger wins, they earn the right to join or loot a technique.
+##############################
 murim_iron_fist.0005 = {
 	type = character_event
 	title = murim_iron_fist.0005.t
 	desc = murim_iron_fist.0005.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = war_over_win
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		prowess >= 22
-		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
+		is_iron_fist_member_trigger = yes
+		prowess >= 14
+		NOT = { has_character_flag = iron_fist_gate_challenge }
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_gate_challenge
+		create_character_memory = {
+			type = iron_fist_gate_challenge_memory
+		}
+		create_character = {
+			template = wandering_fighter_template
+			save_scope_as = gate_challenger
 		}
 	}
-
-	# Challenge the Gate Master
+	
+	# Option A: Accept and fight with full power
 	option = {
 		name = murim_iron_fist.0005.a
 		random_list = {
-			25 = {
-				add_trait = leader_rank
-				add_character_modifier = {
-					modifier = iron_fist_new_gate_master
-					years = -1
-				}
-				add_prowess_skill = 5
-				add_prestige = 1000
-				create_character_memory = {
-					type = iron_fist_became_gate_master_memory
-				}
+			60 = {
+				# Crush the challenger
+				add_prowess_xp = 400
+				add_prestige = 300
+				add_dread = 10
 			}
-			35 = {
+			30 = {
+				# Close fight - both injured
+				add_prowess_xp = 300
+				add_trait = wounded_1
+				add_prestige = 100
+			}
+			10 = {
+				# Defeated - humiliation
+				add_prestige = -400
 				add_trait = wounded_2
-				add_prestige = 200
-				add_character_modifier = {
-					modifier = iron_fist_valiant_challenger
-					years = 5
-				}
-			}
-			40 = {
-				add_trait = wounded_3
-				add_prestige = -300
-				random_list = {
-					70 = {
-						add_character_modifier = {
-							modifier = iron_fist_broken_challenger
-							years = 5
-						}
-					}
-					30 = {
-						add_trait = incapable
-					}
+				add_stress = 50
+				create_character_memory = {
+					type = iron_fist_gate_defeat_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 30
-				has_trait = ambitious
-			}
-		}
+		ai_chance = { base = 50 }
 	}
-
-	# Support the current Gate Master
+	
+	# Option B: Accept but hold back to test the challenger
 	option = {
 		name = murim_iron_fist.0005.b
-		add_opinion = {
-			target = scope:iron_fist_gate_master
-			modifier = grateful_opinion
-			opinion = 40
+		trigger = {
+			prowess >= 20
 		}
-		add_character_modifier = {
-			modifier = iron_fist_loyal_elder
-			years = 10
+		random_list = {
+			70 = {
+				# Easily handle the challenger, then recruit them
+				add_diplomacy_xp = 300
+				add_prestige = 200
+				# Potential new Iron Fist member
+				trigger_event = {
+					id = murim_clan_recruitment.0003
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				# Challenger takes advantage of your restraint
+				add_trait = wounded_1
+				add_stress = 30
+			}
 		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Secretly weaken the Gate Master before challenging
+	
+	# Option C: Refuse the challenge (against Iron Fist tradition)
 	option = {
 		name = murim_iron_fist.0005.c
-		add_intrigue_skill = 3
-		random_list = {
-			35 = {
-				trigger_event = {
-					id = murim_iron_fist.0005
-					days = { 90 180 }
-				}
-				add_character_modifier = {
-					modifier = iron_fist_saboteur
-					years = 5
-				}
+		add_prestige = -300
+		add_stress = -10
+		every_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
 			}
-			65 = {
-				add_character_modifier = {
-					modifier = iron_fist_dishonorable_schemer
-					years = 10
-				}
-				add_prestige = -500
-				add_opinion = {
-					target = scope:iron_fist_gate_master
-					modifier = betrayed_opinion
-					opinion = -60
-				}
+			add_opinion = {
+				modifier = iron_fist_refused_challenge_opinion
+				target = root
+				opinion = -20
 			}
 		}
-		ai_chance = {
-			base = 15
-			modifier = {
-				add = 25
-				has_trait = deceitful
-			}
-		}
+		ai_chance = { base = 10 }
 	}
 }
 
-# IRON_FIST.0006 - The Mountain Training Camp
-# Iron Fist Gate's brutal mountain training. Survive or be expelled.
+##############################
+# EVENT 6: IRON BODY STAGE TWO - THE LIVING IRON
+# Advanced body cultivation. Your skin literally turns metallic.
+# Only masters achieve this.
+##############################
 murim_iron_fist.0006 = {
 	type = character_event
 	title = murim_iron_fist.0006.t
 	desc = murim_iron_fist.0006.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
+		is_iron_fist_member_trigger = yes
+		has_trait = vajra_fist_master
+		prowess >= 22
+		NOT = { has_character_flag = iron_fist_living_iron }
 	}
-
-	# Complete the full training (boulder carrying, waterfall punching, cliff climbing)
+	
+	immediate = {
+		set_character_flag = iron_fist_living_iron
+		create_character_memory = {
+			type = iron_fist_living_iron_memory
+		}
+	}
+	
+	# Option A: Undergo the Molten Iron Bath (extreme risk, supreme reward)
 	option = {
 		name = murim_iron_fist.0006.a
 		random_list = {
-			40 = {
-				add_prowess_skill = 5
+			20 = {
+				# Living Iron achieved - near invulnerable
+				add_prowess_xp = 2000
 				add_character_modifier = {
-					modifier = iron_fist_mountain_forged
+					modifier = iron_fist_living_iron_modifier
+					years = -1
+				}
+				# You are now one of the strongest in Murim
+				trigger_event = {
+					id = murim_rank.0010
+					days = { 14 30 }
+				}
+			}
+			40 = {
+				# Partial transformation - one arm becomes iron
+				add_prowess_xp = 800
+				add_character_modifier = {
+					modifier = iron_fist_iron_arm_modifier
+					years = -1
+				}
+			}
+			40 = {
+				# Catastrophic burns
+				add_trait = wounded_3
+				add_trait = scarred
+				add_character_modifier = {
+					modifier = iron_fist_burn_scars_modifier
 					years = -1
 				}
 				create_character_memory = {
-					type = iron_fist_mountain_training_memory
-				}
-			}
-			35 = {
-				add_prowess_skill = 2
-				add_trait = wounded_1
-			}
-			25 = {
-				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = iron_fist_mountain_broken
-					years = 3
+					type = iron_fist_molten_bath_failure_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 50
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Help a struggling fellow disciple (sacrifice own training time)
+	
+	# Option B: Gradual meditation approach (safe, slower)
 	option = {
 		name = murim_iron_fist.0006.b
-		add_prowess_skill = 1
-		add_diplomacy_skill = 2
+		add_prowess_xp = 600
 		add_character_modifier = {
-			modifier = iron_fist_brotherhood_bond
+			modifier = iron_fist_gradual_iron_body_modifier
 			years = 10
 		}
-		create_character_memory = {
-			type = iron_fist_helped_brother_memory
-		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 25
-				has_trait = compassionate
-			}
-		}
+		ai_chance = { base = 45 }
 	}
-
-	# Train secretly at night for extra sessions
+	
+	# Option C: Combine with demonic blood tempering (forbidden, fastest)
 	option = {
 		name = murim_iron_fist.0006.c
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				has_secret_type = secret_blood_tempering
+			}
+		}
 		random_list = {
 			35 = {
-				add_prowess_skill = 6
+				# Demonic Iron Body - terrifying and nearly unstoppable
+				add_prowess_xp = 2500
 				add_character_modifier = {
-					modifier = iron_fist_midnight_warrior
-					years = 5
+					modifier = iron_fist_demonic_iron_body_modifier
+					years = -1
+				}
+				add_dread = 50
+				add_trait = sadistic
+				# You've crossed to the dark side
+				trigger_event = {
+					id = murim_forbidden.0003
+					days = { 30 60 }
 				}
 			}
-			35 = {
-				add_prowess_skill = 2
-				add_health = -0.5
-			}
-			30 = {
+			65 = {
+				# Demonic qi takes over - lose yourself
+				add_trait = lunatic
 				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = iron_fist_exhaustion_collapse
-					years = 2
+				add_dread = 30
+				create_character_memory = {
+					type = iron_fist_demonic_possession_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 20
-		}
+		ai_chance = { base = 10 }
 	}
 }
 
-# IRON_FIST.0007 - Challenged by Heavenly Demon Disciple
-# An unorthodox fighter mocks Iron Fist's "primitive" methods.
+##############################
+# EVENT 7: THE IRON GATE MASTER'S CHALLENGE
+# The Gate Master is aging. Succession is determined by single combat.
+# Iron Fist Gate's brutal meritocracy.
+##############################
 murim_iron_fist.0007 = {
 	type = character_event
 	title = murim_iron_fist.0007.t
 	desc = murim_iron_fist.0007.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		prowess >= 15
+		is_iron_fist_member_trigger = yes
+		prowess >= 20
+		NOT = { has_character_flag = iron_fist_succession_challenge }
 	}
-
-	# Accept the duel - prove fists beat demonic qi
+	
+	immediate = {
+		set_character_flag = iron_fist_succession_challenge
+		create_character_memory = {
+			type = iron_fist_succession_memory
+		}
+	}
+	
+	# Option A: Challenge the Gate Master directly
 	option = {
 		name = murim_iron_fist.0007.a
 		random_list = {
+			30 = {
+				# Defeat the master - you are the new Gate Master
+				add_character_modifier = {
+					modifier = iron_fist_gate_master_modifier
+					years = -1
+				}
+				add_prestige = 1000
+				add_prowess_xp = 500
+			}
 			40 = {
-				add_prestige = 500
-				add_prowess_skill = 3
-				add_character_modifier = {
-					modifier = iron_fist_demon_slayer
-					years = 10
-				}
-				create_character_memory = {
-					type = iron_fist_beat_demon_memory
-				}
-			}
-			30 = {
+				# Lose honorably - respected but not leader
+				add_prowess_xp = 400
 				add_trait = wounded_1
-				add_prestige = 100
+				add_prestige = 200
 			}
 			30 = {
+				# Crushed - the old master still has it
 				add_trait = wounded_2
+				add_stress = 50
 				add_prestige = -200
-				add_character_modifier = {
-					modifier = iron_fist_lost_to_demon
-					years = 5
-				}
 			}
 		}
-		ai_chance = {
-			base = 50
-		}
+		ai_chance = { base = 40 }
 	}
-
-	# Respond with words not fists (de-escalate)
+	
+	# Option B: Defeat all other candidates first to face the master at full reputation
 	option = {
 		name = murim_iron_fist.0007.b
-		add_diplomacy_skill = 2
-		add_character_modifier = {
-			modifier = iron_fist_restraint
-			years = 3
+		trigger = {
+			prowess >= 24
 		}
-		stress_impact = {
-			wrathful = major_stress_impact_gain
+		random_list = {
+			50 = {
+				# Sweep the competition and claim leadership
+				add_prowess_xp = 800
+				add_character_modifier = {
+					modifier = iron_fist_gate_master_modifier
+					years = -1
+				}
+				add_prestige = 1200
+				add_dread = 20
+			}
+			50 = {
+				# Exhausted by the gauntlet - lose to the master
+				add_prowess_xp = 500
+				add_trait = wounded_1
+				add_stress = 40
+			}
 		}
-		ai_chance = {
-			base = 25
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Ambush them later with fellow disciples
+	
+	# Option C: Poison the Gate Master before the challenge (coward's path)
 	option = {
 		name = murim_iron_fist.0007.c
+		trigger = {
+			intrigue >= 14
+		}
 		random_list = {
-			60 = {
-				add_dread = 15
-				add_character_modifier = {
-					modifier = iron_fist_gang_justice
-					years = 5
-				}
-			}
 			40 = {
-				add_trait = wounded_1
-				add_prestige = -200
+				# Weakened master falls easily
 				add_character_modifier = {
-					modifier = iron_fist_ambush_failed
-					years = 3
+					modifier = iron_fist_gate_master_modifier
+					years = -1
+				}
+				add_secret = {
+					type = secret_poisoned_gate_master
+					target = root
+				}
+				add_prestige = 500
+			}
+			60 = {
+				# Discovered - expelled from Iron Fist Gate
+				remove_trait = iron_fist_member
+				add_prestige = -1000
+				add_dread = -30
+				every_known_character = {
+					limit = {
+						is_iron_fist_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = iron_fist_poisoner_opinion
+						target = root
+						opinion = -60
+					}
+				}
+				create_character_memory = {
+					type = iron_fist_expelled_poisoner_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 15
-		}
+		ai_chance = { base = 10 }
 	}
 }
 
-# IRON_FIST.0008 - The Iron Body Transcendence
-# After decades of physical cultivation, your body begins to transcend normal limits.
+##############################
+# EVENT 8: IRON FIST DEMOLITION TOURNAMENT
+# Annual tournament where Iron Fist members destroy increasingly tough objects.
+# Pillars of wood, stone, iron, then steel. Last one standing wins.
+##############################
 murim_iron_fist.0008 = {
 	type = character_event
 	title = murim_iron_fist.0008.t
 	desc = murim_iron_fist.0008.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		prowess >= 25
-		has_character_modifier = iron_fist_stone_body
+		is_iron_fist_member_trigger = yes
+		prowess >= 14
+		NOT = { has_character_flag = iron_fist_demolition_tourney }
 	}
-
-	# Push for full Iron Body Transcendence
+	
+	immediate = {
+		set_character_flag = iron_fist_demolition_tourney
+		create_character_memory = {
+			type = iron_fist_demolition_tournament_memory
+		}
+	}
+	
+	# Option A: Go all out from the first round
 	option = {
 		name = murim_iron_fist.0008.a
 		random_list = {
-			25 = {
+			30 = {
+				# Shatter everything including the steel pillar - champion
+				add_prowess_xp = 800
+				add_prestige = 500
 				add_character_modifier = {
-					modifier = iron_fist_transcendent_body
-					years = -1
-				}
-				add_prowess_skill = 10
-				add_health = 1
-				create_character_memory = {
-					type = iron_fist_transcendence_memory
-				}
-				trigger_event = {
-					id = murim_ranking.0001
-					days = { 7 14 }
-				}
-			}
-			35 = {
-				add_prowess_skill = 3
-				add_character_modifier = {
-					modifier = iron_fist_near_transcendence
-					years = 10
-				}
-			}
-			40 = {
-				add_trait = incapable
-				create_character_memory = {
-					type = iron_fist_transcendence_failure_memory
-				}
-			}
-		}
-		ai_chance = {
-			base = 40
-		}
-	}
-
-	# Stabilize at current level
-	option = {
-		name = murim_iron_fist.0008.b
-		add_prowess_skill = 1
-		add_health = 0.5
-		ai_chance = {
-			base = 40
-		}
-	}
-
-	# Use a forbidden body-strengthening pill (shortcut)
-	option = {
-		name = murim_iron_fist.0008.c
-		random_list = {
-			35 = {
-				add_character_modifier = {
-					modifier = iron_fist_pill_enhanced_body
-					years = -1
-				}
-				add_prowess_skill = 7
-				add_health = -0.5
-			}
-			65 = {
-				add_trait = wounded_3
-				add_health = -1
-				add_character_modifier = {
-					modifier = iron_fist_pill_rejection
+					modifier = iron_fist_demolition_champion_modifier
 					years = 5
 				}
 			}
-		}
-		ai_chance = {
-			base = 20
-			modifier = {
-				add = 25
-				has_trait = ambitious
+			40 = {
+				# Make it to iron but fail on steel
+				add_prowess_xp = 400
+				add_prestige = 200
+				add_trait = wounded_1
+			}
+			30 = {
+				# Hands break on stone round
+				add_prowess_xp = 100
+				add_trait = wounded_1
+				add_stress = 30
 			}
 		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Conserve energy, pace yourself (strategic approach)
+	option = {
+		name = murim_iron_fist.0008.b
+		trigger = {
+			learning >= 10
+		}
+		random_list = {
+			50 = {
+				add_prowess_xp = 600
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = iron_fist_strategic_fighter_modifier
+					years = 5
+				}
+			}
+			50 = {
+				add_prowess_xp = 300
+				add_prestige = 150
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Use a secret technique to shatter the steel pillar (showoff)
+	option = {
+		name = murim_iron_fist.0008.c
+		trigger = {
+			OR = {
+				has_character_modifier = iron_fist_mountain_splitting_palm_modifier
+				has_character_modifier = iron_fist_vajra_mountain_fusion_modifier
+			}
+		}
+		add_prowess_xp = 600
+		add_prestige = 600
+		add_character_modifier = {
+			modifier = iron_fist_steel_breaker_modifier
+			years = -1
+		}
+		# Draws tournament attention
+		trigger_event = {
+			id = murim_tournament.0001
+			days = { 30 60 }
+		}
+		ai_chance = { base = 30 }
 	}
 }
 
-# IRON_FIST.0009 - Forge Alliance or Stand Alone
-# Orthodox alliance asks Iron Fist to commit fully. But the Gate values independence.
+##############################
+# EVENT 9: IRON FIST WANDERING CHALLENGE TOUR
+# Iron Fist tradition: travel the martial world challenging every sect's champion.
+# Build reputation and test Iron Fist techniques against all styles.
+##############################
 murim_iron_fist.0009 = {
 	type = character_event
 	title = murim_iron_fist.0009.t
 	desc = murim_iron_fist.0009.desc
-	theme = diplomacy
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+		is_iron_fist_member_trigger = yes
+		prowess >= 16
+		NOT = { has_character_flag = iron_fist_wandering_tour }
+		is_adult = yes
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_wandering_tour
+		create_character_memory = {
+			type = iron_fist_wandering_tour_memory
 		}
 	}
-
-	# Commit fully to the orthodox alliance
+	
+	# Option A: Challenge Shaolin (fist vs palm)
 	option = {
 		name = murim_iron_fist.0009.a
-		add_prestige = 300
-		add_character_modifier = {
-			modifier = iron_fist_orthodox_champion
-			years = 10
+		random_list = {
+			40 = {
+				add_prowess_xp = 500
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = iron_fist_defeated_shaolin_modifier
+					years = 5
+				}
+			}
+			60 = {
+				add_prowess_xp = 300
+				add_trait = wounded_1
+				# Shaolin's internal arts counter your external power
+			}
 		}
 		trigger_event = {
-			id = murim_faction_war.0001
-			days = { 60 180 }
+			id = murim_duel.0001
+			days = { 7 14 }
 		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Offer limited support only
+	
+	# Option B: Challenge Wudang (fist vs sword)
 	option = {
 		name = murim_iron_fist.0009.b
-		add_diplomacy_skill = 2
-		add_character_modifier = {
-			modifier = iron_fist_cautious_ally
-			years = 5
+		random_list = {
+			35 = {
+				add_prowess_xp = 500
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = iron_fist_defeated_wudang_modifier
+					years = 5
+				}
+			}
+			65 = {
+				add_prowess_xp = 200
+				add_trait = scarred
+				# Sword techniques exploit your lack of range
+			}
 		}
-		ai_chance = {
-			base = 35
+		trigger_event = {
+			id = murim_duel.0001
+			days = { 7 14 }
 		}
+		ai_chance = { base = 25 }
 	}
-
-	# Refuse - Iron Fist stands alone
+	
+	# Option C: Challenge Mount Hua (fist vs swordsmanship)
 	option = {
 		name = murim_iron_fist.0009.c
-		add_prestige = -100
-		add_character_modifier = {
-			modifier = iron_fist_lone_gate
-			years = 5
+		random_list = {
+			45 = {
+				add_prowess_xp = 400
+				add_prestige = 250
+			}
+			55 = {
+				add_prowess_xp = 200
+				add_trait = wounded_1
+			}
 		}
-		add_opinion = {
-			target = scope:orthodox_alliance_leader
-			modifier = disappointed_opinion
-			opinion = -25
-		}
-		ai_chance = {
-			base = 20
-		}
+		ai_chance = { base = 25 }
 	}
-
-	# Use the alliance to gain resources for Iron Fist alone
+	
+	# Option D: Challenge Heavenly Demon Sect (fist vs demonic arts)
 	option = {
 		name = murim_iron_fist.0009.d
-		add_gold = 300
-		add_intrigue_skill = 2
+		trigger = {
+			has_trait = brave
+		}
 		random_list = {
-			50 = {
+			20 = {
+				add_prowess_xp = 800
+				add_prestige = 500
 				add_character_modifier = {
-					modifier = iron_fist_pragmatist
-					years = 5
+					modifier = iron_fist_demon_crusher_modifier
+					years = 10
 				}
 			}
 			50 = {
+				add_trait = wounded_2
+				add_stress = 40
+			}
+			30 = {
+				# Demonic qi contaminates you
+				add_trait = scarred
 				add_character_modifier = {
-					modifier = iron_fist_exposed_user
-					years = 5
+					modifier = demonic_qi_contamination_modifier
+					years = 3
 				}
-				add_prestige = -300
 			}
 		}
-		ai_chance = {
-			base = 10
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# IRON_FIST.0010 - The Unbreakable Wall
-# During a faction war, Iron Fist disciples form a human wall to protect civilians.
+##############################
+# EVENT 10: THE UNBREAKABLE - IRON FIST LEGEND STATUS
+# You have pushed body cultivation to its absolute limit.
+# You are called "The Unbreakable" across the martial world.
+##############################
 murim_iron_fist.0010 = {
 	type = character_event
 	title = murim_iron_fist.0010.t
 	desc = murim_iron_fist.0010.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = war_over_win
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_iron_fist_member_trigger = yes
-		prowess >= 12
+		is_iron_fist_member_trigger = yes
+		prowess >= 28
+		OR = {
+			has_character_modifier = iron_fist_living_iron_modifier
+			has_character_modifier = iron_fist_vajra_mountain_fusion_modifier
+		}
+		NOT = { has_character_flag = iron_fist_unbreakable }
 	}
-
-	# Take the front position (most dangerous)
+	
+	immediate = {
+		set_character_flag = iron_fist_unbreakable
+		create_character_memory = {
+			type = iron_fist_unbreakable_legend_memory
+		}
+	}
+	
+	# Option A: Accept the title and protect the orthodox alliance
 	option = {
 		name = murim_iron_fist.0010.a
-		random_list = {
-			35 = {
-				add_prestige = 600
-				add_prowess_skill = 3
-				add_character_modifier = {
-					modifier = iron_fist_unbreakable_wall
-					years = -1
-				}
-				create_character_memory = {
-					type = iron_fist_wall_hero_memory
-				}
-			}
-			35 = {
-				add_trait = wounded_2
-				add_prestige = 300
-				add_trait = scarred
-			}
-			30 = {
-				add_trait = wounded_3
-				random_list = {
-					70 = {
-						add_character_modifier = {
-							modifier = iron_fist_broken_but_standing
-							years = 5
-						}
-					}
-					30 = {
-						add_trait = one_eyed
-					}
-				}
-			}
+		add_character_modifier = {
+			modifier = iron_fist_the_unbreakable_modifier
+			years = -1
 		}
-		ai_chance = {
-			base = 40
-			modifier = {
-				add = 25
-				has_trait = brave
-			}
+		add_prestige = 2000
+		# Legendary status - faction war pillar
+		trigger_event = {
+			id = murim_faction_war.0010
+			days = { 60 120 }
 		}
+		ai_chance = { base = 50 }
 	}
-
-	# Command the formation from behind
+	
+	# Option B: Challenge the Strongest Under Heaven for the #1 ranking
 	option = {
 		name = murim_iron_fist.0010.b
-		add_martial_skill = 3
 		add_character_modifier = {
-			modifier = iron_fist_wall_commander
-			years = 5
+			modifier = iron_fist_the_unbreakable_modifier
+			years = -1
 		}
-		create_character_memory = {
-			type = iron_fist_wall_command_memory
+		# Direct challenge to the top
+		trigger_event = {
+			id = murim_legendary_duel.0001
+			days = { 30 60 }
 		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Evacuate civilians while others hold the line
+	
+	# Option C: Retire from the martial world as a living legend
 	option = {
 		name = murim_iron_fist.0010.c
-		add_diplomacy_skill = 2
-		add_prestige = 200
 		add_character_modifier = {
-			modifier = iron_fist_civilian_protector
-			years = 5
+			modifier = iron_fist_retired_legend_modifier
+			years = -1
 		}
-		ai_chance = {
-			base = 25
-		}
+		add_prestige = 1500
+		add_stress = -100
+		ai_chance = { base = 15 }
 	}
 }
