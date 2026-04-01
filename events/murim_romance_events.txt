@@ -1,0 +1,1906 @@
+###############################################################################
+# MURIM ROMANCE EVENTS
+# Dual cultivation, forbidden love, marriage duels, romantic rivals, kidnapping
+# All events include: create_character_memory, combat consequences, cross-refs
+###############################################################################
+
+namespace = murim_romance
+
+######################################
+# murim_romance.0001 - Dual Cultivation Proposal
+# A fellow cultivator of opposite/complementary qi proposes dual cultivation
+######################################
+murim_romance.0001 = {
+	type = character_event
+	title = murim_romance.0001.t
+	desc = murim_romance.0001.desc
+	theme = love
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:romance_partner
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = dual_cultivation_cooldown }
+		any_relation = {
+			type = friend
+			is_available_adult = yes
+			has_trait = murim_cultivator
+			NOT = { has_character_flag = dual_cultivation_cooldown }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = qi_harmony_adept
+		}
+		modifier = {
+			add = 1
+			has_trait = murim_inner_disciple
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = friend
+			limit = {
+				is_available_adult = yes
+				has_trait = murim_cultivator
+				NOT = { has_character_flag = dual_cultivation_cooldown }
+			}
+			save_scope_as = romance_partner
+		}
+		add_character_flag = {
+			flag = dual_cultivation_cooldown
+			years = 3
+		}
+	}
+
+	# Accept dual cultivation
+	option = {
+		name = murim_romance.0001.a
+		trigger = {
+			is_attracted_to_gender_of = scope:romance_partner
+		}
+		add_opinion = {
+			target = scope:romance_partner
+			modifier = murim_dual_cultivation_bond
+			opinion = 30
+		}
+		scope:romance_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_dual_cultivation_bond
+				opinion = 30
+			}
+		}
+		create_character_memory = {
+			type = murim_dual_cultivation_memory
+			participants = {
+				partner = scope:romance_partner
+			}
+		}
+		# Cultivation boost from harmonized qi
+		add_prowess_skill = 1
+		scope:romance_partner = {
+			add_prowess_skill = 1
+		}
+		# Chance of deeper connection
+		random_list = {
+			50 = {
+				set_relation_lover = scope:romance_partner
+				trigger_event = {
+					id = murim_romance.0003
+					days = { 60 120 }
+				}
+			}
+			30 = {
+				# Successful but platonic
+				trigger_event = {
+					id = murim_cultivation_events.0001
+					days = { 30 60 }
+				}
+			}
+			20 = {
+				# Qi deviation from incompatible energies
+				add_trait = qi_deviation_scarred
+				create_character_memory = {
+					type = murim_qi_deviation_memory
+					participants = {
+						partner = scope:romance_partner
+					}
+				}
+				trigger_event = {
+					id = murim_cultivation_events.0005
+					days = { 5 15 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = lustful
+			}
+		}
+	}
+
+	# Decline respectfully
+	option = {
+		name = murim_romance.0001.b
+		add_opinion = {
+			target = scope:romance_partner
+			modifier = murim_declined_dual_cultivation
+			opinion = -10
+		}
+		create_character_memory = {
+			type = murim_declined_proposal_memory
+			participants = {
+				partner = scope:romance_partner
+			}
+		}
+		stress_impact = {
+			shy = minor_stress_impact_loss
+			chaste = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = chaste
+			}
+		}
+	}
+
+	# Attempt to steal their cultivation technique instead
+	option = {
+		name = murim_romance.0001.c
+		trait = deceitful
+		add_dread = 10
+		duel = {
+			skill = intrigue
+			target = scope:romance_partner
+			50 = {
+				desc = murim_romance.0001.c.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 0.5
+				}
+				# Successfully steal technique insight
+				add_prowess_skill = 2
+				create_character_memory = {
+					type = murim_stolen_technique_memory
+					participants = {
+						victim = scope:romance_partner
+					}
+				}
+				scope:romance_partner = {
+					add_opinion = {
+						target = root
+						modifier = murim_stolen_technique_hatred
+						opinion = -50
+					}
+				}
+				trigger_event = {
+					id = murim_duel_events.0001
+					days = { 30 90 }
+				}
+			}
+			50 = {
+				desc = murim_romance.0001.c.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -0.5
+				}
+				# Caught! They attack you
+				add_prestige = -200
+				scope:romance_partner = {
+					set_relation_rival = root
+				}
+				random_list = {
+					40 = {
+						add_trait = wounded_1
+					}
+					30 = {
+						add_trait = wounded_2
+					}
+					30 = {
+						# Nothing physical but massive shame
+						add_trait = craven
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0002 - Forbidden Love: Rival Sect Romance
+# Fall in love with someone from a rival/enemy sect
+######################################
+murim_romance.0002 = {
+	type = character_event
+	title = murim_romance.0002.t
+	desc = murim_romance.0002.desc
+	theme = love
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:forbidden_lover
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = forbidden_love_cooldown }
+		any_known_character = {
+			is_available_adult = yes
+			has_trait = murim_cultivator
+			has_relation_rival = root
+			NOR = {
+				has_relation_lover = root
+				has_relation_soulmate = root
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = lustful
+		}
+		modifier = {
+			add = 2
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		random_known_character = {
+			limit = {
+				is_available_adult = yes
+				has_trait = murim_cultivator
+				has_relation_rival = root
+				NOR = {
+					has_relation_lover = root
+					has_relation_soulmate = root
+				}
+			}
+			save_scope_as = forbidden_lover
+		}
+		add_character_flag = {
+			flag = forbidden_love_cooldown
+			years = 5
+		}
+	}
+
+	# Pursue the forbidden romance despite all risks
+	option = {
+		name = murim_romance.0002.a
+		set_relation_lover = scope:forbidden_lover
+		add_opinion = {
+			target = scope:forbidden_lover
+			modifier = murim_forbidden_love_passion
+			opinion = 40
+		}
+		scope:forbidden_lover = {
+			add_opinion = {
+				target = root
+				modifier = murim_forbidden_love_passion
+				opinion = 40
+			}
+		}
+		create_character_memory = {
+			type = murim_forbidden_love_memory
+			participants = {
+				beloved = scope:forbidden_lover
+			}
+		}
+		add_prestige = -100
+		# Risk of discovery by your sect
+		random_list = {
+			40 = {
+				# Secret is safe for now
+				add_character_flag = {
+					flag = secret_forbidden_love
+					years = 2
+				}
+				trigger_event = {
+					id = murim_romance.0003
+					days = { 90 180 }
+				}
+			}
+			35 = {
+				# Discovered! Sect demands you choose
+				trigger_event = {
+					id = murim_romance.0006
+					days = { 30 60 }
+				}
+			}
+			25 = {
+				# Ambushed by both sects
+				add_trait = wounded_2
+				scope:forbidden_lover = {
+					add_trait = wounded_1
+				}
+				trigger_event = {
+					id = murim_sect_events.0001
+					days = { 10 30 }
+				}
+			}
+		}
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = lustful
+			}
+		}
+	}
+
+	# Suppress your feelings for the sake of your sect
+	option = {
+		name = murim_romance.0002.b
+		add_stress = 30
+		add_opinion = {
+			target = scope:forbidden_lover
+			modifier = murim_suppressed_feelings
+			opinion = -5
+		}
+		create_character_memory = {
+			type = murim_suppressed_love_memory
+			participants = {
+				beloved = scope:forbidden_lover
+			}
+		}
+		# Channel pain into training
+		add_prowess_skill = 1
+		trigger_event = {
+			id = murim_training_events.0001
+			days = { 15 30 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = temperate
+			}
+		}
+	}
+
+	# Use the romance as a ploy to infiltrate their sect
+	option = {
+		name = murim_romance.0002.c
+		trait = deceitful
+		add_intrigue_skill = 1
+		add_dread = 15
+		create_character_memory = {
+			type = murim_romance_betrayal_scheme_memory
+			participants = {
+				target = scope:forbidden_lover
+			}
+		}
+		trigger_event = {
+			id = murim_jianghu_events.0001
+			days = { 60 120 }
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			honest = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0003 - Dual Cultivation Deepens / Soulmate Bond
+# Follow-up: dual cultivation partners grow closer
+######################################
+murim_romance.0003 = {
+	type = character_event
+	title = murim_romance.0003.t
+	desc = murim_romance.0003.desc
+	theme = love
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	right_portrait = {
+		character = scope:romance_partner
+		animation = happiness
+	}
+
+	trigger = {
+		is_available_adult = yes
+		any_relation = {
+			type = lover
+			is_available_adult = yes
+			has_trait = murim_cultivator
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		random_relation = {
+			type = lover
+			limit = {
+				is_available_adult = yes
+				has_trait = murim_cultivator
+			}
+			save_scope_as = romance_partner
+		}
+	}
+
+	# Form a soulmate bond through synchronized cultivation
+	option = {
+		name = murim_romance.0003.a
+		set_relation_soulmate = scope:romance_partner
+		add_opinion = {
+			target = scope:romance_partner
+			modifier = murim_soulmate_cultivation_bond
+			opinion = 50
+		}
+		scope:romance_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_soulmate_cultivation_bond
+				opinion = 50
+			}
+		}
+		create_character_memory = {
+			type = murim_soulmate_bond_memory
+			participants = {
+				soulmate = scope:romance_partner
+			}
+		}
+		add_prowess_skill = 2
+		scope:romance_partner = {
+			add_prowess_skill = 2
+		}
+		# Their combined power draws attention
+		trigger_event = {
+			id = murim_ranking_events.0001
+			days = { 60 120 }
+		}
+		ai_chance = {
+			base = 70
+		}
+	}
+
+	# Keep it casual, focus on individual cultivation
+	option = {
+		name = murim_romance.0003.b
+		add_prowess_skill = 1
+		create_character_memory = {
+			type = murim_chose_cultivation_over_love_memory
+			participants = {
+				partner = scope:romance_partner
+			}
+		}
+		scope:romance_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_chose_path_over_love
+				opinion = -15
+			}
+		}
+		trigger_event = {
+			id = murim_cultivation_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+######################################
+# murim_romance.0004 - Marriage Duel Challenge
+# Someone challenges you for your beloved's hand
+######################################
+murim_romance.0004 = {
+	type = character_event
+	title = murim_romance.0004.t
+	desc = murim_romance.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:marriage_rival
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		any_relation = {
+			type = lover
+			is_available_adult = yes
+		}
+		NOT = { has_character_flag = marriage_duel_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			any_relation = {
+				type = lover
+				has_trait = beauty_good
+			}
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = lover
+			limit = {
+				is_available_adult = yes
+			}
+			save_scope_as = beloved
+		}
+		# Create the rival
+		create_character = {
+			location = root.location
+			template = murim_martial_challenger_template
+			save_scope_as = marriage_rival
+		}
+		scope:marriage_rival = {
+			add_trait = murim_cultivator
+			add_trait = ambitious
+			set_relation_rival = root
+		}
+		add_character_flag = {
+			flag = marriage_duel_cooldown
+			years = 5
+		}
+	}
+
+	# Accept the marriage duel with honor
+	option = {
+		name = murim_romance.0004.a
+		duel = {
+			skill = prowess
+			target = scope:marriage_rival
+			50 = {
+				desc = murim_romance.0004.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				add_prestige = 300
+				add_opinion = {
+					target = scope:beloved
+					modifier = murim_defended_love_honor
+					opinion = 30
+				}
+				create_character_memory = {
+					type = murim_marriage_duel_victory_memory
+					participants = {
+						rival = scope:marriage_rival
+						beloved = scope:beloved
+					}
+				}
+				# Defeated rival
+				scope:marriage_rival = {
+					random_list = {
+						40 = {
+							add_trait = wounded_2
+						}
+						30 = {
+							add_trait = incapable
+						}
+						30 = {
+							death = {
+								death_reason = death_duel
+								killer = root
+							}
+							root = {
+								create_character_memory = {
+									type = murim_killed_marriage_rival_memory
+									participants = {
+										victim = scope:marriage_rival
+									}
+								}
+								trigger_event = {
+									id = murim_ranker_death_events.0001
+									days = { 5 15 }
+								}
+							}
+						}
+					}
+				}
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 30 60 }
+				}
+			}
+			50 = {
+				desc = murim_romance.0004.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				add_prestige = -200
+				random_list = {
+					50 = {
+						add_trait = wounded_2
+					}
+					30 = {
+						add_trait = wounded_3
+					}
+					20 = {
+						add_trait = incapable
+					}
+				}
+				create_character_memory = {
+					type = murim_marriage_duel_defeat_memory
+					participants = {
+						rival = scope:marriage_rival
+						beloved = scope:beloved
+					}
+				}
+				# Beloved may be taken or choose to stay
+				random_list = {
+					60 = {
+						scope:beloved = {
+							remove_relation_lover = root
+						}
+					}
+					40 = {
+						# Beloved stays loyal despite defeat
+						scope:beloved = {
+							add_opinion = {
+								target = root
+								modifier = murim_loyal_despite_defeat
+								opinion = 20
+							}
+						}
+					}
+				}
+				trigger_event = {
+					id = murim_training_events.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Refuse -- resolve this through diplomacy
+	option = {
+		name = murim_romance.0004.b
+		add_prestige = -100
+		add_opinion = {
+			target = scope:beloved
+			modifier = murim_refused_to_fight_for_love
+			opinion = -20
+		}
+		create_character_memory = {
+			type = murim_refused_marriage_duel_memory
+			participants = {
+				rival = scope:marriage_rival
+				beloved = scope:beloved
+			}
+		}
+		scope:marriage_rival = {
+			add_prestige = 100
+		}
+		trigger_event = {
+			id = murim_politics_events.0001
+			days = { 30 60 }
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+			craven = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+
+	# Elope -- flee together under cover of night
+	option = {
+		name = murim_romance.0004.c
+		add_prestige = -300
+		add_opinion = {
+			target = scope:beloved
+			modifier = murim_eloped_together
+			opinion = 40
+		}
+		scope:beloved = {
+			add_opinion = {
+				target = root
+				modifier = murim_eloped_together
+				opinion = 40
+			}
+		}
+		create_character_memory = {
+			type = murim_elopement_memory
+			participants = {
+				beloved = scope:beloved
+			}
+		}
+		# Both become wanderers
+		add_trait = wandering_cultivator
+		trigger_event = {
+			id = murim_daily_life_events.0001
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = lustful
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0005 - Romantic Rival Confrontation
+# Your lover's other admirer confronts you with hostility
+######################################
+murim_romance.0005 = {
+	type = character_event
+	title = murim_romance.0005.t
+	desc = murim_romance.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:romantic_rival
+		animation = schadenfreude
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		any_relation = {
+			type = lover
+			is_available_adult = yes
+		}
+		NOT = { has_character_flag = romantic_rival_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = beauty_good
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = lover
+			limit = { is_available_adult = yes }
+			save_scope_as = beloved
+		}
+		random_known_character = {
+			limit = {
+				is_available_adult = yes
+				has_trait = murim_cultivator
+				NOT = { this = scope:beloved }
+				NOT = { has_relation_friend = root }
+			}
+			save_scope_as = romantic_rival
+		}
+		add_character_flag = {
+			flag = romantic_rival_cooldown
+			years = 3
+		}
+	}
+
+	# Face them head on in a duel
+	option = {
+		name = murim_romance.0005.a
+		duel = {
+			skill = prowess
+			target = scope:romantic_rival
+			50 = {
+				desc = murim_romance.0005.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 150
+				create_character_memory = {
+					type = murim_defeated_romantic_rival_memory
+					participants = {
+						rival = scope:romantic_rival
+						beloved = scope:beloved
+					}
+				}
+				scope:romantic_rival = {
+					add_trait = wounded_1
+					add_opinion = {
+						target = root
+						modifier = murim_defeated_in_love_duel
+						opinion = -40
+					}
+				}
+				trigger_event = {
+					id = murim_duel_events.0001
+					days = { 30 60 }
+				}
+			}
+			50 = {
+				desc = murim_romance.0005.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				add_prestige = -100
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_lost_to_romantic_rival_memory
+					participants = {
+						rival = scope:romantic_rival
+						beloved = scope:beloved
+					}
+				}
+				# Train harder for revenge
+				trigger_event = {
+					id = murim_training_events.0001
+					days = { 15 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Challenge them to prove worthiness through a tournament
+	option = {
+		name = murim_romance.0005.b
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_tournament_for_love_memory
+			participants = {
+				rival = scope:romantic_rival
+				beloved = scope:beloved
+			}
+		}
+		trigger_event = {
+			id = murim_jianghu_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Let the beloved choose -- step aside gracefully
+	option = {
+		name = murim_romance.0005.c
+		add_stress = 20
+		random_list = {
+			60 = {
+				# Beloved chooses you
+				scope:beloved = {
+					add_opinion = {
+						target = root
+						modifier = murim_graceful_confidence
+						opinion = 20
+					}
+				}
+				scope:romantic_rival = {
+					add_opinion = {
+						target = root
+						modifier = murim_respect_for_grace
+						opinion = 10
+					}
+				}
+			}
+			40 = {
+				# Beloved wavers
+				scope:beloved = {
+					add_opinion = {
+						target = root
+						modifier = murim_disappointed_passivity
+						opinion = -15
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = murim_stepped_aside_for_love_memory
+			participants = {
+				rival = scope:romantic_rival
+				beloved = scope:beloved
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0006 - Sect Demands You Choose: Love or Loyalty
+# Your forbidden romance has been discovered
+######################################
+murim_romance.0006 = {
+	type = character_event
+	title = murim_romance.0006.t
+	desc = murim_romance.0006.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:forbidden_lover
+		animation = sadness
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_character_flag = secret_forbidden_love
+		any_relation = {
+			type = lover
+			is_available_adult = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 5
+	}
+
+	immediate = {
+		random_relation = {
+			type = lover
+			limit = { is_available_adult = yes }
+			save_scope_as = forbidden_lover
+		}
+		remove_character_flag = secret_forbidden_love
+	}
+
+	# Choose your beloved -- leave the sect
+	option = {
+		name = murim_romance.0006.a
+		add_prestige = -500
+		remove_trait = murim_inner_disciple
+		add_trait = wandering_cultivator
+		add_opinion = {
+			target = scope:forbidden_lover
+			modifier = murim_chose_love_over_sect
+			opinion = 50
+		}
+		scope:forbidden_lover = {
+			add_opinion = {
+				target = root
+				modifier = murim_chose_love_over_sect
+				opinion = 50
+			}
+			set_relation_soulmate = root
+		}
+		create_character_memory = {
+			type = murim_left_sect_for_love_memory
+			participants = {
+				beloved = scope:forbidden_lover
+			}
+		}
+		trigger_event = {
+			id = murim_sect_events.0001
+			days = { 10 30 }
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = lustful
+			}
+		}
+	}
+
+	# Choose the sect -- end the romance
+	option = {
+		name = murim_romance.0006.b
+		remove_relation_lover = scope:forbidden_lover
+		add_prestige = 100
+		add_stress = 50
+		scope:forbidden_lover = {
+			add_opinion = {
+				target = root
+				modifier = murim_abandoned_for_sect
+				opinion = -60
+			}
+			set_relation_rival = root
+		}
+		create_character_memory = {
+			type = murim_chose_sect_over_love_memory
+			participants = {
+				beloved = scope:forbidden_lover
+			}
+		}
+		# Channel heartbreak into power
+		add_prowess_skill = 2
+		trigger_event = {
+			id = murim_training_events.0001
+			days = { 15 30 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Defy both sects -- fight your way out together
+	option = {
+		name = murim_romance.0006.c
+		trait = brave
+		duel = {
+			skill = prowess
+			target = scope:forbidden_lover
+			# Fighting alongside your partner against pursuers
+			100 = {
+				desc = murim_romance.0006.c.result
+				# Success means both survive but are wounded
+				random_list = {
+					40 = {
+						# Clean escape
+						add_prestige = 200
+						add_trait = wandering_cultivator
+					}
+					35 = {
+						# Wounded escape
+						add_trait = wounded_1
+						add_trait = wandering_cultivator
+					}
+					25 = {
+						# Badly wounded but free
+						add_trait = wounded_2
+						scope:forbidden_lover = {
+							add_trait = wounded_1
+						}
+						add_trait = wandering_cultivator
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = murim_fought_for_forbidden_love_memory
+			participants = {
+				beloved = scope:forbidden_lover
+			}
+		}
+		scope:forbidden_lover = {
+			set_relation_soulmate = root
+		}
+		trigger_event = {
+			id = murim_daily_life_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0007 - Kidnapping of Beloved
+# Your beloved has been kidnapped by a rival faction
+######################################
+murim_romance.0007 = {
+	type = character_event
+	title = murim_romance.0007.t
+	desc = murim_romance.0007.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		any_relation = {
+			type = lover
+			is_available_adult = yes
+		}
+		NOT = { has_character_flag = kidnapping_rescue_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			any_relation = {
+				type = lover
+				has_trait = beauty_good
+			}
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = lover
+			limit = { is_available_adult = yes }
+			save_scope_as = kidnapped_beloved
+		}
+		create_character = {
+			location = root.location
+			template = murim_villain_template
+			save_scope_as = kidnapper
+		}
+		scope:kidnapper = {
+			add_trait = murim_cultivator
+			add_trait = sadistic
+			add_trait = callous
+		}
+		add_character_flag = {
+			flag = kidnapping_rescue_cooldown
+			years = 5
+		}
+	}
+
+	# Storm the enemy stronghold alone
+	option = {
+		name = murim_romance.0007.a
+		duel = {
+			skill = prowess
+			target = scope:kidnapper
+			50 = {
+				desc = murim_romance.0007.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				add_prestige = 500
+				add_opinion = {
+					target = scope:kidnapped_beloved
+					modifier = murim_rescued_from_captivity
+					opinion = 50
+				}
+				create_character_memory = {
+					type = murim_heroic_rescue_memory
+					participants = {
+						beloved = scope:kidnapped_beloved
+						villain = scope:kidnapper
+					}
+				}
+				scope:kidnapper = {
+					random_list = {
+						50 = {
+							death = {
+								death_reason = death_duel
+								killer = root
+							}
+						}
+						30 = {
+							add_trait = incapable
+						}
+						20 = {
+							add_trait = wounded_3
+						}
+					}
+				}
+				# Hero reputation spreads
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 15 30 }
+				}
+			}
+			50 = {
+				desc = murim_romance.0007.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				random_list = {
+					40 = {
+						add_trait = wounded_3
+					}
+					35 = {
+						add_trait = incapable
+					}
+					25 = {
+						# Barely survive
+						add_trait = wounded_2
+						add_trait = craven
+					}
+				}
+				create_character_memory = {
+					type = murim_failed_rescue_memory
+					participants = {
+						beloved = scope:kidnapped_beloved
+						villain = scope:kidnapper
+					}
+				}
+				# Must train to try again
+				trigger_event = {
+					id = murim_training_events.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+
+	# Gather allies for a coordinated rescue
+	option = {
+		name = murim_romance.0007.b
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_organized_rescue_memory
+			participants = {
+				beloved = scope:kidnapped_beloved
+			}
+		}
+		# Success depends on diplomacy
+		duel = {
+			skill = diplomacy
+			target = scope:kidnapper
+			60 = {
+				desc = murim_romance.0007.b.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 300
+				scope:kidnapped_beloved = {
+					add_opinion = {
+						target = root
+						modifier = murim_rescued_from_captivity
+						opinion = 40
+					}
+				}
+				scope:kidnapper = {
+					add_trait = wounded_2
+				}
+			}
+			40 = {
+				desc = murim_romance.0007.b.partial
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1.0
+				}
+				# Rescue succeeds but at a cost
+				add_trait = wounded_1
+				scope:kidnapped_beloved = {
+					add_trait = wounded_1
+				}
+			}
+		}
+		trigger_event = {
+			id = murim_sect_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Pay the ransom -- negotiate
+	option = {
+		name = murim_romance.0007.c
+		add_gold = -200
+		add_prestige = -200
+		create_character_memory = {
+			type = murim_paid_ransom_for_love_memory
+			participants = {
+				beloved = scope:kidnapped_beloved
+				villain = scope:kidnapper
+			}
+		}
+		scope:kidnapped_beloved = {
+			add_opinion = {
+				target = root
+				modifier = murim_paid_ransom
+				opinion = 10
+			}
+		}
+		# The kidnapper may demand more later
+		random_list = {
+			60 = {
+				# They honor the deal
+				scope:kidnapper = {
+					add_gold = 200
+				}
+			}
+			40 = {
+				# They betray the deal
+				trigger_event = {
+					id = murim_jianghu_events.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0008 - Cultivation Partner Betrayal
+# Your romantic cultivation partner steals your technique
+######################################
+murim_romance.0008 = {
+	type = character_event
+	title = murim_romance.0008.t
+	desc = murim_romance.0008.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:betrayer
+		animation = schadenfreude
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		any_relation = {
+			type = lover
+			is_available_adult = yes
+			has_trait = murim_cultivator
+		}
+		NOT = { has_character_flag = romance_betrayal_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			any_relation = {
+				type = lover
+				has_trait = deceitful
+			}
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = lover
+			limit = {
+				is_available_adult = yes
+				has_trait = murim_cultivator
+			}
+			save_scope_as = betrayer
+		}
+		add_character_flag = {
+			flag = romance_betrayal_cooldown
+			years = 10
+		}
+	}
+
+	# Seek revenge immediately -- pursue and confront
+	option = {
+		name = murim_romance.0008.a
+		remove_relation_lover = scope:betrayer
+		set_relation_rival = scope:betrayer
+		duel = {
+			skill = prowess
+			target = scope:betrayer
+			50 = {
+				desc = murim_romance.0008.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 200
+				scope:betrayer = {
+					add_trait = wounded_2
+				}
+				create_character_memory = {
+					type = murim_revenge_on_betrayer_memory
+					participants = {
+						betrayer = scope:betrayer
+					}
+				}
+				trigger_event = {
+					id = murim_duel_events.0001
+					days = { 15 30 }
+				}
+			}
+			50 = {
+				desc = murim_romance.0008.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				# They used your own technique against you
+				add_trait = wounded_2
+				add_prowess_skill = -1
+				create_character_memory = {
+					type = murim_defeated_by_own_technique_memory
+					participants = {
+						betrayer = scope:betrayer
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Develop a counter-technique through bitter training
+	option = {
+		name = murim_romance.0008.b
+		remove_relation_lover = scope:betrayer
+		set_relation_rival = scope:betrayer
+		add_stress = 30
+		add_prowess_skill = 2
+		create_character_memory = {
+			type = murim_heartbroken_training_memory
+			participants = {
+				betrayer = scope:betrayer
+			}
+		}
+		# Long training montage
+		trigger_event = {
+			id = murim_training_events.0001
+			days = { 60 120 }
+		}
+		# Eventually leads to an epic showdown
+		trigger_event = {
+			id = murim_duel_events.0001
+			days = { 180 365 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+
+	# Forgive and let go -- focus on inner peace
+	option = {
+		name = murim_romance.0008.c
+		remove_relation_lover = scope:betrayer
+		add_piety = 200
+		add_stress = -20
+		create_character_memory = {
+			type = murim_forgave_betrayer_memory
+			participants = {
+				betrayer = scope:betrayer
+			}
+		}
+		# Inner peace leads to breakthrough
+		trigger_event = {
+			id = murim_cultivation_events.0001
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = forgiving
+			}
+		}
+	}
+}
+
+######################################
+# murim_romance.0009 - Joint Cultivation Breakthrough
+# You and your partner achieve a breakthrough together
+######################################
+murim_romance.0009 = {
+	type = character_event
+	title = murim_romance.0009.t
+	desc = murim_romance.0009.desc
+	theme = love
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+	right_portrait = {
+		character = scope:cultivation_partner
+		animation = ecstasy
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		any_relation = {
+			type = soulmate
+			is_available_adult = yes
+			has_trait = murim_cultivator
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = qi_harmony_adept
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = soulmate
+			limit = {
+				is_available_adult = yes
+				has_trait = murim_cultivator
+			}
+			save_scope_as = cultivation_partner
+		}
+	}
+
+	# Push through to the next realm together
+	option = {
+		name = murim_romance.0009.a
+		add_prowess_skill = 3
+		scope:cultivation_partner = {
+			add_prowess_skill = 3
+		}
+		add_prestige = 300
+		create_character_memory = {
+			type = murim_joint_breakthrough_memory
+			participants = {
+				partner = scope:cultivation_partner
+			}
+		}
+		# World takes notice
+		trigger_event = {
+			id = murim_ranking_events.0001
+			days = { 15 30 }
+		}
+		# Risk of qi deviation from forced breakthrough
+		random_list = {
+			70 = {
+				# Perfect synchronization
+				add_opinion = {
+					target = scope:cultivation_partner
+					modifier = murim_perfect_harmony
+					opinion = 30
+				}
+			}
+			20 = {
+				# Minor backlash
+				add_trait = wounded_1
+			}
+			10 = {
+				# Serious qi deviation
+				add_trait = qi_deviation_scarred
+				scope:cultivation_partner = {
+					add_trait = wounded_1
+				}
+				trigger_event = {
+					id = murim_fate_events.0001
+					days = { 10 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+		}
+	}
+
+	# Take it slow -- stabilize before advancing
+	option = {
+		name = murim_romance.0009.b
+		add_prowess_skill = 1
+		scope:cultivation_partner = {
+			add_prowess_skill = 1
+		}
+		create_character_memory = {
+			type = murim_careful_joint_cultivation_memory
+			participants = {
+				partner = scope:cultivation_partner
+			}
+		}
+		# Safe but slower path
+		trigger_event = {
+			id = murim_cultivation_events.0001
+			days = { 60 120 }
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+######################################
+# murim_romance.0010 - Love Triangle: Two Admirers
+# Two cultivators are vying for your attention
+######################################
+murim_romance.0010 = {
+	type = character_event
+	title = murim_romance.0010.t
+	desc = murim_romance.0010.desc
+	theme = love
+	left_portrait = {
+		character = scope:admirer_one
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:admirer_two
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = love_triangle_cooldown }
+		NOR = {
+			any_relation = { type = lover }
+			any_relation = { type = soulmate }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = beauty_good
+		}
+		modifier = {
+			add = 2
+			prowess >= 15
+		}
+	}
+
+	immediate = {
+		create_character = {
+			location = root.location
+			template = murim_martial_challenger_template
+			save_scope_as = admirer_one
+		}
+		scope:admirer_one = {
+			add_trait = murim_cultivator
+			add_trait = brave
+			add_trait = ambitious
+		}
+		create_character = {
+			location = root.location
+			template = murim_martial_challenger_template
+			save_scope_as = admirer_two
+		}
+		scope:admirer_two = {
+			add_trait = murim_cultivator
+			add_trait = compassionate
+			add_trait = patient
+		}
+		add_character_flag = {
+			flag = love_triangle_cooldown
+			years = 5
+		}
+	}
+
+	# Choose the bold warrior
+	option = {
+		name = murim_romance.0010.a
+		set_relation_lover = scope:admirer_one
+		add_opinion = {
+			target = scope:admirer_one
+			modifier = murim_chosen_in_love_triangle
+			opinion = 40
+		}
+		scope:admirer_two = {
+			set_relation_rival = root
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_in_love_triangle
+				opinion = -30
+			}
+		}
+		create_character_memory = {
+			type = murim_love_triangle_choice_memory
+			participants = {
+				chosen = scope:admirer_one
+				rejected = scope:admirer_two
+			}
+		}
+		# The rejected one may become dangerous
+		trigger_event = {
+			id = murim_romance.0005
+			days = { 60 180 }
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Choose the gentle cultivator
+	option = {
+		name = murim_romance.0010.b
+		set_relation_lover = scope:admirer_two
+		add_opinion = {
+			target = scope:admirer_two
+			modifier = murim_chosen_in_love_triangle
+			opinion = 40
+		}
+		scope:admirer_one = {
+			set_relation_rival = root
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_in_love_triangle
+				opinion = -30
+			}
+		}
+		create_character_memory = {
+			type = murim_love_triangle_choice_memory
+			participants = {
+				chosen = scope:admirer_two
+				rejected = scope:admirer_one
+			}
+		}
+		trigger_event = {
+			id = murim_romance.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Reject both -- the dao of cultivation is a lonely path
+	option = {
+		name = murim_romance.0010.c
+		add_prestige = 100
+		add_piety = 50
+		scope:admirer_one = {
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_in_love_triangle
+				opinion = -20
+			}
+		}
+		scope:admirer_two = {
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_in_love_triangle
+				opinion = -20
+			}
+		}
+		create_character_memory = {
+			type = murim_rejected_all_love_memory
+		}
+		# Focus leads to cultivation advance
+		trigger_event = {
+			id = murim_cultivation_events.0001
+			days = { 30 60 }
+		}
+		stress_impact = {
+			lustful = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = chaste
+			}
+		}
+	}
+
+	# Make them compete in a tournament for your hand
+	option = {
+		name = murim_romance.0010.d
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_love_tournament_memory
+			participants = {
+				competitor_one = scope:admirer_one
+				competitor_two = scope:admirer_two
+			}
+		}
+		# They duel each other
+		scope:admirer_one = {
+			duel = {
+				skill = prowess
+				target = scope:admirer_two
+				50 = {
+					desc = murim_romance.0010.d.one_wins
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 2.0
+					}
+					root = {
+						set_relation_lover = scope:admirer_one
+					}
+					scope:admirer_two = {
+						add_trait = wounded_1
+					}
+				}
+				50 = {
+					desc = murim_romance.0010.d.two_wins
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -2.0
+					}
+					root = {
+						set_relation_lover = scope:admirer_two
+					}
+					scope:admirer_one = {
+						add_trait = wounded_1
+					}
+				}
+			}
+		}
+		trigger_event = {
+			id = murim_duel_events.0001
+			days = { 5 15 }
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
