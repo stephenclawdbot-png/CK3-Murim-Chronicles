@@ -1,0 +1,1599 @@
+# Murim Chronicles - Artifact Events
+# Weapon discovery, cursed items, technique scrolls, alchemy,
+# spirit beasts, forbidden scriptures
+# Cross-refs: murim_duel (artifact fights), murim_rank (power gains),
+#             murim_sect (sect offerings), murim_jianghu (black market)
+# All combat events create fight memories and roll injury/trauma
+
+namespace = murim_artifact
+
+######################################
+# 0001 - ANCIENT WEAPON DISCOVERED
+# Ruins exploration yields a legendary weapon
+# 4 options: claim (prowess), study (learning), sell, offer to sect
+# Cross-ref: triggers murim_artifact.0002 (curse check)
+######################################
+
+murim_artifact.0001 = {
+	type = character_event
+	title = murim_artifact.0001.t
+	desc = murim_artifact.0001.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		age >= 16
+		NOR = {
+			has_character_flag = murim_artifact_discovery_cooldown
+			has_character_flag = murim_owns_legendary_weapon
+		}
+		OR = {
+			has_trait = brave
+			has_trait = ambitious
+			prowess >= 8
+			learning >= 10
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = adventurer
+		}
+		modifier = {
+			add = 0.5
+			prowess >= 15
+		}
+		modifier = {
+			add = 0.3
+			learning >= 15
+		}
+		modifier = {
+			add = -0.5
+			has_trait = craven
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_artifact_discovery_cooldown
+			years = 3
+		}
+		# Save discoverer for cross-event reference
+		save_scope_as = artifact_discoverer
+	}
+
+	# Option A: Claim the weapon (Prowess check)
+	option = {
+		name = murim_artifact.0001.a
+		trigger = {
+			prowess >= 12
+		}
+		# High prowess = wield it immediately
+		add_character_flag = {
+			flag = murim_owns_legendary_weapon
+		}
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_ancient_weapon_wielder
+			years = 10
+		}
+		add_prestige = 200
+		# Fight memory: discovered a legendary weapon
+		create_character_memory = {
+			type = murim_artifact_discovery_memory
+		}
+		# 30% chance the weapon is cursed - chain to 0002
+		random = {
+			chance = 30
+			trigger_event = {
+				id = murim_artifact.0002
+				days = { 30 60 }
+			}
+		}
+		stress_impact = {
+			ambitious = minor_stress_impact_loss
+			greedy = minor_stress_impact_loss
+			generous = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				prowess >= 18
+			}
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -20
+				has_trait = content
+			}
+		}
+	}
+
+	# Option B: Study the weapon (Learning check)
+	option = {
+		name = murim_artifact.0001.b
+		trigger = {
+			learning >= 10
+		}
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_artifact_researcher
+			years = 5
+		}
+		add_piety = 100
+		# Studying reveals technique scroll chain
+		random = {
+			chance = 40
+			trigger_event = {
+				id = murim_artifact.0005
+				days = { 60 120 }
+			}
+		}
+		stress_impact = {
+			diligent = minor_stress_impact_loss
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				learning >= 18
+			}
+			modifier = {
+				add = 20
+				has_trait = scholar
+			}
+		}
+	}
+
+	# Option C: Sell the weapon
+	option = {
+		name = murim_artifact.0001.c
+		add_gold = 300
+		add_prestige = -50
+		# Weapon enters black market - jianghu cross-ref
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				age >= 16
+			}
+			# Someone else may claim it
+			random = {
+				chance = 25
+				add_character_flag = {
+					flag = murim_owns_legendary_weapon
+				}
+			}
+		}
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+			generous = minor_stress_impact_gain
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = greedy
+			}
+			modifier = {
+				add = -20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option D: Offer to sect
+	option = {
+		name = murim_artifact.0001.d
+		trigger = {
+			exists = liege
+		}
+		add_piety = 150
+		add_prestige = 100
+		# Gain sect favor
+		reverse_add_opinion = {
+			target = liege
+			modifier = murim_offered_artifact_to_sect
+		}
+		add_character_modifier = {
+			modifier = murim_sect_devotee_bonus
+			years = 5
+		}
+		# Sect becomes stronger - cross-ref sect events
+		liege = {
+			add_prestige = 200
+		}
+		stress_impact = {
+			generous = minor_stress_impact_loss
+			zealous = minor_stress_impact_loss
+			greedy = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = generous
+			}
+			modifier = {
+				add = 20
+				has_trait = zealous
+			}
+			modifier = {
+				add = -30
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+######################################
+# 0002 - THE WEAPON IS CURSED
+# Curse discovery chain from 0001
+# Corruption damage over time, 4 options to deal with it
+# Cross-ref: murim_duel (curse-powered fights), murim_jianghu (dark path)
+######################################
+
+murim_artifact.0002 = {
+	type = character_event
+	title = murim_artifact.0002.t
+	desc = murim_artifact.0002.desc
+	theme = skull
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_owns_legendary_weapon
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		# Corruption begins
+		add_character_modifier = {
+			modifier = murim_cursed_weapon_corruption
+			years = 5
+		}
+	}
+
+	# Option A: Purify the weapon (hard Learning + Piety check)
+	option = {
+		name = murim_artifact.0002.a
+		trigger = {
+			learning >= 16
+			piety >= 500
+		}
+		add_piety = -500
+		# Purification success
+		remove_character_modifier = murim_cursed_weapon_corruption
+		add_character_modifier = {
+			modifier = murim_purified_weapon_master
+			years = 15
+		}
+		add_prowess_skill = 2
+		add_prestige = 300
+		create_character_memory = {
+			type = murim_purified_cursed_weapon_memory
+		}
+		stress_impact = {
+			zealous = major_stress_impact_loss
+			cynical = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = zealous
+			}
+			modifier = {
+				add = 20
+				learning >= 20
+			}
+		}
+	}
+
+	# Option B: Embrace the curse (dark path)
+	option = {
+		name = murim_artifact.0002.b
+		# Massive power at a cost
+		add_prowess_skill = 5
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = murim_dark_cultivator_curse_embraced
+			years = 20
+		}
+		add_trait = sadistic
+		add_dread = 30
+		# Everyone fears you now
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_embraced_dark_artifact
+			}
+		}
+		# Sects begin hunting you - cross-ref sect events
+		add_character_flag = {
+			flag = murim_hunted_by_sects
+		}
+		# Jianghu dark path opens
+		add_character_flag = {
+			flag = murim_dark_cultivation_path
+		}
+		create_character_memory = {
+			type = murim_embraced_curse_memory
+		}
+		stress_impact = {
+			sadistic = major_stress_impact_loss
+			compassionate = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 40
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option C: Destroy the weapon
+	option = {
+		name = murim_artifact.0002.c
+		remove_character_flag = murim_owns_legendary_weapon
+		remove_character_modifier = murim_cursed_weapon_corruption
+		add_piety = 200
+		add_prestige = -100
+		add_prowess_skill = -2
+		stress_impact = {
+			craven = minor_stress_impact_loss
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+
+	# Option D: Seek elder help
+	option = {
+		name = murim_artifact.0002.d
+		trigger = {
+			exists = liege
+		}
+		add_gold = -100
+		# 60% success, 40% failure
+		random = {
+			chance = 60
+			remove_character_modifier = murim_cursed_weapon_corruption
+			add_character_modifier = {
+				modifier = murim_elder_blessed_weapon
+				years = 10
+			}
+			add_prowess_skill = 1
+		}
+		random = {
+			chance = 40
+			# Elder fails, curse worsens
+			add_character_modifier = {
+				modifier = murim_curse_deepened
+				years = 8
+			}
+			add_stress = 30
+		}
+		reverse_add_opinion = {
+			target = liege
+			modifier = murim_sought_elder_wisdom
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = trusting
+			}
+		}
+	}
+}
+
+######################################
+# 0003 - RIVAL WANTS YOUR ARTIFACT
+# Someone challenges you for possession
+# Cross-ref: murim_duel (artifact duel), fight memories, combat trauma
+######################################
+
+murim_artifact.0003 = {
+	type = character_event
+	title = murim_artifact.0003.t
+	desc = murim_artifact.0003.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:artifact_rival
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_owns_legendary_weapon
+		any_relation = {
+			type = rival
+			is_alive = yes
+			prowess >= 10
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			any_relation = {
+				type = rival
+				prowess >= 15
+			}
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = rival
+			limit = {
+				is_alive = yes
+				prowess >= 10
+			}
+			save_scope_as = artifact_rival
+		}
+	}
+
+	# Option A: Accept the challenge (duel)
+	option = {
+		name = murim_artifact.0003.a
+		# Duel for the artifact - cross-ref duel system
+		duel = {
+			skill = prowess
+			target = scope:artifact_rival
+			10 = {
+				desc = murim_artifact.0003.a.duel_win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				# Victory - keep weapon, gain prestige
+				add_prestige = 300
+				add_dread = 10
+				scope:artifact_rival = {
+					add_prestige = -200
+					add_opinion = {
+						target = root
+						modifier = murim_defeated_for_artifact
+					}
+					# Combat trauma roll
+					random_list = {
+						60 = { add_character_modifier = { modifier = murim_duel_shame years = 3 } }
+						20 = { add_trait = wounded }
+						10 = { add_trait = one_eyed }
+						10 = { add_character_modifier = { modifier = murim_shattered_meridians years = 10 } }
+					}
+				}
+				# Fight memory
+				create_character_memory = {
+					type = murim_artifact_duel_victory_memory
+					participants = { challenger = scope:artifact_rival }
+				}
+				# Ranking cross-ref: victory boosts rank
+				change_variable = {
+					name = murim_combat_reputation
+					add = 15
+				}
+			}
+			6 = {
+				desc = murim_artifact.0003.a.duel_loss
+				# Defeat - lose weapon
+				remove_character_flag = murim_owns_legendary_weapon
+				add_prestige = -200
+				scope:artifact_rival = {
+					add_character_flag = murim_owns_legendary_weapon
+					add_prestige = 300
+				}
+				# Combat trauma for loser
+				random_list = {
+					40 = { add_character_modifier = { modifier = murim_duel_shame years = 3 } }
+					25 = { add_trait = wounded }
+					15 = { add_character_modifier = { modifier = murim_broken_spirit years = 5 } }
+					10 = { add_trait = craven }
+					10 = { add_character_modifier = { modifier = murim_phantom_pain years = 8 } }
+				}
+				# Fight memory - defeat
+				create_character_memory = {
+					type = murim_artifact_duel_defeat_memory
+					participants = { victor = scope:artifact_rival }
+				}
+				# Revenge chain flag
+				add_character_flag = {
+					flag = murim_artifact_revenge_pending
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+			modifier = {
+				add = 20
+				prowess >= 18
+			}
+			modifier = {
+				add = -30
+				has_trait = craven
+			}
+		}
+	}
+
+	# Option B: Negotiate trade
+	option = {
+		name = murim_artifact.0003.b
+		trigger = {
+			diplomacy >= 12
+		}
+		add_gold = 200
+		remove_character_flag = murim_owns_legendary_weapon
+		scope:artifact_rival = {
+			add_gold = -200
+			add_character_flag = murim_owns_legendary_weapon
+			add_opinion = {
+				target = root
+				modifier = murim_fair_artifact_trade
+			}
+		}
+		add_diplomacy_skill = 1
+		stress_impact = {
+			greedy = minor_stress_impact_loss
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				diplomacy >= 16
+			}
+			modifier = {
+				add = -20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Option C: Refuse (they plot to steal)
+	option = {
+		name = murim_artifact.0003.c
+		scope:artifact_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_refused_artifact_challenge
+			}
+			# They begin plotting
+			add_character_flag = {
+				flag = murim_plotting_artifact_theft
+			}
+		}
+		# May trigger technique theft scheme from jianghu
+		add_character_flag = {
+			flag = murim_artifact_theft_target
+		}
+		stress_impact = {
+			paranoid = major_stress_impact_gain
+			trusting = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = stubborn
+			}
+			modifier = {
+				add = -10
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+######################################
+# 0004 - ARTIFACT RESONATES WITH CULTIVATION
+# Weapon amplifies meditation, risk of qi deviation
+# Cross-ref: murim_cult (breakthrough), murim_rank (power spike)
+######################################
+
+murim_artifact.0004 = {
+	type = character_event
+	title = murim_artifact.0004.t
+	desc = murim_artifact.0004.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_owns_legendary_weapon
+		NOR = {
+			has_character_flag = murim_artifact_resonance_cooldown
+		}
+		OR = {
+			has_variable = murim_cultivation_stage
+			learning >= 12
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			learning >= 18
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_artifact_resonance_cooldown
+			years = 2
+		}
+	}
+
+	# Option A: Meditate with the artifact (breakthrough attempt)
+	option = {
+		name = murim_artifact.0004.a
+		# Prowess + Learning determine success
+		random_list = {
+			50 = {
+				modifier = {
+					add = 20
+					learning >= 18
+				}
+				modifier = {
+					add = 10
+					prowess >= 15
+				}
+				# Success - cultivation breakthrough bonus
+				desc = murim_artifact.0004.a.success
+				add_character_modifier = {
+					modifier = murim_artifact_cultivation_boost
+					years = 5
+				}
+				if = {
+					limit = { has_variable = murim_cultivation_stage }
+					change_variable = {
+						name = murim_cultivation_stage
+						add = 1
+					}
+				}
+				add_prowess_skill = 2
+				add_learning_skill = 1
+				add_prestige = 150
+				create_character_memory = {
+					type = murim_artifact_breakthrough_memory
+				}
+				# Ranking system cross-ref
+				if = {
+					limit = { has_variable = murim_combat_reputation }
+					change_variable = {
+						name = murim_combat_reputation
+						add = 10
+					}
+				}
+			}
+			30 = {
+				# Partial success - some gain, some strain
+				desc = murim_artifact.0004.a.partial
+				add_prowess_skill = 1
+				add_stress = 20
+				add_character_modifier = {
+					modifier = murim_qi_instability
+					years = 2
+				}
+			}
+			20 = {
+				modifier = {
+					add = 10
+					learning < 12
+				}
+				modifier = {
+					add = 10
+					has_trait = impatient
+				}
+				# Qi deviation! Serious consequences
+				desc = murim_artifact.0004.a.deviation
+				add_character_modifier = {
+					modifier = murim_qi_deviation_severe
+					years = 8
+				}
+				random_list = {
+					40 = { add_trait = wounded }
+					30 = { add_character_modifier = { modifier = murim_shattered_meridians years = 10 } }
+					20 = { add_character_modifier = { modifier = murim_battle_madness years = 5 } }
+					10 = { add_trait = incapable }
+				}
+				add_prowess_skill = -3
+				add_stress = 50
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				learning >= 16
+			}
+			modifier = {
+				add = -20
+				has_trait = craven
+			}
+		}
+	}
+
+	# Option B: Study the resonance pattern (safe, learning focus)
+	option = {
+		name = murim_artifact.0004.b
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_artifact_scholar
+			years = 3
+		}
+		# May discover technique scroll
+		random = {
+			chance = 25
+			trigger_event = {
+				id = murim_artifact.0005
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option C: Suppress the resonance (cautious)
+	option = {
+		name = murim_artifact.0004.c
+		add_stress = 10
+		add_piety = 50
+		stress_impact = {
+			patient = minor_stress_impact_loss
+			impatient = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# 0005 - LEGENDARY TECHNIQUE SCROLL FOUND
+# Incomplete scroll - must find the other half
+# Cross-ref: murim_technique (learn technique), murim_jianghu (scroll trade)
+######################################
+
+murim_artifact.0005 = {
+	type = character_event
+	title = murim_artifact.0005.t
+	desc = murim_artifact.0005.desc
+	theme = education
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 8
+		NOR = {
+			has_character_flag = murim_has_technique_scroll
+			has_character_flag = murim_scroll_search_cooldown
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			learning >= 16
+		}
+		modifier = {
+			add = 0.3
+			has_trait = scholar
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_has_technique_scroll
+		}
+		add_character_flag = {
+			flag = murim_scroll_search_cooldown
+			years = 5
+		}
+	}
+
+	# Option A: Learn what you can from the incomplete scroll
+	option = {
+		name = murim_artifact.0005.a
+		add_character_modifier = {
+			modifier = murim_partial_technique_learned
+			years = 10
+		}
+		add_prowess_skill = 1
+		add_learning_skill = 1
+		# Partial technique - not as powerful as complete
+		create_character_memory = {
+			type = murim_found_technique_scroll_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = impatient
+			}
+		}
+	}
+
+	# Option B: Search for the other half (expedition chain)
+	option = {
+		name = murim_artifact.0005.b
+		add_gold = -50
+		add_character_flag = {
+			flag = murim_seeking_scroll_half
+		}
+		# Triggers treasure map chain
+		trigger_event = {
+			id = murim_artifact.0014
+			days = { 60 180 }
+		}
+		stress_impact = {
+			adventurer = minor_stress_impact_loss
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 25
+				has_trait = diligent
+			}
+		}
+	}
+
+	# Option C: Sell the scroll to black market
+	option = {
+		name = murim_artifact.0005.c
+		add_gold = 200
+		remove_character_flag = murim_has_technique_scroll
+		# Jianghu cross-ref: scroll enters underground
+		add_character_modifier = {
+			modifier = murim_black_market_contact
+			years = 3
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+######################################
+# 0006 - ALCHEMY CAULDRON DISCOVERED
+# Pill refinement system: healing, breakthrough, poison
+# Each has success/failure chance based on learning
+# Cross-ref: murim_cult (breakthrough pills), murim_jianghu (poison trade)
+######################################
+
+murim_artifact.0006 = {
+	type = character_event
+	title = murim_artifact.0006.t
+	desc = murim_artifact.0006.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 10
+		NOR = {
+			has_character_flag = murim_alchemy_cooldown
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			learning >= 18
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_cooldown
+			years = 1
+		}
+	}
+
+	# Option A: Refine healing pills
+	option = {
+		name = murim_artifact.0006.a
+		add_gold = -30
+		random_list = {
+			60 = {
+				modifier = {
+					add = 20
+					learning >= 16
+				}
+				# Success - healing pills created
+				desc = murim_artifact.0006.a.success
+				add_character_modifier = {
+					modifier = murim_healing_pills_stockpile
+					years = 3
+				}
+				# Can heal wounds
+				if = {
+					limit = { has_trait = wounded }
+					remove_trait = wounded
+				}
+				add_prestige = 50
+			}
+			40 = {
+				modifier = {
+					add = -20
+					learning >= 16
+				}
+				# Failure - wasted materials, minor injury
+				desc = murim_artifact.0006.a.failure
+				add_stress = 15
+				add_character_modifier = {
+					modifier = murim_alchemy_burns
+					years = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option B: Refine breakthrough pills
+	option = {
+		name = murim_artifact.0006.b
+		add_gold = -80
+		random_list = {
+			40 = {
+				modifier = {
+					add = 25
+					learning >= 18
+				}
+				# Success - breakthrough pill
+				desc = murim_artifact.0006.b.success
+				add_character_modifier = {
+					modifier = murim_breakthrough_pill_ready
+					years = 5
+				}
+				# Cultivation cross-ref
+				if = {
+					limit = { has_variable = murim_cultivation_stage }
+					change_variable = {
+						name = murim_cultivation_stage
+						add = 1
+					}
+				}
+				add_prowess_skill = 2
+				add_prestige = 200
+				create_character_memory = {
+					type = murim_refined_breakthrough_pill_memory
+				}
+			}
+			35 = {
+				# Partial success - weaker pill
+				desc = murim_artifact.0006.b.partial
+				add_prowess_skill = 1
+				add_character_modifier = {
+					modifier = murim_weak_breakthrough_pill
+					years = 2
+				}
+			}
+			25 = {
+				modifier = {
+					add = 10
+					learning < 14
+				}
+				# Catastrophic failure - explosion
+				desc = murim_artifact.0006.b.failure
+				add_character_modifier = {
+					modifier = murim_cauldron_explosion_burns
+					years = 3
+				}
+				random_list = {
+					50 = { add_trait = wounded }
+					30 = { add_trait = disfigured }
+					20 = { add_character_modifier = { modifier = murim_shattered_meridians years = 10 } }
+				}
+				add_stress = 40
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -15
+				has_trait = craven
+			}
+		}
+	}
+
+	# Option C: Refine poison pills
+	option = {
+		name = murim_artifact.0006.c
+		add_gold = -50
+		random_list = {
+			55 = {
+				modifier = {
+					add = 20
+					intrigue >= 14
+				}
+				# Success - deadly poison
+				desc = murim_artifact.0006.c.success
+				add_character_modifier = {
+					modifier = murim_poison_master_stockpile
+					years = 5
+				}
+				add_intrigue_skill = 2
+				add_dread = 10
+				# Jianghu dark path cross-ref
+				add_character_flag = {
+					flag = murim_known_poisoner
+				}
+			}
+			45 = {
+				# Failure - self-poisoning
+				desc = murim_artifact.0006.c.failure
+				add_character_modifier = {
+					modifier = murim_self_poisoned
+					years = 2
+				}
+				add_health = -1
+				add_stress = 25
+			}
+		}
+		stress_impact = {
+			sadistic = minor_stress_impact_loss
+			compassionate = major_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 20
+				intrigue >= 16
+			}
+			modifier = {
+				add = -30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option D: Sell the cauldron
+	option = {
+		name = murim_artifact.0006.d
+		add_gold = 150
+		remove_character_flag = murim_alchemy_cooldown
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+######################################
+# 0007 - SPIRIT BEAST EGG FOUND
+# 4 options: hatch (companion), sell (gold), offer to sect (favor),
+# consume (temporary power + everyone hates you)
+# Cross-ref: murim_sect (offering), murim_jianghu (sale)
+######################################
+
+murim_artifact.0007 = {
+	type = character_event
+	title = murim_artifact.0007.t
+	desc = murim_artifact.0007.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		NOR = {
+			has_character_flag = murim_spirit_beast_cooldown
+			has_character_flag = murim_has_spirit_beast
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.3
+			learning >= 14
+		}
+		modifier = {
+			add = 0.3
+			has_trait = brave
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_spirit_beast_cooldown
+			years = 5
+		}
+	}
+
+	# Option A: Hatch the egg (spirit beast companion)
+	option = {
+		name = murim_artifact.0007.a
+		add_character_flag = {
+			flag = murim_has_spirit_beast
+		}
+		add_character_modifier = {
+			modifier = murim_spirit_beast_companion
+			years = 20
+		}
+		add_prowess_skill = 2
+		add_martial_skill = 1
+		add_prestige = 100
+		# Beast type randomization
+		random_list = {
+			25 = {
+				# Tiger companion
+				add_character_modifier = { modifier = murim_tiger_companion years = 20 }
+				add_prowess_skill = 2
+			}
+			25 = {
+				# Eagle companion
+				add_character_modifier = { modifier = murim_eagle_companion years = 20 }
+				add_martial_skill = 2
+			}
+			25 = {
+				# Serpent companion
+				add_character_modifier = { modifier = murim_serpent_companion years = 20 }
+				add_intrigue_skill = 2
+			}
+			25 = {
+				# Phoenix companion (rare)
+				add_character_modifier = { modifier = murim_phoenix_companion years = 20 }
+				add_learning_skill = 2
+				add_piety = 200
+			}
+		}
+		create_character_memory = {
+			type = murim_hatched_spirit_beast_memory
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option B: Sell the egg
+	option = {
+		name = murim_artifact.0007.b
+		add_gold = 400
+		add_prestige = -25
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Option C: Offer to sect
+	option = {
+		name = murim_artifact.0007.c
+		trigger = {
+			exists = liege
+		}
+		add_piety = 200
+		reverse_add_opinion = {
+			target = liege
+			modifier = murim_offered_spirit_beast_egg
+		}
+		add_character_modifier = {
+			modifier = murim_sect_great_contributor
+			years = 10
+		}
+		liege = {
+			add_prestige = 300
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = generous
+			}
+			modifier = {
+				add = 15
+				has_trait = zealous
+			}
+		}
+	}
+
+	# Option D: Consume the egg (power + hatred)
+	option = {
+		name = murim_artifact.0007.d
+		# Massive temporary power
+		add_prowess_skill = 8
+		add_character_modifier = {
+			modifier = murim_beast_essence_consumed
+			years = 3
+		}
+		# Everyone hates you
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_consumed_spirit_beast
+			}
+		}
+		every_courtier = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_consumed_spirit_beast
+			}
+		}
+		if = {
+			limit = { exists = liege }
+			liege = {
+				add_opinion = {
+					target = root
+					modifier = murim_consumed_spirit_beast
+				}
+			}
+		}
+		add_dread = 40
+		add_tyranny = 20
+		add_trait = callous
+		# Long-term health penalty after the boost fades
+		add_character_modifier = {
+			modifier = murim_beast_essence_backlash
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_consumed_spirit_beast_memory
+		}
+		stress_impact = {
+			sadistic = minor_stress_impact_loss
+			compassionate = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -30
+				has_trait = compassionate
+			}
+		}
+	}
+}
+
+######################################
+# 0008 - FORBIDDEN SCRIPTURE FOUND
+# Dark cultivation path - power + heretic status
+# Cross-ref: murim_sect (hunt), murim_jianghu (dark faction),
+#            murim_duel (powered by dark arts), murim_rank (infamy)
+######################################
+
+murim_artifact.0008 = {
+	type = character_event
+	title = murim_artifact.0008.t
+	desc = murim_artifact.0008.desc
+	theme = skull
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 10
+		NOR = {
+			has_character_flag = murim_read_forbidden_scripture
+			has_trait = zealous
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = cynical
+		}
+		modifier = {
+			add = 0.5
+			intrigue >= 14
+		}
+		modifier = {
+			add = -0.5
+			has_trait = just
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_found_forbidden_scripture
+		}
+	}
+
+	# Option A: Read the scripture (full dark path)
+	option = {
+		name = murim_artifact.0008.a
+		add_character_flag = {
+			flag = murim_read_forbidden_scripture
+		}
+		add_character_flag = {
+			flag = murim_dark_cultivation_path
+		}
+		add_character_flag = {
+			flag = murim_hunted_by_sects
+		}
+		# Massive power gains
+		add_prowess_skill = 5
+		add_intrigue_skill = 3
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_forbidden_scripture_power
+			years = 15
+		}
+		# Marked as heretic - all righteous sects hate you
+		add_trait = deviant
+		add_dread = 25
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_read_forbidden_arts
+			}
+		}
+		# Jianghu dark faction welcomes you
+		add_character_modifier = {
+			modifier = murim_dark_faction_member
+			years = 20
+		}
+		# Cultivation variable boost
+		if = {
+			limit = { has_variable = murim_cultivation_stage }
+			change_variable = {
+				name = murim_cultivation_stage
+				add = 2
+			}
+		}
+		# Fight memory
+		create_character_memory = {
+			type = murim_read_forbidden_scripture_memory
+		}
+		# Ranking system: infamy spike
+		if = {
+			limit = { has_variable = murim_combat_reputation }
+			change_variable = {
+				name = murim_combat_reputation
+				add = 25
+			}
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_loss
+			cynical = minor_stress_impact_loss
+			compassionate = major_stress_impact_gain
+			just = major_stress_impact_gain
+			zealous = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 35
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 25
+				has_trait = sadistic
+			}
+			modifier = {
+				add = -30
+				has_trait = compassionate
+			}
+			modifier = {
+				add = -20
+				has_trait = just
+			}
+		}
+	}
+
+	# Option B: Study only the safe sections
+	option = {
+		name = murim_artifact.0008.b
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = murim_forbidden_knowledge_partial
+			years = 8
+		}
+		# Some power without full corruption
+		add_prowess_skill = 1
+		add_intrigue_skill = 1
+		# Minor suspicion
+		add_character_modifier = {
+			modifier = murim_suspicious_knowledge
+			years = 5
+		}
+		stress_impact = {
+			diligent = minor_stress_impact_loss
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+			modifier = {
+				add = 15
+				learning >= 16
+			}
+		}
+	}
+
+	# Option C: Destroy the scripture
+	option = {
+		name = murim_artifact.0008.c
+		add_piety = 300
+		add_prestige = 100
+		remove_character_flag = murim_found_forbidden_scripture
+		# Righteous reputation boost
+		add_character_modifier = {
+			modifier = murim_destroyed_forbidden_arts
+			years = 10
+		}
+		if = {
+			limit = { exists = liege }
+			reverse_add_opinion = {
+				target = liege
+				modifier = murim_destroyed_heretical_text
+			}
+		}
+		stress_impact = {
+			zealous = major_stress_impact_loss
+			just = minor_stress_impact_loss
+			cynical = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = zealous
+			}
+			modifier = {
+				add = 25
+				has_trait = just
+			}
+			modifier = {
+				add = -20
+				has_trait = cynical
+			}
+		}
+	}
+
+	# Option D: Hide it for later
+	option = {
+		name = murim_artifact.0008.d
+		add_character_flag = {
+			flag = murim_hidden_forbidden_scripture
+		}
+		# Can revisit later
+		trigger_event = {
+			id = murim_artifact.0008
+			days = { 365 730 }
+		}
+		add_stress = 15
+		stress_impact = {
+			paranoid = minor_stress_impact_gain
+			patient = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+			modifier = {
+				add = 15
+				has_trait = paranoid
+			}
+		}
+	}
+}
