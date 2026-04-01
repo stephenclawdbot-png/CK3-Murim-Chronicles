@@ -1,0 +1,536 @@
+# Murim Chronicles Phase 2 - Character Interaction Events
+
+namespace = murim_interact
+
+# Sparring Match
+murim_interact.0001 = {
+	type = character_event
+	title = murim_interact.0001.t
+	desc = murim_interact.0001.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:partner
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_can_spar_trigger = yes
+		exists = scope:partner
+	}
+
+	# Light sparring
+	option = {
+		name = murim_interact.0001.a
+		murim_grant_sparring_xp_effect = yes
+		scope:partner = {
+			murim_grant_sparring_xp_effect = yes
+		}
+		add_opinion = {
+			modifier = murim_sparring_respect
+			target = scope:partner
+		}
+		scope:partner = {
+			add_opinion = {
+				modifier = murim_sparring_respect
+				target = root
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Intense sparring
+	option = {
+		name = murim_interact.0001.b
+		change_variable = { name = murim_cultivation_xp add = 3 }
+		scope:partner = {
+			change_variable = { name = murim_cultivation_xp add = 3 }
+		}
+		random = {
+			chance = 15
+			random_list = {
+				50 = {
+					add_trait = wounded_1
+				}
+				50 = {
+					scope:partner = { add_trait = wounded_1 }
+				}
+			}
+		}
+		add_character_modifier = { modifier = murim_sparring_fatigue days = 30 }
+		scope:partner = {
+			add_character_modifier = { modifier = murim_sparring_fatigue days = 30 }
+		}
+		murim_grant_sparring_xp_effect = yes
+		scope:partner = {
+			murim_grant_sparring_xp_effect = yes
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = wrathful }
+			modifier = { add = -15 has_trait = craven }
+		}
+	}
+
+	# Death match (only with rivals)
+	option = {
+		name = murim_interact.0001.c
+		trigger = {
+			has_relation_rival = scope:partner
+		}
+		# Prowess comparison determines winner
+		if = {
+			limit = { prowess >= scope:partner.prowess }
+			# Root wins
+			change_variable = { name = murim_cultivation_xp add = 6 }
+			add_prestige = 100
+			scope:partner = {
+				random = {
+					chance = 30
+					death = { death_reason = death_duel killer = root }
+				}
+				if = {
+					limit = { is_alive = yes }
+					add_trait = wounded_2
+				}
+			}
+		}
+		else = {
+			# Partner wins
+			random = {
+				chance = 30
+				death = { death_reason = death_duel killer = scope:partner }
+			}
+			if = {
+				limit = { is_alive = yes }
+				add_trait = wounded_2
+			}
+			scope:partner = {
+				change_variable = { name = murim_cultivation_xp add = 6 }
+				add_prestige = 100
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = { add = 40 has_trait = wrathful }
+			modifier = { add = 30 has_trait = murim_eternal_rival }
+			modifier = { add = -30 has_trait = craven }
+		}
+	}
+}
+
+# Master-Disciple Training Session
+murim_interact.0010 = {
+	type = character_event
+	title = murim_interact.0010.t
+	desc = murim_interact.0010.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:disciple
+		animation = personality_honorable
+	}
+
+	trigger = {
+		exists = scope:disciple
+	}
+
+	immediate = {
+		scope:disciple = {
+			save_scope_as = disciple
+		}
+	}
+
+	option = {
+		name = murim_interact.0010.a
+		murim_apply_disciple_training_effect = yes
+		change_variable = { name = murim_cultivation_xp add = 1 }
+		add_prestige = 25
+		# Chance to pass technique
+		if = {
+			limit = { murim_has_any_technique_trait_trigger = yes }
+			random = {
+				chance = 10
+				random_list = {
+					10 = {
+						trigger = { has_trait = murim_harmonious_palm }
+						scope:disciple = { add_trait = murim_harmonious_palm }
+					}
+					10 = {
+						trigger = { has_trait = murim_iron_hegemon }
+						scope:disciple = { add_trait = murim_iron_hegemon }
+					}
+					10 = {
+						trigger = { has_trait = murim_venom_needle }
+						scope:disciple = { add_trait = murim_venom_needle }
+					}
+					10 = {
+						trigger = { has_trait = murim_void_sight }
+						scope:disciple = { add_trait = murim_void_sight }
+					}
+					10 = {
+						trigger = { has_trait = murim_jade_treasury }
+						scope:disciple = { add_trait = murim_jade_treasury }
+					}
+				}
+			}
+		}
+		add_opinion = {
+			modifier = murim_master_disciple_bond
+			target = scope:disciple
+		}
+		scope:disciple = {
+			add_opinion = {
+				modifier = murim_master_disciple_bond
+				target = root
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# Sect Challenge (formal duel)
+murim_interact.0020 = {
+	type = character_event
+	title = murim_interact.0020.t
+	desc = murim_interact.0020.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:target
+		animation = personality_bold
+	}
+
+	trigger = {
+		exists = scope:target
+		is_alive = yes
+	}
+
+	option = {
+		name = murim_interact.0020.a
+		# Prowess comparison with random variance
+		if = {
+			limit = { prowess >= scope:target.prowess }
+			# Root wins
+			add_gold = 50
+			add_prestige = 100
+			change_variable = { name = murim_cultivation_xp add = 3 }
+			scope:target = {
+				remove_short_term_gold = 50
+				add_prestige = -50
+				random = {
+					chance = 20
+					add_trait = wounded_1
+				}
+				add_opinion = {
+					modifier = murim_defeated_in_duel
+					target = root
+				}
+			}
+		}
+		else = {
+			# Root loses
+			remove_short_term_gold = 50
+			add_prestige = -50
+			random = {
+				chance = 20
+				add_trait = wounded_1
+			}
+			scope:target = {
+				add_gold = 50
+				add_prestige = 100
+				change_variable = { name = murim_cultivation_xp add = 3 }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+# Rivalry Declaration
+murim_interact.0030 = {
+	type = character_event
+	title = murim_interact.0030.t
+	desc = murim_interact.0030.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:target
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		exists = scope:target
+		is_alive = yes
+	}
+
+	option = {
+		name = murim_interact.0030.a
+		if = {
+			limit = { NOT = { has_trait = murim_eternal_rival } }
+			add_trait = murim_eternal_rival
+		}
+		scope:target = {
+			if = {
+				limit = { NOT = { has_trait = murim_eternal_rival } }
+				add_trait = murim_eternal_rival
+			}
+		}
+		set_relation_rival = scope:target
+		add_opinion = {
+			modifier = murim_rivalry_hatred
+			target = scope:target
+		}
+		scope:target = {
+			add_opinion = {
+				modifier = murim_rivalry_hatred
+				target = root
+			}
+		}
+		add_character_flag = { flag = murim_has_rival_target days = -1 }
+		scope:target = {
+			add_character_flag = { flag = murim_has_rival_target days = -1 }
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# Technique Theft Attempt
+murim_interact.0040 = {
+	type = character_event
+	title = murim_interact.0040.t
+	desc = murim_interact.0040.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		exists = scope:target
+		is_alive = yes
+	}
+
+	immediate = {
+		add_character_flag = { flag = murim_theft_cooldown days = 365 }
+	}
+
+	option = {
+		name = murim_interact.0040.a
+		random = {
+			chance = murim_technique_theft_success
+			# SUCCESS - steal a random technique
+			random_list = {
+				10 = {
+					trigger = {
+						scope:target = { has_trait = murim_harmonious_palm }
+						NOT = { has_trait = murim_harmonious_palm }
+					}
+					add_trait = murim_harmonious_palm
+				}
+				10 = {
+					trigger = {
+						scope:target = { has_trait = murim_iron_hegemon }
+						NOT = { has_trait = murim_iron_hegemon }
+					}
+					add_trait = murim_iron_hegemon
+				}
+				10 = {
+					trigger = {
+						scope:target = { has_trait = murim_venom_needle }
+						NOT = { has_trait = murim_venom_needle }
+					}
+					add_trait = murim_venom_needle
+				}
+				10 = {
+					trigger = {
+						scope:target = { has_trait = murim_void_sight }
+						NOT = { has_trait = murim_void_sight }
+					}
+					add_trait = murim_void_sight
+				}
+				10 = {
+					trigger = {
+						scope:target = { has_trait = murim_jade_treasury }
+						NOT = { has_trait = murim_jade_treasury }
+					}
+					add_trait = murim_jade_treasury
+				}
+				10 = {
+					trigger = {
+						scope:target = { has_trait = murim_shadow_executioner }
+						NOT = { has_trait = murim_shadow_executioner }
+					}
+					add_trait = murim_shadow_executioner
+				}
+			}
+			if = {
+				limit = { NOT = { has_trait = murim_technique_thief } }
+				add_trait = murim_technique_thief
+			}
+			send_interface_toast = {
+				title = murim_technique_stolen_toast
+				left_icon = root
+			}
+		}
+		modifier = {
+			factor = 0
+		}
+		fallback = {
+			# FAILURE - discovered
+			scope:target = {
+				add_opinion = {
+					modifier = murim_technique_theft_discovered
+					target = root
+				}
+			}
+			add_prestige = -100
+			# Create rivalry
+			if = {
+				limit = { NOT = { has_relation_rival = scope:target } }
+				set_relation_rival = scope:target
+			}
+			send_interface_toast = {
+				title = murim_technique_theft_failed_toast
+				left_icon = root
+			}
+		}
+	}
+	ai_chance = { base = 50 }
+}
+
+# Qi Exchange Healing
+murim_interact.0050 = {
+	type = character_event
+	title = murim_interact.0050.t
+	desc = murim_interact.0050.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:target
+		animation = sadness
+	}
+
+	trigger = {
+		exists = scope:target
+		murim_can_qi_exchange_trigger = yes
+	}
+
+	option = {
+		name = murim_interact.0050.a
+		murim_apply_qi_exchange_effect = yes
+		ai_chance = { base = 50 }
+	}
+}
+
+# Rivalry Duel (periodic between eternal rivals)
+murim_interact.0060 = {
+	type = character_event
+	title = murim_interact.0060.t
+	desc = murim_interact.0060.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = murim_eternal_rival
+		has_character_flag = murim_has_rival_target
+		any_relation = {
+			type = rival
+			is_alive = yes
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = rival
+			limit = { is_alive = yes }
+			save_scope_as = rival_target
+		}
+	}
+
+	# Fight the rival
+	option = {
+		name = murim_interact.0060.a
+		trigger = { exists = scope:rival_target }
+		if = {
+			limit = { prowess >= scope:rival_target.prowess }
+			# Root wins
+			murim_grant_sparring_xp_effect = yes
+			add_prestige = 50
+			scope:rival_target = {
+				add_stress = 20
+				change_variable = { name = murim_cultivation_xp add = 3 }
+			}
+			# Death chance at high ranks
+			if = {
+				limit = {
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 4
+				}
+				random = {
+					chance = 15
+					scope:rival_target = {
+						death = { death_reason = death_duel killer = root }
+					}
+				}
+			}
+		}
+		else = {
+			# Root loses
+			add_stress = 20
+			change_variable = { name = murim_cultivation_xp add = 3 }
+			scope:rival_target = {
+				murim_grant_sparring_xp_effect = yes
+				add_prestige = 50
+			}
+			if = {
+				limit = {
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 4
+				}
+				random = {
+					chance = 15
+					death = { death_reason = death_duel killer = scope:rival_target }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+
+	# Avoid the fight
+	option = {
+		name = murim_interact.0060.b
+		add_stress = 15
+		add_prestige = -25
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
