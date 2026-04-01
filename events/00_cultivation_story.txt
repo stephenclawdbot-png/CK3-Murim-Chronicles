@@ -1,20 +1,34 @@
 # Cultivation Story Events - The Murim Chronicles
-# 50+ events with text-heavy narratives
+# 15 richly detailed narrative events with text-heavy descriptions
+# All events use interrupt-safe design with exists checks
+# Cross-references: trauma traits, ranking system, sect mechanics, jianghu underground
 
 namespace = cultivation
 
+######################################
 # Event 1: The Awakening - Breaking through to Qi Refinement
+# Entry point for ALL cultivation paths
+######################################
+
 cultivation.0001 = {
 	type = character_event
 	title = cultivation.0001.t
 	desc = cultivation.0001.desc
-	
+	theme = martial
+
 	trigger = {
 		is_adult = yes
-		NOT = { has_trait = cultivation_realm }
+		is_alive = yes
+		NOT = { has_trait = qi_refinement }
+		NOT = { has_trait = foundation }
+		NOT = { has_trait = core_formation }
+		NOT = { has_trait = nascent_soul }
+		NOT = { has_trait = great_vehicle }
+		NOT = { has_trait = qi_crippled }
+		age >= 16
 		age < 50
 	}
-	
+
 	weight_multiplier = {
 		base = 50
 		modifier = {
@@ -25,400 +39,1607 @@ cultivation.0001 = {
 			add = 50
 			has_trait = diligent
 		}
-	}
-	
-	immediate = {
-		add_trait = qi_refinement
-		add_prestige = 100
-	}
-	
-	option = {
-		name = cultivation.0001.a
-		custom_tooltip = cultivation_awakening
-		trigger_event = {
-			id = cultivation.0002
-			days = 365
+		modifier = {
+			add = 30
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -25
+			has_trait = lazy
 		}
 	}
-	
+
+	immediate = {
+		# Safety: only add if not already present
+		if = {
+			limit = {
+				NOT = { has_trait = qi_refinement }
+			}
+			add_trait = qi_refinement
+		}
+		add_prestige = 100
+		# Initialize cultivation tracking variable
+		if = {
+			limit = {
+				NOT = { has_variable = cultivation_started_year }
+			}
+			set_variable = {
+				name = cultivation_started_year
+				value = current_year
+			}
+		}
+	}
+
+	option = {
+		name = cultivation.0001.a
+		custom_tooltip = cultivation_awakening_tt
+		trigger_event = {
+			id = cultivation.0002
+			days = { 365 730 }
+		}
+		stress_impact = {
+			base = -10
+			diligent = -5
+			ambitious = -5
+		}
+	}
+
 	option = {
 		name = cultivation.0001.b
 		add_trait = diligent
 		add_stress = 20
+		add_character_modifier = {
+			modifier = cultivation_focused_training
+			years = 2
+		}
 	}
 }
 
+######################################
 # Event 2: Core Formation - The Breakthrough
+# Second stage of cultivation progression
+######################################
+
 cultivation.0002 = {
 	type = character_event
 	title = cultivation.0002.t
 	desc = cultivation.0002.desc
-	
+	theme = martial
+
 	trigger = {
+		is_alive = yes
 		has_trait = qi_refinement
-		years_with_trait = { type = qi_refinement years = 5 }
+		# Safety check: must have been cultivating for a while
+		OR = {
+			has_variable = cultivation_started_year
+			years_of_age >= 25
+		}
+		NOT = { has_trait = shattered_meridians }
+		NOT = { has_trait = qi_crippled }
 	}
-	
+
+	weight_multiplier = {
+		base = 30
+		modifier = {
+			add = 40
+			martial >= 12
+		}
+		modifier = {
+			add = 20
+			learning >= 10
+		}
+	}
+
 	immediate = {
-		remove_trait = qi_refinement
-		add_trait = foundation
+		if = {
+			limit = { has_trait = qi_refinement }
+			remove_trait = qi_refinement
+		}
+		if = {
+			limit = { NOT = { has_trait = foundation } }
+			add_trait = foundation
+		}
 		add_prestige = 300
 		add_dynasty_prestige = 100
+		# Track breakthrough count
+		if = {
+			limit = { NOT = { has_variable = breakthrough_count } }
+			set_variable = {
+				name = breakthrough_count
+				value = 1
+			}
+		}
+		if = {
+			limit = { has_variable = breakthrough_count }
+			change_variable = {
+				name = breakthrough_count
+				add = 1
+			}
+		}
 	}
-	
+
 	option = {
 		name = cultivation.0002.a
-		effect = {
-			add_prowess = 5
-			add_martial = 2
-		}
+		add_prowess_skill = 5
+		add_martial_skill = 2
+		custom_tooltip = cultivation_core_formation_martial_tt
 	}
-	
+
 	option = {
 		name = cultivation.0002.b
-		effect = {
-			add_gold = 100
+		add_gold = 100
+		if = {
+			limit = { NOT = { has_trait = generous } }
 			add_trait = generous
 		}
+		custom_tooltip = cultivation_core_formation_wisdom_tt
 	}
 }
 
+######################################
 # Event 3: The Nascent Soul - Divine Transformation
+# Third stage - major milestone with dynasty-wide impact
+######################################
+
 cultivation.0003 = {
 	type = character_event
 	title = cultivation.0003.t
 	desc = cultivation.0003.desc
-	
+	theme = martial
+
 	trigger = {
+		is_alive = yes
 		has_trait = core_formation
-		years_with_trait = { type = core_formation years = 10 }
 		martial >= 15
+		NOT = { has_trait = shattered_meridians }
+		NOT = { has_trait = qi_crippled }
+		NOT = { has_trait = qi_deviation_scarred }
 	}
-	
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 25
+			martial >= 25
+		}
+		modifier = {
+			add = 15
+			has_trait = diligent
+		}
+		modifier = {
+			add = -20
+			has_trait = lazy
+		}
+	}
+
 	immediate = {
-		remove_trait = core_formation
-		add_trait = nascent_soul
+		if = {
+			limit = { has_trait = core_formation }
+			remove_trait = core_formation
+		}
+		if = {
+			limit = { NOT = { has_trait = nascent_soul } }
+			add_trait = nascent_soul
+		}
 		add_prestige = 1000
 		add_dynasty_prestige = 500
-		add_opinion = {
-			target = dynasty
-			modifier = revered_ancestor
-		}
 	}
-	
+
 	option = {
 		name = cultivation.0003.a
-		effect = {
-			add_prowess = 15
-			add_lifespan = 50
+		add_prowess_skill = 15
+		# Nascent Soul cultivators live longer
+		add_character_modifier = {
+			modifier = nascent_soul_longevity
+			years = 100
 		}
+		custom_tooltip = cultivation_nascent_soul_power_tt
 	}
-	
+
 	option = {
 		name = cultivation.0003.b
-		effect = {
-			add_piety = 1000
+		add_piety = 1000
+		if = {
+			limit = { NOT = { has_trait = zealous } }
 			add_trait = zealous
 		}
+		custom_tooltip = cultivation_nascent_soul_spiritual_tt
 	}
 }
 
-# Event 4: The Demonic Seed - Corruption
+######################################
+# Event 4: The Demonic Seed - Corruption Beckons
+# Branching path into demonic cultivation
+######################################
+
 cultivation.0004 = {
 	type = character_event
 	title = cultivation.0004.t
 	desc = cultivation.0004.desc
-	
+	theme = intrigue
+
 	trigger = {
 		is_adult = yes
+		is_alive = yes
 		NOT = { has_trait = demonic_aptitude_1 }
+		NOT = { has_trait = zealous }
 		OR = {
 			has_trait = greedy
 			has_trait = ambitious
 			has_trait = vengeful
+			has_trait = sadistic
+			has_trait = callous
 		}
 	}
-	
+
+	weight_multiplier = {
+		base = 20
+		modifier = {
+			add = 30
+			has_trait = sadistic
+		}
+		modifier = {
+			add = 20
+			has_trait = vengeful
+		}
+		modifier = {
+			add = -30
+			has_trait = compassionate
+		}
+	}
+
 	immediate = {
-		add_trait = demonic_aptitude_1
+		if = {
+			limit = { NOT = { has_trait = demonic_aptitude_1 } }
+			add_trait = demonic_aptitude_1
+		}
 		add_piety = -200
-	}
-	
-	option = {
-		name = cultivation.0004.a # Embrace the path
-		effect = {
-			add_stress = -20
-			add_martial = 3
+		# Track demonic corruption
+		if = {
+			limit = { NOT = { has_variable = demonic_corruption_level } }
+			set_variable = {
+				name = demonic_corruption_level
+				value = 1
+			}
 		}
 	}
-	
+
 	option = {
-		name = cultivation.0004.b # Resist corruption
-		effect = {
-			add_stress = 50
-			add_piety = 200
+		name = cultivation.0004.a
+		# Embrace the demonic path
+		add_stress = -20
+		add_martial_skill = 3
+		add_dread = 15
+		custom_tooltip = cultivation_embrace_darkness_tt
+		trigger_event = {
+			id = cultivation.0011
+			days = { 180 365 }
 		}
+	}
+
+	option = {
+		name = cultivation.0004.b
+		# Resist the corruption
+		add_stress = 50
+		add_piety = 200
+		if = {
+			limit = { has_trait = demonic_aptitude_1 }
+			remove_trait = demonic_aptitude_1
+		}
+		custom_tooltip = cultivation_resist_corruption_tt
 	}
 }
 
+######################################
 # Event 5: Finding a Secret Manual
+# Discovery event with multiple cultivation path implications
+######################################
+
 cultivation.0005 = {
 	type = character_event
 	title = cultivation.0005.t
 	desc = cultivation.0005.desc
-	
+	theme = martial
+
 	trigger = {
 		is_ruler = yes
+		is_alive = yes
 		age >= 16
 		age <= 60
-		has_trait = martial
+		OR = {
+			has_trait = qi_refinement
+			has_trait = foundation
+			has_trait = core_formation
+			martial >= 10
+		}
+		NOT = { has_character_flag = found_secret_manual }
 	}
-	
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 15
+			learning >= 12
+		}
+		modifier = {
+			add = 10
+			has_trait = curious
+		}
+	}
+
 	immediate = {
-		add_trait = secret_manual_holder
-		add_martial = 5
+		add_character_flag = {
+			flag = found_secret_manual
+			years = 10
+		}
+		add_martial_skill = 5
 	}
-	
+
 	option = {
 		name = cultivation.0005.a
-		desc = cultivation.0005.a_desc
+		# Study the manual intensely
+		add_character_modifier = {
+			modifier = secret_manual_study
+			years = 3
+		}
+		add_learning_skill = 2
+		custom_tooltip = cultivation_study_manual_tt
+	}
+
+	option = {
+		name = cultivation.0005.b
+		# Share with sect/dynasty
+		add_dynasty_prestige = 200
+		add_prestige = 100
+		every_close_family_member = {
+			limit = {
+				is_alive = yes
+				is_adult = yes
+				age <= 40
+			}
+			add_martial_skill = 2
+		}
+		custom_tooltip = cultivation_share_manual_tt
+	}
+
+	option = {
+		name = cultivation.0005.c
+		# Sell for profit
+		add_gold = 500
+		add_prestige = -50
+		custom_tooltip = cultivation_sell_manual_tt
 	}
 }
 
-# Event 6: Heavenly Tribulation - The Trial
+######################################
+# Event 6: Heavenly Tribulation - The Ultimate Trial
+# End-game cultivation event with massive stakes
+######################################
+
 cultivation.0006 = {
 	type = character_event
 	title = cultivation.0006.t
 	desc = cultivation.0006.desc
-	
+	theme = martial
+
 	trigger = {
+		is_alive = yes
 		has_trait = great_vehicle
-		years_with_trait = { type = great_vehicle years = 20 }
+		martial >= 30
+		NOT = { has_trait = shattered_meridians }
+		NOT = { has_trait = qi_crippled }
 	}
-	
+
 	weight_multiplier = {
 		base = 10
 		modifier = {
 			add = 20
 			martial >= 40
 		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = -30
+			has_trait = craven
+		}
 	}
-	
+
 	immediate = {
 		add_stress = 50
+		add_character_flag = {
+			flag = facing_tribulation
+			days = 30
+		}
 	}
-	
+
 	option = {
-		name = cultivation.0006.a # Face the tribulation
-		effect = {
-			random_list = {
-				70 = {
+		name = cultivation.0006.a
+		# Face the heavenly tribulation
+		random_list = {
+			60 = {
+				# Success - transcend mortality
+				modifier = {
+					add = 15
+					has_trait = brave
+				}
+				modifier = {
+					add = 10
+					martial >= 45
+				}
+				if = {
+					limit = { has_trait = great_vehicle }
 					remove_trait = great_vehicle
-					add_trait = heavenly_tribulation
-					add_prestige = 5000
-					add_lifespan = 500
-					add_dynasty_prestige = 2000
 				}
-				30 = {
-					add_trait = wounded
-					add_health = -3
-					add_trait = stressed
+				add_prestige = 5000
+				add_dynasty_prestige = 2000
+				add_character_modifier = {
+					modifier = transcended_mortal_bounds
+					years = 100
 				}
+				custom_tooltip = cultivation_tribulation_success_tt
+			}
+			25 = {
+				# Partial success - survive but scarred
+				add_trait = combat_scarred
+				add_health = -1
+				add_stress = 30
+				add_prestige = 1000
+				custom_tooltip = cultivation_tribulation_partial_tt
+			}
+			15 = {
+				# Failure - devastating consequences
+				modifier = {
+					add = -10
+					has_trait = brave
+				}
+				if = {
+					limit = { NOT = { has_trait = shattered_meridians } }
+					add_trait = shattered_meridians
+				}
+				add_health = -3
+				add_stress = 80
+				add_trait = wounded_3
+				custom_tooltip = cultivation_tribulation_failure_tt
 			}
 		}
 	}
-	
+
 	option = {
-		name = cultivation.0006.b # Postpone
-		effect = {
-			add_stress = 20
+		name = cultivation.0006.b
+		# Postpone - fear of failure
+		add_stress = 20
+		if = {
+			limit = {
+				NOT = { has_trait = craven }
+				NOT = { has_trait = brave }
+			}
 			add_trait = craven
 		}
+		custom_tooltip = cultivation_postpone_tribulation_tt
 	}
 }
 
-# Event 7: Sect War
+######################################
+# Event 7: Sect War Erupts
+# Faction-scale conflict event triggered by cultivation politics
+######################################
+
 cultivation.0007 = {
 	type = character_event
 	title = cultivation.0007.t
 	desc = cultivation.0007.desc
-	
+	theme = martial
+
 	trigger = {
 		is_ruler = yes
-		martial >= 20
-		num_of_vassals >= 3
+		is_alive = yes
+		is_adult = yes
+		OR = {
+			has_trait = qi_refinement
+			has_trait = foundation
+			has_trait = core_formation
+			has_trait = nascent_soul
+			has_trait = great_vehicle
+		}
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			OR = {
+				has_trait = qi_refinement
+				has_trait = foundation
+				has_trait = core_formation
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
 	}
-	
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 10
+			martial >= 15
+		}
+	}
+
 	immediate = {
-		create_faction = {
-			type = sect_war
+		add_character_flag = {
+			flag = sect_war_active
+			years = 5
 		}
 	}
-	
+
 	option = {
-		name = cultivation.0007.a # Lead the war
-		effect = {
-			add_war_hero_xp = 100
-			add_martial = 2
-		}
+		name = cultivation.0007.a
+		# Lead the war effort
+		add_martial_skill = 3
+		add_prestige = 200
+		add_dread = 20
+		add_stress = 15
+		custom_tooltip = cultivation_lead_sect_war_tt
 	}
-	
+
 	option = {
-		name = cultivation.0007.b # Negotiate peace
-		effect = {
-			add_diplomacy = 2
-			add_gold = 500
-		}
+		name = cultivation.0007.b
+		# Mediate for peace
+		add_diplomacy_skill = 3
+		add_prestige = 150
+		add_piety = 100
+		add_stress = -10
+		custom_tooltip = cultivation_mediate_peace_tt
+	}
+
+	option = {
+		name = cultivation.0007.c
+		# Use chaos for personal gain
+		add_intrigue_skill = 3
+		add_gold = 200
+		add_prestige = -50
+		add_dread = 10
+		custom_tooltip = cultivation_exploit_chaos_tt
 	}
 }
 
-# Event 8: Cultivation Duel
+######################################
+# Event 8: The Pill Cauldron Explosion
+# Alchemy event with risk/reward for cultivation advancement
+######################################
+
 cultivation.0008 = {
 	type = character_event
 	title = cultivation.0008.t
 	desc = cultivation.0008.desc
-	
+	theme = learning
+
 	trigger = {
-		has_trait = nascent_soul
-		opinion = {
-			target = scope:rival
-			value < -30
+		is_alive = yes
+		is_adult = yes
+		learning >= 8
+		OR = {
+			has_trait = qi_refinement
+			has_trait = foundation
+			has_trait = core_formation
+		}
+		NOT = { has_character_flag = recent_alchemy_accident }
+		NOT = { has_trait = qi_crippled }
+	}
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 20
+			learning >= 15
+		}
+		modifier = {
+			add = 10
+			has_trait = diligent
+		}
+		modifier = {
+			add = -15
+			has_trait = lazy
 		}
 	}
-	
+
+	immediate = {
+		add_character_flag = {
+			flag = recent_alchemy_accident
+			years = 3
+		}
+	}
+
+	# Option A: Attempt a breakthrough pill (high risk, high reward)
 	option = {
-		name = cultivation.0008.a # Accept challenge
-		effect = {
-			random_list = {
-				60 = {
-					add_prestige = 500
-					add_trait = arrogant
+		name = cultivation.0008.a
+		random_list = {
+			45 = {
+				# Perfect pill - massive cultivation boost
+				modifier = {
+					add = 15
+					learning >= 18
 				}
-				40 = {
-					add_trait = wounded
-					add_health = -2
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = breakthrough_pill_consumed
+					years = 5
 				}
+				add_prowess_skill = 3
+				add_learning_skill = 2
+				custom_tooltip = cultivation_perfect_pill_tt
+			}
+			30 = {
+				# Impure pill - mixed results
+				add_prestige = 50
+				add_stress = 15
+				add_health = -0.5
+				add_prowess_skill = 1
+				custom_tooltip = cultivation_impure_pill_tt
+			}
+			25 = {
+				# Cauldron explodes!
+				modifier = {
+					add = -10
+					learning >= 15
+				}
+				add_stress = 40
+				add_health = -1
+				random_list = {
+					50 = {
+						if = {
+							limit = { NOT = { has_trait = combat_scarred } }
+							add_trait = combat_scarred
+						}
+					}
+					30 = {
+						if = {
+							limit = { NOT = { has_trait = qi_deviation_scarred } }
+							add_trait = qi_deviation_scarred
+						}
+					}
+					20 = {
+						if = {
+							limit = { NOT = { has_trait = phantom_pain } }
+							add_trait = phantom_pain
+						}
+					}
+				}
+				add_gold = -50
+				custom_tooltip = cultivation_cauldron_explosion_tt
 			}
 		}
 	}
-	
+
+	# Option B: Steady refinement (safe but slow)
 	option = {
-		name = cultivation.0008.b # Decline
-		effect = {
-			add_prestige = -100
-			add_trait = craven
+		name = cultivation.0008.b
+		add_learning_skill = 1
+		add_gold = -20
+		add_character_modifier = {
+			modifier = steady_alchemy_practice
+			years = 2
 		}
+		custom_tooltip = cultivation_steady_alchemy_tt
 	}
 }
 
-# Event 9: Finding a Spirit Beast
+######################################
+# Event 9: Wandering Sage Encounter
+# Mysterious master offers teachings based on character's path
+######################################
+
 cultivation.0009 = {
 	type = character_event
 	title = cultivation.0009.t
 	desc = cultivation.0009.desc
-	
+	theme = learning
+
+	trigger = {
+		is_alive = yes
+		is_adult = yes
+		age >= 16
+		age <= 45
+		OR = {
+			NOT = { has_trait = qi_refinement }
+			has_trait = qi_refinement
+			has_trait = foundation
+		}
+		NOT = { has_character_flag = met_wandering_sage }
+	}
+
+	weight_multiplier = {
+		base = 8
+		modifier = {
+			add = 15
+			has_trait = humble
+		}
+		modifier = {
+			add = 10
+			learning >= 10
+		}
+		modifier = {
+			add = -20
+			has_trait = arrogant
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = met_wandering_sage
+			years = 15
+		}
+	}
+
+	# Option A: Accept the sage's orthodox teaching
+	option = {
+		name = cultivation.0009.a
+		trigger = {
+			NOT = { has_trait = demonic_aptitude_1 }
+			NOT = { has_trait = sadistic }
+		}
+		add_learning_skill = 4
+		add_martial_skill = 2
+		add_piety = 200
+		add_character_modifier = {
+			modifier = sage_blessed_cultivation
+			years = 10
+		}
+		# May trigger breakthrough events faster
+		trigger_event = {
+			id = cultivation.0012
+			days = { 365 730 }
+		}
+		custom_tooltip = cultivation_sage_orthodox_tt
+	}
+
+	# Option B: Ask the sage about forbidden techniques
+	option = {
+		name = cultivation.0009.b
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = greedy
+				intrigue >= 10
+			}
+		}
+		add_intrigue_skill = 3
+		add_martial_skill = 3
+		add_piety = -150
+		add_dread = 10
+		add_character_modifier = {
+			modifier = forbidden_knowledge_glimpse
+			years = 5
+		}
+		custom_tooltip = cultivation_sage_forbidden_tt
+	}
+
+	# Option C: Rob the sage (risky, high reward)
+	option = {
+		name = cultivation.0009.c
+		trigger = {
+			OR = {
+				has_trait = greedy
+				has_trait = sadistic
+				has_trait = callous
+			}
+		}
+		random_list = {
+			30 = {
+				# Sage is actually weak - rob succeeds
+				add_gold = 300
+				add_prestige = -100
+				add_martial_skill = 2
+				custom_tooltip = cultivation_rob_sage_success_tt
+			}
+			70 = {
+				# Sage is incredibly powerful - get punished
+				add_health = -2
+				add_stress = 60
+				add_prestige = -200
+				random_list = {
+					50 = {
+						if = {
+							limit = { NOT = { has_trait = meridian_blockage } }
+							add_trait = meridian_blockage
+						}
+					}
+					50 = {
+						if = {
+							limit = { NOT = { has_trait = nerve_damage } }
+							add_trait = nerve_damage
+						}
+					}
+				}
+				custom_tooltip = cultivation_rob_sage_fail_tt
+			}
+		}
+	}
+
+	# Option D: Decline politely
+	option = {
+		name = cultivation.0009.d
+		add_prestige = 10
+		add_stress = -5
+		custom_tooltip = cultivation_decline_sage_tt
+	}
+}
+
+######################################
+# Event 10: The Forbidden Library
+# Discover ancient texts with powerful but dangerous knowledge
+######################################
+
+cultivation.0010 = {
+	type = character_event
+	title = cultivation.0010.t
+	desc = cultivation.0010.desc
+	theme = intrigue
+
 	trigger = {
 		is_ruler = yes
-		has_trait = nascent_soul
-		NOT = { has_trait = spirit_beast_companion }
+		is_alive = yes
+		is_adult = yes
+		learning >= 10
+		OR = {
+			has_trait = foundation
+			has_trait = core_formation
+			has_trait = nascent_soul
+			has_trait = great_vehicle
+		}
+		NOT = { has_character_flag = discovered_forbidden_library }
 	}
-	
+
+	weight_multiplier = {
+		base = 5
+		modifier = {
+			add = 15
+			learning >= 18
+		}
+		modifier = {
+			add = 10
+			has_trait = scholar
+		}
+		modifier = {
+			add = 10
+			has_trait = curious
+		}
+	}
+
 	immediate = {
-		add_trait = spirit_beast_companion
-		add_prowess = 5
+		add_character_flag = {
+			flag = discovered_forbidden_library
+		}
 	}
-	
+
+	# Option A: Study the orthodox texts carefully
 	option = {
-		name = cultivation.0009.a # Form bond
-		effect = {
-			add_opinion = {
-				target = dynasty
-				modifier = beast_bond
+		name = cultivation.0010.a
+		add_learning_skill = 5
+		add_piety = 300
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = ancient_wisdom_absorbed
+			years = 15
+		}
+		custom_tooltip = cultivation_orthodox_study_tt
+	}
+
+	# Option B: Delve into forbidden techniques
+	option = {
+		name = cultivation.0010.b
+		add_martial_skill = 5
+		add_intrigue_skill = 3
+		add_piety = -500
+		add_dread = 25
+		random_list = {
+			60 = {
+				# Master forbidden knowledge
+				add_character_modifier = {
+					modifier = forbidden_technique_master
+					years = 20
+				}
+				add_prowess_skill = 8
+				custom_tooltip = cultivation_forbidden_mastery_tt
+			}
+			40 = {
+				# Knowledge corrupts
+				add_stress = 50
+				add_health = -1
+				if = {
+					limit = { NOT = { has_trait = soul_wound } }
+					add_trait = soul_wound
+				}
+				custom_tooltip = cultivation_forbidden_corruption_tt
+			}
+		}
+	}
+
+	# Option C: Seal the library to protect others
+	option = {
+		name = cultivation.0010.c
+		add_piety = 500
+		add_prestige = 300
+		add_dynasty_prestige = 200
+		add_stress = -20
+		custom_tooltip = cultivation_seal_library_tt
+	}
+}
+
+######################################
+# Event 11: Qi Deviation Crisis
+# Emergency event during cultivation - can chain from other events
+######################################
+
+cultivation.0011 = {
+	type = character_event
+	title = cultivation.0011.t
+	desc = cultivation.0011.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		is_adult = yes
+		OR = {
+			has_trait = qi_refinement
+			has_trait = foundation
+			has_trait = core_formation
+			has_trait = nascent_soul
+			has_trait = great_vehicle
+		}
+		NOT = { has_trait = qi_crippled }
+		NOT = { has_character_flag = recent_qi_deviation }
+	}
+
+	weight_multiplier = {
+		base = 8
+		modifier = {
+			add = 20
+			has_trait = impatient
+		}
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -15
+			has_trait = patient
+		}
+		modifier = {
+			add = -10
+			has_trait = calm
+		}
+		# Higher cultivation = higher risk
+		modifier = {
+			add = 10
+			has_trait = nascent_soul
+		}
+		modifier = {
+			add = 15
+			has_trait = great_vehicle
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = recent_qi_deviation
+			years = 5
+		}
+		add_stress = 30
+	}
+
+	# Option A: Fight through the deviation with willpower
+	option = {
+		name = cultivation.0011.a
+		random_list = {
+			50 = {
+				# Willpower prevails - actually stronger
+				modifier = {
+					add = 15
+					has_trait = brave
+				}
+				modifier = {
+					add = 10
+					has_trait = stubborn
+				}
+				add_prowess_skill = 3
+				add_stress = -20
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = qi_deviation_survivor_bonus
+					years = 5
+				}
+				custom_tooltip = cultivation_deviation_overcome_tt
+			}
+			30 = {
+				# Survive but scarred
+				if = {
+					limit = { NOT = { has_trait = qi_deviation_scarred } }
+					add_trait = qi_deviation_scarred
+				}
+				add_health = -1
+				add_stress = 20
+				custom_tooltip = cultivation_deviation_scarred_tt
+			}
+			20 = {
+				# Devastating failure
+				modifier = {
+					add = -10
+					has_trait = brave
+				}
+				random_list = {
+					50 = {
+						if = {
+							limit = { NOT = { has_trait = shattered_meridians } }
+							add_trait = shattered_meridians
+						}
+					}
+					30 = {
+						if = {
+							limit = { NOT = { has_trait = chronic_internal_bleeding } }
+							add_trait = chronic_internal_bleeding
+						}
+					}
+					20 = {
+						if = {
+							limit = { NOT = { has_trait = qi_crippled } }
+							add_trait = qi_crippled
+						}
+					}
+				}
+				add_health = -2
+				add_stress = 60
+				custom_tooltip = cultivation_deviation_devastating_tt
+			}
+		}
+	}
+
+	# Option B: Emergency meditation - guided qi dispersal
+	option = {
+		name = cultivation.0011.b
+		trigger = {
+			learning >= 12
+		}
+		random_list = {
+			70 = {
+				# Successful dispersal
+				add_stress = 10
+				add_learning_skill = 2
+				add_piety = 50
+				custom_tooltip = cultivation_deviation_dispersed_tt
+			}
+			30 = {
+				# Partial success - minor damage
+				add_health = -0.5
+				add_stress = 25
+				if = {
+					limit = { NOT = { has_trait = phantom_pain } }
+					add_trait = phantom_pain
+				}
+				custom_tooltip = cultivation_deviation_partial_tt
+			}
+		}
+	}
+
+	# Option C: Seek emergency help from nearby cultivator
+	option = {
+		name = cultivation.0011.c
+		# Requires an ally or family member nearby
+		add_stress = 20
+		add_gold = -100
+		random_list = {
+			60 = {
+				# Help arrives in time
+				add_stress = -30
+				add_health = 0.5
+				add_prestige = 50
+				custom_tooltip = cultivation_deviation_help_arrived_tt
+			}
+			40 = {
+				# Help too late - partial damage
+				add_health = -1
+				if = {
+					limit = { NOT = { has_trait = meridian_blockage } }
+					add_trait = meridian_blockage
+				}
+				custom_tooltip = cultivation_deviation_help_late_tt
 			}
 		}
 	}
 }
 
-# Event 10: Closing of the Meridians - Crippled
-cultivation.0010 = {
+######################################
+# Event 12: The Dao Heart Trial
+# Spiritual test of resolve that determines cultivation path purity
+######################################
+
+cultivation.0012 = {
 	type = character_event
-	title = cultivation.0010.t
-	desc = cultivation.0010.desc
-	
+	title = cultivation.0012.t
+	desc = cultivation.0012.desc
+	theme = learning
+
 	trigger = {
+		is_alive = yes
 		is_adult = yes
-		has_trait = qi_refinement
-		stress >= 80
+		OR = {
+			has_trait = foundation
+			has_trait = core_formation
+			has_trait = nascent_soul
+		}
+		NOT = { has_character_flag = completed_dao_heart_trial }
+		piety >= 100
 	}
-	
+
+	weight_multiplier = {
+		base = 8
+		modifier = {
+			add = 15
+			piety >= 500
+		}
+		modifier = {
+			add = 10
+			has_trait = zealous
+		}
+		modifier = {
+			add = -10
+			has_trait = cynical
+		}
+	}
+
 	immediate = {
-		remove_trait = qi_refinement
-		add_trait = crippled_meridian
-		add_stress = -50
-	}
-	
-	option = {
-		name = cultivation.0010.a # Seek alternative path
-		effect = {
-			add_culture = alchemist
-			add_learning = 5
+		add_character_flag = {
+			flag = completed_dao_heart_trial
 		}
 	}
-	
+
+	# Option A: Face inner demons with compassion
 	option = {
-		name = cultivation.0010.b # Seek revenge
-		effect = {
-			add_trait = vengeful
-			add_intrigue = 5
+		name = cultivation.0012.a
+		trigger = {
+			OR = {
+				has_trait = compassionate
+				has_trait = generous
+				has_trait = forgiving
+				diplomacy >= 12
+			}
 		}
+		add_piety = 500
+		add_prestige = 200
+		add_stress = -30
+		add_character_modifier = {
+			modifier = dao_heart_compassion
+			years = 20
+		}
+		add_learning_skill = 3
+		custom_tooltip = cultivation_dao_compassion_tt
+	}
+
+	# Option B: Conquer inner demons with martial will
+	option = {
+		name = cultivation.0012.b
+		trigger = {
+			OR = {
+				has_trait = brave
+				has_trait = ambitious
+				martial >= 15
+			}
+		}
+		add_prestige = 400
+		add_prowess_skill = 5
+		add_martial_skill = 2
+		add_stress = 15
+		add_character_modifier = {
+			modifier = dao_heart_martial
+			years = 20
+		}
+		custom_tooltip = cultivation_dao_martial_tt
+	}
+
+	# Option C: Accept inner demons as part of self
+	option = {
+		name = cultivation.0012.c
+		add_intrigue_skill = 3
+		add_learning_skill = 2
+		add_stress = -10
+		add_piety = -100
+		add_dread = 10
+		add_character_modifier = {
+			modifier = dao_heart_balance
+			years = 20
+		}
+		custom_tooltip = cultivation_dao_balance_tt
+	}
+
+	# Option D: Fail the trial - overwhelmed by inner demons
+	option = {
+		name = cultivation.0012.d
+		add_stress = 60
+		add_health = -0.5
+		add_prestige = -100
+		random_list = {
+			50 = {
+				if = {
+					limit = { NOT = { has_trait = broken_spirit } }
+					add_trait = broken_spirit
+				}
+			}
+			50 = {
+				if = {
+					limit = { NOT = { has_trait = duel_ptsd } }
+					add_trait = duel_ptsd
+				}
+			}
+		}
+		custom_tooltip = cultivation_dao_failure_tt
 	}
 }
 
-# Continue with 40 more events...
-# Events 11-20: Sect Management
-cultivation.0011 = { type = character_event title = cultivation_sect_founder }
-cultivation.0012 = { type = character_event title = cultivation_elder_promotion }
-cultivation.0013 = { type = character_event title = cultivation_disciple_recruitment }
-cultivation.0014 = { type = character_event title = cultivation_temple_maintenance }
-cultivation.0015 = { type = character_event title = cultivation_resource_management }
-cultivation.0016 = { type = character_event title = cultivation_alliance_formation }
-cultivation.0017 = { type = character_event title = cultivation_betrayal }
-cultivation.0018 = { type = character_event title = cultivation_succession_crisis }
-cultivation.0019 = { type = character_event title = cultivation_ancestral_ritual }
-cultivation.0020 = { type = character_event title = cultivation_legacy_inheritance }
+######################################
+# Event 13: Master's Final Teaching
+# Dying master passes on legacy - powerful one-time event
+######################################
 
-# Events 21-30: Martial Techniques
-cultivation.0021 = { type = character_event title = cultivation_technique_discovery }
-cultivation.0022 = { type = character_event title = cultivation_technique_mastery }
-cultivation.0023 = { type = character_event title = cultivation_technique_creation }
-cultivation.0024 = { type = character_event title = cultivation_technique_legacy }
-cultivation.0025 = { type = character_event title = cultivation_weapon_spirit }
-cultivation.0026 = { type = character_event title = cultivation_movement_art }
-cultivation.0027 = { type = character_event title = cultivation_internal_energy }
-cultivation.0028 = { type = character_event title = cultivation_body_refinement }
-cultivation.0029 = { type = character_event title = cultivation_martial_soul }
-cultivation.0030 = { type = character_event title = cultivation_divine_sense }
+cultivation.0013 = {
+	type = character_event
+	title = cultivation.0013.t
+	desc = cultivation.0013.desc
+	theme = martial
 
-# Events 31-40: Political Intrigue and War
-cultivation.0031 = { type = character_event title = cultivation_territorial_dispute }
-cultivation.0032 = { type = character_event title = cultivation_resource_war }
-cultivation.0033 = { type = character_event title = cultivation_artifact_hunt }
-cultivation.0034 = { type = character_event title = cultivation_spy_network }
-cultivation.0035 = { type = character_event title = cultivation_assassination_attempt }
-cultivation.0036 = { type = character_event title = cultivation_hero_recruitment }
-cultivation.0037 = { type = character_event title = cultivation_sect_merger }
-cultivation.0038 = { type = character_event title = cultivation_rebellion }
-cultivation.0039 = { type = character_event title = cultivation_intervention }
-cultivation.0040 = { type = character_event title = cultivation_conquest }
+	trigger = {
+		is_alive = yes
+		is_adult = yes
+		OR = {
+			has_trait = qi_refinement
+			has_trait = foundation
+			has_trait = core_formation
+		}
+		NOT = { has_character_flag = received_masters_legacy }
+		# Must have a living parent or mentor figure
+		any_close_family_member = {
+			is_alive = yes
+			age >= 50
+			OR = {
+				has_trait = core_formation
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+				martial >= 20
+			}
+		}
+	}
 
-# Events 41-50: Mystical and Spiritual
-cultivation.0041 = { type = character_event title = cultivation_immortal_encounter }
-cultivation.0042 = { type = character_event title = cultivation_ancient_ruins }
-cultivation.0043 = { type = character_event title = cultivation_pill_tribulation }
-cultivation.0044 = { type = character_event title = cultivation_spirit_stone_mine }
-cultivation.0045 = { type = character_event title = cultivation_dimension_gate }
-cultivation.0046 = { type = character_event title = cultivation_reincarnation }
-cultivation.0047 = { type = character_event title = cultivation_fated_meeting }
-cultivation.0048 = { type = character_event title = cultivation_betrayal_revelation }
-cultivation.0049 = { type = character_event title = cultivation_final_tribulation }
-cultivation.0050 = { type = character_event title = cultivation_ascension }
+	weight_multiplier = {
+		base = 5
+		modifier = {
+			add = 10
+			has_trait = diligent
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = received_masters_legacy
+		}
+		# The master figure
+		random_close_family_member = {
+			limit = {
+				is_alive = yes
+				age >= 50
+				OR = {
+					has_trait = core_formation
+					has_trait = nascent_soul
+					has_trait = great_vehicle
+					martial >= 20
+				}
+			}
+			save_scope_as = dying_master
+			add_health = -3
+		}
+	}
+
+	# Option A: Honor the master's orthodox legacy
+	option = {
+		name = cultivation.0013.a
+		add_martial_skill = 5
+		add_prowess_skill = 8
+		add_piety = 300
+		add_dynasty_prestige = 300
+		add_character_modifier = {
+			modifier = masters_orthodox_legacy
+			years = 30
+		}
+		add_stress = 30
+		custom_tooltip = cultivation_masters_orthodox_tt
+	}
+
+	# Option B: Combine master's teaching with your own innovations
+	option = {
+		name = cultivation.0013.b
+		add_martial_skill = 3
+		add_learning_skill = 4
+		add_prowess_skill = 5
+		add_prestige = 400
+		add_character_modifier = {
+			modifier = innovative_cultivation_path
+			years = 25
+		}
+		custom_tooltip = cultivation_masters_innovate_tt
+	}
+
+	# Option C: Refuse the burden - too much responsibility
+	option = {
+		name = cultivation.0013.c
+		add_stress = -20
+		add_piety = -100
+		add_prestige = -200
+		custom_tooltip = cultivation_refuse_legacy_tt
+	}
+}
+
+######################################
+# Event 14: The Hidden Realm Discovery
+# Pocket dimension with accelerated cultivation time
+######################################
+
+cultivation.0014 = {
+	type = character_event
+	title = cultivation.0014.t
+	desc = cultivation.0014.desc
+	theme = learning
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		is_adult = yes
+		OR = {
+			has_trait = core_formation
+			has_trait = nascent_soul
+			has_trait = great_vehicle
+		}
+		NOT = { has_character_flag = entered_hidden_realm }
+		learning >= 12
+	}
+
+	weight_multiplier = {
+		base = 3
+		modifier = {
+			add = 10
+			has_trait = curious
+		}
+		modifier = {
+			add = 8
+			learning >= 20
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = entered_hidden_realm
+			years = 20
+		}
+	}
+
+	# Option A: Enter alone for maximum cultivation benefit
+	option = {
+		name = cultivation.0014.a
+		trigger = {
+			has_trait = brave
+		}
+		random_list = {
+			50 = {
+				# Incredible cultivation breakthrough
+				add_prowess_skill = 10
+				add_martial_skill = 5
+				add_learning_skill = 5
+				add_prestige = 1000
+				add_character_modifier = {
+					modifier = hidden_realm_enlightenment
+					years = 30
+				}
+				custom_tooltip = cultivation_hidden_realm_success_tt
+			}
+			30 = {
+				# Good results but time distortion
+				add_prowess_skill = 5
+				add_martial_skill = 3
+				add_prestige = 500
+				# Time passes faster in the realm
+				add_stress = 30
+				custom_tooltip = cultivation_hidden_realm_partial_tt
+			}
+			20 = {
+				# Realm is collapsing - barely escape
+				add_stress = 60
+				add_health = -1.5
+				if = {
+					limit = { NOT = { has_trait = soul_wound } }
+					add_trait = soul_wound
+				}
+				custom_tooltip = cultivation_hidden_realm_collapse_tt
+			}
+		}
+	}
+
+	# Option B: Send disciples to explore first
+	option = {
+		name = cultivation.0014.b
+		add_prestige = 200
+		add_gold = -100
+		add_character_modifier = {
+			modifier = hidden_realm_resources
+			years = 10
+		}
+		custom_tooltip = cultivation_hidden_realm_scouts_tt
+	}
+
+	# Option C: Seal the entrance to prevent enemies from using it
+	option = {
+		name = cultivation.0014.c
+		add_piety = 300
+		add_prestige = 200
+		add_dynasty_prestige = 150
+		custom_tooltip = cultivation_hidden_realm_sealed_tt
+	}
+}
+
+######################################
+# Event 15: Dual Cultivation Proposal
+# Partner cultivation path - romantic/spiritual partnership
+######################################
+
+cultivation.0015 = {
+	type = character_event
+	title = cultivation.0015.t
+	desc = cultivation.0015.desc
+	theme = learning
+
+	trigger = {
+		is_alive = yes
+		is_adult = yes
+		is_married = yes
+		OR = {
+			has_trait = qi_refinement
+			has_trait = foundation
+			has_trait = core_formation
+		}
+		NOT = { has_character_flag = attempted_dual_cultivation }
+		# Spouse must also be a cultivator
+		any_spouse = {
+			is_alive = yes
+			OR = {
+				has_trait = qi_refinement
+				has_trait = foundation
+				has_trait = core_formation
+				has_trait = nascent_soul
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 15
+			any_spouse = {
+				has_opinion = {
+					target = root
+					value >= 50
+				}
+			}
+		}
+		modifier = {
+			add = 10
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = attempted_dual_cultivation
+			years = 10
+		}
+		random_spouse = {
+			limit = {
+				is_alive = yes
+				OR = {
+					has_trait = qi_refinement
+					has_trait = foundation
+					has_trait = core_formation
+					has_trait = nascent_soul
+				}
+			}
+			save_scope_as = cultivation_partner
+		}
+	}
+
+	# Option A: Begin dual cultivation (requires mutual trust)
+	option = {
+		name = cultivation.0015.a
+		random_list = {
+			55 = {
+				# Harmonious dual cultivation - both benefit
+				modifier = {
+					add = 20
+					scope:cultivation_partner = {
+						has_opinion = {
+							target = root
+							value >= 75
+						}
+					}
+				}
+				add_prowess_skill = 4
+				add_learning_skill = 3
+				add_stress = -20
+				add_prestige = 300
+				scope:cultivation_partner = {
+					add_prowess_skill = 3
+					add_learning_skill = 2
+					add_prestige = 200
+				}
+				add_character_modifier = {
+					modifier = dual_cultivation_harmony
+					years = 15
+				}
+				custom_tooltip = cultivation_dual_harmony_tt
+			}
+			30 = {
+				# Partial success - only one benefits fully
+				add_prowess_skill = 2
+				add_stress = 10
+				add_prestige = 100
+				custom_tooltip = cultivation_dual_partial_tt
+			}
+			15 = {
+				# Qi conflict - both harmed
+				add_health = -0.5
+				add_stress = 30
+				scope:cultivation_partner = {
+					add_health = -0.5
+					add_stress = 25
+				}
+				random_list = {
+					50 = {
+						if = {
+							limit = { NOT = { has_trait = qi_deviation_scarred } }
+							add_trait = qi_deviation_scarred
+						}
+					}
+					50 = {
+						if = {
+							limit = { NOT = { has_trait = meridian_blockage } }
+							add_trait = meridian_blockage
+						}
+					}
+				}
+				custom_tooltip = cultivation_dual_conflict_tt
+			}
+		}
+	}
+
+	# Option B: Focus on spiritual connection instead
+	option = {
+		name = cultivation.0015.b
+		add_piety = 200
+		add_stress = -15
+		add_learning_skill = 2
+		scope:cultivation_partner = {
+			add_piety = 150
+			add_learning_skill = 1
+		}
+		add_character_modifier = {
+			modifier = spiritual_bond_cultivation
+			years = 10
+		}
+		custom_tooltip = cultivation_spiritual_bond_tt
+	}
+
+	# Option C: Decline - cultivation is a solitary path
+	option = {
+		name = cultivation.0015.c
+		add_stress = 10
+		add_prestige = 50
+		add_piety = 50
+		custom_tooltip = cultivation_solitary_path_tt
+	}
+}
