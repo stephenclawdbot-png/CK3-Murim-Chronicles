@@ -1,0 +1,302 @@
+###############################################################################
+# MURIM TRAINING EXPANSION 2 EVENTS
+# Final training events to reach 20+ total
+# 19. Forbidden Training Ground Discovery
+# 20. Training Under a Waterfall of Spirit Qi
+# Cross-references: murim_training_events, murim_cultivation_events,
+#                   murim_artifact_events, murim_duel_events, murim_fate_events
+###############################################################################
+
+namespace = murim_training_exp2
+
+###############################################################################
+# 19. FORBIDDEN TRAINING GROUND DISCOVERY
+# You stumble upon an ancient training ground sealed by formation arrays
+###############################################################################
+murim_training_exp2.0001 = {
+	type = character_event
+	title = murim_training_exp2.0001.t
+	desc = murim_training_exp2.0001.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 12
+		NOT = { has_character_flag = found_forbidden_training_ground }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 has_trait = curious }
+		modifier = { add = 0.5 learning >= 12 }
+		modifier = { add = 0.3 has_trait = adventurer }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = found_forbidden_training_ground
+			years = 10
+		}
+		create_character_memory = {
+			type = discovered_forbidden_training_ground_memory
+		}
+	}
+
+	# Enter the forbidden ground and train in concentrated spirit qi
+	option = {
+		name = murim_training_exp2.0001.a
+		add_prowess_skill = 3
+		add_martial_skill = 1
+		add_stress = 25
+		add_character_modifier = {
+			modifier = trained_in_forbidden_ground
+			years = 5
+		}
+		create_character_memory = {
+			type = trained_in_ancient_forbidden_ground_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Exceptional results - ancient qi enhances body
+					add_prowess_skill = 2
+					add_prestige = 300
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 14 30 }
+					}
+				}
+				30 = {
+					# Find an ancient artifact within the ground
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 7 14 }
+					}
+				}
+				20 = {
+					# Formation backlash - ancient arrays attack
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+					}
+					create_character_memory = {
+						type = formation_backlash_injury_memory
+					}
+				}
+				10 = {
+					# Awaken an ancient guardian spirit
+					add_trait = incapable
+					create_character_memory = {
+						type = ancient_guardian_attack_memory
+					}
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+
+	# Study the formation arrays instead of training
+	option = {
+		name = murim_training_exp2.0001.b
+		add_learning_skill = 3
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = studied_ancient_formations
+			years = 5
+		}
+		create_character_memory = {
+			type = studied_ancient_formation_arrays_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 learning >= 15 }
+		}
+	}
+
+	# Seal the ground and report its location to your sect
+	option = {
+		name = murim_training_exp2.0001.c
+		add_piety = 100
+		add_prestige = 150
+		add_character_modifier = {
+			modifier = reported_forbidden_ground
+			years = 3
+		}
+		create_character_memory = {
+			type = reported_forbidden_ground_to_sect_memory
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect.0001
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 15 has_trait = honest }
+		}
+	}
+}
+
+###############################################################################
+# 20. TRAINING UNDER A WATERFALL OF SPIRIT QI
+# A legendary spirit waterfall - extreme body tempering and meditation
+###############################################################################
+murim_training_exp2.0002 = {
+	type = character_event
+	title = murim_training_exp2.0002.t
+	desc = murim_training_exp2.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 10
+		NOT = { has_character_flag = spirit_waterfall_training }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 has_trait = diligent }
+		modifier = { add = 0.5 has_trait = brave }
+		modifier = { add = 0.3 prowess >= 15 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = spirit_waterfall_training
+			years = 5
+		}
+		create_character_memory = {
+			type = spirit_waterfall_training_memory
+		}
+	}
+
+	# Endure the full 49-day waterfall meditation
+	option = {
+		name = murim_training_exp2.0002.a
+		add_prowess_skill = 4
+		add_stress = 40
+		add_character_modifier = {
+			modifier = spirit_waterfall_tempering_complete
+			years = 10
+		}
+		create_character_memory = {
+			type = completed_49_day_waterfall_meditation_memory
+		}
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Perfect tempering - iron body achieved
+					add_prowess_skill = 2
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = iron_body_perfected
+						years = -1
+					}
+					# Cross-ref: ranking entry from exceptional training
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Cultivation breakthrough under the falls
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 7 14 }
+					}
+				}
+				20 = {
+					# Body pushed to limit - severe injury
+					random_list = {
+						50 = { add_trait = wounded_2 }
+						30 = { add_trait = wounded_3 }
+						20 = { add_trait = incapable }
+					}
+					create_character_memory = {
+						type = waterfall_training_severe_injury_memory
+					}
+				}
+				15 = {
+					# Spirit beast disturbed by meditation emerges
+					add_trait = wounded_1
+					add_prowess_skill = 1
+					create_character_memory = {
+						type = fought_spirit_beast_at_waterfall_memory
+					}
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 3 7 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# 7-day shortened version - safer but less effective
+	option = {
+		name = murim_training_exp2.0002.b
+		add_prowess_skill = 2
+		add_stress = 15
+		add_character_modifier = {
+			modifier = partial_waterfall_tempering
+			years = 3
+		}
+		create_character_memory = {
+			type = shortened_waterfall_training_memory
+		}
+		hidden_effect = {
+			random_list = {
+				80 = { }
+				20 = { add_trait = wounded_1 }
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Decline - the waterfall is too dangerous
+	option = {
+		name = murim_training_exp2.0002.c
+		add_stress = -10
+		create_character_memory = {
+			type = declined_waterfall_training_memory
+		}
+		stress_impact = {
+			diligent = minor_stress_impact_gain
+			craven = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = craven }
+			modifier = { add = 15 has_trait = lazy }
+		}
+	}
+}
