@@ -1,0 +1,1384 @@
+###############################################################################
+# MURIM POLITICS EVENTS
+# Martial world politics: alliances, congress, diplomacy, marriage, trade,
+# territory disputes, peace summits, betrayals, war declarations, tribute
+# Cross-references: murim_sect_events, murim_jianghu_events, murim_duel_events,
+#                   murim_ranking_events, murim_artifact_events
+###############################################################################
+
+namespace = murim_politics
+
+##############################
+# 1. Martial Alliance Formation
+##############################
+murim_politics.0001 = {
+	type = character_event
+	title = murim_politics.0001.t
+	desc = murim_politics.0001.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:alliance_partner
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		prestige >= 500
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			NOT = { has_relation_rival = root }
+			opinion = { target = root value >= 20 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = diplomat
+		}
+		modifier = {
+			add = 0.5
+			diplomacy >= 12
+		}
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = {
+				is_alive = yes
+				NOT = { has_relation_rival = root }
+				opinion = { target = root value >= 20 }
+			}
+			save_scope_as = alliance_partner
+		}
+	}
+
+	# Propose formal martial alliance
+	option = {
+		name = murim_politics.0001.a
+		add_prestige = 200
+		scope:alliance_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_alliance_formed_opinion
+				opinion = 30
+			}
+		}
+		create_character_memory = {
+			type = murim_martial_alliance_memory
+			participants = { partner = scope:alliance_partner }
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_alliance_active
+				value = yes
+				days = 3650
+			}
+			trigger_event = { id = murim_politics.0003 days = { 180 365 } }
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = diplomat
+			}
+		}
+	}
+
+	# Propose alliance with conditions - demand technique sharing
+	option = {
+		name = murim_politics.0001.b
+		add_prestige = 100
+		scope:alliance_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_demanding_alliance_opinion
+				opinion = -10
+			}
+		}
+		create_character_memory = {
+			type = murim_conditional_alliance_memory
+			participants = { partner = scope:alliance_partner }
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					trigger_event = { id = murim_politics.0003 days = { 90 180 } }
+				}
+				40 = {
+					trigger_event = { id = murim_politics.0008 days = { 30 90 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Decline - remain independent
+	option = {
+		name = murim_politics.0001.c
+		add_prestige = -50
+		stress_impact = {
+			gregarious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+##############################
+# 2. Wulin Congress Convened
+##############################
+murim_politics.0002 = {
+	type = character_event
+	title = murim_politics.0002.t
+	desc = murim_politics.0002.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		prestige >= 1000
+		NOT = { has_character_flag = attended_wulin_congress }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			any_held_title = { tier >= tier_kingdom }
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = attended_wulin_congress
+			days = 1825
+		}
+	}
+
+	# Attend and seek leadership of the congress
+	option = {
+		name = murim_politics.0002.a
+		add_prestige = 500
+		add_diplomacy_skill = 1
+		create_character_memory = {
+			type = murim_wulin_congress_leader_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					add_character_modifier = {
+						modifier = murim_wulin_congress_leader
+						years = 5
+					}
+				}
+				30 = {
+					trigger_event = { id = murim_politics.0005 days = { 10 30 } }
+				}
+				20 = {
+					trigger_event = { id = murim_politics.0006 days = { 5 15 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Attend as observer - gather intelligence
+	option = {
+		name = murim_politics.0002.b
+		add_prestige = 100
+		add_intrigue_skill = 1
+		create_character_memory = {
+			type = murim_wulin_congress_spy_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_jianghu_events.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Boycott the congress
+	option = {
+		name = murim_politics.0002.c
+		add_prestige = -200
+		stress_impact = {
+			diplomat = major_stress_impact_gain
+		}
+		every_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_boycotted_congress_opinion
+				opinion = -15
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = shy
+			}
+		}
+	}
+}
+
+##############################
+# 3. Inter-Sect Diplomacy
+##############################
+murim_politics.0003 = {
+	type = character_event
+	title = murim_politics.0003.t
+	desc = murim_politics.0003.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:diplomat_target
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			NOR = {
+				has_relation_rival = root
+				has_relation_nemesis = root
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			diplomacy >= 15
+		}
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = {
+				is_alive = yes
+				NOR = {
+					has_relation_rival = root
+					has_relation_nemesis = root
+				}
+			}
+			save_scope_as = diplomat_target
+		}
+	}
+
+	# Propose mutual non-aggression pact
+	option = {
+		name = murim_politics.0003.a
+		add_prestige = 150
+		scope:diplomat_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_non_aggression_opinion
+				opinion = 25
+			}
+		}
+		create_character_memory = {
+			type = murim_diplomacy_success_memory
+			participants = { target = scope:diplomat_target }
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_peace_pact
+				value = yes
+				days = 1825
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+
+	# Propose technique exchange program
+	option = {
+		name = murim_politics.0003.b
+		add_prestige = 100
+		add_learning_skill = 1
+		scope:diplomat_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_technique_exchange_opinion
+				opinion = 15
+			}
+		}
+		create_character_memory = {
+			type = murim_technique_exchange_memory
+			participants = { target = scope:diplomat_target }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_technique_events.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				learning >= 12
+			}
+		}
+	}
+
+	# Diplomacy breaks down - tensions rise
+	option = {
+		name = murim_politics.0003.c
+		scope:diplomat_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_diplomacy_failed_opinion
+				opinion = -20
+			}
+		}
+		stress_impact = {
+			diplomat = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_politics.0006 days = { 60 180 } }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+}
+
+##############################
+# 4. Marriage Alliance Proposed
+##############################
+murim_politics.0004 = {
+	type = character_event
+	title = murim_politics.0004.t
+	desc = murim_politics.0004.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:marriage_candidate
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_child = {
+			is_alive = yes
+			is_married = no
+			age >= 16
+		}
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			any_child = {
+				is_alive = yes
+				is_married = no
+				age >= 16
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = diplomat
+		}
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = {
+				is_alive = yes
+				any_child = {
+					is_alive = yes
+					is_married = no
+					age >= 16
+				}
+			}
+			save_scope_as = marriage_family
+			random_child = {
+				limit = {
+					is_alive = yes
+					is_married = no
+					age >= 16
+				}
+				save_scope_as = marriage_candidate
+			}
+		}
+	}
+
+	# Accept marriage alliance - strengthen bonds
+	option = {
+		name = murim_politics.0004.a
+		add_prestige = 300
+		scope:marriage_family = {
+			add_opinion = {
+				target = root
+				modifier = murim_marriage_alliance_opinion
+				opinion = 40
+			}
+		}
+		create_character_memory = {
+			type = murim_marriage_alliance_memory
+			participants = { family = scope:marriage_family candidate = scope:marriage_candidate }
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_marriage_bond
+				value = yes
+				days = 7300
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = diplomat
+			}
+		}
+	}
+
+	# Demand dowry of martial techniques
+	option = {
+		name = murim_politics.0004.b
+		add_prestige = 100
+		scope:marriage_family = {
+			add_opinion = {
+				target = root
+				modifier = murim_greedy_marriage_opinion
+				opinion = -10
+			}
+		}
+		create_character_memory = {
+			type = murim_marriage_dowry_demand_memory
+			participants = { family = scope:marriage_family }
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_technique_events.0001 days = { 15 30 } }
+				}
+				50 = {
+					trigger_event = { id = murim_politics.0008 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Refuse - our bloodline remains pure
+	option = {
+		name = murim_politics.0004.c
+		add_prestige = -100
+		scope:marriage_family = {
+			add_opinion = {
+				target = root
+				modifier = murim_marriage_refused_opinion
+				opinion = -25
+			}
+		}
+		stress_impact = {
+			gregarious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = arrogant
+			}
+		}
+	}
+}
+
+##############################
+# 5. Trade Negotiations - Medicinal Herbs
+##############################
+murim_politics.0005 = {
+	type = character_event
+	title = murim_politics.0005.t
+	desc = murim_politics.0005.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		gold >= 100
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			stewardship >= 12
+		}
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes }
+			save_scope_as = trade_partner
+		}
+	}
+
+	# Establish a rare herb trade route
+	option = {
+		name = murim_politics.0005.a
+		remove_short_term_gold = 200
+		add_character_modifier = {
+			modifier = murim_herb_trade_route
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_trade_route_memory
+			participants = { partner = scope:trade_partner }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation_events.0001 days = { 90 180 } }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				stewardship >= 15
+			}
+		}
+	}
+
+	# Negotiate exclusive alchemy supply deal
+	option = {
+		name = murim_politics.0005.b
+		remove_short_term_gold = 500
+		add_character_modifier = {
+			modifier = murim_alchemy_supply_exclusive
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_alchemy_deal_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_artifact_events.0001 days = { 60 120 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Refuse trade - self-sufficiency
+	option = {
+		name = murim_politics.0005.c
+		add_prestige = 50
+		stress_impact = {
+			greedy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+##############################
+# 6. Territory Dispute - Sacred Training Ground
+##############################
+murim_politics.0006 = {
+	type = character_event
+	title = murim_politics.0006.t
+	desc = murim_politics.0006.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:territory_rival
+		animation = anger
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			opinion = { target = root value <= -10 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 0.5
+			martial >= 12
+		}
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = {
+				is_alive = yes
+				opinion = { target = root value <= -10 }
+			}
+			save_scope_as = territory_rival
+		}
+	}
+
+	# Challenge them to single combat for the territory
+	option = {
+		name = murim_politics.0006.a
+		duel = {
+			skill = prowess
+			target = scope:territory_rival
+			50 = {
+				desc = murim_politics.0006.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_sacred_ground_controller
+					years = 10
+				}
+				create_character_memory = {
+					type = murim_territory_duel_victory_memory
+					participants = { rival = scope:territory_rival }
+				}
+				scope:territory_rival = {
+					add_prestige = -300
+					add_opinion = {
+						target = root
+						modifier = murim_territory_lost_opinion
+						opinion = -40
+					}
+				}
+			}
+			50 = {
+				desc = murim_politics.0006.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -300
+				random_list = {
+					30 = { add_trait = wounded_1 }
+					15 = { add_trait = wounded_2 }
+					5 = { add_trait = incapable }
+					50 = { }
+				}
+				create_character_memory = {
+					type = murim_territory_duel_defeat_memory
+					participants = { rival = scope:territory_rival }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				prowess >= 15
+			}
+		}
+	}
+
+	# Send disciples to occupy the ground
+	option = {
+		name = murim_politics.0006.b
+		scope:territory_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_territory_aggression_opinion
+				opinion = -30
+			}
+		}
+		create_character_memory = {
+			type = murim_territory_occupation_memory
+			participants = { rival = scope:territory_rival }
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					trigger_event = { id = murim_sect_events.0001 days = { 30 90 } }
+				}
+				60 = {
+					trigger_event = { id = murim_politics.0009 days = { 60 120 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				martial >= 15
+			}
+		}
+	}
+
+	# Propose shared access - diplomatic solution
+	option = {
+		name = murim_politics.0006.c
+		add_prestige = 100
+		scope:territory_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_shared_territory_opinion
+				opinion = 15
+			}
+		}
+		create_character_memory = {
+			type = murim_shared_territory_memory
+			participants = { rival = scope:territory_rival }
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = just
+			}
+		}
+	}
+}
+
+##############################
+# 7. Peace Summit After Sect War
+##############################
+murim_politics.0007 = {
+	type = character_event
+	title = murim_politics.0007.t
+	desc = murim_politics.0007.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:former_enemy
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_relation = {
+			type = rival
+			is_alive = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = forgiving
+		}
+		modifier = {
+			add = 0.5
+			diplomacy >= 15
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = rival
+			limit = { is_alive = yes }
+			save_scope_as = former_enemy
+		}
+	}
+
+	# Offer peace and end hostilities
+	option = {
+		name = murim_politics.0007.a
+		add_prestige = 300
+		add_piety = 100
+		remove_relation_rival = scope:former_enemy
+		scope:former_enemy = {
+			add_opinion = {
+				target = root
+				modifier = murim_peace_offered_opinion
+				opinion = 35
+			}
+		}
+		create_character_memory = {
+			type = murim_peace_summit_success_memory
+			participants = { enemy = scope:former_enemy }
+		}
+		stress_impact = {
+			vengeful = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = forgiving
+			}
+		}
+	}
+
+	# Peace with conditions - they must pay tribute
+	option = {
+		name = murim_politics.0007.b
+		add_prestige = 200
+		scope:former_enemy = {
+			add_opinion = {
+				target = root
+				modifier = murim_tribute_demanded_opinion
+				opinion = -10
+			}
+			pay_short_term_gold = {
+				target = root
+				gold = 300
+			}
+		}
+		create_character_memory = {
+			type = murim_peace_tribute_memory
+			participants = { enemy = scope:former_enemy }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_politics.0010 days = { 365 730 } }
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Refuse peace - continue the vendetta
+	option = {
+		name = murim_politics.0007.c
+		add_prestige = -100
+		scope:former_enemy = {
+			add_opinion = {
+				target = root
+				modifier = murim_peace_refused_opinion
+				opinion = -30
+			}
+		}
+		create_character_memory = {
+			type = murim_peace_refused_memory
+			participants = { enemy = scope:former_enemy }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_duel_events.0001 days = { 30 120 } }
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = vengeful
+			}
+		}
+	}
+}
+
+##############################
+# 8. Betrayal Pact Discovered
+##############################
+murim_politics.0008 = {
+	type = character_event
+	title = murim_politics.0008.t
+	desc = murim_politics.0008.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:betrayer
+		animation = schadenfreude
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_vassal = {
+			is_alive = yes
+			opinion = { target = root value <= 0 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			intrigue >= 12
+		}
+	}
+
+	immediate = {
+		random_vassal = {
+			limit = {
+				is_alive = yes
+				opinion = { target = root value <= 0 }
+			}
+			save_scope_as = betrayer
+		}
+	}
+
+	# Confront and punish the traitor publicly
+	option = {
+		name = murim_politics.0008.a
+		add_prestige = 200
+		add_dread = 30
+		scope:betrayer = {
+			add_opinion = {
+				target = root
+				modifier = murim_betrayer_punished_opinion
+				opinion = -50
+			}
+			add_prestige = -500
+			random_list = {
+				40 = { add_trait = wounded_1 }
+				20 = { add_trait = wounded_2 }
+				10 = { add_trait = incapable }
+				30 = { }
+			}
+		}
+		create_character_memory = {
+			type = murim_betrayal_punished_memory
+			participants = { traitor = scope:betrayer }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_jianghu_events.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Use the information - turn them into a double agent
+	option = {
+		name = murim_politics.0008.b
+		add_intrigue_skill = 1
+		scope:betrayer = {
+			add_opinion = {
+				target = root
+				modifier = murim_blackmailed_opinion
+				opinion = -20
+			}
+		}
+		create_character_memory = {
+			type = murim_double_agent_memory
+			participants = { agent = scope:betrayer }
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_has_double_agent
+				value = yes
+				days = 1825
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Show mercy - forgive to gain loyalty
+	option = {
+		name = murim_politics.0008.c
+		add_piety = 100
+		scope:betrayer = {
+			add_opinion = {
+				target = root
+				modifier = murim_betrayer_forgiven_opinion
+				opinion = 20
+			}
+		}
+		create_character_memory = {
+			type = murim_betrayal_forgiven_memory
+			participants = { traitor = scope:betrayer }
+		}
+		stress_impact = {
+			vengeful = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = forgiving
+			}
+		}
+	}
+}
+
+##############################
+# 9. Alliance War Declaration
+##############################
+murim_politics.0009 = {
+	type = character_event
+	title = murim_politics.0009.t
+	desc = murim_politics.0009.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:war_target
+		animation = anger
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		martial >= 10
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			opinion = { target = root value <= -30 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = wrathful
+		}
+		modifier = {
+			add = 0.5
+			martial >= 15
+		}
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = {
+				is_alive = yes
+				opinion = { target = root value <= -30 }
+			}
+			save_scope_as = war_target
+		}
+	}
+
+	# Launch full sect war - all-out assault
+	option = {
+		name = murim_politics.0009.a
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_sect_war_leader
+			years = 3
+		}
+		scope:war_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_war_declared_opinion
+				opinion = -60
+			}
+		}
+		create_character_memory = {
+			type = murim_war_declaration_memory
+			participants = { enemy = scope:war_target }
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_duel_events.0001 days = { 30 60 } }
+				}
+				30 = {
+					trigger_event = { id = murim_ranking_events.0001 days = { 60 120 } }
+				}
+				20 = {
+					trigger_event = { id = murim_ranker_death_events.0001 days = { 90 180 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Surgical strike - assassination of enemy leader
+	option = {
+		name = murim_politics.0009.b
+		add_intrigue_skill = 1
+		scope:war_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_assassination_attempt_opinion
+				opinion = -80
+			}
+		}
+		create_character_memory = {
+			type = murim_assassination_order_memory
+			participants = { target = scope:war_target }
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					trigger_event = { id = murim_jianghu_events.0001 days = { 15 30 } }
+				}
+				60 = {
+					scope:war_target = {
+						trigger_event = { id = murim_politics.0008 days = { 30 60 } }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Reconsider - the cost is too great
+	option = {
+		name = murim_politics.0009.c
+		add_prestige = -200
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = murim_war_averted_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+##############################
+# 10. Vassal Sect Tribute Demand
+##############################
+murim_politics.0010 = {
+	type = character_event
+	title = murim_politics.0010.t
+	desc = murim_politics.0010.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:tribute_vassal
+		animation = worry
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_vassal = {
+			is_alive = yes
+			is_ruler = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = greedy
+		}
+	}
+
+	immediate = {
+		random_vassal = {
+			limit = {
+				is_alive = yes
+				is_ruler = yes
+			}
+			save_scope_as = tribute_vassal
+		}
+	}
+
+	# Demand gold tribute
+	option = {
+		name = murim_politics.0010.a
+		scope:tribute_vassal = {
+			pay_short_term_gold = {
+				target = root
+				gold = 200
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_tribute_demanded_opinion
+				opinion = -20
+			}
+		}
+		create_character_memory = {
+			type = murim_tribute_collected_memory
+			participants = { vassal = scope:tribute_vassal }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Demand rare herbs and pills instead
+	option = {
+		name = murim_politics.0010.b
+		add_character_modifier = {
+			modifier = murim_rare_herb_supply
+			years = 3
+		}
+		scope:tribute_vassal = {
+			add_opinion = {
+				target = root
+				modifier = murim_herb_tribute_opinion
+				opinion = -10
+			}
+		}
+		create_character_memory = {
+			type = murim_herb_tribute_memory
+			participants = { vassal = scope:tribute_vassal }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation_events.0001 days = { 60 120 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				learning >= 12
+			}
+		}
+	}
+
+	# Demand their best disciple as hostage
+	option = {
+		name = murim_politics.0010.c
+		add_dread = 20
+		scope:tribute_vassal = {
+			add_opinion = {
+				target = root
+				modifier = murim_hostage_demanded_opinion
+				opinion = -35
+			}
+		}
+		create_character_memory = {
+			type = murim_hostage_demand_memory
+			participants = { vassal = scope:tribute_vassal }
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					trigger_event = { id = murim_training_events.0001 days = { 30 60 } }
+				}
+				40 = {
+					trigger_event = { id = murim_politics.0008 days = { 90 180 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+
+	# Show benevolence - waive tribute this year
+	option = {
+		name = murim_politics.0010.d
+		add_prestige = 100
+		add_piety = 50
+		scope:tribute_vassal = {
+			add_opinion = {
+				target = root
+				modifier = murim_tribute_waived_opinion
+				opinion = 30
+			}
+		}
+		create_character_memory = {
+			type = murim_benevolent_lord_memory
+			participants = { vassal = scope:tribute_vassal }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = generous
+			}
+		}
+	}
+}
