@@ -1,0 +1,1203 @@
+namespace = murim_phantom_blade_exp5
+
+# Phantom Blade Expansion 5 - Deep Assassination Chains, Blade Legacy, Shadow War
+# 10 complete events with full interaction trees
+
+### EVENT 1: The Blood Contract ###
+murim_phantom_blade_exp5.0001 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0001.t
+	desc = murim_phantom_blade_exp5.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		martial >= 18
+		has_variable = phantom_blade_rank
+		var:phantom_blade_rank >= 3
+		NOT = { has_character_flag = blood_contract_taken }
+		age >= 20
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = assassin_trained
+		}
+		modifier = {
+			add = 3
+			has_trait = blade_master
+		}
+	}
+	
+	# Option A: Accept the Blood Contract - become elite assassin
+	option = {
+		name = murim_phantom_blade_exp5.0001.a
+		add_character_flag = {
+			flag = blood_contract_taken
+			days = -1
+		}
+		add_trait = blood_oath_assassin
+		add_martial_skill = 3
+		add_intrigue_skill = 4
+		add_dread = 30
+		add_prestige = 500
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			honest = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			set_variable = {
+				name = assassination_contracts_completed
+				value = 0
+			}
+			set_variable = {
+				name = blood_contract_tier
+				value = 1
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+	
+	# Option B: Refuse and face consequences
+	option = {
+		name = murim_phantom_blade_exp5.0001.b
+		add_character_flag = {
+			flag = refused_blood_contract
+			days = 365
+		}
+		add_prestige = -200
+		add_stress = 20
+		reverse_add_opinion = {
+			target = scope:phantom_blade_leader
+			modifier = disobedient_blade_opinion
+			opinion = -40
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_phantom_blade_exp5.0003
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option C: Negotiate modified terms
+	option = {
+		name = murim_phantom_blade_exp5.0001.c
+		trigger = {
+			diplomacy >= 15
+			OR = {
+				has_trait = diplomat
+				has_trait = schemer
+			}
+		}
+		add_character_flag = {
+			flag = modified_blood_contract
+			days = -1
+		}
+		add_intrigue_skill = 2
+		add_prestige = 200
+		add_stress = 10
+		hidden_effect = {
+			set_variable = {
+				name = blood_contract_tier
+				value = 0
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+	
+	# Option D: Challenge the contract giver for leadership
+	option = {
+		name = murim_phantom_blade_exp5.0001.d
+		trigger = {
+			martial >= 25
+			has_trait = blade_master
+			prowess >= 20
+		}
+		duel = {
+			skill = prowess
+			target = scope:phantom_blade_leader
+			50 = {
+				desc = murim_phantom_blade_exp5.0001.d.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 1000
+				add_trait = phantom_blade_grandmaster
+				remove_trait = phantom_blade_member
+				add_dread = 50
+				set_variable = {
+					name = phantom_blade_rank
+					value = 10
+				}
+			}
+			50 = {
+				desc = murim_phantom_blade_exp5.0001.d.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -500
+				increase_wounds_effect = { reason = duel }
+				add_stress = 40
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+### EVENT 2: First Assassination Target ###
+murim_phantom_blade_exp5.0002 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0002.t
+	desc = murim_phantom_blade_exp5.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = blood_contract_taken
+		has_variable = assassination_contracts_completed
+		var:assassination_contracts_completed < 3
+		NOT = { has_character_flag = on_active_contract }
+	}
+	
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 3
+			var:blood_contract_tier >= 1
+		}
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				NOT = { this = root }
+				NOT = { has_trait = phantom_blade_member }
+				martial >= 10
+				is_alive = yes
+			}
+			save_scope_as = assassination_target
+		}
+	}
+	
+	# Option A: Strike from the shadows - stealth kill
+	option = {
+		name = murim_phantom_blade_exp5.0002.a
+		add_character_flag = {
+			flag = on_active_contract
+			days = 60
+		}
+		duel = {
+			skill = intrigue
+			target = scope:assassination_target
+			60 = {
+				desc = murim_phantom_blade_exp5.0002.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+					min = -49
+				}
+				scope:assassination_target = {
+					death = {
+						death_reason = death_murder_known
+						killer = root
+					}
+				}
+				add_prestige = 800
+				add_gold = 200
+				change_variable = {
+					name = assassination_contracts_completed
+					add = 1
+				}
+				add_trait = shadow_killer
+			}
+			40 = {
+				desc = murim_phantom_blade_exp5.0002.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+					min = -49
+				}
+				add_prestige = -300
+				increase_wounds_effect = { reason = assassination_failed }
+				add_character_flag = {
+					flag = known_assassin
+					days = 730
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Poison approach - subtle kill
+	option = {
+		name = murim_phantom_blade_exp5.0002.b
+		trigger = {
+			learning >= 12
+		}
+		add_character_flag = {
+			flag = on_active_contract
+			days = 90
+		}
+		hidden_effect = {
+			random_list = {
+				70 = {
+					modifier = {
+						add = 20
+						intrigue >= 20
+					}
+					scope:assassination_target = {
+						death = {
+							death_reason = death_murder_unknown
+							killer = root
+						}
+					}
+					root = {
+						add_prestige = 600
+						add_gold = 300
+						change_variable = {
+							name = assassination_contracts_completed
+							add = 1
+						}
+					}
+				}
+				30 = {
+					root = {
+						add_prestige = -200
+						add_stress = 30
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Challenge openly - honorable kill
+	option = {
+		name = murim_phantom_blade_exp5.0002.c
+		trigger = {
+			has_trait = honorable
+		}
+		duel = {
+			skill = martial
+			target = scope:assassination_target
+			50 = {
+				desc = murim_phantom_blade_exp5.0002.c.success
+				scope:assassination_target = {
+					death = {
+						death_reason = death_duel
+						killer = root
+					}
+				}
+				add_prestige = 500
+				add_gold = 100
+				change_variable = {
+					name = assassination_contracts_completed
+					add = 1
+				}
+				add_piety = 100
+			}
+			50 = {
+				desc = murim_phantom_blade_exp5.0002.c.failure
+				increase_wounds_effect = { reason = duel }
+				add_prestige = -200
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+	
+	# Option D: Refuse the contract
+	option = {
+		name = murim_phantom_blade_exp5.0002.d
+		add_stress = 30
+		add_prestige = -500
+		reverse_add_opinion = {
+			target = scope:phantom_blade_leader
+			modifier = contract_breaker_opinion
+			opinion = -60
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+### EVENT 3: Hunted by Orthodox Sects (consequence of refusal) ###
+murim_phantom_blade_exp5.0003 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0003.t
+	desc = murim_phantom_blade_exp5.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = refused_blood_contract
+		has_trait = phantom_blade_member
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_disciple
+					has_trait = wudang_disciple
+				}
+				martial >= 15
+			}
+			save_scope_as = orthodox_hunter
+		}
+	}
+	
+	# Option A: Fight the hunter
+	option = {
+		name = murim_phantom_blade_exp5.0003.a
+		duel = {
+			skill = prowess
+			target = scope:orthodox_hunter
+			50 = {
+				desc = murim_phantom_blade_exp5.0003.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+					min = -49
+				}
+				add_prestige = 400
+				add_dread = 20
+				scope:orthodox_hunter = {
+					increase_wounds_effect = { reason = duel }
+				}
+			}
+			50 = {
+				desc = murim_phantom_blade_exp5.0003.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+					min = -49
+				}
+				increase_wounds_effect = { reason = duel }
+				add_prestige = -200
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Flee into hiding
+	option = {
+		name = murim_phantom_blade_exp5.0003.b
+		add_character_flag = {
+			flag = in_hiding_from_orthodox
+			days = 365
+		}
+		add_stewardship_skill = -1
+		add_intrigue_skill = 2
+		add_stress = 20
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Betray the Phantom Blade to save yourself
+	option = {
+		name = murim_phantom_blade_exp5.0003.c
+		remove_trait = phantom_blade_member
+		add_trait = clan_betrayer
+		add_character_flag = {
+			flag = betrayed_phantom_blade
+			days = -1
+		}
+		reverse_add_opinion = {
+			target = scope:orthodox_hunter
+			modifier = grateful_informant_opinion
+			opinion = 30
+		}
+		add_prestige = -800
+		add_gold = 100
+		hidden_effect = {
+			trigger_event = {
+				id = murim_phantom_blade_exp5.0006
+				days = { 60 180 }
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+	
+	# Option D: Negotiate a truce
+	option = {
+		name = murim_phantom_blade_exp5.0003.d
+		trigger = {
+			diplomacy >= 18
+		}
+		add_prestige = 100
+		reverse_add_opinion = {
+			target = scope:orthodox_hunter
+			modifier = uneasy_truce_opinion
+			opinion = -10
+		}
+		add_stress = 10
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+### EVENT 4: Blade Inheritance Ritual ###
+murim_phantom_blade_exp5.0004 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0004.t
+	desc = murim_phantom_blade_exp5.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_variable = phantom_blade_rank
+		var:phantom_blade_rank >= 7
+		age >= 30
+		NOT = { has_character_flag = blade_inheritance_complete }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = blade_master
+		}
+	}
+	
+	# Option A: Accept the legacy blade
+	option = {
+		name = murim_phantom_blade_exp5.0004.a
+		add_character_flag = {
+			flag = blade_inheritance_complete
+			days = -1
+		}
+		add_trait = legacy_blade_wielder
+		add_martial_skill = 4
+		add_prowess = 8
+		add_prestige = 1000
+		hidden_effect = {
+			set_variable = {
+				name = legacy_blade_kills
+				value = 0
+			}
+		}
+		ai_chance = {
+			base = 70
+		}
+	}
+	
+	# Option B: Forge your own blade instead
+	option = {
+		name = murim_phantom_blade_exp5.0004.b
+		add_character_flag = {
+			flag = forged_own_blade
+			days = -1
+		}
+		add_martial_skill = 2
+		add_prowess = 5
+		add_prestige = 600
+		add_learning_skill = 2
+		stress_impact = {
+			ambitious = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+	
+	# Option C: Destroy the legacy blade to end the cycle
+	option = {
+		name = murim_phantom_blade_exp5.0004.c
+		trigger = {
+			has_trait = compassionate
+		}
+		add_piety = 500
+		add_prestige = -300
+		remove_trait = phantom_blade_member
+		add_trait = blade_breaker
+		add_stress = -30
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+### EVENT 5: Shadow War - Phantom Blade vs Heaven's Sword ###
+murim_phantom_blade_exp5.0005 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0005.t
+	desc = murim_phantom_blade_exp5.0005.desc
+	theme = war
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_variable = phantom_blade_rank
+		var:phantom_blade_rank >= 5
+		NOT = { has_character_flag = shadow_war_started }
+		any_ruler = {
+			has_trait = mount_hua_disciple
+			martial >= 20
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = blood_oath_assassin
+		}
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_trait = mount_hua_disciple
+				martial >= 20
+			}
+			save_scope_as = orthodox_rival
+		}
+	}
+	
+	# Option A: Launch a shadow offensive
+	option = {
+		name = murim_phantom_blade_exp5.0005.a
+		add_character_flag = {
+			flag = shadow_war_started
+			days = -1
+		}
+		add_character_flag = {
+			flag = shadow_war_aggressor
+			days = -1
+		}
+		add_prestige = 300
+		add_dread = 40
+		reverse_add_opinion = {
+			target = scope:orthodox_rival
+			modifier = shadow_war_enemy_opinion
+			opinion = -80
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_phantom_blade_exp5.0007
+				days = { 30 90 }
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Defensive posture - protect the clan
+	option = {
+		name = murim_phantom_blade_exp5.0005.b
+		add_character_flag = {
+			flag = shadow_war_started
+			days = -1
+		}
+		add_character_flag = {
+			flag = shadow_war_defender
+			days = -1
+		}
+		add_martial_skill = 2
+		add_prestige = 200
+		add_stress = 15
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Seek alliance with other unorthodox clans
+	option = {
+		name = murim_phantom_blade_exp5.0005.c
+		trigger = {
+			diplomacy >= 14
+		}
+		add_character_flag = {
+			flag = shadow_war_started
+			days = -1
+		}
+		add_character_flag = {
+			flag = unorthodox_alliance_formed
+			days = -1
+		}
+		add_prestige = 500
+		add_diplomacy_skill = 2
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	# Option D: Assassinate the orthodox leader before war starts
+	option = {
+		name = murim_phantom_blade_exp5.0005.d
+		trigger = {
+			intrigue >= 22
+			has_trait = blood_oath_assassin
+		}
+		duel = {
+			skill = intrigue
+			target = scope:orthodox_rival
+			40 = {
+				desc = murim_phantom_blade_exp5.0005.d.success
+				scope:orthodox_rival = {
+					death = {
+						death_reason = death_murder_known
+						killer = root
+					}
+				}
+				add_prestige = 1500
+				add_dread = 60
+				add_tyranny = 20
+			}
+			60 = {
+				desc = murim_phantom_blade_exp5.0005.d.failure
+				increase_wounds_effect = { reason = assassination_failed }
+				add_prestige = -500
+				add_character_flag = {
+					flag = shadow_war_started
+					days = -1
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+### EVENT 6: Phantom Blade Vengeance - Betrayer Hunted ###
+murim_phantom_blade_exp5.0006 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0006.t
+	desc = murim_phantom_blade_exp5.0006.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = betrayed_phantom_blade
+	}
+	
+	# Option A: Face the blade assassins
+	option = {
+		name = murim_phantom_blade_exp5.0006.a
+		duel = {
+			skill = prowess
+			target = scope:phantom_blade_avenger
+			30 = {
+				desc = murim_phantom_blade_exp5.0006.a.success
+				add_prestige = 800
+				add_trait = survivor_of_blades
+			}
+			70 = {
+				desc = murim_phantom_blade_exp5.0006.a.failure
+				death = {
+					death_reason = death_murder_known
+					killer = scope:phantom_blade_avenger
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option B: Beg for mercy
+	option = {
+		name = murim_phantom_blade_exp5.0006.b
+		add_prestige = -1000
+		add_gold = -200
+		remove_trait = clan_betrayer
+		add_trait = shamed_outcast
+		add_stress = 50
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Use orthodox protectors
+	option = {
+		name = murim_phantom_blade_exp5.0006.c
+		trigger = {
+			any_ally = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_disciple
+					has_trait = wudang_disciple
+				}
+			}
+		}
+		add_prestige = -300
+		add_stress = 20
+		add_character_flag = {
+			flag = orthodox_protected
+			days = 365
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+### EVENT 7: Shadow War Battle - Key Engagement ###
+murim_phantom_blade_exp5.0007 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0007.t
+	desc = murim_phantom_blade_exp5.0007.desc
+	theme = war
+	
+	trigger = {
+		has_character_flag = shadow_war_started
+		has_trait = phantom_blade_member
+	}
+	
+	# Option A: Lead the night raid
+	option = {
+		name = murim_phantom_blade_exp5.0007.a
+		duel = {
+			skill = martial
+			target = scope:orthodox_rival
+			55 = {
+				desc = murim_phantom_blade_exp5.0007.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 800
+				add_martial_skill = 2
+				add_dread = 25
+			}
+			45 = {
+				desc = murim_phantom_blade_exp5.0007.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				increase_wounds_effect = { reason = battle }
+				add_prestige = -300
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Sabotage their supply lines
+	option = {
+		name = murim_phantom_blade_exp5.0007.b
+		trigger = {
+			intrigue >= 16
+		}
+		hidden_effect = {
+			random_list = {
+				65 = {
+					root = {
+						add_prestige = 500
+						add_gold = 150
+						add_intrigue_skill = 1
+					}
+				}
+				35 = {
+					root = {
+						add_prestige = -200
+						add_stress = 20
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Negotiate ceasefire
+	option = {
+		name = murim_phantom_blade_exp5.0007.c
+		trigger = {
+			diplomacy >= 16
+		}
+		remove_character_flag = shadow_war_started
+		add_prestige = 200
+		reverse_add_opinion = {
+			target = scope:orthodox_rival
+			modifier = uneasy_ceasefire_opinion
+			opinion = -20
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+### EVENT 8: Phantom Blade Master's Secret Technique ###
+murim_phantom_blade_exp5.0008 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0008.t
+	desc = murim_phantom_blade_exp5.0008.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_variable = phantom_blade_rank
+		var:phantom_blade_rank >= 8
+		martial >= 22
+		NOT = { has_character_flag = learned_phantom_ultimate }
+	}
+	
+	# Option A: Learn the Void Blade technique
+	option = {
+		name = murim_phantom_blade_exp5.0008.a
+		add_character_flag = {
+			flag = learned_phantom_ultimate
+			days = -1
+		}
+		add_trait = void_blade_master
+		add_prowess = 10
+		add_martial_skill = 3
+		add_prestige = 1500
+		stress_impact = {
+			calm = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			set_variable = {
+				name = void_blade_mastery
+				value = 1
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Modify the technique to your style
+	option = {
+		name = murim_phantom_blade_exp5.0008.b
+		add_character_flag = {
+			flag = learned_phantom_ultimate
+			days = -1
+		}
+		add_trait = custom_blade_art
+		add_prowess = 7
+		add_martial_skill = 2
+		add_learning_skill = 2
+		add_prestige = 1000
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: The technique is too dangerous - seal it away
+	option = {
+		name = murim_phantom_blade_exp5.0008.c
+		add_piety = 300
+		add_prestige = 200
+		add_stress = -20
+		add_learning_skill = 3
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+### EVENT 9: Phantom Blade Succession War ###
+murim_phantom_blade_exp5.0009 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0009.t
+	desc = murim_phantom_blade_exp5.0009.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_variable = phantom_blade_rank
+		var:phantom_blade_rank >= 6
+		NOT = { has_character_flag = phantom_succession_resolved }
+		any_ruler = {
+			has_trait = phantom_blade_member
+			NOT = { this = root }
+			has_variable = phantom_blade_rank
+			var:phantom_blade_rank >= 6
+		}
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_trait = phantom_blade_member
+				NOT = { this = root }
+				has_variable = phantom_blade_rank
+				var:phantom_blade_rank >= 6
+			}
+			save_scope_as = succession_rival
+		}
+	}
+	
+	# Option A: Challenge for leadership
+	option = {
+		name = murim_phantom_blade_exp5.0009.a
+		duel = {
+			skill = prowess
+			target = scope:succession_rival
+			50 = {
+				desc = murim_phantom_blade_exp5.0009.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+					min = -49
+				}
+				add_prestige = 2000
+				add_trait = phantom_blade_grandmaster
+				set_variable = {
+					name = phantom_blade_rank
+					value = 10
+				}
+				add_character_flag = {
+					flag = phantom_succession_resolved
+					days = -1
+				}
+			}
+			50 = {
+				desc = murim_phantom_blade_exp5.0009.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+					min = -49
+				}
+				increase_wounds_effect = { reason = duel }
+				add_prestige = -500
+				add_character_flag = {
+					flag = phantom_succession_resolved
+					days = -1
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Assassinate the rival secretly
+	option = {
+		name = murim_phantom_blade_exp5.0009.b
+		trigger = {
+			intrigue >= 20
+		}
+		hidden_effect = {
+			random_list = {
+				55 = {
+					scope:succession_rival = {
+						death = {
+							death_reason = death_murder_unknown
+							killer = root
+						}
+					}
+					root = {
+						add_prestige = 1500
+						add_character_flag = {
+							flag = phantom_succession_resolved
+							days = -1
+						}
+						set_variable = {
+							name = phantom_blade_rank
+							value = 10
+						}
+					}
+				}
+				45 = {
+					root = {
+						add_character_flag = {
+							flag = known_assassin
+							days = 365
+						}
+						add_prestige = -800
+						add_stress = 40
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Form a dual leadership
+	option = {
+		name = murim_phantom_blade_exp5.0009.c
+		trigger = {
+			diplomacy >= 16
+		}
+		add_prestige = 500
+		reverse_add_opinion = {
+			target = scope:succession_rival
+			modifier = co_leader_opinion
+			opinion = 20
+		}
+		add_character_flag = {
+			flag = phantom_succession_resolved
+			days = -1
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+	
+	# Option D: Step aside and become the shadow advisor
+	option = {
+		name = murim_phantom_blade_exp5.0009.d
+		add_intrigue_skill = 4
+		add_prestige = 300
+		add_trait = shadow_advisor
+		add_character_flag = {
+			flag = phantom_succession_resolved
+			days = -1
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+### EVENT 10: The Last Blade - Phantom Blade Endgame ###
+murim_phantom_blade_exp5.0010 = {
+	type = character_event
+	title = murim_phantom_blade_exp5.0010.t
+	desc = murim_phantom_blade_exp5.0010.desc
+	theme = martial_arts
+	
+	trigger = {
+		OR = {
+			has_trait = phantom_blade_grandmaster
+			AND = {
+				has_trait = phantom_blade_member
+				has_variable = phantom_blade_rank
+				var:phantom_blade_rank >= 9
+			}
+		}
+		age >= 45
+		NOT = { has_character_flag = last_blade_event }
+	}
+	
+	# Option A: Transcend mortality through blade arts
+	option = {
+		name = murim_phantom_blade_exp5.0010.a
+		add_character_flag = {
+			flag = last_blade_event
+			days = -1
+		}
+		add_trait = transcendent_blade
+		add_prowess = 15
+		add_martial_skill = 5
+		add_prestige = 3000
+		add_health = 2
+		add_stress = -50
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Pass the blade to a worthy successor
+	option = {
+		name = murim_phantom_blade_exp5.0010.b
+		trigger = {
+			any_child = {
+				has_trait = phantom_blade_member
+			}
+		}
+		add_character_flag = {
+			flag = last_blade_event
+			days = -1
+		}
+		add_prestige = 2000
+		add_piety = 500
+		add_trait = retired_grandmaster
+		random_child = {
+			limit = {
+				has_trait = phantom_blade_member
+			}
+			add_trait = blade_heir
+			add_prowess = 8
+			add_martial_skill = 3
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Destroy all blade techniques and end the legacy
+	option = {
+		name = murim_phantom_blade_exp5.0010.c
+		trigger = {
+			has_trait = compassionate
+		}
+		add_character_flag = {
+			flag = last_blade_event
+			days = -1
+		}
+		add_piety = 1000
+		add_prestige = -500
+		add_stress = -40
+		remove_trait = phantom_blade_grandmaster
+		add_trait = peaceful_elder
+		ai_chance = {
+			base = 15
+		}
+	}
+	
+	# Option D: Merge with Heavenly Demon's power
+	option = {
+		name = murim_phantom_blade_exp5.0010.d
+		trigger = {
+			any_ruler = {
+				has_trait = heavenly_demon_heir
+			}
+		}
+		add_character_flag = {
+			flag = last_blade_event
+			days = -1
+		}
+		add_trait = demon_blade_fusion
+		add_prowess = 20
+		add_martial_skill = 5
+		add_dread = 80
+		add_tyranny = 30
+		add_prestige = 2500
+		add_health = -1
+		ai_chance = {
+			base = 10
+		}
+	}
+}
