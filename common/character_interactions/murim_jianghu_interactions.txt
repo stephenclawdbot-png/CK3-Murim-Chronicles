@@ -1,0 +1,1640 @@
+# Murim Chronicles Phase 4 - Jianghu Underground Interactions
+# 25 unique character interactions for the Wuxia underground shadow network
+# Each has full is_shown, is_valid_showing_failures_only, on_accept, on_decline, ai_accept blocks
+
+######################################
+# 1. BRIBE IMPERIAL OFFICIAL
+######################################
+
+murim_bribe_imperial_official_interaction = {
+	category = interaction_category_hostile
+	icon = icon_gold
+	desc = murim_bribe_imperial_official_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_has_underground_connections_trigger = yes }
+		scope:recipient = {
+			is_ruler = yes
+			highest_held_title_tier >= tier_county
+			NOT = { murim_is_jianghu_member_trigger = yes }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 150
+			NOT = { has_character_modifier = murim_bribe_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = -150
+			add_character_modifier = {
+				modifier = murim_bribe_cooldown
+				years = 2
+			}
+			change_variable = { name = murim_jianghu_influence add = 8 }
+			add_opinion = { target = scope:recipient modifier = murim_bribed_official_opinion }
+		}
+		scope:recipient = {
+			add_gold = 150
+			add_opinion = { target = scope:actor modifier = murim_accepted_bribe_opinion }
+			add_character_modifier = {
+				modifier = murim_bribed_official
+				years = 5
+			}
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -50
+			random = {
+				chance = 30
+				add_character_modifier = { modifier = murim_bribe_attempt_known years = 3 }
+			}
+		}
+	}
+	
+	ai_accept = {
+		base = -20
+		modifier = { add = 30 scope:recipient = { ai_greed >= 50 } }
+		modifier = { add = 20 scope:recipient = { gold < 50 } }
+		modifier = { add = 15 scope:recipient = { has_trait = greedy } }
+		modifier = { add = -30 scope:recipient = { has_trait = just } }
+		modifier = { add = -20 scope:recipient = { has_trait = honest } }
+		modifier = { add = 10 scope:recipient = { has_trait = cynical } }
+		modifier = { add = 15 opinion = { target = scope:actor value >= 30 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 24
+	ai_potential = {
+		murim_has_underground_connections_trigger = yes
+		gold >= 200
+	}
+}
+
+######################################
+# 2. PLANT SECT SPY
+######################################
+
+murim_plant_sect_spy_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_plant_sect_spy_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_member_trigger = yes
+			intrigue >= 10
+		}
+		scope:recipient = {
+			is_ruler = yes
+			NOT = { has_character_flag = murim_spy_planted_here }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 100
+			any_courtier = {
+				has_trait = sect_spy
+				NOT = { has_character_flag = murim_planted_at_court }
+			}
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = -100
+			random_courtier = {
+				limit = {
+					has_trait = sect_spy
+					NOT = { has_character_flag = murim_planted_at_court }
+				}
+				save_scope_as = spy_agent
+			}
+			set_character_flag = murim_has_planted_spy
+			change_variable = { name = murim_spies_planted add = 1 }
+			change_variable = { name = murim_jianghu_influence add = 10 }
+		}
+		scope:recipient = {
+			set_character_flag = murim_spy_planted_here
+			add_courtier = scope:spy_agent
+		}
+		scope:spy_agent = {
+			set_character_flag = murim_planted_at_court
+			add_character_modifier = { modifier = murim_deep_cover_operative years = 10 }
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 48
+	ai_potential = {
+		murim_is_jianghu_member_trigger = yes
+		intrigue >= 12
+		gold >= 150
+	}
+}
+
+######################################
+# 3. RIG CIVIL EXAMINATION
+######################################
+
+murim_rig_civil_examination_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_diplomacy
+	desc = murim_rig_civil_examination_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_rig_examination_trigger = yes }
+		scope:recipient = {
+			learning >= 8
+			age >= 16
+			NOT = { has_character_modifier = murim_examination_passed_fraudulently }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 100
+			NOT = { has_character_modifier = murim_examination_rigging_discovered }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			murim_rig_imperial_examination_effect = yes
+		}
+	}
+	
+	on_decline = {
+		scope:actor = { add_prestige = -25 }
+		scope:recipient = {
+			add_opinion = { target = scope:actor modifier = murim_offered_cheating_opinion }
+		}
+	}
+	
+	ai_accept = {
+		base = 10
+		modifier = { add = 20 scope:recipient = { has_trait = ambitious } }
+		modifier = { add = 15 scope:recipient = { learning < 12 } }
+		modifier = { add = -40 scope:recipient = { has_trait = honest } }
+		modifier = { add = -30 scope:recipient = { has_trait = just } }
+		modifier = { add = 10 scope:recipient = { has_trait = lazy } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 72
+	ai_potential = {
+		murim_can_rig_examination_trigger = yes
+		gold >= 150
+	}
+}
+
+######################################
+# 4. ASSASSINATE VIA SECT CONTRACT
+######################################
+
+murim_assassinate_via_sect_interaction = {
+	category = interaction_category_hostile
+	icon = icon_martial
+	desc = murim_assassinate_via_sect_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_commission_assassination_trigger = yes }
+		scope:recipient = {
+			is_alive = yes
+			NOT = { has_strong_hook = scope:actor }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 150
+			NOT = { has_character_modifier = murim_assassination_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = { save_scope_as = assassination_target }
+		scope:actor = { murim_assassinate_via_sect_effect = yes }
+	}
+	
+	auto_accept = yes
+	ai_frequency = 120
+	ai_potential = {
+		murim_can_commission_assassination_trigger = yes
+		gold >= 250
+		any_relation = {
+			type = rival
+			is_alive = yes
+		}
+	}
+}
+
+######################################
+# 5. CHALLENGE FOR TERRITORY
+######################################
+
+murim_challenge_for_territory_interaction = {
+	category = interaction_category_hostile
+	icon = icon_martial
+	desc = murim_challenge_for_territory_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_member_trigger = yes
+			is_ruler = yes
+		}
+		scope:recipient = {
+			is_ruler = yes
+			is_neighbor_to_realm = scope:actor
+			murim_is_jianghu_member_trigger = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			prowess >= 10
+			NOT = { has_character_modifier = murim_territory_challenge_cooldown }
+		}
+	}
+	
+	on_accept = {
+		# Prowess duel determines outcome
+		scope:actor = {
+			duel = {
+				skill = prowess
+				target = scope:recipient
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = 3.0
+					}
+					desc = murim_territory_duel_win
+					scope:actor = {
+						add_prestige = 200
+						change_variable = { name = murim_jianghu_influence add = 15 }
+						add_character_modifier = { modifier = murim_territory_champion years = 5 }
+					}
+					scope:recipient = {
+						add_prestige = -150
+						change_variable = { name = murim_jianghu_influence add = -10 }
+					}
+				}
+				50 = {
+					compare_modifier = {
+						value = scope:duel_value
+						multiplier = -3.0
+					}
+					desc = murim_territory_duel_lose
+					scope:actor = {
+						add_prestige = -150
+						change_variable = { name = murim_jianghu_influence add = -10 }
+					}
+					scope:recipient = {
+						add_prestige = 200
+						change_variable = { name = murim_jianghu_influence add = 15 }
+					}
+				}
+			}
+			add_character_modifier = { modifier = murim_territory_challenge_cooldown years = 3 }
+		}
+	}
+	
+	on_decline = {
+		scope:recipient = {
+			add_prestige = -100
+			add_character_modifier = { modifier = murim_declined_territory_challenge years = 5 }
+		}
+		scope:actor = {
+			add_prestige = 50
+		}
+	}
+	
+	ai_accept = {
+		base = -10
+		modifier = { add = 30 scope:recipient = { has_trait = brave } }
+		modifier = { add = 20 scope:recipient = { prowess >= scope:actor.prowess } }
+		modifier = { add = -30 scope:recipient = { has_trait = craven } }
+		modifier = { add = 15 scope:recipient = { has_trait = wrathful } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 72
+	ai_potential = {
+		murim_is_jianghu_member_trigger = yes
+		is_ruler = yes
+		prowess >= 14
+	}
+}
+
+######################################
+# 6. OFFER PROTECTION RACKET
+######################################
+
+murim_offer_protection_racket_interaction = {
+	category = interaction_category_hostile
+	icon = icon_gold
+	desc = murim_offer_protection_racket_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_run_protection_racket_trigger = yes }
+		scope:recipient = {
+			is_ruler = yes
+			NOT = { murim_is_jianghu_member_trigger = yes }
+			NOT = { has_character_modifier = murim_paying_protection }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			prowess >= 12
+			NOT = { has_character_modifier = murim_racket_exposed }
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = {
+			add_character_modifier = { modifier = murim_paying_protection years = -1 }
+			set_character_flag = murim_racket_victim
+			add_opinion = { target = scope:actor modifier = murim_extorting_me_opinion }
+		}
+		scope:actor = {
+			add_gold = 50
+			change_variable = { name = murim_jianghu_influence add = 5 }
+			add_character_modifier = { modifier = murim_running_racket years = -1 }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			# Intimidation attempt
+			random_list = {
+				60 = {
+					scope:recipient = {
+						add_stress = 20
+						add_character_modifier = { modifier = murim_threatened_by_jianghu years = 3 }
+					}
+				}
+				40 = {
+					scope:recipient = {
+						add_prestige = 50
+						add_character_modifier = { modifier = murim_stood_up_to_jianghu years = 5 }
+					}
+				}
+			}
+		}
+	}
+	
+	ai_accept = {
+		base = -30
+		modifier = { add = 40 scope:recipient = { has_trait = craven } }
+		modifier = { add = 20 scope:recipient = { martial < 8 } }
+		modifier = { add = -30 scope:recipient = { has_trait = brave } }
+		modifier = { add = -20 scope:recipient = { martial >= 14 } }
+		modifier = { add = 30 scope:actor = { prowess >= 20 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 48
+	ai_potential = {
+		murim_can_run_protection_racket_trigger = yes
+		prowess >= 14
+	}
+}
+
+######################################
+# 7. SMUGGLE FORBIDDEN TEXTS
+######################################
+
+murim_smuggle_forbidden_texts_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_learning
+	desc = murim_smuggle_forbidden_texts_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_smuggle_forbidden_texts_trigger = yes }
+		scope:recipient = {
+			murim_is_cultivator_trigger = yes
+			NOT = { has_character_flag = murim_owns_forbidden_text }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 50
+			NOT = { has_character_modifier = murim_smuggling_busted }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = 75
+			change_variable = { name = murim_jianghu_influence add = 5 }
+		}
+		scope:recipient = {
+			add_gold = -75
+			set_character_flag = murim_owns_forbidden_text
+			add_learning_skill = 1
+			add_character_modifier = { modifier = murim_studying_forbidden_text years = 3 }
+			add_opinion = { target = scope:actor modifier = murim_sold_me_texts_opinion }
+			# Risk of corruption
+			random = {
+				chance = 20
+				trigger_event = { id = murim_jianghu.0120 days = { 30 90 } }
+			}
+		}
+	}
+	
+	on_decline = {
+		scope:actor = { add_prestige = -10 }
+	}
+	
+	ai_accept = {
+		base = 0
+		modifier = { add = 30 scope:recipient = { has_trait = ambitious } }
+		modifier = { add = 20 scope:recipient = { learning >= 14 } }
+		modifier = { add = -30 scope:recipient = { has_trait = just } }
+		modifier = { add = -20 scope:recipient = { has_trait = content } }
+		modifier = { add = 15 scope:recipient = { has_trait = curious } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 72
+	ai_potential = {
+		murim_can_smuggle_forbidden_texts_trigger = yes
+	}
+}
+
+######################################
+# 8. RECRUIT COURT INSIDER
+######################################
+
+murim_recruit_court_insider_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_intrigue
+	desc = murim_recruit_court_insider_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_is_jianghu_member_trigger = yes }
+		scope:recipient = {
+			is_councillor = yes
+			NOT = { murim_is_jianghu_member_trigger = yes }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 200
+			NOT = { has_character_modifier = murim_recruitment_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = -200
+			change_variable = { name = murim_jianghu_influence add = 12 }
+			add_character_modifier = { modifier = murim_recruitment_cooldown years = 1 }
+		}
+		scope:recipient = {
+			add_gold = 200
+			set_character_flag = murim_jianghu_inducted
+			add_trait = imperial_informant
+			add_opinion = { target = scope:actor modifier = murim_recruited_me_to_jianghu }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -50
+			# Risk of exposure
+			random = {
+				chance = 25
+				add_character_modifier = { modifier = murim_recruitment_attempt_known years = 3 }
+			}
+		}
+	}
+	
+	ai_accept = {
+		base = -30
+		modifier = { add = 40 scope:recipient = { ai_greed >= 60 } }
+		modifier = { add = 20 scope:recipient = { has_trait = ambitious } }
+		modifier = { add = -40 scope:recipient = { has_trait = loyal } }
+		modifier = { add = -30 scope:recipient = { has_trait = honest } }
+		modifier = { add = 25 scope:recipient = { gold < 30 } }
+		modifier = { add = 15 opinion = { target = scope:actor value >= 40 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 72
+	ai_potential = {
+		murim_is_jianghu_member_trigger = yes
+		gold >= 250
+	}
+}
+
+######################################
+# 9. BLACKMAIL WITH CULTIVATION SECRET
+######################################
+
+murim_blackmail_cultivation_secret_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_blackmail_cultivation_secret_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_has_broker_intelligence_trigger = yes }
+		scope:recipient = {
+			murim_is_hidden_cultivator_trigger = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_modifier = murim_blackmail_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = 100
+			change_variable = { name = murim_jianghu_influence add = 8 }
+			add_character_modifier = { modifier = murim_blackmail_cooldown years = 2 }
+		}
+		scope:recipient = {
+			add_gold = -100
+			add_stress = 30
+			add_opinion = { target = scope:actor modifier = murim_blackmailing_me }
+			add_character_modifier = { modifier = murim_under_blackmail years = 5 }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			# Expose them
+			scope:recipient = { save_scope_as = exposed_cultivator }
+			murim_expose_cultivator_effect = yes
+		}
+	}
+	
+	ai_accept = {
+		base = 10
+		modifier = { add = 30 scope:recipient = { has_trait = craven } }
+		modifier = { add = 20 scope:recipient = { is_ruler = yes } }
+		modifier = { add = -30 scope:recipient = { has_trait = brave } }
+		modifier = { add = -20 scope:recipient = { prowess >= 18 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 48
+	ai_potential = {
+		murim_has_broker_intelligence_trigger = yes
+	}
+}
+
+######################################
+# 10. DEMAND SECT TRIBUTE
+######################################
+
+murim_demand_sect_tribute_interaction = {
+	category = interaction_category_hostile
+	icon = icon_gold
+	desc = murim_demand_sect_tribute_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_is_jianghu_leader_trigger = yes }
+		scope:recipient = {
+			murim_is_cultivator_trigger = yes
+			NOT = { murim_is_jianghu_leader_trigger = yes }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			prowess >= 14
+			NOT = { has_character_modifier = murim_tribute_demand_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = {
+			add_gold = -75
+			add_opinion = { target = scope:actor modifier = murim_demanding_tribute_opinion }
+		}
+		scope:actor = {
+			add_gold = 75
+			change_variable = { name = murim_jianghu_influence add = 5 }
+			add_character_modifier = { modifier = murim_tribute_demand_cooldown years = 1 }
+		}
+	}
+	
+	on_decline = {
+		# Triggers a confrontation
+		scope:actor = {
+			trigger_event = { id = murim_duel.0001 days = { 5 15 } }
+		}
+	}
+	
+	ai_accept = {
+		base = -10
+		modifier = { add = 30 scope:actor = { prowess >= 20 } }
+		modifier = { add = 20 scope:recipient = { has_trait = craven } }
+		modifier = { add = -30 scope:recipient = { has_trait = brave } }
+		modifier = { add = -20 scope:recipient = { prowess >= scope:actor.prowess } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 48
+	ai_potential = {
+		murim_is_jianghu_leader_trigger = yes
+	}
+}
+
+######################################
+# 11. NEGOTIATE TRADE ROUTE CONTROL
+######################################
+
+murim_negotiate_trade_route_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_gold
+	desc = murim_negotiate_trade_route_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_member_trigger = yes
+			is_ruler = yes
+		}
+		scope:recipient = {
+			is_ruler = yes
+			murim_controls_trade_route_trigger = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 300
+			NOT = { has_character_modifier = murim_recently_seized_trade_route }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = -300
+			add_character_modifier = { modifier = murim_trade_route_controller years = -1 }
+			change_variable = { name = murim_jianghu_influence add = 15 }
+		}
+		scope:recipient = {
+			add_gold = 300
+			add_opinion = { target = scope:actor modifier = murim_trade_partner_opinion }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -25
+		}
+	}
+	
+	ai_accept = {
+		base = -20
+		modifier = { add = 40 scope:recipient = { gold < 100 } }
+		modifier = { add = 20 scope:recipient = { has_trait = greedy } }
+		modifier = { add = -30 scope:recipient = { has_trait = ambitious } }
+		modifier = { add = 20 opinion = { target = scope:actor value >= 50 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 120
+	ai_potential = {
+		murim_is_jianghu_member_trigger = yes
+		is_ruler = yes
+		gold >= 400
+	}
+}
+
+######################################
+# 12. HOST UNDERGROUND TOURNAMENT
+######################################
+
+murim_host_underground_tournament_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_martial
+	desc = murim_host_underground_tournament_interaction_desc
+	
+	is_shown = {
+		scope:actor = scope:recipient
+		scope:actor = {
+			murim_is_jianghu_leader_trigger = yes
+			is_ruler = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 500
+			NOT = { has_character_modifier = murim_tournament_host_prestige }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			murim_host_underground_tournament_effect = yes
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 365
+	ai_potential = {
+		murim_is_jianghu_leader_trigger = yes
+		gold >= 600
+	}
+}
+
+######################################
+# 13. POISON RIVAL'S QI
+######################################
+
+murim_poison_rivals_qi_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_poison_rivals_qi_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_poison_rivals_qi_trigger = yes }
+		scope:recipient = {
+			murim_is_cultivator_trigger = yes
+			is_alive = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 75
+			NOT = { has_character_modifier = murim_poison_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = -75
+			add_character_modifier = { modifier = murim_poison_cooldown years = 3 }
+			change_variable = { name = murim_jianghu_influence add = 3 }
+		}
+		scope:recipient = {
+			random_list = {
+				50 = {
+					# Poison works - qi disruption
+					add_character_modifier = { modifier = murim_qi_poisoned years = 5 }
+					add_prowess_skill = -2
+					add_stress = 30
+				}
+				30 = {
+					# Partial effect
+					add_character_modifier = { modifier = murim_qi_slightly_disrupted years = 2 }
+					add_prowess_skill = -1
+				}
+				20 = {
+					# Target notices and resists
+					add_opinion = { target = scope:actor modifier = murim_tried_to_poison_me }
+					add_character_modifier = { modifier = murim_qi_resistance_built years = 3 }
+				}
+			}
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 120
+	ai_potential = {
+		murim_can_poison_rivals_qi_trigger = yes
+		any_relation = { type = rival murim_is_cultivator_trigger = yes }
+	}
+}
+
+######################################
+# 14. STEAL TECHNIQUE SCROLL
+######################################
+
+murim_steal_technique_scroll_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_steal_technique_scroll_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_member_trigger = yes
+			intrigue >= 10
+		}
+		scope:recipient = {
+			murim_is_cultivator_trigger = yes
+			OR = {
+				has_character_flag = murim_owns_technique_scroll
+				has_character_flag = murim_owns_forbidden_text
+				learning >= 16
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_modifier = murim_theft_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_character_modifier = { modifier = murim_theft_cooldown years = 2 }
+			random_list = {
+				50 = {
+					modifier = { factor = 1.5 intrigue >= 16 }
+					# Success
+					add_learning_skill = 1
+					set_character_flag = murim_owns_technique_scroll
+					add_character_modifier = { modifier = murim_studying_stolen_technique years = 5 }
+					change_variable = { name = murim_jianghu_influence add = 5 }
+				}
+				30 = {
+					# Partial success - got a copy but target knows
+					add_learning_skill = 1
+					scope:recipient = {
+						add_opinion = { target = scope:actor modifier = murim_stole_from_me }
+					}
+				}
+				20 = {
+					# Caught!
+					add_prestige = -100
+					scope:recipient = {
+						add_opinion = { target = scope:actor modifier = murim_caught_stealing }
+					}
+					add_character_modifier = { modifier = murim_caught_thief years = 5 }
+				}
+			}
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 120
+	ai_potential = {
+		murim_is_jianghu_member_trigger = yes
+		intrigue >= 14
+	}
+}
+
+######################################
+# 15. FORGE IMPERIAL DECREE
+######################################
+
+murim_forge_imperial_decree_interaction = {
+	category = interaction_category_hostile
+	icon = icon_diplomacy
+	desc = murim_forge_imperial_decree_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_leader_trigger = yes
+			intrigue >= 14
+		}
+		scope:recipient = {
+			is_ruler = yes
+			NOT = { murim_is_jianghu_member_trigger = yes }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 200
+			NOT = { has_character_modifier = murim_forged_decree_holder }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			murim_forge_imperial_decree_effect = yes
+		}
+		scope:recipient = {
+			add_opinion = { target = scope:actor modifier = murim_received_decree_opinion }
+			add_character_modifier = { modifier = murim_obeying_forged_decree years = 5 }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -50
+			# Decree questioned
+			random = {
+				chance = 40
+				add_character_modifier = { modifier = murim_decree_questioned years = 3 }
+			}
+		}
+	}
+	
+	ai_accept = {
+		base = 10
+		modifier = { add = 20 scope:recipient = { has_trait = trusting } }
+		modifier = { add = -30 scope:recipient = { has_trait = paranoid } }
+		modifier = { add = -20 scope:recipient = { intrigue >= 14 } }
+		modifier = { add = 15 scope:recipient = { has_trait = content } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 120
+	ai_potential = {
+		murim_is_jianghu_leader_trigger = yes
+		intrigue >= 16
+		gold >= 300
+	}
+}
+
+######################################
+# 16. INSTALL PUPPET GOVERNOR
+######################################
+
+murim_install_puppet_governor_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_install_puppet_governor_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_install_puppet_trigger = yes }
+		scope:recipient = {
+			is_ruler = yes
+			highest_held_title_tier = tier_county
+			NOT = { has_trait = puppet_official }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 200
+			NOT = { has_character_modifier = murim_puppet_scheme_failed_recently }
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = { save_scope_as = puppet_target }
+		scope:actor = { murim_install_puppet_official_effect = yes }
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -100
+			add_character_modifier = { modifier = murim_puppet_scheme_failed_recently years = 5 }
+			change_variable = { name = murim_jianghu_influence add = -10 }
+		}
+		scope:recipient = {
+			add_opinion = { target = scope:actor modifier = murim_tried_to_puppet_me }
+		}
+	}
+	
+	ai_accept = {
+		base = -40
+		modifier = { add = 40 scope:recipient = { has_trait = craven } }
+		modifier = { add = 30 scope:recipient = { gold < 20 } }
+		modifier = { add = 20 scope:recipient = { has_trait = lazy } }
+		modifier = { add = -30 scope:recipient = { has_trait = brave } }
+		modifier = { add = -30 scope:recipient = { has_trait = ambitious } }
+		modifier = { add = 30 scope:actor = { prowess >= 20 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 120
+	ai_potential = {
+		murim_can_install_puppet_trigger = yes
+		gold >= 300
+	}
+}
+
+######################################
+# 17. SABOTAGE RIVAL SECT
+######################################
+
+murim_sabotage_rival_sect_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_sabotage_rival_sect_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = { murim_can_sabotage_rival_sect_trigger = yes }
+		scope:recipient = {
+			has_character_flag = murim_sect_leader
+			NOT = { has_character_flag = murim_same_sect_as_actor }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 100
+			NOT = { has_character_modifier = murim_sabotage_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = -100
+			add_character_modifier = { modifier = murim_sabotage_cooldown years = 3 }
+			random_list = {
+				45 = {
+					modifier = { factor = 1.5 intrigue >= 18 }
+					# Sabotage successful
+					scope:recipient = {
+						change_variable = { name = murim_sect_standing add = -20 }
+						add_character_modifier = { modifier = murim_sect_sabotaged years = 3 }
+					}
+					scope:actor = {
+						change_variable = { name = murim_jianghu_influence add = 10 }
+					}
+				}
+				35 = {
+					# Partial success
+					scope:recipient = {
+						change_variable = { name = murim_sect_standing add = -10 }
+					}
+				}
+				20 = {
+					# Discovered
+					scope:recipient = {
+						add_opinion = { target = scope:actor modifier = murim_sabotaged_my_sect }
+					}
+					scope:actor = {
+						add_prestige = -100
+						change_variable = { name = murim_jianghu_influence add = -10 }
+					}
+				}
+			}
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 120
+	ai_potential = {
+		murim_can_sabotage_rival_sect_trigger = yes
+		gold >= 150
+	}
+}
+
+######################################
+# 18. ARRANGE POLITICAL MARRIAGE FOR SECT
+######################################
+
+murim_arrange_sect_marriage_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_diplomacy
+	desc = murim_arrange_sect_marriage_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_leader_trigger = yes
+			is_ruler = yes
+		}
+		scope:recipient = {
+			is_ruler = yes
+			is_married = no
+			age >= 16
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_modifier = murim_marriage_arrangement_cooldown }
+			any_courtier = {
+				is_married = no
+				age >= 16
+				murim_is_cultivator_trigger = yes
+			}
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_character_modifier = { modifier = murim_marriage_arrangement_cooldown years = 2 }
+			change_variable = { name = murim_jianghu_influence add = 12 }
+			add_prestige = 100
+		}
+		scope:recipient = {
+			add_opinion = { target = scope:actor modifier = murim_marriage_alliance_opinion }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = { add_prestige = -25 }
+	}
+	
+	ai_accept = {
+		base = -10
+		modifier = { add = 30 scope:recipient = { has_trait = gregarious } }
+		modifier = { add = 20 opinion = { target = scope:actor value >= 40 } }
+		modifier = { add = -20 scope:recipient = { has_trait = shy } }
+		modifier = { add = 15 scope:recipient = { has_trait = ambitious } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 120
+	ai_potential = {
+		murim_is_jianghu_leader_trigger = yes
+		is_ruler = yes
+	}
+}
+
+######################################
+# 19. INFILTRATE IMPERIAL GUARD
+######################################
+
+murim_infiltrate_imperial_guard_interaction = {
+	category = interaction_category_hostile
+	icon = icon_martial
+	desc = murim_infiltrate_imperial_guard_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_leader_trigger = yes
+		}
+		scope:recipient = {
+			is_ruler = yes
+			highest_held_title_tier >= tier_duchy
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			gold >= 200
+			NOT = { has_character_modifier = murim_has_guard_insider }
+			any_courtier = {
+				murim_is_cultivator_trigger = yes
+				martial >= 12
+				NOT = { has_character_flag = murim_imperial_guard_mole }
+			}
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			random_courtier = {
+				limit = {
+					murim_is_cultivator_trigger = yes
+					martial >= 12
+					NOT = { has_character_flag = murim_imperial_guard_mole }
+				}
+				save_scope_as = infiltrator
+			}
+			murim_infiltrate_imperial_guard_effect = yes
+			add_gold = -200
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 180
+	ai_potential = {
+		murim_is_jianghu_leader_trigger = yes
+		gold >= 300
+	}
+}
+
+######################################
+# 20. EXPOSE HIDDEN CULTIVATOR
+######################################
+
+murim_expose_hidden_cultivator_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_expose_hidden_cultivator_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			OR = {
+				murim_has_broker_intelligence_trigger = yes
+				intrigue >= 14
+				NOT = { murim_is_cultivator_trigger = yes }
+			}
+		}
+		scope:recipient = {
+			murim_can_be_exposed_as_cultivator_trigger = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_modifier = murim_exposure_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = { save_scope_as = exposed_cultivator }
+		scope:actor = {
+			murim_expose_cultivator_effect = yes
+			add_character_modifier = { modifier = murim_exposure_cooldown years = 3 }
+		}
+	}
+	
+	auto_accept = yes
+	ai_frequency = 120
+	ai_potential = {
+		OR = {
+			has_trait = just
+			has_trait = zealous
+			NOT = { murim_is_cultivator_trigger = yes }
+		}
+		intrigue >= 12
+	}
+}
+
+######################################
+# 21. REQUEST SANCTUARY
+######################################
+
+murim_request_sanctuary_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_diplomacy
+	desc = murim_request_sanctuary_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_cultivator_trigger = yes
+			OR = {
+				murim_is_crackdown_target_trigger = yes
+				has_character_modifier = murim_exposed_operative
+				has_character_modifier = murim_imperial_bounty
+			}
+		}
+		scope:recipient = {
+			is_ruler = yes
+			murim_is_jianghu_member_trigger = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_imprisoned = no
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = {
+			add_courtier = scope:actor
+			add_opinion = { target = scope:actor modifier = murim_granted_sanctuary_opinion }
+			change_variable = { name = murim_jianghu_influence add = 5 }
+			# Risk of imperial attention
+			random = {
+				chance = 20
+				trigger_event = { id = murim_imperial_cultivator.0025 days = { 30 120 } }
+			}
+		}
+		scope:actor = {
+			add_opinion = { target = scope:recipient modifier = murim_gave_me_sanctuary_opinion }
+			add_stress = -20
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_stress = 30
+			add_prestige = -50
+		}
+	}
+	
+	ai_accept = {
+		base = -10
+		modifier = { add = 30 scope:recipient = { has_trait = compassionate } }
+		modifier = { add = 20 scope:recipient = { has_trait = brave } }
+		modifier = { add = -30 scope:recipient = { has_trait = craven } }
+		modifier = { add = 15 opinion = { target = scope:actor value >= 30 } }
+		modifier = { add = -20 scope:recipient = { has_character_modifier = murim_imperial_bounty } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 24
+	ai_potential = {
+		murim_is_cultivator_trigger = yes
+		OR = {
+			murim_is_crackdown_target_trigger = yes
+			has_character_modifier = murim_exposed_operative
+		}
+	}
+}
+
+######################################
+# 22. BETRAY SECT TO EMPIRE
+######################################
+
+murim_betray_sect_to_empire_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	desc = murim_betray_sect_to_empire_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_jianghu_member_trigger = yes
+		}
+		scope:recipient = {
+			is_ruler = yes
+			highest_held_title_tier >= tier_duchy
+			NOT = { murim_is_jianghu_member_trigger = yes }
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_modifier = murim_betrayal_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			add_gold = 200
+			remove_character_flag = murim_jianghu_inducted
+			set_character_flag = murim_betrayed_jianghu
+			add_character_modifier = { modifier = murim_jianghu_traitor years = -1 }
+			add_character_modifier = { modifier = murim_betrayal_cooldown years = 10 }
+			add_prestige = -300
+			# All jianghu members hate you
+			every_living_character = {
+				limit = { murim_is_jianghu_member_trigger = yes }
+				add_opinion = { target = scope:actor modifier = murim_traitor_to_jianghu }
+			}
+		}
+		scope:recipient = {
+			add_prestige = 100
+			set_character_flag = murim_discovered_underground
+			add_character_modifier = { modifier = murim_underground_intelligence years = 5 }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -50
+		}
+	}
+	
+	ai_accept = {
+		base = 20
+		modifier = { add = 30 scope:recipient = { has_trait = just } }
+		modifier = { add = 20 scope:recipient = { has_trait = zealous } }
+		modifier = { add = -20 scope:recipient = { has_trait = trusting } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 365
+	ai_potential = {
+		murim_is_jianghu_member_trigger = yes
+		OR = {
+			has_trait = cynical
+			has_trait = deceitful
+			stress >= 80
+		}
+	}
+}
+
+######################################
+# 23. DEFECT TO JIANGHU
+######################################
+
+murim_defect_to_jianghu_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_intrigue
+	desc = murim_defect_to_jianghu_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			NOT = { murim_is_jianghu_member_trigger = yes }
+			murim_is_cultivator_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_jianghu_leader_trigger = yes
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			age >= 16
+			is_imprisoned = no
+		}
+	}
+	
+	on_accept = {
+		scope:actor = { save_scope_as = recruit }
+		scope:recipient = {
+			murim_recruit_to_underground_effect = yes
+		}
+		scope:actor = {
+			add_prestige = 50
+			add_stress = -10
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -25
+			add_stress = 10
+		}
+	}
+	
+	ai_accept = {
+		base = 0
+		modifier = { add = 30 scope:actor = { prowess >= 14 } }
+		modifier = { add = 20 scope:actor = { intrigue >= 14 } }
+		modifier = { add = -20 scope:actor = { has_trait = honest } }
+		modifier = { add = 15 scope:actor = { has_trait = ambitious } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 120
+	ai_potential = {
+		NOT = { murim_is_jianghu_member_trigger = yes }
+		murim_is_cultivator_trigger = yes
+		OR = {
+			has_trait = ambitious
+			has_trait = deceitful
+			stress >= 60
+		}
+	}
+}
+
+######################################
+# 24. CHALLENGE IMPERIAL CHAMPION
+######################################
+
+murim_challenge_imperial_champion_interaction = {
+	category = interaction_category_hostile
+	icon = icon_martial
+	desc = murim_challenge_imperial_champion_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_cultivator_trigger = yes
+			prowess >= 16
+		}
+		scope:recipient = {
+			is_ruler = yes
+			highest_held_title_tier >= tier_duchy
+			any_knight = {
+				prowess >= 15
+			}
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_modifier = murim_imperial_challenge_cooldown }
+			is_at_war = no
+		}
+	}
+	
+	on_accept = {
+		scope:recipient = {
+			random_knight = {
+				limit = { prowess >= 15 }
+				save_scope_as = imperial_champion
+			}
+		}
+		scope:actor = {
+			duel = {
+				skill = prowess
+				target = scope:imperial_champion
+				50 = {
+					compare_modifier = { value = scope:duel_value multiplier = 3.0 }
+					desc = murim_beat_imperial_champion
+					scope:actor = {
+						add_prestige = 500
+						add_prowess_skill = 1
+						change_variable = { name = murim_jianghu_influence add = 25 }
+						add_character_modifier = { modifier = murim_defeated_imperial_champion years = 10 }
+					}
+					scope:recipient = {
+						add_prestige = -200
+					}
+				}
+				50 = {
+					compare_modifier = { value = scope:duel_value multiplier = -3.0 }
+					desc = murim_lost_to_imperial_champion
+					scope:actor = {
+						add_prestige = -200
+						change_variable = { name = murim_jianghu_influence add = -10 }
+						random_list = {
+							70 = { add_character_modifier = { modifier = murim_honorable_defeat years = 3 } }
+							30 = { add_prowess_skill = -1 add_stress = 30 }
+						}
+					}
+				}
+			}
+			add_character_modifier = { modifier = murim_imperial_challenge_cooldown years = 5 }
+		}
+	}
+	
+	on_decline = {
+		scope:recipient = {
+			add_prestige = -100
+			add_character_modifier = { modifier = murim_refused_jianghu_challenge years = 5 }
+		}
+		scope:actor = {
+			add_prestige = 100
+		}
+	}
+	
+	ai_accept = {
+		base = -10
+		modifier = { add = 30 scope:recipient = { has_trait = brave } }
+		modifier = { add = 20 scope:recipient = { any_knight = { prowess >= 20 } } }
+		modifier = { add = -30 scope:recipient = { has_trait = craven } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 180
+	ai_potential = {
+		murim_is_cultivator_trigger = yes
+		prowess >= 18
+	}
+}
+
+######################################
+# 25. PETITION WULIN ALLIANCE
+######################################
+
+murim_petition_wulin_alliance_interaction = {
+	category = interaction_category_diplomacy
+	icon = icon_diplomacy
+	desc = murim_petition_wulin_alliance_interaction_desc
+	
+	is_shown = {
+		NOT = { scope:actor = scope:recipient }
+		scope:actor = {
+			murim_is_cultivator_trigger = yes
+			NOT = { has_trait = wulin_alliance_member }
+			NOT = { has_trait = demonic_cultivator }
+		}
+		scope:recipient = {
+			has_character_flag = murim_wulin_leader
+		}
+	}
+	
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			prowess >= 12
+			NOT = { has_character_flag = murim_wulin_expelled }
+			NOT = { has_character_modifier = murim_wulin_petition_cooldown }
+		}
+	}
+	
+	on_accept = {
+		scope:actor = {
+			murim_join_wulin_alliance_effect = yes
+			add_character_modifier = { modifier = murim_wulin_petition_cooldown years = 5 }
+			add_opinion = { target = scope:recipient modifier = murim_accepted_into_wulin }
+		}
+		scope:recipient = {
+			add_opinion = { target = scope:actor modifier = murim_accepted_wulin_member }
+			change_variable = { name = murim_jianghu_influence add = 3 }
+		}
+	}
+	
+	on_decline = {
+		scope:actor = {
+			add_prestige = -50
+			add_stress = 15
+			add_character_modifier = { modifier = murim_wulin_petition_cooldown years = 5 }
+		}
+	}
+	
+	ai_accept = {
+		base = -10
+		modifier = { add = 30 scope:actor = { has_trait = just } }
+		modifier = { add = 20 scope:actor = { has_trait = brave } }
+		modifier = { add = 20 scope:actor = { prowess >= 18 } }
+		modifier = { add = -40 scope:actor = { has_trait = deceitful } }
+		modifier = { add = -30 scope:actor = { has_trait = sadistic } }
+		modifier = { add = 15 opinion = { target = scope:actor value >= 30 } }
+	}
+	
+	auto_accept = no
+	ai_frequency = 180
+	ai_potential = {
+		murim_is_cultivator_trigger = yes
+		NOT = { has_trait = wulin_alliance_member }
+		prowess >= 14
+		OR = { has_trait = just has_trait = brave has_trait = honest }
+	}
+}
