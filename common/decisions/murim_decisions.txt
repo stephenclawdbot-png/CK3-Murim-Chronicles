@@ -4,8 +4,7 @@
 #   murim_custom_clan_events.txt (clan founding),
 #   murim_ranking_events.txt (challenge ranking)
 # GENDER: All decisions equally available to men and women.
-# POLISH FIX HB#57: Added tang_clan_disciple to exclusion list (was missing 9th clan)
-# POLISH FIX HB#57: Fixed event namespace murim_ranking -> murim_rank
+# POLISH FIX HB#58: Fixed tang_clan check to use BOTH tang_clan_member AND tang_clan_disciple
 
 # ============================================================
 # OPEN THE MURIM LEDGER
@@ -36,6 +35,7 @@ murim_create_custom_clan_decision = {
 				has_trait = iron_fist_disciple
 				has_trait = poison_flower_disciple
 				has_trait = phantom_blade_disciple
+				has_trait = tang_clan_member
 				has_trait = tang_clan_disciple
 			}
 		}
@@ -146,16 +146,12 @@ murim_seek_entry_decision = {
 
 	is_shown = {
 		NOT = { has_trait = martial_artist }
-		NOT = { has_character_flag = murim_entry_attempted }
-		NOT = { has_character_flag = murim_rejected_martial_path }
+		NOT = { has_character_flag = murim_entry_rejected }
 		age >= 14
-		age <= 50
+		age <= 45
 		OR = {
 			prowess >= 8
-			has_trait = brave
-			has_trait = ambitious
-			has_trait = curious
-			any_courtier = { has_trait = martial_artist }
+			learning >= 12
 		}
 	}
 
@@ -165,7 +161,7 @@ murim_seek_entry_decision = {
 	}
 
 	cost = {
-		prestige = 50
+		prestige = 100
 	}
 
 	cooldown = {
@@ -173,37 +169,33 @@ murim_seek_entry_decision = {
 	}
 
 	effect = {
-		add_character_flag = murim_entry_attempted
-		# Determine entry path based on character situation
+		# Determine entry path based on character status
 		if = {
 			limit = {
 				is_landed = no
-				is_courtier = no
+				NOT = { exists = liege }
 			}
 			# Landless adventurer path
-			trigger_event = { id = murim_entry_path.0001 days = { 5 15 } }
+			trigger_event = { id = murim_entry.0002 days = { 5 15 } }
 		}
 		else_if = {
 			limit = {
 				is_landed = yes
-				highest_held_title_tier >= tier_county
 			}
 			# Landed noble path
-			trigger_event = { id = murim_entry_path.0003 days = { 5 15 } }
+			trigger_event = { id = murim_entry.0004 days = { 10 30 } }
 		}
 		else_if = {
 			limit = {
-				is_courtier = yes
-				any_liege_or_above = {
-					any_courtier = { has_trait = martial_artist }
-				}
+				exists = liege
+				is_landed = no
 			}
-			# Courtier exposure path
-			trigger_event = { id = murim_entry_path.0005 days = { 5 15 } }
+			# Courtier path
+			trigger_event = { id = murim_entry.0006 days = { 7 20 } }
 		}
 		else = {
-			# Exploration discovery path
-			trigger_event = { id = murim_entry_path.0007 days = { 5 15 } }
+			# Exploration/discovery path
+			trigger_event = { id = murim_entry.0008 days = { 15 45 } }
 		}
 	}
 
@@ -212,73 +204,62 @@ murim_seek_entry_decision = {
 		OR = {
 			has_trait = brave
 			has_trait = ambitious
+			has_trait = curious
 		}
 	}
 
 	ai_will_do = {
 		base = 5
-		modifier = { add = 10 prowess >= 15 }
-		modifier = { add = 10 has_trait = ambitious }
-		modifier = { add = 5 has_trait = brave }
-		modifier = { add = -15 age >= 40 }
-		# Higher chance in China/Goryeo
-		modifier = {
-			add = 10
-			OR = {
-				culture = { has_cultural_pillar = heritage_chinese }
-				culture = { has_cultural_pillar = heritage_korean }
-			}
-		}
+		modifier = { add = 10 prowess >= 14 }
+		modifier = { add = 10 has_trait = brave }
+		modifier = { add = 5 has_trait = ambitious }
 	}
 }
 
 # ============================================================
-# CHALLENGE FOR RANKING (Quick-access from main decisions)
-# Redirects to murim_rank namespace events
+# CHALLENGE RANKING POSITION
 # ============================================================
 murim_challenge_ranking_decision = {
 	title = murim_challenge_ranking_decision_title
 	desc = murim_challenge_ranking_decision_desc
 
-	ai_check_interval = 180
+	ai_check_interval = 60
 
 	is_shown = {
 		murim_is_martial_artist_trigger = yes
 		has_variable = murim_martial_rank_position
+		var:murim_martial_rank_position >= 2
 	}
 
 	is_valid = {
 		is_alive = yes
 		is_imprisoned = no
 		NOT = { has_character_modifier = murim_recent_challenge_cooldown }
-		NOT = { has_variable = murim_active_duel }
+		NOT = { has_character_modifier = murim_recent_duel_cooldown }
 	}
 
 	cost = {
-		prestige = 50
+		prestige = 200
 	}
 
 	cooldown = {
-		days = 365
+		years = 2
 	}
 
 	effect = {
-		trigger_event = { id = murim_rank.0001 }
-		add_character_modifier = {
-			modifier = murim_recent_challenge_cooldown
-			years = 1
-		}
+		trigger_event = { id = murim_rank.0001 days = { 5 15 } }
+		add_character_modifier = { modifier = murim_recent_challenge_cooldown years = 2 }
 	}
 
 	ai_potential = {
-		prowess >= 15
 		has_trait = ambitious
+		prowess >= 16
 	}
 
 	ai_will_do = {
-		base = 5
-		modifier = { add = 15 has_trait = ambitious }
-		modifier = { add = 10 has_trait = brave }
-		modifier = { add = -25 has_trait = craven }
+		base = 10
+		modifier = { add = 20 has_trait = ambitious }
+		modifier = { add = 15 has_trait = brave }
+		modifier = { add = -30 has_trait = craven }
 	}
 }

@@ -1,10 +1,11 @@
 # Murim Chronicles - Clan Membership Traits
-# All 9 clans represented. Mutually exclusive (except Tang associate).
+# All 9 clans represented. Mutually exclusive (except Tang associate/member).
 # Orthodox: Mount Hua, Shaolin, Wudang, Tang Clan, Beggar Sect, Iron Fist Gate
 # Unorthodox: Heavenly Demon Sect, Poison Flower Palace, Phantom Blade Sect
 # Cross-refs: murim_clan_membership_effects.txt, murim_triggers.txt,
 #   murim_game_start_effects.txt, murim_sect_events.txt
 # GENDER: No gender restrictions on any clan trait.
+# HEARTBEAT #58: Added tang_clan_disciple to fix cross-reference bug
 
 ##############################
 # ORTHODOX CLAN TRAITS
@@ -29,6 +30,7 @@ mount_hua_disciple = {
 		iron_fist_disciple
 		poison_flower_disciple
 		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -61,6 +63,7 @@ wudang_disciple = {
 		iron_fist_disciple
 		poison_flower_disciple
 		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -93,6 +96,7 @@ shaolin_monk = {
 		iron_fist_disciple
 		poison_flower_disciple
 		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -110,6 +114,7 @@ tang_clan_member = {
 	category = fame
 
 	# Blood members of Tang Clan - birthright trait, never removed
+	# Tang dynasty bloodline auto-enrollment handled by murim_tang_birthright_effects.txt
 	character_modifier = {
 		prowess = 2
 		intrigue = 3
@@ -117,8 +122,8 @@ tang_clan_member = {
 		scheme_power_mult = 0.05
 	}
 
-	# Tang blood members CAN be in other clans as associates
-	# so no opposites with other clan traits
+	# Tang blood members CAN coexist with tang_clan_disciple
+	# No opposites with other clan traits (blood is permanent)
 
 	desc = {
 		first_valid = {
@@ -134,7 +139,7 @@ tang_clan_associate = {
 	index = 204
 	category = fame
 
-	# Non-blood allies trained by Tang Clan
+	# Non-blood allies trained by Tang Clan (secondary association)
 	character_modifier = {
 		intrigue = 2
 		scheme_power_mult = 0.03
@@ -161,6 +166,41 @@ tang_clan_associate = {
 	}
 }
 
+tang_clan_disciple = {
+	index = 207
+	category = fame
+
+	# Trained Tang Clan disciple (non-blood, full member)
+	# Distinct from tang_clan_member (blood) and tang_clan_associate (ally)
+	# This is the primary clan membership trait for Tang recruits
+	character_modifier = {
+		prowess = 2
+		intrigue = 2
+		monthly_prestige = 0.15
+		scheme_power_mult = 0.03
+	}
+
+	opposites = {
+		mount_hua_disciple
+		wudang_disciple
+		shaolin_monk
+		heavenly_demon_disciple
+		beggar_sect_member
+		iron_fist_disciple
+		poison_flower_disciple
+		phantom_blade_disciple
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { always = yes }
+				desc = tang_clan_disciple_desc
+			}
+		}
+	}
+}
+
 beggar_sect_member = {
 	index = 205
 	category = fame
@@ -180,6 +220,7 @@ beggar_sect_member = {
 		iron_fist_disciple
 		poison_flower_disciple
 		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -211,6 +252,7 @@ iron_fist_disciple = {
 		beggar_sect_member
 		poison_flower_disciple
 		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -232,11 +274,12 @@ heavenly_demon_disciple = {
 	category = fame
 
 	character_modifier = {
-		prowess = 4
+		prowess = 5
 		intrigue = 2
+		dread_baseline_add = 10
 		monthly_prestige = 0.3
-		dread_baseline_add = 5
-		dread_decay_mult = -0.1
+		general_opinion = -10
+		same_faith_opinion = 15
 	}
 
 	opposites = {
@@ -245,8 +288,7 @@ heavenly_demon_disciple = {
 		shaolin_monk
 		beggar_sect_member
 		iron_fist_disciple
-		poison_flower_disciple
-		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -264,22 +306,21 @@ poison_flower_disciple = {
 	category = fame
 
 	character_modifier = {
-		prowess = 2
+		prowess = 3
 		intrigue = 3
 		learning = 1
 		monthly_prestige = 0.2
 		scheme_power_mult = 0.05
-		hostile_scheme_resistance_mult = 0.05
+		attraction_opinion = 5
 	}
 
 	opposites = {
 		mount_hua_disciple
 		wudang_disciple
 		shaolin_monk
-		heavenly_demon_disciple
 		beggar_sect_member
 		iron_fist_disciple
-		phantom_blade_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -297,21 +338,21 @@ phantom_blade_disciple = {
 	category = fame
 
 	character_modifier = {
-		prowess = 3
+		prowess = 4
 		intrigue = 2
+		martial = 1
 		monthly_prestige = 0.2
-		dread_baseline_add = 3
-		hostile_scheme_power_mult = 0.1
+		dread_baseline_add = 5
+		enemy_personal_scheme_success_chance_add = -5
 	}
 
 	opposites = {
 		mount_hua_disciple
 		wudang_disciple
 		shaolin_monk
-		heavenly_demon_disciple
 		beggar_sect_member
 		iron_fist_disciple
-		poison_flower_disciple
+		tang_clan_disciple
 	}
 
 	desc = {
@@ -325,35 +366,17 @@ phantom_blade_disciple = {
 }
 
 ##############################
-# MISC MARTIAL AWARENESS
+# MARTIAL ARTIST BASE TRAIT
 ##############################
 
-martial_awareness = {
+martial_artist = {
 	index = 220
 	category = fame
 
-	# For non-martial characters who have witnessed martial arts
+	# Base trait for anyone in the martial world
+	# Required by murim_is_martial_artist_trigger
 	character_modifier = {
-		monthly_prestige = 0.05
-	}
-
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = martial_awareness_desc
-			}
-		}
-	}
-}
-
-martial_artist = {
-	index = 221
-	category = fame
-
-	# Base trait for all martial artists
-	character_modifier = {
-		prowess = 1
+		prowess = 2
 		monthly_prestige = 0.1
 	}
 
@@ -362,6 +385,50 @@ martial_artist = {
 			triggered_desc = {
 				trigger = { always = yes }
 				desc = martial_artist_desc
+			}
+		}
+	}
+}
+
+demonic_cultivator = {
+	index = 221
+	category = fame
+
+	# Practices forbidden/demonic cultivation methods
+	character_modifier = {
+		prowess = 3
+		intrigue = 1
+		dread_baseline_add = 5
+		general_opinion = -10
+		health = -0.25
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { always = yes }
+				desc = demonic_cultivator_desc
+			}
+		}
+	}
+}
+
+cultivation_prodigy = {
+	index = 222
+	category = fame
+
+	# Natural talent for cultivation
+	character_modifier = {
+		prowess = 1
+		learning = 2
+		monthly_prestige = 0.2
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { always = yes }
+				desc = cultivation_prodigy_desc
 			}
 		}
 	}
