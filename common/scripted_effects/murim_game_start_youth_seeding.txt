@@ -1,0 +1,510 @@
+# Murim Chronicles - Game Start Youth Seeding (Scarcity Rule)
+# CRITICAL DESIGN: On game start, martial training is RARE among youth.
+# Only 5-10 kids (age 8-15) across ALL of Goryeo/China start with martial training.
+# Adults (age 20+) get the bulk of martial trait seeding.
+# This scarcity makes trained youth VALUABLE and drives the recruitment system.
+# INTEGRATION: Called by murim_game_start_effects.txt (main seeding pipeline)
+# INTEGRATION: Feeds murim_clan_recruitment_events.txt (emergency mode triggers when youth < 3)
+# INTEGRATION: Feeds murim_clan_scout_effects.txt (scouts spawn to find more youth)
+# INTEGRATION: Feeds murim_youth_tournament_events.txt (small initial tournament pool)
+# DESIGN: VANILLA SEPARATION — martial seeding does NOT affect titles, succession, or wars.
+#         A prince with martial training is still just a prince politically.
+# GENDER: Boys and girls equally likely to receive martial training on game start.
+
+# ============================================================
+# YOUTH SEEDING RULES (Age 8-15)
+# ============================================================
+# TOTAL MARTIAL YOUTH ON GAME START: 5-10 across the entire world
+# Distribution:
+#   Mount Hua: 1-2 youth (inner_disciple track — promising young swordsmen)
+#   Shaolin: 1-2 youth (novice monks — temple children)
+#   Heavenly Demon: 0-1 youth (rare — the sect recruits teens, not children)
+#   Tang Clan: 1-2 youth (Tang bloodline children — born into it)
+#   Wudang: 0-1 youth (Wudang prefers older recruits — patience)
+#   Beggar Sect: 1-2 youth (street orphans already inducted)
+#   Independent/Clanless: 0-1 youth (rare prodigy training alone)
+#
+# WHY SO FEW:
+# 1. Creates SCARCITY — trained youth are precious commodities
+# 2. Drives RECRUITMENT — clans immediately need to scout for more
+# 3. Makes PLAYER CHOICES meaningful — sending your kid to train is a big deal
+# 4. Young Dragon Tournament starts SMALL and grows organically
+# 5. Prevents martial world from feeling "already established" at game start
+
+# ============================================================
+# MASTER YOUTH SEEDING EFFECT
+# ============================================================
+murim_seed_youth_martial_artists_effect = {
+	# STEP 1: Seed clan-affiliated youth (5-8 total)
+	# Each clan gets 0-2 youth based on clan personality
+	
+	# Mount Hua Youth (1-2): disciplined young swordsmen
+	random_list = {
+		60 = {
+			# Seed 1 Mount Hua youth
+			murim_seed_single_mount_hua_youth_effect = yes
+		}
+		40 = {
+			# Seed 2 Mount Hua youth
+			murim_seed_single_mount_hua_youth_effect = yes
+			murim_seed_single_mount_hua_youth_effect = yes
+		}
+	}
+	
+	# Shaolin Youth (1-2): temple-raised children
+	random_list = {
+		50 = {
+			murim_seed_single_shaolin_youth_effect = yes
+		}
+		50 = {
+			murim_seed_single_shaolin_youth_effect = yes
+			murim_seed_single_shaolin_youth_effect = yes
+		}
+	}
+	
+	# Heavenly Demon Youth (0-1): rare child recruit
+	random_list = {
+		60 = {
+			# No youth — Heavenly Demon recruits older
+		}
+		40 = {
+			murim_seed_single_heavenly_demon_youth_effect = yes
+		}
+	}
+	
+	# Tang Clan Youth (1-2): born into the bloodline
+	random_list = {
+		40 = {
+			murim_seed_single_tang_youth_effect = yes
+		}
+		60 = {
+			murim_seed_single_tang_youth_effect = yes
+			murim_seed_single_tang_youth_effect = yes
+		}
+	}
+	
+	# Wudang Youth (0-1): rare scholarly prodigy
+	random_list = {
+		70 = {
+			# No youth — Wudang prefers adults
+		}
+		30 = {
+			murim_seed_single_wudang_youth_effect = yes
+		}
+	}
+	
+	# Beggar Sect Youth (1-2): street orphans
+	random_list = {
+		40 = {
+			murim_seed_single_beggar_youth_effect = yes
+		}
+		60 = {
+			murim_seed_single_beggar_youth_effect = yes
+			murim_seed_single_beggar_youth_effect = yes
+		}
+	}
+	
+	# STEP 2: Seed independent youth (0-1 total)
+	# Extremely rare — a child training alone without clan support
+	random_list = {
+		80 = {
+			# No independent youth — clans find most talented children
+		}
+		20 = {
+			murim_seed_single_independent_youth_effect = yes
+		}
+	}
+}
+
+# ============================================================
+# INDIVIDUAL YOUTH SEEDING EFFECTS
+# ============================================================
+
+murim_seed_single_mount_hua_youth_effect = {
+	# Find a suitable existing child in Korea/China region (age 8-15)
+	# OR create one if none qualify
+	random_living_character = {
+		limit = {
+			age >= 8
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			OR = {
+				# Korean characters
+				culture = { has_cultural_pillar = heritage_korean }
+				# Chinese characters
+				culture = { has_cultural_pillar = heritage_chinese }
+			}
+			# Prefer high-prowess or brave children
+			OR = {
+				prowess >= 4
+				has_trait = brave
+				has_trait = strong
+				has_trait = rowdy
+			}
+			is_alive = yes
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 3
+				has_trait = brave
+			}
+			modifier = {
+				add = 2
+				has_trait = just
+			}
+			modifier = {
+				add = 2
+				has_trait = temperate
+			}
+			modifier = {
+				add = 5
+				prowess >= 6
+			}
+		}
+		# Apply Mount Hua youth traits
+		add_trait = mount_hua_member
+		add_trait = outer_disciple
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1  # Third-rate (training just begun)
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 1 4 }  # 1-4 years of training already
+		}
+		# Small prowess boost from training
+		add_prowess_skill = { 1 3 }
+	}
+}
+
+murim_seed_single_shaolin_youth_effect = {
+	random_living_character = {
+		limit = {
+			age >= 8
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			OR = {
+				culture = { has_cultural_pillar = heritage_chinese }
+				# Shaolin also takes orphans from anywhere in East Asia
+				culture = { has_cultural_pillar = heritage_korean }
+			}
+			OR = {
+				prowess >= 3
+				has_trait = calm
+				has_trait = patient
+				has_trait = compassionate
+				learning >= 6
+			}
+			is_alive = yes
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 3
+				has_trait = calm
+			}
+			modifier = {
+				add = 2
+				has_trait = patient
+			}
+			modifier = {
+				add = 3
+				learning >= 8
+			}
+			modifier = {
+				add = 5
+				# Orphans — no living parents
+				NOT = { any_parent = { is_alive = yes } }
+			}
+		}
+		add_trait = shaolin_member
+		add_trait = outer_disciple
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 1 5 }  # Shaolin starts young, long training
+		}
+		add_prowess_skill = { 1 2 }
+		add_learning_skill = { 1 2 }  # Buddhist education
+	}
+}
+
+murim_seed_single_heavenly_demon_youth_effect = {
+	random_living_character = {
+		limit = {
+			age >= 10  # Heavenly Demon recruits slightly older
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			OR = {
+				culture = { has_cultural_pillar = heritage_korean }
+				culture = { has_cultural_pillar = heritage_chinese }
+			}
+			# Heavenly Demon seeks the angry, desperate, ambitious
+			OR = {
+				has_trait = ambitious
+				has_trait = wrathful
+				has_trait = sadistic
+				has_trait = callous
+				prowess >= 5
+			}
+			is_alive = yes
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 5
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 3
+				has_trait = wrathful
+			}
+			modifier = {
+				add = 5
+				# Orphans, prisoners' children, exiles
+				NOT = { any_parent = { is_alive = yes } }
+			}
+			modifier = {
+				add = 3
+				is_imprisoned = yes
+			}
+		}
+		add_trait = heavenly_demon_member
+		add_trait = outer_disciple
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 1 3 }
+		}
+		add_prowess_skill = { 2 4 }  # Harsh training = faster growth
+		add_intrigue_skill = { 1 2 }
+	}
+}
+
+murim_seed_single_tang_youth_effect = {
+	# Tang youth are BORN into the clan — we create them as Tang bloodline children
+	# Ideally children of existing Tang clan adults seeded earlier
+	# If no Tang adults have children of right age, create a new character
+	random_living_character = {
+		limit = {
+			age >= 8
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			OR = {
+				# Already has Tang bloodline from parent seeding
+				has_variable = tang_clan_member
+				# OR child of a Tang member
+				any_parent = { has_trait = tang_clan_member }
+			}
+			is_alive = yes
+		}
+		weight = {
+			base = 10  # Strong preference for actual Tang blood
+			modifier = {
+				add = 5
+				has_trait = shrewd
+			}
+			modifier = {
+				add = 3
+				learning >= 6  # Alchemy aptitude
+			}
+		}
+		add_trait = tang_clan_member
+		add_trait = outer_disciple
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 2 6 }  # Tang children start poison training at age 6
+		}
+		set_variable = {
+			name = tang_poison_training_stage
+			value = 1  # Basic identification (age 6+ milestone)
+		}
+		add_prowess_skill = { 1 2 }
+		add_intrigue_skill = { 1 3 }  # Poison and hidden weapon basics
+	}
+}
+
+murim_seed_single_wudang_youth_effect = {
+	random_living_character = {
+		limit = {
+			age >= 10  # Wudang prefers slightly older, more learned children
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			OR = {
+				culture = { has_cultural_pillar = heritage_chinese }
+				culture = { has_cultural_pillar = heritage_korean }
+			}
+			# Wudang values intelligence above raw strength
+			OR = {
+				learning >= 8
+				has_trait = patient
+				has_trait = calm
+				has_trait = genius
+				has_trait = quick
+				has_trait = intelligent
+			}
+			is_alive = yes
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 5
+				learning >= 10
+			}
+			modifier = {
+				add = 4
+				has_trait = patient
+			}
+			modifier = {
+				add = 3
+				has_trait = intelligent
+			}
+			modifier = {
+				add = 5
+				has_trait = genius
+			}
+		}
+		add_trait = wudang_member
+		add_trait = outer_disciple
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 1 3 }
+		}
+		add_prowess_skill = { 1 2 }
+		add_learning_skill = { 2 3 }  # Scholar-sword tradition
+	}
+}
+
+murim_seed_single_beggar_youth_effect = {
+	random_living_character = {
+		limit = {
+			age >= 8
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			# Beggar Sect recruits from ANYWHERE — most egalitarian
+			is_alive = yes
+			# Prefer lowborn, orphans, homeless
+			OR = {
+				NOT = { any_parent = { is_alive = yes } }
+				is_lowborn = yes
+				has_trait = gregarious
+				has_trait = brave
+			}
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 10
+				# Orphans — primary Beggar Sect demographic
+				NOT = { any_parent = { is_alive = yes } }
+			}
+			modifier = {
+				add = 5
+				is_lowborn = yes
+			}
+			modifier = {
+				add = 3
+				has_trait = gregarious
+			}
+			modifier = {
+				add = 2
+				has_trait = brave
+			}
+		}
+		add_trait = beggar_sect_member
+		add_trait = outer_disciple
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 1 4 }
+		}
+		add_prowess_skill = { 1 3 }
+		add_diplomacy_skill = { 1 2 }  # Street smarts, social skills
+		add_intrigue_skill = { 1 2 }   # Information network basics
+	}
+}
+
+murim_seed_single_independent_youth_effect = {
+	# Extremely rare — a child training alone
+	# Perhaps found an old manual, or learned from a dying wanderer
+	random_living_character = {
+		limit = {
+			age >= 10
+			age <= 15
+			NOT = { murim_is_martial_artist_trigger = yes }
+			# Can be from ANYWHERE in the world
+			is_alive = yes
+			# Must have exceptional natural talent
+			OR = {
+				prowess >= 6
+				has_trait = genius
+				has_trait = quick
+				AND = {
+					has_trait = brave
+					has_trait = strong
+				}
+			}
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 10
+				has_trait = genius
+			}
+			modifier = {
+				add = 5
+				prowess >= 8
+			}
+		}
+		# No clan trait — truly independent
+		add_trait = martial_awareness
+		set_variable = {
+			name = murim_cultivation_tier
+			value = 1
+		}
+		set_variable = {
+			name = murim_self_taught
+			value = yes
+		}
+		set_variable = {
+			name = murim_training_years
+			value = { 1 3 }
+		}
+		add_prowess_skill = { 2 4 }  # Raw talent, unrefined
+	}
+}
+
+# ============================================================
+# ADULT SEEDING REMAINS UNCHANGED
+# ============================================================
+# Adults (age 20+) still get full seeding as before:
+# - Clan leaders, elders, inner disciples at higher tiers
+# - This file ONLY controls youth (age 8-15) scarcity
+# - See murim_game_start_effects.txt for full adult seeding
+# - The contrast between many martial adults and few martial youth
+#   is the ENTIRE POINT: the old generation is established,
+#   the new generation is where the story begins.
