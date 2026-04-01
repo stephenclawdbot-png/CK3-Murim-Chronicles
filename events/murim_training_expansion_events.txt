@@ -1,0 +1,846 @@
+###############################################################################
+# MURIM TRAINING EXPANSION EVENTS
+# Advanced training methods: night training, weighted clothing, poison resistance,
+# blindfolded combat, endurance runs, qi channeling drills, weapon forging, partner meditation
+# Cross-references: murim_training_events, murim_duel_events, murim_cultivation_events,
+#                   murim_artifact_events, murim_mentor_events, murim_ranking_events
+###############################################################################
+
+namespace = murim_training_exp
+
+##############################
+# 11. Midnight Training Regime
+##############################
+murim_training_exp.0001 = {
+	type = character_event
+	title = murim_training_exp.0001.t
+	desc = murim_training_exp.0001.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 8
+		NOT = { has_character_flag = midnight_training_recent }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = diligent }
+		modifier = { add = 0.5 prowess >= 12 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = midnight_training_recent
+			days = 365
+		}
+	}
+
+	# Train through the night - push limits in darkness
+	option = {
+		name = murim_training_exp.0001.a
+		add_prowess_skill = 2
+		add_stress = 15
+		add_character_modifier = {
+			modifier = intense_training_regime
+			days = 90
+		}
+		create_character_memory = {
+			type = murim_midnight_training_memory
+		}
+		hidden_effect = {
+			random_list = {
+				70 = {
+					# Training goes well - senses sharpen
+					add_learning_skill = 1
+				}
+				20 = {
+					# Overexertion - minor injury
+					add_trait = wounded_1
+					create_character_memory = {
+						type = murim_training_injury_memory
+					}
+				}
+				10 = {
+					# Breakthrough insight during night meditation
+					trigger_event = { id = murim_cultivation.0100 days = { 3 7 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Train at a moderate pace - safer approach
+	option = {
+		name = murim_training_exp.0001.b
+		add_prowess_skill = 1
+		add_stress = 5
+		create_character_memory = {
+			type = murim_steady_training_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Rest instead - preserve health
+	option = {
+		name = murim_training_exp.0001.c
+		add_stress = -10
+		stress_impact = {
+			diligent = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = lazy }
+		}
+	}
+}
+
+##############################
+# 12. Weighted Clothing Training
+##############################
+murim_training_exp.0002 = {
+	type = character_event
+	title = murim_training_exp.0002.t
+	desc = murim_training_exp.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 10
+		NOT = { has_character_flag = weighted_training_recent }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = brave }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = weighted_training_recent
+			days = 365
+		}
+	}
+
+	# Wear heavy iron weights for months - extreme body tempering
+	option = {
+		name = murim_training_exp.0002.a
+		add_prowess_skill = 3
+		add_stress = 25
+		add_character_modifier = {
+			modifier = iron_body_tempering
+			years = 2
+		}
+		create_character_memory = {
+			type = murim_weighted_training_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Body adapts - feel lighter and faster when removed
+					add_martial_skill = 1
+				}
+				25 = {
+					# Joint damage from the strain
+					add_trait = wounded_1
+				}
+				15 = {
+					# Severe damage - pushed too hard
+					add_trait = wounded_2
+					add_character_modifier = {
+						modifier = crippling_wound_lingering
+						years = 1
+					}
+					create_character_memory = {
+						type = murim_overtraining_injury_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Use lighter weights - balanced approach
+	option = {
+		name = murim_training_exp.0002.b
+		add_prowess_skill = 1
+		add_stress = 10
+		create_character_memory = {
+			type = murim_light_weight_training_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Decline - the risk isn't worth it
+	option = {
+		name = murim_training_exp.0002.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+##############################
+# 13. Poison Resistance Training
+##############################
+murim_training_exp.0003 = {
+	type = character_event
+	title = murim_training_exp.0003.t
+	desc = murim_training_exp.0003.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 8
+		NOT = { has_character_flag = poison_resistance_training }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = brave }
+		modifier = { add = 0.5 learning >= 12 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = poison_resistance_training
+			days = 730
+		}
+	}
+
+	# Ingest small doses of poison to build immunity
+	option = {
+		name = murim_training_exp.0003.a
+		add_intrigue_skill = 2
+		add_stress = 20
+		create_character_memory = {
+			type = murim_poison_resistance_training_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Build up resistance successfully
+					add_character_modifier = {
+						modifier = poison_master_aura
+						years = 5
+					}
+					add_prowess_skill = 1
+				}
+				30 = {
+					# Partial resistance - but it damages health
+					add_intrigue_skill = 1
+					add_trait = wounded_1
+				}
+				20 = {
+					# Nearly fatal - too much poison
+					add_trait = wounded_2
+					add_character_modifier = {
+						modifier = qi_deviation_recovery
+						years = 1
+					}
+					create_character_memory = {
+						type = murim_poison_overdose_memory
+					}
+					# Craven check from near-death
+					random = {
+						chance = 15
+						modifier = {
+							factor = 2
+							NOT = { has_trait = brave }
+						}
+						add_trait = craven
+						create_character_memory = {
+							type = murim_combat_trauma_craven_memory
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Study poison theory without ingesting
+	option = {
+		name = murim_training_exp.0003.b
+		add_learning_skill = 1
+		add_intrigue_skill = 1
+		create_character_memory = {
+			type = murim_poison_study_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Avoid poison entirely
+	option = {
+		name = murim_training_exp.0003.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+##############################
+# 14. Blindfolded Combat Training
+##############################
+murim_training_exp.0004 = {
+	type = character_event
+	title = murim_training_exp.0004.t
+	desc = murim_training_exp.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:blindfold_sparring_partner
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 12
+		any_courtier = {
+			is_alive = yes
+			prowess >= 10
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 prowess >= 18 }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = { is_alive = yes prowess >= 10 }
+			save_scope_as = blindfold_sparring_partner
+		}
+	}
+
+	# Accept the blindfolded challenge - sense qi instead of sight
+	option = {
+		name = murim_training_exp.0004.a
+		duel = {
+			skill = prowess
+			target = scope:blindfold_sparring_partner
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min = 3
+				desc = murim_training_exp.0004.a.success
+				add_prowess_skill = 2
+				add_learning_skill = 1
+				add_character_modifier = {
+					modifier = combat_meditation_focus
+					years = 2
+				}
+				create_character_memory = {
+					type = murim_blindfold_mastery_memory
+					participants = { partner = scope:blindfold_sparring_partner }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				min = 3
+				desc = murim_training_exp.0004.a.failure
+				add_prowess_skill = 1
+				random_list = {
+					60 = {
+						add_character_modifier = {
+							modifier = sparring_bruises
+							days = 30
+						}
+					}
+					30 = {
+						add_trait = wounded_1
+						create_character_memory = {
+							type = murim_blindfold_wounded_memory
+						}
+					}
+					10 = {
+						add_trait = wounded_2
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Practice blindfolded forms alone instead
+	option = {
+		name = murim_training_exp.0004.b
+		add_prowess_skill = 1
+		add_piety = 25
+		create_character_memory = {
+			type = murim_blindfold_solo_training_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = shy }
+		}
+	}
+
+	# Decline the unusual training
+	option = {
+		name = murim_training_exp.0004.c
+		stress_impact = {
+			diligent = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+##############################
+# 15. Mountain Endurance Run
+##############################
+murim_training_exp.0005 = {
+	type = character_event
+	title = murim_training_exp.0005.t
+	desc = murim_training_exp.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 6
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = athletic }
+	}
+
+	immediate = { }
+
+	# Sprint up the mountain carrying boulders
+	option = {
+		name = murim_training_exp.0005.a
+		add_prowess_skill = 2
+		add_stress = 20
+		create_character_memory = {
+			type = murim_mountain_endurance_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Completed the run - body strengthened
+					add_character_modifier = {
+						modifier = iron_body_tempering
+						years = 1
+					}
+				}
+				25 = {
+					# Stumble and fall - minor injury
+					add_trait = wounded_1
+				}
+				15 = {
+					# Discovery - hidden cave with training grounds
+					add_character_modifier = {
+						modifier = special_training_grounds_bonus
+						years = 3
+					}
+					create_character_memory = {
+						type = murim_secret_training_ground_memory
+					}
+					trigger_event = { id = murim_artifact.0001 days = { 7 14 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Steady jog at moderate pace
+	option = {
+		name = murim_training_exp.0005.b
+		add_prowess_skill = 1
+		add_stress = 5
+		ai_chance = {
+			base = 35
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	# Skip it today
+	option = {
+		name = murim_training_exp.0005.c
+		stress_impact = {
+			diligent = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = lazy }
+		}
+	}
+}
+
+##############################
+# 16. Qi Channeling Drill
+##############################
+murim_training_exp.0006 = {
+	type = character_event
+	title = murim_training_exp.0006.t
+	desc = murim_training_exp.0006.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 8
+		OR = {
+			has_trait = cultivation_body_tempering
+			has_trait = cultivation_meridian_opening
+			has_trait = cultivation_foundation
+			has_trait = cultivation_core_formation
+			has_trait = cultivation_nascent_soul
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 learning >= 15 }
+		modifier = { add = 0.5 has_trait = cultivation_core_formation }
+	}
+
+	immediate = { }
+
+	# Intensive qi circulation - push through all meridians
+	option = {
+		name = murim_training_exp.0006.a
+		add_piety = 50
+		add_character_modifier = {
+			modifier = qi_circulation_boost
+			years = 1
+		}
+		create_character_memory = {
+			type = murim_qi_drill_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Smooth flow - cultivation progress
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 15
+					}
+				}
+				30 = {
+					# Minor blockage - strain but progress
+					add_stress = 15
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 5
+					}
+				}
+				20 = {
+					# Qi deviation risk from forcing circulation
+					add_character_modifier = {
+						modifier = qi_deviation_recovery
+						years = 1
+					}
+					add_trait = wounded_1
+					create_character_memory = {
+						type = murim_qi_deviation_wounded_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Gentle circulation - meditation focus
+	option = {
+		name = murim_training_exp.0006.b
+		add_piety = 25
+		add_character_modifier = {
+			modifier = waterfall_meditation_clarity
+			days = 90
+		}
+		change_variable = {
+			name = murim_cultivation_progress
+			add = 8
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Skip the drill
+	option = {
+		name = murim_training_exp.0006.c
+		stress_impact = {
+			diligent = minor_stress_impact_gain
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# 17. Weapon Forging Training
+##############################
+murim_training_exp.0007 = {
+	type = character_event
+	title = murim_training_exp.0007.t
+	desc = murim_training_exp.0007.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 10
+		stewardship >= 6
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 stewardship >= 12 }
+	}
+
+	immediate = { }
+
+	# Forge a personal weapon - channel qi into the metal
+	option = {
+		name = murim_training_exp.0007.a
+		add_gold = -50
+		add_prowess_skill = 2
+		add_stewardship_skill = 1
+		add_character_modifier = {
+			modifier = ancient_weapon_wielder
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_weapon_forged_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Excellent weapon created
+					add_prestige = 100
+				}
+				30 = {
+					# Adequate weapon - burns from forging
+					add_trait = wounded_1
+				}
+				20 = {
+					# Weapon resonates with spirit energy - artifact quality
+					add_prestige = 200
+					trigger_event = { id = murim_artifact.0001 days = { 3 7 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 stewardship >= 15 }
+		}
+	}
+
+	# Study weapon design theory
+	option = {
+		name = murim_training_exp.0007.b
+		add_learning_skill = 1
+		add_stewardship_skill = 1
+		create_character_memory = {
+			type = murim_weapon_study_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Not interested in forging
+	option = {
+		name = murim_training_exp.0007.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+##############################
+# 18. Partner Meditation Training
+##############################
+murim_training_exp.0008 = {
+	type = character_event
+	title = murim_training_exp.0008.t
+	desc = murim_training_exp.0008.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:meditation_partner
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 8
+		any_courtier = {
+			is_alive = yes
+			learning >= 8
+			opinion = { target = root value >= 10 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = gregarious }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				learning >= 8
+				opinion = { target = root value >= 10 }
+			}
+			save_scope_as = meditation_partner
+		}
+	}
+
+	# Deep partner meditation - synchronize qi
+	option = {
+		name = murim_training_exp.0008.a
+		add_piety = 50
+		add_learning_skill = 1
+		add_stress = -20
+		scope:meditation_partner = {
+			add_piety = 50
+			add_opinion = {
+				target = root
+				modifier = murim_meditation_bond_opinion
+				opinion = 20
+			}
+		}
+		add_character_modifier = {
+			modifier = waterfall_meditation_clarity
+			years = 1
+		}
+		create_character_memory = {
+			type = murim_partner_meditation_memory
+			participants = { partner = scope:meditation_partner }
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Harmonious meditation - cultivation boost
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 10
+					}
+				}
+				30 = {
+					# Deep bond formed - potential dual cultivation path
+					add_character_modifier = {
+						modifier = dual_cultivation_harmony
+						years = 2
+					}
+					trigger_event = { id = murim_romance.0001 days = { 30 90 } }
+				}
+				20 = {
+					# Qi interference - both take minor backlash
+					add_stress = 15
+					scope:meditation_partner = { add_stress = 15 }
+					add_character_modifier = {
+						modifier = meridian_opening_strain
+						days = 60
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+
+	# Meditate near each other but independently
+	option = {
+		name = murim_training_exp.0008.b
+		add_piety = 25
+		add_stress = -10
+		create_character_memory = {
+			type = murim_solo_meditation_near_partner_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = shy }
+		}
+	}
+
+	# Decline partner meditation
+	option = {
+		name = murim_training_exp.0008.c
+		stress_impact = {
+			gregarious = minor_stress_impact_gain
+		}
+		ai_chance = { base = 15 }
+	}
+}
