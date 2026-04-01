@@ -1,0 +1,1757 @@
+# Murim Chronicles - Mount Hua Sect Events
+# The Plum Blossom Sword Sect: righteous path, scholarly martial arts, elegant swordsmanship
+# Fighting style: elegant, principled, strong 1v1 swordsmanship. High prowess, honor-bound.
+# REFUSES ambush/poison. Fights fair or not at all.
+# Counter system: Mount Hua precision COUNTERS Heavenly Demon raw power / Berserker rage
+# COUNTERED BY: Tang Clan poison (can't fight what you can't sword), Beggar Sect intelligence (outmaneuvered)
+# Cross-refs: murim_clan_war (righteous alliance leader), murim_duel (honor duels), murim_ranking (sword prestige),
+#             murim_wudang_events (friendly rivalry), murim_heavenly_demon_events (mortal enemies),
+#             murim_tang_clan_events (uneasy distrust), murim_training (sect training), murim_artifact (legendary swords),
+#             murim_cultivation (sword intent = cultivation path), murim_global_martial (foreign sword exchange)
+# All combat uses murim_injury_chance values. Every event chains to 3+ other files.
+
+namespace = murim_mount_hua
+
+# ============================================================
+# EVENT 0001: Plum Blossom Tournament — Annual Sect Competition
+# Entry point into Mount Hua storyline. Chains to: ranking, duel, training
+# ============================================================
+murim_mount_hua.0001 = {
+	type = character_event
+	title = murim_mount_hua.0001.t
+	desc = murim_mount_hua.0001.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = plum_blossom_swordsman
+			has_trait = mount_hua_elder
+		}
+		NOT = { has_character_flag = plum_blossom_tournament_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = plum_blossom_swordsman
+		}
+		modifier = {
+			add = 1.0
+			has_trait = mount_hua_elder
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = plum_blossom_tournament_cooldown
+			years = 3
+		}
+	}
+	
+	# Option A: Enter the tournament as a competitor
+	option = {
+		name = murim_mount_hua.0001.a
+		
+		# Prowess duel check — uses injury chance calculator
+		duel = {
+			skill = prowess
+			value = average
+			
+			# WIN: glory, prestige, possible rank advancement
+			50 = {
+				desc = murim_mount_hua.0001.a.success
+				send_interface_toast = {
+					title = murim_mount_hua.0001.a.success.toast
+				}
+				add_prestige = 300
+				add_character_flag = {
+					flag = plum_blossom_champion
+					years = 3
+				}
+				# Chain to: RANKING system — tournament victory may change rank
+				if = {
+					limit = {
+						exists = var:murim_rank
+						var:murim_rank <= 50
+					}
+					change_variable = {
+						name = murim_rank_prestige
+						add = 10
+					}
+				}
+				# Chain to: TRAINING — winning reveals technique insight
+				random = {
+					chance = 30
+					trigger_event = {
+						id = murim_training.0006  # Master's special teaching
+						days = { 15 30 }
+					}
+				}
+				# Injury roll for winner — talented swordsman walks away clean
+				random = {
+					chance = murim_injury_chance_honor_duel_winner
+					random_list = {
+						70 = { add_trait = wounded }
+						20 = { add_character_modifier = { modifier = minor_sword_cut days = 60 } }
+						10 = { add_trait = one_eyed }
+					}
+				}
+				# Fight memory — ALWAYS created
+				create_character_memory = {
+					type = plum_blossom_victory_memory
+				}
+			}
+			
+			# LOSE: humiliation, but learn from defeat
+			50 = {
+				desc = murim_mount_hua.0001.a.failure
+				add_prestige = -100
+				stress_impact = {
+					base = 15
+					ambitious = 10
+					arrogant = 15
+				}
+				# Chain to: DUEL — defeated fighter may seek revenge match
+				add_character_flag = {
+					flag = tournament_defeat_memory
+					years = 5
+				}
+				# Injury roll for loser — higher chance
+				random = {
+					chance = murim_injury_chance_honor_duel_loser
+					random_list = {
+						50 = { add_trait = wounded }
+						25 = { add_character_modifier = { modifier = sword_slash_scar days = 365 } }
+						15 = { add_trait = one_eyed }
+						10 = { add_trait = disfigured }
+					}
+				}
+				# Chain to: TRAINING motivation — defeat drives improvement
+				random = {
+					chance = 40
+					trigger_event = {
+						id = murim_training.0001  # Training montage triggered by loss
+						days = { 30 60 }
+					}
+				}
+				create_character_memory = {
+					type = plum_blossom_defeat_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -20
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option B: Judge the tournament (elder path)
+	option = {
+		name = murim_mount_hua.0001.b
+		
+		trigger = {
+			OR = {
+				has_trait = mount_hua_elder
+				age >= 50
+			}
+		}
+		
+		add_prestige = 150
+		add_piety = 50
+		# Chain to: SECT events — judging builds sect influence
+		change_variable = {
+			name = sect_influence
+			add = 5
+		}
+		# Chain to: MENTOR — may spot a talented disciple
+		random = {
+			chance = 25
+			trigger_event = {
+				id = murim_mentor.0001  # Find talented student
+				days = { 7 14 }
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				age >= 50
+			}
+		}
+	}
+	
+	# Option C: Invite rival sects to watch — diplomacy play
+	option = {
+		name = murim_mount_hua.0001.c
+		
+		diplomacy >= 10
+		
+		add_prestige = 200
+		# Chain to: CLAN WAR — showing strength deters enemies
+		add_character_modifier = {
+			modifier = sect_display_of_strength
+			years = 2
+		}
+		# Chain to: GLOBAL — foreign masters may attend
+		random = {
+			chance = 10
+			trigger_event = {
+				id = murim_global.0001  # Foreign master arrives
+				days = { 30 90 }
+			}
+		}
+		# Chain to: POLITICS — rival sect may take offense
+		random = {
+			chance = 20
+			trigger_event = {
+				id = murim_politics.0002  # Sect tension rises
+				days = { 60 120 }
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				diplomacy >= 15
+			}
+		}
+	}
+	
+	# Option D: Skip — focus on cultivation instead
+	option = {
+		name = murim_mount_hua.0001.d
+		
+		stress_impact = {
+			base = -10
+		}
+		# Chain to: CULTIVATION — meditation instead of fighting
+		trigger_event = {
+			id = murim_cultivation.0001  # Quiet cultivation session
+			days = { 3 7 }
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0002: Sword Conference — Multi-Sect Sword Exchange
+# Chains to: global (foreign swords), duel (challenges), romance (meetings)
+# ============================================================
+murim_mount_hua.0002 = {
+	type = character_event
+	title = murim_mount_hua.0002.t
+	desc = murim_mount_hua.0002.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = plum_blossom_swordsman
+			has_trait = mount_hua_elder
+			has_trait = emei_swordswoman
+			has_trait = kenjutsu_master
+			has_trait = goryeo_sword_saint
+		}
+		NOT = { has_character_flag = sword_conference_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = sword_conference_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Demonstrate Plum Blossom Sword Art
+	option = {
+		name = murim_mount_hua.0002.a
+		
+		trigger = {
+			has_trait = plum_blossom_swordsman
+		}
+		
+		add_prestige = 250
+		# Chain to: TECHNIQUE — demonstration inspires new insight
+		random = {
+			chance = 20
+			add_trait_force_tooltip = mount_hua_elder  # recognition upgrade
+		}
+		# Chain to: ROMANCE — Emei swordswoman impressed
+		random = {
+			chance = 15
+			trigger_event = {
+				id = murim_romance.0001  # Martial romance spark
+				days = { 7 30 }
+			}
+		}
+		# Chain to: DUEL — rival swordsman challenges after demonstration
+		random = {
+			chance = 25
+			trigger_event = {
+				id = murim_duel.0003  # Honor challenge
+				days = { 1 3 }
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Challenge a foreign sword master
+	option = {
+		name = murim_mount_hua.0002.b
+		
+		# Chain to: GLOBAL — cross-cultural sword duel
+		trigger_event = {
+			id = murim_global.0002  # Unknown martial style encounter
+			days = { 1 3 }
+		}
+		add_character_flag = {
+			flag = sought_foreign_sword_exchange
+			years = 1
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Exchange techniques peacefully — learn from others
+	option = {
+		name = murim_mount_hua.0002.c
+		
+		add_prestige = 100
+		# Chain to: TECHNIQUE — gain partial knowledge of another style
+		change_variable = {
+			name = technique_insight
+			add = 5
+		}
+		# Cross-sect diplomacy bonus
+		add_character_modifier = {
+			modifier = sword_conference_goodwill
+			years = 3
+		}
+		# Chain to: TRAINING — new perspective on sword arts
+		random = {
+			chance = 30
+			trigger_event = {
+				id = murim_training.0003  # Waterfall meditation with new insight
+				days = { 14 30 }
+			}
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = gregarious
+			}
+		}
+	}
+	
+	# Option D: Observe silently — scout rivals' techniques
+	option = {
+		name = murim_mount_hua.0002.d
+		
+		add_intrigue = 1  # permanent learning
+		# Chain to: JIANGHU — intelligence on rival techniques
+		add_character_flag = {
+			flag = observed_rival_techniques
+			years = 3
+		}
+		# If later dueling someone from the conference, advantage flag
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0003: Righteous Alliance Meeting — Political Leadership
+# Chains to: clan_war (vs Heavenly Demon), politics, sect
+# ============================================================
+murim_mount_hua.0003 = {
+	type = character_event
+	title = murim_mount_hua.0003.t
+	desc = murim_mount_hua.0003.desc
+	theme = diplomacy
+	
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		OR = {
+			has_trait = mount_hua_elder
+			has_trait = plum_blossom_swordsman
+		}
+		NOT = { has_character_flag = righteous_alliance_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = righteous_alliance_cooldown
+			years = 3
+		}
+	}
+	
+	# Option A: Push for war against Heavenly Demon Sect
+	option = {
+		name = murim_mount_hua.0003.a
+		
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = righteous_alliance_war_leader
+			years = 5
+		}
+		# Chain to: CLAN WAR — triggers the great conflict
+		trigger_event = {
+			id = murim_clan_war.0001  # Righteous vs Demonic war begins
+			days = { 30 60 }
+		}
+		# Wudang and Shaolin opinion boost
+		add_character_modifier = {
+			modifier = wudang_shaolin_ally
+			years = 5
+		}
+		# Tang Clan stays neutral — opinion unchanged
+		stress_impact = {
+			base = 10
+			brave = -10
+			craven = 20
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = zealous
+			}
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Propose diplomatic solution — avoid bloodshed
+	option = {
+		name = murim_mount_hua.0003.b
+		
+		diplomacy >= 12
+		
+		add_prestige = 100
+		add_piety = 100
+		# Chain to: POLITICS — negotiate with demonic sect
+		trigger_event = {
+			id = murim_politics.0005  # Cross-faction negotiation
+			days = { 14 30 }
+		}
+		# Wudang approves, Shaolin approves, Hawks in alliance disappointed
+		stress_impact = {
+			base = -5
+			compassionate = -10
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option C: Focus on internal sect strengthening first
+	option = {
+		name = murim_mount_hua.0003.c
+		
+		# Chain to: TRAINING — sect-wide training initiative
+		add_character_modifier = {
+			modifier = sect_training_focus
+			years = 3
+		}
+		change_variable = {
+			name = sect_influence
+			add = 3
+		}
+		# Chain to: SECT — training produces new talent
+		random = {
+			chance = 20
+			trigger_event = {
+				id = murim_training.0006  # Master discovers talented student
+				days = { 30 90 }
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option D: Resign from alliance leadership
+	option = {
+		name = murim_mount_hua.0003.d
+		
+		add_prestige = -200
+		stress_impact = {
+			base = -20
+		}
+		remove_character_flag = righteous_alliance_leader
+		# Chain to: POLITICS — power vacuum in righteous alliance
+		trigger_event = {
+			id = murim_politics.0003  # Leadership vacuum
+			days = { 7 14 }
+		}
+		
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 10
+				stress >= 80
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0004: Scripture Debate — Scholarly Martial Arts
+# Chains to: cultivation (enlightenment), technique (new understanding), mentor
+# ============================================================
+murim_mount_hua.0004 = {
+	type = character_event
+	title = murim_mount_hua.0004.t
+	desc = murim_mount_hua.0004.desc
+	theme = learning
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = mount_hua_elder
+		}
+		learning >= 8
+		NOT = { has_character_flag = scripture_debate_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = scripture_debate_cooldown
+			years = 2
+		}
+	}
+	
+	# Option A: Argue for sword intent as the highest martial path
+	option = {
+		name = murim_mount_hua.0004.a
+		
+		duel = {
+			skill = learning
+			value = average
+			
+			60 = {
+				desc = murim_mount_hua.0004.a.success
+				add_prestige = 150
+				# Chain to: CULTIVATION — sword intent breakthrough
+				change_variable = {
+					name = cultivation_progress
+					add = 15
+				}
+				# Chain to: TECHNIQUE — deeper understanding
+				add_character_modifier = {
+					modifier = sword_intent_clarity
+					years = 3
+				}
+				# Possible breakthrough chain
+				random = {
+					chance = 15
+					trigger_event = {
+						id = murim_cultivation.0005  # Cultivation breakthrough
+						days = { 7 14 }
+					}
+				}
+			}
+			
+			40 = {
+				desc = murim_mount_hua.0004.a.failure
+				stress_impact = {
+					base = 10
+					arrogant = 15
+				}
+				# Chain to: MENTOR — elder corrects your understanding
+				random = {
+					chance = 30
+					trigger_event = {
+						id = murim_mentor.0003  # Master's correction
+						days = { 3 7 }
+					}
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Debate the harmony of martial and scholarly arts
+	option = {
+		name = murim_mount_hua.0004.b
+		
+		add_prestige = 75
+		add_learning = 1
+		# Chain to: DAILY LIFE — philosophical connection
+		add_character_modifier = {
+			modifier = scholarly_martial_harmony
+			years = 2
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = temperate
+			}
+		}
+	}
+	
+	# Option C: Challenge the debater to prove their words with swords
+	option = {
+		name = murim_mount_hua.0004.c
+		
+		# Chain to: DUEL — scholarly disagreement becomes sword fight
+		trigger_event = {
+			id = murim_duel.0001  # Honor duel
+			days = { 1 3 }
+		}
+		stress_impact = {
+			base = 5
+			wrathful = -10
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+	
+	# Option D: Listen and learn from all perspectives
+	option = {
+		name = murim_mount_hua.0004.d
+		
+		add_learning = 1
+		stress_impact = {
+			base = -10
+		}
+		# Chain to: TRAINING — patient learning benefits
+		change_variable = {
+			name = technique_insight
+			add = 3
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0005: Sect Restoration Arc — Mount Hua's Decline and Revival
+# Major storyline. Chains to: politics, clan_war, training, fate
+# ============================================================
+murim_mount_hua.0005 = {
+	type = character_event
+	title = murim_mount_hua.0005.t
+	desc = murim_mount_hua.0005.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = personality_dishonorable
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = mount_hua_elder
+			has_trait = plum_blossom_swordsman
+		}
+		# Only fires when sect is weakened
+		OR = {
+			has_character_flag = sect_weakened
+			has_character_modifier = sect_in_decline
+		}
+		NOT = { has_character_flag = restoration_arc_active }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = restoration_arc_active
+			years = 10
+		}
+	}
+	
+	# Option A: Seek the lost Violet Mist Divine Art
+	option = {
+		name = murim_mount_hua.0005.a
+		
+		# Chain to: ARTIFACT — treasure hunt for lost technique
+		trigger_event = {
+			id = murim_artifact.0005  # Technique scroll search
+			days = { 14 30 }
+		}
+		add_character_flag = {
+			flag = seeking_violet_mist_art
+			years = 5
+		}
+		stress_impact = {
+			base = 10
+			ambitious = -5
+		}
+		
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Train the next generation intensively
+	option = {
+		name = murim_mount_hua.0005.b
+		
+		# Chain to: TRAINING — sect-wide intensive training
+		add_character_modifier = {
+			modifier = sect_intensive_training
+			years = 5
+		}
+		# Chain to: MENTOR — find and raise prodigies
+		trigger_event = {
+			id = murim_training.0009  # Extreme conditioning
+			days = { 30 60 }
+		}
+		# Long-term: sect gradually strengthens
+		change_variable = {
+			name = sect_influence
+			add = 2
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Form alliance with Wudang for mutual protection
+	option = {
+		name = murim_mount_hua.0005.c
+		
+		# Chain to: POLITICS — Mount Hua + Wudang alliance
+		add_character_modifier = {
+			modifier = mount_hua_wudang_pact
+			years = 10
+		}
+		# Chain to: CLAN WAR — alliance changes faction balance
+		trigger_event = {
+			id = murim_politics.0004  # Alliance proposal
+			days = { 7 14 }
+		}
+		add_prestige = 100
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				diplomacy >= 12
+			}
+		}
+	}
+	
+	# Option D: Accept decline — focus on preserving what remains
+	option = {
+		name = murim_mount_hua.0005.d
+		
+		stress_impact = {
+			base = -15
+			content = -10
+			ambitious = 20
+		}
+		add_piety = 100
+		# Chain to: FATE — sometimes acceptance opens unexpected doors
+		random = {
+			chance = 15
+			trigger_event = {
+				id = murim_fate.0003  # Unexpected opportunity from humility
+				days = { 60 180 }
+			}
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = content
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0006: Friendly Rivalry with Wudang
+# Chains to: duel, romance, politics, training
+# ============================================================
+murim_mount_hua.0006 = {
+	type = character_event
+	title = murim_mount_hua.0006.t
+	desc = murim_mount_hua.0006.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = plum_blossom_swordsman
+		}
+		NOT = { has_character_flag = wudang_rivalry_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = wudang_rivalry_cooldown
+			years = 3
+		}
+	}
+	
+	# Option A: Challenge Wudang's best to a friendly duel (sword vs soft arts)
+	option = {
+		name = murim_mount_hua.0006.a
+		
+		# Chain to: DUEL — friendly sparring with Wudang (sword vs Tai Chi)
+		# Balance note: Mount Hua sword = precision, Wudang Tai Chi = redirection
+		# Neither dominates — rock-paper-scissors with technique
+		duel = {
+			skill = prowess
+			value = average
+			
+			50 = {
+				desc = murim_mount_hua.0006.a.win
+				add_prestige = 150
+				add_opinion = {
+					target = scope:wudang_rival
+					modifier = respected_rival
+					opinion = 15
+				}
+				# Sparring injury: very low risk
+				random = {
+					chance = murim_injury_chance_sparring
+					add_character_modifier = { modifier = minor_bruise days = 14 }
+				}
+				create_character_memory = {
+					type = friendly_duel_victory_memory
+				}
+				# Chain to: TRAINING — victory inspires new technique insight
+				random = {
+					chance = 20
+					change_variable = {
+						name = technique_insight
+						add = 3
+					}
+				}
+			}
+			
+			50 = {
+				desc = murim_mount_hua.0006.a.lose
+				add_prestige = 50  # still prestige for a good fight
+				stress_impact = {
+					base = 5
+				}
+				# Chain to: TRAINING — defeat motivates harder practice
+				trigger_event = {
+					id = murim_training.0002  # Sparring partner training
+					days = { 7 14 }
+				}
+				create_character_memory = {
+					type = friendly_duel_loss_memory
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Philosophical exchange over tea
+	option = {
+		name = murim_mount_hua.0006.b
+		
+		add_prestige = 50
+		add_learning = 1
+		stress_impact = {
+			base = -10
+		}
+		# Chain to: DAILY LIFE — tea house connections
+		add_character_modifier = {
+			modifier = cross_sect_friendship
+			years = 3
+		}
+		# Chain to: ROMANCE — possible cross-sect romance
+		random = {
+			chance = 10
+			trigger_event = {
+				id = murim_romance.0002  # Forbidden cross-sect attraction
+				days = { 14 30 }
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = gregarious
+			}
+		}
+	}
+	
+	# Option C: Joint training exercise
+	option = {
+		name = murim_mount_hua.0006.c
+		
+		# Chain to: TRAINING — cross-sect training
+		add_prowess = 1
+		add_character_modifier = {
+			modifier = cross_sect_training_benefit
+			years = 2
+		}
+		# Chain to: TECHNIQUE — hybrid technique chance
+		random = {
+			chance = 5
+			trigger_event = {
+				id = murim_technique.0400  # Technique combination discovery
+				days = { 30 60 }
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	# Option D: Decline — maintain sect independence
+	option = {
+		name = murim_mount_hua.0006.d
+		
+		stress_impact = {
+			base = -5
+		}
+		
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0007: Demonic Sect Provocation — Mortal Enemy Encounter
+# Chains to: clan_war, duel, politics, fate (tragedy)
+# ============================================================
+murim_mount_hua.0007 = {
+	type = character_event
+	title = murim_mount_hua.0007.t
+	desc = murim_mount_hua.0007.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = plum_blossom_swordsman
+			has_trait = mount_hua_elder
+		}
+		NOT = { has_character_flag = demonic_encounter_cooldown }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = demonic_encounter_cooldown
+			years = 2
+		}
+	}
+	
+	# Option A: Honor duel — face the demon head-on (righteous path)
+	option = {
+		name = murim_mount_hua.0007.a
+		
+		# Balance: Mount Hua precision COUNTERS Heavenly Demon raw power
+		# But Heavenly Demon is terrifying — stress and dread
+		stress_impact = {
+			base = 15
+			brave = -15
+			craven = 30
+		}
+		# Chain to: DUEL — full combat with demonic fighter
+		duel = {
+			skill = prowess
+			value = high  # demonic fighters are strong
+			
+			45 = {
+				# Mount Hua's precision advantage vs demonic power
+				desc = murim_mount_hua.0007.a.win
+				add_prestige = 500
+				add_piety = 100
+				# Chain to: RANKING — defeating demonic fighter boosts rank
+				change_variable = {
+					name = murim_rank_prestige
+					add = 15
+				}
+				# Chain to: CLAN WAR — righteous victory emboldens alliance
+				add_character_flag = {
+					flag = defeated_demonic_fighter
+					years = 10
+				}
+				# Injury check — even in victory, demonic fights are dangerous
+				random = {
+					chance = murim_injury_chance_honor_duel_winner
+					random_list = {
+						40 = { add_trait = wounded }
+						30 = { add_character_modifier = { modifier = demonic_qi_contamination days = 180 } }
+						20 = { add_trait = one_eyed }
+						10 = { add_trait = disfigured }
+					}
+				}
+				create_character_memory = {
+					type = righteous_victory_over_demon_memory
+				}
+			}
+			
+			55 = {
+				desc = murim_mount_hua.0007.a.lose
+				add_prestige = -200
+				# Chain to: FATE — tragedy, possible death or crippling
+				random_list = {
+					30 = {
+						add_trait = wounded
+						add_trait = one_eyed
+					}
+					20 = {
+						add_character_modifier = { modifier = shattered_meridians days = 3650 }
+					}
+					30 = {
+						add_trait = wounded
+						add_character_modifier = { modifier = demonic_qi_contamination days = 365 }
+					}
+					15 = {
+						add_trait = incapable
+						# Chain to: MENTOR — disciples must carry on
+						trigger_event = {
+							id = murim_mentor.0005  # Master falls, disciples inherit
+							days = { 7 14 }
+						}
+					}
+					5 = {
+						death = { death_reason = death_duel }
+					}
+				}
+				create_character_memory = {
+					type = defeat_by_demon_memory
+				}
+				# Chain to: DUEL — revenge motivation for the future
+				add_character_flag = {
+					flag = swore_vengeance_on_demonic_sect
+					years = 20
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+			modifier = {
+				add = 15
+				has_trait = zealous
+			}
+			modifier = {
+				add = -30
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Option B: Refuse to fight — it's a trap
+	option = {
+		name = murim_mount_hua.0007.b
+		
+		add_prestige = -50
+		stress_impact = {
+			base = 10
+			brave = 20
+			craven = -10
+		}
+		# Chain to: JIANGHU — gather intelligence on the provocation
+		add_character_flag = {
+			flag = investigated_demonic_provocation
+			years = 2
+		}
+		# Chain to: POLITICS — inform the righteous alliance
+		random = {
+			chance = 40
+			trigger_event = {
+				id = murim_mount_hua.0003  # Righteous alliance meeting
+				days = { 14 30 }
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Try to convert the demonic fighter to the righteous path
+	option = {
+		name = murim_mount_hua.0007.c
+		
+		trigger = {
+			diplomacy >= 15
+			OR = {
+				has_trait = compassionate
+				has_trait = zealous
+			}
+		}
+		
+		duel = {
+			skill = diplomacy
+			value = very_hard
+			
+			25 = {
+				desc = murim_mount_hua.0007.c.success
+				add_prestige = 400
+				add_piety = 200
+				# Chain to: FATE — redemption arc for the demonic fighter
+				trigger_event = {
+					id = murim_fate.0005  # Redemption path
+					days = { 30 60 }
+				}
+			}
+			
+			75 = {
+				desc = murim_mount_hua.0007.c.failure
+				# They laugh at your naivete and attack anyway
+				stress_impact = {
+					base = 20
+				}
+				# Chain to: DUEL — forced combat
+				trigger_event = {
+					id = murim_duel.0005  # Ambush after failed diplomacy
+					days = { 1 1 }
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option D: Send disciples to investigate while you prepare
+	option = {
+		name = murim_mount_hua.0007.d
+		
+		# Chain to: MENTOR — send student on dangerous mission
+		trigger_event = {
+			id = murim_mentor.0004  # Disciple on solo mission
+			days = { 7 14 }
+		}
+		stress_impact = {
+			base = 15  # worried about disciple
+			compassionate = 10
+		}
+		# Prepare for possible fight
+		add_character_modifier = {
+			modifier = combat_preparation
+			days = 30
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 10
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0008: Secret Plum Blossom Technique Discovery
+# Chains to: artifact, cultivation, technique, fate
+# ============================================================
+murim_mount_hua.0008 = {
+	type = character_event
+	title = murim_mount_hua.0008.t
+	desc = murim_mount_hua.0008.desc
+	theme = learning
+	
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = plum_blossom_swordsman
+		learning >= 12
+		NOT = { has_character_flag = secret_technique_discovered }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = secret_technique_discovered
+		}
+	}
+	
+	# Option A: Master the technique immediately (risky — qi deviation possible)
+	option = {
+		name = murim_mount_hua.0008.a
+		
+		random_list = {
+			40 = {
+				# SUCCESS: massive power boost
+				desc = murim_mount_hua.0008.a.success
+				add_prowess = 4
+				add_prestige = 500
+				# Chain to: CULTIVATION — breakthrough from technique mastery
+				trigger_event = {
+					id = murim_cultivation.0005
+					days = { 3 7 }
+				}
+				add_character_flag = {
+					flag = twenty_four_solar_terms_mastered
+					years = -1  # permanent
+				}
+			}
+			35 = {
+				# PARTIAL: learn some, need more study
+				desc = murim_mount_hua.0008.a.partial
+				add_prowess = 2
+				change_variable = {
+					name = cultivation_progress
+					add = 10
+				}
+			}
+			25 = {
+				# QI DEVIATION: forced too fast
+				desc = murim_mount_hua.0008.a.failure
+				# Chain to: CULTIVATION — qi deviation crisis
+				trigger_event = {
+					id = murim_cultivation.0004  # Qi deviation event
+					days = { 1 3 }
+				}
+				add_character_modifier = {
+					modifier = qi_deviation_scar
+					years = 3
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Study gradually over months (safe, slower)
+	option = {
+		name = murim_mount_hua.0008.b
+		
+		add_prowess = 2
+		add_learning = 1
+		add_character_modifier = {
+			modifier = studying_secret_technique
+			years = 2
+		}
+		# Chain to: TRAINING — long-term training montage
+		trigger_event = {
+			id = murim_training.0001  # Training montage
+			days = { 30 60 }
+		}
+		
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Share with the sect — collective study
+	option = {
+		name = murim_mount_hua.0008.c
+		
+		add_prestige = 200
+		add_piety = 100
+		# Chain to: SECT — strengthens entire sect
+		change_variable = {
+			name = sect_influence
+			add = 10
+		}
+		add_character_modifier = {
+			modifier = sect_benefactor
+			years = 5
+		}
+		# Chain to: POLITICS — other sects hear about the discovery
+		random = {
+			chance = 30
+			trigger_event = {
+				id = murim_politics.0006  # Rival sect wants your technique
+				days = { 60 120 }
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = generous
+			}
+		}
+	}
+	
+	# Option D: Hide it — too dangerous to share
+	option = {
+		name = murim_mount_hua.0008.d
+		
+		add_intrigue = 1
+		stress_impact = {
+			base = 10
+			honest = 15
+			deceitful = -5
+		}
+		add_character_flag = {
+			flag = hidden_secret_technique
+			years = -1  # permanent until discovered
+		}
+		# Chain to: JIANGHU — someone might find out
+		random = {
+			chance = 15
+			trigger_event = {
+				id = murim_jianghu.0003  # Secret leaked to underworld
+				days = { 90 365 }
+			}
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0009: Mount Hua Disciple's Worldly Temptation Test
+# Chains to: romance, daily_life, fate, cultivation
+# Classic wuxia trope — the righteous fighter tempted by worldly desires
+# ============================================================
+murim_mount_hua.0009 = {
+	type = character_event
+	title = murim_mount_hua.0009.t
+	desc = murim_mount_hua.0009.desc
+	theme = seduction
+	
+	left_portrait = {
+		character = root
+		animation = flirtation
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = mount_hua_disciple
+		age >= 18
+		NOT = { has_character_flag = temptation_test_done }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = temptation_test_done
+		}
+	}
+	
+	# Option A: Embrace worldly life — leave the sect for love
+	option = {
+		name = murim_mount_hua.0009.a
+		
+		remove_trait = mount_hua_disciple
+		add_prestige = -100
+		stress_impact = {
+			base = -20
+			zealous = 30
+		}
+		# Chain to: ROMANCE — full romantic arc begins
+		trigger_event = {
+			id = murim_romance.0003  # Martial romance full arc
+			days = { 7 30 }
+		}
+		# Chain to: DAILY LIFE — civilian martial master path
+		add_character_modifier = {
+			modifier = former_sect_member
+			years = -1
+		}
+		# Chain to: FATE — leaving the sect has consequences later
+		random = {
+			chance = 30
+			trigger_event = {
+				id = murim_fate.0002  # Past catches up
+				days = { 365 1825 }  # 1-5 years later
+			}
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = lustful
+			}
+		}
+	}
+	
+	# Option B: Resist — strengthen your dao heart
+	option = {
+		name = murim_mount_hua.0009.b
+		
+		stress_impact = {
+			base = 15
+			lustful = 20
+			chaste = -10
+		}
+		add_piety = 100
+		# Chain to: CULTIVATION — dao heart strengthened
+		change_variable = {
+			name = cultivation_progress
+			add = 10
+		}
+		add_character_modifier = {
+			modifier = dao_heart_tempered
+			years = 5
+		}
+		# Possible advancement to plum_blossom_swordsman
+		random = {
+			chance = 25
+			add_trait_force_tooltip = plum_blossom_swordsman
+			remove_trait = mount_hua_disciple
+		}
+		
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = chaste
+			}
+		}
+	}
+	
+	# Option C: Try to have both — secret relationship
+	option = {
+		name = murim_mount_hua.0009.c
+		
+		add_intrigue = 1
+		stress_impact = {
+			base = 10
+			honest = 20
+		}
+		# Chain to: ROMANCE — secret affair
+		add_character_flag = {
+			flag = secret_relationship
+			years = 3
+		}
+		# Chain to: SECT — risk of discovery
+		random = {
+			chance = 40
+			trigger_event = {
+				id = murim_politics.0007  # Sect discovers secret
+				days = { 90 365 }
+			}
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option D: Channel the emotion into sword intent — sublimate desire
+	option = {
+		name = murim_mount_hua.0009.d
+		
+		add_prowess = 2
+		stress_impact = {
+			base = 5
+		}
+		# Chain to: TECHNIQUE — emotion-powered sword art
+		add_character_modifier = {
+			modifier = emotion_fueled_sword_intent
+			years = 3
+		}
+		# Chain to: CULTIVATION — unorthodox breakthrough path
+		random = {
+			chance = 10
+			trigger_event = {
+				id = murim_cultivation.0007  # Unorthodox enlightenment
+				days = { 14 30 }
+			}
+		}
+		
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 0010: Mount Hua Elder's Legacy — Passing the Torch
+# Chains to: mentor, fate, training, sect succession
+# End-of-life event for elder characters
+# ============================================================
+murim_mount_hua.0010 = {
+	type = character_event
+	title = murim_mount_hua.0010.t
+	desc = murim_mount_hua.0010.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = mount_hua_elder
+		OR = {
+			age >= 65
+			health <= 1
+		}
+		NOT = { has_character_flag = legacy_event_done }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = legacy_event_done
+		}
+	}
+	
+	# Option A: Pass the Plum Blossom mantle to your best student
+	option = {
+		name = murim_mount_hua.0010.a
+		
+		# Chain to: MENTOR — formal succession
+		add_prestige = 300
+		add_piety = 200
+		# Find best student and pass technique
+		random_courtier = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = plum_blossom_swordsman
+				}
+			}
+			add_prowess = 3
+			add_prestige = 200
+			add_character_flag = {
+				flag = chosen_successor
+				years = -1
+			}
+		}
+		# Chain to: FATE — peaceful end for a master
+		add_character_modifier = {
+			modifier = at_peace_with_legacy
+			years = -1
+		}
+		
+		ai_chance = {
+			base = 45
+		}
+	}
+	
+	# Option B: Write your sword art into a scripture for future generations
+	option = {
+		name = murim_mount_hua.0010.b
+		
+		add_prestige = 500
+		# Chain to: ARTIFACT — create a technique manual artifact
+		trigger_event = {
+			id = murim_artifact.0008  # Forbidden scripture / technique manual
+			days = { 7 14 }
+		}
+		# Permanent sect benefit
+		change_variable = {
+			name = sect_influence
+			add = 15
+		}
+		
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: One last fight — challenge the strongest you can find
+	option = {
+		name = murim_mount_hua.0010.c
+		
+		# Chain to: DUEL — legendary last stand
+		trigger_event = {
+			id = murim_duel.0010  # Legendary battle
+			days = { 7 14 }
+		}
+		# Chain to: RANKING — ranker's last fight
+		stress_impact = {
+			base = -20
+			brave = -10
+		}
+		
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option D: Retreat to the mountain peak — die in meditation
+	option = {
+		name = murim_mount_hua.0010.d
+		
+		add_piety = 300
+		stress_impact = {
+			base = -30
+		}
+		# Chain to: CULTIVATION — final enlightenment attempt
+		random = {
+			chance = 20
+			# Legendary: breakthrough at the moment of death
+			trigger_event = {
+				id = murim_cultivation.0009  # Death enlightenment
+				days = { 30 60 }
+			}
+		}
+		add_character_modifier = {
+			modifier = mountain_hermit_final_retreat
+			years = -1
+		}
+		
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = content
+			}
+		}
+	}
+}
