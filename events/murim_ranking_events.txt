@@ -1,0 +1,838 @@
+# Murim Chronicles - Top 50 Martial Artist Ranking Events
+# Entry/exit notifications, death promotions, #1 announcements,
+# ranked challenges, yearly summary, hidden talent emergence
+# Load-safe: all events check exists/has_variable before access
+
+namespace = murim_rank
+
+######################################
+# 0001 - ENTERED THE TOP 50
+# Player notification when crossing threshold
+######################################
+
+murim_rank.0001 = {
+	type = character_event
+	title = murim_rank.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					exists = this
+					has_variable = murim_martial_rank_position
+					var:murim_martial_rank_position <= 10
+				}
+				desc = murim_rank.0001.desc_top_10
+			}
+			triggered_desc = {
+				trigger = {
+					exists = this
+					has_variable = murim_martial_rank_position
+					var:murim_martial_rank_position <= 20
+				}
+				desc = murim_rank.0001.desc_top_20
+			}
+			desc = murim_rank.0001.desc_top_50
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	override_background = {
+		reference = throne_room
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+		murim_is_martial_artist_trigger = yes
+	}
+
+	immediate = {
+		# Safety: initialize variables if missing
+		if = {
+			limit = { NOT = { has_variable = murim_martial_rank_score } }
+			set_variable = {
+				name = murim_martial_rank_score
+				value = murim_martial_rank_score
+			}
+		}
+	}
+
+	# Option A: Embrace the fame
+	option = {
+		name = murim_rank.0001.a
+		tooltip = murim_rank_embrace_fame_tt
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_ranked_fame_modifier
+			years = 2
+		}
+		# Ambitious characters gain extra
+		if = {
+			limit = { has_trait = ambitious }
+			add_prestige = 100
+			add_stress = -10
+		}
+		stress_impact = {
+			shy = minor_stress_impact_gain
+			humble = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = arrogant
+			}
+		}
+	}
+
+	# Option B: Stay humble, train harder
+	option = {
+		name = murim_rank.0001.b
+		tooltip = murim_rank_stay_humble_tt
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_ranked_focused_training_modifier
+			years = 2
+		}
+		# Humble/patient characters benefit more
+		if = {
+			limit = {
+				OR = {
+					has_trait = humble
+					has_trait = patient
+					has_trait = temperate
+				}
+			}
+			add_prowess_skill = 1
+		}
+		stress_impact = {
+			arrogant = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = humble
+			}
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option C: Use the rank for political leverage
+	option = {
+		name = murim_rank.0001.c
+		tooltip = murim_rank_political_leverage_tt
+		add_prestige = 150
+		add_character_modifier = {
+			modifier = murim_ranked_political_influence_modifier
+			years = 3
+		}
+		# Diplomacy/intrigue characters gain extra
+		if = {
+			limit = { diplomacy >= 12 }
+			add_diplomacy_skill = 1
+		}
+		stress_impact = {
+			honest = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = gregarious
+			}
+			modifier = {
+				add = 20
+				diplomacy >= 15
+			}
+		}
+	}
+}
+
+######################################
+# 0002 - KNOCKED OUT OF TOP 50
+# Shame and consequences of falling from rankings
+######################################
+
+murim_rank.0002 = {
+	type = character_event
+	title = murim_rank.0002.t
+	desc = murim_rank.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+	override_background = {
+		reference = wilderness
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+	}
+
+	immediate = { }
+
+	# Option A: Swear to reclaim your rank
+	option = {
+		name = murim_rank.0002.a
+		tooltip = murim_rank_swear_reclaim_tt
+		add_character_modifier = {
+			modifier = murim_burning_determination_modifier
+			years = 3
+		}
+		add_stress = -5
+		# Ambitious/brave get extra motivation
+		if = {
+			limit = {
+				OR = {
+					has_trait = ambitious
+					has_trait = brave
+				}
+			}
+			add_prowess_skill = 1
+		}
+		stress_impact = {
+			lazy = minor_stress_impact_gain
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 40
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option B: Accept it with grace
+	option = {
+		name = murim_rank.0002.b
+		tooltip = murim_rank_accept_gracefully_tt
+		add_piety = 100
+		add_stress = -15
+		if = {
+			limit = { has_trait = humble }
+			add_piety = 50
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+			arrogant = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
+		}
+	}
+
+	# Option C: Blame others, become bitter
+	option = {
+		name = murim_rank.0002.c
+		tooltip = murim_rank_become_bitter_tt
+		add_stress = 25
+		add_character_modifier = {
+			modifier = murim_bitter_fallen_fighter_modifier
+			years = 5
+		}
+		# May gain wrathful or vengeful
+		random = {
+			chance = 30
+			add_trait = wrathful
+		}
+		stress_impact = {
+			calm = minor_stress_impact_gain
+			forgiving = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = wrathful
+			}
+			modifier = {
+				add = 20
+				has_trait = vengeful
+			}
+		}
+	}
+}
+
+######################################
+# 0003 - TOP 50 FIGHTER DIED
+# Court notification, next fighter promoted
+######################################
+
+murim_rank.0003 = {
+	type = character_event
+	title = murim_rank.0003.t
+	desc = murim_rank.0003.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+	}
+
+	immediate = { }
+
+	# Option A: A worthy warrior has fallen
+	option = {
+		name = murim_rank.0003.a
+		tooltip = murim_rank_honor_fallen_tt
+		add_piety = 25
+		# If the dead fighter was known to you
+		if = {
+			limit = {
+				exists = scope:dead_ranked_fighter
+				has_relation_rival = scope:dead_ranked_fighter
+			}
+			add_stress = -10
+			custom_tooltip = murim_rank_rival_fallen_tt
+		}
+		if = {
+			limit = {
+				exists = scope:dead_ranked_fighter
+				has_relation_friend = scope:dead_ranked_fighter
+			}
+			add_stress = 20
+			custom_tooltip = murim_rank_friend_fallen_tt
+		}
+		ai_chance = { base = 100 }
+	}
+
+	# Option B: This opens opportunity
+	option = {
+		name = murim_rank.0003.b
+		tooltip = murim_rank_seize_opportunity_tt
+		trigger = {
+			murim_is_martial_artist_trigger = yes
+		}
+		add_character_modifier = {
+			modifier = murim_rank_opportunity_modifier
+			years = 1
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			honest = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+######################################
+# 0004 - NEW NUMBER ONE DECLARED
+# Realm-wide announcement, previous #1 dethroned
+######################################
+
+murim_rank.0004 = {
+	type = character_event
+	title = murim_rank.0004.t
+	desc = murim_rank.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	override_background = {
+		reference = throne_room
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+		has_character_modifier = murim_number_one_modifier
+	}
+
+	immediate = {
+		# Announce to all rulers
+		every_ruler = {
+			limit = {
+				is_alive = yes
+				NOT = { this = root }
+			}
+			send_interface_message = {
+				type = event_generic_good
+				title = murim_rank_new_number_one_notification
+				left_icon = root
+				desc = murim_rank_new_number_one_notification_desc
+			}
+		}
+	}
+
+	# Option A: I am the supreme martial artist
+	option = {
+		name = murim_rank.0004.a
+		tooltip = murim_rank_supreme_declaration_tt
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = murim_supreme_martial_artist_modifier
+			years = 5
+		}
+		# Every martial artist now knows your name
+		every_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_respects_number_one_opinion
+				years = 10
+			}
+		}
+		stress_impact = {
+			humble = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = arrogant
+			}
+		}
+	}
+
+	# Option B: The summit is lonely
+	option = {
+		name = murim_rank.0004.b
+		tooltip = murim_rank_lonely_summit_tt
+		add_prestige = 500
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_lonely_at_the_top_modifier
+			years = 5
+		}
+		add_stress = 10
+		# Wise/humble characters find peace
+		if = {
+			limit = {
+				OR = {
+					has_trait = humble
+					has_trait = patient
+					learning >= 15
+				}
+			}
+			add_stress = -20
+			add_prowess_skill = 2
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = humble
+			}
+		}
+	}
+}
+
+######################################
+# 0005 - AI RANKED CHALLENGE
+# A ranked fighter challenges another ranked fighter for position
+######################################
+
+murim_rank.0005 = {
+	type = character_event
+	title = murim_rank.0005.t
+	desc = murim_rank.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:rank_challenger
+		animation = personality_bold
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+		murim_is_top_50_martial_artist_trigger = yes
+	}
+
+	immediate = {
+		# Find a valid challenger
+		random_living_character = {
+			limit = {
+				murim_ai_should_challenge_for_rank_trigger = yes
+				NOT = { this = root }
+				is_ai = yes
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					has_trait = ambitious
+				}
+				modifier = {
+					add = 3
+					prowess >= 20
+				}
+			}
+			save_scope_as = rank_challenger
+		}
+	}
+
+	# Option A: Accept the challenge
+	option = {
+		name = murim_rank.0005.a
+		tooltip = murim_rank_accept_challenge_tt
+		trigger = {
+			NOR = {
+				has_trait = incapable
+				has_trait = broken_spirit
+			}
+		}
+		# Duel resolution
+		duel = {
+			skill = prowess
+			target = scope:rank_challenger
+			50 = {
+				desc = murim_rank_challenge_win_desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				# Player wins
+				add_prestige = 200
+				scope:rank_challenger = {
+					add_prestige = -100
+					murim_roll_combat_injuries_effect = yes
+					murim_roll_combat_trauma_effect = yes
+				}
+				murim_update_rankings_after_duel_effect = yes
+			}
+			50 = {
+				desc = murim_rank_challenge_lose_desc
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2
+				}
+				# Player loses
+				add_prestige = -200
+				murim_roll_combat_injuries_effect = yes
+				murim_roll_combat_trauma_effect = yes
+				scope:rank_challenger = {
+					add_prestige = 200
+				}
+				# Swap rank positions
+				if = {
+					limit = {
+						has_variable = murim_martial_rank_position
+						scope:rank_challenger = { has_variable = murim_martial_rank_position }
+					}
+					save_temporary_scope_value_as = {
+						name = temp_rank
+						value = var:murim_martial_rank_position
+					}
+					set_variable = {
+						name = murim_martial_rank_position
+						value = scope:rank_challenger.var:murim_martial_rank_position
+					}
+					scope:rank_challenger = {
+						set_variable = {
+							name = murim_martial_rank_position
+							value = scope:temp_rank
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+			modifier = {
+				add = -40
+				has_trait = craven
+			}
+		}
+	}
+
+	# Option B: Decline the challenge
+	option = {
+		name = murim_rank.0005.b
+		tooltip = murim_rank_decline_challenge_tt
+		add_prestige = -300
+		add_character_modifier = {
+			modifier = murim_declined_rank_challenge_modifier
+			years = 2
+		}
+		# Lose face with martial world
+		every_living_character = {
+			limit = {
+				murim_is_top_50_martial_artist_trigger = yes
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_coward_declined_challenge_opinion
+				years = 5
+			}
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 40
+				has_trait = craven
+			}
+			modifier = {
+				add = 20
+				has_trait = wounded
+			}
+		}
+	}
+}
+
+######################################
+# 0006 - YEARLY RANKING SUMMARY
+# Annual update on player's ranking position and changes
+######################################
+
+murim_rank.0006 = {
+	type = character_event
+	title = murim_rank.0006.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_martial_rank_position
+					var:murim_martial_rank_position <= 5
+				}
+				desc = murim_rank.0006.desc_elite
+			}
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_martial_rank_position
+					var:murim_martial_rank_position <= 20
+				}
+				desc = murim_rank.0006.desc_high
+			}
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_martial_rank_position
+					var:murim_martial_rank_position <= 50
+				}
+				desc = murim_rank.0006.desc_ranked
+			}
+			desc = murim_rank.0006.desc_unranked
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+		murim_is_martial_artist_trigger = yes
+	}
+
+	immediate = {
+		# Recalculate before showing
+		murim_recalculate_martial_rank_effect = yes
+	}
+
+	# Option A: Acknowledge
+	option = {
+		name = murim_rank.0006.a
+		tooltip = murim_rank_yearly_acknowledge_tt
+		# Small bonus for being aware of your standing
+		add_character_modifier = {
+			modifier = murim_self_awareness_modifier
+			days = 180
+		}
+		ai_chance = { base = 100 }
+	}
+
+	# Option B: Train harder to improve rank
+	option = {
+		name = murim_rank.0006.b
+		tooltip = murim_rank_yearly_train_tt
+		add_character_modifier = {
+			modifier = murim_rank_motivated_training_modifier
+			years = 1
+		}
+		add_stress = 5
+		stress_impact = {
+			lazy = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+######################################
+# 0007 - HIDDEN TALENT EMERGES
+# Unranked martial artist bursts into Top 50 after major victory
+######################################
+
+murim_rank.0007 = {
+	type = character_event
+	title = murim_rank.0007.t
+	desc = murim_rank.0007.desc
+	theme = martial
+	left_portrait = {
+		character = scope:emerging_talent
+		animation = personality_bold
+	}
+	override_background = {
+		reference = market
+	}
+
+	trigger = {
+		exists = this
+		is_alive = yes
+		is_ai = no
+	}
+
+	immediate = {
+		# Find a newly ranked character to spotlight
+		random_living_character = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				has_variable = murim_martial_rank_position
+				var:murim_martial_rank_position <= 50
+				NOT = { has_character_modifier = murim_ranked_veteran_modifier }
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					prowess >= 20
+				}
+				modifier = {
+					add = 3
+					age <= 25
+				}
+			}
+			save_scope_as = emerging_talent
+		}
+	}
+
+	# Option A: This newcomer is interesting
+	option = {
+		name = murim_rank.0007.a
+		tooltip = murim_rank_newcomer_interesting_tt
+		trigger = {
+			exists = scope:emerging_talent
+		}
+		# Can recruit, befriend, or rival
+		add_opinion = {
+			target = scope:emerging_talent
+			modifier = murim_noticed_talent_opinion
+			years = 3
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Option B: Challenge them immediately
+	option = {
+		name = murim_rank.0007.b
+		tooltip = murim_rank_challenge_newcomer_tt
+		trigger = {
+			exists = scope:emerging_talent
+			murim_can_challenge_for_rank_trigger = yes
+		}
+		# Trigger a duel event
+		trigger_event = {
+			id = murim_rank.0005
+			days = 7
+		}
+		stress_impact = {
+			calm = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = arrogant
+			}
+		}
+	}
+
+	# Option C: Recruit them to your service
+	option = {
+		name = murim_rank.0007.c
+		tooltip = murim_rank_recruit_newcomer_tt
+		trigger = {
+			exists = scope:emerging_talent
+			scope:emerging_talent = { is_ai = yes }
+		}
+		# Attempt to recruit
+		scope:emerging_talent = {
+			set_variable = {
+				name = murim_recruitment_target
+				value = root
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_seeking_talent_modifier
+			years = 1
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = gregarious
+			}
+		}
+	}
+}
