@@ -1,0 +1,652 @@
+############################################
+# MURIM PHANTOM BLADE EXPANSION EVENTS
+# Blade naming ceremony, phantom chase,
+# sect infiltration discovery, blade school
+# rivalry, shadow market, blade inheritance.
+# Cross-refs: murim_phantom_blade_events.txt,
+#   murim_artifact_events.txt, murim_faction_war_events.txt,
+#   murim_duel_events.txt, murim_ranking_events.txt
+# All 9 clans referenced. GENDER: Equal.
+############################################
+
+namespace = murim_phantom_exp
+
+############################################
+# BLADE NAMING CEREMONY
+# A Phantom Blade disciple names their blade
+# after achieving Inner Disciple rank.
+############################################
+murim_phantom_exp.0001 = {
+	type = character_event
+	title = murim_phantom_exp.0001.t
+	desc = murim_phantom_exp.0001.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 2
+		prowess >= 14
+		NOT = { has_character_flag = blade_naming_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 prowess >= 18 }
+		modifier = { add = 2 has_trait = cultivation_stage_3 }
+		modifier = { add = 1 has_character_flag = blade_spirit_communion_done }
+	}
+
+	immediate = {
+		add_character_flag = { flag = blade_naming_done }
+	}
+
+	# Name it after a predator - "Moonlit Fang"
+	option = {
+		name = murim_phantom_exp.0001.a
+		add_prowess_skill = 2
+		add_dread = 10
+		add_character_modifier = { modifier = murim_named_blade_predator years = -1 }
+		add_prestige = 150
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:blade_named_predator }
+		}
+		stress_impact = { brave = minor_stress_impact_loss }
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = brave } }
+	}
+
+	# Name it after the void - "Silent Absence"
+	option = {
+		name = murim_phantom_exp.0001.b
+		add_intrigue_skill = 2
+		add_prowess_skill = 1
+		add_character_modifier = { modifier = murim_named_blade_void years = -1 }
+		add_prestige = 150
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:blade_named_void }
+		}
+		ai_chance = { base = 35 modifier = { add = 20 intrigue >= 16 } }
+	}
+
+	# Name it after someone you lost - memorial blade
+	option = {
+		name = murim_phantom_exp.0001.c
+		add_prowess_skill = 1
+		add_martial_skill = 1
+		add_stress = -20
+		add_character_modifier = { modifier = murim_named_blade_memorial years = -1 }
+		add_prestige = 200
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:blade_named_memorial }
+		}
+		stress_impact = { compassionate = minor_stress_impact_loss }
+		ai_chance = { base = 25 }
+	}
+}
+
+############################################
+# PHANTOM CHASE - PURSUED BY ORTHODOX HUNTERS
+# Orthodox faction sends hunters after a
+# Phantom Blade assassin.
+############################################
+murim_phantom_exp.0002 = {
+	type = character_event
+	title = murim_phantom_exp.0002.t
+	desc = murim_phantom_exp.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	right_portrait = {
+		character = scope:orthodox_hunter
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_faction
+		var:murim_faction = flag:unorthodox
+		prowess >= 12
+		NOT = { has_character_modifier = murim_phantom_chase_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 dread >= 30 }
+		modifier = { add = 2 has_character_flag = assassination_contract_cooldown }
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_phantom_chase_cooldown years = 3 }
+		# Orthodox hunter
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				prowess >= 14
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_monk
+					has_trait = wudang_disciple
+					has_trait = iron_fist_disciple
+					has_trait = beggar_sect_member
+					has_trait = tang_clan_member
+				}
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 prowess >= 18 }
+				modifier = { add = 10 has_trait = just }
+			}
+			save_scope_as = orthodox_hunter
+		}
+	}
+
+	# Use Phantom Step to vanish - escape through stealth
+	option = {
+		name = murim_phantom_exp.0002.a
+		trigger = { exists = scope:orthodox_hunter }
+		random_list = {
+			55 = {
+				modifier = { add = 15 intrigue >= 16 }
+				modifier = { add = 10 has_character_flag = blade_spirit_communion_done }
+				desc = murim_phantom_exp.0002.a.escape
+				add_prestige = 100
+				add_intrigue_skill = 1
+				add_character_modifier = { modifier = murim_phantom_escape_artist years = 3 }
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:phantom_chase_escaped }
+				}
+			}
+			45 = {
+				modifier = { add = 15 scope:orthodox_hunter = { prowess >= 20 } }
+				desc = murim_phantom_exp.0002.a.caught
+				# Caught - forced to fight
+				trigger_event = { id = murim_phantom_exp.0003 days = 1 }
+			}
+		}
+		stress_impact = { brave = medium_stress_impact_gain craven = minor_stress_impact_loss }
+		ai_chance = { base = 50 modifier = { add = 20 intrigue >= 16 } }
+	}
+
+	# Stand and fight - Phantom Blade never runs
+	option = {
+		name = murim_phantom_exp.0002.b
+		trigger = { exists = scope:orthodox_hunter }
+		duel = {
+			skill = prowess
+			target = scope:orthodox_hunter
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_phantom_exp.0002.b.victory
+				add_prestige = 200
+				add_dread = 15
+				scope:orthodox_hunter = {
+					random_list = {
+						40 = { add_trait = wounded_1 }
+						35 = { add_trait = wounded_2 }
+						15 = { add_trait = maimed }
+						10 = { death = { death_reason = death_duel killer = root } }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:phantom_hunter_slain }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:orthodox_hunter }
+				desc = murim_phantom_exp.0002.b.defeat
+				add_prestige = -100
+				random_list = {
+					30 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					25 = { add_trait = maimed }
+					15 = {
+						# Captured - faction war implications
+						add_character_modifier = { modifier = murim_captured_by_orthodox years = 2 }
+						trigger_event = { id = murim_faction_war.0005 days = { 5 15 } }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:phantom_hunter_defeated_me }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = brave } }
+	}
+
+	# Negotiate - offer information for freedom
+	option = {
+		name = murim_phantom_exp.0002.c
+		trigger = { exists = scope:orthodox_hunter diplomacy >= 10 }
+		add_prestige = -50
+		add_dread = -10
+		scope:orthodox_hunter = {
+			add_opinion = { target = root modifier = grudging_respect_opinion opinion = 10 }
+		}
+		add_character_modifier = { modifier = murim_informant_shame years = 5 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:phantom_chase_negotiated }
+		}
+		stress_impact = { deceitful = minor_stress_impact_loss honest = major_stress_impact_gain }
+		ai_chance = { base = 10 modifier = { add = 20 has_trait = deceitful } }
+	}
+}
+
+############################################
+# FORCED CONFRONTATION (follow-up from chase)
+############################################
+murim_phantom_exp.0003 = {
+	type = character_event
+	title = murim_phantom_exp.0003.t
+	desc = murim_phantom_exp.0003.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		exists = scope:orthodox_hunter
+	}
+
+	immediate = { }
+
+	# Unleash forbidden blade technique
+	option = {
+		name = murim_phantom_exp.0003.a
+		trigger = { exists = scope:orthodox_hunter }
+		duel = {
+			skill = prowess
+			target = scope:orthodox_hunter
+			55 = {
+				compare_modifier = { value = prowess multiplier = 3 }
+				desc = murim_phantom_exp.0003.a.win
+				add_prestige = 250
+				add_dread = 20
+				add_prowess_skill = 1
+				scope:orthodox_hunter = {
+					random_list = {
+						50 = { add_trait = wounded_2 }
+						30 = { add_trait = maimed }
+						20 = { death = { death_reason = death_duel killer = root } }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:forbidden_blade_unleashed }
+				}
+			}
+			45 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:orthodox_hunter }
+				desc = murim_phantom_exp.0003.a.lose
+				add_trait = wounded_2
+				add_stress = 30
+				add_prestige = -150
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:forbidden_blade_failed }
+				}
+			}
+		}
+		# Forbidden techniques cost health
+		add_stress = 20
+		stress_impact = { brave = minor_stress_impact_loss }
+		ai_chance = { base = 70 }
+	}
+
+	# Surrender to orthodox justice
+	option = {
+		name = murim_phantom_exp.0003.b
+		add_prestige = -300
+		add_dread = -20
+		add_character_modifier = { modifier = murim_captured_by_orthodox years = 3 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:phantom_surrendered }
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = craven } }
+	}
+}
+
+############################################
+# BLADE SCHOOL RIVALRY
+# Another blade-focused martial artist
+# challenges Phantom Blade supremacy.
+############################################
+murim_phantom_exp.0004 = {
+	type = character_event
+	title = murim_phantom_exp.0004.t
+	desc = murim_phantom_exp.0004.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:blade_rival
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		prowess >= 14
+		NOT = { has_character_modifier = murim_blade_rivalry_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 prowess >= 18 }
+		modifier = { add = 2 has_character_flag = blade_naming_done }
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_blade_rivalry_cooldown years = 3 }
+		# Find a sword-wielding rival from any clan
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				prowess >= 14
+				NOT = { this = root }
+				NOT = { has_trait = phantom_blade_disciple }
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_disciple
+					has_trait = tang_clan_member
+					has_trait = iron_fist_disciple
+				}
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 prowess >= 18 }
+				modifier = { add = 10 has_trait = mount_hua_disciple }
+			}
+			save_scope_as = blade_rival
+		}
+	}
+
+	# Accept the blade duel - prove Phantom Blade supremacy
+	option = {
+		name = murim_phantom_exp.0004.a
+		trigger = { exists = scope:blade_rival }
+		duel = {
+			skill = prowess
+			target = scope:blade_rival
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_phantom_exp.0004.a.win
+				add_prestige = 250
+				add_prowess_skill = 1
+				add_character_modifier = { modifier = murim_blade_school_champion years = 5 }
+				scope:blade_rival = {
+					add_opinion = { target = root modifier = respect_martial_prowess opinion = 20 }
+					random_list = {
+						60 = { }
+						25 = { add_trait = wounded_1 }
+						15 = { add_trait = scarred }
+					}
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:blade_rivalry_won }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:blade_rival }
+				desc = murim_phantom_exp.0004.a.lose
+				add_prestige = -100
+				add_stress = 20
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { add_trait = scarred }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:blade_rivalry_lost }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 60 modifier = { add = 20 has_trait = brave } }
+	}
+
+	# Study their technique first - delayed response
+	option = {
+		name = murim_phantom_exp.0004.b
+		trigger = { exists = scope:blade_rival }
+		add_intrigue_skill = 1
+		add_character_modifier = { modifier = murim_studying_rival_blade years = 2 }
+		# Delayed duel event
+		trigger_event = { id = murim_duel.0001 days = { 90 180 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:blade_rival_studied }
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = patient } }
+	}
+
+	# Ignore the challenge - beneath you
+	option = {
+		name = murim_phantom_exp.0004.c
+		add_prestige = -50
+		add_stress = 10
+		ai_chance = { base = 10 }
+	}
+}
+
+############################################
+# SHADOW MARKET ARMS DEAL
+# Phantom Blade sect deals in rare weapons
+# through underground channels.
+############################################
+murim_phantom_exp.0005 = {
+	type = character_event
+	title = murim_phantom_exp.0005.t
+	desc = murim_phantom_exp.0005.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+		intrigue >= 12
+		gold >= 100
+		NOT = { has_character_modifier = murim_shadow_market_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 intrigue >= 16 }
+		modifier = { add = 2 gold >= 300 }
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_shadow_market_cooldown years = 3 }
+	}
+
+	# Purchase a legendary blade - spend heavily
+	option = {
+		name = murim_phantom_exp.0005.a
+		add_gold = -200
+		add_prowess_skill = 3
+		add_character_modifier = { modifier = murim_legendary_shadow_blade years = -1 }
+		add_prestige = 200
+		# Cross-ref: artifact system
+		trigger_event = { id = murim_artifact.0001 days = { 10 30 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:shadow_blade_purchased }
+		}
+		ai_chance = { base = 40 modifier = { add = 20 gold >= 400 } }
+	}
+
+	# Trade sect intelligence for weapons
+	option = {
+		name = murim_phantom_exp.0005.b
+		add_prowess_skill = 2
+		add_intrigue_skill = -1
+		add_character_modifier = { modifier = murim_intelligence_trader years = 5 }
+		add_dread = 10
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:shadow_market_info_trade }
+		}
+		stress_impact = { honest = major_stress_impact_gain deceitful = minor_stress_impact_loss }
+		ai_chance = { base = 35 modifier = { add = 20 has_trait = deceitful } }
+	}
+
+	# Set up your own shadow market branch
+	option = {
+		name = murim_phantom_exp.0005.c
+		add_gold = -100
+		add_intrigue_skill = 2
+		add_character_modifier = { modifier = murim_shadow_market_owner years = -1 }
+		add_prestige = 100
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:shadow_market_branch_opened }
+		}
+		ai_chance = { base = 25 modifier = { add = 20 has_trait = greedy } }
+	}
+}
+
+############################################
+# BLADE INHERITANCE - SECT ELDER DEATH
+# An elder of Phantom Blade dies, their
+# legendary blade must pass to a successor.
+############################################
+murim_phantom_exp.0006 = {
+	type = character_event
+	title = murim_phantom_exp.0006.t
+	desc = murim_phantom_exp.0006.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 2
+		prowess >= 14
+		NOT = { has_character_flag = blade_inheritance_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 var:murim_clan_rank >= 3 }
+		modifier = { add = 1 prowess >= 18 }
+	}
+
+	immediate = {
+		add_character_flag = { flag = blade_inheritance_done }
+		# Find a rival claimant within the sect
+		random_living_character = {
+			limit = {
+				has_trait = phantom_blade_disciple
+				has_trait = martial_artist
+				is_alive = yes
+				prowess >= 12
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 prowess >= 16 }
+			}
+			save_scope_as = blade_claimant
+		}
+	}
+
+	# Claim the elder's blade through sect rite
+	option = {
+		name = murim_phantom_exp.0006.a
+		trigger = { exists = scope:blade_claimant }
+		duel = {
+			skill = prowess
+			target = scope:blade_claimant
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_phantom_exp.0006.a.win
+				add_prestige = 300
+				add_prowess_skill = 2
+				add_character_modifier = { modifier = murim_elder_blade_inherited years = -1 }
+				# Promotion within sect
+				if = {
+					limit = { var:murim_clan_rank < 4 }
+					change_variable = { name = murim_clan_rank add = 1 }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:elder_blade_claimed }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:blade_claimant }
+				desc = murim_phantom_exp.0006.a.lose
+				add_prestige = -100
+				add_stress = 25
+				random_list = {
+					50 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					20 = { add_trait = scarred }
+				}
+				scope:blade_claimant = {
+					add_character_modifier = { modifier = murim_elder_blade_inherited years = -1 }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:elder_blade_lost }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss }
+		ai_chance = { base = 60 }
+	}
+
+	# Yield the blade - honor the elder's wishes
+	option = {
+		name = murim_phantom_exp.0006.b
+		trigger = { exists = scope:blade_claimant }
+		add_prestige = 100
+		add_piety = 100
+		add_stress = -15
+		scope:blade_claimant = {
+			add_character_modifier = { modifier = murim_elder_blade_inherited years = -1 }
+			add_opinion = { target = root modifier = respect_martial_prowess opinion = 25 }
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:elder_blade_yielded_gracefully }
+		}
+		stress_impact = { ambitious = major_stress_impact_gain content = minor_stress_impact_loss }
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = content } }
+	}
+
+	# Destroy the blade - no one should wield it
+	option = {
+		name = murim_phantom_exp.0006.c
+		add_prestige = -200
+		add_piety = 200
+		add_stress = 20
+		# Sect is outraged
+		if = {
+			limit = { exists = scope:blade_claimant }
+			scope:blade_claimant = {
+				add_opinion = { target = root modifier = insult_opinion opinion = -40 }
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:elder_blade_destroyed }
+		}
+		stress_impact = { zealous = minor_stress_impact_loss cynical = major_stress_impact_gain }
+		ai_chance = { base = 10 }
+	}
+}
