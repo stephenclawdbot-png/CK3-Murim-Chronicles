@@ -1,0 +1,1048 @@
+namespace = murim_entry_path_exp2
+
+# Entry Path Expansion 2 — Deep chains for all 4 paths into the martial world
+# Path 1: Orphan Taken In, Path 2: Noble Blood Revealed, Path 3: Wandering Discovery, Path 4: Forced Conscription
+
+######################################
+# EVENT 0001 — Orphan Path: Street Fight Recruitment
+# An orphan catches the eye of a clan elder during a street brawl
+######################################
+murim_entry_path_exp2.0001 = {
+	type = character_event
+	title = murim_entry_path_exp2.0001.t
+	desc = murim_entry_path_exp2.0001.desc
+	theme = martial_theme
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:recruiting_elder
+		animation = personality_bold
+	}
+
+	trigger = {
+		NOT = { has_variable = murim_clan_id }
+		NOT = { has_variable = murim_cultivation_level }
+		prowess >= 8
+		age >= 14
+		age <= 25
+		NOT = { has_character_flag = orphan_path_started }
+		is_lowborn = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			prowess >= 12
+		}
+		modifier = {
+			add = 2
+			has_trait = brave
+		}
+	}
+
+	immediate = {
+		set_character_flag = orphan_path_started
+		random_ruler = {
+			limit = {
+				has_variable = murim_clan_id
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+					has_trait = beggar_sect_member
+					has_trait = iron_fist_member
+				}
+			}
+			save_scope_as = recruiting_elder
+		}
+	}
+
+	# Accept the elder's offer — join the clan
+	option = {
+		name = murim_entry_path_exp2.0001.a
+		set_variable = {
+			name = murim_cultivation_level
+			value = 1
+		}
+		set_variable = {
+			name = murim_clan_id
+			value = scope:recruiting_elder.var:murim_clan_id
+		}
+		add_trait = orphan_recruit
+		add_character_modifier = {
+			modifier = street_fighter_potential
+			years = 10
+		}
+		scope:recruiting_elder = {
+			add_opinion = {
+				target = root
+				modifier = recruited_promising_orphan
+				opinion = 20
+			}
+		}
+		add_prestige = 100
+		hidden_effect = {
+			trigger_event = {
+				id = murim_entry_path_exp2.0002
+				days = { 90 180 }
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Refuse — stay independent
+	option = {
+		name = murim_entry_path_exp2.0001.b
+		add_prestige = -50
+		add_character_modifier = {
+			modifier = refused_clan_recruitment
+			years = 3
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Ask to be tested first
+	option = {
+		name = murim_entry_path_exp2.0001.c
+		duel = {
+			skill = prowess
+			target = scope:recruiting_elder
+			30 = {
+				desc = murim_entry_path_exp2.0001.c.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				send_interface_toast = {
+					title = murim_entry_path_exp2.0001.c.success.toast
+					left_icon = root
+					set_variable = { name = murim_cultivation_level value = 1 }
+					set_variable = { name = murim_clan_id value = scope:recruiting_elder.var:murim_clan_id }
+					add_trait = orphan_recruit
+					add_trait = tested_by_combat
+					add_prestige = 200
+				}
+			}
+			70 = {
+				desc = murim_entry_path_exp2.0001.c.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				send_interface_toast = {
+					title = murim_entry_path_exp2.0001.c.failure.toast
+					left_icon = root
+					set_variable = { name = murim_cultivation_level value = 1 }
+					set_variable = { name = murim_clan_id value = scope:recruiting_elder.var:murim_clan_id }
+					add_trait = orphan_recruit
+					add_character_modifier = { modifier = humbled_by_test years = 2 }
+				}
+			}
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0002 — Orphan Path: First Day Training Hell
+# The orphan's brutal first training session
+######################################
+murim_entry_path_exp2.0002 = {
+	type = character_event
+	title = murim_entry_path_exp2.0002.t
+	desc = murim_entry_path_exp2.0002.desc
+	theme = education_theme
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	right_portrait = {
+		character = scope:training_master
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = orphan_recruit
+		has_character_flag = orphan_path_started
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_courtier = {
+					has_variable = murim_clan_id
+					prowess >= 15
+				}
+			}
+			random_courtier = {
+				limit = {
+					has_variable = murim_clan_id
+					prowess >= 15
+				}
+				save_scope_as = training_master
+			}
+		}
+	}
+
+	# Endure everything — prove your worth
+	option = {
+		name = murim_entry_path_exp2.0002.a
+		add_prowess_skill = 2
+		add_stress = 30
+		add_character_modifier = {
+			modifier = survived_training_hell
+			years = 5
+		}
+		change_variable = { name = murim_cultivation_level add = 1 }
+		ai_chance = { base = 60 }
+	}
+
+	# Find a clever shortcut
+	option = {
+		name = murim_entry_path_exp2.0002.b
+		trigger = {
+			intrigue >= 10
+		}
+		add_intrigue_skill = 1
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = clever_training_approach
+			years = 3
+		}
+		ai_chance = { base = 25 }
+	}
+
+	# Break down — too much pressure
+	option = {
+		name = murim_entry_path_exp2.0002.c
+		add_stress = 50
+		add_trait = craven
+		add_character_modifier = {
+			modifier = broke_under_training
+			years = 2
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0003 — Noble Blood Path: Bloodline Awakening
+# A character discovers hidden noble martial bloodline
+######################################
+murim_entry_path_exp2.0003 = {
+	type = character_event
+	title = murim_entry_path_exp2.0003.t
+	desc = murim_entry_path_exp2.0003.desc
+	theme = mystic_theme
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		NOT = { has_variable = murim_cultivation_level }
+		is_lowborn = no
+		age >= 16
+		NOT = { has_character_flag = noble_blood_awakened }
+		OR = {
+			any_parent = {
+				has_variable = murim_clan_id
+			}
+			any_grandparent = {
+				has_variable = murim_clan_id
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			any_parent = { has_variable = murim_clan_id }
+		}
+	}
+
+	immediate = {
+		set_character_flag = noble_blood_awakened
+	}
+
+	# Embrace the martial bloodline
+	option = {
+		name = murim_entry_path_exp2.0003.a
+		set_variable = { name = murim_cultivation_level value = 2 }
+		add_trait = noble_blood_martial
+		add_character_modifier = {
+			modifier = bloodline_awakening_power
+			years = 15
+		}
+		add_prowess_skill = 3
+		add_prestige = 300
+		if = {
+			limit = {
+				any_parent = { has_variable = murim_clan_id }
+			}
+			random_parent = {
+				limit = { has_variable = murim_clan_id }
+				root = {
+					set_variable = {
+						name = murim_clan_id
+						value = prev.var:murim_clan_id
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_entry_path_exp2.0004
+				days = { 60 120 }
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Reject the martial world — stay in politics
+	option = {
+		name = murim_entry_path_exp2.0003.b
+		add_diplomacy_skill = 2
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = rejected_martial_bloodline
+			years = 10
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Seek out the parent who hid this from you
+	option = {
+		name = murim_entry_path_exp2.0003.c
+		set_variable = { name = murim_cultivation_level value = 1 }
+		add_character_modifier = {
+			modifier = searching_for_martial_parent
+			years = 5
+		}
+		add_stress = 20
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0004 — Noble Blood Path: Clan Inheritance Challenge
+# Noble heir must prove worthy of clan birthright
+######################################
+murim_entry_path_exp2.0004 = {
+	type = character_event
+	title = murim_entry_path_exp2.0004.t
+	desc = murim_entry_path_exp2.0004.desc
+	theme = martial_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:rival_heir
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = noble_blood_martial
+		has_character_flag = noble_blood_awakened
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				any_courtier = {
+					has_variable = murim_clan_id
+					var:murim_clan_id = root.var:murim_clan_id
+					NOT = { this = root }
+					prowess >= 12
+				}
+			}
+			random_courtier = {
+				limit = {
+					has_variable = murim_clan_id
+					var:murim_clan_id = root.var:murim_clan_id
+					NOT = { this = root }
+					prowess >= 12
+				}
+				save_scope_as = rival_heir
+			}
+		}
+	}
+
+	# Prove your worth through combat
+	option = {
+		name = murim_entry_path_exp2.0004.a
+		trigger = {
+			exists = scope:rival_heir
+		}
+		duel = {
+			skill = prowess
+			target = scope:rival_heir
+			50 = {
+				desc = murim_entry_path_exp2.0004.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				send_interface_toast = {
+					title = murim_entry_path_exp2.0004.a.success.toast
+					left_icon = root
+					add_prestige = 500
+					add_trait = proven_heir
+					add_character_modifier = { modifier = proven_clan_heir years = 20 }
+					change_variable = { name = murim_cultivation_level add = 1 }
+				}
+			}
+			50 = {
+				desc = murim_entry_path_exp2.0004.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				send_interface_toast = {
+					title = murim_entry_path_exp2.0004.a.failure.toast
+					left_icon = root
+					add_prestige = -200
+					add_character_modifier = { modifier = failed_heir_challenge years = 5 }
+					health = -1
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Prove through scholarship instead
+	option = {
+		name = murim_entry_path_exp2.0004.b
+		trigger = {
+			learning >= 14
+		}
+		add_learning_skill = 2
+		add_trait = scholarly_heir
+		add_character_modifier = {
+			modifier = heir_through_knowledge
+			years = 15
+		}
+		add_prestige = 300
+		ai_chance = { base = 25 }
+	}
+
+	# Renounce the inheritance
+	option = {
+		name = murim_entry_path_exp2.0004.c
+		add_prestige = -300
+		add_piety = 200
+		remove_trait = noble_blood_martial
+		add_trait = renounced_heir
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0005 — Wandering Path: Ancient Scroll Discovery
+# Traveler finds an ancient martial arts manual
+######################################
+murim_entry_path_exp2.0005 = {
+	type = character_event
+	title = murim_entry_path_exp2.0005.t
+	desc = murim_entry_path_exp2.0005.desc
+	theme = mystic_theme
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		NOT = { has_variable = murim_cultivation_level }
+		NOT = { has_character_flag = wandering_path_started }
+		learning >= 10
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = curious
+		}
+		modifier = {
+			add = 2
+			has_trait = wanderer
+		}
+	}
+
+	immediate = {
+		set_character_flag = wandering_path_started
+	}
+
+	# Study the scroll immediately
+	option = {
+		name = murim_entry_path_exp2.0005.a
+		set_variable = { name = murim_cultivation_level value = 1 }
+		add_trait = self_taught_martial_artist
+		add_character_modifier = {
+			modifier = ancient_scroll_student
+			years = 10
+		}
+		add_learning_skill = 2
+		add_prowess_skill = 2
+		hidden_effect = {
+			trigger_event = {
+				id = murim_entry_path_exp2.0006
+				days = { 60 180 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Seek a master to interpret the scroll
+	option = {
+		name = murim_entry_path_exp2.0005.b
+		set_variable = { name = murim_cultivation_level value = 1 }
+		add_character_modifier = {
+			modifier = seeking_scroll_interpreter
+			years = 3
+		}
+		ai_chance = { base = 25 }
+	}
+
+	# Sell the scroll — it's worth a fortune
+	option = {
+		name = murim_entry_path_exp2.0005.c
+		add_gold = 500
+		add_prestige = -100
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0006 — Wandering Path: Mysterious Hermit Teacher
+# Self-taught martial artist meets a reclusive master
+######################################
+murim_entry_path_exp2.0006 = {
+	type = character_event
+	title = murim_entry_path_exp2.0006.t
+	desc = murim_entry_path_exp2.0006.desc
+	theme = education_theme
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:hermit_master
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = self_taught_martial_artist
+		has_character_flag = wandering_path_started
+	}
+
+	immediate = {
+		create_character = {
+			template = murim_hermit_master_template
+			save_scope_as = hermit_master
+		}
+	}
+
+	# Train under the hermit — accept harsh conditions
+	option = {
+		name = murim_entry_path_exp2.0006.a
+		add_prowess_skill = 4
+		add_learning_skill = 2
+		change_variable = { name = murim_cultivation_level add = 2 }
+		add_character_modifier = {
+			modifier = hermit_trained
+			years = 15
+		}
+		set_relation_mentor = scope:hermit_master
+		add_stress = 20
+		ai_chance = { base = 60 }
+	}
+
+	# Learn only the basics and continue wandering
+	option = {
+		name = murim_entry_path_exp2.0006.b
+		add_prowess_skill = 2
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_character_modifier = {
+			modifier = brief_hermit_training
+			years = 5
+		}
+		ai_chance = { base = 25 }
+	}
+
+	# Challenge the hermit to a duel
+	option = {
+		name = murim_entry_path_exp2.0006.c
+		trigger = {
+			has_trait = brave
+		}
+		duel = {
+			skill = prowess
+			target = scope:hermit_master
+			20 = {
+				desc = murim_entry_path_exp2.0006.c.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 500
+				change_variable = { name = murim_cultivation_level add = 3 }
+				add_trait = defeated_hermit_master
+			}
+			80 = {
+				desc = murim_entry_path_exp2.0006.c.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				health = -2
+				add_character_modifier = { modifier = humbled_by_hermit years = 5 }
+				set_relation_mentor = scope:hermit_master
+				change_variable = { name = murim_cultivation_level add = 1 }
+			}
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0007 — Forced Conscription Path: Pressed Into Service
+# Character is forcibly recruited by a martial clan
+######################################
+murim_entry_path_exp2.0007 = {
+	type = character_event
+	title = murim_entry_path_exp2.0007.t
+	desc = murim_entry_path_exp2.0007.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+	right_portrait = {
+		character = scope:conscriptor
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		NOT = { has_variable = murim_cultivation_level }
+		NOT = { has_character_flag = forced_conscription_started }
+		age >= 14
+		age <= 30
+		prowess >= 6
+		any_ruler = {
+			OR = {
+				has_trait = heavenly_demon_member
+				has_trait = phantom_blade_member
+				has_trait = iron_fist_member
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			is_lowborn = yes
+		}
+	}
+
+	immediate = {
+		set_character_flag = forced_conscription_started
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = phantom_blade_member
+					has_trait = iron_fist_member
+				}
+			}
+			save_scope_as = conscriptor
+		}
+	}
+
+	# Submit to conscription — survive and grow strong
+	option = {
+		name = murim_entry_path_exp2.0007.a
+		set_variable = { name = murim_cultivation_level value = 1 }
+		set_variable = { name = murim_clan_id value = scope:conscriptor.var:murim_clan_id }
+		add_trait = conscripted_martial_artist
+		add_character_modifier = {
+			modifier = forced_into_martial_world
+			years = 10
+		}
+		add_stress = 40
+		scope:conscriptor = {
+			add_opinion = {
+				target = root
+				modifier = obedient_conscript
+				opinion = 10
+			}
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_entry_path_exp2.0008
+				days = { 60 120 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Fight back against the conscriptors
+	option = {
+		name = murim_entry_path_exp2.0007.b
+		duel = {
+			skill = prowess
+			target = scope:conscriptor
+			15 = {
+				desc = murim_entry_path_exp2.0007.b.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 300
+				add_trait = resisted_conscription
+				set_variable = { name = murim_cultivation_level value = 1 }
+			}
+			85 = {
+				desc = murim_entry_path_exp2.0007.b.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				health = -2
+				set_variable = { name = murim_cultivation_level value = 1 }
+				set_variable = { name = murim_clan_id value = scope:conscriptor.var:murim_clan_id }
+				add_trait = broken_conscript
+				add_stress = 60
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Flee — run far away
+	option = {
+		name = murim_entry_path_exp2.0007.c
+		random = {
+			chance = 50
+			add_prestige = -100
+			add_character_modifier = {
+				modifier = escaped_conscription
+				years = 5
+			}
+		}
+		random = {
+			chance = 50
+			set_variable = { name = murim_cultivation_level value = 1 }
+			set_variable = { name = murim_clan_id value = scope:conscriptor.var:murim_clan_id }
+			add_trait = caught_and_conscripted
+			add_stress = 50
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0008 — Forced Path: Breaking Free from Chains
+# Conscript plans escape or rises through ranks
+######################################
+murim_entry_path_exp2.0008 = {
+	type = character_event
+	title = murim_entry_path_exp2.0008.t
+	desc = murim_entry_path_exp2.0008.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = conscripted_martial_artist
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 2
+	}
+
+	# Plot an escape
+	option = {
+		name = murim_entry_path_exp2.0008.a
+		trigger = {
+			intrigue >= 10
+		}
+		duel = {
+			skill = intrigue
+			value = 40
+			50 = {
+				desc = murim_entry_path_exp2.0008.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				remove_trait = conscripted_martial_artist
+				add_trait = escaped_conscript
+				remove_variable = murim_clan_id
+				add_prestige = 200
+				add_character_modifier = { modifier = free_at_last years = 10 }
+			}
+			50 = {
+				desc = murim_entry_path_exp2.0008.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				add_stress = 40
+				health = -1
+				add_character_modifier = { modifier = failed_escape_punished years = 3 }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Embrace the clan — rise through ranks
+	option = {
+		name = murim_entry_path_exp2.0008.b
+		remove_trait = conscripted_martial_artist
+		add_trait = loyal_convert
+		add_prowess_skill = 2
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_character_modifier = {
+			modifier = embraced_new_clan
+			years = 15
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Become a double agent for orthodox clans
+	option = {
+		name = murim_entry_path_exp2.0008.c
+		trigger = {
+			intrigue >= 14
+		}
+		add_trait = double_agent
+		add_intrigue_skill = 3
+		add_secret = {
+			type = secret_double_agent
+			target = root
+		}
+		add_character_modifier = {
+			modifier = double_agent_infiltrator
+			years = 20
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0009 — All Paths: First Real Combat
+# New martial artist faces their first real life-or-death fight
+######################################
+murim_entry_path_exp2.0009 = {
+	type = character_event
+	title = murim_entry_path_exp2.0009.t
+	desc = murim_entry_path_exp2.0009.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:bandit_leader
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 1
+		var:murim_cultivation_level <= 3
+		NOT = { has_character_flag = first_real_combat }
+	}
+
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 3
+			has_trait = orphan_recruit
+		}
+		modifier = {
+			add = 2
+			has_trait = conscripted_martial_artist
+		}
+	}
+
+	immediate = {
+		set_character_flag = first_real_combat
+		create_character = {
+			template = murim_bandit_template
+			save_scope_as = bandit_leader
+		}
+	}
+
+	# Fight with everything you have
+	option = {
+		name = murim_entry_path_exp2.0009.a
+		duel = {
+			skill = prowess
+			target = scope:bandit_leader
+			55 = {
+				desc = murim_entry_path_exp2.0009.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				send_interface_toast = {
+					title = murim_entry_path_exp2.0009.a.success.toast
+					left_icon = root
+					add_prestige = 200
+					add_prowess_skill = 1
+					add_trait = blooded_warrior
+					scope:bandit_leader = {
+						death = { death_reason = death_battle killer = root }
+					}
+					add_character_modifier = { modifier = first_kill_experience years = 5 }
+				}
+			}
+			45 = {
+				desc = murim_entry_path_exp2.0009.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				send_interface_toast = {
+					title = murim_entry_path_exp2.0009.a.failure.toast
+					left_icon = root
+					health = -2
+					add_trait = combat_scarred
+					add_character_modifier = { modifier = nearly_died_first_fight years = 5 }
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Use cunning instead of brute force
+	option = {
+		name = murim_entry_path_exp2.0009.b
+		trigger = {
+			intrigue >= 10
+		}
+		add_intrigue_skill = 1
+		scope:bandit_leader = {
+			death = { death_reason = death_murder killer = root }
+		}
+		add_character_modifier = {
+			modifier = clever_first_victory
+			years = 5
+		}
+		add_dread = 10
+		ai_chance = { base = 25 }
+	}
+
+	# Run and live to fight another day
+	option = {
+		name = murim_entry_path_exp2.0009.c
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = fled_first_combat
+			years = 3
+		}
+		add_stress = 20
+		ai_chance = { base = 15 }
+	}
+}
+
+######################################
+# EVENT 0010 — All Paths: Choosing Your Martial Identity
+# After entering the martial world, define who you'll become
+######################################
+murim_entry_path_exp2.0010 = {
+	type = character_event
+	title = murim_entry_path_exp2.0010.t
+	desc = murim_entry_path_exp2.0010.desc
+	theme = education_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 2
+		NOT = { has_character_flag = martial_identity_chosen }
+		OR = {
+			has_trait = orphan_recruit
+			has_trait = noble_blood_martial
+			has_trait = self_taught_martial_artist
+			has_trait = conscripted_martial_artist
+			has_trait = loyal_convert
+			has_trait = escaped_conscript
+		}
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = martial_identity_chosen
+	}
+
+	# The Protector — defend the weak
+	option = {
+		name = murim_entry_path_exp2.0010.a
+		add_trait = martial_protector
+		add_diplomacy_skill = 2
+		add_prowess_skill = 1
+		add_piety = 200
+		add_character_modifier = {
+			modifier = protector_of_the_weak_identity
+			years = 30
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# The Seeker — pursue ultimate power
+	option = {
+		name = murim_entry_path_exp2.0010.b
+		add_trait = martial_seeker
+		add_learning_skill = 2
+		add_prowess_skill = 1
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = seeker_of_ultimate_power_identity
+			years = 30
+		}
+		change_variable = { name = murim_cultivation_level add = 1 }
+		ai_chance = { base = 30 }
+	}
+
+	# The Shadow — work from the darkness
+	option = {
+		name = murim_entry_path_exp2.0010.c
+		add_trait = martial_shadow
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = shadow_operative_identity
+			years = 30
+		}
+		add_dread = 15
+		ai_chance = { base = 20 }
+	}
+
+	# The Leader — build something greater
+	option = {
+		name = murim_entry_path_exp2.0010.d
+		add_trait = martial_leader
+		add_diplomacy_skill = 2
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = born_leader_identity
+			years = 30
+		}
+		add_prestige = 300
+		ai_chance = { base = 20 }
+	}
+}
