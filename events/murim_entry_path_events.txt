@@ -1,0 +1,615 @@
+############################################
+# MURIM ENTRY PATH EVENTS
+# 4 ways non-martial characters discover
+# the martial world and begin their journey.
+# Cross-refs: murim_discovery_triggers.txt,
+#   murim_on_actions.txt (yearly pulse),
+#   murim_clan_membership_effects.txt (sect join),
+#   murim_training_events.txt (first training)
+# GENDER: All paths equally available to men and women.
+# GEOGRAPHY: China is center, Goryeo secondary,
+#            rest of world is periphery.
+############################################
+
+namespace = murim_entry
+
+############################################
+# PATH 1: LANDLESS ADVENTURER
+# A wandering character with no lands stumbles
+# into the martial world through desperation.
+############################################
+
+murim_entry.0001 = {
+	type = character_event
+	title = murim_entry.0001.t
+	desc = murim_entry.0001.desc
+	theme = martial
+	override_background = { reference = wilderness }
+
+	trigger = {
+		is_landed = no
+		is_alive = yes
+		age >= 14
+		age <= 40
+		NOT = { has_trait = martial_artist }
+		NOT = { has_character_flag = murim_entry_attempted }
+		OR = {
+			prowess >= 8
+			has_trait = brave
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		add_character_flag = { flag = murim_entry_attempted }
+	}
+
+	# Accept the martial path - become a wandering martial artist
+	option = {
+		name = murim_entry.0001.a
+		# "I have nothing to lose. I will learn the way of the fist."
+		add_trait = martial_artist
+		add_trait = murim_outer_qi
+		add_prowess_skill = 3
+		set_variable = { name = murim_cultivation_rank value = 1 }
+		set_variable = { name = murim_cultivation_xp value = 0 }
+		set_variable = { name = murim_entry_path value = 1 }
+		add_character_flag = { flag = murim_wandering_martial_artist }
+		add_character_modifier = { modifier = murim_desperate_determination years = 3 }
+		# Random encounter with a traveling master
+		random_list = {
+			25 = {
+				trigger_event = { id = murim_entry.0010 days = { 30 90 } }
+			}
+			25 = {
+				trigger_event = { id = murim_entry.0011 days = { 30 90 } }
+			}
+			25 = {
+				trigger_event = { id = murim_entry.0012 days = { 30 90 } }
+			}
+			25 = {
+				trigger_event = { id = murim_entry.0013 days = { 30 90 } }
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss ambitious = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 60 modifier = { add = 30 has_trait = brave } modifier = { add = -40 has_trait = craven } }
+	}
+
+	# Refuse - too dangerous
+	option = {
+		name = murim_entry.0001.b
+		# "The martial world is not for me."
+		add_character_flag = { flag = murim_rejected_martial_path }
+		add_prestige = -10
+		ai_chance = { base = 40 modifier = { add = 40 has_trait = craven } }
+	}
+}
+
+############################################
+# PATH 2: LANDED NOBLE
+# A ruler or landed noble discovers martial
+# artists operating within their domain.
+############################################
+
+murim_entry.0002 = {
+	type = character_event
+	title = murim_entry.0002.t
+	desc = murim_entry.0002.desc
+	theme = intrigue
+	override_background = { reference = throne_room }
+
+	trigger = {
+		is_landed = yes
+		is_alive = yes
+		age >= 16
+		NOT = { has_trait = martial_artist }
+		NOT = { has_character_flag = murim_entry_attempted }
+		OR = {
+			culture = { has_cultural_pillar = heritage_chinese }
+			culture = { has_cultural_pillar = heritage_korean }
+			any_courtier = { has_trait = martial_artist }
+		}
+	}
+
+	immediate = {
+		add_character_flag = { flag = murim_entry_attempted }
+		random_courtier = {
+			limit = { has_trait = martial_artist }
+			save_scope_as = martial_courtier
+		}
+	}
+
+	# Secretly train under your martial courtier
+	option = {
+		name = murim_entry.0002.a
+		# "Teach me. I wish to understand this hidden world."
+		trigger = { exists = scope:martial_courtier }
+		add_trait = martial_artist
+		add_trait = murim_outer_qi
+		add_prowess_skill = 2
+		set_variable = { name = murim_cultivation_rank value = 1 }
+		set_variable = { name = murim_cultivation_xp value = 10 }
+		set_variable = { name = murim_entry_path value = 2 }
+		add_character_flag = { flag = murim_noble_cultivator }
+		if = {
+			limit = { exists = scope:martial_courtier }
+			add_opinion = { target = scope:martial_courtier modifier = grateful_opinion value = 30 }
+			scope:martial_courtier = {
+				add_opinion = { target = root modifier = opinion_mentor_bond value = 25 }
+			}
+		}
+		trigger_event = { id = murim_entry.0020 days = { 60 180 } }
+		ai_chance = { base = 50 modifier = { add = 20 has_trait = ambitious } modifier = { add = 20 learning >= 12 } }
+	}
+
+	# Observe from a distance - gain awareness only
+	option = {
+		name = murim_entry.0002.b
+		# "I will watch from the shadows. Knowledge is power."
+		add_trait = martial_awareness
+		set_variable = { name = murim_witnessed_martial_arts value = 1 }
+		set_variable = { name = murim_entry_path value = 0 }
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = patient } }
+	}
+
+	# Suppress the martial arts in your domain
+	option = {
+		name = murim_entry.0002.c
+		# "These martial artists are a threat to my authority."
+		add_character_flag = { flag = murim_hostile_to_martial_world }
+		add_prestige = 50
+		if = {
+			limit = { exists = scope:martial_courtier }
+			scope:martial_courtier = {
+				add_opinion = { target = root modifier = opinion_betrayed value = -40 }
+			}
+		}
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = paranoid } }
+	}
+}
+
+############################################
+# PATH 3: COURTIER DISCOVERY
+# A courtier or vassal witnesses martial arts
+# and seeks to learn from their liege's guests.
+############################################
+
+murim_entry.0003 = {
+	type = character_event
+	title = murim_entry.0003.t
+	desc = murim_entry.0003.desc
+	theme = education
+	override_background = { reference = courtyard }
+
+	trigger = {
+		is_landed = no
+		is_courtier = yes
+		is_alive = yes
+		age >= 14
+		age <= 45
+		NOT = { has_trait = martial_artist }
+		NOT = { has_character_flag = murim_entry_attempted }
+		OR = {
+			learning >= 10
+			prowess >= 8
+			has_trait = curious
+			has_trait = diligent
+		}
+		liege = {
+			any_courtier = { has_trait = martial_artist }
+		}
+	}
+
+	immediate = {
+		add_character_flag = { flag = murim_entry_attempted }
+		liege = {
+			random_courtier = {
+				limit = { has_trait = martial_artist }
+				save_scope_as = court_martial_master
+			}
+		}
+	}
+
+	# Beg the martial artist for teaching
+	option = {
+		name = murim_entry.0003.a
+		# "Master, please accept me as your student."
+		trigger = { exists = scope:court_martial_master }
+		add_trait = martial_artist
+		add_trait = murim_outer_qi
+		add_prowess_skill = 2
+		set_variable = { name = murim_cultivation_rank value = 1 }
+		set_variable = { name = murim_cultivation_xp value = 5 }
+		set_variable = { name = murim_entry_path value = 3 }
+		add_character_flag = { flag = murim_courtier_cultivator }
+		if = {
+			limit = { exists = scope:court_martial_master }
+			scope:court_martial_master = {
+				add_opinion = { target = root modifier = opinion_mentor_bond value = 20 }
+			}
+		}
+		trigger_event = { id = murim_entry.0030 days = { 30 120 } }
+		ai_chance = { base = 50 modifier = { add = 20 has_trait = diligent } modifier = { add = -30 has_trait = lazy } }
+	}
+
+	# Decline - focus on court life
+	option = {
+		name = murim_entry.0003.b
+		# "My place is in the court, not on the battlefield."
+		add_character_flag = { flag = murim_rejected_martial_path }
+		ai_chance = { base = 50 modifier = { add = 30 has_trait = content } }
+	}
+}
+
+############################################
+# PATH 4: EXPLORATION DISCOVERY
+# Character stumbles upon martial world during
+# travel, exploration, or a chance encounter.
+############################################
+
+murim_entry.0004 = {
+	type = character_event
+	title = murim_entry.0004.t
+	desc = murim_entry.0004.desc
+	theme = adventure
+	override_background = { reference = mountains }
+
+	trigger = {
+		is_alive = yes
+		age >= 14
+		age <= 50
+		NOT = { has_trait = martial_artist }
+		NOT = { has_character_flag = murim_entry_attempted }
+		OR = {
+			has_trait = adventurer
+			has_trait = brave
+			has_trait = curious
+			is_travelling = yes
+		}
+	}
+
+	immediate = {
+		add_character_flag = { flag = murim_entry_attempted }
+	}
+
+	# Follow the strange warrior into the mountains
+	option = {
+		name = murim_entry.0004.a
+		# "Something about this warrior draws me. I must follow."
+		add_trait = martial_artist
+		add_trait = murim_outer_qi
+		add_prowess_skill = 4
+		set_variable = { name = murim_cultivation_rank value = 1 }
+		set_variable = { name = murim_cultivation_xp value = 15 }
+		set_variable = { name = murim_entry_path value = 4 }
+		add_character_flag = { flag = murim_fate_chosen }
+		add_character_modifier = { modifier = murim_mysterious_encounter years = 2 }
+		# The explorer path gives slightly better start due to rare encounter
+		random_list = {
+			20 = {
+				# Found a hidden cave with ancient manual
+				add_character_modifier = { modifier = murim_ancient_manual_insight years = 5 }
+				change_variable = { name = murim_cultivation_xp add = 30 }
+			}
+			30 = {
+				# The warrior teaches you basics before vanishing
+				add_prowess_skill = 2
+			}
+			30 = {
+				# You witness a duel between masters
+				add_character_flag = { flag = murim_witnessed_master_duel }
+				change_variable = { name = murim_cultivation_xp add = 20 }
+			}
+			20 = {
+				# Near-death encounter - survive and awaken qi
+				add_prowess_skill = 3
+				add_stress = 20
+				add_character_modifier = { modifier = murim_near_death_awakening years = 3 }
+			}
+		}
+		trigger_event = { id = murim_entry.0040 days = { 15 60 } }
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 60 modifier = { add = 30 has_trait = brave } }
+	}
+
+	# Turn back - this is too strange
+	option = {
+		name = murim_entry.0004.b
+		# "I saw nothing. This never happened."
+		add_character_flag = { flag = murim_rejected_martial_path }
+		add_stress = 10
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = craven } }
+	}
+}
+
+############################################
+# FOLLOW-UP: ADVENTURER MEETS WANDERING MASTER
+############################################
+
+murim_entry.0010 = {
+	type = character_event
+	title = murim_entry.0010.t
+	desc = murim_entry.0010.desc
+	theme = martial
+	override_background = { reference = tavern }
+
+	immediate = {
+		# Find a suitable wandering master
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				prowess >= 15
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 has_trait = compassionate }
+				modifier = { add = 10 has_trait = patient }
+			}
+			save_scope_as = wandering_master
+		}
+	}
+
+	# The master accepts you - Mount Hua path
+	option = {
+		name = murim_entry.0010.a
+		trigger = { exists = scope:wandering_master }
+		# "The master sees potential in you. Join Mount Hua Sect."
+		save_scope_value_as = { name = sect_type value = flag:mount_hua }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_character_modifier = { modifier = new_sect_member_enthusiasm years = 1 }
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = { base = 30 }
+	}
+
+	# The master sees darkness - Heavenly Demon path
+	option = {
+		name = murim_entry.0010.b
+		trigger = { exists = scope:wandering_master }
+		# "Your anger... it could be useful. The Heavenly Demon Sect welcomes the hungry."
+		save_scope_value_as = { name = sect_type value = flag:heavenly_demon }
+		murim_join_sect_as_outer_disciple_effect = yes
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = wrathful } modifier = { add = 20 has_trait = sadistic } }
+	}
+
+	# Train alone - no sect affiliation
+	option = {
+		name = murim_entry.0010.c
+		# "I walk my own path."
+		add_character_flag = { flag = murim_independent_martial_artist }
+		add_prowess_skill = 2
+		ai_chance = { base = 50 }
+	}
+}
+
+# Adventurer encounters Iron Fist Gate recruiters
+murim_entry.0011 = {
+	type = character_event
+	title = murim_entry.0011.t
+	desc = murim_entry.0011.desc
+	theme = martial
+	override_background = { reference = market }
+
+	immediate = { }
+
+	# Join Iron Fist Gate - they respect raw strength
+	option = {
+		name = murim_entry.0011.a
+		# "Show us your fists. If they're strong enough, you're in."
+		save_scope_value_as = { name = sect_type value = flag:iron_fist }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prowess_skill = 3
+		trigger_event = { id = murim_training.0001 days = { 15 45 } }
+		ai_chance = { base = 40 modifier = { add = 20 prowess >= 12 } }
+	}
+
+	# Decline and seek another clan
+	option = {
+		name = murim_entry.0011.b
+		# "I seek a different path."
+		ai_chance = { base = 60 }
+	}
+}
+
+# Adventurer meets Phantom Blade Sect assassin
+murim_entry.0012 = {
+	type = character_event
+	title = murim_entry.0012.t
+	desc = murim_entry.0012.desc
+	theme = intrigue
+	override_background = { reference = alley_night }
+
+	immediate = { }
+
+	# Accept the Phantom Blade's offer
+	option = {
+		name = murim_entry.0012.a
+		# "A blade in the dark... I can be that blade."
+		save_scope_value_as = { name = sect_type value = flag:phantom_blade }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prowess_skill = 2
+		add_intrigue_skill = 2
+		trigger_event = { id = murim_training.0001 days = { 15 45 } }
+		ai_chance = { base = 30 modifier = { add = 30 intrigue >= 14 } modifier = { add = 20 has_trait = deceitful } }
+	}
+
+	# Refuse - too dangerous
+	option = {
+		name = murim_entry.0012.b
+		# "I want nothing to do with assassins."
+		ai_chance = { base = 70 modifier = { add = -30 has_trait = deceitful } }
+	}
+}
+
+# Adventurer encounters Poison Flower Palace emissary
+murim_entry.0013 = {
+	type = character_event
+	title = murim_entry.0013.t
+	desc = murim_entry.0013.desc
+	theme = seduction
+	override_background = { reference = garden }
+
+	immediate = { }
+
+	# Accept the Poison Flower Palace's invitation
+	option = {
+		name = murim_entry.0013.a
+		# "Beauty and poison walk hand in hand. I will learn both."
+		save_scope_value_as = { name = sect_type value = flag:poison_flower }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prowess_skill = 1
+		add_learning_skill = 2
+		add_intrigue_skill = 1
+		trigger_event = { id = murim_training.0001 days = { 15 45 } }
+		ai_chance = { base = 30 modifier = { add = 20 learning >= 12 } modifier = { add = 20 has_trait = ambitious } }
+	}
+
+	# Decline
+	option = {
+		name = murim_entry.0013.b
+		# "Poison is not my way."
+		ai_chance = { base = 70 }
+	}
+}
+
+############################################
+# FOLLOW-UP: NOBLE BEGINS SECRET TRAINING
+############################################
+
+murim_entry.0020 = {
+	type = character_event
+	title = murim_entry.0020.t
+	desc = murim_entry.0020.desc
+	theme = education
+	override_background = { reference = study }
+
+	immediate = { }
+
+	# Train in orthodox arts (Wudang meditation style)
+	option = {
+		name = murim_entry.0020.a
+		# "The Wudang way of balance suits a ruler."
+		save_scope_value_as = { name = sect_type value = flag:wudang }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_learning_skill = 2
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = just } }
+	}
+
+	# Train in Shaolin discipline
+	option = {
+		name = murim_entry.0020.b
+		# "The Shaolin monks teach body and mind as one."
+		save_scope_value_as = { name = sect_type value = flag:shaolin }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prowess_skill = 2
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = temperate } }
+	}
+
+	# Train independently - no sect
+	option = {
+		name = murim_entry.0020.c
+		# "A ruler bows to no sect. I train alone."
+		add_character_flag = { flag = murim_independent_martial_artist }
+		add_prowess_skill = 1
+		add_learning_skill = 1
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = arrogant } }
+	}
+}
+
+############################################
+# FOLLOW-UP: COURTIER FIRST LESSON
+############################################
+
+murim_entry.0030 = {
+	type = character_event
+	title = murim_entry.0030.t
+	desc = murim_entry.0030.desc
+	theme = education
+	override_background = { reference = courtyard }
+
+	immediate = { }
+
+	# Focus on sword arts (Beggar Sect pragmatic style)
+	option = {
+		name = murim_entry.0030.a
+		# "The Beggar Sect teaches survival first. That's what I need."
+		save_scope_value_as = { name = sect_type value = flag:beggar }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prowess_skill = 2
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = { base = 30 }
+	}
+
+	# Focus on internal arts (Mount Hua elegant style)
+	option = {
+		name = murim_entry.0030.b
+		# "Mount Hua's sword dances are legendary. I wish to learn."
+		save_scope_value_as = { name = sect_type value = flag:mount_hua }
+		murim_join_sect_as_outer_disciple_effect = yes
+		add_prowess_skill = 1
+		add_diplomacy_skill = 1
+		trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		ai_chance = { base = 30 modifier = { add = 20 diplomacy >= 12 } }
+	}
+
+	# Stay independent
+	option = {
+		name = murim_entry.0030.c
+		# "I will learn the basics and find my own way."
+		add_character_flag = { flag = murim_independent_martial_artist }
+		add_prowess_skill = 1
+		ai_chance = { base = 40 }
+	}
+}
+
+############################################
+# FOLLOW-UP: EXPLORER DEEP MOUNTAINS
+############################################
+
+murim_entry.0040 = {
+	type = character_event
+	title = murim_entry.0040.t
+	desc = murim_entry.0040.desc
+	theme = adventure
+	override_background = { reference = mountains }
+
+	immediate = { }
+
+	# The ancient ruin holds Tang Clan secrets
+	option = {
+		name = murim_entry.0040.a
+		trigger = {
+			OR = {
+				culture = { has_cultural_pillar = heritage_chinese }
+				has_dynasty_flag = tang_imperial_bloodline
+			}
+		}
+		# "These poison manuals bear the Tang Clan seal..."
+		murim_tang_birthright_enrollment_effect = yes
+		add_character_modifier = { modifier = murim_ancient_manual_insight years = 5 }
+		ai_chance = { base = 30 }
+	}
+
+	# Train in the mountains - become a hermit cultivator
+	option = {
+		name = murim_entry.0040.b
+		# "I will train here, alone with the wind and stone."
+		add_character_flag = { flag = murim_hermit_cultivator }
+		add_prowess_skill = 3
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		add_character_modifier = { modifier = murim_mountain_hermit_focus years = 5 }
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = reclusive } }
+	}
+
+	# Descend and seek a proper sect
+	option = {
+		name = murim_entry.0040.c
+		# "I've seen enough. Time to find a real teacher."
+		trigger_event = { id = murim_entry.0010 days = { 30 90 } }
+		ai_chance = { base = 30 }
+	}
+}
