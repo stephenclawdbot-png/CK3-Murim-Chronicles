@@ -1,9 +1,11 @@
 # Murim Chronicles - Scripted Triggers
 # Master trigger file - ALL trait references verified against actual trait definitions
 # Cross-references: murim_cultivation_traits.txt, murim_combat_trauma_traits.txt,
-#   murim_technique_traits.txt, murim_ranking_traits.txt, 01_martial_traits.txt
+#   murim_technique_traits.txt, murim_ranking_traits.txt, 01_martial_traits.txt,
+#   murim_clan_traits.txt (martial_artist base trait)
 # POLISH PASS: Heartbeat #52 - Fixed all broken trait references
 # POLISH PASS: Heartbeat #54 - Fixed NAND (invalid CK3) to NOT wrapper
+# POLISH PASS: Heartbeat #58 - Added martial_artist base trait to master trigger
 
 ######################################
 # CORE MARTIAL ARTIST CHECKS
@@ -11,6 +13,10 @@
 
 murim_is_martial_artist_trigger = {
 	OR = {
+		# Base martial artist trait (from murim_clan_traits.txt)
+		# Characters entering via entry paths get this first
+		has_trait = martial_artist
+		# Variable-based check (from murim_variable_init.txt)
 		has_variable = murim_cultivator
 		# Cultivation realm traits (murim_cultivation_traits.txt)
 		has_trait = mortal_realm
@@ -33,6 +39,17 @@ murim_is_martial_artist_trigger = {
 		has_trait = murim_rank_top_10
 		has_trait = murim_rank_top_5
 		has_trait = murim_rank_first
+		# Clan membership traits (any clan member is a martial artist)
+		has_trait = mount_hua_disciple
+		has_trait = wudang_disciple
+		has_trait = shaolin_monk
+		has_trait = heavenly_demon_disciple
+		has_trait = beggar_sect_member
+		has_trait = iron_fist_disciple
+		has_trait = poison_flower_disciple
+		has_trait = phantom_blade_disciple
+		has_trait = tang_clan_disciple
+		has_trait = tang_clan_member
 	}
 }
 
@@ -78,6 +95,49 @@ murim_is_peak_cultivator_trigger = {
 }
 
 ######################################
+# CLAN MEMBERSHIP TRIGGERS
+######################################
+
+murim_is_clan_member_trigger = {
+	OR = {
+		has_trait = mount_hua_disciple
+		has_trait = wudang_disciple
+		has_trait = shaolin_monk
+		has_trait = heavenly_demon_disciple
+		has_trait = beggar_sect_member
+		has_trait = iron_fist_disciple
+		has_trait = poison_flower_disciple
+		has_trait = phantom_blade_disciple
+		has_trait = tang_clan_disciple
+		has_trait = tang_clan_member
+	}
+}
+
+murim_is_orthodox_clan_member_trigger = {
+	OR = {
+		has_trait = mount_hua_disciple
+		has_trait = wudang_disciple
+		has_trait = shaolin_monk
+		has_trait = beggar_sect_member
+		has_trait = iron_fist_disciple
+		has_trait = tang_clan_disciple
+		has_trait = tang_clan_member
+	}
+}
+
+murim_is_unorthodox_clan_member_trigger = {
+	OR = {
+		has_trait = heavenly_demon_disciple
+		has_trait = poison_flower_disciple
+		has_trait = phantom_blade_disciple
+	}
+}
+
+murim_is_clanless_trigger = {
+	NOT = { murim_is_clan_member_trigger = yes }
+}
+
+######################################
 # RANKING SYSTEM TRIGGERS
 ######################################
 
@@ -113,7 +173,6 @@ murim_is_number_one_trigger = {
 murim_is_unranked_trigger = {
 	OR = {
 		has_trait = murim_unranked
-		# FIXED: NAND is not valid CK3 syntax - use NOT wrapper
 		NOT = { murim_is_top_50_martial_artist_trigger = yes }
 	}
 }
@@ -158,192 +217,72 @@ murim_can_be_challenged_for_rank_trigger = {
 
 murim_ai_should_challenge_for_rank_trigger = {
 	is_ai = yes
+	is_alive = yes
 	murim_can_challenge_for_rank_trigger = yes
-	prowess >= 15
+	NOT = { has_character_modifier = murim_recent_challenge_cooldown }
 	OR = {
 		has_trait = ambitious
 		has_trait = brave
-		has_trait = wrathful
+		prowess >= 18
 	}
 }
 
 ######################################
-# TECHNIQUE CHECKS
+# GEOGRAPHY TRIGGERS
 ######################################
 
-murim_has_combat_technique_trigger = {
+murim_is_china_region_trigger = {
 	OR = {
-		has_trait = sword_qi_mastery
-		has_trait = iron_fist_mastery
-		has_trait = palm_strike_mastery
-		has_trait = body_hardening_mastery
-		has_trait = hidden_weapon_mastery
-		has_trait = movement_mastery
-		has_trait = internal_alchemy_mastery
-		has_trait = formation_mastery
-		has_trait = divine_sense_mastery
+		has_variable = murim_china_region
+		# Capital is in East Asia cultural region
+		capital_province = {
+			OR = {
+				geographical_region = world_china
+				geographical_region = world_tibet
+			}
+		}
 	}
 }
 
-murim_has_sword_technique_trigger = {
-	has_trait = sword_qi_mastery
-}
-
-murim_has_body_technique_trigger = {
+murim_is_goryeo_region_trigger = {
 	OR = {
-		has_trait = iron_fist_mastery
-		has_trait = body_hardening_mastery
+		has_variable = murim_goryeo_region
+		capital_province = {
+			geographical_region = world_korea
+		}
 	}
 }
 
-murim_has_internal_technique_trigger = {
+murim_is_martial_heartland_trigger = {
 	OR = {
-		has_trait = internal_alchemy_mastery
-		has_trait = palm_strike_mastery
+		murim_is_china_region_trigger = yes
+		murim_is_goryeo_region_trigger = yes
 	}
 }
 
-murim_has_stealth_technique_trigger = {
-	OR = {
-		has_trait = hidden_weapon_mastery
-		has_trait = movement_mastery
-	}
+murim_is_periphery_trigger = {
+	NOT = { murim_is_martial_heartland_trigger = yes }
 }
 
 ######################################
-# COMBAT TRAUMA CHECKS
+# FACTION ALIGNMENT TRIGGERS
 ######################################
 
-murim_has_combat_trauma_trigger = {
+murim_is_orthodox_aligned_trigger = {
 	OR = {
-		has_trait = battle_hardened
-		has_trait = duel_scarred
-		has_trait = qi_crippled
-		has_trait = meridian_damaged
-		has_trait = death_touched
-		has_trait = berserker_rage
-		has_trait = survivor_guilt
-		has_trait = phantom_pain
-		has_trait = blood_frenzy
-		has_trait = shattered_core
+		has_variable = murim_faction_orthodox
+		murim_is_orthodox_clan_member_trigger = yes
 	}
 }
 
-murim_has_severe_trauma_trigger = {
+murim_is_unorthodox_aligned_trigger = {
 	OR = {
-		has_trait = qi_crippled
-		has_trait = shattered_core
-		has_trait = meridian_damaged
-		has_trait = death_touched
+		has_variable = murim_faction_unorthodox
+		murim_is_unorthodox_clan_member_trigger = yes
 	}
 }
 
-murim_has_qi_damage_trigger = {
-	OR = {
-		has_trait = qi_crippled
-		has_trait = shattered_core
-		has_trait = meridian_damaged
-	}
-}
-
-murim_has_mental_trauma_trigger = {
-	OR = {
-		has_trait = survivor_guilt
-		has_trait = phantom_pain
-		has_trait = berserker_rage
-		has_trait = blood_frenzy
-	}
-}
-
-######################################
-# DUEL ELIGIBILITY
-######################################
-
-murim_can_duel_trigger = {
-	is_alive = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	NOT = {
-		has_character_modifier = murim_recent_duel_cooldown
-	}
-}
-
-murim_can_accept_duel_trigger = {
-	is_alive = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-}
-
-murim_is_worthy_opponent_trigger = {
-	murim_is_martial_artist_trigger = yes
-	prowess >= 8
-	NOT = { has_trait = craven }
-}
-
-######################################
-# SECT MEMBERSHIP
-######################################
-
-murim_is_sect_member_trigger = {
-	OR = {
-		has_variable = murim_sect_id
-		has_character_modifier = murim_sect_loyalty
-	}
-}
-
-murim_is_sect_elder_trigger = {
-	murim_is_sect_member_trigger = yes
-	has_character_modifier = murim_sect_elder_wisdom
-}
-
-######################################
-# CULTIVATION APTITUDE
-######################################
-
-murim_has_high_aptitude_trigger = {
-	OR = {
-		has_trait = genius
-		has_trait = intelligent
-		has_trait = quick
-		has_trait = cultivation_prodigy
-		learning >= 15
-	}
-}
-
-murim_has_low_aptitude_trigger = {
-	OR = {
-		has_trait = dull
-		has_trait = slow
-		has_trait = stupid
-		learning < 5
-	}
-}
-
-######################################
-# INTERACTION PREREQUISITES
-######################################
-
-murim_can_teach_trigger = {
-	murim_is_martial_artist_trigger = yes
-	prowess >= 12
-	OR = {
-		murim_is_advanced_cultivator_trigger = yes
-		murim_has_combat_technique_trigger = yes
-	}
-}
-
-murim_can_learn_trigger = {
-	is_alive = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	NOT = { has_trait = qi_crippled }
-	NOT = { has_trait = shattered_core }
-}
-
-murim_can_dual_cultivate_trigger = {
-	murim_is_cultivator_trigger = yes
-	is_alive = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	NOT = { has_character_modifier = murim_qi_deviation_recovery }
+murim_is_faction_neutral_trigger = {
+	NOT = { murim_is_orthodox_aligned_trigger = yes }
+	NOT = { murim_is_unorthodox_aligned_trigger = yes }
 }
