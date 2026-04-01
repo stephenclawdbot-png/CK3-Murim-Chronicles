@@ -1,0 +1,1574 @@
+# Murim Chronicles - Orthodox vs Unorthodox Faction War Events
+# THE GREAT FACTION WAR: Erupts every 20-30 years. The defining conflict of the martial world.
+# ORTHODOX (Righteous Path): Mount Hua, Shaolin, Wudang, Tang, Beggar Sect, Iron Fist Gate
+# UNORTHODOX (Demonic Path): Heavenly Demon Sect (always leads), Poison Flower Palace, Phantom Blade Sect
+# INTEGRATION: murim_clan_triggers.txt (is_orthodox_faction, is_unorthodox_faction, all 9 clan checks)
+# INTEGRATION: murim_opinion_modifiers.txt (martial opinion changes from war events)
+# INTEGRATION: murim_ranking_events.txt (war heroes gain ranking points)
+# INTEGRATION: murim_china_center_triggers.txt (wars centered in China, spread outward)
+# INTEGRATION: murim_shadow_politics_events.txt (HD infiltration revealed during wars)
+# VANILLA SEPARATION: Faction wars are MARTIAL ONLY. No vanilla armies, no county occupation.
+#   Wars are fought through duels, raids, assassinations, and martial confrontations.
+#   Political rulers may be AFFECTED but wars don't use CK3 war system.
+
+namespace = murim_faction_war
+
+# =================================================================
+# EVENT 1: WAR BREWING - TENSION RISING (Prelude, fires 1-3 years before war)
+# =================================================================
+murim_faction_war.0001 = {
+	type = character_event
+	title = murim_faction_war.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = flag_orthodox_faction_member }
+				desc = murim_faction_war.0001.desc.orthodox
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = flag_unorthodox_faction_member }
+				desc = murim_faction_war.0001.desc.unorthodox
+			}
+			desc = murim_faction_war.0001.desc.neutral
+		}
+	}
+	theme = martial
+	
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_global_variable = murim_faction_war_active }
+		NOT = { has_global_variable = murim_faction_war_cooldown }
+		any_living_character = {
+			count >= 3
+			murim_is_clan_leader_trigger = yes
+			has_character_flag = flag_orthodox_faction_member
+		}
+		any_living_character = {
+			count >= 2
+			murim_is_clan_leader_trigger = yes
+			has_character_flag = flag_unorthodox_faction_member
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			any_living_character = {
+				has_character_flag = flag_heavenly_demon_puppet_emperor
+			}
+		}
+		modifier = {
+			add = 0.3
+			has_global_variable = murim_recent_cross_faction_murder
+		}
+	}
+	
+	immediate = {
+		set_global_variable = {
+			name = murim_faction_war_brewing
+			value = yes
+		}
+		set_variable = {
+			name = war_tension_level
+			value = 1
+		}
+	}
+	
+	# Option A: Rally your faction (faction member)
+	option = {
+		name = murim_faction_war.0001.a
+		trigger = {
+			OR = {
+				has_character_flag = flag_orthodox_faction_member
+				has_character_flag = flag_unorthodox_faction_member
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_war_rally_leader
+			years = 3
+		}
+		hidden_effect = {
+			set_variable = {
+				name = war_tension_level
+				value = 2
+			}
+		}
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = medium_stress_impact_gain
+		}
+	}
+	
+	# Option B: Counsel peace (try to prevent war)
+	option = {
+		name = murim_faction_war.0001.b
+		trigger = {
+			OR = {
+				has_character_flag = flag_orthodox_faction_member
+				has_character_flag = flag_unorthodox_faction_member
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_peacemaker_reputation
+			years = 5
+		}
+		random = {
+			chance = 25
+			modifier = {
+				add = 15
+				diplomacy >= 15
+			}
+			modifier = {
+				add = 10
+				has_trait = diplomat
+			}
+			# Peace succeeds - war delayed
+			set_global_variable = {
+				name = murim_faction_war_cooldown
+				value = yes
+			}
+			trigger_event = { id = murim_faction_war.0002 days = 30 }
+		}
+	}
+	
+	# Option C: Prepare secretly (neutral/independent)
+	option = {
+		name = murim_faction_war.0001.c
+		add_character_modifier = {
+			modifier = murim_war_profiteer_preparing
+			years = 2
+		}
+		hidden_effect = {
+			set_character_flag = {
+				flag = flag_faction_war_opportunist
+				years = 5
+			}
+		}
+	}
+	
+	# Option D: Flee the martial world temporarily
+	option = {
+		name = murim_faction_war.0001.d
+		trigger = {
+			has_trait = craven
+		}
+		add_character_modifier = {
+			modifier = murim_fled_faction_war
+			years = 5
+		}
+		add_prestige = -200
+		stress_impact = {
+			craven = medium_stress_impact_loss
+			brave = major_stress_impact_gain
+		}
+	}
+}
+
+# =================================================================
+# EVENT 2: PEACE NEGOTIATION (if counseled peace)
+# =================================================================
+murim_faction_war.0002 = {
+	type = character_event
+	title = murim_faction_war.0002.t
+	desc = murim_faction_war.0002.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_global_variable = murim_faction_war_cooldown
+	}
+	
+	# Option A: Summit at Shaolin (neutral ground)
+	option = {
+		name = murim_faction_war.0002.a
+		trigger = {
+			any_living_character = {
+				murim_is_clan_leader_trigger = yes
+				has_character_flag = flag_shaolin_member
+			}
+		}
+		hidden_effect = {
+			random = {
+				chance = 40
+				modifier = {
+					add = 20
+					diplomacy >= 18
+				}
+				# Peace holds
+				trigger_event = { id = murim_faction_war.0003 days = 60 }
+			}
+			random = {
+				chance = 60
+				# Peace fails, war erupts at summit
+				trigger_event = { id = murim_faction_war.0010 days = 60 }
+			}
+		}
+	}
+	
+	# Option B: Propose marriage alliance (cross-faction)
+	option = {
+		name = murim_faction_war.0002.b
+		trigger = {
+			any_close_family_member = {
+				is_adult = yes
+				is_married = no
+			}
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0004 days = 30 }
+		}
+	}
+	
+	# Option C: Give up on peace, prepare for war
+	option = {
+		name = murim_faction_war.0002.c
+		remove_global_variable = murim_faction_war_cooldown
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0010 days = 90 }
+		}
+	}
+}
+
+# =================================================================
+# EVENT 3: PEACE SUMMIT SUCCESS
+# =================================================================
+murim_faction_war.0003 = {
+	type = character_event
+	title = murim_faction_war.0003.t
+	desc = murim_faction_war.0003.desc
+	theme = diplomacy
+	
+	immediate = {
+		set_global_variable = {
+			name = murim_faction_war_cooldown
+			value = yes
+		}
+		# Peace lasts 10-15 years
+		set_global_variable = {
+			name = murim_peace_treaty_year
+			value = current_year
+		}
+	}
+	
+	# Option A: Celebrate - you prevented bloodshed
+	option = {
+		name = murim_faction_war.0003.a
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_faction_peacemaker
+			years = 10
+		}
+		every_living_character = {
+			limit = { murim_is_martial_artist_trigger = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_respect_opinion
+			}
+		}
+	}
+	
+	# Option B: Use the peace to strengthen your position
+	option = {
+		name = murim_faction_war.0003.b
+		add_character_modifier = {
+			modifier = murim_peace_manipulator
+			years = 5
+		}
+		add_intrigue = 1
+	}
+}
+
+# =================================================================
+# EVENT 4: CROSS-FACTION MARRIAGE PROPOSAL
+# =================================================================
+murim_faction_war.0004 = {
+	type = character_event
+	title = murim_faction_war.0004.t
+	desc = murim_faction_war.0004.desc
+	theme = romance
+	
+	# Option A: Orthodox daughter marries Unorthodox son
+	option = {
+		name = murim_faction_war.0004.a
+		trigger = {
+			has_character_flag = flag_orthodox_faction_member
+		}
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Marriage accepted
+				trigger_event = { id = murim_faction_war.0005 days = 60 }
+			}
+			random = {
+				chance = 50
+				# Marriage rejected - insult
+				trigger_event = { id = murim_faction_war.0006 days = 30 }
+			}
+		}
+		stress_impact = {
+			zealous = major_stress_impact_gain
+		}
+	}
+	
+	# Option B: Offer yourself as hostage-guest
+	option = {
+		name = murim_faction_war.0004.b
+		add_character_modifier = {
+			modifier = murim_faction_hostage_guest
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0007 days = 90 }
+		}
+	}
+	
+	# Option C: Withdraw proposal (too risky)
+	option = {
+		name = murim_faction_war.0004.c
+		add_prestige = -100
+		stress_impact = {
+			brave = minor_stress_impact_gain
+		}
+	}
+}
+
+# =================================================================
+# EVENT 5: CROSS-FACTION MARRIAGE ACCEPTED
+# =================================================================
+murim_faction_war.0005 = {
+	type = character_event
+	title = murim_faction_war.0005.t
+	desc = murim_faction_war.0005.desc
+	theme = romance
+	
+	# Option A: Grand ceremony (public peace symbol)
+	option = {
+		name = murim_faction_war.0005.a
+		add_prestige = 300
+		add_gold = -100
+		add_character_modifier = {
+			modifier = murim_cross_faction_alliance_builder
+			years = 10
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_faction_war_cooldown
+				value = yes
+			}
+		}
+	}
+	
+	# Option B: Quiet ceremony (avoid attention)
+	option = {
+		name = murim_faction_war.0005.b
+		add_character_modifier = {
+			modifier = murim_secret_cross_faction_bond
+			years = 10
+		}
+	}
+}
+
+# =================================================================
+# EVENT 6: CROSS-FACTION MARRIAGE REJECTED (WAR ACCELERATES)
+# =================================================================
+murim_faction_war.0006 = {
+	type = character_event
+	title = murim_faction_war.0006.t
+	desc = murim_faction_war.0006.desc
+	theme = intrigue
+	
+	# Option A: Swallow the insult
+	option = {
+		name = murim_faction_war.0006.a
+		add_prestige = -200
+		stress_impact = {
+			wrathful = major_stress_impact_gain
+			patient = minor_stress_impact_loss
+		}
+	}
+	
+	# Option B: This means war (accelerate conflict)
+	option = {
+		name = murim_faction_war.0006.b
+		trigger = {
+			OR = {
+				has_trait = wrathful
+				has_trait = vengeful
+				has_trait = ambitious
+			}
+		}
+		remove_global_variable = murim_faction_war_cooldown
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0010 days = 30 }
+		}
+	}
+	
+	# Option C: Kidnap the bride/groom anyway (desperate)
+	option = {
+		name = murim_faction_war.0006.c
+		trigger = {
+			intrigue >= 12
+		}
+		add_dread = 20
+		hidden_effect = {
+			random = {
+				chance = 40
+				trigger_event = { id = murim_faction_war.0008 days = 14 }
+			}
+			random = {
+				chance = 60
+				trigger_event = { id = murim_faction_war.0009 days = 14 }
+			}
+		}
+	}
+}
+
+# =================================================================
+# EVENT 7: HOSTAGE-GUEST IN ENEMY FACTION
+# =================================================================
+murim_faction_war.0007 = {
+	type = character_event
+	title = murim_faction_war.0007.t
+	desc = murim_faction_war.0007.desc
+	theme = intrigue
+	
+	# Option A: Learn their techniques secretly
+	option = {
+		name = murim_faction_war.0007.a
+		trigger = { intrigue >= 10 }
+		random = {
+			chance = 30
+			modifier = {
+				add = 20
+				intrigue >= 15
+			}
+			add_character_modifier = {
+				modifier = murim_stolen_enemy_technique
+				years = -1
+			}
+		}
+		random = {
+			chance = 20
+			# Caught spying
+			trigger_event = { id = murim_faction_war.0009 days = 60 }
+		}
+	}
+	
+	# Option B: Genuinely befriend enemy clan members
+	option = {
+		name = murim_faction_war.0007.b
+		add_character_modifier = {
+			modifier = murim_cross_faction_friendships
+			years = 10
+		}
+		stress_impact = {
+			cynical = minor_stress_impact_gain
+		}
+		hidden_effect = {
+			random_living_character = {
+				limit = {
+					murim_is_martial_artist_trigger = yes
+					NOT = { murim_same_faction_as_root_trigger = yes }
+				}
+				add_opinion = {
+					target = root
+					modifier = murim_deep_admiration_opinion
+				}
+			}
+		}
+	}
+	
+	# Option C: Escape and report back
+	option = {
+		name = murim_faction_war.0007.c
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_enemy_intelligence_gathered
+			years = 5
+		}
+	}
+	
+	# Option D: Defect to the other faction
+	option = {
+		name = murim_faction_war.0007.d
+		trigger = {
+			OR = {
+				has_trait = fickle
+				has_trait = ambitious
+				opinion = {
+					target = scope:host_clan_leader
+					value >= 50
+				}
+			}
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0020 days = 7 }
+		}
+	}
+}
+
+# =================================================================
+# EVENT 8: KIDNAPPING SUCCESS (Forbidden Romance variant)
+# =================================================================
+murim_faction_war.0008 = {
+	type = character_event
+	title = murim_faction_war.0008.t
+	desc = murim_faction_war.0008.desc
+	theme = romance
+	
+	# Option A: Captive falls in love (Stockholm + genuine connection)
+	option = {
+		name = murim_faction_war.0008.a
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = murim_forbidden_cross_faction_love
+				years = -1
+			}
+			hidden_effect = {
+				trigger_event = { id = murim_cross_clan_romance.0001 days = 90 }
+			}
+		}
+		random = {
+			chance = 70
+			# Captive remains hostile
+			trigger_event = { id = murim_faction_war.0009 days = 30 }
+		}
+	}
+	
+	# Option B: Use captive as leverage for peace
+	option = {
+		name = murim_faction_war.0008.b
+		add_character_modifier = {
+			modifier = murim_hostage_holder
+			years = 5
+		}
+		add_dread = 15
+	}
+	
+	# Option C: Release them (honor demands it)
+	option = {
+		name = murim_faction_war.0008.c
+		trigger = {
+			OR = {
+				has_trait = just
+				has_trait = compassionate
+				has_trait = honest
+			}
+		}
+		add_prestige = 200
+		add_piety = 100
+		stress_impact = {
+			just = major_stress_impact_loss
+		}
+	}
+}
+
+# =================================================================
+# EVENT 9: CAUGHT / KIDNAPPING FAILED / EXPOSED
+# =================================================================
+murim_faction_war.0009 = {
+	type = character_event
+	title = murim_faction_war.0009.t
+	desc = murim_faction_war.0009.desc
+	theme = skull
+	
+	# Option A: Fight your way out
+	option = {
+		name = murim_faction_war.0009.a
+		trigger = { prowess >= 15 }
+		duel = {
+			skill = prowess
+			value = 12
+			50 = {
+				# Escape
+				add_character_modifier = {
+					modifier = murim_dramatic_escape
+					years = 3
+				}
+			}
+			50 = {
+				# Captured
+				add_character_modifier = {
+					modifier = murim_imprisoned_by_enemy_faction
+					years = 5
+				}
+				add_trait = wounded_1
+			}
+		}
+	}
+	
+	# Option B: Beg for mercy
+	option = {
+		name = murim_faction_war.0009.b
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = murim_begged_enemy_mercy
+			years = 10
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+			arrogant = major_stress_impact_gain
+		}
+	}
+	
+	# Option C: Use poison (if Tang or Poison Flower)
+	option = {
+		name = murim_faction_war.0009.c
+		trigger = {
+			OR = {
+				has_character_flag = flag_tang_clan_member
+				has_character_flag = flag_poison_flower_member
+			}
+		}
+		add_dread = 30
+		add_character_modifier = {
+			modifier = murim_poison_escape
+			years = 3
+		}
+	}
+	
+	# Option D: Activate assassination technique (Phantom Blade only)
+	option = {
+		name = murim_faction_war.0009.d
+		trigger = {
+			has_character_flag = flag_phantom_blade_member
+		}
+		duel = {
+			skill = prowess
+			value = 8
+			70 = {
+				# Kill captor and escape
+				add_dread = 40
+				add_character_modifier = {
+					modifier = murim_phantom_blade_shadow_kill
+					years = 5
+				}
+			}
+			30 = {
+				add_trait = wounded_2
+			}
+		}
+	}
+}
+
+# =================================================================
+# EVENT 10: THE GREAT FACTION WAR ERUPTS
+# =================================================================
+murim_faction_war.0010 = {
+	type = character_event
+	title = murim_faction_war.0010.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = flag_orthodox_faction_member }
+				desc = murim_faction_war.0010.desc.orthodox
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = flag_unorthodox_faction_member }
+				desc = murim_faction_war.0010.desc.unorthodox
+			}
+			desc = murim_faction_war.0010.desc.neutral
+		}
+	}
+	theme = war
+	
+	immediate = {
+		set_global_variable = {
+			name = murim_faction_war_active
+			value = yes
+		}
+		remove_global_variable = murim_faction_war_brewing
+		remove_global_variable = murim_faction_war_cooldown
+		set_global_variable = {
+			name = murim_faction_war_year_started
+			value = current_year
+		}
+		set_global_variable = {
+			name = murim_orthodox_war_score
+			value = 0
+		}
+		set_global_variable = {
+			name = murim_unorthodox_war_score
+			value = 0
+		}
+	}
+	
+	# Option A: Lead the charge for your faction
+	option = {
+		name = murim_faction_war.0010.a
+		trigger = {
+			OR = {
+				has_character_flag = flag_orthodox_faction_member
+				has_character_flag = flag_unorthodox_faction_member
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_faction_war_commander
+			years = 5
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0011 days = { 30 90 } }
+		}
+	}
+	
+	# Option B: Defend your clan's territory
+	option = {
+		name = murim_faction_war.0010.b
+		trigger = {
+			murim_is_clan_member_trigger = yes
+		}
+		add_character_modifier = {
+			modifier = murim_clan_defender
+			years = 5
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0012 days = { 60 120 } }
+		}
+	}
+	
+	# Option C: War profiteer (sell weapons/info to both sides)
+	option = {
+		name = murim_faction_war.0010.c
+		trigger = {
+			OR = {
+				NOT = { murim_is_clan_member_trigger = yes }
+				has_character_flag = flag_faction_war_opportunist
+			}
+		}
+		add_gold = 200
+		add_character_modifier = {
+			modifier = murim_war_profiteer
+			years = 5
+		}
+		add_dread = 10
+	}
+	
+	# Option D: Go into hiding (protect family)
+	option = {
+		name = murim_faction_war.0010.d
+		add_character_modifier = {
+			modifier = murim_war_refugee
+			years = 3
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+			craven = medium_stress_impact_loss
+		}
+	}
+	
+	# Option E: Attempt to end it immediately (challenge enemy faction leader)
+	option = {
+		name = murim_faction_war.0010.e
+		trigger = {
+			murim_is_clan_leader_trigger = yes
+			prowess >= 20
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0015 days = 14 }
+		}
+	}
+}
+
+# =================================================================
+# EVENT 11: BATTLEFIELD SKIRMISH (Repeating war event)
+# =================================================================
+murim_faction_war.0011 = {
+	type = character_event
+	title = murim_faction_war.0011.t
+	desc = murim_faction_war.0011.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_faction_war_active
+		OR = {
+			has_character_flag = flag_orthodox_faction_member
+			has_character_flag = flag_unorthodox_faction_member
+		}
+	}
+	
+	# Option A: Duel the enemy champion
+	option = {
+		name = murim_faction_war.0011.a
+		duel = {
+			skill = prowess
+			value = 14
+			60 = {
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_war_hero
+					years = 5
+				}
+				hidden_effect = {
+					if = {
+						limit = { has_character_flag = flag_orthodox_faction_member }
+						change_global_variable = {
+							name = murim_orthodox_war_score
+							add = 10
+						}
+					}
+					else = {
+						change_global_variable = {
+							name = murim_unorthodox_war_score
+							add = 10
+						}
+					}
+				}
+			}
+			40 = {
+				add_trait = wounded_2
+				add_prestige = -100
+				hidden_effect = {
+					if = {
+						limit = { has_character_flag = flag_orthodox_faction_member }
+						change_global_variable = {
+							name = murim_unorthodox_war_score
+							add = 5
+						}
+					}
+					else = {
+						change_global_variable = {
+							name = murim_orthodox_war_score
+							add = 5
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	# Option B: Lead group ambush
+	option = {
+		name = murim_faction_war.0011.b
+		trigger = { martial >= 12 }
+		random = {
+			chance = 50
+			modifier = {
+				add = 15
+				martial >= 18
+			}
+			add_prestige = 150
+			add_character_modifier = {
+				modifier = murim_ambush_tactician
+				years = 3
+			}
+		}
+	}
+	
+	# Option C: Use forbidden technique (desperate)
+	option = {
+		name = murim_faction_war.0011.c
+		trigger = {
+			has_character_flag = flag_knows_forbidden_technique
+		}
+		add_dread = 25
+		add_character_modifier = {
+			modifier = murim_used_forbidden_in_war
+			years = 10
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_character_flag = flag_orthodox_faction_member }
+				change_global_variable = {
+					name = murim_orthodox_war_score
+					add = 15
+				}
+			}
+			else = {
+				change_global_variable = {
+					name = murim_unorthodox_war_score
+					add = 15
+				}
+			}
+		}
+		# Using forbidden technique in war has consequences
+		random = {
+			chance = 30
+			trigger_event = { id = murim_faction_war.0016 days = 30 }
+		}
+	}
+	
+	# Option D: Protect civilians caught in crossfire
+	option = {
+		name = murim_faction_war.0011.d
+		add_piety = 100
+		add_prestige = 50
+		add_character_modifier = {
+			modifier = murim_civilian_protector
+			years = 5
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_loss
+			callous = minor_stress_impact_gain
+		}
+	}
+}
+
+# =================================================================
+# EVENT 12: CLAN HQ UNDER ATTACK
+# =================================================================
+murim_faction_war.0012 = {
+	type = character_event
+	title = murim_faction_war.0012.t
+	desc = murim_faction_war.0012.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_faction_war_active
+		murim_is_clan_member_trigger = yes
+	}
+	
+	# Option A: Rally disciples to defend
+	option = {
+		name = murim_faction_war.0012.a
+		trigger = {
+			OR = {
+				murim_is_clan_leader_trigger = yes
+				murim_is_clan_elder_trigger = yes
+			}
+		}
+		duel = {
+			skill = martial
+			value = 15
+			55 = {
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = murim_defended_clan_hq
+					years = 10
+				}
+			}
+			45 = {
+				add_character_modifier = {
+					modifier = murim_clan_hq_damaged
+					years = 5
+				}
+				add_trait = wounded_1
+			}
+		}
+	}
+	
+	# Option B: Evacuate sacred texts/artifacts
+	option = {
+		name = murim_faction_war.0012.b
+		add_character_modifier = {
+			modifier = murim_saved_clan_heritage
+			years = -1
+		}
+		add_prestige = 100
+	}
+	
+	# Option C: Negotiate surrender (preserve lives over honor)
+	option = {
+		name = murim_faction_war.0012.c
+		add_prestige = -300
+		add_character_modifier = {
+			modifier = murim_surrendered_clan_hq
+			years = 10
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+			arrogant = major_stress_impact_gain
+			humble = minor_stress_impact_loss
+		}
+	}
+	
+	# Option D: Set a trap (if the enemy enters, they die)
+	option = {
+		name = murim_faction_war.0012.d
+		trigger = {
+			OR = {
+				has_character_flag = flag_tang_clan_member
+				has_character_flag = flag_poison_flower_member
+				intrigue >= 15
+			}
+		}
+		random = {
+			chance = 45
+			modifier = {
+				add = 20
+				intrigue >= 20
+			}
+			add_prestige = 250
+			add_dread = 30
+			add_character_modifier = {
+				modifier = murim_death_trap_defender
+				years = 5
+			}
+		}
+	}
+}
+
+# =================================================================
+# EVENT 13: WAR TURNING POINT - BETRAYAL FROM WITHIN
+# =================================================================
+murim_faction_war.0013 = {
+	type = character_event
+	title = murim_faction_war.0013.t
+	desc = murim_faction_war.0013.desc
+	theme = intrigue
+	
+	trigger = {
+		has_global_variable = murim_faction_war_active
+		murim_is_clan_leader_trigger = yes
+	}
+	
+	# Option A: A clan elder is secretly working with the enemy
+	option = {
+		name = murim_faction_war.0013.a
+		hidden_effect = {
+			random_living_character = {
+				limit = {
+					murim_is_clan_elder_trigger = yes
+					murim_same_faction_as_root_trigger = yes
+					NOT = { this = root }
+				}
+				save_scope_as = traitor_elder
+				set_character_flag = flag_faction_war_traitor
+			}
+		}
+		# Confront or watch
+		trigger_event = { id = murim_faction_war.0014 days = 14 }
+	}
+	
+	# Option B: Use the knowledge to feed false information
+	option = {
+		name = murim_faction_war.0013.b
+		trigger = { intrigue >= 14 }
+		add_character_modifier = {
+			modifier = murim_counter_intelligence_master
+			years = 5
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_character_flag = flag_orthodox_faction_member }
+				change_global_variable = {
+					name = murim_orthodox_war_score
+					add = 20
+				}
+			}
+			else = {
+				change_global_variable = {
+					name = murim_unorthodox_war_score
+					add = 20
+				}
+			}
+		}
+	}
+	
+	# Option C: Purge all suspected traitors (brutal)
+	option = {
+		name = murim_faction_war.0013.c
+		add_dread = 40
+		add_tyranny = 10
+		add_character_modifier = {
+			modifier = murim_paranoid_purger
+			years = 10
+		}
+		stress_impact = {
+			just = major_stress_impact_gain
+			compassionate = major_stress_impact_gain
+			callous = minor_stress_impact_loss
+		}
+	}
+}
+
+# =================================================================
+# EVENT 14: CONFRONTING THE TRAITOR ELDER
+# =================================================================
+murim_faction_war.0014 = {
+	type = character_event
+	title = murim_faction_war.0014.t
+	desc = murim_faction_war.0014.desc
+	theme = intrigue
+	
+	# Option A: Public execution (example to all)
+	option = {
+		name = murim_faction_war.0014.a
+		add_dread = 30
+		add_prestige = 100
+		hidden_effect = {
+			scope:traitor_elder = {
+				death = { death_reason = death_execution }
+			}
+		}
+	}
+	
+	# Option B: Strip rank and exile (mercy)
+	option = {
+		name = murim_faction_war.0014.b
+		add_prestige = 50
+		add_piety = 50
+		hidden_effect = {
+			scope:traitor_elder = {
+				remove_character_flag = flag_clan_elder
+				set_character_flag = flag_exiled_from_clan
+			}
+		}
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+		}
+	}
+	
+	# Option C: Turn them into a double agent
+	option = {
+		name = murim_faction_war.0014.c
+		trigger = { intrigue >= 16 }
+		add_character_modifier = {
+			modifier = murim_spymaster_war
+			years = 5
+		}
+		hidden_effect = {
+			scope:traitor_elder = {
+				set_character_flag = flag_double_agent
+			}
+		}
+	}
+	
+	# Option D: Forgive and reintegrate (they had reasons)
+	option = {
+		name = murim_faction_war.0014.d
+		trigger = {
+			OR = {
+				has_trait = forgiving
+				has_trait = compassionate
+			}
+		}
+		add_piety = 100
+		hidden_effect = {
+			scope:traitor_elder = {
+				add_opinion = {
+					target = root
+					modifier = murim_deep_admiration_opinion
+				}
+				remove_character_flag = flag_faction_war_traitor
+			}
+		}
+	}
+}
+
+# =================================================================
+# EVENT 15: FACTION LEADER DUEL (War-ending potential)
+# =================================================================
+murim_faction_war.0015 = {
+	type = character_event
+	title = murim_faction_war.0015.t
+	desc = murim_faction_war.0015.desc
+	theme = war
+	
+	# Option A: Duel to the death
+	option = {
+		name = murim_faction_war.0015.a
+		duel = {
+			skill = prowess
+			value = 18
+			45 = {
+				# Victory - war ends decisively
+				add_prestige = 1000
+				add_character_modifier = {
+					modifier = murim_faction_war_ender
+					years = -1
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_faction_war.0017 days = 7 }
+				}
+			}
+			35 = {
+				# Draw - both wounded, war continues
+				add_trait = wounded_2
+				add_prestige = 200
+			}
+			20 = {
+				# Defeat - captured by enemy
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_captured_faction_leader
+					years = 5
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_faction_war.0018 days = 14 }
+				}
+			}
+		}
+	}
+	
+	# Option B: Duel to submission (non-lethal)
+	option = {
+		name = murim_faction_war.0015.b
+		trigger = {
+			OR = {
+				has_trait = compassionate
+				has_trait = just
+			}
+		}
+		duel = {
+			skill = prowess
+			value = 16
+			50 = {
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_merciful_victor
+					years = 10
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_faction_war.0017 days = 7 }
+				}
+			}
+			50 = {
+				add_trait = wounded_1
+				add_prestige = 100
+			}
+		}
+	}
+	
+	# Option C: Withdraw challenge (lost nerve)
+	option = {
+		name = murim_faction_war.0015.c
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = murim_withdrew_from_leader_duel
+			years = 10
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+	}
+}
+
+# =================================================================
+# EVENT 16: FORBIDDEN TECHNIQUE BACKLASH IN WAR
+# =================================================================
+murim_faction_war.0016 = {
+	type = character_event
+	title = murim_faction_war.0016.t
+	desc = murim_faction_war.0016.desc
+	theme = skull
+	
+	# Option A: Qi deviation - internal damage
+	option = {
+		name = murim_faction_war.0016.a
+		add_trait = wounded_2
+		add_character_modifier = {
+			modifier = murim_qi_deviation_wartime
+			years = 5
+		}
+	}
+	
+	# Option B: Your own faction condemns you
+	option = {
+		name = murim_faction_war.0016.b
+		trigger = { has_character_flag = flag_orthodox_faction_member }
+		add_prestige = -300
+		add_character_modifier = {
+			modifier = murim_condemned_by_own_faction
+			years = 10
+		}
+	}
+	
+	# Option C: The technique consumed someone you love
+	option = {
+		name = murim_faction_war.0016.c
+		stress_impact = {
+			base = major_stress_impact_gain
+			compassionate = major_stress_impact_gain
+		}
+		hidden_effect = {
+			random_close_family_member = {
+				limit = { is_alive = yes }
+				add_trait = wounded_3
+			}
+		}
+	}
+}
+
+# =================================================================
+# EVENT 17: FACTION WAR ENDS - VICTORY
+# =================================================================
+murim_faction_war.0017 = {
+	type = character_event
+	title = murim_faction_war.0017.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = flag_orthodox_faction_member }
+				desc = murim_faction_war.0017.desc.orthodox_wins
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = flag_unorthodox_faction_member }
+				desc = murim_faction_war.0017.desc.unorthodox_wins
+			}
+			desc = murim_faction_war.0017.desc.draw
+		}
+	}
+	theme = war
+	
+	immediate = {
+		remove_global_variable = murim_faction_war_active
+		set_global_variable = {
+			name = murim_faction_war_cooldown
+			value = yes
+		}
+	}
+	
+	# Option A: Demand unconditional surrender
+	option = {
+		name = murim_faction_war.0017.a
+		add_prestige = 500
+		add_dread = 20
+		add_character_modifier = {
+			modifier = murim_faction_war_victor
+			years = 20
+		}
+		# Losing faction scattered for 10 years
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_losing_faction_scattered
+				value = yes
+			}
+		}
+	}
+	
+	# Option B: Generous peace (rebuild together)
+	option = {
+		name = murim_faction_war.0017.b
+		add_prestige = 300
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_magnanimous_victor
+			years = 20
+		}
+	}
+	
+	# Option C: Absorb defeated clan members into yours
+	option = {
+		name = murim_faction_war.0017.c
+		trigger = { murim_is_clan_leader_trigger = yes }
+		add_character_modifier = {
+			modifier = murim_clan_absorber
+			years = 10
+		}
+	}
+}
+
+# =================================================================
+# EVENT 18: CAPTURED FACTION LEADER (Post-duel loss)
+# =================================================================
+murim_faction_war.0018 = {
+	type = character_event
+	title = murim_faction_war.0018.t
+	desc = murim_faction_war.0018.desc
+	theme = dungeon
+	
+	# Option A: Endure torture, reveal nothing
+	option = {
+		name = murim_faction_war.0018.a
+		trigger = { has_trait = brave }
+		add_prestige = 200
+		add_trait = wounded_3
+		stress_impact = {
+			base = major_stress_impact_gain
+		}
+		hidden_effect = {
+			# Disciples attempt rescue
+			trigger_event = { id = murim_faction_war.0019 days = { 60 180 } }
+		}
+	}
+	
+	# Option B: Reveal faction secrets (survival)
+	option = {
+		name = murim_faction_war.0018.b
+		add_prestige = -1000
+		add_character_modifier = {
+			modifier = murim_betrayed_faction_under_torture
+			years = -1
+		}
+		# Immediate release but permanently shamed
+		remove_character_modifier = murim_captured_faction_leader
+	}
+	
+	# Option C: Challenge captor to rematch
+	option = {
+		name = murim_faction_war.0018.c
+		trigger = { prowess >= 18 }
+		duel = {
+			skill = prowess
+			value = 15
+			40 = {
+				# Escape
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_escaped_captivity
+					years = 5
+				}
+			}
+			60 = {
+				# Failed, worse punishment
+				add_trait = maimed
+			}
+		}
+	}
+	
+	# Option D: Offer to defect (self-preservation)
+	option = {
+		name = murim_faction_war.0018.d
+		trigger = {
+			OR = {
+				has_trait = craven
+				has_trait = fickle
+			}
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war.0020 days = 7 }
+		}
+	}
+}
+
+# =================================================================
+# EVENT 19: RESCUE ATTEMPT (Disciples rescue captured leader)
+# =================================================================
+murim_faction_war.0019 = {
+	type = character_event
+	title = murim_faction_war.0019.t
+	desc = murim_faction_war.0019.desc
+	theme = war
+	
+	# Option A: Coordinate with rescuers
+	option = {
+		name = murim_faction_war.0019.a
+		random = {
+			chance = 55
+			modifier = {
+				add = 15
+				martial >= 15
+			}
+			# Rescue succeeds
+			add_prestige = 300
+			remove_character_modifier = murim_captured_faction_leader
+			add_character_modifier = {
+				modifier = murim_rescued_from_captivity
+				years = 5
+			}
+		}
+		random = {
+			chance = 45
+			# Rescue fails - rescuers captured too
+			add_character_modifier = {
+				modifier = murim_rescue_failed_disciples_captured
+				years = 10
+			}
+			stress_impact = {
+				base = major_stress_impact_gain
+			}
+		}
+	}
+	
+	# Option B: Tell them to leave you (protect disciples)
+	option = {
+		name = murim_faction_war.0019.b
+		trigger = {
+			OR = {
+				has_trait = generous
+				has_trait = compassionate
+			}
+		}
+		add_prestige = 200
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+		}
+	}
+	
+	# Option C: Use the distraction to escape alone
+	option = {
+		name = murim_faction_war.0019.c
+		random = {
+			chance = 70
+			remove_character_modifier = murim_captured_faction_leader
+		}
+		add_character_modifier = {
+			modifier = murim_abandoned_rescuers
+			years = 10
+		}
+	}
+}
+
+# =================================================================
+# EVENT 20: FACTION DEFECTION
+# =================================================================
+murim_faction_war.0020 = {
+	type = character_event
+	title = murim_faction_war.0020.t
+	desc = murim_faction_war.0020.desc
+	theme = intrigue
+	
+	# Option A: Full defection (switch factions permanently)
+	option = {
+		name = murim_faction_war.0020.a
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = murim_faction_defector
+			years = -1
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_character_flag = flag_orthodox_faction_member }
+				remove_character_flag = flag_orthodox_faction_member
+				set_character_flag = {
+					flag = flag_unorthodox_faction_member
+					years = -1
+				}
+			}
+			else = {
+				remove_character_flag = flag_unorthodox_faction_member
+				set_character_flag = {
+					flag = flag_orthodox_faction_member
+					years = -1
+				}
+			}
+		}
+		# Former allies now hate you
+		every_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				NOT = { murim_same_faction_as_root_trigger = yes }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_betrayal_opinion
+			}
+		}
+	}
+	
+	# Option B: Become a double agent (serve both sides)
+	option = {
+		name = murim_faction_war.0020.b
+		trigger = { intrigue >= 14 }
+		add_character_modifier = {
+			modifier = murim_double_agent_factions
+			years = 10
+		}
+		# High risk of exposure
+		hidden_effect = {
+			set_character_flag = flag_double_agent
+		}
+	}
+	
+	# Option C: Go independent (leave both factions)
+	option = {
+		name = murim_faction_war.0020.c
+		remove_character_flag = flag_orthodox_faction_member
+		remove_character_flag = flag_unorthodox_faction_member
+		add_character_modifier = {
+			modifier = murim_lone_wolf
+			years = -1
+		}
+		add_prestige = -200
+	}
+	
+	# Option D: Back out (stay loyal)
+	option = {
+		name = murim_faction_war.0020.d
+		add_prestige = 100
+		stress_impact = {
+			brave = minor_stress_impact_loss
+		}
+	}
+}
