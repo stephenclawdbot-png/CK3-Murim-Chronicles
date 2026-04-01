@@ -1,5 +1,5 @@
 ################################################################
-# MURIM CHRONICLES — TECHNIQUE UNLOCK EVENTS
+# MURIM CHRONICLES -- TECHNIQUE UNLOCK EVENTS
 # Path: events/murim_technique_events.txt
 #
 # Fires for BOTH AI and player characters.
@@ -234,7 +234,6 @@ murim_technique.0001 = {
 	}
 }
 
-
 # ==============================================================
 # TIER 2 UNLOCK EVENT
 # Fires when a character with a Tier 1 trait qualifies for Tier 2
@@ -409,7 +408,6 @@ murim_technique.0010 = {
 	}
 }
 
-
 # ==============================================================
 # TIER 3 UNLOCK EVENT
 # Legendary. Fires when a Tier 2 holder qualifies.
@@ -512,6 +510,925 @@ murim_technique.0100 = {
 		ai_chance = {
 			base = 100
 			# AI always picks this if available. It's the apex.
+		}
+	}
+}
+
+
+# ==============================================================
+# TECHNIQUE EVOLUTION EVENTS
+# Fires when a character has used a technique long enough to
+# evolve it into a stronger personal variant.
+# ==============================================================
+
+# --- Tier 1 Technique Evolution: Personalized Style ---
+murim_technique.0200 = {
+	type = character_event
+	title = murim_technique.0200.t
+	desc = murim_technique.0200.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		murim_has_tier1_technique_trigger = yes
+		# Must have held technique for at least 5 years
+		OR = {
+			AND = {
+				has_trait = murim_harmonious_palm
+				has_trait_for >= { trait = murim_harmonious_palm years = 5 }
+			}
+			AND = {
+				has_trait = murim_iron_hegemon
+				has_trait_for >= { trait = murim_iron_hegemon years = 5 }
+			}
+			AND = {
+				has_trait = murim_venom_needle
+				has_trait_for >= { trait = murim_venom_needle years = 5 }
+			}
+			AND = {
+				has_trait = murim_void_sight
+				has_trait_for >= { trait = murim_void_sight years = 5 }
+			}
+			AND = {
+				has_trait = murim_jade_treasury
+				has_trait_for >= { trait = murim_jade_treasury years = 5 }
+			}
+		}
+		# Must not already have evolved
+		NOT = { has_character_flag = murim_technique_evolved }
+		# Must have adequate prowess for evolution
+		prowess >= 20
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1.0
+			prowess >= 25
+		}
+		modifier = {
+			add = 0.5
+			exists = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+		}
+		modifier = {
+			add = 0.5
+			exists = var:murim_duel_wins
+			var:murim_duel_wins >= 5
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_technique_evolved
+		}
+	}
+
+	# Evolve through combat insight
+	option = {
+		name = murim_technique.0200.a
+		trigger = {
+			prowess >= 22
+		}
+		add_character_modifier = {
+			modifier = murim_technique_breakthrough_momentum
+			years = 3
+		}
+		add_prowess_skill = 2
+		stress_impact = {
+			brave = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 20 martial >= 18 }
+		}
+	}
+
+	# Evolve through meditation and dao comprehension
+	option = {
+		name = murim_technique.0200.b
+		trigger = {
+			learning >= 16
+		}
+		add_character_modifier = {
+			modifier = murim_heavenly_insight
+			years = 3
+		}
+		add_learning_skill = 2
+		stress_impact = {
+			patient = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 20 learning >= 20 }
+		}
+	}
+
+	# Evolve through life-or-death experience
+	option = {
+		name = murim_technique.0200.c
+		add_character_modifier = {
+			modifier = murim_combat_instinct_sharpened
+			years = 5
+		}
+		add_prowess_skill = 1
+		add_martial_skill = 1
+		stress_impact = {
+			ambitious = minor_stress_impact_loss
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+}
+
+# --- Tier 2 Technique Evolution: Fusion Breakthrough ---
+murim_technique.0210 = {
+	type = character_event
+	title = murim_technique.0210.t
+	desc = murim_technique.0210.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		murim_has_tier2_technique_trigger = yes
+		NOT = { has_character_flag = murim_tier2_technique_evolved }
+		prowess >= 26
+		OR = {
+			AND = {
+				exists = var:murim_cultivation_rank
+				var:murim_cultivation_rank >= 4
+			}
+			prowess >= 30
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1.0
+			prowess >= 30
+		}
+		modifier = {
+			add = 0.5
+			exists = var:murim_duel_wins
+			var:murim_duel_wins >= 10
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_tier2_technique_evolved
+		}
+	}
+
+	# Fuse technique with qi cultivation for amplified power
+	option = {
+		name = murim_technique.0210.a
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_technique_breakthrough_momentum
+			years = 5
+		}
+		add_prestige = 500
+		stress_impact = {
+			ambitious = major_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+
+	# Refine technique into a perfected art form
+	option = {
+		name = murim_technique.0210.b
+		add_prowess_skill = 2
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_heavenly_insight
+			years = 5
+		}
+		add_prestige = 300
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Channel technique into leadership and domain
+	option = {
+		name = murim_technique.0210.c
+		add_martial_skill = 2
+		add_diplomacy_skill = 1
+		add_character_modifier = {
+			modifier = murim_battle_meditation
+			years = 5
+		}
+		add_prestige = 400
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = diplomat }
+		}
+	}
+}
+
+
+# ==============================================================
+# TECHNIQUE FAILURE & BACKLASH EVENTS
+# Fires when a character attempts to force a technique beyond
+# their current limits. Risk-reward system.
+# ==============================================================
+
+# --- Forced Breakthrough Backlash ---
+murim_technique.0300 = {
+	type = character_event
+	title = murim_technique.0300.t
+	desc = murim_technique.0300.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_forcing_breakthrough
+		# Safety check: flag must exist
+		exists = var:murim_cultivation_rank
+	}
+
+	weight_multiplier = {
+		base = 1
+		# Higher cultivation = harder to force
+		modifier = {
+			add = 0.5
+			var:murim_cultivation_rank >= 4
+		}
+		modifier = {
+			add = 1.0
+			var:murim_cultivation_rank >= 6
+		}
+	}
+
+	immediate = {
+		remove_character_flag = murim_forcing_breakthrough
+	}
+
+	# Backlash: Qi Deviation -- meridians damaged
+	option = {
+		name = murim_technique.0300.a
+		trigger = {
+			NOT = { has_trait = murim_dao_heart }
+		}
+		add_character_modifier = {
+			modifier = murim_qi_deviation_suffering
+			years = 2
+		}
+		add_stress = 50
+		if = {
+			limit = { prowess >= 20 }
+			add_prowess_skill = -2
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Backlash: Technique Corruption -- power gained but tainted
+	option = {
+		name = murim_technique.0300.b
+		add_character_modifier = {
+			modifier = murim_forbidden_technique_backlash
+			years = 3
+		}
+		add_prowess_skill = 1
+		add_stress = 30
+		if = {
+			limit = { NOT = { has_trait = callous } }
+			add_trait = callous
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+
+	# Backlash: Barely survived -- gain wisdom from failure
+	option = {
+		name = murim_technique.0300.c
+		add_character_modifier = {
+			modifier = murim_qi_deviation_recovering
+			years = 1
+		}
+		add_learning_skill = 1
+		add_stress = 20
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+# --- Forbidden Technique Corruption Event ---
+murim_technique.0310 = {
+	type = character_event
+	title = murim_technique.0310.t
+	desc = murim_technique.0310.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		has_character_modifier = murim_forbidden_technique_backlash
+		# Corruption has been active for a while
+		NOT = { has_character_flag = murim_corruption_checked }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1.0
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_corruption_checked
+			years = 2
+		}
+	}
+
+	# Embrace the corruption -- gain demonic power
+	option = {
+		name = murim_technique.0310.a
+		add_character_modifier = {
+			modifier = murim_demonic_cultivation_power
+			years = 5
+		}
+		remove_character_modifier = murim_forbidden_technique_backlash
+		add_prowess_skill = 3
+		add_stress = 40
+		if = {
+			limit = { NOT = { has_trait = sadistic } }
+			add_trait = sadistic
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 has_trait = ambitious }
+			modifier = { add = 20 has_trait = cruel }
+			modifier = { add = -30 has_trait = compassionate }
+		}
+	}
+
+	# Fight the corruption -- purify through willpower
+	option = {
+		name = murim_technique.0310.b
+		trigger = {
+			OR = {
+				learning >= 18
+				has_trait = patient
+				has_trait = just
+			}
+		}
+		remove_character_modifier = murim_forbidden_technique_backlash
+		add_character_modifier = {
+			modifier = murim_purified_qi_clarity
+			years = 3
+		}
+		add_learning_skill = 1
+		add_piety = 200
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = just }
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Seek help from a master healer
+	option = {
+		name = murim_technique.0310.c
+		remove_character_modifier = murim_forbidden_technique_backlash
+		add_character_modifier = {
+			modifier = murim_qi_deviation_recovering
+			years = 1
+		}
+		add_gold = -100
+		add_stress = -20
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+
+# ==============================================================
+# TECHNIQUE COMBINATION DISCOVERY EVENTS
+# Fires when a character with multiple techniques discovers
+# synergies between them.
+# ==============================================================
+
+# --- Dual Technique Synergy Discovery ---
+murim_technique.0400 = {
+	type = character_event
+	title = murim_technique.0400.t
+	desc = murim_technique.0400.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		murim_has_tier1_technique_trigger = yes
+		murim_has_tier2_technique_trigger = yes
+		NOT = { has_character_flag = murim_synergy_discovered }
+		prowess >= 24
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			prowess >= 28
+		}
+		modifier = {
+			add = 1.0
+			exists = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 4
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_synergy_discovered
+		}
+	}
+
+	# Offensive synergy: techniques amplify each other in combat
+	option = {
+		name = murim_technique.0400.a
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_sword_intent_awakened
+			years = 5
+		}
+		add_prestige = 300
+		stress_impact = {
+			brave = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 martial >= 20 }
+		}
+	}
+
+	# Defensive synergy: techniques create impenetrable defense
+	option = {
+		name = murim_technique.0400.b
+		add_prowess_skill = 1
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = murim_defensive_technique_mastered
+			years = 5
+		}
+		add_prestige = 250
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 20 has_trait = calm }
+		}
+	}
+
+	# Movement synergy: combine footwork with technique
+	option = {
+		name = murim_technique.0400.c
+		add_prowess_skill = 2
+		add_intrigue_skill = 1
+		add_character_modifier = {
+			modifier = murim_movement_technique_mastered
+			years = 5
+		}
+		add_prestige = 200
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = deceitful }
+			modifier = { add = 20 intrigue >= 18 }
+		}
+	}
+
+	# Qi-infused synergy: merge cultivation energy with technique
+	option = {
+		name = murim_technique.0400.d
+		trigger = {
+			exists = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+		}
+		add_prowess_skill = 2
+		add_learning_skill = 1
+		add_character_modifier = {
+			modifier = murim_heavenly_insight
+			years = 3
+		}
+		add_prestige = 350
+		add_piety = 100
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 learning >= 20 }
+		}
+	}
+}
+
+
+# ==============================================================
+# TECHNIQUE TEACHING CHAIN EVENTS
+# Master teaches disciple. Creates social bonds and spreads
+# techniques across the world.
+# ==============================================================
+
+# --- Master Offers to Teach ---
+murim_technique.0500 = {
+	type = character_event
+	title = murim_technique.0500.t
+	desc = murim_technique.0500.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		murim_has_tier2_technique_trigger = yes
+		age >= 35
+		any_courtier = {
+			is_alive = yes
+			NOT = { murim_has_tier1_technique_trigger = yes }
+			prowess >= 12
+			age >= 16
+		}
+		NOT = { has_character_flag = murim_recently_taught }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = compassionate
+		}
+		modifier = {
+			add = 0.5
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.5
+			has_trait = lazy
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_recently_taught
+			years = 3
+		}
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				NOT = { murim_has_tier1_technique_trigger = yes }
+				prowess >= 12
+				age >= 16
+			}
+			save_scope_as = technique_student
+		}
+	}
+
+	# Teach them your primary technique path
+	option = {
+		name = murim_technique.0500.a
+		trigger = {
+			exists = scope:technique_student
+		}
+		scope:technique_student = {
+			# Grant a tier 1 technique matching the master's path
+			if = {
+				limit = { root = { has_trait = murim_harmonious_palm } }
+				add_trait = murim_harmonious_palm
+			}
+			else_if = {
+				limit = { root = { has_trait = murim_iron_hegemon } }
+				add_trait = murim_iron_hegemon
+			}
+			else_if = {
+				limit = { root = { has_trait = murim_venom_needle } }
+				add_trait = murim_venom_needle
+			}
+			else_if = {
+				limit = { root = { has_trait = murim_void_sight } }
+				add_trait = murim_void_sight
+			}
+			else_if = {
+				limit = { root = { has_trait = murim_jade_treasury } }
+				add_trait = murim_jade_treasury
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_disciple_opinion
+				opinion = 40
+			}
+		}
+		add_prestige = 200
+		add_piety = 50
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+			cruel = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = -20 has_trait = paranoid }
+		}
+	}
+
+	# Teach a different technique to broaden their skills
+	option = {
+		name = murim_technique.0500.b
+		trigger = {
+			exists = scope:technique_student
+		}
+		scope:technique_student = {
+			# Grant a random tier 1 technique
+			random_list = {
+				20 = {
+					trigger = { NOT = { has_trait = murim_harmonious_palm } }
+					add_trait = murim_harmonious_palm
+				}
+				20 = {
+					trigger = { NOT = { has_trait = murim_iron_hegemon } }
+					add_trait = murim_iron_hegemon
+				}
+				20 = {
+					trigger = { NOT = { has_trait = murim_venom_needle } }
+					add_trait = murim_venom_needle
+				}
+				20 = {
+					trigger = { NOT = { has_trait = murim_void_sight } }
+					add_trait = murim_void_sight
+				}
+				20 = {
+					trigger = { NOT = { has_trait = murim_jade_treasury } }
+					add_trait = murim_jade_treasury
+				}
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_disciple_opinion
+				opinion = 30
+			}
+		}
+		add_prestige = 150
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+
+	# Refuse -- techniques are secret
+	option = {
+		name = murim_technique.0500.c
+		add_stress = 10
+		if = {
+			limit = { exists = scope:technique_student }
+			scope:technique_student = {
+				add_opinion = {
+					target = root
+					modifier = murim_refused_teaching_opinion
+					opinion = -20
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = paranoid }
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+}
+
+# --- Student Struggles with Technique ---
+murim_technique.0510 = {
+	type = character_event
+	title = murim_technique.0510.t
+	desc = murim_technique.0510.desc
+	theme = martial
+
+	trigger = {
+		is_alive = yes
+		murim_has_tier1_technique_trigger = yes
+		NOT = { murim_has_tier2_technique_trigger = yes }
+		# Recently learned (within 2 years)
+		NOT = { has_character_flag = murim_struggled_with_technique }
+		age <= 30
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			prowess < 18
+		}
+		modifier = {
+			add = -0.5
+			has_trait = genius
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_struggled_with_technique
+			years = 5
+		}
+	}
+
+	# Push through with willpower
+	option = {
+		name = murim_technique.0510.a
+		add_stress = 30
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = murim_training_montage_active
+			years = 1
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = diligent }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Seek guidance from an elder
+	option = {
+		name = murim_technique.0510.b
+		trigger = {
+			any_liege_or_above = {
+				murim_has_tier2_technique_trigger = yes
+			}
+		}
+		add_learning_skill = 1
+		add_stress = -10
+		add_character_modifier = {
+			modifier = murim_studying_manual
+			years = 1
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+
+	# Adapt the technique to your own style (risk)
+	option = {
+		name = murim_technique.0510.c
+		random_list = {
+			60 = {
+				# Success: personal variation
+				add_prowess_skill = 2
+				add_prestige = 100
+				add_character_modifier = {
+					modifier = murim_technique_breakthrough_momentum
+					years = 2
+				}
+			}
+			40 = {
+				# Failure: backlash
+				add_character_modifier = {
+					modifier = murim_qi_deviation_recovering
+					years = 1
+				}
+				add_stress = 40
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	# Give up and focus on fundamentals
+	option = {
+		name = murim_technique.0510.d
+		add_stress = -20
+		add_learning_skill = 1
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = content }
+			modifier = { add = 20 has_trait = lazy }
+		}
+	}
+}
+
+
+# ==============================================================
+# TECHNIQUE STOLEN / SPIED EVENT
+# Someone attempts to steal or spy on your technique secrets.
+# ==============================================================
+
+murim_technique.0600 = {
+	type = character_event
+	title = murim_technique.0600.t
+	desc = murim_technique.0600.desc
+	theme = intrigue
+
+	trigger = {
+		is_alive = yes
+		murim_has_tier2_technique_trigger = yes
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			is_alive = yes
+			NOT = { murim_has_tier2_technique_trigger = yes }
+			intrigue >= 14
+		}
+		NOT = { has_character_flag = murim_technique_spy_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = trusting
+		}
+		modifier = {
+			add = -0.5
+			has_trait = paranoid
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_technique_spy_event
+			years = 5
+		}
+	}
+
+	# Hunt the spy down -- use intrigue to find them
+	option = {
+		name = murim_technique.0600.a
+		trigger = {
+			intrigue >= 12
+		}
+		random_list = {
+			70 = {
+				# Caught them
+				add_prestige = 200
+				add_dread = 10
+				add_character_modifier = {
+					modifier = murim_spy_network_active
+					years = 2
+				}
+			}
+			30 = {
+				# They escaped
+				add_stress = 20
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 intrigue >= 18 }
+		}
+	}
+
+	# Set a trap with false technique scrolls
+	option = {
+		name = murim_technique.0600.b
+		add_intrigue_skill = 1
+		add_prestige = 100
+		# The spy learns a flawed version -- potential backlash for them
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = deceitful }
+		}
+	}
+
+	# Ignore it -- techniques cannot be truly stolen
+	option = {
+		name = murim_technique.0600.c
+		add_stress = 10
+		add_piety = 50
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Use the opportunity to spread your reputation
+	option = {
+		name = murim_technique.0600.d
+		add_prestige = 300
+		add_diplomacy_skill = 1
+		stress_impact = {
+			gregarious = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = gregarious }
+			modifier = { add = 20 has_trait = ambitious }
 		}
 	}
 }
