@@ -1,5 +1,5 @@
 version = "0.3.0"
-name = "The Murim Chronicles - Martial Arts Total Conversion"
+name = "Murim Chronicles"
 path = "mod/murim"
 supported_version = "1.18.*"
 tags = {
