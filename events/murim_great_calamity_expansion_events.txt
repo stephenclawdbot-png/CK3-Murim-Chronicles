@@ -1,0 +1,994 @@
+namespace = murim_great_calamity_expansion
+
+# Great Calamity Expansion — Aftermath, Rebuilding, Mythology Formation
+# 10 events: post-apocalypse rebuilding, era mythology, survivor politics
+
+### EVENT 0001 — Ashes of the Old World
+# Fires after calamity kills 70-90% of martial world. Survivors assess devastation.
+murim_great_calamity_expansion.0001 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0001.t
+	desc = murim_great_calamity_expansion.0001.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_active
+		is_alive = yes
+		has_trait = murim_calamity_survivor
+		NOT = { has_character_flag = witnessed_ashes_of_old_world }
+	}
+	
+	immediate = {
+		set_character_flag = witnessed_ashes_of_old_world
+		add_stress = 50
+		# Count surviving martial artists in the world
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+			}
+			add_to_temporary_list = surviving_martial_artists
+		}
+	}
+	
+	# Option A: Vow to rebuild the martial world
+	option = {
+		name = murim_great_calamity_expansion.0001.a
+		add_trait = murim_rebuilder
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_rebuilder_resolve
+			years = 20
+		}
+		# Start rebuilding process
+		set_character_flag = murim_rebuilding_vow
+		trigger_event = {
+			id = murim_great_calamity_expansion.0003
+			days = { 60 180 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option B: Scavenge the ruins for lost techniques
+	option = {
+		name = murim_great_calamity_expansion.0001.b
+		add_character_modifier = {
+			modifier = murim_scavenger_of_ruins
+			years = 10
+		}
+		random_list = {
+			40 = {
+				add_trait = murim_forbidden_knowledge
+				custom_tooltip = murim_found_forbidden_scrolls_tt
+			}
+			30 = {
+				add_martial_skill = 4
+				custom_tooltip = murim_found_weapon_cache_tt
+			}
+			30 = {
+				add_stress = 30
+				custom_tooltip = murim_only_found_corpses_tt
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = greedy
+			}
+		}
+	}
+	
+	# Option C: Mourn in silence — the era is truly over
+	option = {
+		name = murim_great_calamity_expansion.0001.c
+		add_piety = 300
+		add_trait = murim_witness_of_ages
+		add_character_modifier = {
+			modifier = murim_deep_mourning
+			years = 5
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+}
+
+### EVENT 0002 — The Last Elder Speaks
+# An ancient elder, sole keeper of lost knowledge, makes their final testimony
+murim_great_calamity_expansion.0002 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0002.t
+	desc = murim_great_calamity_expansion.0002.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:dying_elder
+		animation = sick
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_active
+		is_alive = yes
+		has_trait = murim_martial_artist
+		age >= 16
+		NOT = { has_character_flag = heard_last_elder }
+	}
+	
+	immediate = {
+		set_character_flag = heard_last_elder
+		# Find oldest surviving martial artist who is NOT root
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				age >= 60
+				NOT = { this = root }
+				is_alive = yes
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					age >= 70
+				}
+				modifier = {
+					add = 10
+					age >= 80
+				}
+			}
+			save_scope_as = dying_elder
+		}
+	}
+	
+	# Option A: Record their words for posterity
+	option = {
+		name = murim_great_calamity_expansion.0002.a
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = murim_keeper_of_lost_history
+			years = 30
+		}
+		scope:dying_elder = {
+			add_opinion = {
+				target = root
+				modifier = murim_honored_my_legacy
+				opinion = 40
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = diligent
+			}
+		}
+	}
+	
+	# Option B: Learn their final technique before they die
+	option = {
+		name = murim_great_calamity_expansion.0002.b
+		add_martial_skill = 5
+		add_prowess = 4
+		random_list = {
+			50 = {
+				add_trait = murim_lost_art_inheritor
+				custom_tooltip = murim_inherited_lost_technique_tt
+			}
+			50 = {
+				add_character_modifier = {
+					modifier = murim_incomplete_transmission
+					years = 10
+				}
+				custom_tooltip = murim_technique_incomplete_tt
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Comfort them in their final moments
+	option = {
+		name = murim_great_calamity_expansion.0002.c
+		add_piety = 200
+		add_stress = -20
+		scope:dying_elder = {
+			add_opinion = {
+				target = root
+				modifier = murim_comforted_in_death
+				opinion = 60
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_compassion_of_the_survivor
+			years = 10
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_trait = compassionate
+			}
+		}
+	}
+}
+
+### EVENT 0003 — Founding a New Sect from the Ashes
+# Survivor begins rebuilding martial world with a new sect
+murim_great_calamity_expansion.0003 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0003.t
+	desc = murim_great_calamity_expansion.0003.desc
+	theme = realm
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_character_flag = murim_rebuilding_vow
+		is_alive = yes
+		prestige >= 500
+		NOT = { has_character_flag = founded_new_sect }
+	}
+	
+	immediate = {
+		set_character_flag = founded_new_sect
+	}
+	
+	# Option A: Found an Orthodox sect focused on justice
+	option = {
+		name = murim_great_calamity_expansion.0003.a
+		add_trait = murim_sect_founder_orthodox
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = murim_new_orthodox_patriarch
+			years = 50
+		}
+		set_variable = {
+			name = murim_new_sect_alignment
+			value = 1
+		}
+		# Attract followers
+		trigger_event = {
+			id = murim_great_calamity_expansion.0005
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = just
+			}
+			modifier = {
+				add = 20
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option B: Found an Unorthodox sect — power is all that matters now
+	option = {
+		name = murim_great_calamity_expansion.0003.b
+		add_trait = murim_sect_founder_unorthodox
+		add_prestige = 800
+		add_dread = 30
+		add_character_modifier = {
+			modifier = murim_new_dark_lord
+			years = 50
+		}
+		set_variable = {
+			name = murim_new_sect_alignment
+			value = -1
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion.0005
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Found a Neutral sect — balance between light and dark
+	option = {
+		name = murim_great_calamity_expansion.0003.c
+		add_trait = murim_sect_founder_neutral
+		add_prestige = 700
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_balance_keeper
+			years = 50
+		}
+		set_variable = {
+			name = murim_new_sect_alignment
+			value = 0
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion.0005
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = temperate
+			}
+		}
+	}
+}
+
+### EVENT 0004 — Mythology of the Previous Era
+# The previous era becomes legend. Stories are told of the fallen clans.
+murim_great_calamity_expansion.0004 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0004.t
+	desc = murim_great_calamity_expansion.0004.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_completed
+		age >= 16
+		NOT = { has_character_flag = heard_old_era_mythology }
+		OR = {
+			has_trait = murim_martial_artist
+			has_trait = murim_calamity_survivor
+			any_parent = {
+				has_trait = murim_calamity_survivor
+			}
+		}
+	}
+	
+	immediate = {
+		set_character_flag = heard_old_era_mythology
+	}
+	
+	# Option A: Preserve the true history
+	option = {
+		name = murim_great_calamity_expansion.0004.a
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = murim_historian_of_old_era
+			years = 20
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+	
+	# Option B: Embellish the legends — make the old masters into gods
+	option = {
+		name = murim_great_calamity_expansion.0004.b
+		add_prestige = 300
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_mythmaker
+			years = 15
+		}
+		custom_tooltip = murim_old_masters_become_legends_tt
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+	
+	# Option C: Let the old era die — focus on the future
+	option = {
+		name = murim_great_calamity_expansion.0004.c
+		add_stress = -20
+		add_character_modifier = {
+			modifier = murim_forward_looking
+			years = 10
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+}
+
+### EVENT 0005 — First Disciples of the New Sect
+# New sect attracts first followers from across the devastated land
+murim_great_calamity_expansion.0005 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0005.t
+	desc = murim_great_calamity_expansion.0005.desc
+	theme = vassal
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:first_disciple
+		animation = admiration
+	}
+	
+	trigger = {
+		has_character_flag = founded_new_sect
+		is_alive = yes
+		NOT = { has_character_flag = received_first_disciples }
+	}
+	
+	immediate = {
+		set_character_flag = received_first_disciples
+		# Create a disciple
+		create_character = {
+			age = { 14 22 }
+			gender_female_chance = 40
+			trait = murim_martial_artist
+			trait = ambitious
+			culture = root.culture
+			faith = root.faith
+			save_scope_as = first_disciple
+		}
+	}
+	
+	# Option A: Accept them and begin training immediately
+	option = {
+		name = murim_great_calamity_expansion.0005.a
+		scope:first_disciple = {
+			set_relation_mentor = root
+			add_opinion = {
+				target = root
+				modifier = murim_my_founding_master
+				opinion = 50
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_sect_founder_momentum
+			years = 10
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion.0006
+			days = { 120 365 }
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Test them first — only the worthy may join
+	option = {
+		name = murim_great_calamity_expansion.0005.b
+		custom_tooltip = murim_test_first_disciple_tt
+		random_list = {
+			60 = {
+				scope:first_disciple = {
+					add_trait = diligent
+					set_relation_mentor = root
+					add_opinion = {
+						target = root
+						modifier = murim_earned_my_place
+						opinion = 40
+					}
+				}
+				add_prestige = 100
+			}
+			40 = {
+				scope:first_disciple = {
+					add_trait = lazy
+					add_opinion = {
+						target = root
+						modifier = murim_rejected_me
+						opinion = -30
+					}
+				}
+				custom_tooltip = murim_disciple_failed_test_tt
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Turn them away — not yet ready to teach
+	option = {
+		name = murim_great_calamity_expansion.0005.c
+		add_stress = 10
+		add_piety = 100
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 0006 — Rival Sect Emerges
+# Another survivor founds a competing sect, creating new tension
+murim_great_calamity_expansion.0006 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0006.t
+	desc = murim_great_calamity_expansion.0006.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:rival_founder
+		animation = scheme
+	}
+	
+	trigger = {
+		has_character_flag = founded_new_sect
+		is_alive = yes
+		NOT = { has_character_flag = rival_sect_emerged }
+	}
+	
+	immediate = {
+		set_character_flag = rival_sect_emerged
+		random_living_character = {
+			limit = {
+				has_trait = murim_calamity_survivor
+				NOT = { this = root }
+				is_alive = yes
+				age >= 20
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 has_trait = ambitious }
+				modifier = { add = 3 has_trait = wrathful }
+			}
+			save_scope_as = rival_founder
+		}
+	}
+	
+	# Option A: Challenge them to a duel for dominance
+	option = {
+		name = murim_great_calamity_expansion.0006.a
+		duel = {
+			skill = martial
+			target = scope:rival_founder
+			50 = {
+				desc = murim_great_calamity_expansion.0006.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_defeated_rival_founder
+					left_icon = root
+					right_icon = scope:rival_founder
+				}
+				add_prestige = 500
+				add_dread = 20
+				scope:rival_founder = {
+					add_opinion = {
+						target = root
+						modifier = murim_defeated_me_founding
+						opinion = -40
+					}
+				}
+			}
+			50 = {
+				desc = murim_great_calamity_expansion.0006.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -200
+				scope:rival_founder = {
+					add_prestige = 500
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = wrathful }
+		}
+	}
+	
+	# Option B: Propose an alliance — two sects, shared purpose
+	option = {
+		name = murim_great_calamity_expansion.0006.b
+		scope:rival_founder = {
+			add_opinion = {
+				target = root
+				modifier = murim_proposed_alliance
+				opinion = 20
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_dual_sect_alliance
+			years = 20
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = diplomatic }
+		}
+	}
+	
+	# Option C: Ignore them — the martial world is vast enough
+	option = {
+		name = murim_great_calamity_expansion.0006.c
+		add_stress = -10
+		custom_tooltip = murim_rival_sect_grows_independently_tt
+		ai_chance = { base = 30 }
+	}
+}
+
+### EVENT 0007 — The Calamity Cycle Warning
+# A prophet warns that the calamity is cyclical and will return
+murim_great_calamity_expansion.0007 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0007.t
+	desc = murim_great_calamity_expansion.0007.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_completed
+		is_alive = yes
+		has_trait = murim_martial_artist
+		NOT = { has_character_flag = heard_calamity_cycle_warning }
+		any_living_character = {
+			has_trait = murim_calamity_survivor
+		}
+	}
+	
+	immediate = {
+		set_character_flag = heard_calamity_cycle_warning
+	}
+	
+	# Option A: Heed the warning — prepare defenses
+	option = {
+		name = murim_great_calamity_expansion.0007.a
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_calamity_preparedness
+			years = 30
+		}
+		set_character_flag = murim_preparing_for_next_calamity
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = paranoid }
+		}
+	}
+	
+	# Option B: Dismiss it as superstition
+	option = {
+		name = murim_great_calamity_expansion.0007.b
+		add_stress = -10
+		add_prestige = 100
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = cynical }
+		}
+	}
+	
+	# Option C: Seek the source of the cycle to break it
+	option = {
+		name = murim_great_calamity_expansion.0007.c
+		add_character_modifier = {
+			modifier = murim_cycle_breaker_quest
+			years = 20
+		}
+		add_piety = 200
+		trigger_event = {
+			id = murim_great_calamity_expansion.0009
+			days = { 365 730 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+}
+
+### EVENT 0008 — Children Born After the Calamity
+# A new generation grows up knowing only the post-calamity world
+murim_great_calamity_expansion.0008 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0008.t
+	desc = murim_great_calamity_expansion.0008.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:post_calamity_child
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_completed
+		is_alive = yes
+		has_trait = murim_calamity_survivor
+		any_child = {
+			age >= 12
+			age <= 18
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		NOT = { has_character_flag = guided_post_calamity_child }
+	}
+	
+	immediate = {
+		set_character_flag = guided_post_calamity_child
+		random_child = {
+			limit = {
+				age >= 12
+				age <= 18
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			save_scope_as = post_calamity_child
+		}
+	}
+	
+	# Option A: Train them in the old ways — preserve tradition
+	option = {
+		name = murim_great_calamity_expansion.0008.a
+		scope:post_calamity_child = {
+			add_trait = murim_martial_artist
+			add_martial_skill = 3
+			add_character_modifier = {
+				modifier = murim_trained_in_old_ways
+				years = 20
+			}
+			set_relation_mentor = root
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Teach them a new path — the old ways failed
+	option = {
+		name = murim_great_calamity_expansion.0008.b
+		scope:post_calamity_child = {
+			add_trait = murim_martial_artist
+			add_learning_skill = 3
+			add_character_modifier = {
+				modifier = murim_new_path_pioneer
+				years = 20
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Shield them from the martial world entirely
+	option = {
+		name = murim_great_calamity_expansion.0008.c
+		scope:post_calamity_child = {
+			add_stewardship_skill = 2
+			add_character_modifier = {
+				modifier = murim_sheltered_from_martial_world
+				years = 15
+			}
+		}
+		add_stress = 10
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+### EVENT 0009 — Quest to Break the Calamity Cycle
+# Deep investigation into the root cause of the cyclical calamity
+murim_great_calamity_expansion.0009 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0009.t
+	desc = murim_great_calamity_expansion.0009.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	
+	trigger = {
+		has_character_flag = murim_preparing_for_next_calamity
+		OR = {
+			has_character_modifier = murim_cycle_breaker_quest
+		}
+		is_alive = yes
+	}
+	
+	immediate = {
+		# Nothing needed
+	}
+	
+	# Option A: Discover the Heavenly Dao imbalance
+	option = {
+		name = murim_great_calamity_expansion.0009.a
+		add_learning_skill = 5
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_understands_heavenly_dao
+			years = 50
+		}
+		custom_tooltip = murim_discovered_dao_imbalance_tt
+		random_list = {
+			30 = {
+				add_trait = murim_dao_enlightened
+				custom_tooltip = murim_achieved_dao_breakthrough_tt
+			}
+			70 = {
+				add_stress = 40
+				custom_tooltip = murim_knowledge_too_heavy_tt
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Find the Calamity Artifact — destroy it
+	option = {
+		name = murim_great_calamity_expansion.0009.b
+		add_martial_skill = 3
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = murim_calamity_artifact_destroyed
+					years = 100
+				}
+				set_global_variable = murim_calamity_cycle_broken
+				custom_tooltip = murim_broke_the_cycle_tt
+			}
+			60 = {
+				add_character_modifier = {
+					modifier = murim_calamity_artifact_curse
+					years = 20
+				}
+				add_stress = 60
+				custom_tooltip = murim_artifact_fought_back_tt
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Accept the cycle as natural law
+	option = {
+		name = murim_great_calamity_expansion.0009.c
+		add_piety = 300
+		add_stress = -30
+		add_character_modifier = {
+			modifier = murim_accepts_the_cycle
+			years = 30
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = content }
+		}
+	}
+}
+
+### EVENT 0010 — Dawn of the New Era
+# The martial world has been rebuilt. A new era officially begins.
+murim_great_calamity_expansion.0010 = {
+	type = character_event
+	title = murim_great_calamity_expansion.0010.t
+	desc = murim_great_calamity_expansion.0010.desc
+	theme = realm
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_completed
+		is_alive = yes
+		has_trait = murim_martial_artist
+		NOT = { has_character_flag = witnessed_new_era_dawn }
+		# At least 20 years after calamity
+		current_date >= 1300.1.1
+	}
+	
+	immediate = {
+		set_character_flag = witnessed_new_era_dawn
+		# Clear calamity flags
+		remove_global_variable = murim_calamity_completed
+		set_global_variable = {
+			name = murim_new_era_active
+			value = yes
+		}
+	}
+	
+	# Option A: Declare a Grand Assembly to formalize the new order
+	option = {
+		name = murim_great_calamity_expansion.0010.a
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = murim_new_era_founder
+			years = 50
+		}
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_declared_new_era
+				opinion = 15
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Claim the title of Supreme Martial Lord
+	option = {
+		name = murim_great_calamity_expansion.0010.b
+		add_prestige = 2000
+		add_dread = 40
+		add_character_modifier = {
+			modifier = murim_supreme_martial_lord
+			years = 100
+		}
+		# Some will oppose this
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { this = root }
+				has_trait = ambitious
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_claimed_supreme_title
+				opinion = -30
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 40 has_trait = ambitious }
+		}
+	}
+	
+	# Option C: Step back — let the new generation lead
+	option = {
+		name = murim_great_calamity_expansion.0010.c
+		add_piety = 500
+		add_stress = -30
+		add_character_modifier = {
+			modifier = murim_wise_elder_retired
+			years = 30
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = content }
+		}
+	}
+}
