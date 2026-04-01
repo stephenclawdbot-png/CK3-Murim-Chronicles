@@ -1,0 +1,529 @@
+# Murim Chronicles Phase 2 - Grind Loop Events
+
+namespace = murim_grind
+
+# Solo Meditation (repeatable)
+murim_grind.0001 = {
+	type = character_event
+	title = murim_grind.0001.t
+	desc = murim_grind.0001.desc
+	theme = mental_health
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		prowess >= 5
+		has_character_flag = murim_initiated
+		NOT = { has_character_flag = murim_closed_door_active }
+	}
+
+	# Light meditation - safe, low XP
+	option = {
+		name = murim_grind.0001.a
+		change_variable = { name = murim_cultivation_xp add = 1 }
+		add_character_modifier = { modifier = murim_meditation_focus days = 30 }
+		stress_impact = { base = -5 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = -10 has_trait = ambitious }
+		}
+	}
+
+	# Deep meditation - moderate risk, good XP
+	option = {
+		name = murim_grind.0001.b
+		random = {
+			chance = murim_qi_deviation_chance
+			murim_apply_minor_qi_deviation = yes
+		}
+		change_variable = { name = murim_cultivation_xp add = 3 }
+		stress_impact = { base = 5 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = diligent }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -15 has_trait = craven }
+		}
+	}
+
+	# Dangerous push - high risk, high reward
+	option = {
+		name = murim_grind.0001.c
+		random = {
+			chance = 45
+			murim_apply_minor_qi_deviation = yes
+		}
+		change_variable = { name = murim_cultivation_xp add = 6 }
+		add_stress = 15
+		ai_chance = {
+			base = 10
+			modifier = { add = 40 has_trait = ambitious }
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -30 has_trait = craven }
+			modifier = { add = -20 has_trait = patient }
+		}
+	}
+}
+
+# Body Tempering Attempt (repeatable)
+murim_grind.0010 = {
+	type = character_event
+	title = murim_grind.0010.t
+	desc = murim_grind.0010.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	trigger = {
+		murim_can_attempt_body_tempering_trigger = yes
+	}
+
+	# Standard tempering
+	option = {
+		name = murim_grind.0010.a
+		random = {
+			chance = murim_body_tempering_success_chance
+			murim_apply_body_tempering_effect = yes
+		}
+		modifier = {
+			factor = 0
+		}
+		fallback = {
+			murim_apply_tempering_failure_effect = yes
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 10 has_trait = diligent }
+			modifier = { add = -15 has_trait = craven }
+		}
+	}
+
+	# Extreme tempering - harder but bonus XP
+	option = {
+		name = murim_grind.0010.b
+		random = {
+			chance = 40
+			murim_apply_body_tempering_effect = yes
+			change_variable = { name = murim_cultivation_xp add = 3 }
+		}
+		modifier = {
+			factor = 0
+		}
+		fallback = {
+			murim_apply_tempering_failure_effect = yes
+			add_stress = 20
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	# Abandon
+	option = {
+		name = murim_grind.0010.c
+		add_stress = 10
+		ai_chance = {
+			base = 5
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = 15 has_trait = lazy }
+		}
+	}
+}
+
+# Qi Circulation Training (repeatable)
+murim_grind.0020 = {
+	type = character_event
+	title = murim_grind.0020.t
+	desc = murim_grind.0020.desc
+	theme = mental_health
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_initiated
+		age >= 16
+	}
+
+	# Gentle circulation - safe
+	option = {
+		name = murim_grind.0020.a
+		change_variable = { name = murim_qi_reserves add = 10 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Forced circulation - risky
+	option = {
+		name = murim_grind.0020.b
+		random = {
+			chance = murim_qi_deviation_chance
+			murim_apply_minor_qi_deviation = yes
+		}
+		change_variable = { name = murim_qi_reserves add = 25 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -10 has_trait = craven }
+		}
+	}
+
+	# Reverse circulation - forbidden, high risk
+	option = {
+		name = murim_grind.0020.c
+		random = {
+			chance = 40
+			murim_apply_minor_qi_deviation = yes
+		}
+		change_variable = { name = murim_qi_reserves add = 40 }
+		if = {
+			limit = { NOT = { murim_has_forbidden_mark_trigger = yes } }
+			random = {
+				chance = 25
+				add_trait = murim_forbidden_mark_1
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 20 has_trait = cynical }
+			modifier = { add = -20 has_trait = zealous }
+		}
+	}
+}
+
+# Forbidden Manual Study (repeatable, dangerous)
+murim_grind.0030 = {
+	type = character_event
+	title = murim_grind.0030.t
+	desc = murim_grind.0030.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		murim_can_study_forbidden_trigger = yes
+	}
+
+	# Read cautiously
+	option = {
+		name = murim_grind.0030.a
+		change_variable = { name = murim_cultivation_xp add = 2 }
+		add_character_modifier = { modifier = murim_studying_manual days = 30 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 10 has_trait = patient }
+			modifier = { add = 10 has_trait = diligent }
+		}
+	}
+
+	# Study deeply
+	option = {
+		name = murim_grind.0030.b
+		murim_apply_forbidden_study_effect = yes
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 10 has_trait = deceitful }
+		}
+	}
+
+	# Absorb fully - guaranteed corruption advance
+	option = {
+		name = murim_grind.0030.c
+		change_variable = { name = murim_cultivation_xp add = 10 }
+		# Forced corruption advance
+		if = {
+			limit = { NOT = { murim_has_forbidden_mark_trigger = yes } }
+			add_trait = murim_forbidden_mark_1
+		}
+		else_if = {
+			limit = { has_trait = murim_forbidden_mark_1 }
+			remove_trait = murim_forbidden_mark_1
+			add_trait = murim_forbidden_mark_2
+		}
+		else_if = {
+			limit = { has_trait = murim_forbidden_mark_2 }
+			remove_trait = murim_forbidden_mark_2
+			add_trait = murim_forbidden_mark_3
+		}
+		random = {
+			chance = 15
+			add_trait = lunatic
+		}
+		add_character_flag = { flag = murim_forbidden_study_cooldown days = 90 }
+		ai_chance = {
+			base = 5
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = sadistic }
+			modifier = { add = -30 has_trait = compassionate }
+			modifier = { add = -20 has_trait = zealous }
+		}
+	}
+}
+
+# Breakthrough Attempt
+murim_grind.0040 = {
+	type = character_event
+	title = murim_grind.0040.t
+	desc = murim_grind.0040.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		OR = {
+			murim_can_attempt_breakthrough_trigger = yes
+			murim_can_attempt_tribulation_trigger = yes
+		}
+	}
+
+	# Steady breakthrough
+	option = {
+		name = murim_grind.0040.a
+		murim_attempt_breakthrough_effect = yes
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 10 has_trait = diligent }
+		}
+	}
+
+	# Force breakthrough - higher chance but higher deviation risk
+	option = {
+		name = murim_grind.0040.b
+		add_character_flag = { flag = murim_studying_forbidden days = 1 }
+		murim_attempt_breakthrough_effect = yes
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 10 has_trait = brave }
+			modifier = { add = -15 has_trait = patient }
+		}
+	}
+
+	# Heavenly Tribulation - extreme, only if rank >= 4
+	option = {
+		name = murim_grind.0040.c
+		trigger = {
+			murim_can_attempt_tribulation_trigger = yes
+			exists = var:murim_cultivation_rank
+			var:murim_cultivation_rank >= 4
+		}
+		add_character_flag = { flag = murim_attempting_breakthrough days = 1 }
+		random = {
+			chance = murim_tribulation_survival_chance
+			# SURVIVED
+			change_variable = { name = murim_cultivation_rank add = 1 }
+			set_variable = { name = murim_cultivation_xp value = 0 }
+			add_trait = murim_tribulation_survivor
+			add_prestige = 500
+			send_interface_toast = {
+				title = murim_tribulation_survived_toast
+				left_icon = root
+			}
+		}
+		modifier = {
+			factor = 0
+		}
+		fallback = {
+			# FAILED TRIBULATION
+			random = {
+				chance = 40
+				death = { death_reason = death_accident }
+			}
+			if = {
+				limit = { is_alive = yes }
+				add_trait = wounded_3
+				murim_apply_minor_qi_deviation = yes
+			}
+		}
+		add_character_modifier = { modifier = murim_tribulation_aftermath days = 365 }
+		ai_chance = {
+			base = 10
+			modifier = { add = 40 has_trait = ambitious }
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -50 has_trait = craven }
+			modifier = { add = -30 has_trait = content }
+		}
+	}
+
+	# Abandon
+	option = {
+		name = murim_grind.0040.d
+		add_stress = 15
+		ai_chance = {
+			base = 5
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+# Breakthrough Failure Recovery (fires ~12 months after failure)
+murim_grind.0050 = {
+	type = character_event
+	title = murim_grind.0050.t
+	desc = murim_grind.0050.desc
+	theme = mental_health
+	left_portrait = {
+		character = root
+		animation = sadness
+	}
+
+	trigger = {
+		has_trait = murim_breakthrough_failure
+	}
+
+	# Accept humility
+	option = {
+		name = murim_grind.0050.a
+		murim_remove_breakthrough_failure_effect = yes
+		if = {
+			limit = { NOT = { has_trait = patient } }
+			random = {
+				chance = 30
+				add_trait = patient
+			}
+		}
+		stress_impact = { base = -20 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = humble }
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+
+	# Channel anger
+	option = {
+		name = murim_grind.0050.b
+		murim_remove_breakthrough_failure_effect = yes
+		add_prowess_skill = 1
+		add_stress = 20
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = wrathful }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Seek forbidden shortcut
+	option = {
+		name = murim_grind.0050.c
+		murim_remove_breakthrough_failure_effect = yes
+		if = {
+			limit = { NOT = { murim_has_forbidden_mark_trigger = yes } }
+			add_trait = murim_forbidden_mark_1
+		}
+		change_variable = { name = murim_cultivation_xp add = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = deceitful }
+			modifier = { add = 20 has_trait = cynical }
+			modifier = { add = -20 has_trait = zealous }
+		}
+	}
+}
+
+# Qi Deviation Emergency
+murim_grind.0060 = {
+	type = character_event
+	title = murim_grind.0060.t
+	desc = murim_grind.0060.desc
+	theme = mental_health
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+
+	trigger = {
+		murim_has_qi_deviation_trigger = yes
+	}
+
+	# Endure
+	option = {
+		name = murim_grind.0060.a
+		add_stress = 30
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 10 has_trait = patient }
+		}
+	}
+
+	# Seek healer (gold cost)
+	option = {
+		name = murim_grind.0060.b
+		remove_short_term_gold = 100
+		random = {
+			chance = 50
+			# Downgrade deviation one level
+			if = {
+				limit = { has_trait = murim_qi_deviation_crippling }
+				remove_trait = murim_qi_deviation_crippling
+				add_trait = murim_qi_deviation_major
+			}
+			else_if = {
+				limit = { has_trait = murim_qi_deviation_major }
+				remove_trait = murim_qi_deviation_major
+				add_trait = murim_qi_deviation_minor
+			}
+			else_if = {
+				limit = { has_trait = murim_qi_deviation_minor }
+				remove_trait = murim_qi_deviation_minor
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 15 gold >= 200 }
+			modifier = { add = -20 gold < 100 }
+		}
+	}
+
+	# Embrace corruption
+	option = {
+		name = murim_grind.0060.c
+		# Upgrade deviation but gain power
+		if = {
+			limit = { has_trait = murim_qi_deviation_minor }
+			remove_trait = murim_qi_deviation_minor
+			add_trait = murim_qi_deviation_major
+		}
+		else_if = {
+			limit = { has_trait = murim_qi_deviation_major }
+			remove_trait = murim_qi_deviation_major
+			add_trait = murim_qi_deviation_crippling
+		}
+		change_variable = { name = murim_cultivation_xp add = 8 }
+		if = {
+			limit = { NOT = { murim_has_forbidden_mark_trigger = yes } }
+			add_trait = murim_forbidden_mark_1
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = cynical }
+			modifier = { add = -20 has_trait = zealous }
+			modifier = { add = -15 has_trait = compassionate }
+		}
+	}
+}
