@@ -1,544 +1,552 @@
 # Murim Chronicles - Clan Scout Character Effects
-# Spawns and manages NAMED traveling recruiter characters for each clan.
-# Scouts are REAL characters on the map with traits, not abstract events.
-# INTEGRATION: Called by murim_game_start_effects.txt (initial spawn)
-# INTEGRATION: Called by murim_on_actions.txt (replacement spawn on death)
-# INTEGRATION: Feeds murim_clan_scout_events.txt (scout travel/encounter events)
-# INTEGRATION: Uses murim_clan_triggers.txt (clan membership checks)
-# INTEGRATION: Uses murim_clan_membership_effects.txt (recruit join effects)
-# DESIGN: VANILLA SEPARATION — scouts do NOT affect titles, wars, succession.
-#         They are martial-layer characters only. Their travel is martial travel,
-#         not political movement. Courts they visit get martial events, not diplomatic ones.
-# GENDER: All scouts can be any gender. No sex restrictions.
+# Spawns and manages NAMED TRAVELING RECRUITER characters for each clan.
+# Scouts are REAL characters on the map with traits, travel routes, and lifespans.
+# CHINA-CENTRIC: All scouts DEPART FROM and RETURN TO China (Song Dynasty region).
+# VANILLA SEPARATION: Scout travel is martial-layer only. Does NOT trigger political events,
+#   wars, or diplomatic incidents. Scouts use martial_travel modifier, not vanilla movement.
+# INTEGRATION: Referenced by murim_clan_recruitment_events.txt (dual-mode recruitment),
+#              murim_clan_scout_events.txt (travel events),
+#              murim_game_start_effects.txt (initial scout spawning),
+#              murim_on_actions.txt (yearly scout movement pulse)
+# GENDER: All scouts can be male or female. No restrictions.
 
-# ============================================================
-# SPAWN SCOUT EFFECTS — Called on game start and on scout death
-# ============================================================
+# ===========================
+# SCOUT SPAWNING EFFECTS
+# ===========================
 
-# Master effect: spawn all clan scouts
-murim_spawn_all_clan_scouts_effect = {
-	# Mount Hua: 2 scouts (1 Korea, 1 abroad)
-	murim_spawn_mount_hua_scout_effect = yes
-	# Shaolin: 2 scouts (1 China temples, 1 worldwide monasteries)
-	murim_spawn_shaolin_scout_effect = yes
-	# Heavenly Demon: 2 scouts (1 underworld, 1 foreign desperate)
-	murim_spawn_heavenly_demon_scout_effect = yes
-	# Tang Clan: 1 scout (tracks lost bloodlines + associates)
-	murim_spawn_tang_clan_scout_effect = yes
-	# Wudang: 1 scout (scholarly courts worldwide)
-	murim_spawn_wudang_scout_effect = yes
-	# Beggar Sect: 2 scouts (most widespread — beggars are everywhere)
-	murim_spawn_beggar_sect_scout_effect = yes
+# spawn_clan_scouts_effect — called on game start and when a scout dies (1-2 year delay)
+# Spawns 1-2 scout characters per clan with clan-specific traits and travel preferences.
+# All scouts start in CHINA (Song Dynasty region) at their clan's HQ province.
+
+murim_spawn_clan_scouts_effect = {
+    # Mount Hua Scouts — travel righteous kingdoms, seek disciplined youth
+    # Route: China -> Goryeo -> Japan -> India -> Persia -> back to China (5-6 year cycle)
+    if = {
+        limit = { has_variable = mount_hua_needs_scout }
+        create_character = {
+            name = "Mount Hua Scout"
+            location = title:c_luoyang.title_province    # Mount Hua HQ region
+            age = { 30 40 }
+            trait = brave
+            trait = just
+            trait = temperate
+            trait = outer_disciple    # Senior enough to represent the clan
+            dynasty = none
+            culture = culture:han
+            religion = religion:taoism
+            prowess = { 12 18 }
+            martial = { 10 15 }
+            diplomacy = { 12 18 }    # Scouts need diplomacy for recruitment pitches
+            save_scope_as = mount_hua_scout
+        }
+        scope:mount_hua_scout = {
+            add_trait = martial_artist
+            set_variable = { name = scout_clan value = flag:mount_hua }
+            set_variable = { name = scout_route_stage value = 0 }
+            set_variable = { name = scout_years_traveling value = 0 }
+            set_variable = { name = scout_recruits_found value = 0 }
+            set_variable = { name = scout_max_cycle_years value = 5 }
+            add_character_modifier = {
+                modifier = murim_clan_scout_modifier
+                years = 100
+            }
+            # Mount Hua preference flags
+            set_variable = { name = scout_prefers_disciplined value = yes }
+            set_variable = { name = scout_prefers_honorable value = yes }
+            set_variable = { name = scout_approach_style value = flag:polite_demonstration }
+        }
+        remove_variable = mount_hua_needs_scout
+    }
+
+    # Shaolin Scouts — wander monasteries and temples worldwide, seek spiritual talent
+    # Route: China -> Tibet -> India -> Southeast Asia -> Goryeo -> back to China
+    if = {
+        limit = { has_variable = shaolin_needs_scout }
+        create_character = {
+            name = "Shaolin Scout"
+            location = title:c_kaifeng.title_province    # Near Shaolin Temple
+            age = { 35 50 }
+            trait = calm
+            trait = compassionate
+            trait = temperate
+            trait = inner_disciple    # Shaolin sends senior monks
+            dynasty = none
+            culture = culture:han
+            religion = religion:buddhism
+            prowess = { 14 20 }
+            martial = { 8 12 }
+            diplomacy = { 14 18 }
+            learning = { 14 20 }    # Monks are learned
+            save_scope_as = shaolin_scout
+        }
+        scope:shaolin_scout = {
+            add_trait = martial_artist
+            set_variable = { name = scout_clan value = flag:shaolin }
+            set_variable = { name = scout_route_stage value = 0 }
+            set_variable = { name = scout_years_traveling value = 0 }
+            set_variable = { name = scout_recruits_found value = 0 }
+            set_variable = { name = scout_max_cycle_years value = 6 }
+            add_character_modifier = {
+                modifier = murim_clan_scout_modifier
+                years = 100
+            }
+            set_variable = { name = scout_prefers_spiritual value = yes }
+            set_variable = { name = scout_prefers_orphans value = yes }
+            set_variable = { name = scout_approach_style value = flag:peaceful_invitation }
+        }
+        remove_variable = shaolin_needs_scout
+    }
+
+    # Heavenly Demon Scouts — operate in shadows, visit prisons, slums, exile camps
+    # Route: China shadows -> borderlands -> war zones -> criminal underworld -> back
+    if = {
+        limit = { has_variable = heavenly_demon_needs_scout }
+        create_character = {
+            name = "Heavenly Demon Scout"
+            location = title:c_chengdu.title_province    # Heavenly Demon remote HQ
+            age = { 25 40 }
+            trait = ambitious
+            trait = deceitful
+            trait = sadistic
+            trait = inner_disciple
+            dynasty = none
+            culture = culture:han
+            religion = religion:taoism
+            prowess = { 16 22 }
+            intrigue = { 16 22 }    # Shadow operatives
+            diplomacy = { 6 10 }    # Don't need diplomacy, use intimidation
+            save_scope_as = heavenly_demon_scout
+        }
+        scope:heavenly_demon_scout = {
+            add_trait = martial_artist
+            set_variable = { name = scout_clan value = flag:heavenly_demon }
+            set_variable = { name = scout_route_stage value = 0 }
+            set_variable = { name = scout_years_traveling value = 0 }
+            set_variable = { name = scout_recruits_found value = 0 }
+            set_variable = { name = scout_max_cycle_years value = 4 }    # Faster, more aggressive
+            add_character_modifier = {
+                modifier = murim_clan_scout_modifier
+                years = 100
+            }
+            set_variable = { name = scout_prefers_desperate value = yes }
+            set_variable = { name = scout_prefers_ambitious value = yes }
+            set_variable = { name = scout_approach_style value = flag:shadow_recruitment }
+        }
+        remove_variable = heavenly_demon_needs_scout
+    }
+
+    # Tang Clan Scouts — don't recruit outsiders for full membership (blood only)
+    # Instead scout for ASSOCIATES and track down lost Tang bloodlines worldwide
+    # Route: China -> all regions where Tang diaspora might exist -> back
+    if = {
+        limit = { has_variable = tang_clan_needs_scout }
+        create_character = {
+            name = "Tang Clan Scout"
+            location = title:c_chengdu.title_province    # Tang Clan Sichuan HQ
+            age = { 28 45 }
+            trait = paranoid
+            trait = patient
+            trait = diligent
+            trait = tang_clan_member    # MUST be blood Tang
+            dynasty = none
+            culture = culture:han
+            religion = religion:taoism
+            prowess = { 10 16 }
+            intrigue = { 14 20 }    # Tang scouts are poison/intelligence specialists
+            learning = { 12 16 }    # Need to identify bloodlines and rare materials
+            save_scope_as = tang_scout
+        }
+        scope:tang_scout = {
+            add_trait = martial_artist
+            set_variable = { name = scout_clan value = flag:tang_clan }
+            set_variable = { name = scout_route_stage value = 0 }
+            set_variable = { name = scout_years_traveling value = 0 }
+            set_variable = { name = scout_recruits_found value = 0 }
+            set_variable = { name = scout_max_cycle_years value = 6 }
+            add_character_modifier = {
+                modifier = murim_clan_scout_modifier
+                years = 100
+            }
+            # Tang unique: searches for blood relatives AND useful associates
+            set_variable = { name = scout_prefers_tang_blood value = yes }
+            set_variable = { name = scout_seeks_associates value = yes }
+            set_variable = { name = scout_approach_style value = flag:discrete_investigation }
+        }
+        remove_variable = tang_clan_needs_scout
+    }
+
+    # Wudang Scouts — visit universities, libraries, scholarly courts
+    # Route: China -> Goryeo academies -> India universities -> Persia libraries -> back
+    if = {
+        limit = { has_variable = wudang_needs_scout }
+        create_character = {
+            name = "Wudang Scout"
+            location = title:c_xiangyang.title_province    # Near Wudang Mountains
+            age = { 30 50 }
+            trait = patient
+            trait = temperate
+            trait = diligent
+            trait = inner_disciple
+            dynasty = none
+            culture = culture:han
+            religion = religion:taoism
+            prowess = { 12 18 }
+            learning = { 16 22 }    # Scholars first, fighters second
+            diplomacy = { 12 16 }
+            save_scope_as = wudang_scout
+        }
+        scope:wudang_scout = {
+            add_trait = martial_artist
+            set_variable = { name = scout_clan value = flag:wudang }
+            set_variable = { name = scout_route_stage value = 0 }
+            set_variable = { name = scout_years_traveling value = 0 }
+            set_variable = { name = scout_recruits_found value = 0 }
+            set_variable = { name = scout_max_cycle_years value = 6 }
+            add_character_modifier = {
+                modifier = murim_clan_scout_modifier
+                years = 100
+            }
+            set_variable = { name = scout_prefers_intelligent value = yes }
+            set_variable = { name = scout_prefers_scholarly value = yes }
+            set_variable = { name = scout_approach_style value = flag:intellectual_challenge }
+        }
+        remove_variable = wudang_needs_scout
+    }
+
+    # Beggar Sect Scouts — live among the poor, recruit from streets
+    # Most WIDESPREAD network. Beggars are everywhere in every country.
+    # Route: Everywhere. No fixed route. Wanders with the dispossessed.
+    if = {
+        limit = { has_variable = beggar_sect_needs_scout }
+        create_character = {
+            name = "Beggar Sect Scout"
+            location = title:c_kaifeng.title_province    # Beggar Sect HQ in major city
+            age = { 20 60 }    # Widest age range — anyone can be a beggar
+            trait = gregarious
+            trait = compassionate
+            trait = content    # Doesn't seek glory, seeks worthy people
+            trait = outer_disciple    # Beggar Sect is humble even in rank
+            dynasty = none
+            culture = culture:han
+            religion = religion:taoism
+            prowess = { 10 16 }
+            diplomacy = { 14 20 }    # Social network is their weapon
+            intrigue = { 14 20 }    # Information brokers
+            save_scope_as = beggar_scout
+        }
+        scope:beggar_scout = {
+            add_trait = martial_artist
+            set_variable = { name = scout_clan value = flag:beggar_sect }
+            set_variable = { name = scout_route_stage value = 0 }
+            set_variable = { name = scout_years_traveling value = 0 }
+            set_variable = { name = scout_recruits_found value = 0 }
+            set_variable = { name = scout_max_cycle_years value = 3 }    # Short cycles, always moving
+            add_character_modifier = {
+                modifier = murim_clan_scout_modifier
+                years = 100
+            }
+            set_variable = { name = scout_prefers_poor value = yes }
+            set_variable = { name = scout_prefers_abandoned value = yes }
+            set_variable = { name = scout_approach_style value = flag:street_recruitment }
+        }
+        remove_variable = beggar_sect_needs_scout
+    }
 }
 
-# ============================================================
-# MOUNT HUA SCOUTS
-# ============================================================
-murim_spawn_mount_hua_scout_effect = {
-	# Scout 1: Domestic (Korea/China righteous kingdoms)
-	create_character = {
-		name = "Mount Hua Wandering Sword"
-		# Random name from Korean/Chinese name list
-		age = { 30 45 }
-		# Gender random
-		trait = mount_hua_member
-		trait = inner_disciple
-		trait = brave
-		trait = just
-		trait = temperate
-		prowess = { 14 20 }
-		martial = { 10 15 }
-		diplomacy = { 8 14 }
-		# Flag as scout
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:mount_hua
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:domestic  # Korea/China
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0  # Years until return to HQ. Resets to 5-6 on departure.
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0  # Tracks how many recruits gathered this trip
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 5  # Returns when this many found OR timer expires
-		}
-	}
-	
-	# Scout 2: Foreign (Japan, Southeast Asia, India)
-	create_character = {
-		name = "Mount Hua Far Traveler"
-		age = { 35 50 }
-		trait = mount_hua_member
-		trait = inner_disciple
-		trait = brave
-		trait = patient
-		trait = gregarious
-		prowess = { 12 18 }
-		martial = { 8 14 }
-		diplomacy = { 10 16 }  # Higher diplomacy for foreign relations
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:mount_hua
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:foreign_east  # Japan, SE Asia, India
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 3  # Fewer recruits from far abroad
-		}
-	}
+# ===========================
+# SCOUT TRAVEL EFFECTS
+# ===========================
+
+# murim_advance_scout_route_effect — called yearly on each scout
+# Moves scout to next stage of their route. Triggers court visit events.
+# VANILLA SEPARATION: Uses martial_travel flag, NOT vanilla travel/movement system.
+
+murim_advance_scout_route_effect = {
+    # Increment travel counter
+    change_variable = { name = scout_years_traveling add = 1 }
+    
+    # Check if cycle complete (return to China)
+    if = {
+        limit = {
+            var:scout_years_traveling >= var:scout_max_cycle_years
+        }
+        # Return to China with recruits
+        trigger_event = { id = murim_scout.0010 days = { 15 30 } }    # Return event
+        set_variable = { name = scout_years_traveling value = 0 }
+        set_variable = { name = scout_route_stage value = 0 }
+    }
+    # Otherwise advance route
+    else = {
+        change_variable = { name = scout_route_stage add = 1 }
+        
+        # Each route stage triggers a court visit event based on region
+        # The scout_events file handles the actual interactions
+        trigger_event = { id = murim_scout.0001 days = { 30 90 } }    # Arrive at new region
+    }
 }
 
-# ============================================================
-# SHAOLIN SCOUTS
-# ============================================================
-murim_spawn_shaolin_scout_effect = {
-	# Scout 1: Temple circuit (China/Korea/Japan Buddhist temples)
-	create_character = {
-		name = "Shaolin Wandering Monk"
-		age = { 35 55 }
-		trait = shaolin_member
-		trait = inner_disciple
-		trait = calm
-		trait = temperate
-		trait = compassionate
-		prowess = { 12 18 }
-		martial = { 8 12 }
-		learning = { 12 18 }  # High learning — seeks spiritual talent
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:shaolin
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:temple_circuit
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 4
-		}
-	}
-	
-	# Scout 2: Worldwide monasteries (Tibet, India, Middle East, Europe)
-	create_character = {
-		name = "Shaolin Pilgrim"
-		age = { 40 60 }
-		trait = shaolin_member
-		trait = elder_member
-		trait = patient
-		trait = humble
-		trait = pilgrim  # Vanilla trait — fits perfectly
-		prowess = { 10 16 }
-		diplomacy = { 10 16 }
-		learning = { 14 20 }
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:shaolin
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:foreign_worldwide
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 3
-		}
-	}
+# murim_scout_evaluate_candidate_effect — evaluates a character for martial potential
+# Called when scout encounters a potential recruit during travel
+# Returns weighted score used by recruitment decision events
+
+murim_scout_evaluate_candidate_effect = {
+    # Base score from prowess relative to age
+    # Young characters with high prowess = huge bonus
+    if = {
+        limit = {
+            age < 16
+            prowess >= 8
+        }
+        change_variable = { name = candidate_score add = 10 }    # Youth prodigy
+    }
+    if = {
+        limit = {
+            age >= 16
+            age < 25
+            prowess >= 12
+        }
+        change_variable = { name = candidate_score add = 7 }    # Young talent
+    }
+    if = {
+        limit = {
+            age >= 25
+            prowess >= 16
+        }
+        change_variable = { name = candidate_score add = 5 }    # Adult fighter
+    }
+    
+    # Trait bonuses
+    if = { limit = { has_trait = genius } change_variable = { name = candidate_score add = 8 } }
+    if = { limit = { has_trait = quick } change_variable = { name = candidate_score add = 5 } }
+    if = { limit = { has_trait = intelligent } change_variable = { name = candidate_score add = 4 } }
+    if = { limit = { has_trait = brave } change_variable = { name = candidate_score add = 4 } }
+    if = { limit = { has_trait = strong } change_variable = { name = candidate_score add = 4 } }
+    if = { limit = { has_trait = robust } change_variable = { name = candidate_score add = 3 } }
+    if = { limit = { has_trait = ambitious } change_variable = { name = candidate_score add = 3 } }
+    if = { limit = { has_trait = diligent } change_variable = { name = candidate_score add = 2 } }
+    if = { limit = { has_trait = shrewd } change_variable = { name = candidate_score add = 3 } }
+    
+    # Martial awareness = already knows the murim exists
+    if = {
+        limit = { has_trait = martial_awareness }
+        change_variable = { name = candidate_score add = 5 }
+    }
+    
+    # Tournament veteran = showed talent publicly
+    if = {
+        limit = { has_character_modifier = murim_tournament_participant }
+        change_variable = { name = candidate_score add = 6 }
+    }
+    if = {
+        limit = { has_character_modifier = murim_tournament_winner }
+        change_variable = { name = candidate_score add = 10 }
+    }
+    
+    # Clan-specific preference bonuses
+    # Mount Hua: disciplined + honorable
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:mount_hua }
+            OR = {
+                has_trait = just
+                has_trait = temperate
+                has_trait = honest
+            }
+        }
+        change_variable = { name = candidate_score add = 4 }
+    }
+    
+    # Shaolin: spiritual + calm
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:shaolin }
+            OR = {
+                has_trait = calm
+                has_trait = compassionate
+                has_trait = content
+                religion = { has_doctrine = tenet_monasticism }
+            }
+        }
+        change_variable = { name = candidate_score add = 4 }
+    }
+    
+    # Heavenly Demon: ambitious + ruthless + desperate
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:heavenly_demon }
+            OR = {
+                has_trait = ambitious
+                has_trait = sadistic
+                has_trait = callous
+                has_trait = deceitful
+                is_imprisoned = yes
+                gold < 0
+            }
+        }
+        change_variable = { name = candidate_score add = 5 }
+    }
+    
+    # Tang Clan: blood Tang members get MASSIVE bonus, others evaluated as associates
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:tang_clan }
+            has_trait = tang_clan_member
+        }
+        change_variable = { name = candidate_score add = 20 }    # Lost bloodline found!
+    }
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:tang_clan }
+            NOT = { has_trait = tang_clan_member }
+            OR = {
+                learning >= 14    # Alchemist/poison knowledge
+                has_trait = shrewd
+                has_trait = physician_3    # Medical knowledge useful for poisons
+            }
+        }
+        change_variable = { name = candidate_score add = 3 }    # Associate potential
+    }
+    
+    # Wudang: intelligent + scholarly
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:wudang }
+            OR = {
+                learning >= 14
+                has_trait = scholar
+                has_trait = theologian
+                has_trait = patient
+            }
+        }
+        change_variable = { name = candidate_score add = 4 }
+    }
+    
+    # Beggar Sect: poor + abandoned + information network potential
+    if = {
+        limit = {
+            scope:scout = { var:scout_clan = flag:beggar_sect }
+            OR = {
+                gold < 10
+                is_landed = no
+                has_trait = compassionate
+                has_trait = gregarious
+                intrigue >= 12    # Information broker potential
+            }
+        }
+        change_variable = { name = candidate_score add = 4 }
+    }
+    
+    # 5% pure random "gut feeling" pick — scout just SEES something
+    random = {
+        chance = 5
+        change_variable = { name = candidate_score add = 8 }
+        set_variable = { name = gut_feeling_pick value = yes }
+    }
 }
 
-# ============================================================
-# HEAVENLY DEMON SCOUTS
-# ============================================================
-murim_spawn_heavenly_demon_scout_effect = {
-	# Scout 1: Underworld circuit (prisons, exile camps, criminal havens)
-	create_character = {
-		name = "Shadow Recruiter"
-		age = { 25 40 }
-		trait = heavenly_demon_member
-		trait = inner_disciple
-		trait = deceitful
-		trait = ambitious
-		trait = sadistic
-		prowess = { 14 22 }
-		intrigue = { 14 20 }  # High intrigue — operates in shadows
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:heavenly_demon
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:underworld
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 5  # Recruits the desperate — easy pickings
-		}
-	}
-	
-	# Scout 2: Foreign desperate (war zones, famine regions, collapsed states)
-	create_character = {
-		name = "Demon Sect Whisper"
-		age = { 30 45 }
-		trait = heavenly_demon_member
-		trait = inner_disciple
-		trait = deceitful
-		trait = callous
-		trait = shrewd
-		prowess = { 12 18 }
-		intrigue = { 16 22 }
-		diplomacy = { 10 16 }  # Persuasive — sells false hope
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:heavenly_demon
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:foreign_desperate
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 4
-		}
-	}
+# ===========================
+# SCOUT DEATH/REPLACEMENT EFFECTS
+# ===========================
+
+murim_scout_killed_effect = {
+    # Scout was killed during travel. Clan learns after delay.
+    # Set flag for replacement spawn after 1-2 years
+    if = {
+        limit = { var:scout_clan = flag:mount_hua }
+        set_global_variable = { name = mount_hua_needs_scout value = yes }
+    }
+    if = {
+        limit = { var:scout_clan = flag:shaolin }
+        set_global_variable = { name = shaolin_needs_scout value = yes }
+    }
+    if = {
+        limit = { var:scout_clan = flag:heavenly_demon }
+        set_global_variable = { name = heavenly_demon_needs_scout value = yes }
+    }
+    if = {
+        limit = { var:scout_clan = flag:tang_clan }
+        set_global_variable = { name = tang_clan_needs_scout value = yes }
+    }
+    if = {
+        limit = { var:scout_clan = flag:wudang }
+        set_global_variable = { name = wudang_needs_scout value = yes }
+    }
+    if = {
+        limit = { var:scout_clan = flag:beggar_sect }
+        set_global_variable = { name = beggar_sect_needs_scout value = yes }
+    }
 }
 
-# ============================================================
-# TANG CLAN SCOUT
-# ============================================================
-murim_spawn_tang_clan_scout_effect = {
-	# Only 1 scout: tracks lost Tang bloodlines + useful associates
-	create_character = {
-		name = "Tang Bloodline Seeker"
-		age = { 30 50 }
-		trait = tang_clan_member
-		trait = inner_disciple
-		trait = patient
-		trait = diligent
-		trait = shrewd
-		prowess = { 10 16 }
-		intrigue = { 14 20 }  # Needs intrigue to track bloodlines
-		learning = { 10 16 }  # Identifies poison/alchemy talent
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:tang_clan
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:bloodline_hunt  # Goes wherever Tang descendants scattered
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 3  # Tang is selective
-		}
-		# Special Tang variable: tracks if any lost bloodlines found
-		set_variable = {
-			name = murim_tang_bloodline_found
-			value = 0
-		}
-	}
-}
-
-# ============================================================
-# WUDANG SCOUT
-# ============================================================
-murim_spawn_wudang_scout_effect = {
-	# 1 scout: visits scholarly courts, libraries, universities
-	create_character = {
-		name = "Wudang Scholar-Sword"
-		age = { 35 55 }
-		trait = wudang_member
-		trait = inner_disciple
-		trait = patient
-		trait = temperate
-		trait = scholar  # Vanilla trait
-		prowess = { 12 18 }
-		martial = { 8 14 }
-		learning = { 16 22 }  # Highest learning of any scout
-		diplomacy = { 10 16 }
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:wudang
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:scholarly_courts
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 3  # Wudang is selective — quality over quantity
-		}
-	}
-}
-
-# ============================================================
-# BEGGAR SECT SCOUTS
-# ============================================================
-murim_spawn_beggar_sect_scout_effect = {
-	# Scout 1: Eastern streets (Korea, China, Japan)
-	create_character = {
-		name = "Beggar Sect Street Walker"
-		age = { 25 45 }
-		trait = beggar_sect_member
-		trait = inner_disciple
-		trait = gregarious
-		trait = compassionate
-		trait = humble
-		prowess = { 10 16 }
-		intrigue = { 12 18 }  # Street smarts
-		diplomacy = { 12 18 }  # Talks to anyone
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:beggar_sect
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:eastern_streets
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 5  # Beggars recruit the most — no standards
-		}
-	}
-	
-	# Scout 2: Worldwide poor districts (Middle East, Europe, Africa, India)
-	create_character = {
-		name = "Beggar Sect Wanderer"
-		age = { 30 50 }
-		trait = beggar_sect_member
-		trait = inner_disciple
-		trait = gregarious
-		trait = brave
-		trait = adventurer  # Lives on the road
-		prowess = { 12 18 }
-		intrigue = { 14 20 }
-		diplomacy = { 10 16 }
-		set_variable = {
-			name = murim_clan_scout
-			value = flag:beggar_sect
-		}
-		set_variable = {
-			name = murim_scout_region
-			value = flag:foreign_poor
-		}
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_recruits_found
-			value = 0
-		}
-		set_variable = {
-			name = murim_scout_max_recruits
-			value = 4
-		}
-	}
-}
-
-# ============================================================
-# SCOUT MANAGEMENT EFFECTS
-# ============================================================
-
-# Yearly tick: advance scout timer, check for return
-murim_scout_yearly_tick_effect = {
-	# Increment timer
-	change_variable = {
-		name = murim_scout_return_timer
-		add = 1
-	}
-	
-	# Check if scout should return (timer >= 5 OR max recruits reached)
-	if = {
-		limit = {
-			OR = {
-				var:murim_scout_return_timer >= 5
-				var:murim_scout_recruits_found >= var:murim_scout_max_recruits
-			}
-		}
-		# Trigger return event
-		trigger_event = {
-			id = murim_scout.0010  # Scout returns to clan HQ
-		}
-		# Reset timer
-		set_variable = {
-			name = murim_scout_return_timer
-			value = 0
-		}
-	}
-}
-
-# Scout death: spawn replacement after delay
-murim_scout_death_replacement_effect = {
-	# Save which clan lost a scout
-	save_scope_as = dead_scout
-	# Set clan variable: scout_replacement_timer = 2 (years)
-	# On yearly tick, decrement. When 0, spawn new scout.
-	# The clan that lost the scout gets a "mourning" event
-	trigger_event = {
-		id = murim_scout.0020  # Clan mourns lost scout, begins training replacement
-		days = 30
-	}
-}
-
-# Scout captured: ransom/rescue chain
+# murim_scout_captured_effect — scout imprisoned by hostile ruler
 murim_scout_captured_effect = {
-	# Set captured flag
-	set_variable = {
-		name = murim_scout_captured
-		value = yes
-	}
-	# Trigger rescue event chain for the clan
-	# Clan leader decides: pay ransom, send rescue team, abandon scout
-	trigger_event = {
-		id = murim_scout.0030  # Clan learns scout was captured
-		days = 30
-	}
+    # Triggers rescue/ransom event chain for the clan
+    # Clan has options: pay ransom, send rescue party, abandon scout
+    save_scope_as = captured_scout
+    scope:captured_scout.host = { save_scope_as = captor_ruler }
+    trigger_event = { id = murim_scout.0020 days = { 30 60 } }    # Clan learns of capture
 }
 
-# Scout expelled from realm: blacklist that realm for 10 years
+# murim_scout_expelled_effect — scout kicked out of a realm
 murim_scout_expelled_effect = {
-	# Save the realm that expelled the scout
-	# Set realm variable: murim_scout_blacklisted_by_[clan] = 10
-	# Decrement yearly. Scout won't visit that realm until 0.
-	scope:expelling_ruler = {
-		set_variable = {
-			name = murim_scout_blacklist_timer
-			value = 10
-		}
-	}
-	# Scout moves to next realm on their circuit
-	trigger_event = {
-		id = murim_scout.0040  # Scout expelled, moves on
-		days = 7
-	}
+    # Realm is blacklisted for 10 years
+    scope:expelling_ruler.primary_title = {
+        set_variable = {
+            name = murim_scout_blacklisted
+            value = yes
+        }
+        # Remove blacklist after 10 years
+        # (handled by on_actions yearly check)
+    }
+    set_variable = { name = scout_route_stage value = 0 }    # Reset route, skip this region
 }
 
-# Scout finds a recruit: increment counter, flag the recruit
-murim_scout_found_recruit_effect = {
-	# Increment scout's recruit counter
-	change_variable = {
-		name = murim_scout_recruits_found
-		add = 1
-	}
-	# Flag the recruit to travel with scout
-	scope:recruit = {
-		set_variable = {
-			name = murim_traveling_with_scout
-			value = scope:scout
-		}
-		set_variable = {
-			name = murim_destination_clan
-			value = scope:scout.var:murim_clan_scout
-		}
-	}
+# ===========================
+# SCOUT MODIFIER
+# ===========================
+
+murim_clan_scout_modifier = {
+    # Identifies character as an active clan scout
+    # VANILLA SEPARATION: This modifier gives NO political benefits
+    # Only affects martial-layer interactions
+    monthly_prestige = 0    # No political prestige from scouting
+    prowess = 2    # Slight combat edge from travel experience
+    # Custom tooltip: "This character is an active clan scout traveling the world to recruit new disciples."
 }
 
-# Scout returns with recruits: process all recruits into clan
-murim_scout_process_recruits_effect = {
-	# For each character flagged as traveling with this scout:
-	# 1. Move them to clan HQ region
-	# 2. Apply outer_disciple trait via murim_join_sect_as_outer_disciple_effect
-	# 3. Remove traveling_with_scout variable
-	# 4. Trigger culture shock event if foreign
-	# 5. Reset scout's recruit counter
-	set_variable = {
-		name = murim_scout_recruits_found
-		value = 0
-	}
-}
+# ===========================
+# SCOUT RETURN WITH RECRUITS EFFECT
+# ===========================
 
-# Scout encounter with rival scout: competition event
-murim_scout_rivalry_effect = {
-	# When two scouts from different clans are in the same realm
-	# and both eyeing the same recruit:
-	# Trigger rivalry event — negotiation, competition, or fight
-	trigger_event = {
-		id = murim_scout.0050  # Rival scouts meet
-		days = 7
-	}
-}
-
-# Scout intelligence report: what foreign arts were discovered
-murim_scout_intelligence_report_effect = {
-	# When scout returns, they report on foreign martial traditions seen
-	# This feeds into the foreign arts discovery system
-	# Clan may decide to study, ignore, or send specialists to learn more
-	trigger_event = {
-		id = murim_scout.0060  # Intelligence report to clan council
-		days = 14
-	}
+murim_scout_return_with_recruits_effect = {
+    # Called when scout cycle completes and they return to China
+    # Creates 2-5 recruit characters based on scout success
+    
+    # Number of recruits based on scout's evaluation scores during travel
+    # Minimum 2, maximum 5
+    set_local_variable = { name = num_recruits value = 2 }
+    if = {
+        limit = { var:scout_recruits_found >= 3 }
+        set_local_variable = { name = num_recruits value = 3 }
+    }
+    if = {
+        limit = { var:scout_recruits_found >= 5 }
+        set_local_variable = { name = num_recruits value = 4 }
+    }
+    if = {
+        limit = { var:scout_recruits_found >= 7 }
+        set_local_variable = { name = num_recruits value = 5 }
+    }
+    
+    # Reset scout counters for next cycle
+    set_variable = { name = scout_recruits_found value = 0 }
+    set_variable = { name = scout_years_traveling value = 0 }
+    
+    # Each recruit arrives with:
+    # - outer_disciple trait
+    # - Culture from their origin region (creates diversity in clans)
+    # - 5% chance of being a generational talent (fast-tracked inner disciple)
+    # - Possible homesick modifier if from far away (Europe/Africa = guaranteed)
+    
+    # Trigger the "Scout Returns" event which processes arrivals
+    trigger_event = { id = murim_scout.0010 days = 5 }
 }
