@@ -1,0 +1,1052 @@
+###############################################################################
+# MURIM POLITICS EXPANSION EVENTS
+# Extended martial world politics: impeachment, trade wars, hostages, espionage,
+# martial law, refugee sects, forbidden pacts, grand tournaments
+# Cross-references: murim_politics_events, murim_sect_events, murim_duel_events,
+#                   murim_jianghu_events, murim_ranking_events, murim_artifact_events
+###############################################################################
+
+namespace = murim_politics_exp
+
+##############################
+# 11. Sect Elder Impeachment
+##############################
+murim_politics_exp.0001 = {
+	type = character_event
+	title = murim_politics_exp.0001.t
+	desc = murim_politics_exp.0001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:impeached_elder
+		animation = anger
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		intrigue >= 10
+		any_courtier = {
+			is_alive = yes
+			age >= 40
+			opinion = { target = root value <= -20 }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 0.5
+			intrigue >= 15
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				age >= 40
+				opinion = { target = root value <= -20 }
+			}
+			save_scope_as = impeached_elder
+		}
+	}
+
+	# Launch formal impeachment - gather evidence of corruption
+	option = {
+		name = murim_politics_exp.0001.a
+		add_prestige = 100
+		add_intrigue_skill = 1
+		scope:impeached_elder = {
+			add_opinion = {
+				target = root
+				modifier = murim_impeached_opinion
+				opinion = -50
+			}
+		}
+		create_character_memory = {
+			type = murim_elder_impeachment_memory
+			participants = { elder = scope:impeached_elder }
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Impeachment succeeds - elder exiled
+					scope:impeached_elder = {
+						add_character_modifier = {
+							modifier = sect_exile_stigma
+							years = 10
+						}
+					}
+					add_prestige = 200
+				}
+				40 = {
+					# Impeachment fails - elder retaliates
+					scope:impeached_elder = {
+						trigger_event = { id = murim_duel.0001 days = { 7 14 } }
+					}
+					add_stress = 30
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Challenge the elder to a martial contest to settle it
+	option = {
+		name = murim_politics_exp.0001.b
+		add_prestige = 50
+		duel = {
+			skill = prowess
+			target = scope:impeached_elder
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min = 3
+				desc = murim_politics_exp.0001.b.success
+				add_prestige = 300
+				scope:impeached_elder = {
+					add_character_modifier = {
+						modifier = defeat_shame
+						years = 2
+					}
+				}
+				create_character_memory = {
+					type = murim_impeachment_duel_victory_memory
+					participants = { defeated_elder = scope:impeached_elder }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				min = 3
+				desc = murim_politics_exp.0001.b.failure
+				add_prestige = -200
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					10 = { add_trait = incapable }
+				}
+				create_character_memory = {
+					type = murim_impeachment_duel_defeat_memory
+					participants = { victor_elder = scope:impeached_elder }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+
+	# Let it go - too risky
+	option = {
+		name = murim_politics_exp.0001.c
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+##############################
+# 12. Trade Route Control War
+##############################
+murim_politics_exp.0002 = {
+	type = character_event
+	title = murim_politics_exp.0002.t
+	desc = murim_politics_exp.0002.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:trade_rival
+		animation = anger
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		stewardship >= 8
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			is_ruler = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = greedy }
+		modifier = { add = 0.5 stewardship >= 15 }
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes is_ruler = yes }
+			save_scope_as = trade_rival
+		}
+	}
+
+	# Seize control of the medicinal herb trade route by force
+	option = {
+		name = murim_politics_exp.0002.a
+		add_gold = 200
+		add_prestige = 100
+		scope:trade_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_trade_route_seized_opinion
+				opinion = -40
+			}
+		}
+		create_character_memory = {
+			type = murim_trade_route_seized_memory
+			participants = { rival = scope:trade_rival }
+		}
+		hidden_effect = {
+			scope:trade_rival = {
+				trigger_event = { id = murim_sect.0300 days = { 30 90 } }
+			}
+			add_character_modifier = {
+				modifier = territory_dispute_tension
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = greedy }
+		}
+	}
+
+	# Negotiate a shared trade agreement
+	option = {
+		name = murim_politics_exp.0002.b
+		add_gold = 100
+		scope:trade_rival = {
+			add_gold = 100
+			add_opinion = {
+				target = root
+				modifier = murim_fair_trade_opinion
+				opinion = 20
+			}
+		}
+		create_character_memory = {
+			type = murim_trade_agreement_memory
+			participants = { partner = scope:trade_rival }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Ignore the trade route - focus on cultivation
+	option = {
+		name = murim_politics_exp.0002.c
+		add_piety = 50
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+##############################
+# 13. Hostage Exchange Between Sects
+##############################
+murim_politics_exp.0003 = {
+	type = character_event
+	title = murim_politics_exp.0003.t
+	desc = murim_politics_exp.0003.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:hostage_holder
+		animation = personality_callous
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_child = {
+			is_alive = yes
+			age >= 10
+			age <= 25
+		}
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			NOT = { has_relation_rival = root }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 diplomacy >= 12 }
+	}
+
+	immediate = {
+		random_child = {
+			limit = { is_alive = yes age >= 10 age <= 25 }
+			save_scope_as = hostage_child
+		}
+		random_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes NOT = { has_relation_rival = root } }
+			save_scope_as = hostage_holder
+		}
+	}
+
+	# Agree to the exchange - send child as ward/guarantee of peace
+	option = {
+		name = murim_politics_exp.0003.a
+		add_prestige = 100
+		add_stress = 20
+		scope:hostage_holder = {
+			add_opinion = {
+				target = root
+				modifier = murim_hostage_trust_opinion
+				opinion = 30
+			}
+		}
+		scope:hostage_child = {
+			add_character_modifier = {
+				modifier = sect_outer_disciple
+				years = 5
+			}
+		}
+		create_character_memory = {
+			type = murim_hostage_exchange_memory
+			participants = {
+				child = scope:hostage_child
+				holder = scope:hostage_holder
+			}
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_hostage_peace
+				value = yes
+				days = 3650
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = diplomat }
+		}
+	}
+
+	# Refuse - the child stays, prepare for war
+	option = {
+		name = murim_politics_exp.0003.b
+		add_prestige = -50
+		scope:hostage_holder = {
+			add_opinion = {
+				target = root
+				modifier = murim_refused_hostage_opinion
+				opinion = -30
+			}
+		}
+		add_character_modifier = {
+			modifier = sect_war_mobilization
+			years = 2
+		}
+		create_character_memory = {
+			type = murim_hostage_refused_war_memory
+			participants = { enemy = scope:hostage_holder }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+
+	# Send a decoy disciple instead
+	option = {
+		name = murim_politics_exp.0003.c
+		trigger = { intrigue >= 12 }
+		add_prestige = 50
+		add_intrigue_skill = 1
+		create_character_memory = {
+			type = murim_hostage_decoy_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = { # Decoy works }
+				40 = {
+					# Decoy discovered
+					scope:hostage_holder = {
+						add_opinion = {
+							target = root
+							modifier = murim_decoy_discovered_opinion
+							opinion = -50
+						}
+					}
+					trigger_event = { id = murim_sect.0400 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = deceitful }
+		}
+	}
+}
+
+##############################
+# 14. Spy Network Infiltration
+##############################
+murim_politics_exp.0004 = {
+	type = character_event
+	title = murim_politics_exp.0004.t
+	desc = murim_politics_exp.0004.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		intrigue >= 12
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			is_ruler = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = schemer }
+		modifier = { add = 0.5 intrigue >= 18 }
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes is_ruler = yes }
+			save_scope_as = spy_target
+		}
+	}
+
+	# Infiltrate their sect to steal technique scrolls
+	option = {
+		name = murim_politics_exp.0004.a
+		random_list = {
+			50 = {
+				modifier = { add = 20 intrigue >= 18 }
+				modifier = { add = 10 has_trait = schemer }
+				# Success - technique stolen
+				desc = murim_politics_exp.0004.a.success
+				add_prestige = 200
+				add_prowess_skill = 2
+				create_character_memory = {
+					type = murim_spy_technique_stolen_memory
+					participants = { victim = scope:spy_target }
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_artifact.0001 days = { 7 14 } }
+				}
+			}
+			50 = {
+				modifier = { add = -20 intrigue >= 18 }
+				# Caught - diplomatic incident
+				desc = murim_politics_exp.0004.a.failure
+				scope:spy_target = {
+					add_opinion = {
+						target = root
+						modifier = murim_spy_caught_opinion
+						opinion = -60
+					}
+				}
+				add_prestige = -300
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					10 = { add_trait = incapable }
+				}
+				create_character_memory = {
+					type = murim_spy_caught_memory
+					participants = { captor = scope:spy_target }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = deceitful }
+		}
+	}
+
+	# Gather intelligence on their sect strength instead
+	option = {
+		name = murim_politics_exp.0004.b
+		add_intrigue_skill = 1
+		create_character_memory = {
+			type = murim_intelligence_gathered_memory
+			participants = { target = scope:spy_target }
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_knows_enemy_strength
+				value = yes
+				days = 1825
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Abandon the spy operation
+	option = {
+		name = murim_politics_exp.0004.c
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = honest }
+		}
+	}
+}
+
+##############################
+# 15. Martial Law Declaration
+##############################
+murim_politics_exp.0005 = {
+	type = character_event
+	title = murim_politics_exp.0005.t
+	desc = murim_politics_exp.0005.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		martial >= 12
+		OR = {
+			is_at_war = yes
+			any_neighboring_top_liege_realm_owner = {
+				has_relation_rival = root
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 is_at_war = yes }
+		modifier = { add = 0.5 has_trait = wrathful }
+	}
+
+	immediate = { }
+
+	# Declare martial law - all disciples mobilized
+	option = {
+		name = murim_politics_exp.0005.a
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = sect_war_mobilization
+			years = 3
+		}
+		every_courtier = {
+			limit = { is_alive = yes age >= 16 }
+			add_prowess_skill = 1
+			add_opinion = {
+				target = root
+				modifier = murim_martial_law_opinion
+				opinion = -10
+			}
+		}
+		create_character_memory = {
+			type = murim_martial_law_declared_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_sect.0500 days = { 60 120 } }
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+
+	# Selective mobilization - only inner disciples
+	option = {
+		name = murim_politics_exp.0005.b
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_selective_mobilization_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Seek peace instead
+	option = {
+		name = murim_politics_exp.0005.c
+		add_piety = 50
+		stress_impact = {
+			wrathful = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_politics.0007 days = { 14 30 } }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+}
+
+##############################
+# 16. Refugee Sect Seeks Shelter
+##############################
+murim_politics_exp.0006 = {
+	type = character_event
+	title = murim_politics_exp.0006.t
+	desc = murim_politics_exp.0006.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:refugee_leader
+		animation = beg
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		any_neighboring_top_liege_realm_owner = {
+			is_alive = yes
+			NOT = { this = root }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = compassionate }
+	}
+
+	immediate = {
+		random_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes NOT = { this = root } }
+			save_scope_as = refugee_leader
+		}
+	}
+
+	# Welcome the refugees - gain their loyalty and techniques
+	option = {
+		name = murim_politics_exp.0006.a
+		add_gold = -50
+		add_prestige = 200
+		add_piety = 100
+		scope:refugee_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_shelter_gratitude_opinion
+				opinion = 50
+			}
+		}
+		create_character_memory = {
+			type = murim_sheltered_refugees_memory
+			participants = { leader = scope:refugee_leader }
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# They share valuable techniques
+					add_prowess_skill = 2
+					add_learning_skill = 1
+				}
+				30 = {
+					# Their enemies follow them to you
+					add_character_modifier = {
+						modifier = territory_dispute_tension
+						years = 2
+					}
+					trigger_event = { id = murim_sect.0300 days = { 60 120 } }
+				}
+				20 = {
+					# They're secretly spies
+					trigger_event = { id = murim_politics_exp.0004 days = { 90 180 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+
+	# Turn them away
+	option = {
+		name = murim_politics_exp.0006.b
+		add_prestige = -100
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+		}
+		scope:refugee_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_turned_away_opinion
+				opinion = -40
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = callous }
+		}
+	}
+
+	# Demand they swear fealty as vassals first
+	option = {
+		name = murim_politics_exp.0006.c
+		add_prestige = 150
+		scope:refugee_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_forced_fealty_opinion
+				opinion = -15
+			}
+		}
+		create_character_memory = {
+			type = murim_forced_fealty_memory
+			participants = { vassal = scope:refugee_leader }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+}
+
+##############################
+# 17. Forbidden Technique Pact
+##############################
+murim_politics_exp.0007 = {
+	type = character_event
+	title = murim_politics_exp.0007.t
+	desc = murim_politics_exp.0007.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:dark_pact_partner
+		animation = personality_callous
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		intrigue >= 10
+		OR = {
+			has_trait = ambitious
+			has_trait = sadistic
+			has_trait = callous
+			has_trait = deceitful
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = sadistic }
+		modifier = { add = 0.5 has_trait = ambitious }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				intrigue >= 8
+				OR = {
+					has_trait = ambitious
+					has_trait = deceitful
+					has_trait = sadistic
+				}
+			}
+			save_scope_as = dark_pact_partner
+		}
+	}
+
+	# Agree to study forbidden techniques together
+	option = {
+		name = murim_politics_exp.0007.a
+		add_prowess_skill = 3
+		add_intrigue_skill = 1
+		add_piety = -200
+		add_character_modifier = {
+			modifier = killing_intent_aura
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = cursed_artifact_corruption
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_forbidden_pact_memory
+			participants = { partner = scope:dark_pact_partner }
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Power surge - but at what cost?
+					add_prowess_skill = 2
+					add_character_modifier = {
+						modifier = jianghu_infamy
+						years = 5
+					}
+				}
+				30 = {
+					# Qi deviation from dark techniques
+					add_trait = wounded_1
+					add_character_modifier = {
+						modifier = qi_deviation_recovery
+						years = 2
+					}
+				}
+				30 = {
+					# Partner betrays you
+					scope:dark_pact_partner = {
+						add_opinion = {
+							target = root
+							modifier = murim_betrayed_pact_opinion
+							opinion = -40
+						}
+					}
+					trigger_event = { id = murim_jianghu.0400 days = { 14 30 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = sadistic }
+		}
+	}
+
+	# Study the theory only, don't practice
+	option = {
+		name = murim_politics_exp.0007.b
+		add_learning_skill = 2
+		add_piety = -50
+		create_character_memory = {
+			type = murim_forbidden_study_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Refuse and report them to the orthodox sects
+	option = {
+		name = murim_politics_exp.0007.c
+		add_piety = 100
+		add_prestige = 100
+		scope:dark_pact_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_reported_dark_pact_opinion
+				opinion = -80
+			}
+			add_character_modifier = {
+				modifier = jianghu_infamy
+				years = 10
+			}
+		}
+		create_character_memory = {
+			type = murim_reported_forbidden_pact_memory
+			participants = { reported = scope:dark_pact_partner }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = just }
+			modifier = { add = 20 has_trait = honest }
+		}
+	}
+}
+
+##############################
+# 18. Grand Tournament of Sects
+##############################
+murim_politics_exp.0008 = {
+	type = character_event
+	title = murim_politics_exp.0008.t
+	desc = murim_politics_exp.0008.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		prestige >= 750
+		NOT = { has_character_flag = hosted_grand_tournament }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 diplomacy >= 15 }
+		modifier = { add = 0.5 martial >= 12 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = hosted_grand_tournament
+			days = 3650
+		}
+	}
+
+	# Host the grand tournament - massive prestige event
+	option = {
+		name = murim_politics_exp.0008.a
+		add_gold = -200
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = tournament_glory
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_grand_tournament_host_memory
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_in_tournament
+				value = yes
+				days = 30
+			}
+			# Tournament triggers duel chain
+			trigger_event = { id = murim_duel.0001 days = { 3 7 } }
+			# Ranking events follow
+			trigger_event = { id = murim_ranking.0100 days = { 14 30 } }
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = diplomat }
+		}
+	}
+
+	# Participate as a fighter instead of hosting
+	option = {
+		name = murim_politics_exp.0008.b
+		add_gold = -50
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min = 3
+				desc = murim_politics_exp.0008.b.victory
+				add_prestige = 400
+				add_prowess_skill = 1
+				add_character_modifier = {
+					modifier = duel_champion_fame
+					years = 3
+				}
+				create_character_memory = {
+					type = murim_grand_tournament_champion_memory
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_ranking.0100 days = { 7 14 } }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				min = 3
+				desc = murim_politics_exp.0008.b.defeat
+				add_prestige = 50
+				random_list = {
+					50 = {
+						# Minor injury
+						add_character_modifier = {
+							modifier = sparring_bruises
+							days = 30
+						}
+					}
+					35 = {
+						add_trait = wounded_1
+						create_character_memory = {
+							type = murim_tournament_wounded_memory
+						}
+					}
+					15 = {
+						add_trait = wounded_2
+						add_character_modifier = {
+							modifier = crippling_wound_lingering
+							years = 2
+						}
+						create_character_memory = {
+							type = murim_tournament_crippled_memory
+						}
+					}
+				}
+				# Craven check
+				random = {
+					chance = 10
+					modifier = {
+						factor = 2
+						has_trait = wounded_2
+					}
+					add_trait = craven
+					create_character_memory = {
+						type = murim_combat_trauma_craven_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 prowess >= 15 }
+		}
+	}
+
+	# Decline to participate
+	option = {
+		name = murim_politics_exp.0008.c
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
