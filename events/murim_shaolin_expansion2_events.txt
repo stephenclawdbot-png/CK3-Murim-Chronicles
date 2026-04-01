@@ -1,0 +1,741 @@
+namespace = murim_shaolin_expansion2
+
+# Shaolin Temple Deep Expansion - Full Monk Chain
+# Heartbeat 69 - Sprint Build
+# 10 complete events with full option trees
+
+####################################
+# Shaolin 72 Arts Trial - Choosing Your Path
+####################################
+murim_shaolin_expansion2.0001 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0001.t
+	desc = murim_shaolin_expansion2.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:shaolin_abbot
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		NOT = { has_character_flag = seventy_two_arts_chosen }
+		age >= 16
+		prowess >= 10
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = devoted
+		}
+	}
+	
+	immediate = {
+		random_relation = {
+			type = mentor
+			save_scope_as = shaolin_abbot
+		}
+		if = {
+			limit = { NOT = { exists = scope:shaolin_abbot } }
+			random_courtier = {
+				limit = { has_trait = shaolin_elder age >= 50 }
+				save_scope_as = shaolin_abbot
+			}
+		}
+		set_character_flag = seventy_two_arts_chosen
+	}
+	
+	# Option A: Iron Body Arts - external strength path
+	option = {
+		name = murim_shaolin_expansion2.0001.a
+		add_character_modifier = { modifier = iron_body_training years = 15 }
+		change_prowess = 2
+		add_prestige = 100
+		set_character_flag = shaolin_iron_body_path
+		stress_impact = { brave = medium_stress_loss craven = medium_stress_gain }
+		ai_chance = { base = 40 modifier = { add = 20 prowess >= 15 } }
+	}
+	
+	# Option B: Finger Arts - precision combat path
+	option = {
+		name = murim_shaolin_expansion2.0001.b
+		add_character_modifier = { modifier = finger_technique_training years = 15 }
+		change_prowess = 1
+		add_intrigue = 1
+		add_prestige = 100
+		set_character_flag = shaolin_finger_path
+		ai_chance = { base = 30 modifier = { add = 20 intrigue >= 12 } }
+	}
+	
+	# Option C: Internal Arts - qi and meditation path
+	option = {
+		name = murim_shaolin_expansion2.0001.c
+		add_character_modifier = { modifier = internal_qi_training years = 15 }
+		add_learning = 2
+		add_prestige = 100
+		set_character_flag = shaolin_internal_path
+		ai_chance = { base = 30 modifier = { add = 20 learning >= 15 } }
+	}
+}
+
+####################################
+# Shaolin Bodhi Tree Meditation - Enlightenment Attempt
+####################################
+murim_shaolin_expansion2.0002 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0002.t
+	desc = murim_shaolin_expansion2.0002.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		has_character_flag = seventy_two_arts_chosen
+		NOT = { has_character_flag = bodhi_meditation_done }
+		learning >= 12
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = patient }
+	}
+	
+	immediate = { set_character_flag = bodhi_meditation_done }
+	
+	# Option A: 49-day meditation - full commitment
+	option = {
+		name = murim_shaolin_expansion2.0002.a
+		random_list = {
+			40 = {
+				desc = murim_shaolin_expansion2.0002.a.enlightened
+				modifier = { add = 20 learning >= 18 }
+				add_trait = shaolin_enlightened
+				add_character_modifier = { modifier = bodhi_enlightenment years = 30 }
+				change_prowess = 3
+				add_learning = 3
+				add_prestige = 500
+				add_piety = 300
+			}
+			30 = {
+				desc = murim_shaolin_expansion2.0002.a.partial
+				add_character_modifier = { modifier = partial_enlightenment years = 10 }
+				change_prowess = 1
+				add_learning = 1
+				add_piety = 100
+			}
+			30 = {
+				desc = murim_shaolin_expansion2.0002.a.failed
+				modifier = { add = -20 learning >= 18 }
+				add_character_modifier = { modifier = meditation_failure_doubt years = 5 }
+				add_stress = 30
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Short meditation - safer approach
+	option = {
+		name = murim_shaolin_expansion2.0002.b
+		add_character_modifier = { modifier = brief_meditation_clarity years = 5 }
+		add_piety = 50
+		add_learning = 1
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Skip meditation - focus on combat training
+	option = {
+		name = murim_shaolin_expansion2.0002.c
+		change_prowess = 1
+		add_stress = -10
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# Shaolin Warrior Monk vs Scholar Monk Conflict
+####################################
+murim_shaolin_expansion2.0003 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0003.t
+	desc = murim_shaolin_expansion2.0003.desc
+	theme = intrigue
+	
+	left_portrait = { character = root animation = personality_bold }
+	right_portrait = { character = scope:rival_faction_monk animation = personality_vengeful }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		age >= 25
+		NOT = { has_character_flag = shaolin_faction_war_joined }
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 2 diplomacy >= 12 } }
+	
+	immediate = {
+		set_character_flag = shaolin_faction_war_joined
+		random_courtier = {
+			limit = { has_trait = shaolin_disciple prowess >= 15 NOT = { this = root } }
+			save_scope_as = rival_faction_monk
+		}
+	}
+	
+	# Option A: Side with warrior monks
+	option = {
+		name = murim_shaolin_expansion2.0003.a
+		add_character_modifier = { modifier = warrior_monk_faction years = 20 }
+		change_prowess = 2
+		add_prestige = 200
+		set_character_flag = shaolin_warrior_faction
+		if = {
+			limit = { exists = scope:rival_faction_monk }
+			add_opinion = { target = scope:rival_faction_monk modifier = rival_opinion opinion = -20 }
+		}
+		ai_chance = { base = 40 modifier = { add = 20 prowess >= 18 } }
+	}
+	
+	# Option B: Side with scholar monks
+	option = {
+		name = murim_shaolin_expansion2.0003.b
+		add_character_modifier = { modifier = scholar_monk_faction years = 20 }
+		add_learning = 2
+		add_piety = 200
+		set_character_flag = shaolin_scholar_faction
+		ai_chance = { base = 35 modifier = { add = 20 learning >= 15 } }
+	}
+	
+	# Option C: Mediate between factions
+	option = {
+		name = murim_shaolin_expansion2.0003.c
+		trigger = { diplomacy >= 15 }
+		random = {
+			chance = 50
+			modifier = { add = 20 diplomacy >= 20 }
+			add_character_modifier = { modifier = shaolin_peacemaker years = 20 }
+			add_prestige = 400
+			change_diplomacy = 2
+		}
+		random = {
+			chance = 50
+			modifier = { add = -20 diplomacy >= 20 }
+			add_stress = 25
+			add_prestige = -100
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# Shaolin Forbidden Scripture Theft
+####################################
+murim_shaolin_expansion2.0004 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0004.t
+	desc = murim_shaolin_expansion2.0004.desc
+	theme = intrigue
+	
+	left_portrait = { character = root animation = shock }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		NOT = { has_character_flag = scripture_theft_event }
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 2 intrigue >= 12 } }
+	
+	immediate = {
+		set_character_flag = scripture_theft_event
+		random_courtier = {
+			limit = { NOT = { has_trait = shaolin_disciple } prowess >= 12 }
+			save_scope_as = scripture_thief
+		}
+	}
+	
+	# Option A: Chase the thief personally
+	option = {
+		name = murim_shaolin_expansion2.0004.a
+		if = {
+			limit = { exists = scope:scripture_thief }
+			duel = {
+				skill = prowess
+				target = scope:scripture_thief
+				50 = {
+					desc = murim_shaolin_expansion2.0004.a.caught
+					compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+					add_prestige = 400
+					add_character_modifier = { modifier = scripture_protector years = 10 }
+					change_prowess = 1
+				}
+				50 = {
+					desc = murim_shaolin_expansion2.0004.a.escaped
+					compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+					add_prestige = -200
+					add_stress = 20
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Track the thief with intelligence network
+	option = {
+		name = murim_shaolin_expansion2.0004.b
+		trigger = { intrigue >= 12 }
+		random = {
+			chance = 60
+			modifier = { add = 20 intrigue >= 18 }
+			add_prestige = 300
+			add_character_modifier = { modifier = detective_monk years = 10 }
+		}
+		random = {
+			chance = 40
+			modifier = { add = -20 intrigue >= 18 }
+			add_stress = 15
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Let it go - attachment is suffering
+	option = {
+		name = murim_shaolin_expansion2.0004.c
+		add_piety = 100
+		add_stress = -15
+		add_character_modifier = { modifier = detached_monk years = 5 }
+		ai_chance = { base = 20 modifier = { add = 20 has_trait = content } }
+	}
+}
+
+####################################
+# Shaolin Iron Monk Tournament - Internal Ranking
+####################################
+murim_shaolin_expansion2.0005 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0005.t
+	desc = murim_shaolin_expansion2.0005.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		prowess >= 15
+		NOT = { has_character_flag = iron_monk_tournament_done }
+		age >= 20
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 3 has_character_flag = shaolin_iron_body_path } }
+	
+	immediate = {
+		set_character_flag = iron_monk_tournament_done
+		random_courtier = {
+			limit = { has_trait = shaolin_disciple prowess >= 14 NOT = { this = root } }
+			save_scope_as = tournament_opponent
+		}
+	}
+	
+	# Option A: Enter the tournament
+	option = {
+		name = murim_shaolin_expansion2.0005.a
+		if = {
+			limit = { exists = scope:tournament_opponent }
+			duel = {
+				skill = prowess
+				target = scope:tournament_opponent
+				50 = {
+					desc = murim_shaolin_expansion2.0005.a.champion
+					compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+					add_prestige = 600
+					add_character_modifier = { modifier = iron_monk_champion years = 15 }
+					change_prowess = 2
+				}
+				50 = {
+					desc = murim_shaolin_expansion2.0005.a.defeated
+					compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+					add_prestige = 100
+					add_stress = 15
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Serve as referee instead
+	option = {
+		name = murim_shaolin_expansion2.0005.b
+		add_character_modifier = { modifier = tournament_referee_wisdom years = 5 }
+		add_prestige = 150
+		add_diplomacy = 1
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Protest the violence - monks should not fight
+	option = {
+		name = murim_shaolin_expansion2.0005.c
+		trigger = { has_character_flag = shaolin_scholar_faction }
+		add_piety = 100
+		add_prestige = -50
+		add_stress = 10
+		ai_chance = { base = 15 }
+	}
+}
+
+####################################
+# Shaolin Demon Invasion - Temple Under Attack
+####################################
+murim_shaolin_expansion2.0006 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0006.t
+	desc = murim_shaolin_expansion2.0006.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		NOT = { has_character_flag = demon_invasion_shaolin }
+		any_courtier = { has_trait = heavenly_demon_follower }
+	}
+	
+	weight_multiplier = { base = 1 }
+	
+	immediate = {
+		set_character_flag = demon_invasion_shaolin
+		random_courtier = {
+			limit = { has_trait = heavenly_demon_follower prowess >= 15 }
+			save_scope_as = demon_attacker
+		}
+	}
+	
+	# Option A: Defend the temple with the 18 Luohan Formation
+	option = {
+		name = murim_shaolin_expansion2.0006.a
+		if = {
+			limit = { exists = scope:demon_attacker }
+			duel = {
+				skill = prowess
+				target = scope:demon_attacker
+				50 = {
+					desc = murim_shaolin_expansion2.0006.a.victory
+					compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+					add_prestige = 800
+					add_character_modifier = { modifier = temple_defender_hero years = 20 }
+					change_prowess = 2
+				}
+				50 = {
+					desc = murim_shaolin_expansion2.0006.a.pushed_back
+					compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+					add_character_modifier = { modifier = wounded_defender years = 3 }
+					add_stress = 25
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Evacuate the scripture library
+	option = {
+		name = murim_shaolin_expansion2.0006.b
+		add_character_modifier = { modifier = scripture_savior years = 10 }
+		add_piety = 200
+		add_prestige = 200
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Ring the emergency bell - call all sects
+	option = {
+		name = murim_shaolin_expansion2.0006.c
+		trigger = { diplomacy >= 12 }
+		add_character_modifier = { modifier = alliance_caller years = 10 }
+		add_prestige = 300
+		hidden_effect = {
+			trigger_event = { id = murim_shaolin_expansion2.0007 days = { 30 60 } }
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+####################################
+# Shaolin Alliance Response - Orthodox Sects Unite
+####################################
+murim_shaolin_expansion2.0007 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0007.t
+	desc = murim_shaolin_expansion2.0007.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = { has_character_flag = demon_invasion_shaolin }
+	
+	immediate = {
+		random_courtier = {
+			limit = { OR = { has_trait = mount_hua_disciple has_trait = wudang_disciple } }
+			save_scope_as = allied_champion
+		}
+	}
+	
+	# Option A: Lead the combined orthodox army
+	option = {
+		name = murim_shaolin_expansion2.0007.a
+		trigger = { martial >= 12 }
+		add_character_modifier = { modifier = orthodox_war_commander years = 10 }
+		add_prestige = 600
+		change_martial = 2
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Serve as strategic advisor
+	option = {
+		name = murim_shaolin_expansion2.0007.b
+		add_character_modifier = { modifier = war_strategist_monk years = 10 }
+		add_prestige = 400
+		add_learning = 1
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Negotiate peace with the demons
+	option = {
+		name = murim_shaolin_expansion2.0007.c
+		trigger = { diplomacy >= 18 }
+		random = {
+			chance = 30
+			modifier = { add = 20 diplomacy >= 22 }
+			add_character_modifier = { modifier = demon_peace_broker years = 20 }
+			add_prestige = 1000
+			add_piety = 500
+		}
+		random = {
+			chance = 70
+			modifier = { add = -20 diplomacy >= 22 }
+			add_stress = 30
+			add_prestige = -200
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+####################################
+# Shaolin Abbot Succession
+####################################
+murim_shaolin_expansion2.0008 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0008.t
+	desc = murim_shaolin_expansion2.0008.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		age >= 40
+		prowess >= 20
+		learning >= 15
+		NOT = { has_character_flag = abbot_succession_done }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = shaolin_enlightened }
+		modifier = { add = 2 has_character_modifier = iron_monk_champion }
+	}
+	
+	immediate = {
+		set_character_flag = abbot_succession_done
+		random_courtier = {
+			limit = { has_trait = shaolin_disciple age >= 35 NOT = { this = root } }
+			save_scope_as = abbot_rival
+		}
+	}
+	
+	# Option A: Present yourself as candidate
+	option = {
+		name = murim_shaolin_expansion2.0008.a
+		random_list = {
+			40 = {
+				modifier = { add = 20 has_trait = shaolin_enlightened }
+				add_trait = shaolin_abbot
+				add_prestige = 1000
+				add_piety = 500
+				add_character_modifier = { modifier = new_abbot_authority years = 30 }
+			}
+			30 = {
+				add_prestige = 200
+				add_stress = 15
+			}
+			30 = {
+				modifier = { add = -20 has_trait = shaolin_enlightened }
+				add_prestige = -100
+				add_stress = 25
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Support your rival instead
+	option = {
+		name = murim_shaolin_expansion2.0008.b
+		if = {
+			limit = { exists = scope:abbot_rival }
+			add_opinion = { target = scope:abbot_rival modifier = grateful_opinion opinion = 40 }
+		}
+		add_piety = 200
+		add_character_modifier = { modifier = humble_elder_monk years = 20 }
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Leave to start a branch temple
+	option = {
+		name = murim_shaolin_expansion2.0008.c
+		add_character_modifier = { modifier = branch_temple_founder years = 30 }
+		add_prestige = 500
+		add_piety = 300
+		set_character_flag = branch_temple_founder
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# Shaolin Ultimate Art - Diamond Sutra Body
+####################################
+murim_shaolin_expansion2.0009 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0009.t
+	desc = murim_shaolin_expansion2.0009.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		prowess >= 25
+		learning >= 18
+		has_character_flag = seventy_two_arts_chosen
+		age >= 45
+		NOT = { has_character_flag = diamond_body_attempted }
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 5 has_trait = shaolin_enlightened } }
+	
+	immediate = { set_character_flag = diamond_body_attempted }
+	
+	# Option A: Begin the Diamond Sutra transformation
+	option = {
+		name = murim_shaolin_expansion2.0009.a
+		random_list = {
+			25 = {
+				desc = murim_shaolin_expansion2.0009.a.success
+				modifier = { add = 20 has_trait = shaolin_enlightened }
+				add_trait = diamond_sutra_body
+				change_prowess = 5
+				add_prestige = 2000
+				add_piety = 1000
+				add_character_modifier = { modifier = indestructible_monk years = 50 }
+			}
+			35 = {
+				desc = murim_shaolin_expansion2.0009.a.partial
+				change_prowess = 2
+				add_prestige = 400
+				add_character_modifier = { modifier = partial_diamond_body years = 15 }
+			}
+			40 = {
+				desc = murim_shaolin_expansion2.0009.a.backlash
+				modifier = { add = -20 has_trait = shaolin_enlightened }
+				add_character_modifier = { modifier = qi_deviation_severe years = 10 }
+				change_prowess = -3
+				add_stress = 50
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Defer to next generation
+	option = {
+		name = murim_shaolin_expansion2.0009.b
+		add_piety = 200
+		add_character_modifier = { modifier = wise_elder_restraint years = 20 }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Seek the legendary Bodhidharma cave first
+	option = {
+		name = murim_shaolin_expansion2.0009.c
+		add_character_modifier = { modifier = bodhidharma_pilgrimage years = 5 }
+		add_piety = 300
+		hidden_effect = {
+			trigger_event = { id = murim_shaolin_expansion2.0009 days = { 1825 1825 } }
+			remove_character_flag = diamond_body_attempted
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# Shaolin Legacy - Passing Down the Art
+####################################
+murim_shaolin_expansion2.0010 = {
+	type = character_event
+	title = murim_shaolin_expansion2.0010.t
+	desc = murim_shaolin_expansion2.0010.desc
+	theme = martial_arts
+	
+	left_portrait = { character = root animation = personality_compassionate }
+	right_portrait = { character = scope:chosen_successor animation = personality_rational }
+	
+	trigger = {
+		has_trait = shaolin_disciple
+		age >= 55
+		NOT = { has_character_flag = shaolin_legacy_passed }
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 3 has_trait = shaolin_abbot } }
+	
+	immediate = {
+		set_character_flag = shaolin_legacy_passed
+		random_courtier = {
+			limit = { has_trait = shaolin_disciple age <= 25 }
+			save_scope_as = chosen_successor
+		}
+	}
+	
+	# Option A: Choose the most talented student
+	option = {
+		name = murim_shaolin_expansion2.0010.a
+		if = {
+			limit = { exists = scope:chosen_successor }
+			scope:chosen_successor = {
+				change_prowess = 3
+				add_character_modifier = { modifier = abbots_chosen_successor years = 20 }
+			}
+		}
+		add_prestige = 300
+		add_piety = 200
+		add_character_modifier = { modifier = legacy_passed_peace years = 30 }
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Write down your teachings in a manual
+	option = {
+		name = murim_shaolin_expansion2.0010.b
+		add_character_modifier = { modifier = scripture_author years = 30 }
+		add_prestige = 500
+		add_piety = 300
+		add_learning = 2
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Take the knowledge to your grave
+	option = {
+		name = murim_shaolin_expansion2.0010.c
+		add_character_modifier = { modifier = secret_keeper_monk years = 30 }
+		add_dread = 10
+		add_piety = -100
+		ai_chance = { base = 15 }
+	}
+}
