@@ -1,0 +1,407 @@
+# Murim Chronicles - Seeding & Ranking Power Score Values
+# Used by murim_game_start_effects.txt to calculate initial rankings
+# Used by murim_ranking_events.txt for ongoing rank recalculation
+# Cross-refs: murim_game_start_effects.txt (initial seeding),
+#             murim_ranking_events.txt (rank challenges/updates),
+#             murim_triggers.txt (is_ranked_fighter),
+#             murim_tournament_effects.txt (tournament seeding)
+# INTEGRATION: This is the SINGLE source of truth for power score calculation.
+#              Every system that needs to compare fighter strength uses these values.
+
+##############################
+# MASTER POWER SCORE CALCULATOR
+# Returns a value 0-150+ representing total martial power
+# Used for: initial ranking, tournament seeding, replacement selection, AI matchmaking
+##############################
+
+murim_calculate_power_score_value = {
+	value = 0
+	
+	# === BASE PROWESS (0-40+ range) ===
+	# Raw combat ability is the foundation
+	add = prowess
+	
+	# === CULTIVATION TIER BONUS (0-40 range) ===
+	# Higher cultivation = exponentially more dangerous
+	if = {
+		limit = { has_trait = qi_condensation }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = foundation_establishment }
+		add = 12
+	}
+	if = {
+		limit = { has_trait = core_formation }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = nascent_soul }
+		add = 30
+	}
+	if = {
+		limit = { has_trait = spirit_severing }
+		add = 38
+	}
+	if = {
+		limit = { has_trait = dao_seeking }
+		add = 45
+	}
+	if = {
+		limit = { has_trait = immortal_ascension }
+		add = 55
+	}
+	
+	# === TECHNIQUE COUNT BONUS (0-30 range) ===
+	# Each technique adds 3 points, advanced techniques add more
+	# Basic techniques
+	if = {
+		limit = { has_trait = basic_sword_technique }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = basic_fist_technique }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = basic_internal_arts }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = basic_body_tempering }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = basic_qigong }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = basic_movement_technique }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = basic_palm_technique }
+		add = 2
+	}
+	# Intermediate techniques
+	if = {
+		limit = { has_trait = intermediate_sword_technique }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = intermediate_fist_technique }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = intermediate_internal_arts }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = intermediate_body_tempering }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = intermediate_qigong }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = intermediate_movement_technique }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = intermediate_palm_technique }
+		add = 4
+	}
+	# Advanced techniques
+	if = {
+		limit = { has_trait = advanced_sword_technique }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = advanced_fist_technique }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = advanced_internal_arts }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = advanced_body_tempering }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = advanced_qigong }
+		add = 7
+	}
+	
+	# === CLAN-SPECIFIC TECHNIQUE BONUSES (0-15 range) ===
+	# Named sect techniques are powerful
+	if = {
+		limit = { has_trait = plum_blossom_sword }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = mount_hua_sword_art }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = tang_poison_mastery }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = tang_hidden_weapons }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = heavenly_demon_art }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = demonic_qi_cultivation }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = tai_chi_mastery }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = wudang_sword_art }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = iron_body_technique }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = shaolin_72_arts }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = eighteen_dragon_palms }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = dog_beating_staff }
+		add = 6
+	}
+	
+	# === CLAN ELDER BONUS (0-15 range) ===
+	# Elders are inherently stronger due to experience
+	if = {
+		limit = {
+			OR = {
+				has_trait = mount_hua_elder
+				has_trait = wudang_elder
+				has_trait = shaolin_elder
+				has_trait = tang_clan_elder
+				has_trait = heavenly_demon_sect_elder
+				has_trait = beggar_sect_elder
+			}
+		}
+		add = 15
+	}
+	
+	# === FOREIGN STYLE BONUSES (0-10 range) ===
+	# Foreign masters get a small bonus for unknown style advantage
+	if = {
+		limit = { has_trait = kenjutsu_master }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = iaijutsu_expert }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = shinobi }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = kalari_warrior }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = vajramushti_master }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = pahlevani_champion }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = hashashin_blade }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = bokh_champion }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = berserker_champion }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = varangian_axemaster }
+		add = 7
+	}
+	if = {
+		limit = { has_trait = donga_champion }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = dambe_striker }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = engolo_dancer }
+		add = 6
+	}
+	
+	# === TOURNAMENT CHAMPION BONUSES ===
+	if = {
+		limit = { has_trait = grand_tournament_champion }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = supreme_martial_champion }
+		add = 20
+	}
+	
+	# === WANDERING MASTER BONUS ===
+	# Wandering masters are often underestimated
+	if = {
+		limit = { has_trait = wandering_martial_master }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = disguised_ranker }
+		add = 10
+	}
+	
+	# === AGE MODIFIERS ===
+	# Peak years: 25-45. Young fighters have potential, old fighters lose physicality
+	if = {
+		limit = { age < 20 }
+		add = -8  # Still growing
+	}
+	if = {
+		limit = { age >= 20 age < 25 }
+		add = -3  # Approaching peak
+	}
+	# 25-45: no modifier (peak years)
+	if = {
+		limit = { age >= 46 age < 55 }
+		add = -3  # Experience offsets some decline
+	}
+	if = {
+		limit = { age >= 55 age < 65 }
+		add = -8  # Noticeable decline
+	}
+	if = {
+		limit = { age >= 65 }
+		add = -15  # Significant decline (unless immortal cultivation)
+	}
+	# Exception: high cultivators resist age decline
+	if = {
+		limit = {
+			age >= 55
+			OR = {
+				has_trait = spirit_severing
+				has_trait = dao_seeking
+				has_trait = immortal_ascension
+			}
+		}
+		add = 12  # Partially negates age penalty
+	}
+	
+	# === HEALTH PENALTIES ===
+	if = {
+		limit = { has_trait = wounded }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = severely_injured }
+		add = -12
+	}
+	if = {
+		limit = { has_trait = maimed }
+		add = -20
+	}
+	if = {
+		limit = { has_trait = one_eyed }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = one_legged }
+		add = -15
+	}
+}
+
+##############################
+# TOURNAMENT SEEDING SCORE
+# Variant of power score with tournament performance factored in
+##############################
+
+murim_tournament_seeding_value = {
+	value = murim_calculate_power_score_value
+	
+	# Bonus for qualifying in previous tournaments
+	if = {
+		limit = { has_character_flag = qualified_for_grand_tournament }
+		add = 5
+	}
+	# Bonus for past championship
+	if = {
+		limit = { has_trait = grand_tournament_champion }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = supreme_martial_champion }
+		add = 25
+	}
+	# Penalty for first-time qualifier (unknown quantity)
+	if = {
+		limit = {
+			NOT = { has_character_flag = has_competed_in_grand_tournament }
+		}
+		add = -3
+	}
+}
+
+##############################
+# REPLACEMENT FIGHTER PRIORITY SCORE
+# Used when a tournament fighter dies and needs replacing
+# Higher = more likely to be selected as replacement
+##############################
+
+murim_replacement_priority_value = {
+	value = murim_calculate_power_score_value
+	
+	# Strong preference for fighters who nearly qualified
+	if = {
+		limit = { has_character_flag = failed_qualification_last_cycle }
+		add = 10
+	}
+	# Bonus for being from a major clan (prestige matters for replacement)
+	if = {
+		limit = {
+			OR = {
+				has_trait = mount_hua_disciple
+				has_trait = wudang_disciple
+				has_trait = shaolin_disciple
+				has_trait = tang_clan_member
+				has_trait = heavenly_demon_sect_member
+				has_trait = beggar_sect_member
+			}
+		}
+		add = 5
+	}
+	# Penalty for very young/old replacements
+	if = {
+		limit = { age < 20 }
+		add = -10
+	}
+	if = {
+		limit = { age >= 60 }
+		add = -10
+	}
+}
