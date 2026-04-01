@@ -1,0 +1,771 @@
+###############################################################################
+# MURIM FATE EXPANSION EVENTS
+# Extended fate/destiny: star alignment, past life echoes, destined meetings,
+# karmic trial, fate defiance, heaven's wrath
+# Cross-references: murim_fate_events, murim_cultivation_events, murim_duel_events,
+#                   murim_ranking_events, murim_mentor_events, murim_romance_events
+###############################################################################
+
+namespace = murim_fate_exp
+
+##############################
+# 11. Star Alignment Revelation
+##############################
+murim_fate_exp.0001 = {
+	type = character_event
+	title = murim_fate_exp.0001.t
+	desc = murim_fate_exp.0001.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 12
+		OR = {
+			has_trait = cultivation_foundation
+			has_trait = cultivation_core_formation
+			has_trait = cultivation_nascent_soul
+		}
+		NOT = { has_character_flag = star_alignment_recent }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = mystic }
+		modifier = { add = 0.5 learning >= 18 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = star_alignment_recent
+			days = 1825
+		}
+	}
+
+	# Meditate under the star alignment - seek cosmic insight
+	option = {
+		name = murim_fate_exp.0001.a
+		add_piety = 100
+		add_learning_skill = 2
+		create_character_memory = {
+			type = murim_star_alignment_revelation_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Cosmic insight - breakthrough potential
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 30
+					}
+					add_character_modifier = {
+						modifier = chosen_one_destiny
+						years = 3
+					}
+					trigger_event = { id = murim_cultivation.0100 days = { 14 30 } }
+				}
+				30 = {
+					# Partial vision - prophecy fragment
+					add_character_modifier = {
+						modifier = prophecy_weight
+						years = 5
+					}
+					add_piety = 50
+				}
+				30 = {
+					# Overwhelming cosmic energy - backlash
+					add_stress = 40
+					add_character_modifier = {
+						modifier = qi_deviation_recovery
+						years = 1
+					}
+					random_list = {
+						70 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+					}
+					create_character_memory = {
+						type = murim_cosmic_backlash_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+
+	# Observe the stars but don't channel energy
+	option = {
+		name = murim_fate_exp.0001.b
+		add_piety = 25
+		add_learning_skill = 1
+		create_character_memory = {
+			type = murim_stargazing_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Ignore the celestial event
+	option = {
+		name = murim_fate_exp.0001.c
+		stress_impact = {
+			zealous = medium_stress_impact_gain
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+##############################
+# 12. Past Life Echo
+##############################
+murim_fate_exp.0002 = {
+	type = character_event
+	title = murim_fate_exp.0002.t
+	desc = murim_fate_exp.0002.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = cultivation_core_formation
+			has_trait = cultivation_nascent_soul
+		}
+		NOT = { has_character_flag = past_life_echo_seen }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = cultivation_nascent_soul }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = past_life_echo_seen
+			days = 3650
+		}
+	}
+
+	# Embrace the past life memories - integrate them
+	option = {
+		name = murim_fate_exp.0002.a
+		add_prowess_skill = 2
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = reincarnation_memories
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_past_life_integration_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Ancient technique recalled from past life
+					add_prowess_skill = 2
+					trigger_event = { id = murim_artifact.0001 days = { 7 14 } }
+				}
+				30 = {
+					# Past life enemies find you
+					add_character_modifier = {
+						modifier = karmic_debt_burden
+						years = 5
+					}
+					trigger_event = { id = murim_duel.0001 days = { 30 60 } }
+				}
+				30 = {
+					# Overwhelming memories cause confusion
+					add_stress = 40
+					add_character_modifier = {
+						modifier = qi_stagnation
+						years = 1
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Seal the memories away - too dangerous
+	option = {
+		name = murim_fate_exp.0002.b
+		add_piety = 50
+		add_stress = 15
+		create_character_memory = {
+			type = murim_past_life_sealed_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Seek a master to help interpret the visions
+	option = {
+		name = murim_fate_exp.0002.c
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_seek_vision_guide_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_mentor.0001 days = { 14 30 } }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+}
+
+##############################
+# 13. Fated Meeting
+##############################
+murim_fate_exp.0003 = {
+	type = character_event
+	title = murim_fate_exp.0003.t
+	desc = murim_fate_exp.0003.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:fated_stranger
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		prowess >= 10
+		any_courtier = {
+			is_alive = yes
+			NOT = { has_relation_friend = root }
+			NOT = { has_relation_rival = root }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = gregarious }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_alive = yes
+				NOT = { has_relation_friend = root }
+				NOT = { has_relation_rival = root }
+			}
+			save_scope_as = fated_stranger
+		}
+	}
+
+	# Recognize the destined bond - become sworn siblings
+	option = {
+		name = murim_fate_exp.0003.a
+		set_relation_friend = scope:fated_stranger
+		add_prestige = 100
+		add_piety = 50
+		scope:fated_stranger = {
+			add_opinion = {
+				target = root
+				modifier = murim_sworn_sibling_opinion
+				opinion = 40
+			}
+		}
+		create_character_memory = {
+			type = murim_fated_meeting_sworn_sibling_memory
+			participants = { sibling = scope:fated_stranger }
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# True destined bond - mutual cultivation boost
+					change_variable = { name = murim_cultivation_progress add = 10 }
+				}
+				30 = {
+					# Bond leads to adventure together
+					trigger_event = { id = murim_daily_life.0001 days = { 14 30 } }
+				}
+				20 = {
+					# Fate has darker plans - rivalry emerges later
+					trigger_event = { id = murim_duel.0001 days = { 180 365 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+
+	# Accept them as a future rival destined by heaven
+	option = {
+		name = murim_fate_exp.0003.b
+		set_relation_rival = scope:fated_stranger
+		add_prowess_skill = 1
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_fated_rival_memory
+			participants = { rival = scope:fated_stranger }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_duel.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Ignore the feeling - coincidence, not fate
+	option = {
+		name = murim_fate_exp.0003.c
+		add_stress = 10
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = cynical }
+		}
+	}
+}
+
+##############################
+# 14. Karmic Trial
+##############################
+murim_fate_exp.0004 = {
+	type = character_event
+	title = murim_fate_exp.0004.t
+	desc = murim_fate_exp.0004.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_character_modifier = karmic_debt_burden
+			has_character_modifier = killing_intent_aura
+			has_character_modifier = jianghu_infamy
+			has_trait = sadistic
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_character_modifier = karmic_debt_burden }
+		modifier = { add = 0.5 has_character_modifier = killing_intent_aura }
+	}
+
+	immediate = { }
+
+	# Face the karmic trial head-on
+	option = {
+		name = murim_fate_exp.0004.a
+		random_list = {
+			40 = {
+				modifier = { add = 15 has_trait = brave }
+				modifier = { add = 10 has_trait = just }
+				# Pass the trial - karma cleansed
+				desc = murim_fate_exp.0004.a.pass
+				remove_character_modifier = karmic_debt_burden
+				add_piety = 200
+				add_prestige = 100
+				create_character_memory = {
+					type = murim_karmic_trial_passed_memory
+				}
+				hidden_effect = {
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 20
+					}
+				}
+			}
+			35 = {
+				# Partial atonement - suffering but growth
+				desc = murim_fate_exp.0004.a.partial
+				add_piety = 50
+				add_stress = 30
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					40 = { add_trait = wounded_2 }
+				}
+				create_character_memory = {
+					type = murim_karmic_trial_partial_memory
+				}
+			}
+			25 = {
+				modifier = { add = 10 has_trait = sadistic }
+				# Fail the trial - devastating consequences
+				desc = murim_fate_exp.0004.a.fail
+				add_trait = wounded_2
+				add_stress = 60
+				add_character_modifier = {
+					modifier = heavenly_tribulation_scarred
+					years = 5
+				}
+				create_character_memory = {
+					type = murim_karmic_trial_failed_memory
+				}
+				# Craven check from heavenly punishment
+				random = {
+					chance = 20
+					modifier = {
+						factor = 2
+						NOT = { has_trait = brave }
+					}
+					add_trait = craven
+					create_character_memory = {
+						type = murim_combat_trauma_craven_memory
+					}
+				}
+				# Incapable risk from severe trial
+				random = {
+					chance = 10
+					add_trait = incapable
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Seek a temple to atone through meditation
+	option = {
+		name = murim_fate_exp.0004.b
+		add_piety = 100
+		add_stress = 20
+		add_character_modifier = {
+			modifier = cultivation_seclusion
+			years = 1
+		}
+		create_character_memory = {
+			type = murim_temple_atonement_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+
+	# Ignore karmic warnings
+	option = {
+		name = murim_fate_exp.0004.c
+		add_stress = 15
+		add_character_modifier = {
+			modifier = karmic_debt_burden
+			years = 5
+		}
+		stress_impact = {
+			zealous = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = cynical }
+		}
+	}
+}
+
+##############################
+# 15. Defying Fate
+##############################
+murim_fate_exp.0005 = {
+	type = character_event
+	title = murim_fate_exp.0005.t
+	desc = murim_fate_exp.0005.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_modifier = prophecy_weight
+		prowess >= 15
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = brave }
+		modifier = { add = 0.5 has_trait = ambitious }
+	}
+
+	immediate = { }
+
+	# Defy the prophecy - forge your own path through sheer will
+	option = {
+		name = murim_fate_exp.0005.a
+		remove_character_modifier = prophecy_weight
+		add_prestige = 300
+		add_prowess_skill = 2
+		create_character_memory = {
+			type = murim_fate_defied_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Fate accepts defiance - you transcend
+					add_character_modifier = {
+						modifier = chosen_one_destiny
+						years = 5
+					}
+					trigger_event = { id = murim_cultivation.0100 days = { 7 14 } }
+				}
+				30 = {
+					# Fate fights back - heavenly tribulation
+					trigger_event = { id = murim_fate.0001 days = { 14 30 } }
+				}
+				20 = {
+					# Backlash from defying heaven
+					add_trait = wounded_2
+					add_character_modifier = {
+						modifier = heavenly_tribulation_scarred
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+
+	# Accept the prophecy and walk the destined path
+	option = {
+		name = murim_fate_exp.0005.b
+		add_piety = 200
+		add_learning_skill = 1
+		create_character_memory = {
+			type = murim_fate_accepted_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation.0100 days = { 30 60 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+
+	# Seek to understand the prophecy further before acting
+	option = {
+		name = murim_fate_exp.0005.c
+		add_learning_skill = 2
+		add_piety = 50
+		create_character_memory = {
+			type = murim_prophecy_research_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+##############################
+# 16. Heaven's Wrath Unleashed
+##############################
+murim_fate_exp.0006 = {
+	type = character_event
+	title = murim_fate_exp.0006.t
+	desc = murim_fate_exp.0006.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_character_modifier = karmic_debt_burden
+			has_character_modifier = cursed_artifact_corruption
+			AND = {
+				has_trait = cultivation_nascent_soul
+				has_trait = sadistic
+			}
+		}
+		NOT = { has_character_flag = heavens_wrath_recent }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_character_modifier = karmic_debt_burden }
+		modifier = { add = 0.5 has_trait = sadistic }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = heavens_wrath_recent
+			days = 3650
+		}
+	}
+
+	# Stand and endure the heavenly lightning
+	option = {
+		name = murim_fate_exp.0006.a
+		random_list = {
+			30 = {
+				modifier = { add = 15 prowess >= 25 }
+				modifier = { add = 10 has_trait = brave }
+				# Survive and transcend
+				desc = murim_fate_exp.0006.a.survive
+				add_character_modifier = {
+					modifier = heavenly_tribulation_survivor
+					years = 10
+				}
+				remove_character_modifier = karmic_debt_burden
+				remove_character_modifier = cursed_artifact_corruption
+				add_prestige = 500
+				add_piety = 300
+				create_character_memory = {
+					type = murim_heavens_wrath_survived_memory
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_ranking.0100 days = { 7 14 } }
+				}
+			}
+			40 = {
+				# Survive but gravely wounded
+				desc = murim_fate_exp.0006.a.wounded
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = heavenly_tribulation_scarred
+					years = 5
+				}
+				add_stress = 50
+				create_character_memory = {
+					type = murim_heavens_wrath_scarred_memory
+				}
+				# Craven check
+				random = {
+					chance = 20
+					modifier = {
+						factor = 2
+						NOT = { has_trait = brave }
+					}
+					add_trait = craven
+					create_character_memory = {
+						type = murim_combat_trauma_craven_memory
+					}
+				}
+			}
+			30 = {
+				modifier = { add = 10 has_trait = craven }
+				# Struck down - incapacitated
+				desc = murim_fate_exp.0006.a.struck_down
+				add_trait = incapable
+				add_stress = 80
+				create_character_memory = {
+					type = murim_heavens_wrath_struck_down_memory
+				}
+				# If ranked, trigger ranker death event chain
+				if = {
+					limit = {
+						has_variable = murim_martial_rank
+						var:murim_martial_rank <= 50
+					}
+					trigger_event = { id = murim_ranker_death.0001 days = { 7 14 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+
+	# Attempt to redirect the lightning into your cultivation
+	option = {
+		name = murim_fate_exp.0006.b
+		trigger = {
+			OR = {
+				has_trait = cultivation_core_formation
+				has_trait = cultivation_nascent_soul
+			}
+		}
+		random_list = {
+			40 = {
+				modifier = { add = 20 has_trait = cultivation_nascent_soul }
+				# Lightning absorbed - massive power boost
+				add_prowess_skill = 3
+				change_variable = { name = murim_cultivation_progress add = 40 }
+				add_character_modifier = {
+					modifier = heavenly_tribulation_survivor
+					years = 5
+				}
+				create_character_memory = {
+					type = murim_lightning_absorbed_memory
+				}
+			}
+			60 = {
+				# Backfires catastrophically
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = qi_deviation_recovery
+					years = 3
+				}
+				add_stress = 60
+				random = {
+					chance = 25
+					add_trait = incapable
+				}
+				create_character_memory = {
+					type = murim_lightning_backfire_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Flee from the heavenly wrath
+	option = {
+		name = murim_fate_exp.0006.c
+		add_prestige = -200
+		add_stress = 30
+		random_list = {
+			60 = {
+				# Escape barely
+				add_trait = wounded_1
+			}
+			40 = {
+				# Cannot outrun heaven
+				add_trait = wounded_2
+			}
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = murim_fled_heavens_wrath_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
