@@ -1,0 +1,1168 @@
+# Murim Chronicles - Shaolin Temple Clan Events
+# THE PILLAR OF ORTHODOX MURIM. Buddhist warrior monks. Oldest martial institution.
+# SIGNATURE: 72 Consummate Arts, Diamond Body, Prajna Palm, Staff techniques
+# PHILOSOPHY: Martial arts exist to protect the weak. Violence is last resort.
+# INTERNAL POLITICS: Abbot vs martial monks vs scholarly monks tension.
+# INTEGRATION: murim_clan_triggers.txt (is_shaolin_member), murim_faction_war_events.txt
+# UNIQUE: Only clan where cultivation requires Buddhist devotion (learning trait)
+
+namespace = murim_shaolin
+
+# SHAOLIN.0001 - The Bodhi Tree Meditation
+# Senior monks gather under the ancient bodhi tree for collective enlightenment.
+# Only Shaolin inner disciples+ can participate. Requires learning >= 12.
+murim_shaolin.0001 = {
+	type = character_event
+	title = murim_shaolin.0001.t
+	desc = murim_shaolin.0001.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		has_trait = inner_disciple
+		learning >= 12
+	}
+
+	# Achieve deep meditation - gain enlightened modifier
+	option = {
+		name = murim_shaolin.0001.a
+		add_character_modifier = {
+			modifier = shaolin_bodhi_enlightenment
+			years = 5
+		}
+		add_learning_skill = 2
+		add_piety = 200
+		stress_impact = {
+			wrathful = minor_stress_impact_gain
+			sadistic = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = shaolin_bodhi_meditation_memory
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = zealous
+			}
+		}
+	}
+
+	# Struggle with worldly attachments - prowess focus
+	option = {
+		name = murim_shaolin.0001.b
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = shaolin_worldly_attachment_shame
+			years = 3
+		}
+		stress_impact = {
+			zealous = minor_stress_impact_gain
+		}
+		create_character_memory = {
+			type = shaolin_failed_meditation_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Reject the meditation entirely - martial path divergence
+	option = {
+		name = murim_shaolin.0001.c
+		add_prowess_skill = 5
+		add_character_modifier = {
+			modifier = shaolin_martial_monk_divergence
+			years = 10
+		}
+		remove_trait = zealous
+		add_trait = cynical
+		add_opinion = {
+			target = scope:shaolin_abbot
+			modifier = disappointed_opinion
+			opinion = -30
+		}
+		create_character_memory = {
+			type = shaolin_rejected_buddhism_memory
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# SHAOLIN.0002 - The 72 Arts Trial
+# Attempt to master one of the legendary 72 Consummate Arts.
+# Each art takes years. Failure can cripple. Success makes you elite.
+murim_shaolin.0002 = {
+	type = character_event
+	title = murim_shaolin.0002.t
+	desc = murim_shaolin.0002.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		prowess >= 15
+		NOT = { has_character_modifier = shaolin_72_arts_mastery }
+	}
+
+	# Attempt the Iron Shirt (Diamond Body prerequisite)
+	option = {
+		name = murim_shaolin.0002.a
+		random_list = {
+			60 = {
+				add_character_modifier = {
+					modifier = shaolin_iron_shirt_mastery
+					years = -1
+				}
+				add_prowess_skill = 4
+				create_character_memory = {
+					type = shaolin_72_arts_success_memory
+				}
+				modifier = {
+					add = 20
+					prowess >= 20
+				}
+			}
+			25 = {
+				add_character_modifier = {
+					modifier = shaolin_partial_iron_shirt
+					years = 5
+				}
+				add_prowess_skill = 1
+			}
+			15 = {
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = shaolin_72_arts_injury
+					years = 3
+				}
+				create_character_memory = {
+					type = shaolin_72_arts_failure_memory
+				}
+				modifier = {
+					add = 10
+					prowess < 18
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Attempt the Prajna Palm (qi-based devastating strike)
+	option = {
+		name = murim_shaolin.0002.b
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = shaolin_prajna_palm_mastery
+					years = -1
+				}
+				add_prowess_skill = 3
+				add_martial_skill = 2
+				create_character_memory = {
+					type = shaolin_prajna_palm_memory
+				}
+			}
+			30 = {
+				add_prowess_skill = 1
+				add_character_modifier = {
+					modifier = shaolin_prajna_partial
+					years = 5
+				}
+			}
+			20 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = shaolin_meridian_damage
+					years = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Attempt the Staff of Dharma (weapon mastery)
+	option = {
+		name = murim_shaolin.0002.c
+		random_list = {
+			65 = {
+				add_character_modifier = {
+					modifier = shaolin_dharma_staff_mastery
+					years = -1
+				}
+				add_prowess_skill = 5
+			}
+			35 = {
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = shaolin_staff_training
+					years = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Decline - not ready yet
+	option = {
+		name = murim_shaolin.0002.d
+		add_piety = 100
+		stress_impact = {
+			ambitious = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# SHAOLIN.0003 - Abbot vs Martial Hall Conflict
+# The scholarly abbot wants to reduce martial training. The Martial Hall disagrees.
+# Internal Shaolin politics - choose a side or mediate.
+murim_shaolin.0003 = {
+	type = character_event
+	title = murim_shaolin.0003.t
+	desc = murim_shaolin.0003.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		OR = {
+			has_trait = inner_disciple
+			has_trait = elder_rank
+		}
+	}
+
+	# Side with the Abbot - scholarly path
+	option = {
+		name = murim_shaolin.0003.a
+		add_learning_skill = 3
+		add_piety = 300
+		add_character_modifier = {
+			modifier = shaolin_abbots_favor
+			years = 5
+		}
+		add_opinion = {
+			target = scope:martial_hall_leader
+			modifier = shaolin_faction_opposition
+			opinion = -40
+		}
+		create_character_memory = {
+			type = shaolin_sided_with_abbot_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = zealous
+			}
+			modifier = {
+				add = 20
+				learning >= 15
+			}
+		}
+	}
+
+	# Side with Martial Hall - combat supremacy
+	option = {
+		name = murim_shaolin.0003.b
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = shaolin_martial_hall_champion
+			years = 5
+		}
+		add_opinion = {
+			target = scope:shaolin_abbot
+			modifier = shaolin_faction_opposition
+			opinion = -40
+		}
+		create_character_memory = {
+			type = shaolin_sided_with_martial_hall_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = wrathful
+			}
+			modifier = {
+				add = 20
+				prowess >= 18
+			}
+		}
+	}
+
+	# Mediate between both factions
+	option = {
+		name = murim_shaolin.0003.c
+		add_diplomacy_skill = 3
+		random_list = {
+			60 = {
+				add_character_modifier = {
+					modifier = shaolin_peacemaker
+					years = 10
+				}
+				add_prestige = 500
+			}
+			40 = {
+				add_character_modifier = {
+					modifier = shaolin_fence_sitter
+					years = 3
+				}
+				add_opinion = {
+					target = scope:shaolin_abbot
+					modifier = disappointed_opinion
+					opinion = -15
+				}
+				add_opinion = {
+					target = scope:martial_hall_leader
+					modifier = disappointed_opinion
+					opinion = -15
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				diplomacy >= 12
+			}
+		}
+	}
+}
+
+# SHAOLIN.0004 - The Relic of Bodhidharma
+# An ancient relic attributed to the founder is discovered in a sealed chamber.
+# Massive power but also massive responsibility.
+murim_shaolin.0004 = {
+	type = character_event
+	title = murim_shaolin.0004.t
+	desc = murim_shaolin.0004.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_zealous
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		OR = {
+			has_trait = elder_rank
+			has_trait = vice_leader_rank
+			has_trait = leader_rank
+		}
+	}
+
+	# Study the relic for enlightenment
+	option = {
+		name = murim_shaolin.0004.a
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = bodhidharma_enlightenment
+					years = -1
+				}
+				add_learning_skill = 5
+				add_prowess_skill = 3
+				add_piety = 1000
+				create_character_memory = {
+					type = shaolin_bodhidharma_revelation_memory
+				}
+			}
+			35 = {
+				add_learning_skill = 2
+				add_piety = 300
+				add_character_modifier = {
+					modifier = bodhidharma_partial_insight
+					years = 10
+				}
+			}
+			25 = {
+				add_trait = lunatic
+				add_character_modifier = {
+					modifier = bodhidharma_madness
+					years = 5
+				}
+				create_character_memory = {
+					type = shaolin_bodhidharma_madness_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Seal the relic away - too dangerous
+	option = {
+		name = murim_shaolin.0004.b
+		add_piety = 500
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = shaolin_guardian_of_relics
+			years = -1
+		}
+		create_character_memory = {
+			type = shaolin_sealed_relic_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+
+	# Secretly study it alone at night
+	option = {
+		name = murim_shaolin.0004.c
+		add_secret = {
+			type = secret_shaolin_relic_theft
+		}
+		random_list = {
+			50 = {
+				add_prowess_skill = 6
+				add_character_modifier = {
+					modifier = bodhidharma_forbidden_knowledge
+					years = -1
+				}
+			}
+			50 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = bodhidharma_backlash
+					years = 5
+				}
+				trigger_event = {
+					id = murim_shaolin.0008
+					days = { 30 90 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# SHAOLIN.0005 - Wandering Monk Mission
+# Shaolin sends you into the jianghu to help the common people.
+# How you handle it defines your path within the temple.
+murim_shaolin.0005 = {
+	type = character_event
+	title = murim_shaolin.0005.t
+	desc = murim_shaolin.0005.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		NOT = { has_character_modifier = shaolin_wandering_mission }
+	}
+
+	# Follow the path of compassion (heal, teach, protect)
+	option = {
+		name = murim_shaolin.0005.a
+		add_character_modifier = {
+			modifier = shaolin_wandering_mission
+			years = 3
+		}
+		add_diplomacy_skill = 2
+		add_learning_skill = 2
+		add_piety = 400
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = shaolin_peoples_champion
+					years = 10
+				}
+				add_prestige = 500
+			}
+			30 = {
+				trigger_event = {
+					id = murim_jianghu.0001
+					days = { 60 180 }
+				}
+			}
+			20 = {
+				trigger_event = {
+					id = murim_romance.0001
+					days = { 90 270 }
+				}
+			}
+		}
+		create_character_memory = {
+			type = shaolin_wandering_compassion_memory
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Use the mission to train in real combat
+	option = {
+		name = murim_shaolin.0005.b
+		add_character_modifier = {
+			modifier = shaolin_wandering_mission
+			years = 3
+		}
+		add_prowess_skill = 4
+		random_list = {
+			40 = {
+				trigger_event = {
+					id = murim_duel.0001
+					days = { 30 90 }
+				}
+			}
+			30 = {
+				add_trait = wounded_1
+				trigger_event = {
+					id = murim_training.0001
+					days = { 60 120 }
+				}
+			}
+			30 = {
+				add_character_modifier = {
+					modifier = shaolin_battle_hardened_monk
+					years = 5
+				}
+				add_prowess_skill = 2
+			}
+		}
+		create_character_memory = {
+			type = shaolin_wandering_combat_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Secretly investigate unorthodox activity
+	option = {
+		name = murim_shaolin.0005.c
+		add_character_modifier = {
+			modifier = shaolin_wandering_mission
+			years = 3
+		}
+		add_intrigue_skill = 3
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = shaolin_intelligence_gatherer
+					years = 5
+				}
+				trigger_event = {
+					id = murim_shadow_politics.0001
+					days = { 60 180 }
+				}
+			}
+			30 = {
+				trigger_event = {
+					id = murim_jianghu.0003
+					days = { 30 90 }
+				}
+			}
+			30 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = shaolin_exposed_spy
+					years = 3
+				}
+			}
+		}
+		create_character_memory = {
+			type = shaolin_wandering_spy_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				intrigue >= 12
+			}
+		}
+	}
+
+	# Refuse the mission - stay in the temple
+	option = {
+		name = murim_shaolin.0005.d
+		add_piety = -100
+		add_opinion = {
+			target = scope:shaolin_abbot
+			modifier = disappointed_opinion
+			opinion = -20
+		}
+		stress_impact = {
+			lazy = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# SHAOLIN.0006 - The Diamond Body Awakening
+# After years of Iron Shirt training, your body begins to transcend.
+# The legendary Diamond Body - near invulnerability.
+murim_shaolin.0006 = {
+	type = character_event
+	title = murim_shaolin.0006.t
+	desc = murim_shaolin.0006.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		has_character_modifier = shaolin_iron_shirt_mastery
+		prowess >= 22
+	}
+
+	# Push through the transformation
+	option = {
+		name = murim_shaolin.0006.a
+		random_list = {
+			35 = {
+				remove_character_modifier = shaolin_iron_shirt_mastery
+				add_character_modifier = {
+					modifier = shaolin_diamond_body
+					years = -1
+				}
+				add_prowess_skill = 8
+				create_character_memory = {
+					type = shaolin_diamond_body_achieved_memory
+				}
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 7 14 }
+				}
+			}
+			35 = {
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = shaolin_diamond_body_partial
+					years = 10
+				}
+			}
+			30 = {
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = shaolin_body_shattered
+					years = 5
+				}
+				create_character_memory = {
+					type = shaolin_diamond_body_failure_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Stabilize at Iron Shirt level - don't risk it
+	option = {
+		name = murim_shaolin.0006.b
+		add_prowess_skill = 1
+		add_piety = 200
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Use forbidden shortcuts (demonic qi infusion)
+	option = {
+		name = murim_shaolin.0006.c
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = shaolin_corrupted_diamond_body
+					years = -1
+				}
+				add_prowess_skill = 10
+				add_trait = sadistic
+				add_secret = {
+					type = secret_demonic_cultivation
+				}
+				create_character_memory = {
+					type = shaolin_corrupted_diamond_memory
+				}
+			}
+			60 = {
+				add_trait = incapable
+				create_character_memory = {
+					type = shaolin_demonic_backlash_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# SHAOLIN.0007 - Defending the Temple Gates
+# Unorthodox forces attack Shaolin directly. You must choose how to respond.
+murim_shaolin.0007 = {
+	type = character_event
+	title = murim_shaolin.0007.t
+	desc = murim_shaolin.0007.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		prowess >= 10
+	}
+
+	# Lead the defense from the front
+	option = {
+		name = murim_shaolin.0007.a
+		random_list = {
+			45 = {
+				add_prestige = 500
+				add_prowess_skill = 3
+				add_character_modifier = {
+					modifier = shaolin_temple_defender
+					years = 10
+				}
+				create_character_memory = {
+					type = shaolin_defended_temple_memory
+				}
+			}
+			30 = {
+				add_trait = wounded_2
+				add_prestige = 300
+				add_prowess_skill = 1
+			}
+			25 = {
+				add_trait = wounded_3
+				random_list = {
+					80 = {
+						add_character_modifier = {
+							modifier = shaolin_scarred_defender
+							years = -1
+						}
+					}
+					20 = {
+						add_trait = one_eyed
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Protect the relics and scriptures (retreat to inner sanctum)
+	option = {
+		name = murim_shaolin.0007.b
+		add_learning_skill = 2
+		add_piety = 500
+		add_character_modifier = {
+			modifier = shaolin_relic_protector
+			years = 5
+		}
+		create_character_memory = {
+			type = shaolin_protected_relics_memory
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Negotiate with the attackers
+	option = {
+		name = murim_shaolin.0007.c
+		random_list = {
+			40 = {
+				add_diplomacy_skill = 3
+				add_character_modifier = {
+					modifier = shaolin_negotiator
+					years = 5
+				}
+			}
+			30 = {
+				add_prestige = -200
+				add_character_modifier = {
+					modifier = shaolin_humiliating_concession
+					years = 5
+				}
+			}
+			30 = {
+				add_trait = wounded_1
+				trigger_event = {
+					id = murim_faction_war.0001
+					days = { 7 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				diplomacy >= 15
+			}
+		}
+	}
+}
+
+# SHAOLIN.0008 - Secret Theft Discovered (follow-up from 0004.c)
+# Your secret study of the Bodhidharma relic has been noticed.
+murim_shaolin.0008 = {
+	type = character_event
+	title = murim_shaolin.0008.t
+	desc = murim_shaolin.0008.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shame
+	}
+
+	trigger = {
+		has_secret_type = secret_shaolin_relic_theft
+	}
+
+	# Confess and accept punishment
+	option = {
+		name = murim_shaolin.0008.a
+		expose_secret = secret_shaolin_relic_theft
+		add_piety = 200
+		add_character_modifier = {
+			modifier = shaolin_penitent_monk
+			years = 5
+		}
+		add_opinion = {
+			target = scope:shaolin_abbot
+			modifier = disappointed_opinion
+			opinion = -30
+		}
+		create_character_memory = {
+			type = shaolin_confessed_theft_memory
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Lie and frame another monk
+	option = {
+		name = murim_shaolin.0008.b
+		add_intrigue_skill = 3
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = shaolin_secret_keeper
+					years = 10
+				}
+			}
+			50 = {
+				expose_secret = secret_shaolin_relic_theft
+				add_character_modifier = {
+					modifier = shaolin_exposed_liar
+					years = 10
+				}
+				add_opinion = {
+					target = scope:shaolin_abbot
+					modifier = betrayed_opinion
+					opinion = -60
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Flee the temple with the knowledge
+	option = {
+		name = murim_shaolin.0008.c
+		remove_trait = shaolin_member
+		add_character_modifier = {
+			modifier = shaolin_renegade_monk
+			years = -1
+		}
+		add_prowess_skill = 3
+		trigger_event = {
+			id = murim_jianghu.0001
+			days = { 30 60 }
+		}
+		create_character_memory = {
+			type = shaolin_fled_temple_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# SHAOLIN.0009 - Abbot Succession
+# The old abbot is dying. Who will lead Shaolin?
+murim_shaolin.0009 = {
+	type = character_event
+	title = murim_shaolin.0009.t
+	desc = murim_shaolin.0009.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		OR = {
+			has_trait = elder_rank
+			has_trait = vice_leader_rank
+		}
+	}
+
+	# Nominate yourself
+	option = {
+		name = murim_shaolin.0009.a
+		random_list = {
+			35 = {
+				add_trait = leader_rank
+				add_character_modifier = {
+					modifier = shaolin_new_abbot
+					years = -1
+				}
+				add_prestige = 1000
+				add_piety = 500
+				create_character_memory = {
+					type = shaolin_became_abbot_memory
+				}
+			}
+			40 = {
+				add_prestige = -200
+				add_character_modifier = {
+					modifier = shaolin_rejected_candidate
+					years = 5
+				}
+			}
+			25 = {
+				trigger_event = {
+					id = murim_succession_crisis.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Support another elder
+	option = {
+		name = murim_shaolin.0009.b
+		add_diplomacy_skill = 2
+		add_character_modifier = {
+			modifier = shaolin_kingmaker
+			years = 10
+		}
+		add_opinion = {
+			target = scope:supported_elder
+			modifier = grateful_opinion
+			opinion = 40
+		}
+		create_character_memory = {
+			type = shaolin_supported_succession_memory
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Sabotage all candidates to create a power vacuum
+	option = {
+		name = murim_shaolin.0009.c
+		add_intrigue_skill = 4
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = shaolin_shadow_puppeteer
+					years = 10
+				}
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 60 120 }
+				}
+			}
+			60 = {
+				add_character_modifier = {
+					modifier = shaolin_exposed_schemer
+					years = 10
+				}
+				add_opinion = {
+					target = scope:shaolin_abbot
+					modifier = betrayed_opinion
+					opinion = -50
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# SHAOLIN.0010 - The Fallen Monk's Return
+# A former Shaolin monk who left for unorthodox ways returns seeking redemption.
+# Do you accept them back or turn them away?
+murim_shaolin.0010 = {
+	type = character_event
+	title = murim_shaolin.0010.t
+	desc = murim_shaolin.0010.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		murim_is_shaolin_member_trigger = yes
+		OR = {
+			has_trait = elder_rank
+			has_trait = leader_rank
+		}
+	}
+
+	# Accept them with open arms - Buddhist mercy
+	option = {
+		name = murim_shaolin.0010.a
+		add_piety = 300
+		add_character_modifier = {
+			modifier = shaolin_merciful_elder
+			years = 5
+		}
+		random_list = {
+			60 = {
+				create_character_memory = {
+					type = shaolin_redemption_success_memory
+				}
+			}
+			40 = {
+				trigger_event = {
+					id = murim_shaolin.0008
+					days = { 90 180 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Accept but assign harsh penance
+	option = {
+		name = murim_shaolin.0010.b
+		add_piety = 200
+		add_character_modifier = {
+			modifier = shaolin_strict_elder
+			years = 5
+		}
+		create_character_memory = {
+			type = shaolin_penance_assigned_memory
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Reject them - once fallen, forever fallen
+	option = {
+		name = murim_shaolin.0010.c
+		add_piety = -100
+		add_character_modifier = {
+			modifier = shaolin_unyielding_elder
+			years = 5
+		}
+		random_list = {
+			50 = {
+				create_character_memory = {
+					type = shaolin_rejected_fallen_memory
+				}
+			}
+			50 = {
+				trigger_event = {
+					id = murim_faction_war.0003
+					days = { 60 180 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = vengeful
+			}
+		}
+	}
+}
