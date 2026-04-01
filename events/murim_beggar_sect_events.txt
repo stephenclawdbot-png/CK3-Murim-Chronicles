@@ -1,1072 +1,1187 @@
 # Murim Chronicles - Beggar Sect Clan Events
-# THE EYES AND EARS OF THE JIANGHU. Largest sect by numbers. Intelligence network.
-# SIGNATURE: Eighteen Dragon Subduing Palms, Dog Beating Staff, information brokering
-# PHILOSOPHY: The common people are the foundation of the martial world.
-# INTERNAL POLITICS: Clean Clothes faction (noble-born) vs Dirty Clothes faction (street).
-# INTEGRATION: murim_clan_triggers.txt (is_beggar_sect_member), murim_jianghu_events.txt
-# UNIQUE: Only clan with intelligence network mechanic. Rank shown by bag pouches (1-9).
+# ORTHODOX PILLAR. Largest sect by numbers. Intelligence network across all lands.
+# SIGNATURE: Dog Beating Staff, Eighteen Dragon Subduing Palms, beggar disguise network
+# PHILOSOPHY: Protect the common people. Information is the true weapon.
+# INTERNAL POLITICS: Clean Faction (wealthy donors) vs Dirty Faction (true beggars) rivalry.
+# UNIQUE: Only clan with a spy/intelligence network mechanic. Succession by staff inheritance.
+# INTEGRATION: murim_clan_triggers.txt, murim_jianghu_events.txt, murim_faction_war_events.txt
 
 namespace = murim_beggar
 
-# BEGGAR.0001 - The Pouch Ceremony
-# Receive your rank pouches. Each pouch = one rank within the sect.
+##############################
+# EVENT 1: THE BEGGAR'S INITIATION
+# Joining the Beggar Sect. You must prove you understand poverty and humility.
+# Three paths based on your background.
+##############################
 murim_beggar.0001 = {
 	type = character_event
 	title = murim_beggar.0001.t
 	desc = murim_beggar.0001.desc
-	theme = diplomacy
-	left_portrait = {
-		character = root
-		animation = personality_honorable
-	}
-
+	theme = intrigue
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
+		NOT = { has_character_flag = beggar_initiation_complete }
+		age >= 14
 	}
-
-	# Accept the pouch with humility
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = humble
+		}
+	}
+	
+	immediate = {
+		set_character_flag = beggar_initiation_complete
+		create_character_memory = {
+			type = beggar_sect_initiation_memory
+		}
+	}
+	
+	# Option A: Live as a true beggar for 30 days (Dirty Faction approval)
 	option = {
 		name = murim_beggar.0001.a
-		add_prestige = 200
-		add_diplomacy_skill = 2
 		add_character_modifier = {
-			modifier = beggar_sect_pouch_bearer
-			years = -1
+			modifier = beggar_dirty_faction_respect_modifier
+			years = 10
 		}
-		create_character_memory = {
-			type = beggar_pouch_ceremony_memory
+		add_prowess_xp = 200
+		add_intrigue_xp = 300
+		stress_impact = {
+			arrogant = major_stress_impact_gain
+			humble = minor_stress_impact_loss
 		}
 		ai_chance = {
-			base = 60
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
 		}
 	}
-
-	# Demand a higher rank pouch (challenge for position)
+	
+	# Option B: Donate your wealth to the poor (Clean Faction approval)
 	option = {
 		name = murim_beggar.0001.b
-		random_list = {
-			35 = {
-				add_prestige = 400
-				add_prowess_skill = 2
-				add_character_modifier = {
-					modifier = beggar_sect_rapid_rise
-					years = 5
-				}
-				create_character_memory = {
-					type = beggar_challenged_rank_memory
-				}
+		trigger = {
+			gold >= 200
+		}
+		remove_short_term_gold = 200
+		add_character_modifier = {
+			modifier = beggar_clean_faction_patron_modifier
+			years = 10
+		}
+		add_diplomacy_xp = 300
+		add_prestige = 200
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				gold >= 500
 			}
-			35 = {
-				add_prestige = -100
-				add_character_modifier = {
-					modifier = beggar_sect_overreacher
-					years = 3
-				}
-			}
-			30 = {
-				add_trait = wounded_1
-				add_prestige = -200
-			}
+		}
+	}
+	
+	# Option C: Prove your worth through intelligence gathering (spy path)
+	option = {
+		name = murim_beggar.0001.c
+		trigger = {
+			intrigue >= 10
+		}
+		add_intrigue_xp = 500
+		add_character_modifier = {
+			modifier = beggar_intelligence_operative_modifier
+			years = 10
+		}
+		# Start intelligence network chain
+		trigger_event = {
+			id = murim_beggar.0004
+			days = { 30 60 }
 		}
 		ai_chance = {
 			base = 25
 			modifier = {
-				add = 25
-				has_trait = ambitious
+				add = 20
+				intrigue >= 14
 			}
-		}
-	}
-
-	# Refuse rank entirely - stay as a wanderer
-	option = {
-		name = murim_beggar.0001.c
-		add_character_modifier = {
-			modifier = beggar_sect_lone_wolf
-			years = -1
-		}
-		add_intrigue_skill = 3
-		create_character_memory = {
-			type = beggar_refused_rank_memory
-		}
-		ai_chance = {
-			base = 15
 		}
 	}
 }
 
-# BEGGAR.0002 - Clean Clothes vs Dirty Clothes
-# The eternal internal divide. Noble-born beggars vs street-born beggars.
+##############################
+# EVENT 2: DOG BEATING STAFF TECHNIQUE
+# The Beggar Sect's signature weapon art. Passed from Chief to successor.
+# Learning it means you're being considered for leadership.
+##############################
 murim_beggar.0002 = {
 	type = character_event
 	title = murim_beggar.0002.t
 	desc = murim_beggar.0002.desc
-	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
-		OR = {
-			has_trait = inner_disciple
-			has_trait = elder_rank
+		is_beggar_sect_member_trigger = yes
+		has_character_flag = beggar_initiation_complete
+		prowess >= 14
+		NOT = { has_character_flag = beggar_staff_training }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_beggar_rank_elder_trigger = yes
 		}
 	}
-
-	# Side with Clean Clothes (political connections, funding)
+	
+	immediate = {
+		set_character_flag = beggar_staff_training
+		create_character_memory = {
+			type = beggar_dog_beating_staff_memory
+		}
+	}
+	
+	# Option A: Learn the orthodox 36 stances (reliable mastery)
 	option = {
 		name = murim_beggar.0002.a
-		add_diplomacy_skill = 3
-		add_gold = 200
+		add_prowess_xp = 600
+		add_trait = dog_beating_staff_user
 		add_character_modifier = {
-			modifier = beggar_clean_clothes_ally
-			years = 5
+			modifier = beggar_orthodox_staff_modifier
+			years = -1
 		}
-		add_opinion = {
-			target = scope:dirty_clothes_leader
-			modifier = beggar_faction_opposition
-			opinion = -40
-		}
-		create_character_memory = {
-			type = beggar_clean_clothes_memory
-		}
-		ai_chance = {
-			base = 35
-			modifier = {
-				add = 25
-				diplomacy >= 12
-			}
-		}
+		ai_chance = { base = 45 }
 	}
-
-	# Side with Dirty Clothes (street loyalty, numbers)
+	
+	# Option B: Focus on the 12 killing stances (offensive variant)
 	option = {
 		name = murim_beggar.0002.b
-		add_prowess_skill = 2
-		add_intrigue_skill = 2
+		trigger = {
+			prowess >= 16
+		}
+		add_prowess_xp = 800
+		add_trait = dog_beating_staff_user
 		add_character_modifier = {
-			modifier = beggar_dirty_clothes_champion
-			years = 5
+			modifier = beggar_killing_staff_modifier
+			years = -1
 		}
-		add_opinion = {
-			target = scope:clean_clothes_leader
-			modifier = beggar_faction_opposition
-			opinion = -40
-		}
-		create_character_memory = {
-			type = beggar_dirty_clothes_memory
+		# Aggressive style draws ranking attention
+		trigger_event = {
+			id = murim_rank.0005
+			days = { 30 60 }
 		}
 		ai_chance = {
-			base = 35
+			base = 30
 			modifier = {
-				add = 25
-				prowess >= 15
+				add = 15
+				has_trait = wrathful
 			}
 		}
 	}
-
-	# Unite both factions under a common cause
+	
+	# Option C: Combine staff with Eighteen Dragon Subduing Palms (genius fusion)
 	option = {
 		name = murim_beggar.0002.c
+		trigger = {
+			prowess >= 18
+			learning >= 14
+		}
 		random_list = {
 			30 = {
+				# Fusion succeeds - devastatingly powerful
+				add_prowess_xp = 1200
+				add_trait = dog_beating_staff_user
 				add_character_modifier = {
-					modifier = beggar_sect_unifier
-					years = 10
+					modifier = beggar_staff_palm_fusion_modifier
+					years = -1
 				}
-				add_diplomacy_skill = 4
-				add_prestige = 500
-			}
-			70 = {
-				add_character_modifier = {
-					modifier = beggar_sect_naive_idealist
-					years = 3
+				trigger_event = {
+					id = murim_technique.0003
+					days = { 60 120 }
 				}
-				add_prestige = -100
 			}
-		}
-		ai_chance = {
-			base = 20
-			modifier = {
-				add = 30
-				diplomacy >= 18
-			}
-		}
-	}
-
-	# Exploit the division for personal power
-	option = {
-		name = murim_beggar.0002.d
-		add_intrigue_skill = 4
-		random_list = {
 			40 = {
-				add_character_modifier = {
-					modifier = beggar_sect_manipulator
-					years = 10
-				}
-				add_gold = 300
+				# Partial fusion - one technique suffers
+				add_prowess_xp = 500
+				add_trait = dog_beating_staff_user
 			}
-			60 = {
+			30 = {
+				# Qi conflict from mixing external/internal arts
+				add_trait = wounded_1
 				add_character_modifier = {
-					modifier = beggar_sect_exposed_schemer
-					years = 5
+					modifier = qi_deviation_modifier
+					years = 2
 				}
-				add_prestige = -300
 			}
 		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				add = 25
-				has_trait = deceitful
-			}
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# BEGGAR.0003 - The Eighteen Dragon Subduing Palms
-# Attempt to learn the legendary palm technique - only taught to sect leaders.
+##############################
+# EVENT 3: CLEAN FACTION VS DIRTY FACTION SHOWDOWN
+# The Beggar Sect's defining internal conflict. Clean = wealthy donors who buy rank.
+# Dirty = true beggars who earned everything through suffering.
+##############################
 murim_beggar.0003 = {
 	type = character_event
 	title = murim_beggar.0003.t
 	desc = murim_beggar.0003.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = intrigue
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
-		prowess >= 20
-		OR = {
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+		is_beggar_sect_member_trigger = yes
+		is_adult = yes
+		NOT = { has_character_flag = beggar_faction_showdown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_beggar_rank_elder_trigger = yes
 		}
 	}
-
-	# Train in the complete Eighteen Palms
+	
+	immediate = {
+		set_character_flag = beggar_faction_showdown
+		create_character_memory = {
+			type = beggar_faction_showdown_memory
+		}
+	}
+	
+	# Option A: Side with Clean Faction (wealth and political power)
 	option = {
 		name = murim_beggar.0003.a
-		random_list = {
-			30 = {
-				add_character_modifier = {
-					modifier = beggar_eighteen_dragons_mastery
-					years = -1
-				}
-				add_prowess_skill = 8
-				create_character_memory = {
-					type = beggar_eighteen_dragons_memory
-				}
-				trigger_event = {
-					id = murim_ranking.0001
-					days = { 7 14 }
-				}
-			}
-			40 = {
-				add_character_modifier = {
-					modifier = beggar_eighteen_dragons_partial
-					years = 10
-				}
-				add_prowess_skill = 4
-			}
-			30 = {
-				add_trait = wounded_3
-				add_character_modifier = {
-					modifier = beggar_palm_backlash
-					years = 5
-				}
-				create_character_memory = {
-					type = beggar_eighteen_dragons_failure_memory
-				}
-			}
-		}
-		ai_chance = {
-			base = 60
-		}
-	}
-
-	# Learn only the first 6 palms (safer)
-	option = {
-		name = murim_beggar.0003.b
-		add_prowess_skill = 4
+		add_gold = 300
+		add_diplomacy_xp = 400
 		add_character_modifier = {
-			modifier = beggar_six_dragon_palms
-			years = -1
+			modifier = beggar_clean_faction_leader_modifier
+			years = 10
+		}
+		# Dirty Faction becomes hostile
+		random_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				has_trait = humble
+			}
+			add_opinion = {
+				modifier = beggar_faction_betrayal_opinion
+				target = root
+				opinion = -35
+			}
 		}
 		ai_chance = {
 			base = 30
+			modifier = {
+				add = 20
+				gold >= 500
+			}
 		}
 	}
-
-	# Attempt to modify the technique with your own style
+	
+	# Option B: Side with Dirty Faction (martial legitimacy)
 	option = {
-		name = murim_beggar.0003.c
-		random_list = {
-			20 = {
-				add_character_modifier = {
-					modifier = beggar_dragon_palm_variant
-					years = -1
-				}
-				add_prowess_skill = 6
-				add_prestige = 500
+		name = murim_beggar.0003.b
+		add_prowess_xp = 400
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = beggar_dirty_faction_champion_modifier
+			years = 10
+		}
+		# Clean Faction withdraws funding
+		random_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				stewardship >= 12
 			}
-			40 = {
-				add_prowess_skill = 2
-			}
-			40 = {
-				add_trait = wounded_2
-				add_trait = scarred
+			add_opinion = {
+				modifier = beggar_faction_betrayal_opinion
+				target = root
+				opinion = -30
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 35
 			modifier = {
-				add = 25
-				has_trait = ambitious
+				add = 20
+				has_trait = humble
 			}
 		}
 	}
+	
+	# Option C: Unite both factions under your leadership (hardest path)
+	option = {
+		name = murim_beggar.0003.c
+		trigger = {
+			diplomacy >= 16
+			OR = {
+				has_trait = gregarious
+				has_trait = just
+			}
+		}
+		random_list = {
+			35 = {
+				# Both factions follow you
+				add_diplomacy_xp = 600
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = beggar_sect_unifier_modifier
+					years = -1
+				}
+				every_courtier = {
+					limit = {
+						is_beggar_sect_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = beggar_unified_leader_opinion
+						target = root
+						opinion = 20
+					}
+				}
+			}
+			65 = {
+				# Failed mediation - civil war erupts
+				add_stress = 50
+				add_character_modifier = {
+					modifier = beggar_sect_civil_war_modifier
+					years = 3
+				}
+				# Chains to sect war events
+				trigger_event = {
+					id = murim_sect_war.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Secretly work with Heavenly Demon to split the sect
+	option = {
+		name = murim_beggar.0003.d
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				intrigue >= 16
+			}
+		}
+		add_intrigue_xp = 500
+		add_character_modifier = {
+			modifier = beggar_heavenly_demon_spy_modifier
+			years = 10
+		}
+		add_secret = {
+			type = secret_demonic_sect_spy
+			target = root
+		}
+		# Chains to shadow politics
+		trigger_event = {
+			id = murim_shadow.0003
+			days = { 60 120 }
+		}
+		ai_chance = { base = 10 }
+	}
 }
 
-# BEGGAR.0004 - Intelligence Network Report
-# Your beggars bring critical intelligence about the jianghu.
+##############################
+# EVENT 4: INTELLIGENCE NETWORK MISSION
+# Beggar Sect's spy network discovers critical information.
+# Player decides how to use it.
+##############################
 murim_beggar.0004 = {
 	type = character_event
 	title = murim_beggar.0004.t
 	desc = murim_beggar.0004.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
 		OR = {
-			has_trait = inner_disciple
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+			has_character_modifier = beggar_intelligence_operative_modifier
+			intrigue >= 14
+		}
+		NOT = { has_character_flag = beggar_intel_mission_done }
+	}
+	
+	immediate = {
+		set_character_flag = beggar_intel_mission_done
+		create_character_memory = {
+			type = beggar_intelligence_mission_memory
 		}
 	}
-
-	# Intel on unorthodox movement - warn orthodox alliance
+	
+	# Option A: Uncover a Heavenly Demon Sect spy in orthodox leadership
 	option = {
 		name = murim_beggar.0004.a
-		add_prestige = 300
+		add_intrigue_xp = 500
+		add_prestige = 400
 		add_character_modifier = {
-			modifier = beggar_orthodox_informant
+			modifier = beggar_spy_hunter_modifier
 			years = 5
 		}
+		# Chains to shadow politics events
 		trigger_event = {
-			id = murim_faction_war.0001
-			days = { 30 90 }
+			id = murim_shadow.0005
+			days = { 30 60 }
 		}
-		create_character_memory = {
-			type = beggar_warned_orthodox_memory
-		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Sell the intel to the highest bidder
+	
+	# Option B: Discover the location of a legendary martial arts manual
 	option = {
 		name = murim_beggar.0004.b
-		add_gold = 500
-		add_intrigue_skill = 2
 		add_character_modifier = {
-			modifier = beggar_information_broker
-			years = 5
-		}
-		create_character_memory = {
-			type = beggar_sold_intel_memory
-		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 25
-				has_trait = greedy
-			}
-		}
-	}
-
-	# Use intel for personal advantage (blackmail targets)
-	option = {
-		name = murim_beggar.0004.c
-		add_intrigue_skill = 4
-		random_list = {
-			50 = {
-				add_character_modifier = {
-					modifier = beggar_blackmail_master
-					years = 10
-				}
-				add_gold = 300
-				add_dread = 15
-			}
-			50 = {
-				add_character_modifier = {
-					modifier = beggar_blackmail_backfire
-					years = 3
-				}
-				add_prestige = -200
-				trigger_event = {
-					id = murim_jianghu.0003
-					days = { 30 60 }
-				}
-			}
-		}
-		ai_chance = {
-			base = 20
-		}
-	}
-
-	# Verify the intel first before acting (cautious)
-	option = {
-		name = murim_beggar.0004.d
-		add_learning_skill = 2
-		add_character_modifier = {
-			modifier = beggar_careful_spymaster
+			modifier = beggar_treasure_map_modifier
 			years = 3
 		}
+		# Chains to artifact hunt
+		trigger_event = {
+			id = murim_artifact.0003
+			days = { 30 60 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Sell the intelligence to the highest bidder
+	option = {
+		name = murim_beggar.0004.c
+		trigger = {
+			OR = {
+				has_trait = greedy
+				stewardship >= 12
+			}
+		}
+		add_gold = 500
+		add_character_modifier = {
+			modifier = beggar_information_broker_modifier
+			years = 5
+		}
+		# Risk of being discovered as a traitor
 		random_list = {
-			60 = {
-				trigger_event = {
-					id = murim_shadow_politics.0001
-					days = { 60 120 }
-				}
+			70 = {
+				# Clean getaway
+				add_intrigue_xp = 300
 			}
-			40 = {
-				add_character_modifier = {
-					modifier = beggar_intel_too_late
-					years = 2
+			30 = {
+				# Caught selling secrets
+				add_secret = {
+					type = secret_selling_intelligence
+					target = root
+				}
+				every_courtier = {
+					limit = {
+						is_beggar_sect_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = beggar_traitor_opinion
+						target = root
+						opinion = -40
+					}
 				}
 			}
 		}
-		ai_chance = {
-			base = 15
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Use the intelligence for blackmail
+	option = {
+		name = murim_beggar.0004.d
+		trigger = {
+			intrigue >= 16
 		}
+		add_intrigue_xp = 400
+		add_dread = 30
+		add_character_modifier = {
+			modifier = beggar_blackmailer_modifier
+			years = 5
+		}
+		# Chains to jianghu intrigue
+		trigger_event = {
+			id = murim_jianghu.0010
+			days = { 30 60 }
+		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# BEGGAR.0005 - Dog Beating Staff Inheritance
-# The sect leader's staff is passed down. Who receives it?
+##############################
+# EVENT 5: EIGHTEEN DRAGON SUBDUING PALMS AWAKENING
+# The most powerful palm technique in the martial world.
+# Only Beggar Sect Chiefs have historically mastered all 18 palms.
+##############################
 murim_beggar.0005 = {
 	type = character_event
 	title = murim_beggar.0005.t
 	desc = murim_beggar.0005.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_honorable
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
+		prowess >= 18
+		NOT = { has_character_flag = beggar_dragon_palms_attempted }
 		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
+			has_beggar_rank_elder_trigger = yes
+			has_trait = dog_beating_staff_user
 		}
 	}
-
-	# Accept the staff and become sect leader
+	
+	immediate = {
+		set_character_flag = beggar_dragon_palms_attempted
+		create_character_memory = {
+			type = beggar_dragon_palms_memory
+		}
+	}
+	
+	# Option A: Learn all 18 palms in sequence (orthodox, slow, safe)
 	option = {
 		name = murim_beggar.0005.a
-		random_list = {
-			40 = {
-				add_trait = leader_rank
-				add_character_modifier = {
-					modifier = beggar_dog_beating_staff_bearer
-					years = -1
-				}
-				add_prowess_skill = 5
-				add_prestige = 1000
-				create_character_memory = {
-					type = beggar_received_staff_memory
-				}
-			}
-			35 = {
-				add_character_modifier = {
-					modifier = beggar_contested_succession
-					years = 3
-				}
-				trigger_event = {
-					id = murim_succession_crisis.0001
-					days = { 30 60 }
-				}
-			}
-			25 = {
-				add_trait = wounded_1
-				add_prestige = -200
-			}
+		add_prowess_xp = 800
+		add_character_modifier = {
+			modifier = beggar_dragon_palms_orthodox_modifier
+			years = -1
 		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 40 }
 	}
-
-	# Nominate another worthy elder
+	
+	# Option B: Attempt to master the final 6 palms directly (skip ahead, dangerous)
 	option = {
 		name = murim_beggar.0005.b
-		add_diplomacy_skill = 3
-		add_character_modifier = {
-			modifier = beggar_kingmaker
-			years = 10
+		trigger = {
+			prowess >= 22
 		}
-		add_opinion = {
-			target = scope:nominated_elder
-			modifier = grateful_opinion
-			opinion = 50
-		}
-		ai_chance = {
-			base = 35
-		}
-	}
-
-	# Steal the staff in the night
-	option = {
-		name = murim_beggar.0005.c
-		add_intrigue_skill = 4
 		random_list = {
-			30 = {
+			25 = {
+				# Mastered the final palms - supreme power
+				add_prowess_xp = 2000
 				add_character_modifier = {
-					modifier = beggar_stolen_staff
+					modifier = beggar_dragon_palms_complete_modifier
 					years = -1
 				}
-				add_prowess_skill = 5
-				add_dread = 30
+				# You are now a top ranker
+				trigger_event = {
+					id = murim_rank.0010
+					days = { 14 30 }
+				}
 			}
-			70 = {
+			45 = {
+				# Partial mastery - powerful but incomplete
+				add_prowess_xp = 600
 				add_character_modifier = {
-					modifier = beggar_caught_thief
+					modifier = beggar_dragon_palms_partial_modifier
 					years = 10
 				}
-				add_prestige = -500
-				remove_trait = beggar_sect_member
+			}
+			30 = {
+				# Qi backlash from overreaching
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = qi_deviation_modifier
+					years = 5
+				}
+				create_character_memory = {
+					type = beggar_dragon_palm_backlash_memory
+				}
 			}
 		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				add = 25
-				has_trait = deceitful
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Combine with Dog Beating Staff for dual mastery
+	option = {
+		name = murim_beggar.0005.c
+		trigger = {
+			has_trait = dog_beating_staff_user
+			prowess >= 20
+		}
+		random_list = {
+			35 = {
+				add_prowess_xp = 1500
+				add_character_modifier = {
+					modifier = beggar_dual_art_master_modifier
+					years = -1
+				}
+				# Staff + Palms = Beggar Sect Chief material
+				trigger_event = {
+					id = murim_succession.0003
+					days = { 90 180 }
+				}
+			}
+			65 = {
+				add_prowess_xp = 500
+				add_stress = 30
 			}
 		}
+		ai_chance = { base = 30 }
 	}
 }
 
-# BEGGAR.0006 - Famine Relief Mission
-# A province is starving. The Beggar Sect organizes food distribution.
+##############################
+# EVENT 6: BEGGAR DISGUISE INFILTRATION
+# Use the Beggar Sect's disguise network to infiltrate an enemy sect.
+##############################
 murim_beggar.0006 = {
 	type = character_event
 	title = murim_beggar.0006.t
 	desc = murim_beggar.0006.desc
-	theme = diplomacy
-	left_portrait = {
-		character = root
-		animation = personality_compassionate
-	}
-
+	theme = intrigue
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
+		intrigue >= 12
+		NOT = { has_character_flag = beggar_infiltration_done }
 	}
-
-	# Lead the relief effort personally
+	
+	immediate = {
+		set_character_flag = beggar_infiltration_done
+		create_character_memory = {
+			type = beggar_infiltration_memory
+		}
+	}
+	
+	# Option A: Infiltrate Heavenly Demon Sect (high risk, high reward)
 	option = {
 		name = murim_beggar.0006.a
-		add_diplomacy_skill = 3
-		add_prestige = 400
-		add_gold = -100
-		add_character_modifier = {
-			modifier = beggar_peoples_hero
-			years = 10
-		}
-		create_character_memory = {
-			type = beggar_famine_relief_memory
-		}
-		ai_chance = {
-			base = 50
-			modifier = {
-				add = 25
-				has_trait = compassionate
-			}
-		}
-	}
-
-	# Use the chaos to recruit new members
-	option = {
-		name = murim_beggar.0006.b
-		add_character_modifier = {
-			modifier = beggar_opportunistic_recruiter
-			years = 5
-		}
-		add_intrigue_skill = 2
-		create_character_memory = {
-			type = beggar_recruited_during_famine_memory
-		}
-		ai_chance = {
-			base = 25
-		}
-	}
-
-	# Rob the corrupt officials hoarding grain
-	option = {
-		name = murim_beggar.0006.c
 		random_list = {
-			50 = {
-				add_prestige = 500
-				add_gold = 300
+			30 = {
+				add_intrigue_xp = 800
 				add_character_modifier = {
-					modifier = beggar_robin_hood
+					modifier = beggar_deep_cover_agent_modifier
 					years = 10
 				}
-				create_character_memory = {
-					type = beggar_robbed_corrupt_memory
+				# Intel on Heavenly Demon's plans
+				trigger_event = {
+					id = murim_shadow.0007
+					days = { 60 120 }
 				}
+			}
+			40 = {
+				# Discovered and barely escape
+				add_intrigue_xp = 300
+				add_trait = scarred
+				add_stress = 40
 			}
 			30 = {
-				add_trait = wounded_1
-				add_gold = 100
-			}
-			20 = {
-				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = beggar_wanted_by_court
-					years = 5
+				# Captured
+				add_trait = imprisoned
+				create_character_memory = {
+					type = beggar_captured_by_demons_memory
 				}
+				# Chains to escape/rescue events
 				trigger_event = {
-					id = murim_politics.0001
+					id = murim_jianghu.0015
 					days = { 30 60 }
 				}
 			}
 		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 25
-				has_trait = just
+		ai_chance = { base = 25 }
+	}
+	
+	# Option B: Infiltrate a rival orthodox sect (political espionage)
+	option = {
+		name = murim_beggar.0006.b
+		random_list = {
+			50 = {
+				add_intrigue_xp = 500
+				add_character_modifier = {
+					modifier = beggar_orthodox_spy_modifier
+					years = 5
+				}
+				add_gold = 200
+			}
+			30 = {
+				# Caught - diplomatic incident
+				add_stress = 30
+				add_prestige = -300
+			}
+			20 = {
+				# Double agent situation - the other sect tries to turn you
+				add_character_modifier = {
+					modifier = beggar_double_agent_modifier
+					years = 5
+				}
+				trigger_event = {
+					id = murim_beggar.0007
+					days = { 30 60 }
+				}
 			}
 		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Infiltrate the imperial court (political power play)
+	option = {
+		name = murim_beggar.0006.c
+		trigger = {
+			diplomacy >= 14
+		}
+		random_list = {
+			40 = {
+				add_diplomacy_xp = 500
+				add_intrigue_xp = 500
+				add_character_modifier = {
+					modifier = beggar_court_insider_modifier
+					years = 10
+				}
+				# Chains to shadow politics (puppet emperor chain)
+				trigger_event = {
+					id = murim_shadow.0010
+					days = { 60 120 }
+				}
+			}
+			60 = {
+				# Imperial guards detect you
+				add_trait = wounded_1
+				add_stress = 30
+				add_prestige = -200
+			}
+		}
+		ai_chance = { base = 20 }
 	}
 }
 
-# BEGGAR.0007 - The Spy Network Compromised
-# Someone has been feeding false intel through your network.
+##############################
+# EVENT 7: DOUBLE AGENT CRISIS (follow-up from infiltration)
+# You've been turned - or have you? Mind games and loyalty tests.
+##############################
 murim_beggar.0007 = {
 	type = character_event
 	title = murim_beggar.0007.t
 	desc = murim_beggar.0007.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = stress
-	}
-
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
-		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+		has_character_modifier = beggar_double_agent_modifier
+	}
+	
+	immediate = {
+		create_character_memory = {
+			type = beggar_double_agent_crisis_memory
 		}
 	}
-
-	# Purge all suspected double agents
+	
+	# Option A: Stay loyal to Beggar Sect (feed false intel to enemy)
 	option = {
 		name = murim_beggar.0007.a
-		add_dread = 20
+		add_intrigue_xp = 600
+		remove_character_modifier = beggar_double_agent_modifier
 		add_character_modifier = {
-			modifier = beggar_purge_master
+			modifier = beggar_triple_agent_modifier
 			years = 5
 		}
-		random_list = {
-			50 = {
-				add_intrigue_skill = 3
-				create_character_memory = {
-					type = beggar_purge_success_memory
-				}
-			}
-			50 = {
-				add_character_modifier = {
-					modifier = beggar_purged_innocents
-					years = 5
-				}
-				add_prestige = -200
-			}
-		}
-		ai_chance = {
-			base = 35
-		}
+		add_prestige = 300
+		ai_chance = { base = 45 }
 	}
-
-	# Feed false intel back through the compromised channel
+	
+	# Option B: Actually defect to the other sect
 	option = {
 		name = murim_beggar.0007.b
-		add_intrigue_skill = 4
-		random_list = {
-			45 = {
-				add_character_modifier = {
-					modifier = beggar_counter_intelligence_master
-					years = 10
-				}
-				trigger_event = {
-					id = murim_shadow_politics.0001
-					days = { 60 120 }
-				}
+		# Leave Beggar Sect
+		remove_trait = beggar_sect_member
+		add_character_modifier = {
+			modifier = beggar_sect_defector_modifier
+			years = -1
+		}
+		add_prestige = -500
+		add_gold = 500
+		# Every beggar hates you now
+		every_known_character = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
 			}
-			55 = {
-				add_character_modifier = {
-					modifier = beggar_double_played
-					years = 3
-				}
+			add_opinion = {
+				modifier = beggar_traitor_defector_opinion
+				target = root
+				opinion = -50
 			}
 		}
-		ai_chance = {
-			base = 35
-			modifier = {
-				add = 25
-				intrigue >= 15
-			}
-		}
+		ai_chance = { base = 15 }
 	}
-
-	# Rebuild the network from scratch
+	
+	# Option C: Play both sides for maximum personal gain
 	option = {
 		name = murim_beggar.0007.c
-		add_gold = -200
-		add_character_modifier = {
-			modifier = beggar_network_rebuilding
-			years = 3
+		trigger = {
+			intrigue >= 18
 		}
-		add_intrigue_skill = 2
-		create_character_memory = {
-			type = beggar_rebuilt_network_memory
-		}
-		ai_chance = {
-			base = 20
-		}
-	}
-
-	# Use the traitor to set an ambush
-	option = {
-		name = murim_beggar.0007.d
 		random_list = {
-			40 = {
-				add_prowess_skill = 3
-				add_intrigue_skill = 2
+			25 = {
+				# Master manipulator
+				add_intrigue_xp = 1000
+				add_gold = 800
 				add_character_modifier = {
-					modifier = beggar_ambush_master
-					years = 5
-				}
-				create_character_memory = {
-					type = beggar_traitor_ambush_memory
+					modifier = beggar_master_manipulator_modifier
+					years = -1
 				}
 			}
-			60 = {
+			75 = {
+				# Both sides discover your treachery
 				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = beggar_ambush_reversed
-					years = 3
+				add_prestige = -500
+				add_dread = -50
+				create_character_memory = {
+					type = beggar_double_betrayal_exposed_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 10
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# BEGGAR.0008 - The Young Beggar Prodigy
-# A street child shows extraordinary martial talent. You must decide their fate.
+##############################
+# EVENT 8: BEGGAR SECT CHIEF SUCCESSION
+# The old Chief is dying. The Green Jade Staff must pass to a successor.
+# Massive political event involving all factions.
+##############################
 murim_beggar.0008 = {
 	type = character_event
 	title = murim_beggar.0008.t
 	desc = murim_beggar.0008.desc
-	theme = diplomacy
-	left_portrait = {
-		character = root
-		animation = personality_compassionate
-	}
-
+	theme = intrigue
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
 		OR = {
-			has_trait = elder_rank
-			has_trait = leader_rank
+			has_beggar_rank_elder_trigger = yes
+			has_trait = dog_beating_staff_user
+		}
+		NOT = { has_character_flag = beggar_succession_event }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_character_modifier = beggar_dual_art_master_modifier
 		}
 	}
-
-	# Take them as your personal disciple
+	
+	immediate = {
+		set_character_flag = beggar_succession_event
+		create_character_memory = {
+			type = beggar_succession_memory
+		}
+	}
+	
+	# Option A: Claim the Green Jade Staff by martial strength
 	option = {
 		name = murim_beggar.0008.a
-		add_character_modifier = {
-			modifier = beggar_prodigy_mentor
-			years = 10
-		}
-		add_diplomacy_skill = 2
-		trigger_event = {
-			id = murim_mentor.0001
-			days = { 30 60 }
-		}
-		create_character_memory = {
-			type = beggar_adopted_prodigy_memory
-		}
-		ai_chance = {
-			base = 40
-		}
-	}
-
-	# Assign them to the intelligence network
-	option = {
-		name = murim_beggar.0008.b
-		add_intrigue_skill = 2
-		add_character_modifier = {
-			modifier = beggar_spymaster_recruit
-			years = 5
-		}
-		create_character_memory = {
-			type = beggar_recruited_prodigy_spy_memory
-		}
-		ai_chance = {
-			base = 30
-		}
-	}
-
-	# Send them to Shaolin for proper training
-	option = {
-		name = murim_beggar.0008.c
-		add_piety = 200
-		add_opinion = {
-			target = scope:shaolin_abbot
-			modifier = grateful_opinion
-			opinion = 30
-		}
-		add_character_modifier = {
-			modifier = beggar_generous_elder
-			years = 5
-		}
-		ai_chance = {
-			base = 20
-		}
-	}
-
-	# Exploit their talent for sect battles
-	option = {
-		name = murim_beggar.0008.d
-		add_martial_skill = 2
-		add_character_modifier = {
-			modifier = beggar_ruthless_trainer
-			years = 5
+		trigger = {
+			prowess >= 20
 		}
 		random_list = {
 			50 = {
-				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = beggar_sect_chief_modifier
+					years = -1
+				}
+				add_prestige = 1000
+				add_prowess_xp = 500
+				# Chains to murim alliance leader events
+				trigger_event = {
+					id = murim_sect_alliance.0001
+					days = { 90 180 }
+				}
 			}
 			50 = {
-				add_character_modifier = {
-					modifier = beggar_prodigy_resentment
-					years = 10
+				# Contested - civil war
+				add_stress = 50
+				trigger_event = {
+					id = murim_sect_war.0003
+					days = { 30 60 }
 				}
 			}
 		}
-		ai_chance = {
-			base = 10
+		ai_chance = { base = 35 }
+	}
+	
+	# Option B: Win through political maneuvering
+	option = {
+		name = murim_beggar.0008.b
+		trigger = {
+			diplomacy >= 16
 		}
+		add_diplomacy_xp = 500
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = beggar_sect_chief_modifier
+					years = -1
+				}
+				add_prestige = 800
+			}
+			60 = {
+				# Political opponents block you
+				add_stress = 40
+				add_character_modifier = {
+					modifier = beggar_failed_candidate_modifier
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Support another candidate (kingmaker)
+	option = {
+		name = murim_beggar.0008.c
+		add_character_modifier = {
+			modifier = beggar_kingmaker_modifier
+			years = 10
+		}
+		add_prestige = 300
+		add_diplomacy_xp = 400
+		# The candidate you backed owes you
+		random_courtier = {
+			limit = {
+				is_beggar_sect_member_trigger = yes
+				prowess >= 16
+			}
+			add_opinion = {
+				modifier = beggar_loyal_supporter_opinion
+				target = root
+				opinion = 40
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Steal the Green Jade Staff and flee
+	option = {
+		name = murim_beggar.0008.d
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				intrigue >= 16
+			}
+		}
+		random_list = {
+			20 = {
+				# Steal and establish a splinter sect
+				add_character_modifier = {
+					modifier = beggar_jade_staff_thief_modifier
+					years = -1
+				}
+				add_prestige = -300
+				add_dread = 50
+				trigger_event = {
+					id = murim_custom_clan.0001
+					days = { 30 60 }
+				}
+			}
+			80 = {
+				# Caught - imprisoned and stripped of rank
+				add_trait = imprisoned
+				add_prestige = -1000
+				every_known_character = {
+					limit = {
+						is_beggar_sect_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = beggar_jade_staff_thief_opinion
+						target = root
+						opinion = -60
+					}
+				}
+			}
+		}
+		ai_chance = { base = 5 }
 	}
 }
 
-# BEGGAR.0009 - The Grand Gathering
-# All Beggar Sect branches convene for the annual grand meeting.
+##############################
+# EVENT 9: THE BEGGAR'S FEAST - ANNUAL GATHERING
+# All Beggar Sect members gather for the annual meeting.
+# Intelligence sharing, technique demonstrations, and politics.
+##############################
 murim_beggar.0009 = {
 	type = character_event
 	title = murim_beggar.0009.t
 	desc = murim_beggar.0009.desc
-	theme = diplomacy
-	left_portrait = {
-		character = root
-		animation = personality_honorable
-	}
-
+	theme = feast
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
+		is_adult = yes
+		NOT = { has_character_flag = beggar_annual_feast }
 	}
-
-	# Present intelligence findings (earn respect)
+	
+	immediate = {
+		set_character_flag = beggar_annual_feast
+		create_character_memory = {
+			type = beggar_annual_feast_memory
+		}
+	}
+	
+	# Option A: Share intelligence with the Chief (loyalty + reward)
 	option = {
 		name = murim_beggar.0009.a
-		add_prestige = 300
-		add_intrigue_skill = 2
+		add_prestige = 200
+		add_intrigue_xp = 300
 		add_character_modifier = {
-			modifier = beggar_gathering_star
+			modifier = beggar_loyal_informant_modifier
 			years = 3
 		}
-		create_character_memory = {
-			type = beggar_grand_gathering_memory
-		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Challenge a rival for higher rank
+	
+	# Option B: Challenge a rival to demonstrate your techniques
 	option = {
 		name = murim_beggar.0009.b
+		trigger = {
+			prowess >= 14
+		}
 		random_list = {
-			45 = {
-				add_prowess_skill = 3
-				add_prestige = 400
-				create_character_memory = {
-					type = beggar_gathering_duel_victory_memory
-				}
+			50 = {
+				add_prowess_xp = 400
+				add_prestige = 200
 			}
-			30 = {
-				add_trait = wounded_1
-				add_prestige = -100
-			}
-			25 = {
-				add_trait = wounded_2
-				add_prestige = -300
+			50 = {
+				add_prowess_xp = 200
+				add_stress = 20
 			}
 		}
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Organize a feast for morale (spend gold)
+	
+	# Option C: Recruit new members from the gathering
 	option = {
 		name = murim_beggar.0009.c
-		add_gold = -150
-		add_diplomacy_skill = 3
-		add_character_modifier = {
-			modifier = beggar_generous_feast_giver
-			years = 5
+		trigger = {
+			diplomacy >= 12
 		}
-		ai_chance = {
-			base = 20
-		}
-	}
-
-	# Skip the gathering - independent streak
-	option = {
-		name = murim_beggar.0009.d
-		add_prestige = -100
+		add_diplomacy_xp = 300
 		add_character_modifier = {
-			modifier = beggar_loner_reputation
+			modifier = beggar_recruiter_modifier
 			years = 3
 		}
-		stress_impact = {
-			gregarious = major_stress_impact_gain
+		# Chains to recruitment events
+		trigger_event = {
+			id = murim_clan_recruitment.0001
+			days = { 14 30 }
 		}
-		ai_chance = {
-			base = 10
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Get drunk and start a brawl (chaotic fun)
+	option = {
+		name = murim_beggar.0009.d
+		trigger = {
+			OR = {
+				has_trait = drunkard
+				has_trait = gregarious
+			}
 		}
+		add_stress = -30
+		random_list = {
+			60 = {
+				add_prowess_xp = 200
+				add_prestige = -50
+			}
+			40 = {
+				add_trait = wounded_1
+				add_stress = -50
+			}
+		}
+		ai_chance = { base = 20 }
 	}
 }
 
-# BEGGAR.0010 - The Sect Leader's Dilemma
-# Orthodox alliance demands Beggar Sect intel on the unorthodox. But you have contacts there.
+##############################
+# EVENT 10: THE BEGGAR KING'S NETWORK - MURIM INTELLIGENCE REPORT
+# As a high-ranking Beggar Sect member, you receive a comprehensive
+# intelligence report on the state of the martial world.
+##############################
 murim_beggar.0010 = {
 	type = character_event
 	title = murim_beggar.0010.t
 	desc = murim_beggar.0010.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	
 	trigger = {
-		murim_is_beggar_sect_member_trigger = yes
+		is_beggar_sect_member_trigger = yes
 		OR = {
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+			has_beggar_rank_elder_trigger = yes
+			has_character_modifier = beggar_intelligence_operative_modifier
+		}
+		NOT = { has_character_flag = beggar_intel_report }
+	}
+	
+	immediate = {
+		set_character_flag = beggar_intel_report
+		create_character_memory = {
+			type = beggar_murim_intel_report_memory
 		}
 	}
-
-	# Share full intel with the orthodox alliance
+	
+	# Option A: Act on the intelligence - preemptive strike
 	option = {
 		name = murim_beggar.0010.a
-		add_prestige = 300
 		add_character_modifier = {
-			modifier = beggar_orthodox_loyalist
-			years = 5
+			modifier = beggar_preemptive_strike_modifier
+			years = 3
 		}
+		# Chains to faction war
 		trigger_event = {
 			id = murim_faction_war.0001
-			days = { 30 90 }
+			days = { 30 60 }
 		}
-		create_character_memory = {
-			type = beggar_shared_intel_orthodox_memory
-		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Share partial intel (protect your sources)
+	
+	# Option B: Share with the Orthodox Alliance (political goodwill)
 	option = {
 		name = murim_beggar.0010.b
-		add_intrigue_skill = 3
+		add_prestige = 500
+		add_diplomacy_xp = 400
 		add_character_modifier = {
-			modifier = beggar_careful_informant
+			modifier = beggar_orthodox_alliance_informant_modifier
 			years = 5
 		}
-		ai_chance = {
-			base = 35
+		# Chains to alliance events
+		trigger_event = {
+			id = murim_sect_alliance.0003
+			days = { 60 120 }
 		}
+		ai_chance = { base = 35 }
 	}
-
-	# Play both sides - sell intel to unorthodox too
+	
+	# Option C: Keep the intelligence secret for personal advantage
 	option = {
 		name = murim_beggar.0010.c
-		add_gold = 500
-		add_intrigue_skill = 4
-		random_list = {
-			40 = {
-				add_character_modifier = {
-					modifier = beggar_double_agent_master
-					years = 10
-				}
-			}
-			60 = {
-				add_character_modifier = {
-					modifier = beggar_exposed_double_agent
-					years = 10
-				}
-				add_prestige = -500
-				trigger_event = {
-					id = murim_faction_war.0003
-					days = { 30 60 }
-				}
-			}
+		add_intrigue_xp = 500
+		add_character_modifier = {
+			modifier = beggar_secret_knowledge_modifier
+			years = 5
 		}
-		ai_chance = {
-			base = 15
-			modifier = {
-				add = 25
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Leak it to the Heavenly Demon for a price (traitor path)
+	option = {
+		name = murim_beggar.0010.d
+		trigger = {
+			OR = {
+				has_trait = greedy
 				has_trait = deceitful
 			}
 		}
-	}
-
-	# Refuse to share any intel - declare neutrality
-	option = {
-		name = murim_beggar.0010.d
-		add_prestige = -200
+		add_gold = 1000
+		add_secret = {
+			type = secret_demonic_sect_collaborator
+			target = root
+		}
 		add_character_modifier = {
-			modifier = beggar_neutral_stance
-			years = 5
+			modifier = beggar_demon_collaborator_modifier
+			years = -1
 		}
-		add_opinion = {
-			target = scope:orthodox_alliance_leader
-			modifier = disappointed_opinion
-			opinion = -30
+		# Chains to shadow politics
+		trigger_event = {
+			id = murim_shadow.0008
+			days = { 30 60 }
 		}
-		ai_chance = {
-			base = 15
-		}
+		ai_chance = { base = 10 }
 	}
 }
