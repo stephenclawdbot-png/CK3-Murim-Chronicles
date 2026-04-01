@@ -1,5 +1,7 @@
-# Murim Chronicles Phase 2 - AI Autonomy On Actions
-# Gives AI characters autonomous cultivation behavior
+# Murim Chronicles - AI Autonomy On Actions (EXPANDED)
+# Comprehensive AI cultivation behavior + FREQUENT AI DUEL SYSTEM
+# All blocks include load-safety checks for interrupt-safe operation
+# v0.6.0 - Heartbeat #18 expansion
 
 ######################################
 # MONTHLY PULSE - Routine Training
@@ -13,9 +15,16 @@ on_monthly = {
 				age >= 16
 				OR = {
 					has_character_flag = murim_cultivation_enabled
-					murim_has_body_tempering_trigger = yes
-					murim_has_forbidden_mark_trigger = yes
-					exists = var:murim_cultivation_rank
+					has_trait = murim_body_tempering_1
+					has_trait = murim_body_tempering_2
+					has_trait = murim_body_tempering_3
+					has_trait = murim_forbidden_mark_1
+					has_trait = murim_forbidden_mark_2
+					has_trait = murim_forbidden_mark_3
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
 				}
 			}
 			random_list = {
@@ -31,11 +40,14 @@ on_monthly = {
 					}
 					modifier = {
 						add = 10
-						has_trait = murim_hermit_cultivator
+						has_trait = zealous
 					}
 					modifier = {
-						add = 10
-						has_trait = zealous
+						add = 5
+						AND = {
+							exists = var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 3
+						}
 					}
 					trigger_event = { id = murim_grind.0001 }
 				}
@@ -55,7 +67,10 @@ on_monthly = {
 					}
 					modifier = {
 						add = 5
-						has_trait = murim_sparring_addict
+						OR = {
+							has_trait = murim_body_tempering_1
+							has_trait = murim_body_tempering_2
+						}
 					}
 					trigger = {
 						prowess >= 8
@@ -80,7 +95,10 @@ on_monthly = {
 					}
 					trigger = {
 						exists = var:murim_cultivation_rank
-						NOT = { murim_has_qi_deviation_trigger = yes }
+						var:murim_cultivation_rank >= 1
+						NOT = { has_trait = murim_qi_deviation_minor }
+						NOT = { has_trait = murim_qi_deviation_major }
+						NOT = { has_trait = murim_qi_deviation_crippling }
 					}
 					trigger_event = { id = murim_grind.0020 }
 				}
@@ -100,14 +118,18 @@ on_monthly = {
 					}
 					modifier = {
 						add = 10
-						murim_has_forbidden_mark_trigger = yes
+						OR = {
+							has_trait = murim_forbidden_mark_1
+							has_trait = murim_forbidden_mark_2
+						}
 					}
 					trigger = {
 						OR = {
 							has_trait = ambitious
 							has_trait = sadistic
 							has_trait = cynical
-							murim_has_forbidden_mark_trigger = yes
+							has_trait = murim_forbidden_mark_1
+							has_trait = murim_forbidden_mark_2
 						}
 						intrigue >= 10
 						NOT = { has_trait = murim_forbidden_mark_3 }
@@ -115,8 +137,35 @@ on_monthly = {
 					}
 					trigger_event = { id = murim_grind.0030 }
 				}
-				# Do nothing - most common
-				50 = {
+				# Technique Practice - builds combat mastery
+				15 = {
+					modifier = {
+						add = 10
+						has_trait = diligent
+					}
+					modifier = {
+						add = 5
+						has_trait = patient
+					}
+					modifier = {
+						add = 10
+						OR = {
+							has_trait = murim_sword_initiate
+							has_trait = murim_sword_adept
+							has_trait = murim_fist_initiate
+							has_trait = murim_fist_adept
+							has_trait = murim_palm_initiate
+							has_trait = murim_palm_adept
+						}
+					}
+					trigger = {
+						prowess >= 8
+						NOT = { has_character_flag = murim_technique_practice_cooldown }
+					}
+					trigger_event = { id = murim_technique.0001 }
+				}
+				# Do nothing - common for non-dedicated cultivators
+				35 = {
 					modifier = {
 						add = 20
 						has_trait = lazy
@@ -125,6 +174,14 @@ on_monthly = {
 						add = 10
 						has_trait = content
 					}
+					modifier = {
+						add = -15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = -10
+						has_trait = diligent
+					}
 				}
 			}
 		}
@@ -132,7 +189,1128 @@ on_monthly = {
 }
 
 ######################################
-# YEARLY PULSE - Major Milestones
+# BI-MONTHLY AI DUEL PULSE
+# Fires every other month for HIGH frequency dueling
+# AI martial artists autonomously challenge each other
+######################################
+
+on_monthly = {
+	effect = {
+		# --- AI-vs-AI BACKGROUND DUELS (frequent, background resolution) ---
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				is_ai = yes
+				age >= 16
+				prowess >= 10
+				NOT = { has_character_flag = murim_duel_cooldown }
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					has_character_flag = murim_initiated
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
+					has_trait = murim_body_tempering_1
+					has_trait = murim_body_tempering_2
+					has_trait = murim_body_tempering_3
+				}
+				# 50% chance to even consider dueling this month (frequency throttle)
+				trigger_if = {
+					limit = { always = yes }
+					random = 50
+				}
+			}
+			random_list = {
+				##############################
+				# 1. HONOR DUEL - formal challenge between cultivators
+				##############################
+				25 = {
+					modifier = {
+						add = 20
+						has_trait = just
+					}
+					modifier = {
+						add = 15
+						has_trait = brave
+					}
+					modifier = {
+						add = 10
+						has_trait = honorable
+					}
+					modifier = {
+						add = -15
+						has_trait = craven
+					}
+					modifier = {
+						add = 10
+						prowess >= 15
+					}
+					trigger = {
+						any_living_character = {
+							is_ai = yes
+							prowess >= 8
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							OR = {
+								has_character_flag = murim_initiated
+								has_character_flag = murim_cultivation_enabled
+								AND = {
+									exists = var:murim_cultivation_rank
+									var:murim_cultivation_rank >= 1
+								}
+							}
+						}
+					}
+					# Find a worthy opponent
+					random_living_character = {
+						limit = {
+							is_ai = yes
+							prowess >= 8
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							OR = {
+								has_character_flag = murim_initiated
+								has_character_flag = murim_cultivation_enabled
+								AND = {
+									exists = var:murim_cultivation_rank
+									var:murim_cultivation_rank >= 1
+								}
+							}
+						}
+						save_scope_as = ai_duel_target
+					}
+					# Set cooldowns
+					set_character_flag = {
+						flag = murim_duel_cooldown
+						months = 3
+					}
+					scope:ai_duel_target = {
+						set_character_flag = {
+							flag = murim_duel_cooldown
+							months = 3
+						}
+					}
+					# Resolve duel in background
+					duel = {
+						skill = prowess
+						target = scope:ai_duel_target
+						50 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = 3.0
+							}
+							# Winner gains prestige and prowess XP
+							add_prestige = 100
+							add_character_modifier = {
+								modifier = murim_duel_victor_aura
+								years = 1
+							}
+							scope:ai_duel_target = {
+								add_prestige = -50
+							}
+							# Notify the player about nearby duel
+							every_player = {
+								limit = {
+									is_alive = yes
+									OR = {
+										any_courtier = { this = root }
+										any_courtier = { this = scope:ai_duel_target }
+										any_vassal = { this = root }
+										any_vassal = { this = scope:ai_duel_target }
+										any_neighboring_and_across_water_top_liege_realm_owner = {
+											OR = {
+												this = root
+												this = scope:ai_duel_target
+											}
+										}
+									}
+								}
+								send_interface_message = {
+									type = event_martial_good
+									title = murim_ai_duel_honor_victory_notification
+									desc = murim_ai_duel_honor_victory_notification_desc
+									left_icon = root
+									right_icon = scope:ai_duel_target
+								}
+							}
+						}
+						15 = {
+							# Draw - mutual respect
+							add_opinion = {
+								target = scope:ai_duel_target
+								modifier = murim_duel_respect
+							}
+							scope:ai_duel_target = {
+								add_opinion = {
+									target = prev
+									modifier = murim_duel_respect
+								}
+							}
+						}
+						35 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = -3.0
+							}
+							# Loser
+							add_prestige = -50
+							scope:ai_duel_target = {
+								add_prestige = 100
+								add_character_modifier = {
+									modifier = murim_duel_victor_aura
+									years = 1
+								}
+							}
+							# Notify player
+							every_player = {
+								limit = {
+									is_alive = yes
+									OR = {
+										any_courtier = { this = root }
+										any_courtier = { this = scope:ai_duel_target }
+										any_vassal = { this = root }
+										any_vassal = { this = scope:ai_duel_target }
+									}
+								}
+								send_interface_message = {
+									type = event_martial_neutral
+									title = murim_ai_duel_honor_defeat_notification
+									desc = murim_ai_duel_honor_defeat_notification_desc
+									left_icon = scope:ai_duel_target
+									right_icon = root
+								}
+							}
+						}
+					}
+				}
+
+				##############################
+				# 2. DEATH MATCH - lethal duel, rare but dramatic
+				##############################
+				8 = {
+					modifier = {
+						add = 15
+						has_trait = wrathful
+					}
+					modifier = {
+						add = 15
+						has_trait = sadistic
+					}
+					modifier = {
+						add = 10
+						has_trait = vengeful
+					}
+					modifier = {
+						add = -20
+						has_trait = compassionate
+					}
+					modifier = {
+						add = -15
+						has_trait = craven
+					}
+					trigger = {
+						prowess >= 14
+						any_living_character = {
+							is_ai = yes
+							prowess >= 12
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							OR = {
+								has_negative_opinion_of = prev
+								AND = {
+									exists = prev.var:murim_cultivation_rank
+									exists = var:murim_cultivation_rank
+								}
+							}
+						}
+					}
+					random_living_character = {
+						limit = {
+							is_ai = yes
+							prowess >= 12
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+						}
+						save_scope_as = ai_death_target
+					}
+					set_character_flag = {
+						flag = murim_duel_cooldown
+						years = 1
+					}
+					scope:ai_death_target = {
+						set_character_flag = {
+							flag = murim_duel_cooldown
+							years = 1
+						}
+					}
+					duel = {
+						skill = prowess
+						target = scope:ai_death_target
+						50 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = 3.5
+							}
+							# Kill the opponent
+							scope:ai_death_target = {
+								death = {
+									death_reason = death_duel
+									killer = prev
+								}
+							}
+							add_prestige = 300
+							add_dread = 25
+							add_character_modifier = {
+								modifier = murim_duel_killer_reputation
+								years = 5
+							}
+							# CHAIN: Trigger revenge arc from victim's family
+							scope:ai_death_target = {
+								if = {
+									limit = {
+										exists = dynasty
+										any_dynasty_member = {
+											is_alive = yes
+											NOT = { this = root }
+											prowess >= 10
+										}
+									}
+									random_dynasty_member = {
+										limit = {
+											is_alive = yes
+											NOT = { this = root }
+											prowess >= 10
+										}
+										save_scope_as = revenge_seeker
+										set_character_flag = {
+											flag = murim_revenge_target_flag
+											years = 10
+										}
+										set_variable = {
+											name = murim_revenge_target
+											value = root
+										}
+										# Revenge duel fires within 6 months
+										trigger_event = { id = murim_duel.0100 days = { 30 180 } }
+									}
+								}
+							}
+							# Notify all players
+							every_player = {
+								limit = { is_alive = yes }
+								send_interface_message = {
+									type = event_martial_bad
+									title = murim_ai_death_match_notification
+									desc = murim_ai_death_match_notification_desc
+									left_icon = root
+									right_icon = scope:ai_death_target
+								}
+							}
+						}
+						10 = {
+							# Both severely wounded
+							add_trait = wounded_1
+							scope:ai_death_target = {
+								add_trait = wounded_1
+							}
+						}
+						40 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = -3.5
+							}
+							# Root dies
+							death = {
+								death_reason = death_duel
+								killer = scope:ai_death_target
+							}
+							scope:ai_death_target = {
+								add_prestige = 300
+								add_dread = 25
+								add_character_modifier = {
+									modifier = murim_duel_killer_reputation
+									years = 5
+								}
+							}
+							# Notify players
+							every_player = {
+								limit = { is_alive = yes }
+								send_interface_message = {
+									type = event_martial_bad
+									title = murim_ai_death_match_notification
+									desc = murim_ai_death_match_reverse_notification_desc
+									left_icon = scope:ai_death_target
+									right_icon = root
+								}
+							}
+						}
+					}
+				}
+
+				##############################
+				# 3. SECT RANKING FIGHT - compete for sect position
+				##############################
+				20 = {
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = arrogant
+					}
+					modifier = {
+						add = -10
+						has_trait = content
+					}
+					trigger = {
+						exists = var:murim_sect_id
+						any_living_character = {
+							is_ai = yes
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							exists = var:murim_sect_id
+							var:murim_sect_id = prev.var:murim_sect_id
+							prowess >= 8
+						}
+					}
+					random_living_character = {
+						limit = {
+							is_ai = yes
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							exists = var:murim_sect_id
+							var:murim_sect_id = prev.var:murim_sect_id
+							prowess >= 8
+						}
+						save_scope_as = ai_sect_rival
+					}
+					set_character_flag = {
+						flag = murim_duel_cooldown
+						months = 4
+					}
+					scope:ai_sect_rival = {
+						set_character_flag = {
+							flag = murim_duel_cooldown
+							months = 4
+						}
+					}
+					duel = {
+						skill = prowess
+						target = scope:ai_sect_rival
+						55 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = 3.0
+							}
+							add_prestige = 150
+							# Gain sect standing
+							if = {
+								limit = { exists = var:murim_sect_rank }
+								change_variable = {
+									name = murim_sect_rank
+									add = 1
+								}
+							}
+							scope:ai_sect_rival = {
+								if = {
+									limit = { exists = var:murim_sect_rank }
+									change_variable = {
+										name = murim_sect_rank
+										add = -1
+									}
+								}
+								add_prestige = -75
+							}
+							# Notify player if in same sect
+							every_player = {
+								limit = {
+									is_alive = yes
+									exists = var:murim_sect_id
+									var:murim_sect_id = root.var:murim_sect_id
+								}
+								send_interface_message = {
+									type = event_martial_good
+									title = murim_ai_sect_ranking_fight_notification
+									desc = murim_ai_sect_ranking_fight_notification_desc
+									left_icon = root
+									right_icon = scope:ai_sect_rival
+								}
+							}
+						}
+						15 = {
+							# Draw
+							add_opinion = {
+								target = scope:ai_sect_rival
+								modifier = murim_sect_rivalry_respect
+							}
+						}
+						30 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = -3.0
+							}
+							add_prestige = -75
+							scope:ai_sect_rival = {
+								add_prestige = 150
+								if = {
+									limit = { exists = var:murim_sect_rank }
+									change_variable = {
+										name = murim_sect_rank
+										add = 1
+									}
+								}
+							}
+						}
+					}
+				}
+
+				##############################
+				# 4. AMBUSH ATTACK - intrigue-based surprise attack
+				##############################
+				10 = {
+					modifier = {
+						add = 20
+						has_trait = deceitful
+					}
+					modifier = {
+						add = 15
+						has_trait = sadistic
+					}
+					modifier = {
+						add = 10
+						intrigue >= 15
+					}
+					modifier = {
+						add = -20
+						has_trait = just
+					}
+					modifier = {
+						add = -15
+						has_trait = honorable
+					}
+					trigger = {
+						intrigue >= 12
+						any_living_character = {
+							is_ai = yes
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_ambush_immunity }
+							has_negative_opinion_of = prev
+							prowess >= 6
+						}
+					}
+					random_living_character = {
+						limit = {
+							is_ai = yes
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_ambush_immunity }
+							has_negative_opinion_of = prev
+							prowess >= 6
+						}
+						save_scope_as = ai_ambush_victim
+					}
+					set_character_flag = {
+						flag = murim_duel_cooldown
+						months = 6
+					}
+					# Ambush uses intrigue for initiative, then prowess
+					duel = {
+						skill = intrigue
+						target = scope:ai_ambush_victim
+						60 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = 2.5
+							}
+							# Ambush succeeds - wound the victim
+							scope:ai_ambush_victim = {
+								add_trait = wounded_1
+								add_prestige = -100
+								set_character_flag = {
+									flag = murim_ambush_immunity
+									months = 6
+								}
+								# CHAIN: Victim may hire bounty hunter for revenge
+								if = {
+									limit = { gold >= 50 }
+									random = {
+										chance = 40
+										trigger_event = { id = murim_jianghu.0200 days = { 14 60 } }
+									}
+								}
+							}
+							add_dread = 15
+							# Notify players
+							every_player = {
+								limit = {
+									is_alive = yes
+									OR = {
+										any_courtier = { this = scope:ai_ambush_victim }
+										any_vassal = { this = scope:ai_ambush_victim }
+									}
+								}
+								send_interface_message = {
+									type = event_martial_bad
+									title = murim_ai_ambush_attack_notification
+									desc = murim_ai_ambush_attack_notification_desc
+									left_icon = root
+									right_icon = scope:ai_ambush_victim
+								}
+							}
+						}
+						40 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = -2.5
+							}
+							# Ambush fails - attacker exposed
+							add_prestige = -200
+							add_opinion = {
+								target = scope:ai_ambush_victim
+								modifier = murim_ambush_failed_shame
+								years = 5
+							}
+							scope:ai_ambush_victim = {
+								add_prestige = 100
+								set_character_flag = {
+									flag = murim_ambush_immunity
+									months = 6
+								}
+							}
+						}
+					}
+				}
+
+				##############################
+				# 5. REVENGE DUEL - triggered by grudge/enemy death
+				##############################
+				12 = {
+					modifier = {
+						add = 20
+						has_trait = vengeful
+					}
+					modifier = {
+						add = 15
+						has_trait = wrathful
+					}
+					modifier = {
+						add = 10
+						has_trait = brave
+					}
+					modifier = {
+						add = -15
+						has_trait = forgiving
+					}
+					trigger = {
+						OR = {
+							has_character_flag = murim_revenge_target_flag
+							any_living_character = {
+								is_ai = yes
+								NOT = { this = prev }
+								NOT = { has_character_flag = murim_duel_cooldown }
+								has_relation_rival = prev
+								prowess >= 8
+							}
+						}
+					}
+					# Try to use saved revenge target first
+					if = {
+						limit = {
+							has_character_flag = murim_revenge_target_flag
+							exists = var:murim_revenge_target
+							var:murim_revenge_target = {
+								is_alive = yes
+							}
+						}
+						save_scope_as = revenge_challenger
+						var:murim_revenge_target = {
+							save_scope_as = ai_revenge_target
+						}
+					}
+					else = {
+						random_living_character = {
+							limit = {
+								is_ai = yes
+								NOT = { this = prev }
+								NOT = { has_character_flag = murim_duel_cooldown }
+								has_relation_rival = prev
+								prowess >= 8
+							}
+							save_scope_as = ai_revenge_target
+						}
+					}
+					set_character_flag = {
+						flag = murim_duel_cooldown
+						months = 6
+					}
+					# Revenge duels are more lethal
+					duel = {
+						skill = prowess
+						target = scope:ai_revenge_target
+						45 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = 4.0
+							}
+							add_prestige = 200
+							remove_character_flag = murim_revenge_target_flag
+							# Severe wound or kill
+							scope:ai_revenge_target = {
+								random_list = {
+									60 = { add_trait = wounded_2 }
+									40 = {
+										death = {
+											death_reason = death_duel
+											killer = prev
+										}
+									}
+								}
+							}
+							# CHAIN: This may trigger ANOTHER revenge chain
+							scope:ai_revenge_target = {
+								if = {
+									limit = {
+										is_alive = no
+										exists = dynasty
+										any_dynasty_member = {
+											is_alive = yes
+											prowess >= 10
+										}
+									}
+									random_dynasty_member = {
+										limit = {
+											is_alive = yes
+											prowess >= 10
+										}
+										set_character_flag = {
+											flag = murim_revenge_target_flag
+											years = 10
+										}
+										set_variable = {
+											name = murim_revenge_target
+											value = root
+										}
+									}
+								}
+							}
+							every_player = {
+								limit = { is_alive = yes }
+								send_interface_message = {
+									type = event_martial_bad
+									title = murim_ai_revenge_duel_notification
+									desc = murim_ai_revenge_duel_notification_desc
+									left_icon = root
+									right_icon = scope:ai_revenge_target
+								}
+							}
+						}
+						10 = {
+							# Both badly hurt
+							add_trait = wounded_1
+							scope:ai_revenge_target = {
+								add_trait = wounded_1
+							}
+						}
+						45 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = -4.0
+							}
+							# Revenge fails
+							add_prestige = -150
+							random_list = {
+								60 = { add_trait = wounded_2 }
+								40 = {
+									death = {
+										death_reason = death_duel
+										killer = scope:ai_revenge_target
+									}
+								}
+							}
+						}
+					}
+				}
+
+				##############################
+				# 6. MASTER vs DISCIPLE SPARRING
+				##############################
+				15 = {
+					modifier = {
+						add = 10
+						has_trait = patient
+					}
+					modifier = {
+						add = 10
+						has_trait = generous
+					}
+					modifier = {
+						add = 10
+						AND = {
+							exists = var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 4
+						}
+					}
+					trigger = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 3
+						any_living_character = {
+							is_ai = yes
+							NOT = { this = prev }
+							exists = var:murim_cultivation_rank
+							var:murim_cultivation_rank < prev.var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 1
+							NOT = { has_character_flag = murim_sparring_cooldown }
+						}
+					}
+					random_living_character = {
+						limit = {
+							is_ai = yes
+							NOT = { this = prev }
+							exists = var:murim_cultivation_rank
+							var:murim_cultivation_rank < prev.var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 1
+							NOT = { has_character_flag = murim_sparring_cooldown }
+						}
+						save_scope_as = ai_disciple
+					}
+					# Sparring is non-lethal, short cooldown
+					set_character_flag = {
+						flag = murim_sparring_cooldown
+						months = 2
+					}
+					scope:ai_disciple = {
+						set_character_flag = {
+							flag = murim_sparring_cooldown
+							months = 2
+						}
+						# Disciple gains cultivation XP
+						if = {
+							limit = { exists = var:murim_cultivation_progress }
+							change_variable = {
+								name = murim_cultivation_progress
+								add = 5
+							}
+						}
+						add_prowess_skill = 1
+					}
+					add_prestige = 25
+					# Notify player if they're the disciple's liege
+					every_player = {
+						limit = {
+							is_alive = yes
+							OR = {
+								any_courtier = { this = scope:ai_disciple }
+								any_vassal = { this = scope:ai_disciple }
+							}
+						}
+						send_interface_message = {
+							type = event_martial_neutral
+							title = murim_ai_sparring_notification
+							desc = murim_ai_sparring_notification_desc
+							left_icon = root
+							right_icon = scope:ai_disciple
+						}
+					}
+				}
+
+				##############################
+				# 7. BREAKTHROUGH CHALLENGE DUEL
+				# When someone breaks through, nearby cultivators challenge them
+				##############################
+				10 = {
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = envious
+					}
+					modifier = {
+						add = 10
+						has_trait = arrogant
+					}
+					trigger = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 2
+						any_living_character = {
+							is_ai = yes
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							has_character_flag = murim_recent_breakthrough
+							prowess >= 10
+						}
+					}
+					random_living_character = {
+						limit = {
+							is_ai = yes
+							NOT = { this = prev }
+							NOT = { has_character_flag = murim_duel_cooldown }
+							has_character_flag = murim_recent_breakthrough
+							prowess >= 10
+						}
+						save_scope_as = ai_breakthrough_target
+					}
+					set_character_flag = {
+						flag = murim_duel_cooldown
+						months = 4
+					}
+					duel = {
+						skill = prowess
+						target = scope:ai_breakthrough_target
+						45 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = 3.0
+							}
+							add_prestige = 200
+							# CHAIN: Humiliating a breakthrough cultivator ripples into sect politics
+							scope:ai_breakthrough_target = {
+								add_prestige = -200
+								if = {
+									limit = { exists = var:murim_sect_id }
+									# Sect loses face
+									trigger_event = { id = murim_sect.0500 days = { 7 30 } }
+								}
+							}
+							every_player = {
+								limit = { is_alive = yes }
+								send_interface_message = {
+									type = event_martial_good
+									title = murim_ai_breakthrough_challenge_victory_notification
+									desc = murim_ai_breakthrough_challenge_notification_desc
+									left_icon = root
+									right_icon = scope:ai_breakthrough_target
+								}
+							}
+						}
+						20 = {
+							# Draw - breakthrough cultivator proves worthy
+							scope:ai_breakthrough_target = {
+								add_prestige = 100
+							}
+						}
+						35 = {
+							compare_modifier = {
+								value = scope:duel_value
+								multiplier = -3.0
+							}
+							# Challenger defeated by new breakthrough cultivator
+							add_prestige = -150
+							scope:ai_breakthrough_target = {
+								add_prestige = 250
+								# CHAIN: Victory cements their new rank, sect prestige rises
+								if = {
+									limit = { exists = var:murim_sect_id }
+									trigger_event = { id = murim_sect.0501 days = { 7 30 } }
+								}
+							}
+						}
+					}
+				}
+
+				##############################
+				# No duel this month
+				##############################
+				25 = {
+					modifier = {
+						add = 20
+						has_trait = craven
+					}
+					modifier = {
+						add = 15
+						has_trait = content
+					}
+					modifier = {
+						add = 10
+						has_trait = lazy
+					}
+					modifier = {
+						add = -15
+						has_trait = brave
+					}
+					modifier = {
+						add = -10
+						has_trait = ambitious
+					}
+				}
+			}
+		}
+
+		# --- AI CHALLENGES THE PLAYER DIRECTLY ---
+		every_player = {
+			limit = {
+				is_alive = yes
+				age >= 16
+				NOT = { has_character_flag = murim_player_duel_cooldown }
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					has_character_flag = murim_initiated
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
+					prowess >= 12
+					has_trait = murim_body_tempering_1
+					has_trait = murim_body_tempering_2
+					has_trait = murim_body_tempering_3
+					has_trait = murim_sword_initiate
+					has_trait = murim_sword_adept
+					has_trait = murim_sword_master
+					has_trait = murim_fist_initiate
+					has_trait = murim_fist_adept
+					has_trait = murim_fist_master
+					has_trait = murim_palm_initiate
+					has_trait = murim_palm_adept
+					has_trait = murim_palm_master
+				}
+			}
+			# 30% chance per month of being challenged
+			random = {
+				chance = 30
+				modifier = {
+					add = 15
+					prowess >= 20
+				}
+				modifier = {
+					add = 10
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 4
+					}
+				}
+				modifier = {
+					add = -10
+					prowess < 10
+				}
+				# Find an AI challenger
+				random_living_character = {
+					limit = {
+						is_ai = yes
+						is_alive = yes
+						prowess >= 10
+						NOT = { this = prev }
+						NOT = { has_character_flag = murim_duel_cooldown }
+						OR = {
+							has_character_flag = murim_initiated
+							has_character_flag = murim_cultivation_enabled
+							AND = {
+								exists = var:murim_cultivation_rank
+								var:murim_cultivation_rank >= 1
+							}
+						}
+					}
+					save_scope_as = duel_challenger
+				}
+				# Trigger the player-facing duel event
+				if = {
+					limit = { exists = scope:duel_challenger }
+					set_character_flag = {
+						flag = murim_player_duel_cooldown
+						months = 2
+					}
+					trigger_event = { id = murim_duel.0001 }
+				}
+			}
+		}
+	}
+}
+
+######################################
+# QUARTERLY TOURNAMENT SYSTEM
+# Every 3 months, chance of a martial tournament
+######################################
+
+on_quarterly_pulse = {
+	effect = {
+		# Only fire for players to avoid performance issues
+		every_player = {
+			limit = {
+				is_alive = yes
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					has_character_flag = murim_initiated
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
+				}
+				NOT = { has_character_flag = murim_tournament_cooldown }
+			}
+			# 40% chance per quarter
+			random = {
+				chance = 40
+				modifier = {
+					add = 20
+					any_courtier = {
+						count >= 3
+						OR = {
+							has_character_flag = murim_initiated
+							AND = {
+								exists = var:murim_cultivation_rank
+								var:murim_cultivation_rank >= 1
+							}
+						}
+					}
+				}
+				set_character_flag = {
+					flag = murim_tournament_cooldown
+					months = 6
+				}
+				trigger_event = { id = murim_duel.0200 }
+			}
+		}
+
+		# Background AI tournaments - sect-hosted
+		random_living_character = {
+			limit = {
+				is_ai = yes
+				is_alive = yes
+				exists = var:murim_sect_id
+				exists = var:murim_sect_rank
+				var:murim_sect_rank >= 3
+				NOT = { has_character_flag = murim_tournament_host_cooldown }
+			}
+			set_character_flag = {
+				flag = murim_tournament_host_cooldown
+				years = 1
+			}
+			# Resolve a mini-tournament in background
+			every_living_character = {
+				limit = {
+					is_ai = yes
+					is_alive = yes
+					prowess >= 10
+					exists = var:murim_sect_id
+					var:murim_sect_id = prev.var:murim_sect_id
+					NOT = { this = prev }
+				}
+				random = {
+					chance = 30
+					add_prestige = 50
+					add_character_modifier = {
+						modifier = murim_tournament_participant_bonus
+						months = 6
+					}
+				}
+			}
+			# Notify players about nearby tournament
+			every_player = {
+				limit = { is_alive = yes }
+				send_interface_message = {
+					type = event_martial_good
+					title = murim_ai_tournament_notification
+					desc = murim_ai_tournament_notification_desc
+					left_icon = prev
+				}
+			}
+		}
+	}
+}
+
+######################################
+# YEARLY PULSE - Major Milestones + AI Cultivation Progression
 ######################################
 
 on_yearly_pulse = {
@@ -143,18 +1321,22 @@ on_yearly_pulse = {
 				age >= 16
 				OR = {
 					has_character_flag = murim_cultivation_enabled
-					exists = var:murim_cultivation_rank
-					murim_has_body_tempering_trigger = yes
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
+					has_trait = murim_body_tempering_1
+					has_trait = murim_body_tempering_2
+					has_trait = murim_body_tempering_3
 				}
 			}
-			# Attempt Breakthrough
+			# Attempt Breakthrough - AI progresses through ALL cultivation ranks
 			if = {
 				limit = {
-					murim_can_attempt_breakthrough_trigger = yes
+					exists = var:murim_cultivation_rank
 					OR = {
 						# Outer Qi -> Qi Gathering (prowess >= 10)
 						AND = {
-							exists = var:murim_cultivation_rank
 							var:murim_cultivation_rank >= 1
 							var:murim_cultivation_rank < 2
 							prowess >= 10
@@ -177,53 +1359,243 @@ on_yearly_pulse = {
 							var:murim_cultivation_rank < 5
 							prowess >= 22
 						}
-						# Nascent Soul -> Spirit Severing (prowess >= 26)
+						# Nascent Soul -> Soul Transformation (prowess >= 26)
 						AND = {
 							var:murim_cultivation_rank >= 5
 							var:murim_cultivation_rank < 6
 							prowess >= 26
 						}
 					}
+					NOT = { has_character_flag = murim_breakthrough_cooldown }
+				}
+				random_list = {
+					# Aggressive breakthrough - ambitious/brave characters
+					40 = {
+						modifier = {
+							add = 25
+							has_trait = ambitious
+						}
+						modifier = {
+							add = 15
+							has_trait = brave
+						}
+						modifier = {
+							add = 10
+							has_trait = diligent
+						}
+						modifier = {
+							add = -20
+							has_trait = content
+						}
+						modifier = {
+							add = -15
+							has_trait = lazy
+						}
+						set_character_flag = {
+							flag = murim_breakthrough_cooldown
+							years = 2
+						}
+						set_character_flag = {
+							flag = murim_recent_breakthrough
+							months = 6
+						}
+						trigger_event = { id = murim_breakthrough.0001 }
+					}
+					# Cautious breakthrough - patient/content characters
+					25 = {
+						modifier = {
+							add = 20
+							has_trait = patient
+						}
+						modifier = {
+							add = 15
+							has_trait = calm
+						}
+						modifier = {
+							add = 10
+							has_trait = content
+						}
+						set_character_flag = {
+							flag = murim_breakthrough_cooldown
+							years = 3
+						}
+						set_character_flag = {
+							flag = murim_recent_breakthrough
+							months = 6
+						}
+						trigger_event = { id = murim_breakthrough.0010 }
+					}
+					# Forbidden path breakthrough - intrigue characters
+					15 = {
+						modifier = {
+							add = 25
+							has_trait = sadistic
+						}
+						modifier = {
+							add = 20
+							has_trait = cynical
+						}
+						modifier = {
+							add = 15
+							intrigue >= 15
+						}
+						modifier = {
+							add = -25
+							has_trait = just
+						}
+						trigger = {
+							OR = {
+								has_trait = sadistic
+								has_trait = cynical
+								has_trait = deceitful
+								has_trait = murim_forbidden_mark_1
+								has_trait = murim_forbidden_mark_2
+							}
+						}
+						set_character_flag = {
+							flag = murim_breakthrough_cooldown
+							years = 1
+						}
+						set_character_flag = {
+							flag = murim_recent_breakthrough
+							months = 6
+						}
+						trigger_event = { id = murim_breakthrough.0050 }
+					}
+					# Wait - not ready
+					20 = {
+						modifier = {
+							add = 15
+							has_trait = patient
+						}
+						modifier = {
+							add = 20
+							has_trait = craven
+						}
+						modifier = {
+							add = 10
+							has_trait = lazy
+						}
+					}
+				}
+			}
+
+			# AI Sect Joining/Betrayal cycle
+			if = {
+				limit = {
+					is_ai = yes
+					NOT = { exists = var:murim_sect_id }
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 2
+					NOT = { has_character_flag = murim_sect_decision_cooldown }
 				}
 				random = {
-					chance = 40
+					chance = 35
 					modifier = {
-						add = 20
+						add = 15
+						has_trait = gregarious
+					}
+					modifier = {
+						add = 10
 						has_trait = ambitious
 					}
 					modifier = {
+						add = -20
+						has_trait = shy
+					}
+					set_character_flag = {
+						flag = murim_sect_decision_cooldown
+						years = 3
+					}
+					trigger_event = { id = murim_sect.0001 }
+				}
+			}
+
+			# AI Sect Betrayal - rare but dramatic
+			if = {
+				limit = {
+					is_ai = yes
+					exists = var:murim_sect_id
+					NOT = { has_character_flag = murim_sect_betrayal_cooldown }
+					OR = {
+						has_trait = deceitful
+						has_trait = ambitious
+						has_trait = arbitrary
+					}
+				}
+				random = {
+					chance = 8
+					modifier = {
+						add = 10
+						has_trait = deceitful
+					}
+					modifier = {
+						add = 8
+						has_trait = ambitious
+					}
+					modifier = {
+						add = -15
+						has_trait = honorable
+					}
+					set_character_flag = {
+						flag = murim_sect_betrayal_cooldown
+						years = 5
+					}
+					trigger_event = { id = murim_sect.0100 }
+				}
+			}
+
+			# AI enters closed cultivation (hermit phase)
+			if = {
+				limit = {
+					is_ai = yes
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 3
+					NOT = { has_character_flag = murim_closed_cultivation }
+					NOT = { has_character_flag = murim_closed_cultivation_cooldown }
+				}
+				random = {
+					chance = 20
+					modifier = {
 						add = 15
-						has_trait = brave
+						has_trait = patient
 					}
 					modifier = {
 						add = 10
 						has_trait = diligent
 					}
-					trigger_event = { id = murim_grind.0040 }
-				}
-			}
-			# Attempt Tribulation
-			if = {
-				limit = {
-					murim_can_attempt_tribulation_trigger = yes
-					exists = var:murim_cultivation_rank
-					var:murim_cultivation_rank >= 3
-				}
-				random = {
-					chance = 25
 					modifier = {
-						add = 15
-						has_trait = brave
+						add = -15
+						has_trait = gregarious
 					}
-					modifier = {
-						add = 10
-						has_trait = wrathful
+					set_character_flag = {
+						flag = murim_closed_cultivation
+						years = 2
 					}
-					modifier = {
-						add = 10
-						has_trait = ambitious
+					set_character_flag = {
+						flag = murim_closed_cultivation_cooldown
+						years = 5
 					}
-					trigger_event = { id = murim_grind.0050 }
+					add_character_modifier = {
+						modifier = murim_closed_cultivation_seclusion
+						years = 2
+					}
+					# Notify player if relevant
+					if = {
+						limit = {
+							any_liege_or_above = {
+								is_ai = no
+							}
+						}
+						liege = {
+							send_interface_message = {
+								type = event_martial_neutral
+								title = murim_ai_closed_cultivation_notification
+								desc = murim_ai_closed_cultivation_notification_desc
+								left_icon = prev
+							}
+						}
+					}
 				}
 			}
 		}
@@ -231,36 +1603,127 @@ on_yearly_pulse = {
 }
 
 ######################################
-# WAR STARTED - Martial Tempering
+# ON DEATH HOOK - Duel death cascading effects
 ######################################
 
-on_war_started = {
+on_death = {
 	effect = {
-		root = {
+		# If killed in a duel, trigger revenge chains
+		if = {
+			limit = {
+				exists = killer
+				OR = {
+					death_reason = death_duel
+					has_character_flag = murim_killed_in_duel
+				}
+			}
+			# Family revenge chain
 			if = {
 				limit = {
-					is_alive = yes
-					age >= 16
-					prowess >= 12
-					exists = var:murim_cultivation_rank
-					NOT = { has_trait = murim_qi_deviation_crippling }
-					NOT = { has_character_flag = murim_tempering_cooldown }
+					exists = dynasty
+					any_dynasty_member = {
+						is_alive = yes
+						prowess >= 8
+						NOT = { this = root.killer }
+					}
 				}
-				random = {
-					chance = 50
-					modifier = {
-						add = 20
-						has_trait = brave
+				random_dynasty_member = {
+					limit = {
+						is_alive = yes
+						prowess >= 8
+						NOT = { this = root.killer }
 					}
-					modifier = {
-						add = 15
-						has_trait = wrathful
+					weight = {
+						base = 1
+						modifier = {
+							add = 5
+							has_trait = vengeful
+						}
+						modifier = {
+							add = 3
+							has_trait = brave
+						}
+						modifier = {
+							add = 3
+							has_trait = wrathful
+						}
 					}
-					modifier = {
-						add = 10
-						has_trait = ambitious
+					set_character_flag = {
+						flag = murim_revenge_target_flag
+						years = 10
 					}
-					trigger_event = { id = murim_grind.0010 days = { 5 15 } }
+					set_variable = {
+						name = murim_revenge_target
+						value = root.killer
+					}
+					add_opinion = {
+						target = root.killer
+						modifier = murim_blood_feud_hatred
+					}
+				}
+			}
+
+			# Sect vengeance - if victim was in a sect, the sect may hunt the killer
+			if = {
+				limit = {
+					exists = var:murim_sect_id
+					killer = {
+						NOT = {
+							exists = var:murim_sect_id
+							var:murim_sect_id = root.var:murim_sect_id
+						}
+					}
+				}
+				every_living_character = {
+					limit = {
+						exists = var:murim_sect_id
+						var:murim_sect_id = root.var:murim_sect_id
+						prowess >= 12
+						is_alive = yes
+					}
+					add_opinion = {
+						target = root.killer
+						modifier = murim_sect_enemy_opinion
+					}
+					# 20% chance each sect member swears revenge
+					random = {
+						chance = 20
+						set_character_flag = {
+							flag = murim_revenge_target_flag
+							years = 5
+						}
+						set_variable = {
+							name = murim_revenge_target
+							value = root.killer
+						}
+					}
+				}
+			}
+
+			# CHAIN: Qi deviation death attracts demonic sects
+			if = {
+				limit = {
+					OR = {
+						has_trait = murim_qi_deviation_crippling
+						has_trait = murim_forbidden_mark_3
+					}
+				}
+				every_living_character = {
+					limit = {
+						is_ai = yes
+						is_alive = yes
+						OR = {
+							has_trait = murim_forbidden_mark_1
+							has_trait = murim_forbidden_mark_2
+							has_trait = murim_forbidden_mark_3
+						}
+						NOT = { this = root }
+					}
+					# Demonic cultivators investigate the death site
+					random = {
+						chance = 30
+						trigger_event = { id = murim_jianghu.0300 days = { 30 90 } }
+					}
 				}
 			}
 		}
@@ -268,51 +1731,67 @@ on_war_started = {
 }
 
 ######################################
-# BIRTHDAY - Coming of Age Cultivation
+# ON BATTLE END - Martial cultivators gain combat experience
 ######################################
 
-on_birthday = {
+on_combat_end_winner = {
 	effect = {
 		if = {
 			limit = {
-				age = 16
-				is_alive = yes
-				NOT = { has_character_flag = murim_cultivation_enabled }
-				NOT = { exists = var:murim_cultivation_rank }
-				NOT = { murim_has_body_tempering_trigger = yes }
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
+				}
 			}
+			# Combat experience boosts cultivation
+			if = {
+				limit = { exists = var:murim_cultivation_progress }
+				change_variable = {
+					name = murim_cultivation_progress
+					add = 3
+				}
+			}
+			# Small chance of combat insight triggering breakthrough readiness
 			random = {
-				chance = 30
-				modifier = {
-					add = 15
-					has_trait = brave
+				chance = 10
+				add_character_modifier = {
+					modifier = murim_combat_enlightenment
+					months = 6
 				}
-				modifier = {
-					add = 15
-					has_trait = ambitious
+			}
+		}
+	}
+}
+
+on_combat_end_loser = {
+	effect = {
+		if = {
+			limit = {
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 1
+					}
 				}
-				modifier = {
-					add = 10
-					has_trait = wrathful
+			}
+			# Defeat can also bring insight
+			random = {
+				chance = 15
+				add_character_modifier = {
+					modifier = murim_defeat_insight
+					months = 3
 				}
-				modifier = {
-					add = 10
-					prowess >= 8
+				if = {
+					limit = { exists = var:murim_cultivation_progress }
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 2
+					}
 				}
-				modifier = {
-					add = 5
-					has_trait = diligent
-				}
-				modifier = {
-					add = -15
-					has_trait = craven
-				}
-				modifier = {
-					add = -10
-					has_trait = lazy
-				}
-				add_character_flag = murim_cultivation_enabled
-				trigger_event = { id = murim_grind.0001 days = { 10 30 } }
 			}
 		}
 	}
