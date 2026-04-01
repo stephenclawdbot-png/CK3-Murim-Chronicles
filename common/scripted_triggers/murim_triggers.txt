@@ -1,0 +1,408 @@
+# Murim Chronicles - Core Scripted Triggers
+# Cross-references: All event files, all trait files, all effect files
+# Master trigger file consolidating common conditions used across the mod
+
+#####################################
+# CULTIVATION CHECK TRIGGERS
+#####################################
+
+is_murim_cultivator_trigger = {
+	has_variable = murim_cultivator
+}
+
+is_active_cultivator_trigger = {
+	has_variable = murim_cultivator
+	is_alive = yes
+	is_imprisoned = no
+	NOT = { has_trait = incapable }
+}
+
+is_cultivation_eligible_trigger = {
+	is_alive = yes
+	is_adult = yes
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = cultivation_crippled }
+}
+
+has_cultivation_realm_trigger = {
+	OR = {
+		has_trait = mortal_realm
+		has_trait = qi_condensation_realm
+		has_trait = foundation_realm
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+	}
+}
+
+is_at_least_qi_condensation_trigger = {
+	OR = {
+		has_trait = qi_condensation_realm
+		has_trait = foundation_realm
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+	}
+}
+
+is_at_least_foundation_trigger = {
+	OR = {
+		has_trait = foundation_realm
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+	}
+}
+
+is_at_least_core_formation_trigger = {
+	OR = {
+		has_trait = core_formation_realm
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+	}
+}
+
+is_at_least_nascent_soul_trigger = {
+	OR = {
+		has_trait = nascent_soul_realm
+		has_trait = ascension_realm
+	}
+}
+
+is_ascension_realm_trigger = {
+	has_trait = ascension_realm
+}
+
+can_attempt_breakthrough_trigger = {
+	is_active_cultivator_trigger = yes
+	NOT = { has_trait = qi_deviation }
+	NOT = { has_trait = meridians_blocked }
+	NOT = { has_character_modifier = cultivation_cooldown }
+	stress < 75
+}
+
+has_qi_deviation_trigger = {
+	has_trait = qi_deviation
+}
+
+has_meridian_issues_trigger = {
+	OR = {
+		has_trait = meridians_blocked
+		has_trait = poisoned_meridians
+	}
+}
+
+is_cultivation_crippled_trigger = {
+	has_trait = cultivation_crippled
+}
+
+#####################################
+# RANKING SYSTEM TRIGGERS
+#####################################
+
+is_ranked_fighter_trigger = {
+	OR = {
+		has_trait = murim_rank_top_50
+		has_trait = murim_rank_top_20
+		has_trait = murim_rank_top_10
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
+	}
+}
+
+is_top_10_ranker_trigger = {
+	OR = {
+		has_trait = murim_rank_top_10
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
+	}
+}
+
+is_top_5_ranker_trigger = {
+	OR = {
+		has_trait = murim_rank_top_5
+		has_trait = murim_rank_first
+	}
+}
+
+is_number_one_ranker_trigger = {
+	has_trait = murim_rank_first
+}
+
+is_unranked_trigger = {
+	OR = {
+		has_trait = murim_unranked
+		NOR = {
+			has_trait = murim_rank_top_50
+			has_trait = murim_rank_top_20
+			has_trait = murim_rank_top_10
+			has_trait = murim_rank_top_5
+			has_trait = murim_rank_first
+		}
+	}
+}
+
+is_rising_star_trigger = {
+	has_trait = murim_rising_star
+}
+
+is_fallen_ranker_trigger = {
+	has_trait = murim_fallen_ranker
+}
+
+#####################################
+# COMBAT & DUEL TRIGGERS
+#####################################
+
+can_duel_trigger = {
+	is_alive = yes
+	is_adult = yes
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = recent_duel_cooldown }
+	prowess >= 5
+}
+
+can_accept_duel_trigger = {
+	is_alive = yes
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = craven }
+}
+
+is_worthy_duel_opponent_trigger = {
+	is_active_cultivator_trigger = yes
+	prowess >= 10
+	OR = {
+		is_ranked_fighter_trigger = yes
+		is_at_least_foundation_trigger = yes
+	}
+}
+
+has_combat_trauma_trigger = {
+	OR = {
+		has_trait = battle_scarred
+		has_trait = wounded_1
+		has_trait = wounded_2
+		has_trait = wounded_3
+		has_trait = maimed
+	}
+}
+
+is_combat_capable_trigger = {
+	is_alive = yes
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = wounded_3 }
+	prowess >= 1
+}
+
+#####################################
+# SECT & FACTION TRIGGERS
+#####################################
+
+is_sect_member_trigger = {
+	has_variable = murim_sect_id
+}
+
+is_sect_leader_trigger = {
+	has_variable = murim_sect_leader
+}
+
+is_sect_elder_trigger = {
+	OR = {
+		has_variable = murim_sect_elder
+		has_variable = murim_sect_leader
+	}
+}
+
+is_inner_disciple_trigger = {
+	has_variable = murim_inner_disciple
+}
+
+is_outer_disciple_trigger = {
+	has_variable = murim_sect_id
+	NOT = { has_variable = murim_inner_disciple }
+	NOT = { has_variable = murim_sect_elder }
+	NOT = { has_variable = murim_sect_leader }
+}
+
+can_join_sect_trigger = {
+	is_active_cultivator_trigger = yes
+	NOT = { has_variable = murim_sect_id }
+	age >= 16
+}
+
+can_found_sect_trigger = {
+	is_active_cultivator_trigger = yes
+	NOT = { has_variable = murim_sect_id }
+	is_at_least_core_formation_trigger = yes
+	prestige >= 1000
+	gold >= 500
+}
+
+is_righteous_sect_trigger = {
+	has_variable = murim_sect_id
+	OR = {
+		has_variable = murim_sect_righteous
+		NOT = { has_variable = murim_sect_evil }
+	}
+}
+
+is_evil_sect_trigger = {
+	has_variable = murim_sect_evil
+}
+
+#####################################
+# JIANGHU TRIGGERS
+#####################################
+
+is_jianghu_member_trigger = {
+	has_variable = murim_jianghu_member
+}
+
+is_bounty_hunter_trigger = {
+	has_variable = murim_bounty_hunter
+}
+
+is_assassin_trigger = {
+	OR = {
+		has_variable = murim_assassin
+		has_trait = murim_shadow_assassin
+	}
+}
+
+is_black_market_trader_trigger = {
+	has_variable = murim_black_market_access
+}
+
+is_information_broker_trigger = {
+	has_variable = murim_info_broker
+}
+
+has_criminal_reputation_trigger = {
+	OR = {
+		is_assassin_trigger = yes
+		is_black_market_trader_trigger = yes
+		has_variable = murim_poison_user
+		has_trait = murim_world_enemy
+	}
+}
+
+#####################################
+# MENTOR & TEACHING TRIGGERS
+#####################################
+
+can_be_mentor_trigger = {
+	is_active_cultivator_trigger = yes
+	is_at_least_foundation_trigger = yes
+	age >= 30
+	prowess >= 12
+}
+
+can_accept_disciple_trigger = {
+	can_be_mentor_trigger = yes
+	NOT = {
+		any_relation = {
+			type = ward
+			count >= 3
+		}
+	}
+}
+
+has_mentor_trigger = {
+	has_variable = murim_mentor
+}
+
+is_seeking_mentor_trigger = {
+	is_active_cultivator_trigger = yes
+	NOT = { has_variable = murim_mentor }
+	NOT = { is_at_least_core_formation_trigger = yes }
+}
+
+#####################################
+# ARTIFACT & TECHNIQUE TRIGGERS
+#####################################
+
+has_legendary_weapon_trigger = {
+	has_variable = murim_legendary_weapon
+}
+
+has_secret_manual_trigger = {
+	has_variable = murim_secret_manual
+}
+
+has_forbidden_technique_trigger = {
+	has_variable = murim_forbidden_technique
+}
+
+can_learn_technique_trigger = {
+	is_active_cultivator_trigger = yes
+	NOT = { has_trait = cultivation_crippled }
+	learning >= 5
+}
+
+can_forge_artifact_trigger = {
+	is_active_cultivator_trigger = yes
+	is_at_least_foundation_trigger = yes
+	gold >= 200
+}
+
+#####################################
+# ROMANCE & RELATIONSHIP TRIGGERS
+#####################################
+
+can_dual_cultivate_trigger = {
+	is_active_cultivator_trigger = yes
+	is_at_least_qi_condensation_trigger = yes
+	NOT = { has_trait = qi_deviation }
+}
+
+has_dual_cultivation_partner_trigger = {
+	has_trait = dual_cultivation_partner
+}
+
+is_suitable_romance_target_trigger = {
+	is_alive = yes
+	is_adult = yes
+	has_variable = murim_cultivator
+	NOT = { has_trait = incapable }
+}
+
+#####################################
+# POLITICS & ALLIANCE TRIGGERS
+#####################################
+
+is_martial_alliance_leader_trigger = {
+	has_variable = murim_alliance_leader
+}
+
+is_martial_alliance_member_trigger = {
+	has_variable = murim_alliance_member
+}
+
+can_call_wulin_congress_trigger = {
+	OR = {
+		is_martial_alliance_leader_trigger = yes
+		is_top_5_ranker_trigger = yes
+		is_sect_leader_trigger = yes
+	}
+	prestige >= 2000
+}
+
+#####################################
+# FATE & DESTINY TRIGGERS
+#####################################
+
+has_heavenly_destiny_trigger = {
+	has_variable = murim_chosen_one
+}
+
+is_under_tribulation_trigger = {
+	has_variable = murim_tribulation_active
+}
+
+has_karmic_debt_trigger = {
+	has_trait = karmic_debt
+}
+
+has_reincarnated_memories_trigger = {
+	has_trait = reincarnated_memories
+}
