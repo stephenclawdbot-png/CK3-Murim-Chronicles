@@ -1,0 +1,801 @@
+namespace = murim_tang_clan_expansion3
+
+# Tang Clan Expansion 3 — Poison Weapon Mastery, Clan Secrets, Hidden Arsenal
+# 10 events: deep Tang Clan chain with poison crafting, hidden weapon mastery, clan politics
+
+murim_tang_clan_expansion3.0001 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0001.t
+	desc = murim_tang_clan_expansion3.0001.desc
+	theme = martial_arts
+	
+	# The Thousand Poison Cauldron — Tang Clan's ultimate test. A disciple must survive
+	# three days sealed inside a room with 1000 different poisons. Those who emerge alive
+	# gain immunity to all known toxins. 30% death rate historically.
+	
+	trigger = {
+		has_trait = tang_clan_member
+		age >= 18
+		age <= 35
+		NOT = { has_character_flag = attempted_poison_cauldron }
+		prowess >= 8
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = ambitious }
+		modifier = { add = 2 has_trait = brave }
+		modifier = { add = -5 has_trait = craven }
+	}
+	
+	immediate = {
+		set_character_flag = attempted_poison_cauldron
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0001.a
+		# Enter the Cauldron Room
+		random_list = {
+			35 = {
+				# Perfect immunity achieved
+				add_trait = poison_immune
+				add_prowess = 6
+				add_character_modifier = {
+					modifier = thousand_poison_body
+					years = -1
+				}
+				add_prestige = 500
+				hidden_effect = {
+					trigger_event = {
+						id = murim_tang_clan_expansion3.0003
+						days = { 30 60 }
+					}
+				}
+			}
+			35 = {
+				# Partial immunity — scarred but stronger
+				add_trait = poison_resistant
+				add_prowess = 3
+				add_health = -1
+				add_character_modifier = {
+					modifier = poison_scarred_body
+					years = -1
+				}
+			}
+			30 = {
+				# Death in the cauldron
+				death = { death_reason = death_poison_trial }
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0001.b
+		# Refuse — too risky
+		add_stress = 20
+		add_character_modifier = {
+			modifier = cauldron_refusal_shame
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0001.c
+		# Secretly take an antidote beforehand (cheating)
+		add_intrigue = 4
+		random_list = {
+			60 = {
+				add_trait = poison_resistant
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = false_immunity
+					years = 10
+				}
+			}
+			40 = {
+				# Caught cheating — expelled from inner circle
+				add_trait = tang_clan_disgraced
+				add_prestige = -300
+				add_opinion = {
+					target = liege
+					modifier = cheater_exposed
+					opinion = -50
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+}
+
+murim_tang_clan_expansion3.0002 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0002.t
+	desc = murim_tang_clan_expansion3.0002.desc
+	theme = martial_arts
+	
+	# Hidden Weapon Arsenal Discovery — while cleaning the ancestral hall, you discover
+	# a hidden passage leading to the First Patriarch's personal arsenal. Weapons never
+	# seen before: Rain of Stars (360-degree needle launcher), Soul Seeker (heat-tracking
+	# dart), and the Phantom Chain (invisible wire weapon).
+	
+	trigger = {
+		has_trait = tang_clan_member
+		age >= 16
+		NOT = { has_character_flag = found_hidden_arsenal }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = curious }
+	}
+	
+	immediate = {
+		set_character_flag = found_hidden_arsenal
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0002.a
+		# Study Rain of Stars
+		add_trait = rain_of_stars_user
+		add_prowess = 5
+		add_martial = 2
+		add_character_modifier = {
+			modifier = needle_storm_mastery
+			years = -1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0002.b
+		# Study Soul Seeker
+		add_trait = soul_seeker_user
+		add_prowess = 4
+		add_intrigue = 4
+		add_character_modifier = {
+			modifier = heat_tracking_assassination
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0002.c
+		# Study Phantom Chain
+		add_trait = phantom_chain_user
+		add_prowess = 4
+		add_martial = 3
+		add_character_modifier = {
+			modifier = invisible_wire_combat
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_tang_clan_expansion3.0003 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0003.t
+	desc = murim_tang_clan_expansion3.0003.desc
+	theme = martial_arts
+	
+	# Poison Grandmaster Recognition — after surviving the Thousand Poison Cauldron,
+	# the Clan Elders recognize you as a candidate for Poison Grandmaster. But the
+	# current Grandmaster sees you as a threat to her position...
+	
+	trigger = {
+		has_trait = poison_immune
+		has_trait = tang_clan_member
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = tang_clan_member
+				age >= 45
+				is_female = yes
+			}
+			save_scope_as = current_grandmaster
+		}
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0003.a
+		# Challenge the current Grandmaster
+		duel = {
+			target = scope:current_grandmaster
+			skill = prowess
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_tang_clan_expansion3.0003.a.win
+				add_trait = poison_grandmaster
+				add_prestige = 800
+				add_character_modifier = {
+					modifier = tang_clan_supreme_poisoner
+					years = -1
+				}
+				scope:current_grandmaster = {
+					add_trait = defeated_elder
+					add_opinion = {
+						target = root
+						modifier = bitter_defeat
+						opinion = -60
+					}
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = -2 }
+				desc = murim_tang_clan_expansion3.0003.a.lose
+				add_prowess = -3
+				add_health = -2
+				add_character_modifier = {
+					modifier = poisoned_by_grandmaster
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = ambitious } }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0003.b
+		# Wait your turn — show patience
+		add_diplomacy = 3
+		add_character_modifier = {
+			modifier = patient_successor
+			years = 10
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_tang_clan_expansion3.0005
+				days = { 365 730 }
+			}
+		}
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = patient } }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0003.c
+		# Leave the clan — your skills will serve you elsewhere
+		remove_trait = tang_clan_member
+		add_trait = rogue_poisoner
+		add_prowess = 2
+		add_intrigue = 5
+		add_character_modifier = {
+			modifier = freelance_poison_master
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_tang_clan_expansion3.0004 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0004.t
+	desc = murim_tang_clan_expansion3.0004.desc
+	theme = martial_arts
+	
+	# Tang Clan Trade Route Crisis — the clan's poison ingredient supply routes through
+	# Sichuan are being raided by Iron Fist Gate bandits. Without rare ingredients,
+	# the clan cannot produce its signature weapons.
+	
+	trigger = {
+		has_trait = tang_clan_member
+		is_ruler = yes
+		any_held_title = { tier >= county }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 has_trait = diligent }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0004.a
+		# Send an armed escort — protect the caravans
+		add_gold = -200
+		add_martial = 2
+		random_list = {
+			60 = {
+				add_character_modifier = {
+					modifier = secured_trade_routes
+					years = 5
+				}
+				add_gold = 500
+			}
+			40 = {
+				# Escort ambushed — heavy losses
+				add_gold = -300
+				add_character_modifier = {
+					modifier = trade_route_disaster
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0004.b
+		# Negotiate with Iron Fist Gate — offer poison-free trade
+		add_diplomacy = 3
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = iron_fist_tang_alliance
+					years = 10
+				}
+				add_gold = 300
+				hidden_effect = {
+					every_known_character = {
+						limit = { has_trait = iron_fist_member }
+						add_opinion = {
+							target = root
+							modifier = trade_partner
+							opinion = 25
+						}
+					}
+				}
+			}
+			50 = {
+				# They laugh at your offer
+				add_prestige = -100
+				add_opinion = {
+					target = liege
+					modifier = failed_negotiation
+					opinion = -20
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0004.c
+		# Find alternative ingredients — adapt recipes
+		add_learning = 4
+		add_stewardship = 2
+		add_character_modifier = {
+			modifier = innovative_alchemist
+			years = -1
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_tang_clan_expansion3.0006
+				days = { 60 180 }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_tang_clan_expansion3.0005 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0005.t
+	desc = murim_tang_clan_expansion3.0005.desc
+	theme = martial_arts
+	
+	# Grandmaster's Death — the current Poison Grandmaster dies under mysterious
+	# circumstances. Was she assassinated? By whom? The clan demands answers.
+	
+	trigger = {
+		has_character_flag = attempted_poison_cauldron
+		has_trait = tang_clan_member
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0005.a
+		# Investigate the death
+		add_intrigue = 4
+		random_list = {
+			40 = {
+				# Discover it was the Phantom Blade sect
+				add_character_modifier = {
+					modifier = uncovered_assassination_plot
+					years = 5
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = phantom_blade_tang_war
+						value = yes
+					}
+				}
+			}
+			30 = {
+				# It was an internal power play by a rival elder
+				add_character_modifier = {
+					modifier = internal_conspiracy_discovered
+					years = 5
+				}
+			}
+			30 = {
+				# Natural death — the poisons finally caught up to her
+				add_piety = 100
+				add_character_modifier = {
+					modifier = poison_masters_fate
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0005.b
+		# Claim the Grandmaster title immediately
+		add_trait = poison_grandmaster
+		add_prestige = 500
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+		}
+		add_character_modifier = {
+			modifier = controversial_succession
+			years = 5
+		}
+		ai_chance = { base = 30 modifier = { add = 30 has_trait = ambitious } }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0005.c
+		# Call for a proper succession tournament
+		add_diplomacy = 3
+		add_prestige = 200
+		hidden_effect = {
+			trigger_event = {
+				id = murim_tournament_events.0001
+				days = { 30 60 }
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_tang_clan_expansion3.0006 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0006.t
+	desc = murim_tang_clan_expansion3.0006.desc
+	theme = martial_arts
+	
+	# Alternative Ingredient Breakthrough — while researching substitutes, you discover
+	# a new compound that is MORE lethal than the traditional formula. This could
+	# revolutionize Tang Clan weaponry... or destroy the balance of power.
+	
+	trigger = {
+		has_trait = tang_clan_member
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0006.a
+		# Develop the new compound fully
+		add_learning = 5
+		add_prowess = 4
+		add_character_modifier = {
+			modifier = revolutionary_poison_formula
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = tang_super_poison_exists
+				value = yes
+			}
+			# Orthodox Alliance will be concerned
+			every_known_character = {
+				limit = {
+					OR = {
+						has_trait = shaolin_disciple
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+					}
+				}
+				add_opinion = {
+					target = root
+					modifier = dangerous_innovation
+					opinion = -20
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0006.b
+		# Share the formula with the Orthodox Alliance — build trust
+		add_diplomacy = 5
+		add_prestige = 400
+		hidden_effect = {
+			every_known_character = {
+				limit = {
+					OR = {
+						has_trait = shaolin_disciple
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+					}
+				}
+				add_opinion = {
+					target = root
+					modifier = generous_sharing
+					opinion = 30
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0006.c
+		# Destroy the formula — too dangerous
+		add_piety = 300
+		add_learning = 2
+		add_character_modifier = {
+			modifier = responsible_alchemist
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_tang_clan_expansion3.0007 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0007.t
+	desc = murim_tang_clan_expansion3.0007.desc
+	theme = martial_arts
+	
+	# Tang Clan Bloodline Awakening — ancient Tang bloodline carries dormant poison resistance.
+	# In rare individuals, this awakens as the "Venomous Constitution" — the body itself
+	# produces toxins. Touch becomes lethal. Sweat is corrosive.
+	
+	trigger = {
+		has_trait = tang_clan_member
+		age >= 20
+		age <= 40
+		NOT = { has_character_flag = bloodline_check_done }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 5 has_trait = poison_immune }
+	}
+	
+	immediate = {
+		set_character_flag = bloodline_check_done
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0007.a
+		# Embrace the Venomous Constitution
+		add_trait = venomous_constitution
+		add_prowess = 8
+		add_diplomacy = -5
+		add_character_modifier = {
+			modifier = toxic_body
+			years = -1
+		}
+		# Cannot touch loved ones without harming them
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			gregarious = major_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_tang_clan_expansion3.0008
+				days = { 90 180 }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0007.b
+		# Suppress it with medicine — stay normal
+		add_health = -1
+		add_gold = -100
+		add_character_modifier = {
+			modifier = suppressed_bloodline
+			years = -1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0007.c
+		# Seek the Heavenly Doctor (Poison Flower Palace) for a cure
+		add_diplomacy = 2
+		hidden_effect = {
+			trigger_event = {
+				id = murim_poison_flower_events.0001
+				days = { 30 90 }
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_tang_clan_expansion3.0008 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0008.t
+	desc = murim_tang_clan_expansion3.0008.desc
+	theme = martial_arts
+	
+	# Curse of the Venomous Body — your touch kills flowers. Animals flee. Even your
+	# own family cannot embrace you. A rival suggests this makes you the perfect
+	# assassin... the Phantom Blade sect makes an offer.
+	
+	trigger = {
+		has_trait = venomous_constitution
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0008.a
+		# Accept Phantom Blade's offer — become the ultimate assassin
+		remove_trait = tang_clan_member
+		add_trait = phantom_blade_member
+		add_prowess = 5
+		add_intrigue = 6
+		add_character_modifier = {
+			modifier = living_weapon
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0008.b
+		# Refuse — find a way to control the poison yourself
+		add_learning = 4
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = self_control_training
+			years = 5
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_tang_clan_expansion3.0009
+				days = { 180 365 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0008.c
+		# Isolate yourself — become a hermit in the mountains
+		add_trait = hermit_poisoner
+		add_learning = 6
+		add_character_modifier = {
+			modifier = mountain_isolation
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_tang_clan_expansion3.0009 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0009.t
+	desc = murim_tang_clan_expansion3.0009.desc
+	theme = martial_arts
+	
+	# Poison Control Mastery — after months of meditation and training, you learn to
+	# control your venomous body. You can now choose when to be lethal and when to be
+	# safe. You become the first Tang Clan member to master the Venomous Constitution.
+	
+	trigger = {
+		has_trait = venomous_constitution
+		has_trait = tang_clan_member
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0009.a
+		# Master of Poison and Touch
+		remove_character_modifier = toxic_body
+		add_trait = poison_body_master
+		add_prowess = 4
+		add_diplomacy = 3
+		add_character_modifier = {
+			modifier = controlled_venom
+			years = -1
+		}
+		add_prestige = 600
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0009.b
+		# Teach the control method to future generations
+		add_learning = 5
+		add_prestige = 400
+		add_character_modifier = {
+			modifier = poison_control_teacher
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = tang_bloodline_control_method
+				value = yes
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+murim_tang_clan_expansion3.0010 = {
+	type = character_event
+	title = murim_tang_clan_expansion3.0010.t
+	desc = murim_tang_clan_expansion3.0010.desc
+	theme = martial_arts
+	
+	# Tang Clan Ultimate: The Myriad Poison Divine Art — combining all Tang knowledge
+	# into one supreme technique. The practitioner becomes both the ultimate healer and
+	# the ultimate killer. This is the Tang Clan's answer to the Heavenly Demon's power.
+	
+	trigger = {
+		has_trait = tang_clan_member
+		OR = {
+			has_trait = poison_grandmaster
+			has_trait = poison_body_master
+		}
+		prowess >= 20
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 5 has_trait = poison_immune }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0010.a
+		# Achieve the Myriad Poison Divine Art
+		add_trait = myriad_poison_divine
+		add_prowess = 10
+		add_martial = 5
+		add_learning = 5
+		add_character_modifier = {
+			modifier = tang_clan_supreme_art
+			years = -1
+		}
+		add_prestige = 2000
+		hidden_effect = {
+			set_global_variable = {
+				name = myriad_poison_divine_achieved
+				value = yes
+			}
+			every_known_character = {
+				limit = {
+					OR = {
+						has_trait = tang_clan_member
+						has_trait = poison_flower_member
+					}
+				}
+				add_opinion = {
+					target = root
+					modifier = ultimate_poison_master
+					opinion = 40
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_tang_clan_expansion3.0010.b
+		# The power is too great — seal it for the next generation
+		add_piety = 500
+		add_learning = 5
+		add_character_modifier = {
+			modifier = sealed_divine_art
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+}
