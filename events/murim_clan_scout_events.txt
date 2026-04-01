@@ -1,0 +1,1101 @@
+# Murim Chronicles - Clan Scout Travel & Encounter Events
+# Events for named scout characters traveling the world recruiting for clans.
+# INTEGRATION: Uses murim_clan_scout_effects.txt (scout spawn, management)
+# INTEGRATION: Uses murim_clan_recruitment_events.txt (dual-mode recruitment)
+# INTEGRATION: Uses murim_discovery_triggers.txt (region checks, eligibility)
+# INTEGRATION: Uses murim_clan_membership_effects.txt (recruit joins clan)
+# DESIGN: VANILLA SEPARATION — scouts are martial-layer only. No title/war/succession impact.
+#         Scout travel is martial travel. Courts get martial events, not diplomatic ones.
+# GENDER: All scouts and recruits gender-neutral. No sex checks anywhere.
+
+namespace = murim_scout
+
+# ============================================================
+# SCOUT TRAVEL EVENTS (0001-0009)
+# ============================================================
+
+# murim_scout.0001 — Scout Arrives at Foreign Court (Western)
+# Triggers when a scout enters a non-Korean/non-Chinese realm
+murim_scout.0001 = {
+	type = character_event
+	title = murim_scout.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:mount_hua } }
+				desc = murim_scout.0001.desc_mount_hua
+				# "A composed traveler from the distant East requests an audience with your court.
+				#  They move with an unusual grace, and their eyes seem to evaluate everyone 
+				#  in the room with a single glance. They claim to represent a 'martial sect' 
+				#  — a concept your courtiers struggle to understand."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:shaolin } }
+				desc = murim_scout.0001.desc_shaolin
+				# "A bald monk in simple robes arrives at your court, having walked from 
+				#  the far East. Despite appearing unarmed and humble, your guards report 
+				#  an unsettling feeling — as though this gentle pilgrim could defeat 
+				#  every soldier in your retinue without breaking a sweat."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:heavenly_demon } }
+				desc = murim_scout.0001.desc_heavenly_demon
+				# "A stranger has been seen lurking in the less reputable districts of your 
+				#  capital. Your spies report they've been speaking with prisoners, exiles, 
+				#  and the desperate — offering them 'a new life of power in the East.' 
+				#  Something about them makes even your hardened spymaster uneasy."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:wudang } }
+				desc = murim_scout.0001.desc_wudang
+				# "A soft-spoken scholar from the East has arrived, requesting access to 
+				#  your royal library. They claim to seek knowledge of 'the body's hidden 
+				#  meridians' — whatever that means. Your court physician is fascinated. 
+				#  Your court marshal noticed the scholar wears a sword with practiced ease."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:beggar_sect } }
+				desc = murim_scout.0001.desc_beggar
+				# "Your steward reports something strange: a new beggar has appeared in the 
+				#  city streets, but this one is... different. The other beggars defer to them. 
+				#  They've been seen talking to homeless children, evaluating them with an 
+				#  intensity that belies their ragged appearance. And once, a thief tried to 
+				#  rob them — and was found unconscious three streets away."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:tang_clan } }
+				desc = murim_scout.0001.desc_tang
+				# "A quiet traveler from the East has been asking unusual questions in your 
+				#  court — about bloodlines, family trees, marriages to Eastern merchants. 
+				#  They seem to be searching for someone specific. When asked their purpose, 
+				#  they smile and say only: 'Family matters.' Your herbalist noticed they 
+				#  carry vials of substances that are definitely not medicine."
+			}
+		}
+	}
+	
+	theme = diplomacy
+	
+	# Court ruler gets options:
+	option = {
+		name = murim_scout.0001.a
+		# "Grant them audience — I'm curious about the martial world"
+		# Triggers scout evaluation of your court members
+		# Grants martial_awareness to the ruler if they don't have it
+		trigger_event = {
+			id = murim_scout.0002
+			days = 7
+		}
+		if = {
+			limit = { NOT = { has_trait = martial_awareness } }
+			add_trait = martial_awareness
+		}
+		# VANILLA SEPARATION: No opinion change with liege, no political consequences
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = curious
+			}
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+			modifier = {
+				add = -20
+				has_trait = craven
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0001.b
+		# "Allow them to stay but keep them watched"
+		# Scout operates covertly, evaluates characters without formal permission
+		# Lower chance of finding recruits, but no risk to ruler
+		trigger_event = {
+			id = murim_scout.0003
+			days = 14
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = paranoid
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0001.c
+		# "Expel this foreign agent immediately"
+		# Scout is expelled, realm blacklisted for 10 years
+		# VANILLA SEPARATION: This is a martial decision, not a diplomatic incident
+		scope:scout = {
+			murim_scout_expelled_effect = yes
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = paranoid
+			}
+			modifier = {
+				add = 20
+				has_trait = zealous  # Religious rulers suspicious of Eastern practices
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0001.d
+		# "Capture them — I want to know more about these 'martial sects'"
+		# Triggers capture event. Risky — scout may fight back.
+		# If scout is powerful (prowess > ruler's martial), they escape
+		# If captured successfully, intelligence event + clan hostility
+		trigger_event = {
+			id = murim_scout.0004
+			days = 3
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# murim_scout.0002 — Scout Evaluates Court (Formal Audience Granted)
+murim_scout.0002 = {
+	type = character_event
+	title = murim_scout.0002.t
+	desc = murim_scout.0002.desc
+	# "The martial sect representative spends several days at your court, 
+	#  observing everyone from kitchen servants to your finest knights.
+	#  They watch sparring matches with an unreadable expression, occasionally
+	#  nodding at unexpected moments — not when the strongest swing lands,
+	#  but when a squire dodges with natural instinct."
+	
+	theme = martial
+	
+	# Scout evaluates all characters in court age 8-40
+	# Checks: prowess relative to age, brave/strong/genius traits, martial_awareness
+	# If finds candidate(s), triggers recruitment pitch
+	
+	immediate = {
+		# Scout evaluation logic
+		# Weighted scoring: genius +5, quick +4, strong +3, brave +3, 
+		#   robust +2, ambitious +2, rowdy +2, martial_awareness +2
+		# Prowess threshold: age 8-15 needs prowess >= 4, age 16-25 needs >= 8, age 26+ needs >= 12
+		# Clan-specific preferences applied:
+		#   Mount Hua: +3 for just, +3 for temperate, -3 for deceitful
+		#   Shaolin: +3 for calm, +3 for compassionate, +4 for learning >= 10, -3 for wrathful
+		#   Heavenly Demon: +3 for ambitious, +3 for deceitful, +2 for sadistic, -3 for just
+		#   Tang: +5 for Tang bloodline (var:tang_clan_member), +3 for learning >= 8 (alchemy)
+		#   Wudang: +4 for learning >= 12, +3 for patient, +2 for scholar, -3 for wrathful
+		#   Beggar Sect: +3 for gregarious, +2 for brave, +5 for no_liege (homeless/wanderers)
+	}
+	
+	option = {
+		name = murim_scout.0002.a
+		# "They've identified [NUMBER] potential candidates in my court"
+		# Scout approaches candidates. For each: recruitment pitch event.
+		# If player's character or player's child is a candidate, special event.
+		trigger_event = {
+			id = murim_recruit.0003  # From murim_clan_recruitment_events.txt
+			days = 3
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	option = {
+		name = murim_scout.0002.b
+		# "Nobody caught their eye. The scout bows and departs."
+		# Scout moves to next realm. Slight disappointment.
+		# May trigger murim_scout.0008 (failed recruitment trip) if pattern continues
+		ai_chance = { base = 0 }  # Only fires if no candidates found
+	}
+}
+
+# murim_scout.0003 — Scout Operates Covertly (Watched but Tolerated)
+murim_scout.0003 = {
+	type = character_event
+	title = murim_scout.0003.t
+	desc = murim_scout.0003.desc
+	# "Your spies report the Eastern traveler has been approaching people 
+	#  discreetly — servants with unusual physical ability, guards who move 
+	#  too fast, children who play-fight with uncanny coordination. They're 
+	#  recruiting, but carefully. Your watchers are impressed: this person 
+	#  moves through crowds like smoke."
+	
+	theme = intrigue
+	
+	# Reduced evaluation — scout sees fewer characters, lower chance of finding candidates
+	# But also lower risk: no formal commitment from the ruler
+	
+	option = {
+		name = murim_scout.0003.a
+		# "Let them continue. If they find someone, I want to know."
+		# Scout continues for another month. 50% chance of finding 1 candidate.
+		# If found, ruler is notified and can intervene or allow recruitment.
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_scout.0003.b
+		# "They've seen enough. Escort them out politely."
+		# Scout leaves with whatever intelligence they gathered.
+		# Not a formal expulsion — no blacklist. Scout may return in a few years.
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_scout.0003.c
+		# "Actually, I'd like to speak with them myself."
+		# Elevate to formal audience. Triggers murim_scout.0002.
+		# Ruler gains martial_awareness if they don't have it.
+		trigger_event = {
+			id = murim_scout.0002
+			days = 3
+		}
+		if = {
+			limit = { NOT = { has_trait = martial_awareness } }
+			add_trait = martial_awareness
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+# murim_scout.0004 — Attempted Capture of Scout
+murim_scout.0004 = {
+	type = character_event
+	title = murim_scout.0004.t
+	desc = murim_scout.0004.desc
+	# "Your guards move to seize the Eastern visitor. What happens next 
+	#  depends entirely on how skilled this scout truly is..."
+	
+	theme = martial
+	
+	# Outcome based on prowess comparison: scout vs. ruler's best fighter
+	# If scout prowess > best guard prowess: scout escapes (fights through)
+	# If scout prowess <= best guard prowess: scout captured
+	
+	option = {
+		name = murim_scout.0004.a
+		# SCOUT ESCAPES — "They moved through your guards like water through 
+		#  fingers. Three soldiers are unconscious. The visitor is gone."
+		trigger = {
+			# Scout is stronger than any guard
+			scope:scout = { prowess >= 16 }
+		}
+		# Scout escapes, realm blacklisted for 10 years
+		# 1-2 guards wounded. Ruler gains martial_awareness from witnessing.
+		scope:scout = { murim_scout_expelled_effect = yes }
+		if = {
+			limit = { NOT = { has_trait = martial_awareness } }
+			add_trait = martial_awareness
+		}
+		# VANILLA SEPARATION: No war, no diplomatic incident. Just embarrassment.
+		add_prestige = -50
+		ai_chance = { base = 0 }  # Outcome, not choice
+	}
+	
+	option = {
+		name = murim_scout.0004.b
+		# SCOUT CAPTURED — "After a brief but terrifying display of skill,
+		#  your guards overwhelm the visitor through sheer numbers."
+		trigger = {
+			scope:scout = { prowess < 16 }
+		}
+		scope:scout = { murim_scout_captured_effect = yes }
+		# Triggers ransom/rescue chain. Clan will respond.
+		ai_chance = { base = 0 }  # Outcome, not choice
+	}
+}
+
+# murim_scout.0005 — Scout Arrives at Korean/Chinese Court
+# Different tone than foreign courts — locals KNOW what martial sects are
+murim_scout.0005 = {
+	type = character_event
+	title = murim_scout.0005.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:mount_hua } }
+				desc = murim_scout.0005.desc_mount_hua
+				# "A Mount Hua disciple arrives at your court. The plum blossom insignia 
+				#  on their robes is unmistakable. Your courtiers whisper — Mount Hua 
+				#  hasn't sent a recruiter here in years. They must be running low on talent."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:shaolin } }
+				desc = murim_scout.0005.desc_shaolin
+				# "A Shaolin monk has come down from the mountain. Everyone in court knows 
+				#  what this means — they're looking for children with potential. Parents 
+				#  push their kids forward eagerly. Others hide theirs. Shaolin training 
+				#  is legendary, but the discipline breaks most who attempt it."
+			}
+			triggered_desc = {
+				trigger = { scope:scout = { var:murim_clan_scout = flag:heavenly_demon } }
+				desc = murim_scout.0005.desc_heavenly_demon
+				# "Rumors spread through the city: the Heavenly Demon Sect has a recruiter 
+				#  in town. Guards double their patrols. Parents lock their doors. The 
+				#  desperate, the angry, and the ambitious quietly seek out the dark figure 
+				#  who promises power without the righteous sects' endless rules and patience."
+			}
+			# [Similar triggered_desc for tang, wudang, beggar_sect]
+		}
+	}
+	
+	theme = martial
+	
+	option = {
+		name = murim_scout.0005.a
+		# "Welcome the recruiter with ceremony"
+		# Full cooperation — scout evaluates everyone, high recruit chance
+		# Opinion boost with that clan
+		add_opinion = {
+			modifier = murim_martial_respect_opinion
+			target = scope:scout
+			opinion = 15
+		}
+		trigger_event = {
+			id = murim_scout.0002
+			days = 3
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_scout.0005.b
+		# "Allow them to recruit, but I want first pick of my own court"
+		# Ruler can exempt specific characters from being approached
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_scout.0005.c
+		# "Our region has its own martial traditions. We don't need foreign sects."
+		# Patriotic refusal. Scout leaves. Slight clan opinion penalty.
+		add_opinion = {
+			modifier = murim_martial_rivalry_opinion
+			target = scope:scout
+			opinion = -10
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = arrogant
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0005.d
+		# "Only if they demonstrate their sect's techniques first"
+		# Scout gives a martial demonstration. Entertainment + martial_awareness for court.
+		# All courtiers who watch gain martial_awareness if they lack it.
+		trigger_event = {
+			id = murim_scout.0006
+			days = 7
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# murim_scout.0006 — Scout Martial Demonstration
+murim_scout.0006 = {
+	type = character_event
+	title = murim_scout.0006.t
+	desc = murim_scout.0006.desc
+	# "The scout steps into the courtyard and demonstrates their sect's art.
+	#  [Clan-specific description of the demonstration]
+	#  The court watches in stunned silence. Several children's eyes 
+	#  are wide with wonder. A few adults unconsciously clench their fists,
+	#  imagining themselves moving that way. The martial world just became real 
+	#  for everyone who watched."
+	
+	theme = martial
+	
+	# All courtiers gain martial_awareness
+	# Children who watched have boosted recruitment weight for that clan
+	# Ruler gains martial_respect opinion of the scout
+	
+	option = {
+		name = murim_scout.0006.a
+		# "Magnificent. Proceed with your recruitment."
+		# Full cooperation now. Scout evaluates court.
+		trigger_event = {
+			id = murim_scout.0002
+			days = 3
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_scout.0006.b
+		# "Impressive, but I'd like to test their skills myself"
+		# Ruler challenges scout to a friendly spar. Duel event.
+		# Win: ruler gains prestige, scout gains respect for the realm
+		# Lose: ruler gains humility, martial_awareness bonus, children inspired
+		trigger_event = {
+			id = murim_duel.0001  # From duel events — friendly spar variant
+			days = 1
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+			modifier = {
+				add = 20
+				prowess >= 12
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0006.c
+		# "A fine show. But my people will find their own path."
+		# Polite refusal after demonstration. Scout leaves impressed by the courtesy.
+		# No opinion penalty — the demonstration was a good cultural exchange.
+		ai_chance = { base = 25 }
+	}
+}
+
+# ============================================================
+# SCOUT RETURN & MANAGEMENT EVENTS (0010-0019)
+# ============================================================
+
+# murim_scout.0010 — Scout Returns to Clan Headquarters
+murim_scout.0010 = {
+	type = character_event
+	title = murim_scout.0010.t
+	desc = murim_scout.0010.desc
+	# "After [X] years abroad, [SCOUT NAME] returns to [CLAN] headquarters.
+	#  Behind them trail [NUMBER] new prospects — wide-eyed and uncertain,
+	#  but burning with potential. The clan elders gather to evaluate 
+	#  what the scout has brought home."
+	
+	theme = diplomacy
+	
+	# Clan leader (or council) evaluates recruits
+	# Each recruit is processed through murim_scout_process_recruits_effect
+	
+	option = {
+		name = murim_scout.0010.a
+		# "Welcome home, [SCOUT]. Let us meet our new prospects."
+		# Process all recruits: outer_disciple trait, culture shock events for foreigners
+		murim_scout_process_recruits_effect = yes
+		# Trigger intelligence report
+		trigger_event = {
+			id = murim_scout.0060
+			days = 7
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+# murim_scout.0020 — Clan Mourns Lost Scout
+murim_scout.0020 = {
+	type = character_event
+	title = murim_scout.0020.t
+	desc = murim_scout.0020.desc
+	# "Word reaches [CLAN] that their scout [NAME] has fallen in distant lands.
+	#  The details are unclear — killed by bandits, executed by a suspicious ruler, 
+	#  or perhaps challenged by a rival sect's recruiter. The loss is felt deeply. 
+	#  A replacement must be trained, but that takes time."
+	
+	theme = diplomacy
+	
+	option = {
+		name = murim_scout.0020.a
+		# "Train a replacement immediately — we cannot afford a gap"
+		# New scout spawns in 1 year. Higher cost (inner disciple pulled from duties).
+		# Clan harmony -3 (rushed decision)
+		change_variable = {
+			name = murim_clan_harmony
+			add = -3
+		}
+		# Schedule replacement spawn
+		trigger_event = {
+			id = murim_scout.0021  # Replacement scout spawns
+			days = 365
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				# Clan is in emergency recruitment mode
+				var:murim_clan_youth_count < 3
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0020.b
+		# "Take time to select the right person. A poor scout does more harm than good."
+		# New scout spawns in 2 years. Better quality (higher stats).
+		trigger_event = {
+			id = murim_scout.0021
+			days = 730
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_scout.0020.c
+		# "Avenge our scout first, then replace them"
+		# Send a martial team to the location where scout died.
+		# Revenge event chain. Then replacement spawn.
+		trigger_event = {
+			id = murim_scout.0022  # Revenge mission
+			days = 30
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = vengeful
+			}
+		}
+	}
+}
+
+# murim_scout.0030 — Clan Learns Scout Was Captured
+murim_scout.0030 = {
+	type = character_event
+	title = murim_scout.0030.t
+	desc = murim_scout.0030.desc
+	# "A message arrives — [SCOUT NAME] has been captured and imprisoned by 
+	#  [RULER] of [REALM]. The foreign ruler demands answers about the sect's 
+	#  'espionage activities.' The clan must decide how to respond."
+	
+	theme = intrigue
+	
+	option = {
+		name = murim_scout.0030.a
+		# "Pay the ransom — our scout's life is worth more than gold"
+		# Costs gold. Scout freed, returns to clan. Realm blacklisted 10 years.
+		add_gold = -100
+		# Free scout, blacklist realm
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_scout.0030.b
+		# "Send a rescue team — our people don't languish in foreign prisons"
+		# Dispatch inner disciples to break scout out. Stealth mission event.
+		# Success: scout freed, spectacular escape story, realm VERY hostile
+		# Failure: rescue team also captured, international incident
+		trigger_event = {
+			id = murim_scout.0031  # Rescue mission
+			days = 60
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				# Clan has strong fighters available
+				any_courtier = {
+					has_trait = inner_disciple
+					prowess >= 18
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0030.c
+		# "The scout knew the risks. We cannot expose ourselves for one person."
+		# Abandon scout. Harsh but pragmatic.
+		# Clan harmony -5 (members lose faith in clan loyalty)
+		# Scout may be executed, released after years, or escape on their own
+		change_variable = {
+			name = murim_clan_harmony
+			add = -5
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = callous
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0030.d
+		# "Open diplomatic channels — explain our peaceful intentions"
+		# Attempt to negotiate release through diplomacy. 
+		# Works better with high-diplomacy clan leaders.
+		# VANILLA SEPARATION: This is martial diplomacy, not political diplomacy.
+		# No treaties, no alliances, no political consequences.
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 25
+				diplomacy >= 14
+			}
+		}
+	}
+}
+
+# murim_scout.0040 — Scout Expelled, Moves On
+murim_scout.0040 = {
+	type = character_event
+	title = murim_scout.0040.t
+	desc = murim_scout.0040.desc
+	# "Escorted to the border by armed guards, [SCOUT NAME] looks back 
+	#  at [REALM] one last time. There was talent there — raw, untrained, 
+	#  wasted. But the ruler has spoken. The scout marks this realm on 
+	#  their mental map: 'Return in ten years. Rulers change. Policies change. 
+	#  The talented children will still be there.'"
+	
+	theme = diplomacy
+	
+	# Scout automatically redirects to next realm on circuit.
+	# No player choice — informational event.
+	
+	option = {
+		name = murim_scout.0040.a
+		# "The road continues."
+		ai_chance = { base = 100 }
+	}
+}
+
+# murim_scout.0050 — Rival Scouts Meet
+# Two scouts from different clans in the same realm, both targeting the same recruit
+murim_scout.0050 = {
+	type = character_event
+	title = murim_scout.0050.t
+	desc = murim_scout.0050.desc
+	# "[SCOUT 1] of [CLAN 1] and [SCOUT 2] of [CLAN 2] lock eyes across 
+	#  the market square. Both have been watching the same child — 
+	#  a [AGE]-year-old with extraordinary reflexes and raw power. 
+	#  The tension is immediate. The martial world's recruitment wars 
+	#  have come to [REALM]."
+	
+	theme = martial
+	
+	option = {
+		name = murim_scout.0050.a
+		# "Negotiate — split the territory, you take this one, I'll find another"
+		# Diplomatic resolution. 50/50 who gets the recruit based on diplomacy stat.
+		# No hostility generated. Professional scouts respect the game.
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				diplomacy >= 12
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0050.b
+		# "Let the child choose — present both sects and let them decide"
+		# The recruit gets to pick their clan. Personality-based.
+		# Fair resolution. Both scouts can live with it.
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_scout.0050.c
+		# "Challenge — the stronger scout's clan deserves the better recruit"
+		# Duel between scouts. Non-lethal (usually). Winner gets recruit.
+		# Loser's clan gets a rivalry opinion with winner's clan.
+		# VANILLA SEPARATION: This duel is martial, not political. No wars triggered.
+		trigger_event = {
+			id = murim_duel.0001  # Martial duel
+			days = 1
+		}
+		add_opinion = {
+			modifier = murim_martial_rivalry_opinion
+			target = scope:rival_scout
+			opinion = -15
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+			modifier = {
+				add = 20
+				prowess >= scope:rival_scout.prowess
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0050.d
+		# "Sabotage — poison the rival scout's reputation with the family"
+		# Spread lies about the rival clan. Intrigue-based.
+		# If discovered, BOTH scouts expelled from the realm.
+		# Heavenly Demon scouts heavily favor this option.
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				has_trait = ambitious
+				var:murim_clan_scout = flag:heavenly_demon
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 30
+				var:murim_clan_scout = flag:heavenly_demon
+			}
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# murim_scout.0060 — Intelligence Report to Clan Council
+murim_scout.0060 = {
+	type = character_event
+	title = murim_scout.0060.t
+	desc = murim_scout.0060.desc
+	# "[SCOUT NAME] stands before the clan council and delivers their report:
+	#  'In my travels, I have seen martial traditions we do not know. 
+	#  [FOREIGN ART DESCRIPTION]. If we could study their methods, 
+	#  our own techniques might evolve in ways we cannot imagine.'"
+	
+	theme = learning
+	
+	# Scout reports on foreign martial arts discovered during travels
+	# Based on regions visited: Byzantine wrestling, Persian archery-combat,
+	# Indian yoga-martial arts, Norse berserker techniques, African stick fighting,
+	# Japanese proto-kenjutsu, Southeast Asian Muay/Pencak Silat
+	
+	option = {
+		name = murim_scout.0060.a
+		# "Send specialists to study this foreign art"
+		# Begins a long-term event chain: 2-5 years to learn foreign technique
+		# If successful: new hybrid technique created for the clan
+		# Costs gold and manpower (inner disciples sent abroad)
+		add_gold = -50
+		trigger_event = {
+			id = murim_foreign.0001  # Foreign arts study chain
+			days = 365
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = curious
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0060.b
+		# "Interesting, but our traditional methods are sufficient"
+		# No action. Some elders agree, some younger members disappointed.
+		# Mild harmony impact if younger generation is restless.
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_scout.0060.c
+		# "This knowledge could be dangerous in the wrong hands. Suppress the report."
+		# Intelligence classified. Prevents rival clans from learning about it.
+		# But the scout may leak it if disloyal. Intrigue check.
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = paranoid
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0060.d
+		# "Invite a foreign master to teach us directly"
+		# Bold move. Send an invitation to a foreign martial master.
+		# If they accept: foreign master arrives at clan HQ, teaches for 1-3 years
+		# If they decline: nothing happens
+		# If they're hostile: could be a trap
+		trigger_event = {
+			id = murim_foreign.0010  # Invite foreign master chain
+			days = 180
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				diplomacy >= 14
+			}
+		}
+	}
+}
+
+# ============================================================
+# SCOUT SPECIAL EVENTS (0070-0079)
+# ============================================================
+
+# murim_scout.0070 — Scout Discovers Generational Prodigy
+# Rare event (1% per court visit) — scout finds a once-in-a-generation talent
+murim_scout.0070 = {
+	type = character_event
+	title = murim_scout.0070.t
+	desc = murim_scout.0070.desc
+	# "[SCOUT NAME]'s hands are trembling. In all their years of searching, 
+	#  across dozens of realms and hundreds of children evaluated, they have 
+	#  never seen anything like this. [CHILD NAME], a [AGE]-year-old from 
+	#  [ORIGIN], possesses a natural martial body that appears perhaps once 
+	#  in a century. If this child is trained properly, they could reshape 
+	#  the balance of the entire martial world."
+	
+	theme = martial
+	
+	# The prodigy child. Scout's top priority. Will fight rival scouts for this one.
+	# If recruited: fast-track to inner disciple. Potential future clan leader.
+	# If missed: another clan will grab them. Or they'll discover martial arts on their own.
+	
+	option = {
+		name = murim_scout.0070.a
+		# "Approach the family immediately — spare no expense"
+		# Scout offers maximum incentive. Gold, prestige, guarantees.
+		# 80% success rate. Parents would be fools to refuse.
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_scout.0070.b
+		# "Report to the clan first — this decision is above my rank"
+		# Scout sends urgent message to clan leadership. 
+		# Clan leader personally comes to recruit (or sends vice leader).
+		# Delay risks rival scouts finding the prodigy.
+		trigger_event = {
+			id = murim_scout.0071  # Clan leadership responds
+			days = 30
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	option = {
+		name = murim_scout.0070.c
+		# "Watch from a distance first — I need to be sure"
+		# Scout observes for weeks. Confirms the assessment.
+		# But delay means 30% chance a rival scout also notices.
+		ai_chance = { base = 10 }
+	}
+}
+
+# murim_scout.0075 — Scout Falls in Love with Foreign Land
+# The human element. After years abroad, some scouts don't want to go back.
+murim_scout.0075 = {
+	type = character_event
+	title = murim_scout.0075.t
+	desc = murim_scout.0075.desc
+	# "Years of travel have changed [SCOUT NAME]. They've found love, 
+	#  or peace, or simply a place that feels more like home than their 
+	#  clan headquarters ever did. The next return trip approaches, 
+	#  and for the first time, the scout doesn't want to go back."
+	
+	theme = diplomacy
+	
+	option = {
+		name = murim_scout.0075.a
+		# "Duty calls. Return to the clan."
+		# Scout returns but with stress/depression modifier.
+		# May request transfer to a different role.
+		add_stress = 30
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_scout.0075.b
+		# "Stay. Send a message explaining your decision."
+		# Scout defects from clan. Becomes a wandering martial artist in the foreign land.
+		# Clan loses a scout. Big harmony hit. Possible betrayal classification.
+		# But the ex-scout becomes a bridge between cultures — potential future ally.
+		# Removes clan membership, adds wandering_martial_artist modifier
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+			modifier = {
+				add = 15
+				any_relation = { type = lover }  # Has a lover in foreign land
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0075.c
+		# "Request permission to establish a branch school here"
+		# Bold diplomatic move. If clan approves: first foreign branch of the sect.
+		# Creates a permanent martial presence in a foreign land.
+		# Major event if successful — changes the martial world map.
+		trigger_event = {
+			id = murim_scout.0076  # Branch school proposal
+			days = 180
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				diplomacy >= 14
+			}
+		}
+	}
+}
+
+# ============================================================
+# CROSS-CULTURAL RECRUIT EVENTS (0080-0089)
+# ============================================================
+
+# murim_scout.0080 — Foreign Recruit's Identity Crisis
+# A recruited foreigner struggles with being between two worlds
+murim_scout.0080 = {
+	type = character_event
+	title = murim_scout.0080.t
+	desc = murim_scout.0080.desc
+	# "You are [NAME] of [ORIGIN], but everyone calls you by a Korean/Chinese 
+	#  name now. You eat different food, speak a different language, practice 
+	#  arts your parents never imagined. Sometimes at night you dream in your 
+	#  mother tongue. Sometimes you can't remember the words anymore. 
+	#  Who are you? The [ORIGIN] child who left, or the martial artist you've become?"
+	
+	theme = diplomacy
+	
+	# Only fires for recruited foreign characters (has murim_foreign_origin variable)
+	# Fires once between ages 14-18
+	
+	option = {
+		name = murim_scout.0080.a
+		# "I am of [CLAN] now. This is my home. My old life is behind me."
+		# Full assimilation. Gains loyalty bonus to clan. Loses connection to homeland.
+		# Cannot trigger homecoming events later. Becomes fully Eastern identity.
+		add_opinion = {
+			modifier = murim_martial_respect_opinion
+			target = scope:clan_leader
+			opinion = 20
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	option = {
+		name = murim_scout.0080.b
+		# "I am BOTH. My [ORIGIN] roots make my [CLAN] techniques unique."
+		# Dual identity. Creates a hybrid fighting style eventually.
+		# Gets unique modifier: murim_cross_cultural_fighter (+2 prowess, +2 diplomacy)
+		# Other clan members respect the difference. Some are jealous.
+		add_character_modifier = {
+			modifier = murim_cross_cultural_fighter
+			years = -1  # Permanent
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_scout.0080.c
+		# "I want to go home. I don't belong here."
+		# Triggers homesickness chain. May lead to defection or eventual homecoming.
+		# Clan tries to convince them to stay. If they leave, secret knowledge concern.
+		add_stress = 20
+		trigger_event = {
+			id = murim_recruit.0010  # Homecoming event chain
+			days = 180
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = shy
+			}
+		}
+	}
+	
+	option = {
+		name = murim_scout.0080.d
+		# "I'll forge my own path — neither fully [ORIGIN] nor fully [CLAN]"
+		# Becomes a wanderer. Leaves clan but keeps techniques.
+		# Becomes a unique character: foreign-born wandering martial artist.
+		# Creates their own reputation independent of any clan.
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# murim_scout.0085 — Foreign Recruit Shocks Everyone
+# When a foreign recruit excels beyond all expectations
+murim_scout.0085 = {
+	type = character_event
+	title = murim_scout.0085.t
+	desc = murim_scout.0085.desc
+	# "The training hall falls silent. [NAME], the [ORIGIN]-born disciple 
+	#  that half the clan dismissed as a charity case, has just defeated 
+	#  the inner disciple champion in open sparring. Not through luck. 
+	#  Through technique so refined it made the elders stand. 
+	#  'Where did you learn that movement?' the head elder asks. 
+	#  [NAME] smiles. 'It's how we dance in [ORIGIN]. I adapted it.'"
+	
+	theme = martial
+	
+	# Fires when a foreign recruit's prowess exceeds the clan average by 5+
+	# Massive reputation event. The foreign nobody just proved themselves.
+	
+	option = {
+		name = murim_scout.0085.a
+		# "This one has found harmony between two worlds. Promote them."
+		# Instant promotion to inner disciple (if outer) or elder candidate (if inner)
+		# Clan gains prestige. Other foreign recruits gain hope.
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_scout.0085.b
+		# "Fascinating technique. I want to study how they combined styles."
+		# Clan begins developing a hybrid style based on the foreign recruit's innovations.
+		# New technique creation event chain over 2-3 years.
+		trigger_event = {
+			id = murim_technique.0050  # Hybrid technique development
+			days = 365
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_scout.0085.c
+		# "One impressive display doesn't erase their foreign blood."
+		# Clan conservatives resist. Internal tension event.
+		# Foreign recruit faces discrimination. Test of character.
+		# If they persevere: even more impressive rise story.
+		# If they break: leave clan, potential enemy.
+		add_opinion = {
+			modifier = murim_martial_rivalry_opinion
+			target = scope:foreign_recruit
+			opinion = -10
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = arrogant
+			}
+		}
+	}
+}
