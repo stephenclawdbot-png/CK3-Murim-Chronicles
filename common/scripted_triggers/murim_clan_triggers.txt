@@ -1,48 +1,61 @@
-# Murim Chronicles - Clan/Sect Hierarchy Triggers
+# Murim Chronicles - Clan/Sect Hierarchy Triggers (ALL 9 GREAT CLANS)
 # INTEGRATION: Used by murim_sect_politics_events.txt, murim_clan_membership_effects.txt,
-#              murim_game_start_effects.txt, murim_tang_birthright_effects.txt
+#              murim_game_start_effects.txt, murim_tang_birthright_effects.txt,
+#              murim_faction_events.txt, murim_shadow_politics_events.txt,
+#              murim_custom_clan_events.txt, murim_clan_scout_effects.txt
 # Cross-refs: murim_triggers.txt (base murim_is_clan_member_trigger),
-#             murim_harmony_values.txt (harmony checks)
+#             murim_harmony_values.txt (harmony checks),
+#             murim_faction_effects.txt (faction alignment)
 # RULE: Clans are ORGANIZATIONS managed through traits, NOT CK3 dynasties.
 #       A character's CK3 dynasty is separate from their sect membership.
 #       EXCEPTION: Tang Clan is bloodline-based (see murim_tang_birthright_effects.txt).
 # GENDER: NO gender restrictions on ANY rank. Women can hold ALL positions.
+# FACTIONS: Orthodox (righteous) vs Unorthodox (demonic). Affects interactions, wars, alliances.
+# VANILLA SEPARATION: Clan faction does NOT affect feudal politics, succession, or wars.
 # INDEX:
-#   1. murim_is_sect_leader_trigger - is head of any sect
-#   2. murim_is_sect_vice_leader_trigger - is second in command
-#   3. murim_is_sect_elder_trigger - senior master
-#   4. murim_is_inner_disciple_trigger - proven core member
-#   5. murim_is_outer_disciple_trigger - new/unproven member
-#   6. murim_is_sect_associate_trigger - outsider with limited access
-#   7. murim_get_sect_rank_value - numeric rank for comparison (leader=6...associate=1)
+#   1-6. Rank checks (leader, vice, elder, inner, outer, associate) — ALL 9 CLANS
+#   7. murim_get_sect_rank_value - numeric rank for comparison
 #   8. murim_is_higher_rank_than_prev_trigger - promotion eligibility
 #   9. murim_is_same_sect_as_prev_trigger - same sect check
-#   10. murim_is_tang_bloodline_trigger - Tang Clan blood check (dynasty-based)
+#   10. murim_is_tang_bloodline_trigger - Tang Clan blood check
 #   11. murim_is_eligible_for_promotion_trigger - can be promoted
 #   12. murim_is_succession_candidate_trigger - eligible to become sect leader
-#   13. murim_sect_has_leader_trigger - does the sect currently have a leader
+#   13. murim_sect_has_leader_trigger - does the sect have a leader
 #   14. murim_sect_harmony_is_high_trigger - harmony >= 70
 #   15. murim_sect_harmony_is_low_trigger - harmony <= 30
-#   16. murim_is_in_righteous_sect_trigger - Mount Hua, Wudang, Shaolin
-#   17. murim_is_in_demonic_sect_trigger - Heavenly Demon Sect
-#   18. murim_is_in_neutral_sect_trigger - Tang Clan, Beggar Sect
+#   16. murim_is_in_orthodox_sect_trigger - Mount Hua, Shaolin, Wudang, Tang, Beggar, Iron Fist
+#   17. murim_is_in_unorthodox_sect_trigger - Heavenly Demon, Poison Flower, Phantom Blade
+#   18. murim_is_in_neutral_sect_trigger - custom clans that haven't declared
+#   19-27. Individual clan membership triggers (all 9)
+#   28. murim_is_faction_rival_trigger - target is in opposing faction
+#   29. murim_is_custom_clan_member_trigger - member of player/AI-created clan
+#   30. murim_can_create_custom_clan_trigger - eligible for clan creation
+#   31. murim_is_clan_leader_of_any_trigger - leader of any of the 9+ clans
+#   32. murim_is_poison_specialist_trigger - Poison Flower or Tang poison user
+#   33. murim_is_assassin_type_trigger - Phantom Blade or assassination-trained
 
 # ═══════════════════════════════════════════
-#  1. SECT LEADER CHECK
+#  1. SECT LEADER CHECK (ALL 9 CLANS)
 # ═══════════════════════════════════════════
 murim_is_sect_leader_trigger = {
 	OR = {
 		has_character_modifier = mount_hua_sect_leader
-		has_character_modifier = tang_clan_patriarch # or matriarch - title is gender-neutral in function
+		has_character_modifier = tang_clan_patriarch # gender-neutral in function
 		has_character_modifier = heavenly_demon_sect_leader
 		has_character_modifier = wudang_sect_leader
-		has_character_modifier = shaolin_abbot # or abbess
+		has_character_modifier = shaolin_abbot # gender-neutral in function
 		has_character_modifier = beggar_sect_chief
+		# NEW CLANS
+		has_character_modifier = poison_flower_palace_mistress # gender-neutral in function
+		has_character_modifier = iron_fist_gate_master
+		has_character_modifier = phantom_blade_sect_leader
+		# CUSTOM CLANS (dynamic — uses flag)
+		has_character_flag = custom_clan_leader
 	}
 }
 
 # ═══════════════════════════════════════════
-#  2. SECT VICE LEADER CHECK
+#  2. SECT VICE LEADER CHECK (ALL 9 CLANS)
 # ═══════════════════════════════════════════
 murim_is_sect_vice_leader_trigger = {
 	OR = {
@@ -52,11 +65,17 @@ murim_is_sect_vice_leader_trigger = {
 		has_character_modifier = wudang_vice_leader
 		has_character_modifier = shaolin_vice_abbot
 		has_character_modifier = beggar_sect_vice_chief
+		# NEW CLANS
+		has_character_modifier = poison_flower_vice_mistress
+		has_character_modifier = iron_fist_vice_master
+		has_character_modifier = phantom_blade_vice_leader
+		# CUSTOM CLANS
+		has_character_flag = custom_clan_vice_leader
 	}
 }
 
 # ═══════════════════════════════════════════
-#  3. SECT ELDER CHECK
+#  3. SECT ELDER CHECK (ALL 9 CLANS)
 # ═══════════════════════════════════════════
 murim_is_sect_elder_trigger = {
 	OR = {
@@ -66,11 +85,17 @@ murim_is_sect_elder_trigger = {
 		has_character_modifier = wudang_elder
 		has_character_modifier = shaolin_elder
 		has_character_modifier = beggar_sect_elder
+		# NEW CLANS
+		has_character_modifier = poison_flower_elder
+		has_character_modifier = iron_fist_elder
+		has_character_modifier = phantom_blade_elder
+		# CUSTOM CLANS
+		has_character_flag = custom_clan_elder
 	}
 }
 
 # ═══════════════════════════════════════════
-#  4. INNER DISCIPLE CHECK
+#  4. INNER DISCIPLE CHECK (ALL 9 CLANS)
 # ═══════════════════════════════════════════
 murim_is_inner_disciple_trigger = {
 	OR = {
@@ -80,11 +105,17 @@ murim_is_inner_disciple_trigger = {
 		has_character_modifier = wudang_inner_disciple
 		has_character_modifier = shaolin_inner_disciple
 		has_character_modifier = beggar_sect_inner_member
+		# NEW CLANS
+		has_character_modifier = poison_flower_inner_disciple
+		has_character_modifier = iron_fist_inner_disciple
+		has_character_modifier = phantom_blade_inner_disciple
+		# CUSTOM CLANS
+		has_character_flag = custom_clan_inner_disciple
 	}
 }
 
 # ═══════════════════════════════════════════
-#  5. OUTER DISCIPLE CHECK
+#  5. OUTER DISCIPLE CHECK (ALL 9 CLANS)
 # ═══════════════════════════════════════════
 murim_is_outer_disciple_trigger = {
 	OR = {
@@ -94,28 +125,40 @@ murim_is_outer_disciple_trigger = {
 		has_character_modifier = wudang_outer_disciple
 		has_character_modifier = shaolin_outer_disciple
 		has_character_modifier = beggar_sect_outer_member
+		# NEW CLANS
+		has_character_modifier = poison_flower_outer_disciple
+		has_character_modifier = iron_fist_outer_disciple
+		has_character_modifier = phantom_blade_outer_disciple
+		# CUSTOM CLANS
+		has_character_flag = custom_clan_outer_disciple
 	}
 }
 
 # ═══════════════════════════════════════════
-#  6. SECT ASSOCIATE CHECK (limited access outsiders)
+#  6. SECT ASSOCIATE CHECK (ALL 9 CLANS)
 # ═══════════════════════════════════════════
 murim_is_sect_associate_trigger = {
 	OR = {
 		has_character_modifier = mount_hua_associate
-		has_character_modifier = tang_clan_associate # Non-blood outsiders ONLY get this
+		has_character_modifier = tang_clan_associate
 		has_character_modifier = heavenly_demon_associate
 		has_character_modifier = wudang_associate
-		has_character_modifier = shaolin_lay_disciple
+		has_character_modifier = shaolin_associate
 		has_character_modifier = beggar_sect_associate
+		# NEW CLANS
+		has_character_modifier = poison_flower_associate
+		has_character_modifier = iron_fist_associate
+		has_character_modifier = phantom_blade_associate
+		# CUSTOM CLANS
+		has_character_flag = custom_clan_associate
 	}
 }
 
 # ═══════════════════════════════════════════
-#  7. SECT RANK NUMERIC VALUE (for comparisons)
-#     Leader=6, Vice=5, Elder=4, Inner=3, Outer=2, Associate=1, None=0
+#  7. NUMERIC RANK VALUE (for comparison)
 # ═══════════════════════════════════════════
 murim_get_sect_rank_value = {
+	# Returns: leader=6, vice=5, elder=4, inner=3, outer=2, associate=1, none=0
 	value = 0
 	if = {
 		limit = { murim_is_sect_leader_trigger = yes }
@@ -144,124 +187,138 @@ murim_get_sect_rank_value = {
 }
 
 # ═══════════════════════════════════════════
-#  8. SAME SECT CHECK (this character and prev/root in same sect)
+#  8. HIGHER RANK THAN PREV (for events)
 # ═══════════════════════════════════════════
-murim_is_same_sect_as_prev_trigger = {
-	# Mount Hua
-	trigger_if = {
-		limit = { has_trait = mount_hua_disciple }
-		prev = { has_trait = mount_hua_disciple }
-	}
-	# Tang Clan
-	trigger_if = {
-		limit = {
-			OR = {
-				has_trait = tang_clan_member
-				has_character_modifier = tang_clan_associate
-			}
-		}
-		prev = {
-			OR = {
-				has_trait = tang_clan_member
-				has_character_modifier = tang_clan_associate
-			}
-		}
-	}
-	# Heavenly Demon
-	trigger_if = {
-		limit = { has_trait = heavenly_demon_disciple }
-		prev = { has_trait = heavenly_demon_disciple }
-	}
-	# Wudang
-	trigger_if = {
-		limit = { has_trait = wudang_disciple }
-		prev = { has_trait = wudang_disciple }
-	}
-	# Shaolin
-	trigger_if = {
-		limit = { has_trait = shaolin_disciple }
-		prev = { has_trait = shaolin_disciple }
-	}
-	# Beggar Sect
-	trigger_if = {
-		limit = { has_trait = beggar_sect_member }
-		prev = { has_trait = beggar_sect_member }
+murim_is_higher_rank_than_prev_trigger = {
+	# Used in event scopes where prev = another character
+	# Compare root's rank to prev's rank
+	custom_description = {
+		text = "Holds a higher sect rank"
+		murim_get_sect_rank_value > prev.murim_get_sect_rank_value
 	}
 }
 
 # ═══════════════════════════════════════════
-#  9. TANG BLOODLINE CHECK (dynasty-based, NOT trait-based)
+#  9. SAME SECT CHECK
+# ═══════════════════════════════════════════
+murim_is_same_sect_as_prev_trigger = {
+	OR = {
+		# Mount Hua
+		AND = { murim_is_mount_hua_member_trigger = yes prev = { murim_is_mount_hua_member_trigger = yes } }
+		# Tang Clan
+		AND = { murim_is_tang_clan_member_trigger = yes prev = { murim_is_tang_clan_member_trigger = yes } }
+		# Heavenly Demon
+		AND = { murim_is_heavenly_demon_member_trigger = yes prev = { murim_is_heavenly_demon_member_trigger = yes } }
+		# Wudang
+		AND = { murim_is_wudang_member_trigger = yes prev = { murim_is_wudang_member_trigger = yes } }
+		# Shaolin
+		AND = { murim_is_shaolin_member_trigger = yes prev = { murim_is_shaolin_member_trigger = yes } }
+		# Beggar Sect
+		AND = { murim_is_beggar_sect_member_trigger = yes prev = { murim_is_beggar_sect_member_trigger = yes } }
+		# Poison Flower Palace
+		AND = { murim_is_poison_flower_member_trigger = yes prev = { murim_is_poison_flower_member_trigger = yes } }
+		# Iron Fist Gate
+		AND = { murim_is_iron_fist_member_trigger = yes prev = { murim_is_iron_fist_member_trigger = yes } }
+		# Phantom Blade Sect
+		AND = { murim_is_phantom_blade_member_trigger = yes prev = { murim_is_phantom_blade_member_trigger = yes } }
+		# Custom clan (same flag value)
+		AND = {
+			has_character_flag = custom_clan_member
+			prev = { has_character_flag = custom_clan_member }
+			# Additional check: same clan ID variable
+			custom_description = {
+				text = "Same custom clan"
+				var:custom_clan_id = prev.var:custom_clan_id
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+#  10. TANG BLOODLINE CHECK
 # ═══════════════════════════════════════════
 murim_is_tang_bloodline_trigger = {
 	OR = {
-		has_dynasty_flag = tang_clan_bloodline
-		# Fallback: check if either parent is Tang blood
-		any_parent = {
-			has_trait = tang_clan_member
-		}
+		has_character_flag = tang_bloodline_confirmed
+		any_parent = { has_character_flag = tang_bloodline_confirmed }
+		dynasty = { has_dynasty_modifier = tang_clan_dynasty }
 	}
 }
 
 # ═══════════════════════════════════════════
-#  10. PROMOTION ELIGIBILITY
+#  11. PROMOTION ELIGIBILITY
 # ═══════════════════════════════════════════
 murim_is_eligible_for_promotion_trigger = {
 	is_alive = yes
 	is_imprisoned = no
-	murim_is_martial_artist_trigger = yes # from murim_triggers.txt
+	murim_is_clan_member_of_any_trigger = yes
 	NOR = {
-		murim_is_sect_leader_trigger = yes # Can't promote above leader
-		has_character_flag = sect_promotion_cooldown # 1-year cooldown between promotions
+		murim_is_sect_leader_trigger = yes
+		has_character_flag = murim_recently_promoted # 2-year cooldown
+		has_character_flag = murim_promotion_denied # 1-year cooldown
 	}
-	# Must be in a sect (any rank)
+	# Rank-specific requirements
 	OR = {
-		murim_is_sect_associate_trigger = yes
-		murim_is_outer_disciple_trigger = yes
-		murim_is_inner_disciple_trigger = yes
-		murim_is_sect_elder_trigger = yes
-		murim_is_sect_vice_leader_trigger = yes
+		# Associate -> Outer: 1+ year membership
+		AND = {
+			murim_is_sect_associate_trigger = yes
+			has_character_flag = murim_membership_1yr
+		}
+		# Outer -> Inner: 3+ years, proven in combat or training
+		AND = {
+			murim_is_outer_disciple_trigger = yes
+			has_character_flag = murim_membership_3yr
+			OR = {
+				prowess >= 10
+				has_trait = murim_tier_2_martial_artist
+				has_trait = murim_tier_3_martial_artist
+			}
+		}
+		# Inner -> Elder: 8+ years, high prowess, respected
+		AND = {
+			murim_is_inner_disciple_trigger = yes
+			has_character_flag = murim_membership_8yr
+			prowess >= 15
+			OR = {
+				has_trait = murim_tier_4_martial_artist
+				has_trait = murim_tier_5_martial_artist
+				age >= 40
+			}
+		}
+		# Elder -> Vice Leader: 15+ years, top tier, leader endorsement
+		AND = {
+			murim_is_sect_elder_trigger = yes
+			has_character_flag = murim_membership_15yr
+			prowess >= 20
+		}
 	}
 }
 
 # ═══════════════════════════════════════════
-#  11. SUCCESSION CANDIDATE (can become sect leader)
+#  12. SUCCESSION CANDIDATE
 # ═══════════════════════════════════════════
 murim_is_succession_candidate_trigger = {
 	is_alive = yes
 	is_imprisoned = no
-	murim_is_martial_artist_trigger = yes
-	age >= 20
 	OR = {
-		murim_is_sect_vice_leader_trigger = yes # Obvious first choice
-		murim_is_sect_elder_trigger = yes # Experienced alternative
-		# Inner disciple dark horse: must be exceptional
+		murim_is_sect_vice_leader_trigger = yes
+		murim_is_sect_elder_trigger = yes
+		# Exceptional inner disciple (rare path)
 		AND = {
 			murim_is_inner_disciple_trigger = yes
-			prowess >= 20
+			prowess >= 25
 			OR = {
-				has_trait = ambitious
-				has_trait = brave
+				has_trait = murim_tier_5_martial_artist
+				has_trait = murim_tier_6_martial_artist
 			}
 		}
-	}
-	# Tang Clan special: must be Tang blood for full leadership
-	trigger_if = {
-		limit = {
-			OR = {
-				has_trait = tang_clan_member
-				has_character_modifier = tang_clan_associate
-			}
-		}
-		has_trait = tang_clan_member # Associates can't lead Tang
 	}
 }
 
 # ═══════════════════════════════════════════
-#  12. SECT HAS ACTIVE LEADER
+#  13. SECT HAS LEADER
 # ═══════════════════════════════════════════
 murim_sect_has_leader_trigger = {
-	# Check if any living character has leader modifier for THIS sect
-	# Used to detect succession crisis situations
 	any_living_character = {
 		murim_is_sect_leader_trigger = yes
 		murim_is_same_sect_as_prev_trigger = yes
@@ -269,123 +326,382 @@ murim_sect_has_leader_trigger = {
 }
 
 # ═══════════════════════════════════════════
-#  13. HARMONY CHECKS (uses variables from murim_harmony_values.txt)
+#  14-15. HARMONY THRESHOLDS
 # ═══════════════════════════════════════════
 murim_sect_harmony_is_high_trigger = {
-	# High harmony: >= 70 (out of 100)
-	# Grants training bonuses, loyalty, recruitment
-	OR = {
-		# Check sect-specific harmony variables
-		has_variable = mount_hua_harmony
-		has_variable = tang_clan_harmony
-		has_variable = heavenly_demon_harmony
-		has_variable = wudang_harmony
-		has_variable = shaolin_harmony
-		has_variable = beggar_sect_harmony
+	# Harmony >= 70: golden age conditions
+	custom_description = {
+		text = "Sect harmony is high"
+		always = yes # Placeholder — actual harmony stored as variable
 	}
-	# Actual threshold check done in script_values
-	# This trigger is a simplified check for event conditions
-	scope:sect_harmony_score >= 70
 }
 
 murim_sect_harmony_is_low_trigger = {
-	# Low harmony: <= 30
-	# Increases betrayal chance, members leave, vulnerability
-	scope:sect_harmony_score <= 30
-}
-
-# ═══════════════════════════════════════════
-#  14. FACTION ALIGNMENT (righteous/demonic/neutral)
-# ═══════════════════════════════════════════
-murim_is_in_righteous_sect_trigger = {
-	OR = {
-		has_trait = mount_hua_disciple
-		has_trait = wudang_disciple
-		has_trait = shaolin_disciple
+	# Harmony <= 30: discord, risk of schism
+	custom_description = {
+		text = "Sect harmony is dangerously low"
+		always = yes # Placeholder — actual harmony stored as variable
 	}
 }
 
-murim_is_in_demonic_sect_trigger = {
-	has_trait = heavenly_demon_disciple
+# ═══════════════════════════════════════════
+#  16. ORTHODOX FACTION (Righteous Path)
+#  Led by elected Murim Alliance Leader
+# ═══════════════════════════════════════════
+murim_is_in_orthodox_sect_trigger = {
+	OR = {
+		murim_is_mount_hua_member_trigger = yes
+		murim_is_shaolin_member_trigger = yes
+		murim_is_wudang_member_trigger = yes
+		murim_is_tang_clan_member_trigger = yes
+		murim_is_beggar_sect_member_trigger = yes
+		murim_is_iron_fist_member_trigger = yes
+		# Custom clans that declared orthodox
+		AND = {
+			has_character_flag = custom_clan_member
+			has_character_flag = custom_clan_orthodox
+		}
+	}
 }
 
+# ═══════════════════════════════════════════
+#  17. UNORTHODOX FACTION (Demonic Path)
+#  Led by Heavenly Demon Sect Leader ALWAYS
+# ═══════════════════════════════════════════
+murim_is_in_unorthodox_sect_trigger = {
+	OR = {
+		murim_is_heavenly_demon_member_trigger = yes
+		murim_is_poison_flower_member_trigger = yes
+		murim_is_phantom_blade_member_trigger = yes
+		# Custom clans that declared unorthodox
+		AND = {
+			has_character_flag = custom_clan_member
+			has_character_flag = custom_clan_unorthodox
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+#  18. NEUTRAL / UNDECLARED
+# ═══════════════════════════════════════════
 murim_is_in_neutral_sect_trigger = {
+	murim_is_clan_member_of_any_trigger = yes
+	NOR = {
+		murim_is_in_orthodox_sect_trigger = yes
+		murim_is_in_unorthodox_sect_trigger = yes
+	}
+}
+
+# ═══════════════════════════════════════════
+#  19-27. INDIVIDUAL CLAN MEMBERSHIP TRIGGERS
+# ═══════════════════════════════════════════
+
+# 19. Mount Hua Sect
+murim_is_mount_hua_member_trigger = {
 	OR = {
-		has_trait = tang_clan_member
+		has_character_modifier = mount_hua_sect_leader
+		has_character_modifier = mount_hua_vice_leader
+		has_character_modifier = mount_hua_elder
+		has_character_modifier = mount_hua_inner_disciple
+		has_character_modifier = mount_hua_outer_disciple
+		has_character_modifier = mount_hua_associate
+	}
+}
+
+# 20. Shaolin Temple
+murim_is_shaolin_member_trigger = {
+	OR = {
+		has_character_modifier = shaolin_abbot
+		has_character_modifier = shaolin_vice_abbot
+		has_character_modifier = shaolin_elder
+		has_character_modifier = shaolin_inner_disciple
+		has_character_modifier = shaolin_outer_disciple
+		has_character_modifier = shaolin_associate
+	}
+}
+
+# 21. Wudang Sect
+murim_is_wudang_member_trigger = {
+	OR = {
+		has_character_modifier = wudang_sect_leader
+		has_character_modifier = wudang_vice_leader
+		has_character_modifier = wudang_elder
+		has_character_modifier = wudang_inner_disciple
+		has_character_modifier = wudang_outer_disciple
+		has_character_modifier = wudang_associate
+	}
+}
+
+# 22. Tang Clan
+murim_is_tang_clan_member_trigger = {
+	OR = {
+		has_character_modifier = tang_clan_patriarch
+		has_character_modifier = tang_clan_vice_patriarch
+		has_character_modifier = tang_clan_elder
+		has_character_modifier = tang_clan_inner_member
+		has_character_modifier = tang_clan_outer_member
 		has_character_modifier = tang_clan_associate
-		has_trait = beggar_sect_member
 	}
 }
 
-# ═══════════════════════════════════════════
-#  15. AI BEHAVIOR TRIGGERS
-# ═══════════════════════════════════════════
-murim_ai_should_scheme_for_promotion_trigger = {
-	is_ai = yes
-	murim_is_eligible_for_promotion_trigger = yes
+# 23. Beggar Sect
+murim_is_beggar_sect_member_trigger = {
 	OR = {
-		has_trait = ambitious
-		has_trait = arrogant
-		prowess >= 18
+		has_character_modifier = beggar_sect_chief
+		has_character_modifier = beggar_sect_vice_chief
+		has_character_modifier = beggar_sect_elder
+		has_character_modifier = beggar_sect_inner_member
+		has_character_modifier = beggar_sect_outer_member
+		has_character_modifier = beggar_sect_associate
 	}
-	# Don't scheme too often
-	NOT = { has_character_flag = ai_promotion_scheme_cooldown }
 }
 
-murim_ai_should_betray_sect_trigger = {
-	is_ai = yes
-	murim_is_clan_member_trigger = yes
-	# Base 3% chance modified by traits
+# 24. Heavenly Demon Sect
+murim_is_heavenly_demon_member_trigger = {
+	OR = {
+		has_character_modifier = heavenly_demon_sect_leader
+		has_character_modifier = heavenly_demon_vice_leader
+		has_character_modifier = heavenly_demon_elder
+		has_character_modifier = heavenly_demon_inner_disciple
+		has_character_modifier = heavenly_demon_outer_disciple
+		has_character_modifier = heavenly_demon_associate
+	}
+}
+
+# 25. Poison Flower Palace (NEW — Unorthodox)
+# Female-founded, accepts all genders. Poison arts, seduction, info networks.
+# Rivals Tang Clan (both poison, opposite factions). HQ: hidden palace, southern China.
+# Unique: +3 intrigue, can poison rivals without dueling.
+murim_is_poison_flower_member_trigger = {
+	OR = {
+		has_character_modifier = poison_flower_palace_mistress
+		has_character_modifier = poison_flower_vice_mistress
+		has_character_modifier = poison_flower_elder
+		has_character_modifier = poison_flower_inner_disciple
+		has_character_modifier = poison_flower_outer_disciple
+		has_character_modifier = poison_flower_associate
+	}
+}
+
+# 26. Iron Fist Gate (NEW — Orthodox)
+# Pure physical martial arts, no weapons, no qi tricks. Blue-collar clan.
+# Rivals Mount Hua (swords vs fists). HQ: northern China.
+# Unique: +2 prowess, CANNOT learn weapon techniques.
+murim_is_iron_fist_member_trigger = {
+	OR = {
+		has_character_modifier = iron_fist_gate_master
+		has_character_modifier = iron_fist_vice_master
+		has_character_modifier = iron_fist_elder
+		has_character_modifier = iron_fist_inner_disciple
+		has_character_modifier = iron_fist_outer_disciple
+		has_character_modifier = iron_fist_associate
+	}
+}
+
+# 27. Phantom Blade Sect (NEW — Unorthodox)
+# Assassin clan, stealth, speed, killing arts. Mercenary killers for hire.
+# HQ: unknown location. You don't find them, they find you.
+# Unique: assassination missions, +5 dread per mission.
+murim_is_phantom_blade_member_trigger = {
+	OR = {
+		has_character_modifier = phantom_blade_sect_leader
+		has_character_modifier = phantom_blade_vice_leader
+		has_character_modifier = phantom_blade_elder
+		has_character_modifier = phantom_blade_inner_disciple
+		has_character_modifier = phantom_blade_outer_disciple
+		has_character_modifier = phantom_blade_associate
+	}
+}
+
+# ═══════════════════════════════════════════
+#  28. FACTION RIVAL CHECK
+#  Orthodox vs Unorthodox = rivals
+# ═══════════════════════════════════════════
+murim_is_faction_rival_trigger = {
+	# ROOT is in one faction, TARGET (prev) is in the other
 	OR = {
 		AND = {
-			has_trait = ambitious
-			has_trait = deceitful
+			murim_is_in_orthodox_sect_trigger = yes
+			prev = { murim_is_in_unorthodox_sect_trigger = yes }
 		}
 		AND = {
-			has_trait = callous
-			opinion = {
-				target = scope:sect_leader
-				value < -30
+			murim_is_in_unorthodox_sect_trigger = yes
+			prev = { murim_is_in_orthodox_sect_trigger = yes }
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+#  29. CUSTOM CLAN MEMBER
+# ═══════════════════════════════════════════
+murim_is_custom_clan_member_trigger = {
+	has_character_flag = custom_clan_member
+}
+
+# ═══════════════════════════════════════════
+#  30. CAN CREATE CUSTOM CLAN
+#  PATH 1: Hard Way — tier 5+, 10yr exp, 5 followers, 500 gold
+#  PATH 2: Supreme Way — #1 ranked OR defeated 3 clan leaders
+# ═══════════════════════════════════════════
+murim_can_create_custom_clan_trigger = {
+	is_alive = yes
+	is_imprisoned = no
+	NOR = {
+		murim_is_clan_member_of_any_trigger = yes
+		has_character_flag = custom_clan_creation_cooldown # 10-year on rejection
+	}
+	OR = {
+		# PATH 1: Hard Way
+		AND = {
+			OR = {
+				has_trait = murim_tier_5_martial_artist
+				has_trait = murim_tier_6_martial_artist
+				has_trait = murim_tier_7_martial_artist
+				has_trait = murim_tier_8_martial_artist
+			}
+			has_character_flag = murim_10yr_experience
+			# 5+ followers (characters with martial_master = ROOT)
+			any_relation = {
+				type = mentor
+				count >= 5
+			}
+			gold >= 500
+		}
+		# PATH 2: Supreme Way
+		AND = {
+			OR = {
+				has_character_modifier = murim_supreme_champion # #1 ranked
+				has_character_flag = defeated_three_clan_leaders # beat 3 leaders in succession
 			}
 		}
-		has_character_flag = approached_by_rival_sect
 	}
-	NOT = { has_character_flag = ai_betrayal_cooldown }
 }
 
-murim_ai_leader_should_retire_trigger = {
-	is_ai = yes
+# ═══════════════════════════════════════════
+#  31. IS LEADER OF ANY CLAN
+# ═══════════════════════════════════════════
+murim_is_clan_leader_of_any_trigger = {
 	murim_is_sect_leader_trigger = yes
-	age >= 60
-	# 10% yearly, modified by health
-	OR = {
-		health <= 2
-		age >= 75
-		AND = {
-			has_trait = content
-			age >= 65
-		}
-	}
-	NOT = { has_character_flag = ai_retirement_cooldown }
 }
 
-murim_ai_should_transfer_sects_trigger = {
-	is_ai = yes
-	murim_is_clan_member_trigger = yes
-	# ~2% yearly for dissatisfied members
+# ═══════════════════════════════════════════
+#  32. MEMBER OF ANY CLAN (UNIVERSAL)
+# ═══════════════════════════════════════════
+murim_is_clan_member_of_any_trigger = {
 	OR = {
-		murim_is_outer_disciple_trigger = yes
-		murim_is_sect_associate_trigger = yes
+		murim_is_mount_hua_member_trigger = yes
+		murim_is_shaolin_member_trigger = yes
+		murim_is_wudang_member_trigger = yes
+		murim_is_tang_clan_member_trigger = yes
+		murim_is_beggar_sect_member_trigger = yes
+		murim_is_heavenly_demon_member_trigger = yes
+		murim_is_poison_flower_member_trigger = yes
+		murim_is_iron_fist_member_trigger = yes
+		murim_is_phantom_blade_member_trigger = yes
+		murim_is_custom_clan_member_trigger = yes
 	}
+}
+
+# ═══════════════════════════════════════════
+#  33. POISON SPECIALIST (cross-clan)
+#  Poison Flower Palace OR Tang poison users
+# ═══════════════════════════════════════════
+murim_is_poison_specialist_trigger = {
 	OR = {
-		opinion = {
-			target = scope:sect_leader
-			value < -20
+		murim_is_poison_flower_member_trigger = yes
+		AND = {
+			murim_is_tang_clan_member_trigger = yes
+			OR = {
+				has_character_flag = tang_poison_stage_1
+				has_character_flag = tang_poison_stage_2
+				has_character_flag = tang_poison_stage_3
+			}
 		}
-		has_trait = fickle
-		has_character_flag = passed_over_for_promotion
+		has_trait = murim_poison_master # Independent poison users
 	}
-	# Tang blood NEVER transfers — it's in their blood
-	NOT = { has_trait = tang_clan_member }
-	NOT = { has_character_flag = ai_transfer_cooldown }
+}
+
+# ═══════════════════════════════════════════
+#  34. ASSASSIN TYPE (cross-clan)
+#  Phantom Blade OR assassination-trained characters
+# ═══════════════════════════════════════════
+murim_is_assassin_type_trigger = {
+	OR = {
+		murim_is_phantom_blade_member_trigger = yes
+		has_character_flag = murim_assassination_trained
+		AND = {
+			has_trait = murim_stealth_master
+			intrigue >= 15
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+#  35. CLAN RIVALRY MATRIX
+#  Specific clan-vs-clan rivalries beyond faction lines
+# ═══════════════════════════════════════════
+murim_is_clan_rival_of_prev_trigger = {
+	OR = {
+		# Tang vs Poison Flower (both poison, opposite factions)
+		AND = { murim_is_tang_clan_member_trigger = yes prev = { murim_is_poison_flower_member_trigger = yes } }
+		AND = { murim_is_poison_flower_member_trigger = yes prev = { murim_is_tang_clan_member_trigger = yes } }
+		# Mount Hua vs Iron Fist (sword vs fist philosophy)
+		AND = { murim_is_mount_hua_member_trigger = yes prev = { murim_is_iron_fist_member_trigger = yes } }
+		AND = { murim_is_iron_fist_member_trigger = yes prev = { murim_is_mount_hua_member_trigger = yes } }
+		# Mount Hua vs Heavenly Demon (classic murim rivalry)
+		AND = { murim_is_mount_hua_member_trigger = yes prev = { murim_is_heavenly_demon_member_trigger = yes } }
+		AND = { murim_is_heavenly_demon_member_trigger = yes prev = { murim_is_mount_hua_member_trigger = yes } }
+		# Shaolin vs Phantom Blade (honor vs assassination)
+		AND = { murim_is_shaolin_member_trigger = yes prev = { murim_is_phantom_blade_member_trigger = yes } }
+		AND = { murim_is_phantom_blade_member_trigger = yes prev = { murim_is_shaolin_member_trigger = yes } }
+	}
+}
+
+# ═══════════════════════════════════════════
+#  36. HEAVENLY DEMON SHADOW POLITICS ELIGIBILITY
+#  Can the HD leader attempt to infiltrate a ruler?
+# ═══════════════════════════════════════════
+murim_hd_can_infiltrate_ruler_trigger = {
+	# Target (ROOT) must be a ruler in China/Korea
+	is_ruler = yes
+	OR = {
+		murim_is_in_china_trigger = yes
+		murim_is_in_goryeo_trigger = yes
+	}
+	# Must have exploitable personality
+	OR = {
+		has_trait = ambitious
+		has_trait = deceitful
+		has_trait = arbitrary
+		has_trait = cruel
+		has_trait = sadistic
+		has_trait = greedy
+	}
+	# Not already infiltrated or aware
+	NOR = {
+		has_character_modifier = heavenly_demon_puppet
+		has_character_flag = hd_infiltration_exposed
+		has_character_flag = hd_infiltration_rejected
+		# Orthodox clan members are immune
+		murim_is_in_orthodox_sect_trigger = yes
+	}
+}
+
+# ═══════════════════════════════════════════
+#  37. IS MURIM ALLIANCE LEADER
+#  Elected leader of the orthodox faction
+# ═══════════════════════════════════════════
+murim_is_alliance_leader_trigger = {
+	has_character_modifier = murim_alliance_leader
+}
+
+# ═══════════════════════════════════════════
+#  38. IRON FIST WEAPON RESTRICTION
+#  Iron Fist Gate members CANNOT learn weapon techniques
+# ═══════════════════════════════════════════
+murim_is_weapon_restricted_trigger = {
+	murim_is_iron_fist_member_trigger = yes
+	NOR = {
+		has_character_flag = iron_fist_weapon_exception # Rare: left the gate's pure path
+	}
 }
