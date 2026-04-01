@@ -1,0 +1,1038 @@
+namespace = murim_faction_war_exp
+
+# Faction War Expansion — Orthodox vs Unorthodox full war event chains
+# 10 complete events covering alliance formation, battles, betrayals, negotiations
+
+######################################
+# EVENT 0001 — Orthodox Alliance War Council
+# Orthodox faction leaders gather to plan campaign against unorthodox
+######################################
+murim_faction_war_exp.0001 = {
+	type = character_event
+	title = murim_faction_war_exp.0001.t
+	desc = murim_faction_war_exp.0001.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:shaolin_leader
+		animation = personality_compassionate
+	}
+	lower_left_portrait = {
+		character = scope:wudang_leader
+		animation = personality_bold
+	}
+
+	trigger = {
+		OR = {
+			has_trait = mount_hua_member
+			has_trait = shaolin_member
+			has_trait = wudang_member
+			has_trait = iron_fist_member
+			has_trait = tang_clan_member
+		}
+		has_variable = murim_clan_id
+		NOT = { has_character_flag = orthodox_war_council_attended }
+		any_ruler = {
+			has_trait = heavenly_demon_member
+			is_at_war = no
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = zealous
+		}
+		modifier = {
+			add = 2
+			martial >= 15
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = orthodox_war_council_attended days = 730 }
+		if = {
+			limit = {
+				any_ruler = { has_trait = shaolin_member }
+			}
+			random_ruler = {
+				limit = { has_trait = shaolin_member }
+				save_scope_as = shaolin_leader
+			}
+		}
+		if = {
+			limit = {
+				any_ruler = { has_trait = wudang_member }
+			}
+			random_ruler = {
+				limit = { has_trait = wudang_member }
+				save_scope_as = wudang_leader
+			}
+		}
+	}
+
+	# Lead the alliance offensive
+	option = {
+		name = murim_faction_war_exp.0001.a
+		add_character_modifier = {
+			modifier = orthodox_war_commander
+			years = 5
+		}
+		add_prestige = 500
+		add_martial_skill = 2
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+					has_trait = iron_fist_member
+					has_trait = tang_clan_member
+				}
+			}
+			add_opinion = {
+				target = root
+				modifier = orthodox_war_leader
+				opinion = 20
+			}
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_faction_war_exp.0002
+				days = { 30 90 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Advocate for defensive strategy
+	option = {
+		name = murim_faction_war_exp.0001.b
+		add_character_modifier = {
+			modifier = orthodox_defensive_strategist
+			years = 5
+		}
+		add_prestige = 200
+		add_martial_skill = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Propose peace negotiations instead
+	option = {
+		name = murim_faction_war_exp.0001.c
+		trigger = {
+			diplomacy >= 16
+		}
+		add_piety = 300
+		add_character_modifier = {
+			modifier = orthodox_peace_advocate
+			years = 5
+		}
+		every_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+				}
+			}
+			add_opinion = {
+				target = root
+				modifier = proposed_peace_instead
+				opinion = -10
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0002 — First Battlefield Clash
+# Orthodox and unorthodox forces meet in open combat
+######################################
+murim_faction_war_exp.0002 = {
+	type = character_event
+	title = murim_faction_war_exp.0002.t
+	desc = murim_faction_war_exp.0002.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:unorthodox_commander
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_character_modifier = orthodox_war_commander
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = phantom_blade_member
+				}
+			}
+			save_scope_as = unorthodox_commander
+		}
+	}
+
+	# Lead the charge personally
+	option = {
+		name = murim_faction_war_exp.0002.a
+		duel = {
+			skill = prowess
+			target = scope:unorthodox_commander
+			50 = {
+				desc = murim_faction_war_exp.0002.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				send_interface_toast = {
+					title = murim_faction_war_exp.0002.a.success.toast
+					left_icon = root
+					add_prestige = 800
+					add_character_modifier = { modifier = faction_war_victory years = 10 }
+					add_trait = faction_war_hero
+					scope:unorthodox_commander = {
+						health = -3
+						add_prestige = -500
+					}
+				}
+			}
+			50 = {
+				desc = murim_faction_war_exp.0002.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				send_interface_toast = {
+					title = murim_faction_war_exp.0002.a.failure.toast
+					left_icon = root
+					health = -3
+					add_prestige = -300
+					add_character_modifier = { modifier = faction_war_wounded years = 3 }
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Command from the rear — strategic approach
+	option = {
+		name = murim_faction_war_exp.0002.b
+		add_martial_skill = 2
+		random = {
+			chance = 60
+			add_prestige = 400
+			add_character_modifier = { modifier = strategic_war_victory years = 8 }
+		}
+		random = {
+			chance = 40
+			add_prestige = -100
+			add_character_modifier = { modifier = strategic_withdrawal years = 3 }
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Send champions to fight one-on-one instead of mass battle
+	option = {
+		name = murim_faction_war_exp.0002.c
+		trigger = {
+			diplomacy >= 14
+		}
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = champion_duel_proposal
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_faction_war_exp.0003
+				days = { 7 14 }
+			}
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0003 — Champion Duel Between Factions
+# Representative champions fight to settle the war
+######################################
+murim_faction_war_exp.0003 = {
+	type = character_event
+	title = murim_faction_war_exp.0003.t
+	desc = murim_faction_war_exp.0003.desc
+	theme = martial_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:unorthodox_champion
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_character_modifier = champion_duel_proposal
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = phantom_blade_member
+				}
+				prowess >= 15
+			}
+			save_scope_as = unorthodox_champion
+		}
+	}
+
+	# Fight as the orthodox champion yourself
+	option = {
+		name = murim_faction_war_exp.0003.a
+		duel = {
+			skill = prowess
+			target = scope:unorthodox_champion
+			50 = {
+				desc = murim_faction_war_exp.0003.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 5.0
+				}
+				send_interface_toast = {
+					title = murim_faction_war_exp.0003.a.success.toast
+					left_icon = root
+					add_prestige = 1500
+					add_trait = faction_champion
+					add_character_modifier = { modifier = champion_of_orthodoxy years = 20 }
+					scope:unorthodox_champion = {
+						death = { death_reason = death_battle killer = root }
+					}
+				}
+			}
+			50 = {
+				desc = murim_faction_war_exp.0003.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -5.0
+				}
+				send_interface_toast = {
+					title = murim_faction_war_exp.0003.a.failure.toast
+					left_icon = root
+					death = { death_reason = death_battle killer = scope:unorthodox_champion }
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Nominate another fighter
+	option = {
+		name = murim_faction_war_exp.0003.b
+		random_courtier = {
+			limit = {
+				prowess >= 15
+				OR = {
+					has_trait = mount_hua_member
+					has_trait = shaolin_member
+					has_trait = wudang_member
+				}
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 prowess >= 20 }
+			}
+			duel = {
+				skill = prowess
+				target = scope:unorthodox_champion
+				50 = {
+					add_prestige = 500
+					root = { add_prestige = 300 }
+				}
+				50 = {
+					death = { death_reason = death_battle killer = scope:unorthodox_champion }
+					root = { add_prestige = -200 }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Cancel and return to full war
+	option = {
+		name = murim_faction_war_exp.0003.c
+		add_prestige = -200
+		remove_character_modifier = champion_duel_proposal
+		ai_chance = { base = 10 }
+	}
+}
+
+######################################
+# EVENT 0004 — Unorthodox Counter-Attack
+# Heavenly Demon sect launches devastating counter-offensive
+######################################
+murim_faction_war_exp.0004 = {
+	type = character_event
+	title = murim_faction_war_exp.0004.t
+	desc = murim_faction_war_exp.0004.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:demon_lord
+		animation = rage
+	}
+
+	trigger = {
+		OR = {
+			has_trait = mount_hua_member
+			has_trait = shaolin_member
+			has_trait = wudang_member
+			has_trait = iron_fist_member
+		}
+		any_ruler = {
+			has_trait = heavenly_demon_member
+			prowess >= 20
+		}
+		NOT = { has_character_flag = unorthodox_counter_attack }
+	}
+
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 3
+			has_character_modifier = faction_war_victory
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = unorthodox_counter_attack days = 365 }
+		random_ruler = {
+			limit = {
+				has_trait = heavenly_demon_member
+				prowess >= 20
+			}
+			save_scope_as = demon_lord
+		}
+	}
+
+	# Rally the defense
+	option = {
+		name = murim_faction_war_exp.0004.a
+		add_character_modifier = {
+			modifier = rallied_orthodox_defense
+			years = 5
+		}
+		add_martial_skill = 2
+		add_prestige = 300
+		add_stress = 30
+		ai_chance = { base = 50 }
+	}
+
+	# Evacuate non-combatants and fall back
+	option = {
+		name = murim_faction_war_exp.0004.b
+		add_piety = 200
+		add_character_modifier = {
+			modifier = protected_civilians_in_retreat
+			years = 5
+		}
+		add_prestige = -100
+		ai_chance = { base = 30 }
+	}
+
+	# Challenge the Demon Lord directly to end this
+	option = {
+		name = murim_faction_war_exp.0004.c
+		trigger = {
+			prowess >= 18
+		}
+		duel = {
+			skill = prowess
+			target = scope:demon_lord
+			35 = {
+				desc = murim_faction_war_exp.0004.c.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 5.0
+				}
+				add_prestige = 2000
+				add_trait = demon_lord_slayer
+				scope:demon_lord = {
+					death = { death_reason = death_battle killer = root }
+				}
+			}
+			65 = {
+				desc = murim_faction_war_exp.0004.c.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -5.0
+				}
+				health = -4
+				add_character_modifier = { modifier = nearly_killed_by_demon_lord years = 5 }
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0005 — Betrayal Within Orthodox Ranks
+# A supposed ally secretly works for the unorthodox
+######################################
+murim_faction_war_exp.0005 = {
+	type = character_event
+	title = murim_faction_war_exp.0005.t
+	desc = murim_faction_war_exp.0005.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:traitor
+		animation = personality_cynical
+	}
+
+	trigger = {
+		OR = {
+			has_trait = mount_hua_member
+			has_trait = shaolin_member
+			has_trait = wudang_member
+		}
+		has_character_flag = orthodox_war_council_attended
+		NOT = { has_character_flag = discovered_faction_traitor }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			intrigue >= 14
+		}
+	}
+
+	immediate = {
+		set_character_flag = discovered_faction_traitor
+		random_courtier = {
+			limit = {
+				has_variable = murim_clan_id
+				is_ai = yes
+			}
+			save_scope_as = traitor
+		}
+	}
+
+	# Expose the traitor publicly
+	option = {
+		name = murim_faction_war_exp.0005.a
+		scope:traitor = {
+			add_trait = exposed_traitor
+			add_prestige = -500
+			add_character_modifier = { modifier = publicly_shamed_traitor years = 10 }
+		}
+		add_prestige = 400
+		add_dread = 20
+		ai_chance = { base = 50 }
+	}
+
+	# Use the traitor as a double agent
+	option = {
+		name = murim_faction_war_exp.0005.b
+		trigger = {
+			intrigue >= 16
+		}
+		scope:traitor = {
+			add_opinion = {
+				target = root
+				modifier = spared_from_exposure
+				opinion = 20
+			}
+		}
+		add_intrigue_skill = 2
+		add_character_modifier = {
+			modifier = running_double_agent_network
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Execute the traitor as an example
+	option = {
+		name = murim_faction_war_exp.0005.c
+		scope:traitor = {
+			death = { death_reason = death_execution killer = root }
+		}
+		add_dread = 40
+		add_tyranny = 10
+		add_character_modifier = { modifier = executed_faction_traitor years = 5 }
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0006 — Unorthodox Alliance Fracture
+# Heavenly Demon and Phantom Blade disagree on war strategy
+######################################
+murim_faction_war_exp.0006 = {
+	type = character_event
+	title = murim_faction_war_exp.0006.t
+	desc = murim_faction_war_exp.0006.desc
+	theme = intrigue_scheme_theme
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:other_faction_leader
+		animation = anger
+	}
+
+	trigger = {
+		OR = {
+			has_trait = heavenly_demon_member
+			has_trait = phantom_blade_member
+		}
+		NOT = { has_character_flag = unorthodox_fracture_event }
+	}
+
+	weight_multiplier = {
+		base = 2
+	}
+
+	immediate = {
+		set_character_flag = { flag = unorthodox_fracture_event days = 365 }
+		if = {
+			limit = { has_trait = heavenly_demon_member }
+			random_ruler = {
+				limit = { has_trait = phantom_blade_member }
+				save_scope_as = other_faction_leader
+			}
+		}
+		else = {
+			random_ruler = {
+				limit = { has_trait = heavenly_demon_member }
+				save_scope_as = other_faction_leader
+			}
+		}
+	}
+
+	# Assert dominance — your strategy prevails
+	option = {
+		name = murim_faction_war_exp.0006.a
+		scope:other_faction_leader = {
+			add_opinion = {
+				target = root
+				modifier = overruled_in_war_council
+				opinion = -30
+			}
+		}
+		add_prestige = 300
+		add_dread = 20
+		add_character_modifier = { modifier = unorthodox_war_dictator years = 5 }
+		ai_chance = { base = 40 }
+	}
+
+	# Compromise — split the campaign
+	option = {
+		name = murim_faction_war_exp.0006.b
+		scope:other_faction_leader = {
+			add_opinion = {
+				target = root
+				modifier = reasonable_compromise
+				opinion = 10
+			}
+		}
+		add_character_modifier = { modifier = split_campaign_approach years = 5 }
+		ai_chance = { base = 40 }
+	}
+
+	# Break the alliance — go solo
+	option = {
+		name = murim_faction_war_exp.0006.c
+		scope:other_faction_leader = {
+			add_opinion = {
+				target = root
+				modifier = abandoned_alliance
+				opinion = -50
+			}
+		}
+		add_prestige = -200
+		add_character_modifier = { modifier = lone_unorthodox_force years = 10 }
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0007 — Neutral Clan Forced to Choose
+# Beggar Sect / Tang Clan pressured to pick a side
+######################################
+murim_faction_war_exp.0007 = {
+	type = character_event
+	title = murim_faction_war_exp.0007.t
+	desc = murim_faction_war_exp.0007.desc
+	theme = diplomacy_theme
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:orthodox_envoy
+		animation = personality_bold
+	}
+	lower_right_portrait = {
+		character = scope:unorthodox_envoy
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		OR = {
+			has_trait = beggar_sect_member
+			has_trait = tang_clan_member
+			has_trait = poison_flower_palace_member
+		}
+		NOT = { has_character_flag = forced_faction_choice }
+	}
+
+	weight_multiplier = {
+		base = 2
+	}
+
+	immediate = {
+		set_character_flag = forced_faction_choice
+		random_ruler = {
+			limit = {
+				OR = { has_trait = mount_hua_member has_trait = shaolin_member }
+			}
+			save_scope_as = orthodox_envoy
+		}
+		random_ruler = {
+			limit = {
+				OR = { has_trait = heavenly_demon_member has_trait = phantom_blade_member }
+			}
+			save_scope_as = unorthodox_envoy
+		}
+	}
+
+	# Side with orthodox
+	option = {
+		name = murim_faction_war_exp.0007.a
+		add_trait = orthodox_aligned
+		scope:orthodox_envoy = {
+			add_opinion = { target = root modifier = joined_orthodox_cause opinion = 30 }
+		}
+		scope:unorthodox_envoy = {
+			add_opinion = { target = root modifier = rejected_our_alliance opinion = -40 }
+		}
+		add_prestige = 300
+		add_piety = 200
+		ai_chance = { base = 40 }
+	}
+
+	# Side with unorthodox
+	option = {
+		name = murim_faction_war_exp.0007.b
+		add_trait = unorthodox_aligned
+		scope:unorthodox_envoy = {
+			add_opinion = { target = root modifier = joined_unorthodox_cause opinion = 30 }
+		}
+		scope:orthodox_envoy = {
+			add_opinion = { target = root modifier = betrayed_righteous_path opinion = -40 }
+		}
+		add_prestige = 200
+		add_dread = 20
+		ai_chance = { base = 30 }
+	}
+
+	# Refuse both — stay neutral
+	option = {
+		name = murim_faction_war_exp.0007.c
+		add_trait = faction_neutral
+		scope:orthodox_envoy = {
+			add_opinion = { target = root modifier = coward_fence_sitter opinion = -15 }
+		}
+		scope:unorthodox_envoy = {
+			add_opinion = { target = root modifier = coward_fence_sitter opinion = -15 }
+		}
+		add_character_modifier = { modifier = neutral_during_faction_war years = 10 }
+		add_prestige = -100
+		ai_chance = { base = 30 }
+	}
+}
+
+######################################
+# EVENT 0008 — Siege of Sacred Mountain
+# Unorthodox forces besiege a holy orthodox site
+######################################
+murim_faction_war_exp.0008 = {
+	type = character_event
+	title = murim_faction_war_exp.0008.t
+	desc = murim_faction_war_exp.0008.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		OR = {
+			has_trait = shaolin_member
+			has_trait = wudang_member
+			has_trait = mount_hua_member
+		}
+		has_character_flag = orthodox_war_council_attended
+		NOT = { has_character_flag = sacred_mountain_siege }
+	}
+
+	weight_multiplier = {
+		base = 2
+	}
+
+	immediate = {
+		set_character_flag = sacred_mountain_siege
+	}
+
+	# Defend to the last — protect the sacred ground
+	option = {
+		name = murim_faction_war_exp.0008.a
+		add_character_modifier = {
+			modifier = sacred_mountain_defender
+			years = 10
+		}
+		add_piety = 500
+		add_stress = 40
+		random = {
+			chance = 60
+			add_prestige = 800
+			add_trait = mountain_defender
+		}
+		random = {
+			chance = 40
+			health = -3
+			add_character_modifier = { modifier = mountain_siege_wounded years = 5 }
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Strategic retreat — save lives over land
+	option = {
+		name = murim_faction_war_exp.0008.b
+		add_prestige = -200
+		add_piety = -100
+		add_character_modifier = {
+			modifier = abandoned_sacred_mountain
+			years = 10
+		}
+		add_stress = 30
+		ai_chance = { base = 30 }
+	}
+
+	# Secret passage escape with sacred texts
+	option = {
+		name = murim_faction_war_exp.0008.c
+		trigger = { intrigue >= 14 }
+		add_character_modifier = {
+			modifier = saved_sacred_texts
+			years = 20
+		}
+		add_piety = 300
+		add_intrigue_skill = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0009 — War Exhaustion Peace Talks
+# Both sides are tired — can peace be achieved?
+######################################
+murim_faction_war_exp.0009 = {
+	type = character_event
+	title = murim_faction_war_exp.0009.t
+	desc = murim_faction_war_exp.0009.desc
+	theme = diplomacy_theme
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:enemy_negotiator
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_variable = murim_clan_id
+		has_character_flag = orthodox_war_council_attended
+		NOT = { has_character_flag = faction_peace_talks }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		set_character_flag = faction_peace_talks
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = phantom_blade_member
+				}
+			}
+			save_scope_as = enemy_negotiator
+		}
+	}
+
+	# Negotiate honorable peace terms
+	option = {
+		name = murim_faction_war_exp.0009.a
+		duel = {
+			skill = diplomacy
+			target = scope:enemy_negotiator
+			55 = {
+				desc = murim_faction_war_exp.0009.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				add_prestige = 600
+				add_piety = 300
+				add_character_modifier = { modifier = faction_war_peacemaker years = 20 }
+				add_trait = faction_peacemaker
+			}
+			45 = {
+				desc = murim_faction_war_exp.0009.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				add_prestige = -200
+				add_character_modifier = { modifier = failed_peace_negotiator years = 5 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Demand unconditional surrender
+	option = {
+		name = murim_faction_war_exp.0009.b
+		add_dread = 30
+		scope:enemy_negotiator = {
+			add_opinion = {
+				target = root
+				modifier = demanded_surrender
+				opinion = -40
+			}
+		}
+		add_prestige = 200
+		ai_chance = { base = 30 }
+	}
+
+	# Accept unfavorable terms for peace
+	option = {
+		name = murim_faction_war_exp.0009.c
+		add_prestige = -300
+		add_piety = 200
+		add_gold = -200
+		add_character_modifier = { modifier = paid_for_peace years = 10 }
+		scope:enemy_negotiator = {
+			add_opinion = { target = root modifier = paid_for_peace opinion = 15 }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0010 — Faction War Aftermath
+# The dust settles — how does the martial world recover?
+######################################
+murim_faction_war_exp.0010 = {
+	type = character_event
+	title = murim_faction_war_exp.0010.t
+	desc = murim_faction_war_exp.0010.desc
+	theme = realm_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_variable = murim_clan_id
+		OR = {
+			has_character_flag = faction_peace_talks
+			has_character_flag = unorthodox_counter_attack
+			has_character_modifier = faction_war_victory
+		}
+		NOT = { has_character_flag = faction_war_aftermath }
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = faction_war_aftermath
+	}
+
+	# Rebuild and strengthen alliances
+	option = {
+		name = murim_faction_war_exp.0010.a
+		add_prestige = 300
+		add_gold = -200
+		add_character_modifier = {
+			modifier = post_war_rebuilder
+			years = 15
+		}
+		every_ruler = {
+			limit = { has_variable = murim_clan_id }
+			add_opinion = {
+				target = root
+				modifier = war_rebuilding_effort
+				opinion = 10
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Capitalize on weakened enemies
+	option = {
+		name = murim_faction_war_exp.0010.b
+		add_prestige = 500
+		add_dread = 30
+		add_character_modifier = {
+			modifier = post_war_opportunist
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Retire from the conflict — seek personal cultivation
+	option = {
+		name = murim_faction_war_exp.0010.c
+		add_piety = 300
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_character_modifier = {
+			modifier = post_war_cultivation_retreat
+			years = 10
+		}
+		add_stress = -30
+		ai_chance = { base = 30 }
+	}
+}
