@@ -1,573 +1,315 @@
-# Murim Chronicles - Great Calamity Traits
-# Survivor traits, omen traits, hidden fate mechanics, calamity-related modifiers.
-# INTEGRATION: murim_great_calamity_events.txt, murim_calamity_triggers.txt
-# DESIGN: Survivors carry legacy of fallen era. Some traits hereditary.
+######################################
+# MURIM GREAT CALAMITY TRAITS
+# Traits for survivors, witnesses, rebuilders
+# and post-calamity era characters
+######################################
 
-# ========================================
-# HIDDEN FATE TRAITS (assigned at birth/game_start)
-# These determine who the heavens choose to survive
-# ========================================
-
-murim_fate_blessed = {
-	index = 230
+# === CALAMITY SURVIVOR ===
+murim_calamity_survivor = {
+	index = 1
 	
-	# Hidden from player — the heavens work in mysterious ways
-	hidden = yes
-	
-	opposites = {
-		murim_fate_doomed
-	}
-	
-	# Subtle stat bonuses that hint something is special
-	health = 0.5
-	fertility = 0.1
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_fate_blessed_desc
-			}
-		}
-	}
-}
-
-murim_fate_doomed = {
-	index = 231
-	
-	hidden = yes
-	
-	opposites = {
-		murim_fate_blessed
-	}
-	
-	# Subtle penalties
-	health = -0.25
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_fate_doomed_desc
-			}
-		}
-	}
-}
-
-# ========================================
-# OMEN TRAITS (visible, assigned during warning phase)
-# ========================================
-
-murim_omen_seer = {
-	index = 232
-	
-	# Character has prophetic visions of the coming calamity
-	icon = "gfx/interface/icons/traits/mystic.dds"
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_survivor.dds" }
 	
 	diplomacy = 2
-	learning = 4
-	intrigue = 1
-	stress_gain_mult = 0.15  # Visions are disturbing
-	
-	birth = 0  # Not a birth trait
-	
-	opposites = {
-		murim_omen_denier
-	}
-	
-	compatibility = {
-		mystic = { value = 10 }
-		zealous = { value = 5 }
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_omen_seer_desc
-			}
-		}
-	}
-}
-
-murim_omen_denier = {
-	index = 233
-	
-	# Character refuses to believe the omens
-	icon = "gfx/interface/icons/traits/arrogant.dds"
-	
-	martial = 2
-	prowess = 2
-	diplomacy = -2
-	
-	birth = 0
-	
-	opposites = {
-		murim_omen_seer
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_omen_denier_desc
-			}
-		}
-	}
-}
-
-murim_heaven_touched = {
-	index = 234
-	
-	# Qi disturbances have affected this character physically
-	icon = "gfx/interface/icons/traits/possessed.dds"
-	
-	martial = -1
-	prowess = -2
-	learning = 3
-	health = -0.5
-	fertility = -0.15
-	
-	birth = 0
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_heaven_touched_desc
-			}
-		}
-	}
-}
-
-# ========================================
-# CALAMITY SURVIVOR TRAITS
-# ========================================
-
-murim_calamity_survivor = {
-	index = 235
-	
-	# The core survivor trait — you lived through the apocalypse
-	icon = "gfx/interface/icons/traits/scarred.dds"
-	
-	# Survivors are hardened but haunted
 	martial = 3
-	prowess = 2
-	diplomacy = -1
-	stress_gain_mult = 0.10
-	health = 0.25
+	prowess = 4
+	intrigue = 2
 	
-	# NOT genetic — earned through survival
-	birth = 0
+	health = 1.0
 	
-	# Inheritable as a story — children know what their parents survived
-	genetic = no
+	birth = no
 	
 	desc = {
 		first_valid = {
 			triggered_desc = {
-				trigger = { always = yes }
+				trigger = { has_trait = murim_calamity_survivor }
 				desc = murim_calamity_survivor_desc
 			}
 		}
 	}
-}
-
-murim_bearer_of_ashes = {
-	index = 236
 	
-	# Carries the memory and techniques of a destroyed era
-	icon = "gfx/interface/icons/traits/wise_man.dds"
+	compatibility = {
+		murim_calamity_survivor = { value = 30 }
+		murim_calamity_witness = { value = 20 }
+		murim_calamity_rebuilder = { value = 15 }
+	}
 	
-	diplomacy = 2
-	learning = 4
-	martial = 1
+	same_opinion = 20
 	
-	# This IS inheritable — the stories pass down
-	birth = 0
-	genetic = no
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_bearer_of_ashes_desc
-			}
-		}
+	# Survivors have seen the worst - they are hardened
+	character_modifier = {
+		stress_gain_mult = -0.2
+		dread_baseline_add = 10
+		monthly_prestige = 0.5
 	}
 }
 
-# ========================================
-# LAST OF CLAN TRAITS (mutually exclusive)
-# Only 1 per clan can have this at a time
-# ========================================
-
-murim_last_of_shaolin = {
-	index = 237
-	icon = "gfx/interface/icons/traits/devoted.dds"
+# === CALAMITY WITNESS ===
+murim_calamity_witness = {
+	index = 2
 	
-	martial = 2
-	learning = 4
-	prowess = 2
-	diplomacy = 2
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_witness.dds" }
 	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_shaolin_desc
-			}
-		}
-	}
-}
-
-murim_last_of_wudang = {
-	index = 238
-	icon = "gfx/interface/icons/traits/devoted.dds"
-	
-	martial = 2
 	learning = 3
-	prowess = 3
-	diplomacy = 1
+	diplomacy = 2
 	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
-	}
+	birth = no
 	
 	desc = {
 		first_valid = {
 			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_wudang_desc
+				trigger = { has_trait = murim_calamity_witness }
+				desc = murim_calamity_witness_desc
 			}
 		}
 	}
-}
-
-murim_last_of_mount_hua = {
-	index = 239
-	icon = "gfx/interface/icons/traits/devoted.dds"
 	
-	martial = 3
-	prowess = 4
-	diplomacy = 1
-	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
+	character_modifier = {
+		stress_gain_mult = 0.1
+		monthly_piety = 0.3
+		learning_per_prestige_level = 1
 	}
 	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_mount_hua_desc
-			}
-		}
-	}
+	same_opinion = 15
 }
 
-murim_last_of_beggar_sect = {
-	index = 240
-	icon = "gfx/interface/icons/traits/devoted.dds"
+# === CALAMITY REBUILDER ===
+murim_calamity_rebuilder = {
+	index = 3
+	
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_rebuilder.dds" }
 	
 	diplomacy = 4
-	intrigue = 3
+	stewardship = 3
+	martial = 2
+	
+	birth = no
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = murim_calamity_rebuilder }
+				desc = murim_calamity_rebuilder_desc
+			}
+		}
+	}
+	
+	character_modifier = {
+		domain_tax_mult = 0.15
+		build_speed = -0.1
+		monthly_prestige = 0.8
+		vassal_opinion = 10
+	}
+	
+	same_opinion = 20
+}
+
+# === CALAMITY BORN AFTER ===
+murim_calamity_born_after = {
+	index = 4
+	
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_born_after.dds" }
+	
 	martial = 1
+	learning = 2
 	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
-	}
+	birth = no
 	
 	desc = {
 		first_valid = {
 			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_beggar_sect_desc
+				trigger = { has_trait = murim_calamity_born_after }
+				desc = murim_calamity_born_after_desc
 			}
 		}
 	}
-}
-
-murim_last_of_iron_fist = {
-	index = 241
-	icon = "gfx/interface/icons/traits/devoted.dds"
 	
-	martial = 3
-	prowess = 5
-	health = 0.5
-	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_iron_fist_desc
-			}
-		}
+	character_modifier = {
+		monthly_piety = 0.2
+		attraction_opinion = 5
 	}
 }
 
-murim_last_of_tang_clan = {
-	index = 242
-	icon = "gfx/interface/icons/traits/devoted.dds"
+# === CALAMITY LIVING LEGEND ===
+murim_calamity_living_legend = {
+	index = 5
 	
-	intrigue = 4
-	martial = 2
-	prowess = 2
-	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_tang_clan_desc
-			}
-		}
-	}
-}
-
-murim_last_of_heavenly_demon = {
-	index = 243
-	icon = "gfx/interface/icons/traits/devoted.dds"
-	
-	martial = 4
-	prowess = 3
-	intrigue = 2
-	diplomacy = -2
-	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_poison_flower
-		murim_last_of_phantom_blade
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_heavenly_demon_desc
-			}
-		}
-	}
-}
-
-murim_last_of_poison_flower = {
-	index = 244
-	icon = "gfx/interface/icons/traits/devoted.dds"
-	
-	intrigue = 5
-	diplomacy = 2
-	learning = 1
-	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_phantom_blade
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_poison_flower_desc
-			}
-		}
-	}
-}
-
-murim_last_of_phantom_blade = {
-	index = 245
-	icon = "gfx/interface/icons/traits/devoted.dds"
-	
-	martial = 2
-	prowess = 4
-	intrigue = 3
-	
-	birth = 0
-	genetic = no
-	
-	opposites = {
-		murim_last_of_shaolin
-		murim_last_of_wudang
-		murim_last_of_mount_hua
-		murim_last_of_beggar_sect
-		murim_last_of_iron_fist
-		murim_last_of_tang_clan
-		murim_last_of_heavenly_demon
-		murim_last_of_poison_flower
-	}
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_last_of_phantom_blade_desc
-			}
-		}
-	}
-}
-
-# ========================================
-# CALAMITY ROLE TRAITS
-# ========================================
-
-murim_calamity_accelerator = {
-	index = 246
-	
-	# This character actively caused the calamity to happen faster
-	icon = "gfx/interface/icons/traits/sadistic.dds"
-	
-	martial = 3
-	prowess = 2
-	intrigue = 3
-	diplomacy = -4
-	
-	birth = 0
-	genetic = no
-	
-	desc = {
-		first_valid = {
-			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_calamity_accelerator_desc
-			}
-		}
-	}
-}
-
-murim_calamity_peacemaker = {
-	index = 247
-	
-	# This character tried to prevent the calamity
-	icon = "gfx/interface/icons/traits/just.dds"
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_living_legend.dds" }
 	
 	diplomacy = 5
-	martial = -1
-	learning = 2
+	martial = 3
+	learning = 4
+	prowess = 3
 	
-	birth = 0
-	genetic = no
+	health = 0.5
 	
-	opposites = {
-		murim_calamity_accelerator
-	}
+	birth = no
 	
 	desc = {
 		first_valid = {
 			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_calamity_peacemaker_desc
+				trigger = { has_trait = murim_calamity_living_legend }
+				desc = murim_calamity_living_legend_desc
 			}
 		}
+	}
+	
+	character_modifier = {
+		monthly_prestige = 2.0
+		vassal_opinion = 20
+		dread_baseline_add = 20
+		stress_gain_mult = -0.3
+	}
+	
+	same_opinion = 30
+}
+
+# === CALAMITY BETRAYER ===
+murim_calamity_betrayer = {
+	index = 6
+	
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_betrayer.dds" }
+	
+	intrigue = 4
+	diplomacy = -3
+	
+	birth = no
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = murim_calamity_betrayer }
+				desc = murim_calamity_betrayer_desc
+			}
+		}
+	}
+	
+	character_modifier = {
+		general_opinion = -20
+		dread_gain_mult = 0.3
+		hostile_scheme_power_mult = 0.2
+	}
+	
+	same_opinion = -10
+	opposite_opinion = -30
+}
+
+# === CALAMITY ORPHAN ===
+murim_calamity_orphan = {
+	index = 7
+	
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_orphan.dds" }
+	
+	martial = 2
+	prowess = 2
+	intrigue = 1
+	
+	birth = no
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = murim_calamity_orphan }
+				desc = murim_calamity_orphan_desc
+			}
+		}
+	}
+	
+	character_modifier = {
+		stress_gain_mult = 0.15
+		prowess_per_stress_level = 2
+		monthly_prestige = 0.1
+	}
+	
+	same_opinion = 15
+}
+
+# === CYCLE BREAKER ===
+murim_cycle_breaker = {
+	index = 8
+	
+	icon = { reference = "gfx/interface/icons/traits/murim_cycle_breaker.dds" }
+	
+	diplomacy = 5
+	martial = 5
+	learning = 5
+	prowess = 5
+	
+	health = 2.0
+	
+	birth = no
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = murim_cycle_breaker }
+				desc = murim_cycle_breaker_desc
+			}
+		}
+	}
+	
+	character_modifier = {
+		monthly_prestige = 3.0
+		monthly_piety = 2.0
+		vassal_opinion = 25
+		general_opinion = 15
+		dread_baseline_add = 30
 	}
 }
 
-murim_child_of_renewal = {
-	index = 248
+# === CALAMITY PROPHET ===
+murim_calamity_prophet = {
+	index = 9
 	
-	# Born after the calamity — first generation of the new era
-	icon = "gfx/interface/icons/traits/child_of_concubine.dds"
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_prophet.dds" }
 	
-	diplomacy = 1
-	learning = 2
-	health = 0.25
-	fertility = 0.1
+	learning = 5
+	intrigue = 3
 	
-	birth = 0
-	genetic = no
+	birth = no
 	
 	desc = {
 		first_valid = {
 			triggered_desc = {
-				trigger = { always = yes }
-				desc = murim_child_of_renewal_desc
+				trigger = { has_trait = murim_calamity_prophet }
+				desc = murim_calamity_prophet_desc
 			}
 		}
+	}
+	
+	character_modifier = {
+		monthly_piety = 1.0
+		general_opinion = -10
+		learning_per_piety_level = 2
+	}
+}
+
+# === CALAMITY WARLORD ===
+murim_calamity_warlord = {
+	index = 10
+	
+	icon = { reference = "gfx/interface/icons/traits/murim_calamity_warlord.dds" }
+	
+	martial = 6
+	prowess = 5
+	diplomacy = -2
+	
+	birth = no
+	
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_trait = murim_calamity_warlord }
+				desc = murim_calamity_warlord_desc
+			}
+		}
+	}
+	
+	character_modifier = {
+		dread_gain_mult = 0.5
+		knight_effectiveness_mult = 0.2
+		men_at_arms_maintenance = -0.1
+		monthly_prestige = 1.0
+		general_opinion = -15
 	}
 }
