@@ -1,0 +1,722 @@
+namespace = murim_shadow_politics_expansion2
+
+# Shadow Politics Expansion 2 — Heavenly Demon Puppet Emperor System
+# 8 events: Installing puppet emperor, controlling court, betrayal, collapse
+
+### EVENT 0001 — The Heavenly Demon's Imperial Ambition
+# The Heavenly Demon Sect plots to install a puppet on the imperial throne
+murim_shadow_politics_expansion2.0001 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0001.t
+	desc = murim_shadow_politics_expansion2.0001.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	
+	trigger = {
+		has_trait = murim_heavenly_demon_clan
+		has_trait = murim_martial_artist
+		intrigue >= 14
+		age >= 30
+		NOT = { has_character_flag = demon_imperial_ambition }
+	}
+	
+	immediate = {
+		set_character_flag = demon_imperial_ambition
+	}
+	
+	# Option A: Begin the Shadow Throne operation
+	option = {
+		name = murim_shadow_politics_expansion2.0001.a
+		add_character_modifier = {
+			modifier = murim_shadow_throne_architect
+			years = 30
+		}
+		add_intrigue_skill = 3
+		set_character_flag = murim_shadow_throne_active
+		trigger_event = {
+			id = murim_shadow_politics_expansion2.0002
+			days = { 90 365 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+	
+	# Option B: Build influence slowly through court manipulation
+	option = {
+		name = murim_shadow_politics_expansion2.0001.b
+		add_intrigue_skill = 2
+		add_diplomacy_skill = 2
+		add_character_modifier = {
+			modifier = murim_court_shadow_influence
+			years = 20
+		}
+		trigger_event = {
+			id = murim_shadow_politics_expansion2.0003
+			days = { 365 730 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+	
+	# Option C: Focus on martial power — the throne is irrelevant
+	option = {
+		name = murim_shadow_politics_expansion2.0001.c
+		add_martial_skill = 3
+		add_prowess = 2
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+}
+
+### EVENT 0002 — Selecting the Puppet Candidate
+# Choose which imperial candidate to control
+murim_shadow_politics_expansion2.0002 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0002.t
+	desc = murim_shadow_politics_expansion2.0002.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:puppet_candidate
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_character_flag = murim_shadow_throne_active
+		is_alive = yes
+	}
+	
+	immediate = {
+		# Find a weak-willed ruler or heir
+		random_living_character = {
+			limit = {
+				OR = {
+					is_ruler = yes
+					any_parent = { is_ruler = yes }
+				}
+				NOT = { this = root }
+				NOT = { has_trait = murim_heavenly_demon_clan }
+				age >= 16
+			}
+			weight = {
+				base = 1
+				modifier = { add = 10 has_trait = craven }
+				modifier = { add = 5 has_trait = lazy }
+				modifier = { add = 5 diplomacy < 8 }
+				modifier = { add = -5 has_trait = brave }
+				modifier = { add = -5 has_trait = ambitious }
+			}
+			save_scope_as = puppet_candidate
+		}
+	}
+	
+	# Option A: Approach through blackmail
+	option = {
+		name = murim_shadow_politics_expansion2.0002.a
+		add_intrigue_skill = 2
+		random_list = {
+			60 = {
+				scope:puppet_candidate = {
+					add_opinion = {
+						target = root
+						modifier = murim_blackmailed_into_submission
+						opinion = -40
+					}
+					set_character_flag = murim_demon_puppet
+				}
+				add_character_modifier = {
+					modifier = murim_puppet_master
+					years = 30
+				}
+				custom_tooltip = murim_puppet_secured_through_blackmail_tt
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0004
+					days = { 180 365 }
+				}
+			}
+			40 = {
+				add_stress = 30
+				custom_tooltip = murim_blackmail_material_insufficient_tt
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Approach through seduction and gifts
+	option = {
+		name = murim_shadow_politics_expansion2.0002.b
+		add_gold = -300
+		add_diplomacy_skill = 2
+		random_list = {
+			70 = {
+				scope:puppet_candidate = {
+					add_opinion = {
+						target = root
+						modifier = murim_generous_benefactor
+						opinion = 30
+					}
+					set_character_flag = murim_demon_puppet
+				}
+				add_character_modifier = {
+					modifier = murim_puppet_master
+					years = 30
+				}
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0004
+					days = { 180 365 }
+				}
+			}
+			30 = {
+				add_gold = -200
+				custom_tooltip = murim_gifts_rejected_suspicion_tt
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Approach through force — abduct and condition
+	option = {
+		name = murim_shadow_politics_expansion2.0002.c
+		add_dread = 20
+		random_list = {
+			50 = {
+				scope:puppet_candidate = {
+					set_character_flag = murim_demon_puppet
+					add_trait = craven
+				}
+				add_character_modifier = {
+					modifier = murim_puppet_master
+					years = 30
+				}
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0004
+					days = { 90 180 }
+				}
+			}
+			50 = {
+				add_prestige = -300
+				add_stress = 40
+				custom_tooltip = murim_abduction_failed_scandal_tt
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = sadistic }
+		}
+	}
+}
+
+### EVENT 0003 — Court Infiltration Progress
+# Demon Sect agents infiltrate the imperial court
+murim_shadow_politics_expansion2.0003 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0003.t
+	desc = murim_shadow_politics_expansion2.0003.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	
+	trigger = {
+		has_trait = murim_heavenly_demon_clan
+		has_character_modifier = murim_court_shadow_influence
+		is_alive = yes
+		NOT = { has_character_flag = court_infiltration_progress }
+	}
+	
+	immediate = {
+		set_character_flag = court_infiltration_progress
+	}
+	
+	# Option A: Place agents in the imperial guard
+	option = {
+		name = murim_shadow_politics_expansion2.0003.a
+		add_character_modifier = {
+			modifier = murim_agents_in_imperial_guard
+			years = 20
+		}
+		add_intrigue_skill = 2
+		custom_tooltip = murim_guard_reports_to_demon_sect_tt
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Corrupt the imperial eunuch network
+	option = {
+		name = murim_shadow_politics_expansion2.0003.b
+		add_gold = -200
+		add_character_modifier = {
+			modifier = murim_eunuch_network_corrupted
+			years = 20
+		}
+		custom_tooltip = murim_eunuchs_serve_demon_sect_tt
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Infiltrate the scholarly bureaucracy
+	option = {
+		name = murim_shadow_politics_expansion2.0003.c
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_scholars_compromised
+			years = 20
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+### EVENT 0004 — The Puppet Emperor Ascends
+# The puppet candidate takes the throne under Demon Sect control
+murim_shadow_politics_expansion2.0004 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0004.t
+	desc = murim_shadow_politics_expansion2.0004.desc
+	theme = realm
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	right_portrait = {
+		character = scope:puppet_emperor
+		animation = worry
+	}
+	
+	trigger = {
+		has_character_modifier = murim_puppet_master
+		is_alive = yes
+		NOT = { has_character_flag = puppet_emperor_ascended }
+	}
+	
+	immediate = {
+		set_character_flag = puppet_emperor_ascended
+		random_living_character = {
+			limit = { has_character_flag = murim_demon_puppet }
+			save_scope_as = puppet_emperor
+		}
+	}
+	
+	# Option A: Rule from the shadows — the perfect arrangement
+	option = {
+		name = murim_shadow_politics_expansion2.0004.a
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = murim_shadow_emperor
+			years = 50
+		}
+		set_global_variable = {
+			name = murim_demon_controls_throne
+			value = yes
+		}
+		trigger_event = {
+			id = murim_shadow_politics_expansion2.0005
+			days = { 365 730 }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Make yourself the Regent — semi-public control
+	option = {
+		name = murim_shadow_politics_expansion2.0004.b
+		add_prestige = 500
+		add_dread = 30
+		add_character_modifier = {
+			modifier = murim_demon_regent
+			years = 30
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Use the position for one massive demand, then withdraw
+	option = {
+		name = murim_shadow_politics_expansion2.0004.c
+		add_gold = 2000
+		add_prestige = 300
+		custom_tooltip = murim_extracted_treasure_and_left_tt
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+}
+
+### EVENT 0005 — Orthodox Alliance Discovers the Puppet
+# Word leaks that the emperor is under demonic control
+murim_shadow_politics_expansion2.0005 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0005.t
+	desc = murim_shadow_politics_expansion2.0005.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		has_character_modifier = murim_shadow_emperor
+		is_alive = yes
+		NOT = { has_character_flag = orthodox_discovered_puppet }
+	}
+	
+	immediate = {
+		set_character_flag = orthodox_discovered_puppet
+	}
+	
+	# Option A: Deny everything — gaslight the orthodox alliance
+	option = {
+		name = murim_shadow_politics_expansion2.0005.a
+		add_intrigue_skill = 3
+		random_list = {
+			40 = {
+				custom_tooltip = murim_denial_successful_tt
+				add_prestige = 200
+			}
+			60 = {
+				custom_tooltip = murim_denial_failed_war_coming_tt
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0006
+					days = { 30 90 }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Threaten them with the imperial army
+	option = {
+		name = murim_shadow_politics_expansion2.0005.b
+		add_dread = 40
+		add_character_modifier = {
+			modifier = murim_imperial_army_threat
+			years = 10
+		}
+		random_list = {
+			50 = { custom_tooltip = murim_orthodox_backs_down_tt }
+			50 = {
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0006
+					days = { 30 60 }
+				}
+				custom_tooltip = murim_orthodox_rallies_instead_tt
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+	
+	# Option C: Abandon the puppet and go underground
+	option = {
+		name = murim_shadow_politics_expansion2.0005.c
+		remove_character_modifier = murim_shadow_emperor
+		add_character_modifier = {
+			modifier = murim_demon_gone_underground
+			years = 20
+		}
+		add_stress = 20
+		custom_tooltip = murim_puppet_abandoned_chaos_ensues_tt
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+### EVENT 0006 — The Righteous Uprising
+# Orthodox clans unite to storm the imperial palace and free the emperor
+murim_shadow_politics_expansion2.0006 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0006.t
+	desc = murim_shadow_politics_expansion2.0006.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:orthodox_leader
+		animation = anger
+	}
+	
+	trigger = {
+		has_trait = murim_heavenly_demon_clan
+		has_character_flag = orthodox_discovered_puppet
+		is_alive = yes
+		NOT = { has_character_flag = righteous_uprising_faced }
+	}
+	
+	immediate = {
+		set_character_flag = righteous_uprising_faced
+		random_living_character = {
+			limit = {
+				OR = {
+					has_trait = murim_mount_hua_clan
+					has_trait = murim_shaolin_clan
+					has_trait = murim_wudang_clan
+				}
+				has_trait = murim_martial_artist
+				age >= 25
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 martial >= 16 }
+			}
+			save_scope_as = orthodox_leader
+		}
+	}
+	
+	# Option A: Fight the alliance head-on
+	option = {
+		name = murim_shadow_politics_expansion2.0006.a
+		duel = {
+			skill = martial
+			target = scope:orthodox_leader
+			50 = {
+				desc = murim_shadow_politics_expansion2.0006.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 1000
+				add_dread = 40
+				add_character_modifier = {
+					modifier = murim_crushed_orthodox_uprising
+					years = 20
+				}
+			}
+			50 = {
+				desc = murim_shadow_politics_expansion2.0006.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -500
+				random_list = {
+					50 = { add_trait = wounded_3 }
+					50 = { add_trait = wounded_2 }
+				}
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0007
+					days = { 30 90 }
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Use the puppet emperor as a hostage
+	option = {
+		name = murim_shadow_politics_expansion2.0006.b
+		add_dread = 30
+		add_intrigue_skill = 2
+		random_list = {
+			50 = {
+				custom_tooltip = murim_hostage_forces_retreat_tt
+				add_prestige = 500
+			}
+			50 = {
+				custom_tooltip = murim_orthodox_calls_bluff_tt
+				add_stress = 40
+				trigger_event = {
+					id = murim_shadow_politics_expansion2.0007
+					days = { 10 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = sadistic }
+		}
+	}
+	
+	# Option C: Negotiate a truce — offer to withdraw peacefully
+	option = {
+		name = murim_shadow_politics_expansion2.0006.c
+		remove_character_modifier = murim_shadow_emperor
+		add_prestige = -200
+		scope:orthodox_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_negotiated_withdrawal
+				opinion = 10
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = calm }
+		}
+	}
+}
+
+### EVENT 0007 — Fall of the Shadow Emperor
+# The puppet emperor scheme collapses
+murim_shadow_politics_expansion2.0007 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0007.t
+	desc = murim_shadow_politics_expansion2.0007.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+	
+	trigger = {
+		has_trait = murim_heavenly_demon_clan
+		is_alive = yes
+	}
+	
+	immediate = {
+		remove_character_modifier = murim_shadow_emperor
+		remove_character_modifier = murim_puppet_master
+		remove_global_variable = murim_demon_controls_throne
+	}
+	
+	# Option A: Vow revenge — the throne will be ours again
+	option = {
+		name = murim_shadow_politics_expansion2.0007.a
+		add_character_modifier = {
+			modifier = murim_demon_vengeance_oath
+			years = 30
+		}
+		add_stress = 30
+		add_dread = 20
+		trigger_event = {
+			id = murim_shadow_politics_expansion2.0008
+			days = { 730 1825 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = vengeful }
+		}
+	}
+	
+	# Option B: Accept the loss — focus on rebuilding sect strength
+	option = {
+		name = murim_shadow_politics_expansion2.0007.b
+		add_stress = -20
+		add_martial_skill = 3
+		add_character_modifier = {
+			modifier = murim_demon_sect_consolidation
+			years = 15
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Go into hiding — disappear completely
+	option = {
+		name = murim_shadow_politics_expansion2.0007.c
+		add_character_modifier = {
+			modifier = murim_demon_in_hiding
+			years = 20
+		}
+		add_intrigue_skill = 3
+		custom_tooltip = murim_demon_sect_vanishes_tt
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+}
+
+### EVENT 0008 — The Second Shadow Throne Attempt
+# Years later, the Demon Sect tries again with a new strategy
+murim_shadow_politics_expansion2.0008 = {
+	type = character_event
+	title = murim_shadow_politics_expansion2.0008.t
+	desc = murim_shadow_politics_expansion2.0008.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	
+	trigger = {
+		has_trait = murim_heavenly_demon_clan
+		has_character_modifier = murim_demon_vengeance_oath
+		is_alive = yes
+	}
+	
+	# Option A: This time, become emperor yourself
+	option = {
+		name = murim_shadow_politics_expansion2.0008.a
+		add_prestige = 500
+		add_dread = 30
+		add_character_modifier = {
+			modifier = murim_demon_emperor_candidate
+			years = 30
+		}
+		random_list = {
+			30 = {
+				add_character_modifier = {
+					modifier = murim_demon_emperor_achieved
+					years = 50
+				}
+				add_prestige = 3000
+				custom_tooltip = murim_demon_lord_becomes_emperor_tt
+			}
+			70 = {
+				add_stress = 50
+				custom_tooltip = murim_second_attempt_also_fails_tt
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+	
+	# Option B: Install a child puppet — easier to control
+	option = {
+		name = murim_shadow_politics_expansion2.0008.b
+		add_intrigue_skill = 3
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = murim_child_emperor_puppet_master
+					years = 30
+				}
+				custom_tooltip = murim_child_puppet_installed_tt
+			}
+			50 = {
+				add_stress = 30
+				custom_tooltip = murim_child_puppet_plan_exposed_tt
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Abandon imperial ambitions — rule the martial world instead
+	option = {
+		name = murim_shadow_politics_expansion2.0008.c
+		remove_character_modifier = murim_demon_vengeance_oath
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_demon_martial_supremacy
+			years = 30
+		}
+		custom_tooltip = murim_demon_focuses_on_martial_world_tt
+		ai_chance = { base = 25 }
+	}
+}
