@@ -1,0 +1,847 @@
+# Murim Chronicles Phase 3 - Breakthrough Events
+# Multi-stage breakthrough chain: preparation -> tribulation -> success/failure/deviation
+
+namespace = murim_breakthrough
+
+######################################
+# BREAKTHROUGH PREPARATION
+######################################
+
+murim_breakthrough.0001 = {
+	type = character_event
+	title = murim_breakthrough.0001.t
+	desc = murim_breakthrough.0001.desc
+	theme = mental_health
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		has_character_flag = murim_initiated
+		NOT = { has_character_flag = murim_breakthrough_cooldown }
+		NOT = { has_character_flag = murim_closed_door_active }
+		murim_can_attempt_breakthrough_trigger = yes
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_breakthrough_in_progress
+			days = 180
+		}
+	}
+
+	# Careful preparation - lower risk, lower reward
+	option = {
+		name = murim_breakthrough.0001.a
+		trigger = { learning >= 8 }
+		custom_tooltip = murim_breakthrough_careful_tt
+		set_variable = { name = murim_breakthrough_approach value = 1 }
+		stress_impact = { base = 10 }
+		hidden_effect = {
+			trigger_event = {
+				id = murim_breakthrough.0010
+				days = { 30 60 }
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+			modifier = {
+				add = 15
+				has_trait = temperate
+			}
+		}
+	}
+
+	# Forceful breakthrough - higher risk, higher reward
+	option = {
+		name = murim_breakthrough.0001.b
+		trigger = { prowess >= 12 }
+		custom_tooltip = murim_breakthrough_forceful_tt
+		set_variable = { name = murim_breakthrough_approach value = 2 }
+		stress_impact = { base = 25 }
+		hidden_effect = {
+			trigger_event = {
+				id = murim_breakthrough.0010
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Reckless gambit - extreme risk, massive reward
+	option = {
+		name = murim_breakthrough.0001.c
+		custom_tooltip = murim_breakthrough_reckless_tt
+		set_variable = { name = murim_breakthrough_approach value = 3 }
+		stress_impact = { base = 50 }
+		hidden_effect = {
+			trigger_event = {
+				id = murim_breakthrough.0010
+				days = { 7 14 }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = impatient
+			}
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				OR = {
+					has_trait = sadistic
+					has_trait = callous
+				}
+			}
+		}
+	}
+
+	# Abandon the attempt
+	option = {
+		name = murim_breakthrough.0001.d
+		custom_tooltip = murim_breakthrough_abandon_tt
+		remove_character_flag = murim_breakthrough_in_progress
+		stress_impact = { base = -5 }
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# TRIBULATION PHASE
+######################################
+
+murim_breakthrough.0010 = {
+	type = character_event
+	title = murim_breakthrough.0010.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { var:murim_breakthrough_approach = 1 }
+				desc = murim_breakthrough.0010.desc_careful
+			}
+			triggered_desc = {
+				trigger = { var:murim_breakthrough_approach = 2 }
+				desc = murim_breakthrough.0010.desc_forceful
+			}
+			triggered_desc = {
+				trigger = { var:murim_breakthrough_approach = 3 }
+				desc = murim_breakthrough.0010.desc_reckless
+			}
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_breakthrough_in_progress
+	}
+
+	# Endure the tribulation with willpower
+	option = {
+		name = murim_breakthrough.0010.a
+		custom_tooltip = murim_breakthrough_endure_tt
+		hidden_effect = {
+			random_list = {
+				# Success chance based on approach
+				murim_breakthrough_success_weight = {
+					trigger_event = { id = murim_breakthrough.0100 days = 3 }
+				}
+				# Partial success
+				murim_breakthrough_partial_weight = {
+					trigger_event = { id = murim_breakthrough.0200 days = 3 }
+				}
+				# Failure
+				murim_breakthrough_failure_weight = {
+					trigger_event = { id = murim_breakthrough.0300 days = 3 }
+				}
+				# Qi deviation
+				murim_breakthrough_deviation_weight = {
+					trigger_event = { id = murim_breakthrough.0400 days = 3 }
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Channel forbidden energy to aid breakthrough
+	option = {
+		name = murim_breakthrough.0010.b
+		trigger = {
+			OR = {
+				has_trait = murim_forbidden_art_initiate
+				has_trait = murim_forbidden_art_practitioner
+				has_trait = murim_forbidden_art_master
+				has_trait = murim_forbidden_art_consumed
+			}
+		}
+		custom_tooltip = murim_breakthrough_forbidden_channel_tt
+		add_character_modifier = {
+			modifier = murim_forbidden_breakthrough_surge
+			years = 1
+		}
+		hidden_effect = {
+			random_list = {
+				70 = {
+					trigger_event = { id = murim_breakthrough.0100 days = 1 }
+				}
+				10 = {
+					trigger_event = { id = murim_breakthrough.0200 days = 1 }
+				}
+				5 = {
+					trigger_event = { id = murim_breakthrough.0300 days = 1 }
+				}
+				15 = {
+					trigger_event = { id = murim_breakthrough.0400 days = 1 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Seek help from a mentor
+	option = {
+		name = murim_breakthrough.0010.c
+		trigger = {
+			any_relation = {
+				type = mentor
+				is_alive = yes
+				prowess >= root.prowess
+			}
+		}
+		custom_tooltip = murim_breakthrough_mentor_aid_tt
+		hidden_effect = {
+			random_relation = {
+				type = mentor
+				limit = { is_alive = yes }
+				save_scope_as = breakthrough_mentor
+				add_opinion = {
+					target = root
+					modifier = murim_aided_breakthrough_opinion
+				}
+			}
+			random_list = {
+				60 = {
+					trigger_event = { id = murim_breakthrough.0100 days = 5 }
+				}
+				25 = {
+					trigger_event = { id = murim_breakthrough.0200 days = 5 }
+				}
+				10 = {
+					trigger_event = { id = murim_breakthrough.0300 days = 5 }
+				}
+				5 = {
+					trigger_event = { id = murim_breakthrough.0400 days = 5 }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+######################################
+# BREAKTHROUGH SUCCESS
+######################################
+
+murim_breakthrough.0100 = {
+	type = character_event
+	title = murim_breakthrough.0100.t
+	desc = murim_breakthrough.0100.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = { is_alive = yes }
+
+	immediate = {
+		remove_character_flag = murim_breakthrough_in_progress
+		set_character_flag = {
+			flag = murim_breakthrough_cooldown
+			years = 3
+		}
+		# Advance cultivation rank
+		if = {
+			limit = { has_trait = cultivation_rank_qi_condensation }
+			remove_trait = cultivation_rank_qi_condensation
+			add_trait = cultivation_rank_foundation
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_foundation }
+			remove_trait = cultivation_rank_foundation
+			add_trait = cultivation_rank_core_formation
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_core_formation }
+			remove_trait = cultivation_rank_core_formation
+			add_trait = cultivation_rank_nascent_soul
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_nascent_soul }
+			remove_trait = cultivation_rank_nascent_soul
+			add_trait = cultivation_rank_spirit_severing
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_spirit_severing }
+			remove_trait = cultivation_rank_spirit_severing
+			add_trait = cultivation_rank_dao_seeking
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_dao_seeking }
+			remove_trait = cultivation_rank_dao_seeking
+			add_trait = cultivation_rank_tribulation
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_tribulation }
+			remove_trait = cultivation_rank_tribulation
+			add_trait = cultivation_rank_immortal_ascension
+			trigger_event = { id = murim_breakthrough.0500 days = 7 }
+		}
+	}
+
+	# Celebrate the breakthrough
+	option = {
+		name = murim_breakthrough.0100.a
+		add_prestige = 500
+		add_piety = 200
+		stress_impact = { base = -30 }
+		if = {
+			limit = { var:murim_breakthrough_approach = 3 }
+			add_prowess_skill = 3
+		}
+		else_if = {
+			limit = { var:murim_breakthrough_approach = 2 }
+			add_prowess_skill = 2
+		}
+		else = {
+			add_prowess_skill = 1
+		}
+	}
+
+	# Share insights with disciples
+	option = {
+		name = murim_breakthrough.0100.b
+		trigger = {
+			any_relation = {
+				type = mentor
+				count >= 1
+			}
+		}
+		add_prestige = 300
+		add_piety = 400
+		every_relation = {
+			type = ward
+			limit = { has_character_flag = murim_initiated }
+			add_opinion = {
+				target = root
+				modifier = murim_master_breakthrough_inspiration
+			}
+			change_variable = {
+				name = murim_cultivation_xp
+				add = 50
+			}
+		}
+	}
+}
+
+######################################
+# PARTIAL SUCCESS
+######################################
+
+murim_breakthrough.0200 = {
+	type = character_event
+	title = murim_breakthrough.0200.t
+	desc = murim_breakthrough.0200.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = { is_alive = yes }
+
+	immediate = {
+		remove_character_flag = murim_breakthrough_in_progress
+		set_character_flag = {
+			flag = murim_breakthrough_cooldown
+			years = 1
+		}
+	}
+
+	# Accept the partial gain
+	option = {
+		name = murim_breakthrough.0200.a
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 100
+		}
+		add_prowess_skill = 1
+		stress_impact = { base = 15 }
+	}
+
+	# Push through despite the setback
+	option = {
+		name = murim_breakthrough.0200.b
+		trigger = { prowess >= 15 }
+		custom_tooltip = murim_partial_push_through_tt
+		hidden_effect = {
+			random_list = {
+				40 = {
+					trigger_event = { id = murim_breakthrough.0100 days = 7 }
+				}
+				30 = {
+					change_variable = { name = murim_cultivation_xp add = 50 }
+				}
+				30 = {
+					trigger_event = { id = murim_breakthrough.0400 days = 1 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+}
+
+######################################
+# BREAKTHROUGH FAILURE
+######################################
+
+murim_breakthrough.0300 = {
+	type = character_event
+	title = murim_breakthrough.0300.t
+	desc = murim_breakthrough.0300.desc
+	theme = mental_health
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = { is_alive = yes }
+
+	immediate = {
+		remove_character_flag = murim_breakthrough_in_progress
+		set_character_flag = {
+			flag = murim_breakthrough_cooldown
+			years = 5
+		}
+	}
+
+	# Accept defeat gracefully
+	option = {
+		name = murim_breakthrough.0300.a
+		stress_impact = { base = 30 }
+		add_character_modifier = {
+			modifier = murim_shattered_confidence
+			years = 2
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Vow revenge against the heavens
+	option = {
+		name = murim_breakthrough.0300.b
+		stress_impact = { base = -10 }
+		add_character_modifier = {
+			modifier = murim_defiant_will
+			years = 5
+		}
+		add_trait = wrathful
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Seek forbidden knowledge to compensate
+	option = {
+		name = murim_breakthrough.0300.c
+		trigger = { intrigue >= 10 }
+		custom_tooltip = murim_failure_seek_forbidden_tt
+		hidden_effect = {
+			add_trait = murim_forbidden_art_initiate
+			add_character_modifier = {
+				modifier = murim_desperate_seeker
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+}
+
+######################################
+# QI DEVIATION DURING BREAKTHROUGH
+######################################
+
+murim_breakthrough.0400 = {
+	type = character_event
+	title = murim_breakthrough.0400.t
+	desc = murim_breakthrough.0400.desc
+	theme = death
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+
+	trigger = { is_alive = yes }
+
+	immediate = {
+		remove_character_flag = murim_breakthrough_in_progress
+		set_character_flag = {
+			flag = murim_breakthrough_cooldown
+			years = 10
+		}
+	}
+
+	# Endure the deviation
+	option = {
+		name = murim_breakthrough.0400.a
+		custom_tooltip = murim_qi_deviation_endure_tt
+		add_trait = wounded_2
+		add_character_modifier = {
+			modifier = murim_qi_deviation_scarred
+			years = 5
+		}
+		change_variable = {
+			name = murim_qi_deviation_count
+			add = 1
+		}
+		stress_impact = { base = 50 }
+		hidden_effect = {
+			random = {
+				chance = 15
+				add_trait = lunatic
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Seal meridians to contain damage
+	option = {
+		name = murim_breakthrough.0400.b
+		trigger = { learning >= 12 }
+		custom_tooltip = murim_qi_deviation_seal_tt
+		add_trait = wounded_1
+		add_character_modifier = {
+			modifier = murim_sealed_meridians
+			years = 10
+		}
+		add_prowess_skill = -2
+		stress_impact = { base = 30 }
+		ai_chance = { base = 40 }
+	}
+
+	# Release the energy outward (damages others)
+	option = {
+		name = murim_breakthrough.0400.c
+		custom_tooltip = murim_qi_deviation_release_tt
+		add_trait = wounded_1
+		stress_impact = { base = 20 }
+		hidden_effect = {
+			if = {
+				limit = { exists = scope:breakthrough_mentor }
+				scope:breakthrough_mentor = {
+					add_trait = wounded_2
+					add_opinion = {
+						target = root
+						modifier = murim_qi_blast_victim_opinion
+					}
+				}
+			}
+			random_courtier = {
+				limit = {
+					is_alive = yes
+					NOT = { this = root }
+				}
+				add_trait = wounded_1
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = callous }
+		}
+	}
+}
+
+######################################
+# HEAVENLY TRIBULATION (High Tier)
+######################################
+
+murim_breakthrough.0500 = {
+	type = character_event
+	title = murim_breakthrough.0500.t
+	desc = murim_breakthrough.0500.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = cultivation_rank_tribulation
+			has_trait = cultivation_rank_immortal_ascension
+		}
+	}
+
+	# Face the tribulation head-on
+	option = {
+		name = murim_breakthrough.0500.a
+		custom_tooltip = murim_heavenly_tribulation_face_tt
+		hidden_effect = {
+			random_list = {
+				40 = {
+					modifier = {
+						add = 20
+						prowess >= 25
+					}
+					add_prestige = 2000
+					add_piety = 1000
+					add_character_modifier = {
+						modifier = murim_tribulation_survivor
+						years = -1
+					}
+					add_prowess_skill = 5
+				}
+				30 = {
+					add_trait = wounded_3
+					add_character_modifier = {
+						modifier = murim_tribulation_scarred
+						years = 5
+					}
+					add_prowess_skill = 2
+				}
+				20 = {
+					add_trait = incapable
+					add_character_modifier = {
+						modifier = murim_cultivation_crippled
+						years = -1
+					}
+				}
+				10 = {
+					death = { death_reason = death_murder }
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Use a protective artifact
+	option = {
+		name = murim_breakthrough.0500.b
+		trigger = {
+			any_held_artifact = {
+				has_variable = murim_artifact_protective
+			}
+		}
+		custom_tooltip = murim_heavenly_tribulation_artifact_tt
+		hidden_effect = {
+			random_held_artifact = {
+				limit = { has_variable = murim_artifact_protective }
+				destroy_artifact = this
+			}
+			random_list = {
+				70 = {
+					add_prestige = 2000
+					add_piety = 1000
+					add_character_modifier = {
+						modifier = murim_tribulation_survivor
+						years = -1
+					}
+					add_prowess_skill = 3
+				}
+				20 = {
+					add_trait = wounded_1
+					add_prowess_skill = 2
+				}
+				10 = {
+					add_trait = wounded_2
+					add_character_modifier = {
+						modifier = murim_tribulation_scarred
+						years = 3
+					}
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Flee from the tribulation (lose rank)
+	option = {
+		name = murim_breakthrough.0500.c
+		custom_tooltip = murim_heavenly_tribulation_flee_tt
+		if = {
+			limit = { has_trait = cultivation_rank_immortal_ascension }
+			remove_trait = cultivation_rank_immortal_ascension
+			add_trait = cultivation_rank_tribulation
+		}
+		else_if = {
+			limit = { has_trait = cultivation_rank_tribulation }
+			remove_trait = cultivation_rank_tribulation
+			add_trait = cultivation_rank_dao_seeking
+		}
+		add_prestige = -1000
+		add_character_modifier = {
+			modifier = murim_tribulation_coward
+			years = 10
+		}
+		stress_impact = { base = -40 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+######################################
+# DUAL BREAKTHROUGH (with partner)
+######################################
+
+murim_breakthrough.0600 = {
+	type = character_event
+	title = murim_breakthrough.0600.t
+	desc = murim_breakthrough.0600.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:dual_partner
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_alive = yes
+		exists = scope:dual_partner
+		scope:dual_partner = { is_alive = yes }
+		has_character_flag = murim_breakthrough_in_progress
+	}
+
+	# Synchronize qi channels
+	option = {
+		name = murim_breakthrough.0600.a
+		custom_tooltip = murim_dual_breakthrough_sync_tt
+		hidden_effect = {
+			random_list = {
+				55 = {
+					trigger_event = { id = murim_breakthrough.0100 days = 3 }
+					scope:dual_partner = {
+						change_variable = { name = murim_cultivation_xp add = 150 }
+					}
+				}
+				25 = {
+					trigger_event = { id = murim_breakthrough.0200 days = 3 }
+					scope:dual_partner = {
+						change_variable = { name = murim_cultivation_xp add = 75 }
+					}
+				}
+				15 = {
+					trigger_event = { id = murim_breakthrough.0300 days = 3 }
+				}
+				5 = {
+					trigger_event = { id = murim_breakthrough.0400 days = 3 }
+					scope:dual_partner = {
+						add_trait = wounded_1
+					}
+				}
+			}
+		}
+		add_opinion = {
+			target = scope:dual_partner
+			modifier = murim_dual_cultivation_bond
+		}
+		scope:dual_partner = {
+			add_opinion = {
+				target = root
+				modifier = murim_dual_cultivation_bond
+			}
+		}
+	}
+
+	# Sacrifice partner's qi to fuel breakthrough
+	option = {
+		name = murim_breakthrough.0600.b
+		trigger = {
+			OR = {
+				has_trait = callous
+				has_trait = sadistic
+				has_trait = ambitious
+			}
+		}
+		custom_tooltip = murim_dual_breakthrough_sacrifice_tt
+		hidden_effect = {
+			random_list = {
+				80 = {
+					trigger_event = { id = murim_breakthrough.0100 days = 1 }
+				}
+				15 = {
+					trigger_event = { id = murim_breakthrough.0200 days = 1 }
+				}
+				5 = {
+					trigger_event = { id = murim_breakthrough.0400 days = 1 }
+				}
+			}
+			scope:dual_partner = {
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_qi_drained_victim
+					years = 5
+				}
+				add_opinion = {
+					target = root
+					modifier = murim_betrayed_cultivation_partner
+				}
+			}
+		}
+		add_tyranny = 20
+		ai_chance = {
+			base = 5
+			modifier = { add = 15 has_trait = sadistic }
+			modifier = { add = 10 has_trait = callous }
+		}
+	}
+}
