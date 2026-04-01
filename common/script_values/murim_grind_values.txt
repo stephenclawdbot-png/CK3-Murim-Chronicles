@@ -1,6 +1,10 @@
 # Murim Chronicles Phase 2 - Grind Loop Script Values
 # Extreme difficulty scaling for cultivation progression
 
+######################################
+# BODY TEMPERING VALUES
+######################################
+
 murim_body_tempering_success_chance = {
 	value = 80
 	if = {
@@ -168,266 +172,1342 @@ murim_breakthrough_success_chance = {
 	}
 	if = {
 		limit = { prowess >= 10 prowess < 17 }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = brave }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = ambitious }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = patient }
 		add = 3
 	}
 	if = {
-		limit = { has_trait = diligent }
+		limit = { has_trait = craven }
+		subtract = 10
+	}
+	if = {
+		limit = { has_trait = lazy }
+		subtract = 8
+	}
+	min = 2
+	max = 90
+}
+
+######################################
+# MEDITATION FOCUS VALUES
+######################################
+
+murim_meditation_focus_gain = {
+	# Base qi accumulation per meditation session
+	value = 10
+	# Learning stat bonus
+	if = {
+		limit = { learning >= 20 }
+		add = 15
+	}
+	if = {
+		limit = { learning >= 14 learning < 20 }
 		add = 10
 	}
 	if = {
-		limit = { has_trait = murim_hermit_cultivator }
+		limit = { learning >= 8 learning < 14 }
+		add = 5
+	}
+	# Cultivation rank enhances meditation
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 3 }
 		add = 8
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = murim_qi_deviation_minor
-				has_trait = murim_qi_deviation_major
-				has_trait = murim_qi_deviation_crippling
-			}
-		}
-		subtract = 30
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 5 }
+		add = 12
+	}
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 7 }
+		add = 15
+	}
+	# Meditation mastery trait bonuses
+	if = {
+		limit = { has_trait = murim_meditation_novice }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = murim_meditation_adept }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = murim_meditation_master }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = murim_meditation_grandmaster }
+		add = 25
+	}
+	if = {
+		limit = { has_trait = murim_meditation_sage }
+		add = 40
+	}
+	# Environmental bonuses
+	if = {
+		limit = { exists = var:murim_in_sacred_ground var:murim_in_sacred_ground = 1 }
+		multiply = 1.5
+	}
+	# Negative modifiers
+	if = {
+		limit = { has_trait = impatient }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = wrathful }
+		subtract = 3
+	}
+	if = {
+		limit = { stress >= 50 }
+		subtract = 8
+	}
+	if = {
+		limit = { stress >= 75 }
+		subtract = 12
+	}
+	min = 1
+	max = 100
+}
+
+murim_meditation_deep_trance_chance = {
+	# Chance to enter deep trance for bonus cultivation XP
+	value = 20
+	if = {
+		limit = { learning >= 16 }
+		add = 15
+	}
+	if = {
+		limit = { learning >= 10 learning < 16 }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = calm }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = murim_meditation_master }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = murim_meditation_grandmaster }
+		add = 25
+	}
+	if = {
+		limit = { has_trait = murim_meditation_sage }
+		add = 35
+	}
+	if = {
+		limit = { exists = var:murim_meditation_streak var:murim_meditation_streak >= 3 }
+		add = 5
+	}
+	if = {
+		limit = { exists = var:murim_meditation_streak var:murim_meditation_streak >= 7 }
+		add = 10
+	}
+	if = {
+		limit = { stress >= 50 }
+		subtract = 15
+	}
+	if = {
+		limit = { has_trait = impatient }
+		subtract = 20
 	}
 	min = 1
 	max = 85
 }
 
-murim_qi_deviation_chance = {
+######################################
+# QI DEVIATION RISK VALUES
+######################################
+
+murim_qi_deviation_risk = {
+	# Risk of qi deviation during forced cultivation
 	value = 5
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 1 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 2 }
-		add = 5
-	}
+	# Higher cultivation rank = more volatile qi
 	if = {
 		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 3 }
 		add = 5
 	}
 	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 4 }
-		add = 5
-	}
-	if = {
 		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 5 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 6 }
-		add = 5
-	}
-	if = {
-		limit = { has_trait = murim_forbidden_mark_1 }
 		add = 10
 	}
 	if = {
-		limit = { has_trait = murim_forbidden_mark_2 }
-		add = 20
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 7 }
+		add = 15
 	}
+	# Rushed cultivation massively increases risk
 	if = {
-		limit = { has_trait = murim_forbidden_mark_3 }
-		add = 30
-	}
-	if = {
-		limit = { has_character_flag = murim_attempting_breakthrough }
+		limit = { exists = var:murim_rushed_cultivation var:murim_rushed_cultivation >= 1 }
 		add = 15
 	}
 	if = {
-		limit = { has_character_flag = murim_studying_forbidden }
+		limit = { exists = var:murim_rushed_cultivation var:murim_rushed_cultivation >= 3 }
 		add = 20
+	}
+	# Using forbidden techniques
+	if = {
+		limit = { has_trait = murim_demonic_cultivator }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_blood_cultivator }
+		add = 15
+	}
+	# Emotional instability
+	if = {
+		limit = { stress >= 75 }
+		add = 20
+	}
+	if = {
+		limit = { stress >= 50 stress < 75 }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = wrathful }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = lunatic }
+		add = 10
+	}
+	# Protective factors
+	if = {
+		limit = { has_trait = calm }
+		subtract = 5
 	}
 	if = {
 		limit = { has_trait = patient }
 		subtract = 5
 	}
-	min = 2
-	max = 70
+	if = {
+		limit = { has_trait = murim_meditation_master }
+		subtract = 8
+	}
+	if = {
+		limit = { has_trait = murim_meditation_grandmaster }
+		subtract = 12
+	}
+	if = {
+		limit = { has_trait = murim_meditation_sage }
+		subtract = 18
+	}
+	if = {
+		limit = { learning >= 18 }
+		subtract = 5
+	}
+	min = 1
+	max = 80
 }
 
-murim_meditation_xp_gain = {
-	value = 1
-	if = {
-		limit = { learning >= 20 }
-		add = 2
-	}
-	if = {
-		limit = { learning >= 10 learning < 20 }
-		add = 1
-	}
-	if = {
-		limit = { learning >= 5 learning < 10 }
-		add = 0.5
-	}
-	if = {
-		limit = { has_trait = murim_hermit_cultivator }
-		add = 1.5
-	}
-	max = 5
-}
-
-murim_sparring_xp_gain = {
-	value = 1.5
-	if = {
-		limit = {
-			exists = scope:partner
-			scope:partner = { prowess > root.prowess }
-		}
-		add = 2
-	}
-	if = {
-		limit = { has_trait = murim_sparring_addict }
-		add = 1
-	}
-	max = 5
-}
-
-murim_cultivation_xp_threshold = {
-	value = 20
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 1 }
-		multiply = 4
-	}
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 2 }
-		multiply = 2.25
-	}
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 3 }
-		multiply = 1.778
-	}
+murim_qi_deviation_severity = {
+	# How bad a qi deviation is (1-100 scale)
+	value = 30
 	if = {
 		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 4 }
-		multiply = 1.5625
+		add = 15
 	}
 	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 5 }
-		multiply = 1.44
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 6 }
+		add = 20
 	}
+	if = {
+		limit = { has_trait = murim_demonic_cultivator }
+		add = 15
+	}
+	if = {
+		limit = { exists = var:murim_inner_demon_level var:murim_inner_demon_level >= 3 }
+		add = 20
+	}
+	if = {
+		limit = { health <= 2 }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_meditation_sage }
+		subtract = 15
+	}
+	if = {
+		limit = { has_trait = temperate }
+		subtract = 5
+	}
+	min = 5
+	max = 100
 }
 
-murim_tribulation_survival_chance = {
+######################################
+# HERB GATHERING & ALCHEMY VALUES
+######################################
+
+murim_herb_gathering_efficiency = {
+	# How many useful herbs found per expedition
+	value = 3
+	if = {
+		limit = { learning >= 15 }
+		add = 3
+	}
+	if = {
+		limit = { learning >= 10 learning < 15 }
+		add = 2
+	}
+	if = {
+		limit = { learning >= 6 learning < 10 }
+		add = 1
+	}
+	# Herb knowledge trait bonuses
+	if = {
+		limit = { has_trait = murim_herb_apprentice }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = murim_herb_journeyman }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = murim_herb_master }
+		add = 7
+	}
+	# Terrain bonuses (checked by variable set by location events)
+	if = {
+		limit = { exists = var:murim_in_mountain_territory var:murim_in_mountain_territory = 1 }
+		add = 3
+	}
+	if = {
+		limit = { exists = var:murim_in_forest_territory var:murim_in_forest_territory = 1 }
+		add = 2
+	}
+	# Season bonus
+	if = {
+		limit = { exists = var:murim_current_season var:murim_current_season = 2 }
+		add = 2 # Spring is best for herbs
+	}
+	min = 1
+	max = 20
+}
+
+murim_alchemy_success_chance = {
+	# Base chance to create a usable pill/elixir
 	value = 40
 	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 1 }
-		subtract = 8
+		limit = { learning >= 20 }
+		add = 25
 	}
 	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 2 }
-		subtract = 8
+		limit = { learning >= 14 learning < 20 }
+		add = 15
 	}
+	if = {
+		limit = { learning >= 8 learning < 14 }
+		add = 8
+	}
+	# Alchemy talent trait scaling
+	if = {
+		limit = { has_trait = murim_alchemy_novice }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_alchemy_adept }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = murim_alchemy_master }
+		add = 35
+	}
+	# Recipe difficulty scaling
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 3 }
+		subtract = 15
+	}
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 5 }
+		subtract = 20
+	}
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 7 }
+		subtract = 25
+	}
+	# Cultivation rank helps understand ingredients
 	if = {
 		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 3 }
-		subtract = 8
-	}
-	if = {
-		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 4 }
-		subtract = 8
+		add = 5
 	}
 	if = {
 		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 5 }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = lazy }
+		subtract = 10
+	}
+	min = 2
+	max = 95
+}
+
+murim_alchemy_explosion_risk = {
+	# Risk of cauldron explosion during failed alchemy
+	value = 10
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 5 }
+		add = 15
+	}
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 7 }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = murim_alchemy_novice }
+		subtract = 2
+	}
+	if = {
+		limit = { has_trait = murim_alchemy_adept }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = murim_alchemy_master }
+		subtract = 10
+	}
+	if = {
+		limit = { has_trait = impatient }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = reckless }
+		add = 8
+	}
+	min = 1
+	max = 60
+}
+
+######################################
+# SPARRING & COMBAT TRAINING VALUES
+######################################
+
+murim_sparring_prowess_gain = {
+	# Prowess XP gained per sparring session
+	value = 5
+	if = {
+		limit = { prowess >= 20 }
+		subtract = 2 # Diminishing returns at high prowess
+	}
+	if = {
+		limit = { prowess >= 30 }
+		subtract = 2
+	}
+	# Sparring dedication trait bonuses
+	if = {
+		limit = { has_trait = murim_sparring_enthusiast }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = murim_sparring_veteran }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = murim_sparring_demon }
+		add = 10
+	}
+	# Partner quality bonus (set by sparring event)
+	if = {
+		limit = { exists = var:murim_sparring_partner_quality var:murim_sparring_partner_quality >= 2 }
+		add = 3
+	}
+	if = {
+		limit = { exists = var:murim_sparring_partner_quality var:murim_sparring_partner_quality >= 4 }
+		add = 5
+	}
+	# Diligent characters train harder
+	if = {
+		limit = { has_trait = diligent }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = brave }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = lazy }
+		subtract = 3
+	}
+	if = {
+		limit = { has_trait = craven }
+		subtract = 2
+	}
+	min = 1
+	max = 25
+}
+
+murim_sparring_injury_risk = {
+	# Risk of injury during sparring
+	value = 10
+	if = {
+		limit = { exists = var:murim_sparring_intensity var:murim_sparring_intensity >= 2 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_sparring_intensity var:murim_sparring_intensity >= 3 }
+		add = 15
+	}
+	if = {
+		limit = { prowess < 8 }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_5_gold_marrow }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_7_obsidian_core }
 		subtract = 8
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_9_void_body }
+		subtract = 12
+	}
+	if = {
+		limit = { health <= 3 }
+		add = 10
+	}
+	min = 1
+	max = 50
+}
+
+murim_training_montage_duration = {
+	# Months of training montage (affects stat gains)
+	value = 6
+	if = {
+		limit = { has_trait = diligent }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = ambitious }
+		add = 2
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = lazy }
+		subtract = 3
+	}
+	if = {
+		limit = { has_trait = impatient }
+		subtract = 2
+	}
+	if = {
+		limit = { age >= 50 }
+		subtract = 2
+	}
+	if = {
+		limit = { age >= 65 }
+		subtract = 3
+	}
+	# Cultivation rank extends focus duration
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 5 }
+		add = 3
+	}
+	min = 2
+	max = 18
+}
+
+murim_training_montage_result_quality = {
+	# Quality multiplier for training montage results
+	value = 50
+	if = {
+		limit = { has_trait = diligent }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = ambitious }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = brave }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 12
 	}
 	if = {
 		limit = { prowess >= 20 }
 		add = 10
 	}
 	if = {
-		limit = { prowess >= 14 prowess < 20 }
-		add = 7
+		limit = { learning >= 15 }
+		add = 10
+	}
+	# Master/disciple training bonus
+	if = {
+		limit = { exists = var:murim_has_master var:murim_has_master = 1 }
+		add = 20
 	}
 	if = {
-		limit = { prowess >= 8 prowess < 14 }
+		limit = { has_trait = lazy }
+		subtract = 15
+	}
+	if = {
+		limit = { has_trait = craven }
+		subtract = 10
+	}
+	if = {
+		limit = { stress >= 75 }
+		subtract = 15
+	}
+	min = 10
+	max = 100
+}
+
+######################################
+# ENDURANCE TRAINING VALUES
+######################################
+
+murim_endurance_training_gain = {
+	# Stamina/health gain per endurance session
+	value = 8
+	if = {
+		limit = { prowess >= 15 }
+		add = 5
+	}
+	if = {
+		limit = { prowess >= 25 }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = murim_endurance_trained }
 		add = 4
 	}
 	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 1 }
-		add = 5
+		limit = { has_trait = murim_endurance_hardened }
+		add = 8
 	}
 	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 2 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 3 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 4 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 5 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 6 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 7 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 8 }
-		add = 5
-	}
-	if = {
-		limit = { exists = var:murim_body_tempering_level var:murim_body_tempering_level >= 9 }
-		add = 5
-	}
-	if = {
-		limit = { has_trait = brave }
-		add = 10
-	}
-	if = {
-		limit = { has_trait = murim_tribulation_survivor }
+		limit = { has_trait = murim_endurance_iron_will }
 		add = 15
 	}
-	min = 5
-	max = 75
+	if = {
+		limit = { has_trait = diligent }
+		add = 5
+	}
+	if = {
+		limit = { age >= 55 }
+		subtract = 5
+	}
+	if = {
+		limit = { age >= 40 age < 55 }
+		subtract = 2
+	}
+	# Cultivation provides endurance
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 4 }
+		add = 5
+	}
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 6 }
+		add = 8
+	}
+	min = 1
+	max = 50
 }
 
-murim_technique_theft_success = {
-	value = 20
+murim_endurance_overtraining_risk = {
+	# Risk of injury from overtraining
+	value = 5
 	if = {
-		limit = { intrigue >= 15 }
+		limit = { exists = var:murim_training_sessions_this_year var:murim_training_sessions_this_year >= 5 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_training_sessions_this_year var:murim_training_sessions_this_year >= 10 }
+		add = 20
+	}
+	if = {
+		limit = { exists = var:murim_training_sessions_this_year var:murim_training_sessions_this_year >= 15 }
+		add = 30
+	}
+	if = {
+		limit = { health <= 3 }
 		add = 15
 	}
 	if = {
-		limit = { intrigue >= 10 intrigue < 15 }
+		limit = { age >= 50 }
 		add = 10
 	}
 	if = {
-		limit = { intrigue >= 5 intrigue < 10 }
-		add = 5
+		limit = { has_trait = murim_endurance_iron_will }
+		subtract = 10
 	}
 	if = {
-		limit = { has_trait = deceitful }
-		add = 10
+		limit = { has_trait = temperate }
+		subtract = 5
 	}
-	min = 5
+	min = 1
 	max = 70
 }
 
-murim_disciple_training_xp = {
-	value = 2
+######################################
+# WEAPON FORGING VALUES
+######################################
+
+murim_forging_quality = {
+	# Quality of weapon produced (determines artifact quality tier)
+	value = 30
 	if = {
-		limit = { learning >= 20 }
+		limit = { martial >= 20 }
+		add = 20
+	}
+	if = {
+		limit = { martial >= 14 martial < 20 }
+		add = 12
+	}
+	if = {
+		limit = { martial >= 8 martial < 14 }
+		add = 5
+	}
+	# Forging experience
+	if = {
+		limit = { exists = var:murim_forging_experience var:murim_forging_experience >= 3 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_forging_experience var:murim_forging_experience >= 7 }
+		add = 15
+	}
+	if = {
+		limit = { exists = var:murim_forging_experience var:murim_forging_experience >= 12 }
+		add = 25
+	}
+	# Material quality
+	if = {
+		limit = { exists = var:murim_material_quality var:murim_material_quality >= 3 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_material_quality var:murim_material_quality >= 5 }
+		add = 15
+	}
+	# Cultivation rank for spiritual weapon infusion
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 4 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 6 }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 5
+	}
+	min = 5
+	max = 100
+}
+
+######################################
+# INNER DEMON RESISTANCE VALUES
+######################################
+
+murim_inner_demon_resistance = {
+	# Ability to resist inner demon corruption during cultivation
+	value = 50
+	if = {
+		limit = { learning >= 18 }
+		add = 15
+	}
+	if = {
+		limit = { learning >= 12 learning < 18 }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = calm }
+		add = 12
+	}
+	if = {
+		limit = { has_trait = patient }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = temperate }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = just }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = compassionate }
+		add = 5
+	}
+	# Meditation mastery helps greatly
+	if = {
+		limit = { has_trait = murim_meditation_grandmaster }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = murim_meditation_sage }
+		add = 25
+	}
+	# Negative factors
+	if = {
+		limit = { has_trait = wrathful }
+		subtract = 10
+	}
+	if = {
+		limit = { has_trait = sadistic }
+		subtract = 8
+	}
+	if = {
+		limit = { has_trait = vengeful }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = deceitful }
+		subtract = 5
+	}
+	if = {
+		limit = { stress >= 75 }
+		subtract = 20
+	}
+	if = {
+		limit = { stress >= 50 stress < 75 }
+		subtract = 10
+	}
+	# Inner demon level makes it harder
+	if = {
+		limit = { exists = var:murim_inner_demon_level var:murim_inner_demon_level >= 2 }
+		subtract = 10
+	}
+	if = {
+		limit = { exists = var:murim_inner_demon_level var:murim_inner_demon_level >= 4 }
+		subtract = 15
+	}
+	if = {
+		limit = { exists = var:murim_inner_demon_level var:murim_inner_demon_level >= 6 }
+		subtract = 20
+	}
+	min = 5
+	max = 95
+}
+
+murim_inner_demon_growth_rate = {
+	# How fast inner demons accumulate (lower = better for player)
+	value = 10
+	if = {
+		limit = { has_trait = murim_demonic_cultivator }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = murim_blood_cultivator }
+		add = 10
+	}
+	if = {
+		limit = { stress >= 50 }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = wrathful }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = sadistic }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = lustful }
 		add = 3
 	}
 	if = {
-		limit = { learning >= 13 learning < 20 }
-		add = 2
+		limit = { has_trait = greedy }
+		add = 3
+	}
+	# Righteous cultivation slows demon growth
+	if = {
+		limit = { has_trait = compassionate }
+		subtract = 5
 	}
 	if = {
-		limit = { learning >= 7 learning < 13 }
-		add = 1
+		limit = { has_trait = honest }
+		subtract = 3
 	}
 	if = {
-		limit = { has_trait = murim_master_teacher }
-		add = 2
+		limit = { has_trait = just }
+		subtract = 5
 	}
-	max = 8
+	if = {
+		limit = { has_trait = murim_meditation_sage }
+		subtract = 8
+	}
+	min = 1
+	max = 50
+}
+
+######################################
+# SEASONAL TRAINING VALUES
+######################################
+
+murim_seasonal_training_bonus = {
+	# Bonus/penalty based on season for outdoor training
+	value = 0
+	# Spring - renewal, good for qi cultivation
+	if = {
+		limit = { exists = var:murim_current_season var:murim_current_season = 1 }
+		add = 5
+	}
+	# Summer - intense heat, body tempering bonus
+	if = {
+		limit = { exists = var:murim_current_season var:murim_current_season = 2 }
+		add = 8
+	}
+	# Autumn - harvest, herb gathering bonus
+	if = {
+		limit = { exists = var:murim_current_season var:murim_current_season = 3 }
+		add = 3
+	}
+	# Winter - harsh, endurance training bonus but higher risk
+	if = {
+		limit = { exists = var:murim_current_season var:murim_current_season = 4 }
+		add = 10 # Bonus for endurance specifically
+	}
+}
+
+murim_winter_training_penalty = {
+	# Extra injury risk for winter outdoor training
+	value = 5
+	if = {
+		limit = { exists = var:murim_current_season var:murim_current_season = 4 }
+		add = 15
+	}
+	if = {
+		limit = { age >= 50 }
+		add = 5
+	}
+	if = {
+		limit = { health <= 3 }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_endurance_iron_will }
+		subtract = 8
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_7_obsidian_core }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_9_void_body }
+		subtract = 10
+	}
+	min = 0
+	max = 40
+}
+
+######################################
+# SECT TRAINING VALUES
+######################################
+
+murim_sect_training_quality = {
+	# Quality of training received from sect
+	value = 30
+	# Sect rank/position matters
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 1 }
+		add = 5 # Outer disciple
+	}
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 2 }
+		add = 10 # Inner disciple
+	}
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 3 }
+		add = 15 # Core disciple
+	}
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 4 }
+		add = 20 # Elder
+	}
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 5 }
+		add = 25 # Sect Leader
+	}
+	# Sect prestige bonus
+	if = {
+		limit = { exists = var:murim_sect_prestige var:murim_sect_prestige >= 50 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_sect_prestige var:murim_sect_prestige >= 80 }
+		add = 15
+	}
+	# Having a personal master
+	if = {
+		limit = { exists = var:murim_has_master var:murim_has_master = 1 }
+		add = 15
+	}
+	# No sect = no sect training
+	if = {
+		limit = { NOT = { exists = var:murim_sect_id } }
+		multiply = 0
+	}
+	min = 0
+	max = 100
+}
+
+murim_sect_resource_access = {
+	# How many sect resources (pills, manuals, training grounds) you can use
+	value = 10
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 2 }
+		add = 15
+	}
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 3 }
+		add = 20
+	}
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 4 }
+		add = 25
+	}
+	if = {
+		limit = { exists = var:murim_sect_contribution_points var:murim_sect_contribution_points >= 50 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_sect_contribution_points var:murim_sect_contribution_points >= 100 }
+		add = 15
+	}
+	if = {
+		limit = { NOT = { exists = var:murim_sect_id } }
+		multiply = 0
+	}
+	min = 0
+	max = 100
+}
+
+######################################
+# DUAL CULTIVATION VALUES
+######################################
+
+murim_dual_cultivation_bonus = {
+	# Bonus when cultivating with a partner (spouse/lover)
+	value = 0
+	# Must have a partner
+	if = {
+		limit = { exists = var:murim_dual_cultivation_partner var:murim_dual_cultivation_partner = 1 }
+		add = 15
+	}
+	# Compatibility bonus
+	if = {
+		limit = { exists = var:murim_partner_compatibility var:murim_partner_compatibility >= 3 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_partner_compatibility var:murim_partner_compatibility >= 5 }
+		add = 15
+	}
+	# Yin-yang balance (opposite cultivation types)
+	if = {
+		limit = { exists = var:murim_yin_yang_balance var:murim_yin_yang_balance >= 3 }
+		add = 20
+	}
+	# Opinion of partner affects results
+	if = {
+		limit = { has_trait = lustful }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = chaste }
+		subtract = 5
+	}
+	max = 60
+}
+
+######################################
+# BODY REFINEMENT PILL VALUES
+######################################
+
+murim_pill_effectiveness = {
+	# How effective a cultivation pill is
+	value = 50
+	# Pill quality (set by alchemy event)
+	if = {
+		limit = { exists = var:murim_pill_quality var:murim_pill_quality >= 2 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_pill_quality var:murim_pill_quality >= 4 }
+		add = 15
+	}
+	if = {
+		limit = { exists = var:murim_pill_quality var:murim_pill_quality >= 6 }
+		add = 25
+	}
+	# Pill tolerance (diminishing returns on same pill type)
+	if = {
+		limit = { exists = var:murim_pill_tolerance var:murim_pill_tolerance >= 3 }
+		subtract = 15
+	}
+	if = {
+		limit = { exists = var:murim_pill_tolerance var:murim_pill_tolerance >= 6 }
+		subtract = 25
+	}
+	if = {
+		limit = { exists = var:murim_pill_tolerance var:murim_pill_tolerance >= 9 }
+		subtract = 35
+	}
+	# Constitution affects absorption
+	if = {
+		limit = { has_trait = murim_body_temper_5_gold_marrow }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_7_obsidian_core }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_9_void_body }
+		add = 20
+	}
+	if = {
+		limit = { health >= 7 }
+		add = 5
+	}
+	if = {
+		limit = { health <= 3 }
+		subtract = 10
+	}
+	min = 5
+	max = 100
+}
+
+murim_pill_toxicity_risk = {
+	# Risk of pill toxicity (impurities building up)
+	value = 5
+	if = {
+		limit = { exists = var:murim_pills_consumed var:murim_pills_consumed >= 5 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_pills_consumed var:murim_pills_consumed >= 10 }
+		add = 15
+	}
+	if = {
+		limit = { exists = var:murim_pills_consumed var:murim_pills_consumed >= 20 }
+		add = 25
+	}
+	# Low quality pills are more toxic
+	if = {
+		limit = { exists = var:murim_pill_quality var:murim_pill_quality < 3 }
+		add = 10
+	}
+	# Body tempering helps detoxify
+	if = {
+		limit = { has_trait = murim_body_temper_5_gold_marrow }
+		subtract = 5
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_7_obsidian_core }
+		subtract = 8
+	}
+	if = {
+		limit = { has_trait = murim_body_temper_9_void_body }
+		subtract = 15
+	}
+	if = {
+		limit = { health >= 7 }
+		subtract = 3
+	}
+	min = 1
+	max = 60
+}
+
+######################################
+# BREAKTHROUGH CATALYST VALUES
+######################################
+
+murim_breakthrough_catalyst_bonus = {
+	# Bonus to breakthrough when using a rare catalyst
+	value = 0
+	# Catalyst type (set by item events)
+	if = {
+		limit = { exists = var:murim_catalyst_tier var:murim_catalyst_tier >= 1 }
+		add = 10 # Common catalyst
+	}
+	if = {
+		limit = { exists = var:murim_catalyst_tier var:murim_catalyst_tier >= 2 }
+		add = 10 # Rare catalyst
+	}
+	if = {
+		limit = { exists = var:murim_catalyst_tier var:murim_catalyst_tier >= 3 }
+		add = 15 # Epic catalyst
+	}
+	if = {
+		limit = { exists = var:murim_catalyst_tier var:murim_catalyst_tier >= 4 }
+		add = 20 # Legendary catalyst
+	}
+	# Compatibility with cultivation path
+	if = {
+		limit = { exists = var:murim_catalyst_compatible var:murim_catalyst_compatible = 1 }
+		multiply = 1.5
+	}
+	max = 60
+}
+
+murim_natural_talent_multiplier = {
+	# Innate cultivation talent (affects all grind speed)
+	value = 100 # Percentage (100 = normal)
+	if = {
+		limit = { has_trait = genius }
+		add = 30
+	}
+	if = {
+		limit = { has_trait = intelligent }
+		add = 15
+	}
+	if = {
+		limit = { has_trait = quick }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = slow }
+		subtract = 15
+	}
+	if = {
+		limit = { has_trait = stupid }
+		subtract = 25
+	}
+	if = {
+		limit = { has_trait = imbecile }
+		subtract = 40
+	}
+	# Age factor - younger cultivators learn faster
+	if = {
+		limit = { age < 20 }
+		add = 20
+	}
+	if = {
+		limit = { age >= 20 age < 30 }
+		add = 10
+	}
+	if = {
+		limit = { age >= 50 age < 65 }
+		subtract = 10
+	}
+	if = {
+		limit = { age >= 65 }
+		subtract = 25
+	}
+	# Bloodline bonus
+	if = {
+		limit = { exists = var:murim_bloodline_tier var:murim_bloodline_tier >= 1 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_bloodline_tier var:murim_bloodline_tier >= 2 }
+		add = 10
+	}
+	if = {
+		limit = { exists = var:murim_bloodline_tier var:murim_bloodline_tier >= 3 }
+		add = 15
+	}
+	min = 30
+	max = 200
+}
+
+######################################
+# RESOURCE COST VALUES
+######################################
+
+murim_training_gold_cost = {
+	# Gold cost per training session
+	value = 25
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 3 }
+		add = 25
+	}
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 5 }
+		add = 50
+	}
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 7 }
+		add = 100
+	}
+	# Sect discount
+	if = {
+		limit = { exists = var:murim_sect_position var:murim_sect_position >= 3 }
+		multiply = 0.5
+	}
+	min = 10
+}
+
+murim_pill_crafting_gold_cost = {
+	# Gold cost for pill ingredients
+	value = 50
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 3 }
+		add = 50
+	}
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 5 }
+		add = 100
+	}
+	if = {
+		limit = { exists = var:murim_pill_difficulty var:murim_pill_difficulty >= 7 }
+		add = 200
+	}
+	# Herb knowledge reduces waste
+	if = {
+		limit = { has_trait = murim_herb_master }
+		multiply = 0.7
+	}
+	if = {
+		limit = { has_trait = murim_herb_journeyman }
+		multiply = 0.85
+	}
+	min = 20
+}
+
+murim_weapon_forging_gold_cost = {
+	# Gold cost for weapon forging materials
+	value = 100
+	if = {
+		limit = { exists = var:murim_material_quality var:murim_material_quality >= 3 }
+		add = 100
+	}
+	if = {
+		limit = { exists = var:murim_material_quality var:murim_material_quality >= 5 }
+		add = 200
+	}
+	# Spiritual weapon infusion cost
+	if = {
+		limit = { exists = var:murim_cultivation_rank var:murim_cultivation_rank >= 4 }
+		add = 150
+	}
+	min = 50
 }
