@@ -1,0 +1,905 @@
+# Murim Chronicles Phase 4 - Jianghu Underground Effects
+# Reusable effects for underground recruitment, court infiltration, examination rigging,
+# assassination, puppet installation, trade route control, blackmail, exposure
+
+######################################
+# UNDERGROUND RECRUITMENT
+######################################
+
+murim_recruit_to_underground_effect = {
+	# Target is scope:recruit
+	scope:recruit = {
+		set_character_flag = murim_jianghu_inducted
+		set_variable = {
+			name = murim_jianghu_influence
+			value = 10
+		}
+		set_variable = {
+			name = murim_underground_rep
+			value = 0
+		}
+		add_opinion = {
+			target = root
+			modifier = murim_recruited_me_to_jianghu
+		}
+		# Grant starting role based on skills
+		if = {
+			limit = { intrigue >= 14 }
+			add_trait = sect_spy
+		}
+		else_if = {
+			limit = { martial >= 14 }
+			add_trait = jianghu_enforcer
+		}
+		else_if = {
+			limit = { stewardship >= 14 }
+			add_trait = black_market_dealer
+		}
+		else = {
+			add_character_modifier = {
+				modifier = murim_jianghu_initiate
+				years = 3
+			}
+		}
+	}
+	# Recruiter gains influence
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 5
+	}
+	add_prestige = 50
+}
+
+murim_induct_into_jianghu_ceremony_effect = {
+	scope:recruit = {
+		set_character_flag = murim_jianghu_inducted
+		set_character_flag = murim_sworn_blood_oath
+		add_character_modifier = {
+			modifier = murim_blood_oath_bound
+			years = -1
+		}
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 5
+		}
+	}
+	root = {
+		add_opinion = {
+			target = scope:recruit
+			modifier = murim_sworn_brother_opinion
+		}
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 3
+		}
+	}
+	scope:recruit = {
+		add_opinion = {
+			target = root
+			modifier = murim_sworn_brother_opinion
+		}
+	}
+}
+
+murim_promote_jianghu_operative_effect = {
+	# Requires scope:operative
+	scope:operative = {
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 15
+		}
+		change_variable = {
+			name = murim_underground_rep
+			add = 10
+		}
+		add_prestige = 100
+		# Promote to higher tier based on current role
+		if = {
+			limit = {
+				has_trait = sect_spy
+				intrigue >= 18
+			}
+			remove_trait = sect_spy
+			add_trait = shadow_broker
+		}
+		else_if = {
+			limit = {
+				has_trait = jianghu_enforcer
+				prowess >= 18
+			}
+			remove_trait = jianghu_enforcer
+			add_trait = hidden_master
+		}
+		else_if = {
+			limit = {
+				has_trait = black_market_dealer
+				stewardship >= 18
+			}
+			remove_trait = black_market_dealer
+			add_trait = shadow_broker
+		}
+	}
+}
+
+######################################
+# SPY PLANTING & COURT INFILTRATION
+######################################
+
+murim_plant_spy_in_court_effect = {
+	# Requires scope:target_ruler and scope:spy_agent
+	scope:spy_agent = {
+		set_character_flag = murim_planted_at_court
+		add_character_modifier = {
+			modifier = murim_deep_cover_operative
+			years = 10
+		}
+	}
+	scope:target_ruler = {
+		add_courtier = scope:spy_agent
+	}
+	root = {
+		set_character_flag = murim_has_planted_spy
+		change_variable = {
+			name = murim_spies_planted
+			add = 1
+		}
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 8
+		}
+		add_intrigue_skill = 1
+	}
+}
+
+murim_spy_gather_intelligence_effect = {
+	# Spy at court gathers info
+	change_variable = {
+		name = murim_intelligence_network
+		add = 1
+	}
+	random_list = {
+		30 = {
+			# Discovered political secrets
+			add_character_modifier = {
+				modifier = murim_court_secrets_known
+				years = 5
+			}
+		}
+		25 = {
+			# Discovered military disposition
+			add_character_modifier = {
+				modifier = murim_enemy_plans_known
+				years = 2
+			}
+		}
+		25 = {
+			# Discovered financial vulnerabilities
+			add_character_modifier = {
+				modifier = murim_financial_leverage
+				years = 3
+			}
+		}
+		15 = {
+			# Spy discovered a hidden cultivator
+			trigger_event = {
+				id = murim_jianghu.0050
+				days = { 5 15 }
+			}
+		}
+		5 = {
+			# Spy was nearly exposed
+			add_character_modifier = {
+				modifier = murim_spy_close_call
+				months = 6
+			}
+		}
+	}
+}
+
+murim_expose_spy_at_court_effect = {
+	# scope:exposed_spy is the spy being revealed
+	scope:exposed_spy = {
+		remove_character_modifier = murim_deep_cover_operative
+		remove_character_flag = murim_planted_at_court
+		add_character_modifier = {
+			modifier = murim_exposed_operative
+			years = 10
+		}
+		add_prestige = -200
+		# Chance of imprisonment
+		if = {
+			limit = {
+				exists = liege
+				liege = { has_trait = just }
+			}
+			imprison = {
+				target = scope:exposed_spy
+				type = dungeon
+			}
+		}
+	}
+	# Spy's handler loses influence
+	if = {
+		limit = {
+			exists = scope:handler
+		}
+		scope:handler = {
+			change_variable = {
+				name = murim_jianghu_influence
+				add = -15
+			}
+			add_prestige = -100
+		}
+	}
+}
+
+######################################
+# EXAMINATION RIGGING
+######################################
+
+murim_rig_imperial_examination_effect = {
+	# scope:candidate is who we're pushing through
+	# scope:examination_target is the position/title
+	scope:candidate = {
+		add_character_modifier = {
+			modifier = murim_examination_passed_fraudulently
+			years = -1
+		}
+		add_learning_skill = 1
+		add_prestige = 150
+		set_character_flag = murim_rigged_examination_beneficiary
+	}
+	root = {
+		add_gold = -100
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 10
+		}
+		add_opinion = {
+			target = scope:candidate
+			modifier = murim_i_rigged_your_exam
+		}
+		# Risk of discovery
+		random = {
+			chance = 25
+			trigger_event = {
+				id = murim_jianghu.0060
+				days = { 30 180 }
+			}
+		}
+	}
+	scope:candidate = {
+		add_opinion = {
+			target = root
+			modifier = murim_you_got_me_through_exam
+		}
+	}
+}
+
+murim_examination_rigging_discovered_effect = {
+	add_character_modifier = {
+		modifier = murim_examination_rigging_discovered
+		years = 10
+	}
+	add_prestige = -300
+	add_piety = -100
+	change_variable = {
+		name = murim_jianghu_influence
+		add = -20
+	}
+	# All who know lose opinion
+	every_courtier = {
+		limit = {
+			has_character_flag = murim_knows_about_rigging
+		}
+		add_opinion = {
+			target = root
+			modifier = murim_cheater_exposed_opinion
+		}
+	}
+}
+
+######################################
+# ASSASSINATION VIA SECT CONTRACT
+######################################
+
+murim_assassinate_via_sect_effect = {
+	# scope:assassination_target is the victim
+	# Root is the commissioner
+	add_gold = -150
+	change_variable = {
+		name = murim_jianghu_influence
+		add = -5
+	}
+
+	random_list = {
+		40 = {
+			modifier = {
+				factor = 1.5
+				has_trait = shadow_broker
+			}
+			modifier = {
+				factor = 1.3
+				intrigue >= 18
+			}
+			# Assassination succeeds cleanly
+			scope:assassination_target = {
+				death = {
+					death_reason = death_murder_unknown
+				}
+			}
+			root = {
+				add_character_modifier = {
+					modifier = murim_successful_contract
+					years = 3
+				}
+				change_variable = {
+					name = murim_underground_rep
+					add = 10
+				}
+			}
+		}
+		25 = {
+			# Assassination succeeds but leaves evidence
+			scope:assassination_target = {
+				death = {
+					death_reason = death_murder_unknown
+				}
+			}
+			root = {
+				add_character_modifier = {
+					modifier = murim_sloppy_contract
+					years = 5
+				}
+				random = {
+					chance = 40
+					trigger_event = {
+						id = murim_jianghu.0070
+						days = { 10 60 }
+					}
+				}
+			}
+		}
+		20 = {
+			# Assassination fails - target survives
+			scope:assassination_target = {
+				add_character_modifier = {
+					modifier = murim_survived_assassination
+					years = 5
+				}
+				add_prowess_skill = 1
+			}
+			root = {
+				add_character_modifier = {
+					modifier = murim_failed_contract
+					years = 3
+				}
+				change_variable = {
+					name = murim_underground_rep
+					add = -5
+				}
+			}
+		}
+		15 = {
+			# Assassination fails and traces back
+			scope:assassination_target = {
+				add_character_modifier = {
+					modifier = murim_survived_assassination
+					years = 5
+				}
+				add_opinion = {
+					target = root
+					modifier = murim_tried_to_kill_me
+				}
+			}
+			root = {
+				add_character_modifier = {
+					modifier = murim_assassination_traced
+					years = 10
+				}
+				add_prestige = -200
+				change_variable = {
+					name = murim_jianghu_influence
+					add = -15
+				}
+			}
+		}
+	}
+}
+
+######################################
+# PUPPET OFFICIAL INSTALLATION
+######################################
+
+murim_install_puppet_official_effect = {
+	# scope:puppet_target is the person being made puppet
+	# scope:target_title is the title they'll hold
+	scope:puppet_target = {
+		add_trait = puppet_official
+		set_character_flag = murim_puppet_of_underground
+		add_character_modifier = {
+			modifier = murim_under_sect_control
+			years = -1
+		}
+		add_opinion = {
+			target = root
+			modifier = murim_you_control_me
+		}
+	}
+	root = {
+		change_variable = {
+			name = murim_puppets_installed
+			add = 1
+		}
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 20
+		}
+		add_character_modifier = {
+			modifier = murim_puppet_master
+			years = 10
+		}
+	}
+}
+
+murim_puppet_revolt_effect = {
+	# Puppet breaks free
+	remove_trait = puppet_official
+	remove_character_flag = murim_puppet_of_underground
+	remove_character_modifier = murim_under_sect_control
+	set_character_flag = murim_freed_from_puppet_control
+	add_prestige = 100
+	add_character_modifier = {
+		modifier = murim_freed_puppet_resolve
+		years = 5
+	}
+	# Former controller suffers
+	if = {
+		limit = {
+			exists = scope:former_controller
+		}
+		scope:former_controller = {
+			change_variable = {
+				name = murim_puppets_installed
+				add = -1
+			}
+			change_variable = {
+				name = murim_jianghu_influence
+				add = -10
+			}
+			add_prestige = -100
+		}
+	}
+}
+
+######################################
+# TRADE ROUTE CONTROL
+######################################
+
+murim_control_trade_route_effect = {
+	# scope:route_type determines which route
+	add_gold = -300
+	if = {
+		limit = { scope:route_type = flag:silk_road }
+		set_character_flag = murim_controls_silk_road_segment
+		add_character_modifier = {
+			modifier = murim_silk_road_profits
+			years = -1
+		}
+	}
+	else_if = {
+		limit = { scope:route_type = flag:tea_route }
+		set_character_flag = murim_controls_tea_route
+		add_character_modifier = {
+			modifier = murim_tea_route_profits
+			years = -1
+		}
+	}
+	else_if = {
+		limit = { scope:route_type = flag:salt_route }
+		set_character_flag = murim_controls_salt_route
+		add_character_modifier = {
+			modifier = murim_salt_route_profits
+			years = -1
+		}
+	}
+	else_if = {
+		limit = { scope:route_type = flag:jade_route }
+		set_character_flag = murim_controls_jade_route
+		add_character_modifier = {
+			modifier = murim_jade_route_profits
+			years = -1
+		}
+	}
+	add_character_modifier = {
+		modifier = murim_trade_route_controller
+		years = -1
+	}
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 15
+	}
+}
+
+murim_lose_trade_route_effect = {
+	# scope:route_type determines which is lost
+	if = {
+		limit = { has_character_flag = murim_controls_silk_road_segment }
+		remove_character_flag = murim_controls_silk_road_segment
+		remove_character_modifier = murim_silk_road_profits
+	}
+	if = {
+		limit = { has_character_flag = murim_controls_tea_route }
+		remove_character_flag = murim_controls_tea_route
+		remove_character_modifier = murim_tea_route_profits
+	}
+	if = {
+		limit = { has_character_flag = murim_controls_salt_route }
+		remove_character_flag = murim_controls_salt_route
+		remove_character_modifier = murim_salt_route_profits
+	}
+	if = {
+		limit = { has_character_flag = murim_controls_jade_route }
+		remove_character_flag = murim_controls_jade_route
+		remove_character_modifier = murim_jade_route_profits
+	}
+	remove_character_modifier = murim_trade_route_controller
+	change_variable = {
+		name = murim_jianghu_influence
+		add = -15
+	}
+	add_prestige = -200
+}
+
+######################################
+# BLACKMAIL OPERATIONS
+######################################
+
+murim_blackmail_noble_effect = {
+	# scope:blackmail_target, scope:secret_known
+	scope:blackmail_target = {
+		add_opinion = {
+			target = root
+			modifier = murim_blackmailing_me
+		}
+		add_character_modifier = {
+			modifier = murim_under_blackmail
+			years = 5
+		}
+		add_stress = 30
+	}
+	root = {
+		add_gold = 100
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 5
+		}
+		# Risk of retaliation
+		random = {
+			chance = 15
+			modifier = {
+				add = 10
+				scope:blackmail_target = { martial >= 14 }
+			}
+			modifier = {
+				add = 10
+				scope:blackmail_target = { has_trait = wrathful }
+			}
+			trigger_event = {
+				id = murim_jianghu.0080
+				days = { 30 120 }
+			}
+		}
+	}
+}
+
+murim_blackmail_escalate_effect = {
+	# Increase demands on existing blackmail victim
+	scope:blackmail_target = {
+		add_stress = 20
+		add_opinion = {
+			target = root
+			modifier = murim_increased_blackmail_demands
+		}
+	}
+	root = {
+		add_gold = 75
+		# Higher chance of retaliation when escalating
+		random = {
+			chance = 30
+			scope:blackmail_target = {
+				trigger_event = {
+					id = murim_jianghu.0081
+					days = { 10 60 }
+				}
+			}
+		}
+	}
+}
+
+######################################
+# CULTIVATOR EXPOSURE
+######################################
+
+murim_expose_cultivator_effect = {
+	# scope:exposed_cultivator
+	scope:exposed_cultivator = {
+		set_character_flag = murim_cultivation_public
+		remove_character_modifier = murim_identity_perfectly_concealed
+		add_character_modifier = {
+			modifier = murim_cultivation_exposed
+			years = 5
+		}
+		add_prestige = -100
+		add_stress = 40
+		# Court reactions
+		if = {
+			limit = {
+				exists = liege
+				liege = {
+					NOT = { murim_is_cultivator_trigger = yes }
+				}
+			}
+			liege = {
+				trigger_event = {
+					id = murim_imperial_cultivator.0001
+					days = { 1 5 }
+				}
+			}
+		}
+	}
+	root = {
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 10
+		}
+		add_prestige = 50
+		if = {
+			limit = { NOT = { murim_is_jianghu_member_trigger = yes } }
+			add_piety = 50
+		}
+	}
+}
+
+murim_conceal_cultivation_identity_effect = {
+	add_character_modifier = {
+		modifier = murim_identity_perfectly_concealed
+		years = 5
+	}
+	remove_character_flag = murim_cultivation_public
+	add_gold = -50
+	add_intrigue_skill = 1
+}
+
+######################################
+# UNDERGROUND TOURNAMENT
+######################################
+
+murim_host_underground_tournament_effect = {
+	add_gold = -500
+	add_prestige = 200
+	set_character_flag = murim_hosting_tournament
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 25
+	}
+	add_character_modifier = {
+		modifier = murim_tournament_host_prestige
+		years = 3
+	}
+	# Notify nearby cultivators
+	every_neighboring_and_across_water_top_liege_realm_owner = {
+		limit = {
+			any_courtier = {
+				murim_is_cultivator_trigger = yes
+			}
+		}
+		random_courtier = {
+			limit = { murim_is_cultivator_trigger = yes }
+			trigger_event = {
+				id = murim_jianghu.0090
+				days = { 5 15 }
+			}
+		}
+	}
+}
+
+murim_win_underground_tournament_effect = {
+	add_trait = underground_tournament_champion
+	add_prowess_skill = 2
+	add_prestige = 300
+	add_gold = 200
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 20
+	}
+	add_character_modifier = {
+		modifier = murim_tournament_champion_fame
+		years = 5
+	}
+}
+
+######################################
+# WULIN ALLIANCE OPERATIONS
+######################################
+
+murim_declare_wulin_alliance_effect = {
+	add_trait = wulin_alliance_member
+	set_character_flag = murim_wulin_leader
+	add_prestige = 500
+	add_character_modifier = {
+		modifier = murim_wulin_alliance_leader
+		years = -1
+	}
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 50
+	}
+	# Rally righteous cultivators
+	every_living_character = {
+		limit = {
+			murim_is_cultivator_trigger = yes
+			OR = {
+				has_trait = just
+				has_trait = brave
+				has_trait = honest
+			}
+			NOT = { has_trait = demonic_cultivator }
+			NOT = { this = root }
+		}
+		random = {
+			chance = 30
+			add_opinion = {
+				target = root
+				modifier = murim_wulin_alliance_respect
+			}
+		}
+	}
+}
+
+murim_join_wulin_alliance_effect = {
+	add_trait = wulin_alliance_member
+	set_character_flag = murim_wulin_member
+	add_prestige = 100
+	add_character_modifier = {
+		modifier = murim_wulin_alliance_protection
+		years = -1
+	}
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 10
+	}
+}
+
+murim_call_wulin_summit_effect = {
+	set_character_flag = murim_called_wulin_summit
+	add_character_modifier = {
+		modifier = murim_recent_wulin_summit
+		years = 3
+	}
+	add_prestige = 200
+	# Summit effects depend on attendees
+	trigger_event = {
+		id = murim_jianghu.0100
+		days = { 10 20 }
+	}
+}
+
+######################################
+# IMPERIAL CRACKDOWN
+######################################
+
+murim_launch_imperial_crackdown_effect = {
+	set_character_flag = murim_launched_crackdown
+	add_character_modifier = {
+		modifier = murim_recent_crackdown
+		years = 5
+	}
+	add_prestige = 100
+	add_piety = 50
+	# Mark underground members in realm as targets
+	every_courtier = {
+		limit = {
+			murim_is_jianghu_member_trigger = yes
+		}
+		set_character_flag = murim_crackdown_wanted
+		add_character_modifier = {
+			modifier = murim_imperial_bounty
+			years = 3
+		}
+	}
+	every_vassal = {
+		limit = {
+			murim_is_jianghu_member_trigger = yes
+		}
+		set_character_flag = murim_crackdown_wanted
+		add_character_modifier = {
+			modifier = murim_imperial_bounty
+			years = 3
+		}
+	}
+	# Counter-effect: underground goes deeper
+	trigger_event = {
+		id = murim_imperial_cultivator.0020
+		days = { 30 90 }
+	}
+}
+
+murim_shelter_persecuted_cultivators_effect = {
+	add_piety = 100
+	add_prestige = 50
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 15
+	}
+	add_character_modifier = {
+		modifier = murim_cultivator_sanctuary
+		years = 5
+	}
+	# Risk of imperial attention
+	random = {
+		chance = 30
+		trigger_event = {
+			id = murim_imperial_cultivator.0025
+			days = { 60 180 }
+		}
+	}
+}
+
+######################################
+# FORGE IMPERIAL DECREE
+######################################
+
+murim_forge_imperial_decree_effect = {
+	add_gold = -200
+	add_character_modifier = {
+		modifier = murim_forged_decree_holder
+		years = 5
+	}
+	change_variable = {
+		name = murim_jianghu_influence
+		add = 15
+	}
+	# Very risky - high chance of discovery
+	random = {
+		chance = 35
+		modifier = {
+			add = -15
+			has_trait = shadow_broker
+		}
+		modifier = {
+			add = -10
+			intrigue >= 20
+		}
+		trigger_event = {
+			id = murim_jianghu.0110
+			days = { 20 90 }
+		}
+	}
+}
+
+######################################
+# INFILTRATE IMPERIAL GUARD
+######################################
+
+murim_infiltrate_imperial_guard_effect = {
+	# scope:infiltrator is who we're inserting
+	scope:infiltrator = {
+		set_character_flag = murim_imperial_guard_mole
+		add_martial_skill = 1
+		add_character_modifier = {
+			modifier = murim_imperial_guard_cover
+			years = -1
+		}
+	}
+	root = {
+		change_variable = {
+			name = murim_jianghu_influence
+			add = 20
+		}
+		add_character_modifier = {
+			modifier = murim_has_guard_insider
+			years = -1
+		}
+	}
+}
