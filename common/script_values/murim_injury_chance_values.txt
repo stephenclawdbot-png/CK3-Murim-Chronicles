@@ -1,0 +1,577 @@
+# Murim Chronicles - Combat Injury Chance Calculator
+# Rebalanced system: talented fighters walk away UNSCATHED most of the time
+# Only equal-tier or stronger opponents carry real injury risk
+# Prowess gap + cultivation gap + technique mastery = damage reduction
+#
+# BASE INJURY RATES BY COMBAT TYPE:
+#   Sparring:    30% base (70% unscathed, 25% minor, 5% accident)
+#   Honor Duel:  60% winner / 80% loser base
+#   Death Match: 85% winner / 100% loser base
+#   Ambush:      50% attacker success / 90% attacker fail base
+#
+# MODIFIERS (cumulative reduction):
+#   Prowess gap 5+:   -15% injury chance
+#   Prowess gap 10+:  -30% injury chance (stacks, so 5+ = -15, 10+ = -30 total)
+#   Prowess gap 15+:  -45% injury chance
+#   Prowess gap 20+:  -60% injury chance
+#   Cultivation tier gap 1: -10%
+#   Cultivation tier gap 2: -20%
+#   Cultivation tier gap 3+: -35%
+#   Each technique trait: -5% (max -25% at 5+ techniques)
+#   Shaolin iron_body: -30% flat
+#   Wudang inner_peace: -15% flat
+#   Luck/fate floor: always 5% chance of clean escape even in death match
+
+########################################
+# PROWESS GAP CALCULATOR
+# Positive = you are stronger, negative = you are weaker
+########################################
+
+murim_prowess_gap_value = {
+	value = 0
+	# Start with own prowess
+	add = prowess
+	# Subtract opponent prowess (scope:target must be set before calling)
+	if = {
+		limit = {
+			exists = scope:target
+		}
+		subtract = scope:target.prowess
+	}
+}
+
+########################################
+# CULTIVATION TIER GAP
+# Uses cultivation_stage variable (1=qi condensation, 2=foundation, 3=core, 4=nascent, 5=transcendent)
+########################################
+
+murim_cultivation_gap_value = {
+	value = 0
+	if = {
+		limit = {
+			has_variable = cultivation_stage
+			exists = scope:target
+			scope:target = { has_variable = cultivation_stage }
+		}
+		add = var:cultivation_stage
+		subtract = scope:target.var:cultivation_stage
+	}
+}
+
+########################################
+# TECHNIQUE COUNT
+# Counts martial technique traits for damage reduction
+########################################
+
+murim_technique_count_value = {
+	value = 0
+	# Tier 1 techniques
+	if = { limit = { has_trait = iron_fist_technique } add = 1 }
+	if = { limit = { has_trait = flowing_water_palm } add = 1 }
+	if = { limit = { has_trait = shadow_step_technique } add = 1 }
+	if = { limit = { has_trait = iron_body_technique } add = 1 }
+	if = { limit = { has_trait = qi_blade_technique } add = 1 }
+	# Tier 2 techniques
+	if = { limit = { has_trait = dragon_fist_technique } add = 1 }
+	if = { limit = { has_trait = celestial_palm } add = 1 }
+	if = { limit = { has_trait = phantom_step } add = 1 }
+	if = { limit = { has_trait = adamantine_body } add = 1 }
+	if = { limit = { has_trait = void_blade } add = 1 }
+	# Tier 3 legendary techniques
+	if = { limit = { has_trait = heavenly_sword_intent } add = 2 }
+	if = { limit = { has_trait = divine_palm_creation } add = 2 }
+	if = { limit = { has_trait = asura_annihilation_body } add = 2 }
+	if = { limit = { has_trait = void_emperor_gaze } add = 2 }
+	if = { limit = { has_trait = golden_emperor_treasury } add = 2 }
+	# Clan-specific techniques (count as technique mastery)
+	if = { limit = { has_trait = tang_poison_master } add = 1 }
+	if = { limit = { has_trait = plum_blossom_swordsman } add = 1 }
+	if = { limit = { has_trait = heavenly_demon_body } add = 2 }
+	if = { limit = { has_trait = tai_chi_master } add = 1 }
+	if = { limit = { has_trait = iron_body } add = 1 }
+	if = { limit = { has_trait = dog_beating_staff_master } add = 1 }
+	# Weapon Dao mastery
+	if = { limit = { has_trait = sword_dao_mastery } add = 1 }
+	if = { limit = { has_trait = fist_dao_mastery } add = 1 }
+	if = { limit = { has_trait = spear_dao_mastery } add = 1 }
+}
+
+########################################
+# TECHNIQUE DAMAGE REDUCTION (capped at 25%)
+# Each technique = 5% reduction, max 5 counted
+########################################
+
+murim_technique_damage_reduction = {
+	value = murim_technique_count_value
+	multiply = 5
+	min = 0
+	max = 25
+}
+
+########################################
+# CLAN-SPECIFIC INJURY REDUCTION
+# Shaolin iron body, Wudang inner peace, etc.
+########################################
+
+murim_clan_injury_reduction = {
+	value = 0
+	# Shaolin Iron Body: -30% flat
+	if = {
+		limit = {
+			OR = {
+				has_trait = iron_body
+				has_trait = golden_bell_cover
+				has_trait = shaolin_monk
+			}
+		}
+		add = 30
+	}
+	# Wudang Taoist: -15% flat (defensive style)
+	if = {
+		limit = {
+			OR = {
+				has_trait = wudang_taoist
+				has_trait = tai_chi_master
+				has_trait = inner_peace
+			}
+		}
+		add = 15
+	}
+	# Body cultivation stages reduce injury
+	if = {
+		limit = { has_trait = body_tempering_iron }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = body_tempering_steel }
+		add = 20
+	}
+	if = {
+		limit = { has_trait = body_tempering_diamond }
+		add = 30
+	}
+	max = 40
+}
+
+########################################
+# PROWESS GAP INJURY REDUCTION
+# Bigger prowess advantage = less chance of injury
+########################################
+
+murim_prowess_injury_reduction = {
+	value = 0
+	if = {
+		limit = {
+			exists = scope:target
+			prowess >= scope:target.prowess
+		}
+		# Gap 5+: -15%
+		if = {
+			limit = {
+				murim_prowess_gap_value >= 5
+			}
+			add = 15
+		}
+		# Gap 10+: -30% total
+		if = {
+			limit = {
+				murim_prowess_gap_value >= 10
+			}
+			add = 15
+		}
+		# Gap 15+: -45% total
+		if = {
+			limit = {
+				murim_prowess_gap_value >= 15
+			}
+			add = 15
+		}
+		# Gap 20+: -60% total
+		if = {
+			limit = {
+				murim_prowess_gap_value >= 20
+			}
+			add = 15
+		}
+	}
+	max = 60
+}
+
+########################################
+# CULTIVATION GAP INJURY REDUCTION
+########################################
+
+murim_cultivation_injury_reduction = {
+	value = 0
+	if = {
+		limit = {
+			has_variable = cultivation_stage
+			exists = scope:target
+			scope:target = { has_variable = cultivation_stage }
+		}
+		# 1 tier above: -10%
+		if = {
+			limit = { murim_cultivation_gap_value >= 1 }
+			add = 10
+		}
+		# 2 tiers above: -20% total
+		if = {
+			limit = { murim_cultivation_gap_value >= 2 }
+			add = 10
+		}
+		# 3+ tiers above: -35% total
+		if = {
+			limit = { murim_cultivation_gap_value >= 3 }
+			add = 15
+		}
+	}
+	max = 35
+}
+
+########################################
+# MASTER INJURY CHANCE CALCULATOR
+# Used by all combat events. Set scope:combat_type before calling.
+# scope:combat_type values:
+#   1 = sparring
+#   2 = honor_duel_winner
+#   3 = honor_duel_loser
+#   4 = death_match_winner
+#   5 = death_match_loser
+#   6 = ambush_attacker_success
+#   7 = ambush_attacker_fail
+########################################
+
+murim_injury_chance = {
+	value = 0
+
+	# BASE RATES by combat type
+	# Sparring: 30% base injury
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:sparring
+		}
+		add = 30
+	}
+	# Honor duel winner: 60% base
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:honor_duel_winner
+		}
+		add = 60
+	}
+	# Honor duel loser: 80% base
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:honor_duel_loser
+		}
+		add = 80
+	}
+	# Death match winner: 85% base
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:death_match_winner
+		}
+		add = 85
+	}
+	# Death match loser: 100% base (always injured)
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:death_match_loser
+		}
+		add = 100
+	}
+	# Ambush attacker (success): 50% base
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:ambush_success
+		}
+		add = 50
+	}
+	# Ambush attacker (failed): 90% base
+	if = {
+		limit = {
+			exists = scope:combat_type
+			scope:combat_type = flag:ambush_fail
+		}
+		add = 90
+	}
+
+	# SUBTRACT ALL REDUCTIONS
+	subtract = murim_prowess_injury_reduction
+	subtract = murim_cultivation_injury_reduction
+	subtract = murim_technique_damage_reduction
+	subtract = murim_clan_injury_reduction
+
+	# LUCK/FATE FLOOR: minimum 5% chance of clean escape
+	# (inverted: max injury chance is 95%)
+	max = 95
+
+	# Absolute floor: injury never negative
+	min = 0
+}
+
+########################################
+# INJURY SEVERITY CALCULATOR
+# Once injured, how bad is it?
+# Lower prowess gap = worse injuries possible
+########################################
+
+murim_injury_severity = {
+	# 0-30 = minor (bruises, light wounds)
+	# 31-60 = moderate (wounded, bleeding)
+	# 61-80 = severe (one_eyed, disfigured, broken bones)
+	# 81-100 = catastrophic (shattered_meridians, qi_crippled, incapable)
+	value = 50
+
+	# Being weaker makes injuries worse
+	if = {
+		limit = {
+			exists = scope:target
+			scope:target.prowess >= prowess
+		}
+		# Opponent 5+ stronger
+		if = {
+			limit = {
+				scope:target = { prowess >= prev.prowess }
+				murim_prowess_gap_value <= -5
+			}
+			add = 15
+		}
+		# Opponent 10+ stronger
+		if = {
+			limit = { murim_prowess_gap_value <= -10 }
+			add = 15
+		}
+	}
+
+	# Being stronger reduces severity
+	if = {
+		limit = {
+			exists = scope:target
+			prowess >= scope:target.prowess
+			murim_prowess_gap_value >= 5
+		}
+		subtract = 15
+	}
+	if = {
+		limit = {
+			exists = scope:target
+			murim_prowess_gap_value >= 10
+		}
+		subtract = 15
+	}
+
+	# Higher cultivation = less severe
+	if = {
+		limit = { murim_cultivation_gap_value >= 1 }
+		subtract = 10
+	}
+	if = {
+		limit = { murim_cultivation_gap_value >= 2 }
+		subtract = 10
+	}
+
+	# Iron body reduces severity
+	if = {
+		limit = {
+			OR = {
+				has_trait = iron_body
+				has_trait = golden_bell_cover
+				has_trait = body_tempering_diamond
+			}
+		}
+		subtract = 20
+	}
+
+	# Death match increases severity
+	if = {
+		limit = {
+			exists = scope:combat_type
+			OR = {
+				scope:combat_type = flag:death_match_winner
+				scope:combat_type = flag:death_match_loser
+			}
+		}
+		add = 20
+	}
+
+	min = 0
+	max = 100
+}
+
+########################################
+# SPARRING OUTCOME WEIGHTS
+# 70% unscathed, 25% minor wound, 5% accident
+########################################
+
+murim_sparring_unscathed_weight = {
+	value = 70
+	# Higher prowess gap = more likely unscathed
+	if = { limit = { murim_prowess_gap_value >= 5 } add = 10 }
+	if = { limit = { murim_prowess_gap_value >= 10 } add = 10 }
+	# Technique mastery helps
+	if = { limit = { murim_technique_count_value >= 3 } add = 5 }
+	max = 95
+}
+
+murim_sparring_minor_wound_weight = {
+	value = 25
+	# Reduce if dominant
+	if = { limit = { murim_prowess_gap_value >= 5 } subtract = 8 }
+	if = { limit = { murim_prowess_gap_value >= 10 } subtract = 7 }
+	min = 4
+}
+
+murim_sparring_accident_weight = {
+	value = 5
+	# Very slightly less if dominant
+	if = { limit = { murim_prowess_gap_value >= 10 } subtract = 3 }
+	min = 1
+}
+
+########################################
+# HONOR DUEL OUTCOME WEIGHTS (WINNER)
+# Base: 40% unscathed, 35% minor, 20% moderate, 5% severe
+########################################
+
+murim_honor_duel_winner_unscathed = {
+	value = 40
+	if = { limit = { murim_prowess_gap_value >= 5 } add = 15 }
+	if = { limit = { murim_prowess_gap_value >= 10 } add = 15 }
+	if = { limit = { murim_cultivation_gap_value >= 1 } add = 10 }
+	if = { limit = { murim_technique_count_value >= 3 } add = 5 }
+	max = 90
+}
+
+murim_honor_duel_winner_minor = {
+	value = 35
+	if = { limit = { murim_prowess_gap_value >= 10 } subtract = 15 }
+	min = 5
+}
+
+murim_honor_duel_winner_moderate = {
+	value = 20
+	if = { limit = { murim_prowess_gap_value >= 5 } subtract = 10 }
+	min = 3
+}
+
+murim_honor_duel_winner_severe = {
+	value = 5
+	if = { limit = { murim_prowess_gap_value >= 10 } subtract = 3 }
+	min = 1
+}
+
+########################################
+# HONOR DUEL OUTCOME WEIGHTS (LOSER)
+# Base: 20% unscathed, 30% minor, 30% moderate, 20% severe
+########################################
+
+murim_honor_duel_loser_unscathed = {
+	value = 20
+	# If loser is still much stronger in cultivation, some protection
+	if = { limit = { murim_cultivation_gap_value >= 2 } add = 15 }
+	if = { limit = { has_trait = iron_body } add = 10 }
+	max = 45
+}
+
+murim_honor_duel_loser_minor = {
+	value = 30
+}
+
+murim_honor_duel_loser_moderate = {
+	value = 30
+	if = { limit = { has_trait = iron_body } subtract = 10 }
+	min = 10
+}
+
+murim_honor_duel_loser_severe = {
+	value = 20
+	if = { limit = { murim_cultivation_gap_value >= 1 } subtract = 5 }
+	if = { limit = { has_trait = golden_bell_cover } subtract = 10 }
+	min = 5
+}
+
+########################################
+# DEATH MATCH OUTCOME WEIGHTS (WINNER)
+# Base: 15% unscathed, 30% minor, 30% moderate, 20% severe, 5% catastrophic
+########################################
+
+murim_death_match_winner_unscathed = {
+	value = 15
+	if = { limit = { murim_prowess_gap_value >= 10 } add = 20 }
+	if = { limit = { murim_prowess_gap_value >= 20 } add = 20 }
+	if = { limit = { murim_cultivation_gap_value >= 2 } add = 15 }
+	if = { limit = { has_trait = heavenly_demon_body } add = 10 }
+	max = 80
+}
+
+murim_death_match_winner_minor = {
+	value = 30
+	if = { limit = { murim_prowess_gap_value >= 15 } subtract = 15 }
+	min = 5
+}
+
+murim_death_match_winner_moderate = {
+	value = 30
+	if = { limit = { murim_prowess_gap_value >= 10 } subtract = 10 }
+	min = 5
+}
+
+murim_death_match_winner_severe = {
+	value = 20
+	if = { limit = { murim_prowess_gap_value >= 10 } subtract = 10 }
+	min = 3
+}
+
+murim_death_match_winner_catastrophic = {
+	value = 5
+	if = { limit = { murim_prowess_gap_value >= 15 } subtract = 3 }
+	min = 1
+}
+
+########################################
+# AMBUSH OUTCOME WEIGHTS
+########################################
+
+murim_ambush_attacker_success_unscathed = {
+	value = 50
+	if = { limit = { murim_prowess_gap_value >= 5 } add = 15 }
+	if = { limit = { has_trait = tang_hidden_weapon_expert } add = 15 }
+	max = 85
+}
+
+murim_ambush_attacker_fail_unscathed = {
+	value = 10
+	if = { limit = { murim_prowess_gap_value >= 10 } add = 10 }
+	max = 30
+}
+
+########################################
+# POISON INJURY MODIFIERS (Tang Clan special)
+# Poison bypasses physical defense but not qi resistance
+########################################
+
+murim_poison_injury_chance = {
+	value = 70
+	# Cultivation stage provides qi resistance to poison
+	if = {
+		limit = { has_variable = cultivation_stage }
+		if = { limit = { var:cultivation_stage >= 2 } subtract = 10 }
+		if = { limit = { var:cultivation_stage >= 3 } subtract = 10 }
+		if = { limit = { var:cultivation_stage >= 4 } subtract = 15 }
+		if = { limit = { var:cultivation_stage >= 5 } subtract = 20 }
+	}
+	# Specific poison resistance
+	if = { limit = { has_trait = poison_resistance_trained } subtract = 20 }
+	if = { limit = { has_trait = tang_poison_master } subtract = 30 }
+	# Wudang purification helps somewhat
+	if = { limit = { has_trait = wudang_taoist } subtract = 10 }
+	min = 5
+	max = 90
+}
