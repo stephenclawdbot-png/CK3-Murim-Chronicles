@@ -1,0 +1,807 @@
+# Murim Chronicles - Character Interactions
+# 7 core martial arts interactions for the murim world
+# Cross-references: murim_triggers, murim_effects, murim_duel_events, murim_training_events
+# murim_mentor_events, murim_jianghu_events, murim_cultivation_events
+
+# ==========================================
+# 1. CHALLENGE TO DUEL
+# A martial artist formally challenges another to a duel
+# ==========================================
+
+challenge_to_duel_interaction = {
+	category = interaction_category_hostile
+	icon = icon_duel
+
+	desc = challenge_to_duel_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_martial_artist_trigger = yes
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+			NOT = { has_character_flag = murim_duel_cooldown }
+		}
+		scope:recipient = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			add_character_flag = {
+				flag = murim_duel_cooldown
+				years = 1
+			}
+			trigger_event = {
+				id = murim_duel.0001
+				days = { 5 15 }
+			}
+			create_character_memory = {
+				type = murim_challenge_issued_memory
+				participants = {
+					opponent = scope:recipient
+				}
+			}
+		}
+		scope:recipient = {
+			create_character_memory = {
+				type = murim_challenge_received_memory
+				participants = {
+					challenger = scope:actor
+				}
+			}
+		}
+	}
+
+	on_decline = {
+		scope:recipient = {
+			add_prestige = -50
+			add_character_modifier = {
+				modifier = defeat_shame
+				years = 1
+			}
+			create_character_memory = {
+				type = murim_declined_challenge_memory
+				participants = {
+					challenger = scope:actor
+				}
+			}
+		}
+		scope:actor = {
+			add_prestige = 25
+		}
+	}
+
+	auto_accept = no
+
+	ai_accept = {
+		base = 20
+		modifier = {
+			add = 30
+			has_trait = brave
+		}
+		modifier = {
+			add = -40
+			has_trait = craven
+		}
+		modifier = {
+			add = 20
+			has_trait = wrathful
+		}
+		modifier = {
+			add = -20
+			has_trait = wounded_1
+		}
+		modifier = {
+			add = -40
+			has_trait = wounded_2
+		}
+		modifier = {
+			add = 20
+			prowess >= scope:actor.prowess
+		}
+		modifier = {
+			add = -20
+			prowess < scope:actor.prowess
+		}
+		opinion_modifier = {
+			opinion_target = scope:actor
+			multiplier = -0.5
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+		modifier = {
+			factor = 3
+			has_trait = wrathful
+		}
+		modifier = {
+			factor = 0.1
+			has_trait = craven
+		}
+		modifier = {
+			factor = 2.0
+			prowess >= scope:recipient.prowess
+		}
+		modifier = {
+			factor = 0.5
+			has_trait = wounded_1
+		}
+	}
+
+	cooldown = { years = 1 }
+	cooldown_against_recipient = { years = 2 }
+}
+
+# ==========================================
+# 2. REQUEST TEACHING
+# Ask a more skilled martial artist to teach you
+# ==========================================
+
+request_teaching_interaction = {
+	category = interaction_category_friendly
+	icon = icon_education
+
+	desc = request_teaching_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_martial_artist_trigger = yes
+			prowess > scope:actor.prowess
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+		scope:recipient = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			add_character_modifier = {
+				modifier = intense_training_regime
+				years = 2
+			}
+			change_variable = {
+				name = murim_cultivation_progress
+				add = 15
+			}
+			create_character_memory = {
+				type = murim_received_teaching_memory
+				participants = {
+					teacher = scope:recipient
+				}
+			}
+			trigger_event = {
+				id = murim_training.0001
+				days = { 10 30 }
+			}
+		}
+		scope:recipient = {
+			add_prestige = 50
+			add_piety = 25
+			create_character_memory = {
+				type = murim_gave_teaching_memory
+				participants = {
+					student = scope:actor
+				}
+			}
+		}
+	}
+
+	auto_accept = no
+
+	ai_accept = {
+		base = 0
+		modifier = {
+			add = 30
+			has_trait = generous
+		}
+		modifier = {
+			add = 20
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -30
+			has_trait = callous
+		}
+		modifier = {
+			add = -20
+			has_trait = paranoid
+		}
+		opinion_modifier = {
+			opinion_target = scope:actor
+			multiplier = 0.5
+		}
+	}
+
+	ai_will_do = {
+		base = 15
+		modifier = {
+			factor = 2
+			has_trait = diligent
+		}
+		modifier = {
+			factor = 0.5
+			has_trait = lazy
+		}
+	}
+
+	cooldown = { years = 2 }
+}
+
+# ==========================================
+# 3. OFFER DISCIPLESHIP
+# A master offers to take someone as a disciple
+# ==========================================
+
+offer_discipleship_interaction = {
+	category = interaction_category_friendly
+	icon = icon_education
+
+	desc = offer_discipleship_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+			prowess >= 15
+		}
+		scope:recipient = {
+			age >= 8
+			age < 25
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+			NOT = { has_character_flag = murim_has_disciple }
+		}
+		scope:recipient = {
+			is_alive = yes
+			is_imprisoned = no
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			add_character_flag = {
+				flag = murim_has_disciple
+				years = 10
+			}
+			add_prestige = 50
+			create_character_memory = {
+				type = murim_took_disciple_memory
+				participants = {
+					disciple = scope:recipient
+				}
+			}
+		}
+		scope:recipient = {
+			add_trait = murim_outer_qi
+			add_character_modifier = {
+				modifier = intense_training_regime
+				years = 3
+			}
+			create_character_memory = {
+				type = murim_became_disciple_memory
+				participants = {
+					master = scope:actor
+				}
+			}
+			trigger_event = {
+				id = murim_mentor.0001
+				days = { 5 20 }
+			}
+		}
+	}
+
+	auto_accept = no
+
+	ai_accept = {
+		base = 30
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -20
+			has_trait = lazy
+		}
+		opinion_modifier = {
+			opinion_target = scope:actor
+			multiplier = 0.5
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			scope:recipient = { has_trait = genius }
+		}
+		modifier = {
+			factor = 2
+			scope:recipient = { has_trait = quick }
+		}
+	}
+
+	cooldown = { years = 5 }
+}
+
+# ==========================================
+# 4. TRADE TECHNIQUES
+# Exchange martial arts knowledge with another cultivator
+# ==========================================
+
+trade_techniques_interaction = {
+	category = interaction_category_friendly
+	icon = icon_diplomacy
+
+	desc = trade_techniques_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_martial_artist_trigger = yes
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+		scope:recipient = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			change_variable = {
+				name = murim_cultivation_progress
+				add = 10
+			}
+			add_piety = 25
+			create_character_memory = {
+				type = murim_traded_techniques_memory
+				participants = {
+					partner = scope:recipient
+				}
+			}
+		}
+		scope:recipient = {
+			change_variable = {
+				name = murim_cultivation_progress
+				add = 10
+			}
+			add_piety = 25
+			create_character_memory = {
+				type = murim_traded_techniques_memory
+				participants = {
+					partner = scope:actor
+				}
+			}
+		}
+	}
+
+	auto_accept = no
+
+	ai_accept = {
+		base = 10
+		modifier = {
+			add = 20
+			has_trait = trusting
+		}
+		modifier = {
+			add = -30
+			has_trait = paranoid
+		}
+		opinion_modifier = {
+			opinion_target = scope:actor
+			multiplier = 0.5
+		}
+	}
+
+	ai_will_do = {
+		base = 10
+		modifier = {
+			factor = 2
+			has_trait = gregarious
+		}
+	}
+
+	cooldown = { years = 3 }
+}
+
+# ==========================================
+# 5. JOINT CULTIVATION
+# Cultivate together for mutual benefit (dual cultivation)
+# ==========================================
+
+joint_cultivation_interaction = {
+	category = interaction_category_friendly
+	icon = icon_piety
+
+	desc = joint_cultivation_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_martial_artist_trigger = yes
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+		scope:recipient = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			change_variable = {
+				name = murim_cultivation_progress
+				add = 20
+			}
+			add_character_modifier = {
+				modifier = dual_cultivation_harmony
+				years = 2
+			}
+			create_character_memory = {
+				type = murim_joint_cultivation_memory
+				participants = {
+					partner = scope:recipient
+				}
+			}
+			trigger_event = {
+				id = murim_romance.0001
+				days = { 10 30 }
+			}
+		}
+		scope:recipient = {
+			change_variable = {
+				name = murim_cultivation_progress
+				add = 20
+			}
+			add_character_modifier = {
+				modifier = dual_cultivation_harmony
+				years = 2
+			}
+			create_character_memory = {
+				type = murim_joint_cultivation_memory
+				participants = {
+					partner = scope:actor
+				}
+			}
+		}
+	}
+
+	auto_accept = no
+
+	ai_accept = {
+		base = 5
+		modifier = {
+			add = 30
+			is_spouse_of = scope:actor
+		}
+		modifier = {
+			add = 20
+			has_trait = lustful
+		}
+		modifier = {
+			add = -20
+			has_trait = chaste
+		}
+		opinion_modifier = {
+			opinion_target = scope:actor
+			multiplier = 0.5
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			is_spouse_of = scope:recipient
+		}
+	}
+
+	cooldown = { years = 1 }
+}
+
+# ==========================================
+# 6. POISON RIVAL
+# Secretly poison a martial rival (intrigue)
+# ==========================================
+
+poison_rival_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	use_diplomatic_range = no
+
+	desc = poison_rival_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_martial_artist_trigger = yes
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+			NOT = { has_trait = honest }
+			intrigue >= 8
+		}
+		scope:recipient = {
+			is_alive = yes
+		}
+	}
+
+	on_send = {
+		scope:actor = {
+			# Attempt to poison - success depends on intrigue
+			random_list = {
+				50 = {
+					modifier = {
+						add = scope:actor.intrigue
+					}
+					modifier = {
+						factor = 1.5
+						has_trait = deceitful
+					}
+					# Success - poison takes effect
+					scope:recipient = {
+						add_character_modifier = {
+							modifier = murim_poisoned_qi
+							years = 3
+						}
+						random_list = {
+							60 = {
+								add_trait = wounded_1
+							}
+							30 = {
+								add_trait = wounded_2
+							}
+							10 = {
+								add_trait = incapable
+							}
+						}
+						create_character_memory = {
+							type = murim_was_poisoned_memory
+						}
+					}
+					create_character_memory = {
+						type = murim_poisoned_rival_memory
+						participants = {
+							victim = scope:recipient
+						}
+					}
+					add_stress = 15
+					trigger_event = {
+						id = murim_jianghu.0001
+						days = { 3 10 }
+					}
+				}
+				50 = {
+					modifier = {
+						factor = 1.5
+						scope:recipient = { intrigue >= 12 }
+					}
+					# Failure - caught or detected
+					scope:recipient = {
+						add_opinion = {
+							modifier = murim_attempted_poison_opinion
+							target = scope:actor
+						}
+						trigger_event = {
+							id = murim_jianghu.0002
+							days = { 1 5 }
+						}
+					}
+					add_prestige = -100
+					add_stress = 30
+					create_character_memory = {
+						type = murim_failed_poisoning_memory
+						participants = {
+							target = scope:recipient
+						}
+					}
+				}
+			}
+		}
+	}
+
+	auto_accept = yes
+
+	ai_will_do = {
+		base = 0
+		modifier = {
+			factor = 1
+			add = 5
+			has_trait = sadistic
+		}
+		modifier = {
+			factor = 1
+			add = 5
+			has_trait = vengeful
+		}
+		modifier = {
+			factor = 1
+			add = 5
+			has_rivalry = scope:recipient
+		}
+	}
+
+	cooldown = { years = 3 }
+}
+
+# ==========================================
+# 7. STEAL TECHNIQUE
+# Attempt to steal martial arts knowledge through deception
+# ==========================================
+
+steal_technique_interaction = {
+	category = interaction_category_hostile
+	icon = icon_intrigue
+	use_diplomatic_range = no
+
+	desc = steal_technique_interaction_desc
+
+	is_shown = {
+		scope:actor = {
+			murim_is_martial_artist_trigger = yes
+		}
+		scope:recipient = {
+			murim_is_martial_artist_trigger = yes
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			is_alive = yes
+			is_imprisoned = no
+			NOT = { has_trait = incapable }
+			intrigue >= 10
+		}
+		scope:recipient = {
+			is_alive = yes
+		}
+	}
+
+	on_send = {
+		scope:actor = {
+			random_list = {
+				40 = {
+					modifier = {
+						add = scope:actor.intrigue
+					}
+					modifier = {
+						factor = 1.5
+						has_trait = deceitful
+					}
+					# Success - gained technique knowledge
+					change_variable = {
+						name = murim_cultivation_progress
+						add = 30
+					}
+					add_piety = 50
+					create_character_memory = {
+						type = murim_stole_technique_memory
+						participants = {
+							victim = scope:recipient
+						}
+					}
+					trigger_event = {
+						id = murim_jianghu.0005
+						days = { 5 15 }
+					}
+				}
+				60 = {
+					modifier = {
+						factor = 1.5
+						scope:recipient = { intrigue >= 12 }
+					}
+					modifier = {
+						factor = 1.3
+						scope:recipient = { has_trait = paranoid }
+					}
+					# Failure - caught
+					scope:recipient = {
+						add_opinion = {
+							modifier = murim_attempted_theft_opinion
+							target = scope:actor
+						}
+					}
+					add_prestige = -150
+					add_stress = 40
+					# Recipient may challenge to duel
+					scope:recipient = {
+						random = {
+							chance = 50
+							trigger_event = {
+								id = murim_duel.0005
+								days = { 3 10 }
+							}
+						}
+					}
+					create_character_memory = {
+						type = murim_failed_technique_theft_memory
+						participants = {
+							target = scope:recipient
+						}
+					}
+				}
+			}
+		}
+	}
+
+	auto_accept = yes
+
+	ai_will_do = {
+		base = 0
+		modifier = {
+			factor = 1
+			add = 5
+			has_trait = deceitful
+		}
+		modifier = {
+			factor = 1
+			add = 5
+			has_trait = ambitious
+		}
+		modifier = {
+			factor = 1
+			add = 3
+			scope:recipient = { prowess >= 20 }
+		}
+	}
+
+	cooldown = { years = 5 }
+}
