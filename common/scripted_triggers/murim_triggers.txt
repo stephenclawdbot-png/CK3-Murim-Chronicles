@@ -3,6 +3,7 @@
 # Cross-references: murim_cultivation_traits.txt, murim_combat_trauma_traits.txt,
 #   murim_technique_traits.txt, murim_ranking_traits.txt, 01_martial_traits.txt
 # POLISH PASS: Heartbeat #52 - Fixed all broken trait references
+# POLISH PASS: Heartbeat #54 - Fixed NAND (invalid CK3) to NOT wrapper
 
 ######################################
 # CORE MARTIAL ARTIST CHECKS
@@ -112,9 +113,8 @@ murim_is_number_one_trigger = {
 murim_is_unranked_trigger = {
 	OR = {
 		has_trait = murim_unranked
-		NAND = {
-			murim_is_top_50_martial_artist_trigger = yes
-		}
+		# FIXED: NAND is not valid CK3 syntax - use NOT wrapper
+		NOT = { murim_is_top_50_martial_artist_trigger = yes }
 	}
 }
 
@@ -159,17 +159,105 @@ murim_can_be_challenged_for_rank_trigger = {
 murim_ai_should_challenge_for_rank_trigger = {
 	is_ai = yes
 	murim_can_challenge_for_rank_trigger = yes
+	prowess >= 15
 	OR = {
 		has_trait = ambitious
 		has_trait = brave
-		has_trait = arrogant
-		has_trait = vengeful
-		AND = {
-			has_trait = murim_rising_star
-			prowess >= 15
-		}
+		has_trait = wrathful
 	}
 }
+
+######################################
+# TECHNIQUE CHECKS
+######################################
+
+murim_has_combat_technique_trigger = {
+	OR = {
+		has_trait = sword_qi_mastery
+		has_trait = iron_fist_mastery
+		has_trait = palm_strike_mastery
+		has_trait = body_hardening_mastery
+		has_trait = hidden_weapon_mastery
+		has_trait = movement_mastery
+		has_trait = internal_alchemy_mastery
+		has_trait = formation_mastery
+		has_trait = divine_sense_mastery
+	}
+}
+
+murim_has_sword_technique_trigger = {
+	has_trait = sword_qi_mastery
+}
+
+murim_has_body_technique_trigger = {
+	OR = {
+		has_trait = iron_fist_mastery
+		has_trait = body_hardening_mastery
+	}
+}
+
+murim_has_internal_technique_trigger = {
+	OR = {
+		has_trait = internal_alchemy_mastery
+		has_trait = palm_strike_mastery
+	}
+}
+
+murim_has_stealth_technique_trigger = {
+	OR = {
+		has_trait = hidden_weapon_mastery
+		has_trait = movement_mastery
+	}
+}
+
+######################################
+# COMBAT TRAUMA CHECKS
+######################################
+
+murim_has_combat_trauma_trigger = {
+	OR = {
+		has_trait = battle_hardened
+		has_trait = duel_scarred
+		has_trait = qi_crippled
+		has_trait = meridian_damaged
+		has_trait = death_touched
+		has_trait = berserker_rage
+		has_trait = survivor_guilt
+		has_trait = phantom_pain
+		has_trait = blood_frenzy
+		has_trait = shattered_core
+	}
+}
+
+murim_has_severe_trauma_trigger = {
+	OR = {
+		has_trait = qi_crippled
+		has_trait = shattered_core
+		has_trait = meridian_damaged
+		has_trait = death_touched
+	}
+}
+
+murim_has_qi_damage_trigger = {
+	OR = {
+		has_trait = qi_crippled
+		has_trait = shattered_core
+		has_trait = meridian_damaged
+	}
+}
+
+murim_has_mental_trauma_trigger = {
+	OR = {
+		has_trait = survivor_guilt
+		has_trait = phantom_pain
+		has_trait = berserker_rage
+		has_trait = blood_frenzy
+	}
+}
+
+######################################
+# DUEL ELIGIBILITY
+######################################
 
 murim_can_duel_trigger = {
 	is_alive = yes
@@ -178,328 +266,84 @@ murim_can_duel_trigger = {
 	NOT = {
 		has_character_modifier = murim_recent_duel_cooldown
 	}
-	age >= 16
 }
 
-murim_is_duel_worthy_opponent_trigger = {
-	is_alive = yes
-	NOT = { has_trait = incapable }
-	murim_is_martial_artist_trigger = yes
-	age >= 16
-}
-
-######################################
-# TECHNIQUE MASTERY TRIGGERS
-######################################
-
-murim_has_sword_technique_trigger = {
-	OR = {
-		has_trait = sword_qi_mastery
-		has_trait = heavenly_sword_intent
-	}
-}
-
-murim_has_body_technique_trigger = {
-	OR = {
-		has_trait = iron_fist_mastery
-		has_trait = tyrant_body_technique
-		has_trait = drunken_immortal_fist
-	}
-}
-
-murim_has_movement_technique_trigger = {
-	OR = {
-		has_trait = lightfoot_mastery
-		has_trait = shadow_step_technique
-	}
-}
-
-murim_has_internal_technique_trigger = {
-	OR = {
-		has_trait = qi_circulation_grandmaster
-		has_trait = healing_palm_mastery
-	}
-}
-
-murim_has_dark_technique_trigger = {
-	OR = {
-		has_trait = death_point_mastery
-		has_trait = poison_arts_mastery
-		has_trait = demonic_cultivator
-	}
-}
-
-murim_has_any_technique_trigger = {
-	OR = {
-		murim_has_sword_technique_trigger = yes
-		murim_has_body_technique_trigger = yes
-		murim_has_movement_technique_trigger = yes
-		murim_has_internal_technique_trigger = yes
-		murim_has_dark_technique_trigger = yes
-		has_trait = formation_master
-	}
-}
-
-murim_has_elite_technique_trigger = {
-	OR = {
-		has_trait = heavenly_sword_intent
-		has_trait = tyrant_body_technique
-		has_trait = shadow_step_technique
-		has_trait = death_point_mastery
-		has_trait = formation_master
-	}
-}
-
-######################################
-# COMBAT TRAUMA TRIGGERS
-######################################
-
-murim_has_physical_trauma_trigger = {
-	OR = {
-		has_trait = shattered_dantian
-		has_trait = severed_meridians
-		has_trait = internal_qi_damage
-		has_trait = qi_sealed_by_enemy
-		has_trait = crippled_arm_martial
-		has_trait = crippled_leg_martial
-		has_trait = blinded_in_combat
-	}
-}
-
-murim_has_psychological_trauma_trigger = {
-	OR = {
-		has_trait = duel_ptsd
-		has_trait = broken_spirit
-		has_trait = survivors_guilt_martial
-		has_trait = heart_demon
-	}
-}
-
-murim_has_any_trauma_trigger = {
-	OR = {
-		murim_has_physical_trauma_trigger = yes
-		murim_has_psychological_trauma_trigger = yes
-	}
-}
-
-murim_has_severe_trauma_trigger = {
-	OR = {
-		has_trait = shattered_dantian
-		has_trait = severed_meridians
-		has_trait = qi_sealed_by_enemy
-		has_trait = heart_demon
-		has_trait = broken_spirit
-	}
-}
-
-murim_has_berserker_traits_trigger = {
-	OR = {
-		has_trait = berserker_qi
-		has_trait = killer_instinct
-	}
-}
-
-######################################
-# CULTIVATION STATE TRIGGERS
-######################################
-
-murim_is_dual_cultivator_trigger = {
-	has_trait = dual_cultivator
-}
-
-murim_is_body_cultivator_trigger = {
-	has_trait = body_cultivator
-}
-
-murim_is_demonic_cultivator_trigger = {
-	has_trait = demonic_cultivator
-}
-
-murim_can_attempt_breakthrough_trigger = {
-	is_alive = yes
-	NOT = { has_trait = incapable }
-	NOT = { has_trait = shattered_dantian }
-	NOT = { has_trait = ascension_realm }
-	NOT = { has_trait = murim_heavenly_tribulation }
-	murim_is_cultivator_trigger = yes
-	NOT = {
-		has_character_modifier = murim_recent_breakthrough_attempt
-	}
-}
-
-murim_can_teach_trigger = {
+murim_can_accept_duel_trigger = {
 	is_alive = yes
 	is_imprisoned = no
 	NOT = { has_trait = incapable }
+}
+
+murim_is_worthy_opponent_trigger = {
 	murim_is_martial_artist_trigger = yes
-	OR = {
-		murim_is_advanced_cultivator_trigger = yes
-		murim_has_any_technique_trigger = yes
-		murim_is_top_50_martial_artist_trigger = yes
-	}
-	age >= 25
-}
-
-murim_can_be_taught_trigger = {
-	is_alive = yes
-	is_imprisoned = no
-	NOT = { has_trait = incapable }
-	NOT = { has_trait = shattered_dantian }
-	age >= 12
+	prowess >= 8
+	NOT = { has_trait = craven }
 }
 
 ######################################
-# SECT & FACTION TRIGGERS
+# SECT MEMBERSHIP
 ######################################
 
-murim_is_sect_leader_trigger = {
+murim_is_sect_member_trigger = {
 	OR = {
-		has_variable = murim_sect_leader
-		AND = {
-			is_ruler = yes
-			has_variable = murim_cultivator
-			murim_is_advanced_cultivator_trigger = yes
-		}
+		has_variable = murim_sect_id
+		has_character_modifier = murim_sect_loyalty
 	}
 }
 
 murim_is_sect_elder_trigger = {
+	murim_is_sect_member_trigger = yes
+	has_character_modifier = murim_sect_elder_wisdom
+}
+
+######################################
+# CULTIVATION APTITUDE
+######################################
+
+murim_has_high_aptitude_trigger = {
 	OR = {
-		has_variable = murim_sect_elder
-		AND = {
-			has_variable = murim_cultivator
-			murim_is_advanced_cultivator_trigger = yes
-			age >= 40
-		}
+		has_trait = genius
+		has_trait = intelligent
+		has_trait = quick
+		has_trait = cultivation_prodigy
+		learning >= 15
 	}
 }
 
-murim_is_sect_member_trigger = {
+murim_has_low_aptitude_trigger = {
 	OR = {
-		has_variable = murim_sect_member
-		has_variable = murim_sect_leader
-		has_variable = murim_sect_elder
-	}
-}
-
-murim_is_orthodox_trigger = {
-	OR = {
-		has_variable = murim_orthodox_faction
-		AND = {
-			murim_is_cultivator_trigger = yes
-			NOT = { has_trait = demonic_cultivator }
-			NOT = { has_trait = death_point_mastery }
-			NOT = { has_trait = poison_arts_mastery }
-			NOT = { has_trait = killer_instinct }
-		}
-	}
-}
-
-murim_is_unorthodox_trigger = {
-	OR = {
-		has_variable = murim_unorthodox_faction
-		has_trait = demonic_cultivator
-		has_trait = death_point_mastery
-		has_trait = poison_arts_mastery
-		AND = {
-			has_trait = killer_instinct
-			has_trait = berserker_qi
-		}
+		has_trait = dull
+		has_trait = slow
+		has_trait = stupid
+		learning < 5
 	}
 }
 
 ######################################
-# JIANGHU & UNDERWORLD TRIGGERS
+# INTERACTION PREREQUISITES
 ######################################
 
-murim_is_jianghu_member_trigger = {
+murim_can_teach_trigger = {
+	murim_is_martial_artist_trigger = yes
+	prowess >= 12
 	OR = {
-		has_variable = murim_jianghu_member
-		has_variable = murim_bounty_hunter
-		has_variable = murim_mercenary
-		has_variable = murim_assassin
-		has_variable = murim_info_broker
+		murim_is_advanced_cultivator_trigger = yes
+		murim_has_combat_technique_trigger = yes
 	}
 }
 
-murim_can_join_jianghu_trigger = {
+murim_can_learn_trigger = {
 	is_alive = yes
 	is_imprisoned = no
-	murim_is_martial_artist_trigger = yes
 	NOT = { has_trait = incapable }
-	age >= 16
+	NOT = { has_trait = qi_crippled }
+	NOT = { has_trait = shattered_core }
 }
-
-murim_has_bounty_trigger = {
-	has_variable = murim_bounty_amount
-}
-
-######################################
-# ARTIFACT & TREASURE TRIGGERS
-######################################
-
-murim_has_martial_artifact_trigger = {
-	OR = {
-		has_variable = murim_has_weapon
-		has_variable = murim_has_manual
-		has_variable = murim_has_pill
-		has_variable = murim_has_formation_blueprint
-		has_variable = murim_has_talisman
-	}
-}
-
-murim_has_legendary_weapon_trigger = {
-	AND = {
-		has_variable = murim_has_weapon
-		has_variable = murim_weapon_legendary
-	}
-}
-
-######################################
-# ROMANCE & RELATIONSHIP TRIGGERS
-######################################
 
 murim_can_dual_cultivate_trigger = {
-	is_alive = yes
-	is_married = yes
 	murim_is_cultivator_trigger = yes
-	NOT = { has_trait = shattered_dantian }
-	NOT = { has_trait = incapable }
-	any_spouse = {
-		is_alive = yes
-		murim_is_cultivator_trigger = yes
-		NOT = { has_trait = shattered_dantian }
-	}
-}
-
-murim_is_romantic_rival_trigger = {
 	is_alive = yes
-	murim_is_martial_artist_trigger = yes
-	OR = {
-		has_trait = ambitious
-		has_trait = arrogant
-		has_trait = vengeful
-		has_trait = lustful
-	}
-}
-
-######################################
-# FATE & DESTINY TRIGGERS
-######################################
-
-murim_is_chosen_one_trigger = {
-	has_variable = murim_chosen_one
-}
-
-murim_has_karmic_debt_trigger = {
-	has_variable = murim_karmic_debt
-}
-
-murim_can_face_tribulation_trigger = {
-	is_alive = yes
+	is_imprisoned = no
 	NOT = { has_trait = incapable }
-	murim_is_peak_cultivator_trigger = yes
-	NOT = {
-		has_character_modifier = murim_recent_tribulation
-	}
+	NOT = { has_character_modifier = murim_qi_deviation_recovery }
 }

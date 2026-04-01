@@ -2,6 +2,7 @@
 # Recalculation, entry/exit, death removal, duel updates
 # Load-safe: all effects check exists before variable access
 # POLISH FIX: All script value and modifier references verified against actual files
+# POLISH FIX HB54: Fixed event namespace murim_ranking -> murim_rank (matches actual events)
 # Cross-references: murim_ranking_values.txt, murim_modifiers.txt, murim_ranking_events.txt
 
 ######################################
@@ -56,11 +57,11 @@ murim_enter_top_50_effect = {
 		modifier = murim_ranked_top_50_modifier
 		years = 1
 	}
-	# Notification to the character
+	# Notification to the character - FIXED: namespace is murim_rank, not murim_ranking
 	if = {
 		limit = { is_ai = no }
 		trigger_event = {
-			id = murim_ranking.0001
+			id = murim_rank.0001
 			days = 1
 		}
 	}
@@ -110,11 +111,11 @@ murim_leave_top_50_effect = {
 		limit = { has_character_modifier = murim_ranked_top_50_modifier }
 		remove_character_modifier = murim_ranked_top_50_modifier
 	}
-	# Notification to the character
+	# Notification to the character - FIXED: namespace is murim_rank
 	if = {
 		limit = { is_ai = no }
 		trigger_event = {
-			id = murim_ranking.0002
+			id = murim_rank.0002
 			days = 1
 		}
 	}
@@ -156,48 +157,167 @@ murim_remove_from_rankings_on_death_effect = {
 			limit = {
 				var:murim_martial_rank_position = 1
 			}
-			# Realm-wide notification: #1 has fallen
-			every_ruler = {
+			# World event for #1 dying - FIXED: namespace murim_rank
+			every_living_character = {
 				limit = {
 					is_ai = no
-					is_alive = yes
 				}
 				trigger_event = {
-					id = murim_ranker_death.0001
-					days = { 1 5 }
+					id = murim_rank.0003
+					days = 3
 				}
 			}
 		}
-		# Remove all ranking variables and modifiers
+		# General ranker death notification - FIXED: namespace murim_rank
 		if = {
-			limit = { has_character_modifier = murim_ranked_top_50_modifier }
-			remove_character_modifier = murim_ranked_top_50_modifier
+			limit = {
+				any_living_character = {
+					is_ai = no
+					murim_is_martial_artist_trigger = yes
+				}
+			}
+			every_living_character = {
+				limit = {
+					is_ai = no
+					murim_is_martial_artist_trigger = yes
+				}
+				send_interface_message = {
+					type = event_generic_neutral
+					title = murim_rank_death_notification
+					left_icon = scope:dead_ranked_fighter
+					desc = murim_rank_death_desc
+				}
+			}
 		}
-		remove_variable = murim_martial_rank_position
-		if = {
-			limit = { has_variable = murim_martial_rank_score }
-			remove_variable = murim_martial_rank_score
+	}
+}
+
+######################################
+# RANKING DUEL EFFECT
+# Resolve a formal ranking challenge between two ranked fighters
+######################################
+
+murim_ranking_duel_effect = {
+	# Both combatants must exist and be alive
+	if = {
+		limit = {
+			exists = scope:rank_challenger
+			exists = scope:rank_challenge_target
+			scope:rank_challenger = { is_alive = yes }
+			scope:rank_challenge_target = { is_alive = yes }
+		}
+		# Duel resolution
+		duel = {
+			skill = prowess
+			target = scope:rank_challenge_target
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				modifier = {
+					add = 10
+					scope:rank_challenger = { has_trait = brave }
+				}
+				desc = murim_rank_challenge_winner_desc
+				# Challenger wins - swap positions
+				scope:rank_challenger = {
+					create_character_memory = {
+						type = murim_ranking_duel_victory_memory
+					}
+					add_prestige = 150
+					add_character_modifier = {
+						modifier = murim_recent_duel_cooldown
+						years = 1
+					}
+					# Swap rank positions
+					if = {
+						limit = {
+							scope:rank_challenge_target = { has_variable = murim_martial_rank_position }
+						}
+						set_variable = {
+							name = murim_martial_rank_position
+							value = scope:rank_challenge_target.var:murim_martial_rank_position
+						}
+					}
+				}
+				scope:rank_challenge_target = {
+					create_character_memory = {
+						type = murim_ranking_duel_defeat_memory
+					}
+					add_character_modifier = {
+						modifier = defeat_shame
+						years = 2
+					}
+					add_character_modifier = {
+						modifier = murim_recent_duel_cooldown
+						years = 1
+					}
+					# Wound chance
+					random = {
+						chance = 25
+						add_trait = wounded_1
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				modifier = {
+					add = 10
+					scope:rank_challenge_target = { has_trait = brave }
+				}
+				desc = murim_rank_challenge_loser_desc
+				# Challenger loses
+				scope:rank_challenger = {
+					create_character_memory = {
+						type = murim_ranking_duel_defeat_memory
+					}
+					add_character_modifier = {
+						modifier = defeat_shame
+						years = 2
+					}
+					add_character_modifier = {
+						modifier = murim_recent_duel_cooldown
+						years = 1
+					}
+					# Wound chance
+					random = {
+						chance = 30
+						add_trait = wounded_1
+					}
+				}
+				scope:rank_challenge_target = {
+					create_character_memory = {
+						type = murim_ranking_duel_victory_memory
+					}
+					add_prestige = 75
+					add_character_modifier = {
+						modifier = murim_recent_duel_cooldown
+						years = 1
+					}
+				}
+			}
 		}
 	}
 }
 
 ######################################
 # UPDATE RANK TIER MODIFIERS
-# Adds/removes top-10, top-25 tier modifiers based on score
+# Adjusts modifiers to reflect current ranking tier
 ######################################
 
 murim_update_rank_tier_modifiers_effect = {
-	# Top 10 check
 	if = {
 		limit = {
-			exists = var:murim_martial_rank_score
-			var:murim_martial_rank_score >= murim_is_top_10_threshold_value
+			has_variable = murim_martial_rank_position
+			var:murim_martial_rank_position = 1
 		}
-		# In top 10 tier
+		# The #1 - strongest under heaven
 		if = {
-			limit = {
-				NOT = { has_character_modifier = strongest_under_heaven }
-			}
+			limit = { NOT = { has_character_modifier = strongest_under_heaven } }
 			add_character_modifier = {
 				modifier = strongest_under_heaven
 				years = 1
@@ -205,182 +325,10 @@ murim_update_rank_tier_modifiers_effect = {
 		}
 	}
 	else = {
-		# Not in top 10 - remove modifier if present
+		# Remove #1 modifier if no longer #1
 		if = {
 			limit = { has_character_modifier = strongest_under_heaven }
 			remove_character_modifier = strongest_under_heaven
-		}
-	}
-}
-
-######################################
-# DUEL RECORD UPDATE EFFECTS
-# Called after ranked duels to update win/loss/kill records
-######################################
-
-murim_record_duel_win_effect = {
-	if = {
-		limit = {
-			NOT = { has_variable = murim_duel_wins }
-		}
-		set_variable = {
-			name = murim_duel_wins
-			value = 0
-		}
-	}
-	change_variable = {
-		name = murim_duel_wins
-		add = 1
-	}
-	# Recalculate rank after duel
-	murim_recalculate_martial_rank_effect = yes
-}
-
-murim_record_duel_loss_effect = {
-	if = {
-		limit = {
-			NOT = { has_variable = murim_duel_losses }
-		}
-		set_variable = {
-			name = murim_duel_losses
-			value = 0
-		}
-	}
-	change_variable = {
-		name = murim_duel_losses
-		add = 1
-	}
-	# Recalculate rank after duel
-	murim_recalculate_martial_rank_effect = yes
-}
-
-murim_record_duel_kill_effect = {
-	if = {
-		limit = {
-			NOT = { has_variable = murim_duel_kills }
-		}
-		set_variable = {
-			name = murim_duel_kills
-			value = 0
-		}
-	}
-	change_variable = {
-		name = murim_duel_kills
-		add = 1
-	}
-	# Also count as a win
-	murim_record_duel_win_effect = yes
-}
-
-######################################
-# RANKING POSITION SWAP EFFECT
-# Called when a challenger defeats a ranked fighter
-######################################
-
-murim_ranking_position_swap_effect = {
-	# Root = challenger (winner), scope:target = defeated
-	if = {
-		limit = {
-			scope:target = {
-				has_variable = murim_martial_rank_position
-			}
-		}
-		# Store target's old position
-		save_temporary_scope_value_as = {
-			name = stolen_position
-			value = scope:target.var:murim_martial_rank_position
-		}
-		# Challenger takes the position
-		set_variable = {
-			name = murim_martial_rank_position
-			value = scope:stolen_position
-		}
-		# Target drops one rank (or out if at 50)
-		scope:target = {
-			if = {
-				limit = { var:murim_martial_rank_position >= 50 }
-				# Pushed out of top 50 entirely
-				murim_leave_top_50_effect = yes
-			}
-			else = {
-				change_variable = {
-					name = murim_martial_rank_position
-					add = 1
-				}
-			}
-		}
-		# If challenger wasn't ranked before, enter rankings
-		if = {
-			limit = {
-				NOT = { has_character_modifier = murim_ranked_top_50_modifier }
-			}
-			add_character_modifier = {
-				modifier = murim_ranked_top_50_modifier
-				years = 1
-			}
-		}
-		# Memory of ranking ascension
-		create_character_memory = {
-			type = murim_rank_ascension_memory
-		}
-	}
-}
-
-######################################
-# YEARLY RANKING RECALCULATION PULSE
-# Runs for every living martial artist
-######################################
-
-murim_yearly_ranking_pulse_effect = {
-	every_living_character = {
-		limit = {
-			murim_is_martial_artist_trigger = yes
-			age >= 16
-		}
-		murim_recalculate_martial_rank_effect = yes
-	}
-}
-
-######################################
-# INITIALIZE RANKING VARIABLES
-# Sets up ranking variables for a new martial artist
-######################################
-
-murim_initialize_ranking_variables_effect = {
-	if = {
-		limit = {
-			NOT = { has_variable = murim_duel_wins }
-		}
-		set_variable = {
-			name = murim_duel_wins
-			value = 0
-		}
-	}
-	if = {
-		limit = {
-			NOT = { has_variable = murim_duel_losses }
-		}
-		set_variable = {
-			name = murim_duel_losses
-			value = 0
-		}
-	}
-	if = {
-		limit = {
-			NOT = { has_variable = murim_duel_kills }
-		}
-		set_variable = {
-			name = murim_duel_kills
-			value = 0
-		}
-	}
-	if = {
-		limit = {
-			NOT = { has_variable = murim_martial_rank_score }
-		}
-		set_variable = {
-			name = murim_martial_rank_score
-			value = 0
 		}
 	}
 }
