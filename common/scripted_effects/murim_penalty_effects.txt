@@ -1,0 +1,508 @@
+# Murim Chronicles Phase 3 - Penalty Effects
+# Reusable effects for qi deviation, forbidden corruption, sect betrayal, failed breakthrough, duel shame
+
+######################################
+# QI DEVIATION PENALTY
+######################################
+
+murim_apply_qi_deviation_penalty_effect = {
+	# Tracks cumulative deviation damage
+	change_variable = {
+		name = murim_qi_deviation_count
+		add = 1
+	}
+
+	# Severity scales with deviation count
+	if = {
+		limit = { var:murim_qi_deviation_count >= 5 }
+		# Catastrophic - cultivation destroyed
+		add_trait = incapable
+		add_character_modifier = {
+			modifier = murim_cultivation_destroyed
+			years = -1
+		}
+		remove_character_flag = murim_initiated
+		custom_tooltip = murim_qi_deviation_catastrophic_tt
+	}
+	else_if = {
+		limit = { var:murim_qi_deviation_count >= 3 }
+		# Severe - major cultivation setback
+		add_trait = wounded_3
+		add_character_modifier = {
+			modifier = murim_qi_deviation_severe
+			years = 10
+		}
+		add_prowess_skill = -3
+		# Chance of madness
+		random = {
+			chance = 40
+			add_trait = lunatic
+		}
+		# Possible rank regression
+		random = {
+			chance = 30
+			if = {
+				limit = { has_trait = cultivation_rank_nascent_soul }
+				remove_trait = cultivation_rank_nascent_soul
+				add_trait = cultivation_rank_core_formation
+			}
+			else_if = {
+				limit = { has_trait = cultivation_rank_core_formation }
+				remove_trait = cultivation_rank_core_formation
+				add_trait = cultivation_rank_foundation
+			}
+			else_if = {
+				limit = { has_trait = cultivation_rank_spirit_severing }
+				remove_trait = cultivation_rank_spirit_severing
+				add_trait = cultivation_rank_nascent_soul
+			}
+		}
+		custom_tooltip = murim_qi_deviation_severe_tt
+	}
+	else_if = {
+		limit = { var:murim_qi_deviation_count >= 2 }
+		# Moderate - lingering damage
+		add_trait = wounded_2
+		add_character_modifier = {
+			modifier = murim_qi_deviation_moderate
+			years = 5
+		}
+		add_prowess_skill = -2
+		random = {
+			chance = 20
+			add_trait = lunatic
+		}
+		custom_tooltip = murim_qi_deviation_moderate_tt
+	}
+	else = {
+		# Mild - first deviation
+		add_trait = wounded_1
+		add_character_modifier = {
+			modifier = murim_qi_deviation_mild
+			years = 3
+		}
+		add_prowess_skill = -1
+		stress_impact = { base = 30 }
+		custom_tooltip = murim_qi_deviation_mild_tt
+	}
+}
+
+######################################
+# FORBIDDEN CORRUPTION PENALTY
+######################################
+
+murim_apply_forbidden_corruption_effect = {
+	change_variable = {
+		name = murim_forbidden_corruption_level
+		add = 1
+	}
+
+	# Corruption tier progression
+	if = {
+		limit = { var:murim_forbidden_corruption_level >= 8 }
+		# Fully consumed by dark arts
+		if = {
+			limit = { NOT = { has_trait = murim_forbidden_art_consumed } }
+			remove_trait = murim_forbidden_art_master
+			add_trait = murim_forbidden_art_consumed
+		}
+		add_character_modifier = {
+			modifier = murim_demonic_transformation
+			years = -1
+		}
+		# Lose sanity permanently
+		if = {
+			limit = { NOT = { has_trait = lunatic } }
+			add_trait = lunatic
+		}
+		# All allies turn hostile
+		every_relation = {
+			type = friend
+			add_opinion = {
+				target = root
+				modifier = murim_consumed_by_darkness_horror
+			}
+		}
+		custom_tooltip = murim_forbidden_consumed_tt
+	}
+	else_if = {
+		limit = { var:murim_forbidden_corruption_level >= 5 }
+		# Master-level corruption
+		if = {
+			limit = {
+				NOT = { has_trait = murim_forbidden_art_master }
+				NOT = { has_trait = murim_forbidden_art_consumed }
+			}
+			remove_trait = murim_forbidden_art_practitioner
+			add_trait = murim_forbidden_art_master
+		}
+		add_character_modifier = {
+			modifier = murim_dark_qi_corruption
+			years = 5
+		}
+		add_prowess_skill = 2
+		add_learning_skill = -1
+		add_diplomacy_skill = -2
+		random = {
+			chance = 25
+			add_trait = possessed
+		}
+		custom_tooltip = murim_forbidden_master_corruption_tt
+	}
+	else_if = {
+		limit = { var:murim_forbidden_corruption_level >= 3 }
+		# Practitioner-level corruption
+		if = {
+			limit = {
+				NOT = { has_trait = murim_forbidden_art_practitioner }
+				NOT = { has_trait = murim_forbidden_art_master }
+				NOT = { has_trait = murim_forbidden_art_consumed }
+			}
+			remove_trait = murim_forbidden_art_initiate
+			add_trait = murim_forbidden_art_practitioner
+		}
+		add_character_modifier = {
+			modifier = murim_forbidden_taint_spreading
+			years = 3
+		}
+		add_prowess_skill = 1
+		add_diplomacy_skill = -1
+		random = {
+			chance = 15
+			add_trait = callous
+		}
+		custom_tooltip = murim_forbidden_practitioner_corruption_tt
+	}
+	else = {
+		# Initial taint
+		if = {
+			limit = {
+				NOT = { has_trait = murim_forbidden_art_initiate }
+				NOT = { has_trait = murim_forbidden_art_practitioner }
+				NOT = { has_trait = murim_forbidden_art_master }
+				NOT = { has_trait = murim_forbidden_art_consumed }
+			}
+			add_trait = murim_forbidden_art_initiate
+		}
+		add_character_modifier = {
+			modifier = murim_initial_dark_taint
+			years = 2
+		}
+		stress_impact = { base = 15 }
+		custom_tooltip = murim_forbidden_initiate_corruption_tt
+	}
+}
+
+######################################
+# SECT BETRAYAL CONSEQUENCES
+######################################
+
+murim_apply_sect_betrayal_consequences_effect = {
+	# Brand as traitor
+	remove_character_flag = murim_sect_member
+	remove_character_flag = murim_sect_outer_disciple
+	remove_character_flag = murim_sect_inner_disciple
+	remove_character_flag = murim_sect_core_disciple
+	remove_character_flag = murim_sect_leader
+
+	# Remove all sect status modifiers
+	remove_character_modifier = murim_sect_inner_disciple_status
+	remove_character_modifier = murim_sect_core_disciple_status
+	remove_character_modifier = murim_sect_patriarch_status
+	remove_character_modifier = murim_sect_probationary_status
+
+	# Apply exile brand
+	add_character_modifier = {
+		modifier = murim_sect_exile_brand
+		years = -1
+	}
+
+	# Massive reputation hit
+	add_prestige = -1000
+	add_piety = -500
+
+	# All sect members become hostile
+	every_known_character = {
+		limit = { has_character_flag = murim_sect_member }
+		add_opinion = {
+			target = root
+			modifier = murim_sect_traitor_loathing
+		}
+	}
+
+	# Lose technique access
+	add_character_modifier = {
+		modifier = murim_sect_techniques_sealed
+		years = 10
+	}
+	add_prowess_skill = -2
+
+	# Possible assassination attempts
+	set_character_flag = {
+		flag = murim_sect_assassination_target
+		years = 5
+	}
+
+	custom_tooltip = murim_sect_betrayal_consequences_tt
+}
+
+######################################
+# FAILED BREAKTHROUGH DAMAGE
+######################################
+
+murim_apply_failed_breakthrough_damage_effect = {
+	# Physical damage
+	if = {
+		limit = {
+			OR = {
+				has_trait = cultivation_rank_spirit_severing
+				has_trait = cultivation_rank_dao_seeking
+				has_trait = cultivation_rank_tribulation
+			}
+		}
+		# High-tier failure is devastating
+		add_trait = wounded_3
+		add_character_modifier = {
+			modifier = murim_shattered_golden_core
+			years = 10
+		}
+		add_prowess_skill = -4
+		change_variable = { name = murim_cultivation_xp add = -200 }
+		# Risk of permanent cultivation damage
+		random = {
+			chance = 25
+			add_character_modifier = {
+				modifier = murim_cultivation_crippled
+				years = -1
+			}
+		}
+		custom_tooltip = murim_failed_breakthrough_devastating_tt
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_trait = cultivation_rank_core_formation
+				has_trait = cultivation_rank_nascent_soul
+			}
+		}
+		# Mid-tier failure
+		add_trait = wounded_2
+		add_character_modifier = {
+			modifier = murim_cracked_foundation
+			years = 5
+		}
+		add_prowess_skill = -2
+		change_variable = { name = murim_cultivation_xp add = -100 }
+		custom_tooltip = murim_failed_breakthrough_severe_tt
+	}
+	else = {
+		# Low-tier failure
+		add_trait = wounded_1
+		add_character_modifier = {
+			modifier = murim_shattered_confidence
+			years = 2
+		}
+		add_prowess_skill = -1
+		change_variable = { name = murim_cultivation_xp add = -50 }
+		stress_impact = { base = 25 }
+		custom_tooltip = murim_failed_breakthrough_minor_tt
+	}
+
+	# Cooldown before next attempt
+	set_character_flag = {
+		flag = murim_breakthrough_cooldown
+		years = 5
+	}
+}
+
+######################################
+# DUEL LOSS SHAME
+######################################
+
+murim_apply_duel_loss_shame_effect = {
+	add_prestige = -200
+
+	# Physical wounds
+	add_trait = wounded_1
+
+	# Social consequences based on context
+	if = {
+		limit = { has_character_flag = murim_sect_leader }
+		# Sect leader losing is catastrophic
+		add_character_modifier = {
+			modifier = murim_sect_leader_defeated_shame
+			years = 5
+		}
+		every_courtier = {
+			limit = { has_character_flag = murim_sect_member }
+			add_opinion = {
+				target = root
+				modifier = murim_leader_weakness_exposed
+			}
+		}
+		# Risk of sect leadership challenge
+		set_character_flag = {
+			flag = murim_leadership_vulnerable
+			years = 2
+		}
+		custom_tooltip = murim_duel_loss_sect_leader_tt
+	}
+	else_if = {
+		limit = { has_character_flag = murim_sect_core_disciple }
+		add_character_modifier = {
+			modifier = murim_duel_defeat_shame
+			years = 3
+		}
+		custom_tooltip = murim_duel_loss_core_disciple_tt
+	}
+	else = {
+		add_character_modifier = {
+			modifier = murim_duel_defeat_shame
+			years = 2
+		}
+		custom_tooltip = murim_duel_loss_general_tt
+	}
+
+	# Stress from defeat
+	stress_impact = {
+		base = 20
+		brave = 15
+		honorable = 20
+		ambitious = 25
+	}
+
+	# Potential personality change
+	random = {
+		chance = 15
+		if = {
+			limit = { NOT = { has_trait = vengeful } }
+			add_trait = vengeful
+		}
+	}
+}
+
+######################################
+# MERIDIAN DAMAGE (from overtraining)
+######################################
+
+murim_apply_meridian_damage_effect = {
+	change_variable = {
+		name = murim_meridian_damage_count
+		add = 1
+	}
+
+	if = {
+		limit = { var:murim_meridian_damage_count >= 5 }
+		# Meridians destroyed
+		add_character_modifier = {
+			modifier = murim_meridians_destroyed
+			years = -1
+		}
+		add_prowess_skill = -5
+		if = {
+			limit = { NOT = { has_trait = incapable } }
+			add_trait = incapable
+		}
+		custom_tooltip = murim_meridians_destroyed_tt
+	}
+	else_if = {
+		limit = { var:murim_meridian_damage_count >= 3 }
+		# Severe meridian damage
+		add_character_modifier = {
+			modifier = murim_meridians_fractured
+			years = 5
+		}
+		add_prowess_skill = -3
+		add_character_modifier = {
+			modifier = murim_qi_flow_disrupted
+			years = 3
+		}
+		custom_tooltip = murim_meridians_severe_tt
+	}
+	else = {
+		# Minor meridian strain
+		add_character_modifier = {
+			modifier = murim_meridian_strain
+			years = 2
+		}
+		add_prowess_skill = -1
+		custom_tooltip = murim_meridians_minor_tt
+	}
+}
+
+######################################
+# REPUTATION DESTRUCTION
+######################################
+
+murim_apply_reputation_destroyed_effect = {
+	add_prestige = -2000
+	add_piety = -500
+
+	add_character_modifier = {
+		modifier = murim_reputation_destroyed
+		years = -1
+	}
+
+	# All cultivators shun this person
+	every_known_character = {
+		limit = { has_character_flag = murim_initiated }
+		add_opinion = {
+			target = root
+			modifier = murim_pariah_cultivator
+		}
+	}
+
+	# Remove from any sect
+	if = {
+		limit = { has_character_flag = murim_sect_member }
+		murim_apply_sect_betrayal_consequences_effect = yes
+	}
+
+	# Can no longer participate in cultivator society
+	set_character_flag = {
+		flag = murim_cultivator_pariah
+		years = 10
+	}
+
+	custom_tooltip = murim_reputation_destroyed_tt
+}
+
+######################################
+# DEMONIC TAINT SPREAD
+######################################
+
+murim_apply_demonic_taint_spread_effect = {
+	# Corruption spreads to nearby characters
+	every_courtier = {
+		limit = {
+			has_character_flag = murim_initiated
+			NOT = { has_trait = murim_forbidden_art_initiate }
+			NOT = { has_trait = murim_forbidden_art_practitioner }
+			NOT = { has_trait = murim_forbidden_art_master }
+			NOT = { has_trait = murim_forbidden_art_consumed }
+		}
+		random = {
+			chance = 10
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 5
+				intrigue >= 12
+			}
+			add_character_modifier = {
+				modifier = murim_exposed_to_demonic_qi
+				years = 1
+			}
+			hidden_effect = {
+				random = {
+					chance = 20
+					add_trait = murim_forbidden_art_initiate
+				}
+			}
+		}
+	}
+
+	custom_tooltip = murim_demonic_taint_spread_tt
+}
