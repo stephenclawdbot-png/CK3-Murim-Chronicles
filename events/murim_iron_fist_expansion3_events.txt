@@ -1,0 +1,776 @@
+namespace = murim_iron_fist_expansion3
+
+# Iron Fist Gate — Deep Expansion: Advanced internal politics, legendary techniques, betrayal
+# 8 events covering the full depth of Iron Fist Gate martial culture
+
+### EVENT 0001 — The Iron Body Perfection Trial
+# Iron Fist disciples attempt to reach the legendary Iron Body Perfection stage
+murim_iron_fist_expansion3.0001 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0001.t
+	desc = murim_iron_fist_expansion3.0001.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		martial >= 14
+		prowess >= 12
+		NOT = { has_character_flag = attempted_iron_body_perfection }
+		age >= 25
+	}
+	
+	immediate = {
+		set_character_flag = attempted_iron_body_perfection
+	}
+	
+	# Option A: Endure the Seven-Day Iron Tempering
+	option = {
+		name = murim_iron_fist_expansion3.0001.a
+		custom_tooltip = murim_seven_day_iron_tempering_tt
+		random_list = {
+			25 = {
+				desc = murim_iron_fist_expansion3.0001.a.perfect
+				add_trait = murim_iron_body_perfection
+				add_prowess = 8
+				add_martial_skill = 4
+				add_character_modifier = {
+					modifier = murim_iron_body_perfected
+					years = 50
+				}
+				custom_tooltip = murim_body_becomes_living_weapon_tt
+			}
+			35 = {
+				desc = murim_iron_fist_expansion3.0001.a.partial
+				add_prowess = 4
+				add_martial_skill = 2
+				add_character_modifier = {
+					modifier = murim_partial_iron_body
+					years = 20
+				}
+			}
+			25 = {
+				desc = murim_iron_fist_expansion3.0001.a.fail
+				add_stress = 40
+				add_character_modifier = {
+					modifier = murim_iron_tempering_failure
+					years = 5
+				}
+				custom_tooltip = murim_body_rejected_tempering_tt
+			}
+			15 = {
+				desc = murim_iron_fist_expansion3.0001.a.crippled
+				add_trait = wounded_3
+				add_stress = 60
+				add_character_modifier = {
+					modifier = murim_iron_meridian_damage
+					years = 30
+				}
+				custom_tooltip = murim_meridians_shattered_tt
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = -30 has_trait = craven }
+		}
+	}
+	
+	# Option B: Study the theory first, attempt later
+	option = {
+		name = murim_iron_fist_expansion3.0001.b
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_studying_iron_body_theory
+			years = 5
+		}
+		trigger_event = {
+			id = murim_iron_fist_expansion3.0001
+			days = { 730 1460 }
+		}
+		set_character_flag = { flag = attempted_iron_body_perfection unset = yes }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+	
+	# Option C: Reject the trial — the risk is too great
+	option = {
+		name = murim_iron_fist_expansion3.0001.c
+		add_stress = -10
+		add_opinion = {
+			target = root
+			modifier = murim_iron_fist_coward_opinion
+			opinion = -15
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+### EVENT 0002 — The Granite Fist Succession
+# The Iron Fist Gate Master is aging. Succession struggle begins.
+murim_iron_fist_expansion3.0002 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0002.t
+	desc = murim_iron_fist_expansion3.0002.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:iron_fist_rival
+		animation = anger
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		martial >= 12
+		age >= 30
+		NOT = { has_character_flag = iron_fist_succession_struggle }
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_succession_struggle
+		random_living_character = {
+			limit = {
+				has_trait = murim_iron_fist_clan
+				has_trait = murim_martial_artist
+				NOT = { this = root }
+				age >= 25
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 martial >= 14 }
+				modifier = { add = 3 has_trait = ambitious }
+			}
+			save_scope_as = iron_fist_rival
+		}
+	}
+	
+	# Option A: Challenge the rival directly — Iron Fist way
+	option = {
+		name = murim_iron_fist_expansion3.0002.a
+		duel = {
+			skill = martial
+			target = scope:iron_fist_rival
+			50 = {
+				desc = murim_iron_fist_expansion3.0002.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_iron_fist_succession_victor
+					years = 20
+				}
+				scope:iron_fist_rival = {
+					add_opinion = {
+						target = root
+						modifier = murim_succession_defeat
+						opinion = -50
+					}
+				}
+			}
+			50 = {
+				desc = murim_iron_fist_expansion3.0002.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -300
+				add_stress = 30
+				scope:iron_fist_rival = {
+					add_prestige = 500
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+	
+	# Option B: Undermine the rival politically
+	option = {
+		name = murim_iron_fist_expansion3.0002.b
+		add_intrigue_skill = 3
+		scope:iron_fist_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_political_undermining
+				opinion = -30
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_iron_fist_political_player
+			years = 10
+		}
+		random_list = {
+			50 = {
+				add_prestige = 300
+				custom_tooltip = murim_elders_favor_you_tt
+			}
+			50 = {
+				add_prestige = -100
+				custom_tooltip = murim_scheming_discovered_tt
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+	
+	# Option C: Support the rival and become their right hand
+	option = {
+		name = murim_iron_fist_expansion3.0002.c
+		scope:iron_fist_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_loyal_supporter
+				opinion = 40
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_iron_fist_right_hand
+			years = 20
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = content }
+		}
+	}
+}
+
+### EVENT 0003 — The Forbidden Iron Blood Art
+# An ancient forbidden technique of Iron Fist Gate is discovered
+murim_iron_fist_expansion3.0003 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0003.t
+	desc = murim_iron_fist_expansion3.0003.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		martial >= 16
+		NOT = { has_character_flag = found_iron_blood_art }
+	}
+	
+	immediate = {
+		set_character_flag = found_iron_blood_art
+	}
+	
+	# Option A: Learn the forbidden art despite the danger
+	option = {
+		name = murim_iron_fist_expansion3.0003.a
+		add_trait = murim_forbidden_knowledge
+		add_prowess = 6
+		add_martial_skill = 4
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = murim_iron_blood_art_master
+					years = 30
+				}
+				custom_tooltip = murim_blood_and_iron_fuse_tt
+			}
+			30 = {
+				add_character_modifier = {
+					modifier = murim_iron_blood_backlash
+					years = 10
+				}
+				add_stress = 40
+			}
+			30 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_iron_blood_corruption
+					years = 20
+				}
+				custom_tooltip = murim_forbidden_art_corrupts_tt
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+	
+	# Option B: Seal the technique away — too dangerous
+	option = {
+		name = murim_iron_fist_expansion3.0003.b
+		add_piety = 200
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_iron_fist_guardian_of_secrets
+			years = 20
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+	
+	# Option C: Destroy it — no one should have this power
+	option = {
+		name = murim_iron_fist_expansion3.0003.c
+		add_piety = 300
+		add_stress = 20
+		custom_tooltip = murim_iron_blood_art_destroyed_forever_tt
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+}
+
+### EVENT 0004 — Iron Fist Gate Trade Route Protection
+# The clan is hired to protect a major trade route
+murim_iron_fist_expansion3.0004 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0004.t
+	desc = murim_iron_fist_expansion3.0004.desc
+	theme = stewardship
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		age >= 20
+		NOT = { has_character_flag = iron_fist_trade_protection }
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_trade_protection
+	}
+	
+	# Option A: Accept — guard the route with full force
+	option = {
+		name = murim_iron_fist_expansion3.0004.a
+		add_gold = 300
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_iron_fist_trade_guardian
+			years = 10
+		}
+		random_list = {
+			60 = {
+				custom_tooltip = murim_route_protected_successfully_tt
+				add_gold = 200
+			}
+			40 = {
+				custom_tooltip = murim_bandits_attack_route_tt
+				trigger_event = {
+					id = murim_iron_fist_expansion3.0005
+					days = { 30 90 }
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Demand triple the payment — Iron Fist doesn't come cheap
+	option = {
+		name = murim_iron_fist_expansion3.0004.b
+		add_gold = 600
+		add_prestige = -50
+		add_character_modifier = {
+			modifier = murim_iron_fist_expensive_guard
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+	
+	# Option C: Decline — Iron Fist Gate is not for hire
+	option = {
+		name = murim_iron_fist_expansion3.0004.c
+		add_prestige = 100
+		add_piety = 50
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = arrogant }
+		}
+	}
+}
+
+### EVENT 0005 — Bandit Ambush on the Trade Route
+# Bandits attack the trade route Iron Fist is guarding
+murim_iron_fist_expansion3.0005 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0005.t
+	desc = murim_iron_fist_expansion3.0005.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		is_alive = yes
+	}
+	
+	# Option A: Crush them with overwhelming force
+	option = {
+		name = murim_iron_fist_expansion3.0005.a
+		add_prowess = 2
+		add_prestige = 200
+		add_dread = 15
+		add_character_modifier = {
+			modifier = murim_iron_fist_bandit_crusher
+			years = 5
+		}
+		random_list = {
+			70 = {
+				custom_tooltip = murim_bandits_obliterated_tt
+			}
+			30 = {
+				add_trait = wounded_1
+				custom_tooltip = murim_took_a_hit_but_won_tt
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Capture the bandit leader alive
+	option = {
+		name = murim_iron_fist_expansion3.0005.b
+		add_prestige = 300
+		add_intrigue_skill = 2
+		random_list = {
+			50 = {
+				custom_tooltip = murim_bandit_leader_captured_tt
+				add_gold = 200
+			}
+			50 = {
+				custom_tooltip = murim_bandit_leader_escaped_tt
+				add_stress = 10
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Let the junior disciples handle it as training
+	option = {
+		name = murim_iron_fist_expansion3.0005.c
+		add_character_modifier = {
+			modifier = murim_iron_fist_mentor_in_battle
+			years = 5
+		}
+		custom_tooltip = murim_juniors_gain_combat_experience_tt
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+### EVENT 0006 — Iron Fist Gate vs Heavenly Demon Clash
+# A major clash between Iron Fist Gate and the Heavenly Demon Sect
+murim_iron_fist_expansion3.0006 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0006.t
+	desc = murim_iron_fist_expansion3.0006.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:demon_sect_champion
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		martial >= 14
+		NOT = { has_character_flag = iron_fist_vs_demon_clash }
+		any_living_character = {
+			has_trait = murim_heavenly_demon_clan
+			has_trait = murim_martial_artist
+		}
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_vs_demon_clash
+		random_living_character = {
+			limit = {
+				has_trait = murim_heavenly_demon_clan
+				has_trait = murim_martial_artist
+				age >= 20
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 martial >= 16 }
+			}
+			save_scope_as = demon_sect_champion
+		}
+	}
+	
+	# Option A: Fight with full Iron Fist power
+	option = {
+		name = murim_iron_fist_expansion3.0006.a
+		duel = {
+			skill = martial
+			target = scope:demon_sect_champion
+			50 = {
+				desc = murim_iron_fist_expansion3.0006.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 800
+				add_prowess = 3
+				add_character_modifier = {
+					modifier = murim_iron_fist_champion_of_justice
+					years = 20
+				}
+			}
+			50 = {
+				desc = murim_iron_fist_expansion3.0006.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -300
+				random_list = {
+					60 = { add_trait = wounded_2 }
+					40 = { add_trait = wounded_3 }
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Propose a ceasefire — bigger threats exist
+	option = {
+		name = murim_iron_fist_expansion3.0006.b
+		scope:demon_sect_champion = {
+			add_opinion = {
+				target = root
+				modifier = murim_proposed_ceasefire
+				opinion = 10
+			}
+		}
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_iron_fist_pragmatist
+			years = 10
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = calm }
+		}
+	}
+	
+	# Option C: Retreat strategically — fight another day
+	option = {
+		name = murim_iron_fist_expansion3.0006.c
+		add_prestige = -100
+		add_stress = 20
+		add_character_modifier = {
+			modifier = murim_tactical_retreat
+			years = 5
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+### EVENT 0007 — Iron Fist Mountain Training Grounds Expansion
+# The clan expands their legendary mountain training grounds
+murim_iron_fist_expansion3.0007 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0007.t
+	desc = murim_iron_fist_expansion3.0007.desc
+	theme = stewardship
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		gold >= 300
+		NOT = { has_character_flag = expanded_iron_fist_training }
+	}
+	
+	immediate = {
+		set_character_flag = expanded_iron_fist_training
+	}
+	
+	# Option A: Build the Iron Pillar Forest (strength training)
+	option = {
+		name = murim_iron_fist_expansion3.0007.a
+		add_gold = -300
+		add_character_modifier = {
+			modifier = murim_iron_pillar_forest_owner
+			years = 30
+		}
+		custom_tooltip = murim_all_disciples_gain_strength_tt
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Construct the Boulder Canyon (endurance training)
+	option = {
+		name = murim_iron_fist_expansion3.0007.b
+		add_gold = -250
+		add_character_modifier = {
+			modifier = murim_boulder_canyon_owner
+			years = 30
+		}
+		custom_tooltip = murim_all_disciples_gain_endurance_tt
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Open the grounds to other orthodox clans for a fee
+	option = {
+		name = murim_iron_fist_expansion3.0007.c
+		add_gold = 200
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_iron_fist_training_academy
+			years = 20
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+### EVENT 0008 — The Iron Fist Gate Elder's Final Lesson
+# The oldest elder passes on the ultimate secret of Iron Fist martial arts
+murim_iron_fist_expansion3.0008 = {
+	type = character_event
+	title = murim_iron_fist_expansion3.0008.t
+	desc = murim_iron_fist_expansion3.0008.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:iron_elder
+		animation = sick
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_clan
+		has_trait = murim_martial_artist
+		martial >= 15
+		NOT = { has_character_flag = received_elders_final_lesson }
+	}
+	
+	immediate = {
+		set_character_flag = received_elders_final_lesson
+		random_living_character = {
+			limit = {
+				has_trait = murim_iron_fist_clan
+				age >= 65
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = { add = 10 age >= 75 }
+			}
+			save_scope_as = iron_elder
+		}
+	}
+	
+	# Option A: Absorb every word — the ultimate fist truth
+	option = {
+		name = murim_iron_fist_expansion3.0008.a
+		add_martial_skill = 5
+		add_prowess = 4
+		add_character_modifier = {
+			modifier = murim_iron_fist_ultimate_truth
+			years = 50
+		}
+		scope:iron_elder = {
+			add_opinion = {
+				target = root
+				modifier = murim_worthy_inheritor
+				opinion = 50
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Question the elder — challenge their assumptions
+	option = {
+		name = murim_iron_fist_expansion3.0008.b
+		add_learning_skill = 3
+		add_martial_skill = 2
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = murim_iron_fist_innovator
+					years = 30
+				}
+				custom_tooltip = murim_created_new_iron_fist_variant_tt
+			}
+			50 = {
+				scope:iron_elder = {
+					add_opinion = {
+						target = root
+						modifier = murim_disrespected_tradition
+						opinion = -30
+					}
+				}
+				add_stress = 15
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+	
+	# Option C: Ask the elder to write it down for future generations
+	option = {
+		name = murim_iron_fist_expansion3.0008.c
+		add_learning_skill = 2
+		add_character_modifier = {
+			modifier = murim_iron_fist_manual_keeper
+			years = 40
+		}
+		custom_tooltip = murim_iron_fist_technique_manual_created_tt
+		ai_chance = { base = 15 }
+	}
+}
