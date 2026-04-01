@@ -1,0 +1,254 @@
+# Murim Chronicles - Tang Clan Birthright Effects
+# UNIQUE: Tang Clan is a BLOODLINE, not just an organization.
+# Born Tang = born into the clan. No recruitment. Blood only.
+# Outsiders can NEVER be tang_clan_member, only tang_clan_associate.
+# INTEGRATION: Hooks into on_birth (murim_on_actions.txt) and on_game_start
+#              (murim_game_start_effects.txt) to auto-assign traits.
+# Cross-refs: murim_clan_membership_effects.txt (tang_clan_associate for outsiders),
+#             murim_tang_clan_events.txt (clan-specific events),
+#             murim_triggers.txt (murim_is_clan_member_trigger includes Tang),
+#             murim_clan_triggers.txt (is_tang_bloodline)
+# GENDER: Both sons AND daughters born Tang get tang_clan_member. No exceptions.
+#         Women inherit Tang poison knowledge equally.
+
+########################################
+# ON BIRTH: Auto-assign Tang Clan membership
+########################################
+
+# Called by on_birth in murim_on_actions.txt
+# Scope: the newborn child
+murim_tang_birthright_on_birth_effect = {
+	# Check if EITHER parent is Tang blood
+	if = {
+		limit = {
+			OR = {
+				# Mother is Tang
+				mother = {
+					OR = {
+						has_trait = tang_clan_member
+						has_dynasty_flag = tang_dynasty_flag
+						dynasty = { has_dynasty_flag = tang_dynasty_flag }
+					}
+				}
+				# Father is Tang
+				father = {
+					OR = {
+						has_trait = tang_clan_member
+						has_dynasty_flag = tang_dynasty_flag
+						dynasty = { has_dynasty_flag = tang_dynasty_flag }
+					}
+				}
+			}
+			# Not already a Tang member (safety check)
+			NOT = { has_trait = tang_clan_member }
+		}
+		# BORN TANG - automatic, no choice, no recruitment
+		add_trait = tang_clan_member
+		# Set the dynasty flag if not already set
+		if = {
+			limit = {
+				exists = dynasty
+				dynasty = { NOT = { has_dynasty_flag = tang_dynasty_flag } }
+			}
+			dynasty = {
+				set_dynasty_flag = tang_dynasty_flag
+			}
+		}
+		# Born into the clan means starting to learn poison arts early
+		# At age 6, they begin basic training (handled by training events)
+		set_character_flag = tang_birth_training_pending
+		# Tang children get a small innate poison resistance
+		add_character_modifier = {
+			modifier = tang_innate_poison_resistance
+			years = -1
+		}
+	}
+}
+
+########################################
+# ON GAME START: Find existing Tang dynasty characters
+########################################
+
+# Called by murim_game_start_effects.txt during world seeding
+# Scope: every_living_character iteration
+murim_tang_birthright_game_start_seed_effect = {
+	# Find characters whose dynasty name matches Tang patterns
+	# CK3 checks: dynasty name, house name, cultural naming conventions
+	if = {
+		limit = {
+			OR = {
+				# Direct dynasty flag check
+				dynasty = { has_dynasty_flag = tang_dynasty_flag }
+				# Cultural check - characters in Chinese culture with Tang surname
+				# (CK3 handles this through dynasty/house names)
+				AND = {
+					OR = {
+						culture = { has_cultural_pillar = heritage_chinese }
+						culture = { has_cultural_pillar = heritage_han }
+					}
+					# Dynasty-based check for Tang family
+					dynasty = {
+						OR = {
+							has_dynasty_flag = tang_dynasty_flag
+							# Fallback: any dynasty manually flagged during setup
+						}
+					}
+				}
+			}
+			NOT = { has_trait = tang_clan_member }
+		}
+		add_trait = tang_clan_member
+		# Assign rank based on age and prowess
+		if = {
+			limit = { age >= 50 prowess >= 18 }
+			add_character_modifier = { modifier = sect_elder }
+		}
+		else_if = {
+			limit = { age >= 25 prowess >= 12 }
+			add_character_modifier = { modifier = sect_inner_disciple }
+		}
+		else_if = {
+			limit = { age >= 14 }
+			add_character_modifier = { modifier = sect_outer_disciple }
+		}
+		# All Tang members get poison resistance
+		add_character_modifier = {
+			modifier = tang_innate_poison_resistance
+			years = -1
+		}
+	}
+}
+
+########################################
+# TANG POISON TRAINING MILESTONES
+########################################
+
+# Age 6: Basic poison identification (passive, auto-assigned)
+murim_tang_age_6_training_effect = {
+	if = {
+		limit = {
+			has_trait = tang_clan_member
+			has_character_flag = tang_birth_training_pending
+			age >= 6
+		}
+		add_character_modifier = {
+			modifier = tang_basic_poison_knowledge
+			years = -1
+		}
+		remove_character_flag = tang_birth_training_pending
+		set_character_flag = tang_basic_training_complete
+	}
+}
+
+# Age 10: Intermediate poison arts (if still in clan)
+murim_tang_age_10_training_effect = {
+	if = {
+		limit = {
+			has_trait = tang_clan_member
+			has_character_flag = tang_basic_training_complete
+			age >= 10
+		}
+		add_character_modifier = {
+			modifier = tang_intermediate_poison_arts
+			years = -1
+		}
+		remove_character_flag = tang_basic_training_complete
+		set_character_flag = tang_intermediate_training_complete
+		# Small prowess boost from hidden weapon training
+		add_character_modifier = {
+			modifier = tang_hidden_weapon_basics
+			years = -1
+		}
+	}
+}
+
+# Age 16: Full Tang arts access (adult training begins)
+murim_tang_age_16_full_access_effect = {
+	if = {
+		limit = {
+			has_trait = tang_clan_member
+			has_character_flag = tang_intermediate_training_complete
+			age >= 16
+		}
+		# Full access to Tang secret techniques
+		add_character_modifier = {
+			modifier = tang_full_poison_mastery_access
+			years = -1
+		}
+		remove_character_flag = tang_intermediate_training_complete
+		set_character_flag = tang_full_training_access
+		# Cross-ref: now eligible for Tang-specific technique events
+		# Cross-ref: now eligible for adult tournaments
+	}
+}
+
+########################################
+# TANG ASSOCIATE MANAGEMENT
+########################################
+
+# Grant associate status to outsider (limited access, no secrets)
+murim_grant_tang_associate_status_effect = {
+	if = {
+		limit = {
+			NOT = { has_trait = tang_clan_member }
+			NOT = { has_trait = tang_clan_associate }
+		}
+		add_trait = tang_clan_associate
+		add_character_modifier = {
+			modifier = sect_associate
+		}
+		# Associates learn BASIC poison defense only, never offense
+		add_character_modifier = {
+			modifier = tang_associate_basic_defense
+			years = -1
+		}
+		# Opinion: Tang members are wary but accepting
+		add_character_modifier = {
+			modifier = tang_outsider_trust_probation
+			years = 3
+		}
+	}
+}
+
+# Revoke associate status (trust broken or contract ended)
+murim_revoke_tang_associate_status_effect = {
+	if = {
+		limit = { has_trait = tang_clan_associate }
+		remove_trait = tang_clan_associate
+		remove_character_modifier = sect_associate
+		remove_character_modifier = tang_associate_basic_defense
+		remove_character_modifier = tang_outsider_trust_probation
+		add_prestige = -100
+		# Associates who lose status are watched - they know some secrets
+		add_character_modifier = {
+			modifier = tang_former_associate_watched
+			years = 5
+		}
+	}
+}
+
+########################################
+# TANG BLOODLINE VERIFICATION
+########################################
+
+# Verify if a character is truly Tang blood (for disputed cases)
+# Used by events where someone CLAIMS to be Tang
+murim_verify_tang_bloodline_effect = {
+	if = {
+		limit = {
+			OR = {
+				has_trait = tang_clan_member
+				mother = { has_trait = tang_clan_member }
+				father = { has_trait = tang_clan_member }
+				dynasty = { has_dynasty_flag = tang_dynasty_flag }
+			}
+		}
+		# Verified Tang blood
+		set_character_flag = tang_blood_verified
+	}
+	else = {
+		# NOT Tang blood - imposter
+		set_character_flag = tang_blood_false_claim
+		# Cross-ref: this could trigger a dramatic reveal event
+	}
+}
