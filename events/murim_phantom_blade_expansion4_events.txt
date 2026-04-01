@@ -1,0 +1,1132 @@
+namespace = murim_phantom_blade_exp4
+
+# Phantom Blade Sect — Deep Assassination & Shadow War Chain
+# 10 complete events — contracts, betrayals, shadow wars, blade evolution
+
+##############################
+# 0001 — Shadow Contract: Imperial Target
+##############################
+murim_phantom_blade_exp4.0001 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0001.t
+	desc = murim_phantom_blade_exp4.0001.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:target_official
+		animation = worry
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_trait_rank = { trait = martial_cultivation value >= 4 }
+		is_ai = no
+		NOT = { has_character_flag = phantom_blade_imperial_contract }
+		any_ruler = {
+			has_title_rank = kingdom
+			NOR = {
+				has_trait = phantom_blade_member
+				has_trait = phantom_blade_elder
+			}
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = phantom_blade_elder
+		}
+		modifier = {
+			add = 2
+			intrigue >= 20
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = phantom_blade_imperial_contract days = 1825 }
+		random_ruler = {
+			limit = {
+				has_title_rank = kingdom
+				NOR = {
+					has_trait = phantom_blade_member
+					has_trait = phantom_blade_elder
+				}
+			}
+			save_scope_as = target_official
+		}
+		hidden_effect = {
+			set_variable = { name = blade_contract_target value = scope:target_official }
+		}
+	}
+	
+	# Accept the imperial assassination contract
+	option = {
+		name = murim_phantom_blade_exp4.0001.a
+		add_internal_flag = dangerous
+		
+		duel = {
+			skill = intrigue
+			target = scope:target_official
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_phantom_blade_exp4.0001.a.success
+				send_interface_toast = {
+					title = murim_phantom_blade_exp4.0001.a.success
+					scope:target_official = {
+						death = { death_reason = death_murder_unknown killer = root }
+					}
+				}
+				add_prestige = 500
+				add_gold = 300
+				add_character_modifier = {
+					modifier = phantom_blade_imperial_assassin
+					years = 10
+				}
+				if = {
+					limit = { NOT = { has_trait = phantom_blade_elder } }
+					add_trait = phantom_blade_elder
+				}
+			}
+			30 = {
+				desc = murim_phantom_blade_exp4.0001.a.partial
+				add_prestige = 100
+				scope:target_official = {
+					add_character_modifier = {
+						modifier = assassination_attempt_survivor
+						years = 5
+					}
+				}
+				add_character_modifier = {
+					modifier = phantom_blade_exposed
+					years = 3
+				}
+			}
+			20 = {
+				desc = murim_phantom_blade_exp4.0001.a.failure
+				add_prestige = -200
+				add_dread = -30
+				add_character_modifier = {
+					modifier = phantom_blade_wounded_retreat
+					years = 5
+				}
+				random = {
+					chance = 40
+					add_trait = wounded_3
+				}
+			}
+		}
+		
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			honest = medium_stress_impact_gain
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# Refuse — too dangerous
+	option = {
+		name = murim_phantom_blade_exp4.0001.b
+		add_prestige = -100
+		add_internal_flag = boring
+		
+		reverse_add_opinion = {
+			target = scope:target_official
+			modifier = grateful_opinion
+			opinion = 10
+		}
+		
+		if = {
+			limit = { has_trait = phantom_blade_elder }
+			custom_tooltip = murim_phantom_blade_exp4.0001.b.elder_shame
+			add_prestige = -300
+		}
+		
+		ai_chance = { base = 20 }
+	}
+	
+	# Warn the target instead — betray the sect
+	option = {
+		name = murim_phantom_blade_exp4.0001.c
+		trigger = { intrigue >= 15 }
+		
+		scope:target_official = {
+			add_opinion = {
+				target = root
+				modifier = grateful_opinion
+				opinion = 40
+			}
+		}
+		
+		add_character_flag = { flag = phantom_blade_traitor days = 3650 }
+		add_character_modifier = {
+			modifier = phantom_blade_sect_enemy
+			years = 20
+		}
+		
+		hidden_effect = {
+			every_known_character = {
+				limit = { has_trait = phantom_blade_member }
+				add_opinion = {
+					target = root
+					modifier = angry_opinion
+					opinion = -60
+				}
+			}
+		}
+		
+		ai_chance = { base = 5 }
+	}
+}
+
+##############################
+# 0002 — Blade Evolution: Living Shadow
+##############################
+murim_phantom_blade_exp4.0002 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0002.t
+	desc = murim_phantom_blade_exp4.0002.desc
+	theme = martial_cultivation
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_trait_rank = { trait = martial_cultivation value >= 5 }
+		NOT = { has_character_flag = blade_evolution_living_shadow }
+		prowess >= 25
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = phantom_blade_elder
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = blade_evolution_living_shadow }
+	}
+	
+	# Merge with your shadow — become the Living Shadow
+	option = {
+		name = murim_phantom_blade_exp4.0002.a
+		
+		add_prowess_skill = 5
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = living_shadow_blade
+			years = -1
+		}
+		add_trait_force_tooltip = phantom_blade_living_shadow
+		
+		hidden_effect = {
+			set_variable = { name = shadow_merge_complete value = yes }
+			every_known_character = {
+				limit = {
+					has_trait = phantom_blade_member
+					NOT = { this = root }
+				}
+				trigger_event = {
+					id = murim_phantom_blade_exp4.0002
+					days = { 3 7 }
+				}
+			}
+		}
+		
+		stress_impact = {
+			paranoid = minor_stress_impact_loss
+			calm = medium_stress_impact_gain
+		}
+		
+		ai_chance = { base = 80 }
+	}
+	
+	# Reject the shadow merge — maintain humanity
+	option = {
+		name = murim_phantom_blade_exp4.0002.b
+		
+		add_piety = 200
+		add_character_modifier = {
+			modifier = shadow_rejection_clarity
+			years = 5
+		}
+		
+		ai_chance = { base = 20 }
+	}
+}
+
+##############################
+# 0003 — Shadow War: Orthodox Hunter Squad
+##############################
+murim_phantom_blade_exp4.0003 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0003.t
+	desc = murim_phantom_blade_exp4.0003.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:hunter_leader
+		animation = anger
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		has_trait_rank = { trait = martial_cultivation value >= 3 }
+		NOT = { has_character_flag = orthodox_hunter_encounter }
+		any_known_character = {
+			OR = {
+				has_trait = mount_hua_disciple
+				has_trait = shaolin_disciple
+				has_trait = wudang_disciple
+			}
+			has_opinion_modifier = {
+				target = root
+				modifier = angry_opinion
+			}
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_character_flag = phantom_blade_traitor
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = orthodox_hunter_encounter days = 730 }
+		random_known_character = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_disciple
+					has_trait = wudang_disciple
+				}
+			}
+			save_scope_as = hunter_leader
+		}
+	}
+	
+	# Fight the hunter squad head-on
+	option = {
+		name = murim_phantom_blade_exp4.0003.a
+		
+		duel = {
+			skill = prowess
+			target = scope:hunter_leader
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				desc = murim_phantom_blade_exp4.0003.a.success
+				add_prestige = 300
+				add_dread = 25
+				scope:hunter_leader = {
+					add_character_modifier = {
+						modifier = defeated_by_phantom_blade
+						years = 5
+					}
+				}
+			}
+			25 = {
+				desc = murim_phantom_blade_exp4.0003.a.draw
+				add_character_modifier = {
+					modifier = narrow_shadow_escape
+					years = 3
+				}
+			}
+			25 = {
+				desc = murim_phantom_blade_exp4.0003.a.failure
+				add_trait = wounded_2
+				add_prestige = -150
+				add_character_modifier = {
+					modifier = phantom_blade_in_hiding
+					years = 5
+				}
+			}
+		}
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Use shadow techniques to escape without fighting
+	option = {
+		name = murim_phantom_blade_exp4.0003.b
+		trigger = { intrigue >= 18 }
+		
+		add_character_modifier = {
+			modifier = phantom_blade_ghosted
+			years = 3
+		}
+		add_prestige = 50
+		
+		scope:hunter_leader = {
+			add_character_modifier = {
+				modifier = lost_the_phantom
+				years = 3
+			}
+		}
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Surrender and offer information
+	option = {
+		name = murim_phantom_blade_exp4.0003.c
+		
+		add_trait = imprisoned
+		remove_trait = phantom_blade_member
+		add_character_modifier = {
+			modifier = phantom_blade_defector
+			years = 10
+		}
+		
+		scope:hunter_leader = {
+			add_opinion = {
+				target = root
+				modifier = grateful_opinion
+				opinion = 20
+			}
+		}
+		
+		ai_chance = { base = 10 }
+	}
+}
+
+##############################
+# 0004 — Night of a Thousand Blades
+##############################
+murim_phantom_blade_exp4.0004 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0004.t
+	desc = murim_phantom_blade_exp4.0004.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_elder
+		has_trait_rank = { trait = martial_cultivation value >= 5 }
+		NOT = { has_character_flag = thousand_blades_night }
+		is_ai = no
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = phantom_blade_living_shadow
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = thousand_blades_night }
+	}
+	
+	# Orchestrate the Night of a Thousand Blades — mass assassination
+	option = {
+		name = murim_phantom_blade_exp4.0004.a
+		add_internal_flag = dangerous
+		
+		custom_tooltip = murim_phantom_blade_exp4.0004.a.tt
+		
+		hidden_effect = {
+			random_list = {
+				60 = {
+					modifier = {
+						add = 20
+						intrigue >= 25
+					}
+					# Success — multiple targets eliminated
+					every_ruler = {
+						limit = {
+							is_ai = yes
+							has_title_rank >= county
+							NOR = {
+								has_trait = phantom_blade_member
+								has_trait = phantom_blade_elder
+								is_allied_to = root
+							}
+						}
+						random = {
+							chance = 30
+							death = { death_reason = death_murder_unknown killer = root }
+						}
+					}
+					root = {
+						trigger_event = { id = murim_phantom_blade_exp4.0004 days = 3 }
+					}
+				}
+				25 = {
+					# Partial success
+					random_ruler = {
+						limit = {
+							is_ai = yes
+							NOR = {
+								has_trait = phantom_blade_member
+								is_allied_to = root
+							}
+						}
+						death = { death_reason = death_murder_unknown killer = root }
+					}
+					root = {
+						add_character_modifier = {
+							modifier = thousand_blades_partial
+							years = 5
+						}
+					}
+				}
+				15 = {
+					# Failure — exposed
+					root = {
+						add_character_modifier = {
+							modifier = thousand_blades_exposed
+							years = 10
+						}
+						add_prestige = -500
+						every_known_character = {
+							limit = {
+								OR = {
+									has_trait = mount_hua_disciple
+									has_trait = shaolin_disciple
+									has_trait = wudang_disciple
+								}
+							}
+							add_opinion = {
+								target = root
+								modifier = angry_opinion
+								opinion = -80
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		add_dread = 50
+		add_prestige = 500
+		
+		stress_impact = {
+			compassionate = massive_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		
+		ai_chance = { base = 70 }
+	}
+	
+	# Too risky — call it off
+	option = {
+		name = murim_phantom_blade_exp4.0004.b
+		
+		add_prestige = -50
+		add_character_modifier = {
+			modifier = phantom_blade_cautious_elder
+			years = 3
+		}
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+##############################
+# 0005 — Blade Inheritance: Choosing a Successor
+##############################
+murim_phantom_blade_exp4.0005 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0005.t
+	desc = murim_phantom_blade_exp4.0005.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:blade_heir
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_elder
+		age >= 50
+		NOT = { has_character_flag = blade_succession_chosen }
+		any_close_or_extended_family_member = {
+			has_trait = phantom_blade_member
+			age >= 16
+			NOT = { this = root }
+		}
+	}
+	
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 5
+			age >= 65
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = blade_succession_chosen }
+		random_close_or_extended_family_member = {
+			limit = {
+				has_trait = phantom_blade_member
+				age >= 16
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 10
+					prowess >= 15
+				}
+				modifier = {
+					add = 5
+					intrigue >= 15
+				}
+			}
+			save_scope_as = blade_heir
+		}
+	}
+	
+	# Pass the Phantom Blade legacy to your chosen heir
+	option = {
+		name = murim_phantom_blade_exp4.0005.a
+		
+		scope:blade_heir = {
+			add_trait_force_tooltip = phantom_blade_elder
+			add_prowess_skill = 3
+			add_intrigue_skill = 2
+			add_character_modifier = {
+				modifier = phantom_blade_inheritor
+				years = -1
+			}
+		}
+		
+		add_character_modifier = {
+			modifier = phantom_blade_retired_master
+			years = -1
+		}
+		
+		add_prestige = 200
+		
+		ai_chance = { base = 70 }
+	}
+	
+	# No one is worthy — take the secrets to the grave
+	option = {
+		name = murim_phantom_blade_exp4.0005.b
+		
+		add_character_modifier = {
+			modifier = phantom_blade_last_shadow
+			years = -1
+		}
+		add_prestige = 100
+		add_dread = 20
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+##############################
+# 0006 — Shadow Market: Forbidden Poison Trade
+##############################
+murim_phantom_blade_exp4.0006 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0006.t
+	desc = murim_phantom_blade_exp4.0006.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:poison_dealer
+		animation = personality_cynical
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		NOT = { has_character_flag = shadow_market_poison }
+		gold >= 100
+		any_known_character = {
+			OR = {
+				has_trait = poison_flower_member
+				has_trait = tang_clan_member
+			}
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			intrigue >= 18
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = shadow_market_poison days = 1095 }
+		random_known_character = {
+			limit = {
+				OR = {
+					has_trait = poison_flower_member
+					has_trait = tang_clan_member
+				}
+			}
+			save_scope_as = poison_dealer
+		}
+	}
+	
+	# Buy the forbidden poisons for blade coating
+	option = {
+		name = murim_phantom_blade_exp4.0006.a
+		
+		remove_short_term_gold = 150
+		add_character_modifier = {
+			modifier = poison_coated_phantom_blade
+			years = 5
+		}
+		add_prowess_skill = 2
+		
+		scope:poison_dealer = {
+			add_opinion = {
+				target = root
+				modifier = business_partner_opinion
+				opinion = 15
+			}
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# Steal the poisons instead
+	option = {
+		name = murim_phantom_blade_exp4.0006.b
+		trigger = { intrigue >= 20 }
+		
+		duel = {
+			skill = intrigue
+			target = scope:poison_dealer
+			60 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				desc = murim_phantom_blade_exp4.0006.b.success
+				add_character_modifier = {
+					modifier = poison_coated_phantom_blade
+					years = 5
+				}
+			}
+			40 = {
+				desc = murim_phantom_blade_exp4.0006.b.failure
+				scope:poison_dealer = {
+					add_opinion = {
+						target = root
+						modifier = angry_opinion
+						opinion = -50
+					}
+				}
+				add_character_modifier = {
+					modifier = poison_exposure_sickness
+					years = 3
+				}
+			}
+		}
+		
+		ai_chance = { base = 25 }
+	}
+	
+	# Decline — too risky
+	option = {
+		name = murim_phantom_blade_exp4.0006.c
+		add_prestige = 25
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# 0007 — Phantom Court: Shadow Government
+##############################
+murim_phantom_blade_exp4.0007 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0007.t
+	desc = murim_phantom_blade_exp4.0007.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_elder
+		has_trait_rank = { trait = martial_cultivation value >= 6 }
+		NOT = { has_character_flag = phantom_court_established }
+		realm_size >= 3
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			intrigue >= 25
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = phantom_court_established }
+	}
+	
+	# Establish the Phantom Court — shadow government controlling local lords
+	option = {
+		name = murim_phantom_blade_exp4.0007.a
+		
+		add_character_modifier = {
+			modifier = phantom_court_master
+			years = -1
+		}
+		add_dread = 40
+		add_prestige = 400
+		
+		hidden_effect = {
+			every_vassal = {
+				limit = { is_ai = yes }
+				random = {
+					chance = 50
+					add_opinion = {
+						target = root
+						modifier = intimidated_opinion
+						opinion = -20
+					}
+					add_character_modifier = {
+						modifier = phantom_court_puppet
+						years = 10
+					}
+				}
+			}
+		}
+		
+		ai_chance = { base = 70 }
+	}
+	
+	# Rule from the open instead
+	option = {
+		name = murim_phantom_blade_exp4.0007.b
+		
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = open_blade_ruler
+			years = -1
+		}
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+##############################
+# 0008 — Dual Identity Crisis
+##############################
+murim_phantom_blade_exp4.0008 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0008.t
+	desc = murim_phantom_blade_exp4.0008.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_member
+		stress >= 50
+		NOT = { has_character_flag = dual_identity_crisis }
+		has_any_secrets = yes
+	}
+	
+	weight_multiplier = {
+		base = 2
+		modifier = {
+			add = 5
+			stress >= 80
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = dual_identity_crisis days = 1825 }
+	}
+	
+	# Embrace the shadow — let your public identity die
+	option = {
+		name = murim_phantom_blade_exp4.0008.a
+		
+		add_stress = -40
+		add_character_modifier = {
+			modifier = shadow_identity_only
+			years = -1
+		}
+		remove_trait = honest
+		add_trait_force_tooltip = deceitful
+		add_intrigue_skill = 3
+		add_diplomacy_skill = -2
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Fight to maintain both identities
+	option = {
+		name = murim_phantom_blade_exp4.0008.b
+		
+		add_stress = 30
+		add_character_modifier = {
+			modifier = dual_identity_strain
+			years = 5
+		}
+		add_diplomacy_skill = 1
+		add_intrigue_skill = 1
+		
+		ai_chance = { base = 35 }
+	}
+	
+	# Abandon the Phantom Blade — choose your public life
+	option = {
+		name = murim_phantom_blade_exp4.0008.c
+		
+		add_stress = -60
+		remove_trait = phantom_blade_member
+		add_character_modifier = {
+			modifier = former_phantom_blade
+			years = -1
+		}
+		add_piety = 100
+		
+		every_known_character = {
+			limit = { has_trait = phantom_blade_member }
+			add_opinion = {
+				target = root
+				modifier = angry_opinion
+				opinion = -40
+			}
+		}
+		
+		ai_chance = { base = 15 }
+	}
+}
+
+##############################
+# 0009 — Blood Moon Ritual
+##############################
+murim_phantom_blade_exp4.0009 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0009.t
+	desc = murim_phantom_blade_exp4.0009.desc
+	theme = dark_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_elder
+		NOT = { has_character_flag = blood_moon_ritual }
+		has_trait_rank = { trait = martial_cultivation value >= 5 }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = phantom_blade_living_shadow
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = blood_moon_ritual }
+	}
+	
+	# Perform the Blood Moon Ritual — ultimate shadow power
+	option = {
+		name = murim_phantom_blade_exp4.0009.a
+		add_internal_flag = dangerous
+		
+		random_list = {
+			50 = {
+				modifier = {
+					add = 20
+					has_trait = phantom_blade_living_shadow
+				}
+				desc = murim_phantom_blade_exp4.0009.a.success
+				add_prowess_skill = 5
+				add_intrigue_skill = 3
+				add_character_modifier = {
+					modifier = blood_moon_ascendant
+					years = -1
+				}
+				add_trait_force_tooltip = phantom_blade_blood_moon_master
+			}
+			30 = {
+				desc = murim_phantom_blade_exp4.0009.a.partial
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = blood_moon_incomplete
+					years = 5
+				}
+			}
+			20 = {
+				desc = murim_phantom_blade_exp4.0009.a.failure
+				add_trait = wounded_3
+				add_stress = 50
+				add_character_modifier = {
+					modifier = blood_moon_backlash
+					years = 10
+				}
+			}
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# The ritual is too dark — refuse
+	option = {
+		name = murim_phantom_blade_exp4.0009.b
+		add_piety = 100
+		add_prestige = 50
+		ai_chance = { base = 40 }
+	}
+}
+
+##############################
+# 0010 — The Last Phantom: Extinction or Rebirth
+##############################
+murim_phantom_blade_exp4.0010 = {
+	type = character_event
+	title = murim_phantom_blade_exp4.0010.t
+	desc = murim_phantom_blade_exp4.0010.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_trait = phantom_blade_elder
+		age >= 60
+		NOT = { has_character_flag = last_phantom_decision }
+		NOT = {
+			any_close_or_extended_family_member = {
+				has_trait = phantom_blade_member
+				age >= 16
+				NOT = { this = root }
+			}
+		}
+	}
+	
+	weight_multiplier = {
+		base = 3
+		modifier = {
+			add = 5
+			age >= 70
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = last_phantom_decision }
+	}
+	
+	# Recruit a stranger to carry the Phantom Blade legacy
+	option = {
+		name = murim_phantom_blade_exp4.0010.a
+		
+		hidden_effect = {
+			random_living_character = {
+				limit = {
+					age >= 14
+					age <= 25
+					prowess >= 10
+					NOT = {
+						OR = {
+							has_trait = mount_hua_disciple
+							has_trait = shaolin_disciple
+							has_trait = wudang_disciple
+						}
+					}
+				}
+				weight = {
+					base = 1
+					modifier = { add = 10 intrigue >= 12 }
+				}
+				save_scope_as = new_phantom
+				add_trait = phantom_blade_member
+				add_character_modifier = {
+					modifier = phantom_blade_inheritor
+					years = -1
+				}
+			}
+		}
+		
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = phantom_blade_legacy_secured
+			years = -1
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# Let the Phantom Blade sect die with you
+	option = {
+		name = murim_phantom_blade_exp4.0010.b
+		
+		add_prestige = 500
+		add_piety = 200
+		add_character_modifier = {
+			modifier = last_phantom_blade
+			years = -1
+		}
+		
+		ai_chance = { base = 25 }
+	}
+	
+	# Write the techniques in a hidden manual for future discovery
+	option = {
+		name = murim_phantom_blade_exp4.0010.c
+		
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = phantom_blade_manual_hidden
+			years = -1
+		}
+		
+		hidden_effect = {
+			set_global_variable = { name = phantom_blade_manual_exists value = yes }
+		}
+		
+		ai_chance = { base = 15 }
+	}
+}
