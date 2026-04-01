@@ -1,0 +1,469 @@
+# Murim Chronicles - Combat Trauma Traits
+# Real lasting consequences from duels and combat
+# These traits fundamentally change how a character fights, cultivates, and behaves
+# Load-safe: all traits have defaults and graceful degradation
+
+######################################
+# SHATTERED MERIDIANS
+# Cannot cultivate above current rank ever again
+# Caused by: devastating qi explosion, critical breakthrough failure during combat
+######################################
+
+shattered_meridians = {
+	index = 1
+	category = personality
+
+	# Permanent cultivation ceiling
+	character_modifier = {
+		monthly_piety = -0.5
+		stress_gain_mult = 0.15
+		health = -0.25
+		learning = -3
+	}
+
+	# Cannot be removed by normal means
+	can_have = {
+		is_alive = yes
+	}
+
+	# Incompatible with qi_crippled (meridians must exist to be shattered vs fully gone)
+	opposites = {
+		qi_crippled
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = shattered_meridians
+				}
+				desc = trait_shattered_meridians_desc
+			}
+		}
+	}
+
+	# AI impact: will never attempt breakthrough, avoids cultivation decisions
+	ai_energy = -25
+	ai_boldness = -20
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 15
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = cannot_advance_cultivation
+}
+
+######################################
+# QI CRIPPLED
+# Lost access to qi entirely - can fight physically but no techniques
+# Caused by: meridian destruction in combat, forbidden technique backlash
+######################################
+
+qi_crippled = {
+	index = 2
+	category = personality
+
+	character_modifier = {
+		monthly_piety = -1.0
+		stress_gain_mult = 0.25
+		health = -0.5
+		prowess = -4
+		learning = -4
+		intrigue = -2
+		monthly_prestige = -0.3
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	opposites = {
+		shattered_meridians
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = qi_crippled
+				}
+				desc = trait_qi_crippled_desc
+			}
+		}
+	}
+
+	# AI impact: completely avoids all cultivation and qi-based activities
+	ai_energy = -50
+	ai_boldness = -30
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 25
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = cannot_use_techniques
+	flag = cannot_advance_cultivation
+}
+
+######################################
+# COMBAT SCARRED
+# Veteran of too many fights - stress from duel invitations but +prowess from experience
+# Caused by: accumulating 5+ serious fights without extended rest
+######################################
+
+combat_scarred = {
+	index = 3
+	category = personality
+
+	character_modifier = {
+		prowess = 3
+		monthly_prestige = 0.2
+		stress_gain_mult = 0.10
+		attraction_opinion = -10
+		same_faith_opinion = 5
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = combat_scarred
+				}
+				desc = trait_combat_scarred_desc
+			}
+		}
+	}
+
+	# AI impact: experienced but wary of more fights
+	ai_energy = -10
+	ai_boldness = -5
+	ai_honor = 10
+	ai_greed = 0
+	ai_rationality = 15
+
+	flag = murim_combat_trauma
+	flag = murim_veteran_trait
+}
+
+######################################
+# BROKEN SPIRIT
+# Lost to someone far weaker - will never challenge anyone again
+# Caused by: devastating loss to a character with much lower prowess
+######################################
+
+broken_spirit = {
+	index = 4
+	category = personality
+
+	character_modifier = {
+		prowess = -5
+		monthly_prestige = -0.5
+		stress_gain_mult = 0.30
+		attraction_opinion = -15
+		vassal_opinion = -10
+		health = -0.25
+		martial = -2
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	# Incompatible with brave or battle_madness
+	opposites = {
+		brave
+		battle_madness
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = broken_spirit
+				}
+				desc = trait_broken_spirit_desc
+			}
+		}
+	}
+
+	# AI impact: will NEVER initiate duels, refuses challenges, tries to flee
+	ai_energy = -75
+	ai_boldness = -100
+	ai_honor = -30
+	ai_greed = 0
+	ai_rationality = 50
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = cannot_initiate_duels
+	flag = refuses_duel_challenges
+}
+
+######################################
+# BATTLE MADNESS
+# Too many kills - gains prowess but randomly attacks allies
+# Caused by: killing 5+ opponents in duels/combat, forbidden berserker techniques
+######################################
+
+battle_madness = {
+	index = 5
+	category = personality
+
+	character_modifier = {
+		prowess = 6
+		martial = 3
+		monthly_prestige = 0.3
+		diplomacy = -6
+		intrigue = -3
+		stress_gain_mult = -0.15
+		vassal_opinion = -20
+		courtier_opinion = -25
+		attraction_opinion = -10
+		hostile_scheme_power_mult = 0.2
+		tyranny_gain_mult = -0.25
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	opposites = {
+		craven
+		calm
+		compassionate
+		broken_spirit
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = battle_madness
+				}
+				desc = trait_battle_madness_desc
+			}
+		}
+	}
+
+	# AI impact: extremely aggressive, always seeks combat, ignores risk
+	ai_energy = 50
+	ai_boldness = 100
+	ai_honor = -50
+	ai_greed = 10
+	ai_rationality = -75
+
+	flag = murim_combat_trauma
+	flag = murim_berserker
+	flag = attacks_allies_randomly
+}
+
+######################################
+# PHANTOM PAIN
+# Old wound that flares up - random events where old injury causes problems
+# Caused by: any serious wound that heals but leaves lasting nerve damage
+######################################
+
+phantom_pain = {
+	index = 6
+	category = personality
+
+	character_modifier = {
+		prowess = -1
+		health = -0.15
+		stress_gain_mult = 0.10
+		monthly_piety = 0.1
+		learning = 1
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = phantom_pain
+				}
+				desc = trait_phantom_pain_desc
+			}
+		}
+	}
+
+	# AI impact: slightly cautious, occasional disadvantage in combat
+	ai_energy = -10
+	ai_boldness = -10
+	ai_honor = 5
+	ai_greed = 0
+	ai_rationality = 10
+
+	flag = murim_combat_trauma
+	flag = murim_chronic_condition
+	flag = random_flareup_events
+}
+
+######################################
+# FLINCH REFLEX
+# Lost badly to a specific technique type - disadvantage against that type forever
+# Caused by: traumatic defeat involving a specific technique category
+# Uses flags to track which technique type: flinch_sword, flinch_palm, flinch_fire, flinch_poison, flinch_shadow
+######################################
+
+flinch_reflex = {
+	index = 7
+	category = personality
+
+	character_modifier = {
+		prowess = -2
+		stress_gain_mult = 0.15
+		martial = -1
+		monthly_prestige = -0.1
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					AND = {
+						has_trait = flinch_reflex
+						has_character_flag = flinch_sword
+					}
+				}
+				desc = trait_flinch_reflex_sword_desc
+			}
+			triggered_desc = {
+				trigger = {
+					AND = {
+						has_trait = flinch_reflex
+						has_character_flag = flinch_palm
+					}
+				}
+				desc = trait_flinch_reflex_palm_desc
+			}
+			triggered_desc = {
+				trigger = {
+					AND = {
+						has_trait = flinch_reflex
+						has_character_flag = flinch_fire
+					}
+				}
+				desc = trait_flinch_reflex_fire_desc
+			}
+			triggered_desc = {
+				trigger = {
+					AND = {
+						has_trait = flinch_reflex
+						has_character_flag = flinch_poison
+					}
+				}
+				desc = trait_flinch_reflex_poison_desc
+			}
+			triggered_desc = {
+				trigger = {
+					AND = {
+						has_trait = flinch_reflex
+						has_character_flag = flinch_shadow
+					}
+				}
+				desc = trait_flinch_reflex_shadow_desc
+			}
+			triggered_desc = {
+				trigger = {
+					has_trait = flinch_reflex
+				}
+				desc = trait_flinch_reflex_generic_desc
+			}
+		}
+	}
+
+	# AI impact: avoids fights against the technique type that traumatized them
+	ai_energy = -15
+	ai_boldness = -20
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 20
+
+	flag = murim_combat_trauma
+	flag = murim_technique_phobia
+}
+
+######################################
+# RECENT COMBAT MODIFIER TRAIT (STACKING RISK)
+# Not a permanent trait - tracks recent fight activity
+# Used by combat events to increase wound severity if fighting again within 30 days
+######################################
+
+recent_combat_fatigue = {
+	index = 8
+	category = personality
+
+	character_modifier = {
+		prowess = -1
+		health = -0.1
+		stress_gain_mult = 0.05
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	# Expires naturally - events should remove after 30 days
+	# Stacks conceptually via flags: recent_combat_1, recent_combat_2, recent_combat_3
+	# Each stack increases injury chance in next fight
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = recent_combat_fatigue
+				}
+				desc = trait_recent_combat_fatigue_desc
+			}
+		}
+	}
+
+	ai_energy = -5
+	ai_boldness = -10
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 15
+
+	flag = murim_combat_fatigue
+	flag = murim_temporary_condition
+}
+
+######################################
+# SCRIPTED TRIGGERS FOR COMBAT TRAUMA CHECKS
+# Load-safe: all have exists checks and fallback defaults
+######################################
+
+# Use these in all duel/combat events before allowing participation:
+#
+# murim_can_participate_in_duel_trigger:
+#   NOT = { has_trait = incapable }
+#   NOT = { has_trait = broken_spirit }  # refuses all duels
+#   trigger_if = {
+#     trigger = { has_trait = craven }
+#     # craven characters CAN duel but with massive AI penalty
+#   }
+#
+# murim_duel_injury_severity_value:
+#   Base severity from fight type (sparring=1, honor=2, death_match=3, ambush=4)
+#   + recent_combat_fatigue stacks
+#   + wounded/severely_wounded existing conditions
+#   - has_trait = robust (reduces severity)
+#
+# murim_roll_combat_trauma:
+#   Called after every duel resolution
+#   Rolls for: physical injury, mental trauma, technique phobia
+#   Scales with severity value above
+#   Winners roll at 50% of loser's chance (winners can still get hurt)
