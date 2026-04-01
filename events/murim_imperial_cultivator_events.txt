@@ -1,0 +1,1295 @@
+# Murim Chronicles Phase 4 - Imperial Cultivator Events
+# Emperor discovers cultivators, imperial cultivator corps, court cultivator exposed,
+# examination rigged, governor is puppet, war decided by hidden duel, imperial ban,
+# underground railroad for persecuted cultivators
+
+namespace = murim_imperial_cultivator
+
+######################################
+# 0001 - EMPEROR DISCOVERS CULTIVATORS
+######################################
+
+murim_imperial_cultivator.0001 = {
+	type = character_event
+	title = murim_imperial_cultivator.0001.t
+	desc = murim_imperial_cultivator.0001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:exposed_cultivator
+		animation = shame
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_duchy
+		NOT = { murim_is_cultivator_trigger = yes }
+		exists = scope:exposed_cultivator
+	}
+
+	immediate = {
+		set_character_flag = murim_discovered_cultivators
+	}
+
+	# Option A: Demand they serve the empire
+	option = {
+		name = murim_imperial_cultivator.0001.a
+		scope:exposed_cultivator = {
+			set_character_flag = murim_cultivation_public
+			add_opinion = {
+				target = root
+				modifier = murim_forced_into_service
+			}
+			add_character_modifier = {
+				modifier = murim_imperial_cultivator_conscript
+				years = -1
+			}
+		}
+		root = {
+			add_prestige = 100
+			add_character_modifier = {
+				modifier = murim_has_cultivator_servant
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 10 has_trait = pragmatic }
+		}
+	}
+
+	# Option B: Imprison them as a threat
+	option = {
+		name = murim_imperial_cultivator.0001.b
+		scope:exposed_cultivator = {
+			imprison = {
+				target = scope:exposed_cultivator
+				type = dungeon
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_imprisoned_for_cultivation
+			}
+		}
+		root = {
+			add_piety = 50
+			add_tyranny = 10
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = zealous }
+			modifier = { add = 15 has_trait = paranoid }
+		}
+	}
+
+	# Option C: Secretly learn from them
+	option = {
+		name = murim_imperial_cultivator.0001.c
+		scope:exposed_cultivator = {
+			add_opinion = {
+				target = root
+				modifier = murim_interested_in_cultivation
+			}
+		}
+		root = {
+			set_character_flag = murim_secretly_studying_cultivation
+			add_character_modifier = {
+				modifier = murim_hidden_cultivation_student
+				years = 5
+			}
+			add_learning_skill = 1
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = curious }
+			modifier = { add = 15 learning >= 14 }
+		}
+	}
+
+	# Option D: Ignore and pretend nothing happened
+	option = {
+		name = murim_imperial_cultivator.0001.d
+		root = {
+			add_stress = 10
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 15 has_trait = lazy }
+			modifier = { add = 10 has_trait = content }
+		}
+	}
+}
+
+######################################
+# 0005 - FORM IMPERIAL CULTIVATOR CORPS
+######################################
+
+murim_imperial_cultivator.0005 = {
+	type = character_event
+	title = murim_imperial_cultivator.0005.t
+	desc = murim_imperial_cultivator.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		has_character_flag = murim_discovered_cultivators
+		NOT = { has_character_flag = murim_formed_cultivator_corps }
+		any_courtier = {
+			count >= 3
+			murim_is_cultivator_trigger = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 martial >= 16 }
+		modifier = { factor = 1.5 has_trait = ambitious }
+	}
+
+	immediate = {
+		set_character_flag = murim_formed_cultivator_corps
+	}
+
+	# Option A: Form elite cultivator guard
+	option = {
+		name = murim_imperial_cultivator.0005.a
+		root = {
+			add_character_modifier = {
+				modifier = murim_imperial_cultivator_corps
+				years = -1
+			}
+			add_prestige = 300
+			add_martial_skill = 1
+		}
+		every_courtier = {
+			limit = { murim_is_cultivator_trigger = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_cultivator_corps_member
+			}
+			add_character_modifier = {
+				modifier = murim_imperial_corps_duty
+				years = -1
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 martial >= 16 }
+		}
+	}
+
+	# Option B: Form secret cultivator intelligence unit
+	option = {
+		name = murim_imperial_cultivator.0005.b
+		root = {
+			add_character_modifier = {
+				modifier = murim_cultivator_intelligence_unit
+				years = -1
+			}
+			add_intrigue_skill = 2
+			add_prestige = 200
+		}
+		every_courtier = {
+			limit = {
+				murim_is_cultivator_trigger = yes
+				intrigue >= 10
+			}
+			add_character_modifier = {
+				modifier = murim_imperial_spy_cultivator
+				years = -1
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 intrigue >= 14 }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+
+	# Option C: Too dangerous - disband and suppress
+	option = {
+		name = murim_imperial_cultivator.0005.c
+		root = {
+			add_piety = 100
+			add_prestige = -100
+			murim_launch_imperial_crackdown_effect = yes
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = zealous }
+			modifier = { add = 15 has_trait = paranoid }
+		}
+	}
+}
+
+######################################
+# 0010 - COURT CULTIVATOR EXPOSED
+######################################
+
+murim_imperial_cultivator.0010 = {
+	type = character_event
+	title = murim_imperial_cultivator.0010.t
+	desc = murim_imperial_cultivator.0010.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_ruler = yes
+		any_courtier = {
+			murim_is_hidden_cultivator_trigger = yes
+			has_character_flag = murim_used_technique_publicly
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 has_trait = paranoid }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				murim_is_hidden_cultivator_trigger = yes
+				has_character_flag = murim_used_technique_publicly
+			}
+			save_scope_as = court_cultivator
+		}
+	}
+
+	# Option A: Public trial
+	option = {
+		name = murim_imperial_cultivator.0010.a
+		scope:court_cultivator = {
+			set_character_flag = murim_cultivation_public
+			add_character_modifier = {
+				modifier = murim_publicly_tried_cultivator
+				years = 5
+			}
+			add_prestige = -200
+			add_stress = 40
+		}
+		root = {
+			add_prestige = 50
+			add_piety = 25
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Option B: Private confrontation - demand loyalty
+	option = {
+		name = murim_imperial_cultivator.0010.b
+		scope:court_cultivator = {
+			add_opinion = {
+				target = root
+				modifier = murim_knows_my_secret
+			}
+			add_character_modifier = {
+				modifier = murim_sworn_loyalty_under_duress
+				years = 10
+			}
+		}
+		root = {
+			add_intrigue_skill = 1
+			add_character_modifier = {
+				modifier = murim_cultivator_leverage
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 intrigue >= 14 }
+			modifier = { add = 10 has_trait = deceitful }
+		}
+	}
+
+	# Option C: Cover it up - they're too useful
+	option = {
+		name = murim_imperial_cultivator.0010.c
+		scope:court_cultivator = {
+			add_opinion = {
+				target = root
+				modifier = murim_covered_for_me
+			}
+		}
+		root = {
+			add_stress = 15
+			add_character_modifier = {
+				modifier = murim_harboring_cultivator_secret
+				years = 5
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 15 has_trait = compassionate }
+			modifier = { add = 10 has_trait = trusting }
+		}
+	}
+}
+
+######################################
+# 0015 - EXAMINATION RIGGING DISCOVERED
+######################################
+
+murim_imperial_cultivator.0015 = {
+	type = character_event
+	title = murim_imperial_cultivator.0015.t
+	desc = murim_imperial_cultivator.0015.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_duchy
+		any_courtier = {
+			has_character_modifier = murim_examination_passed_fraudulently
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 has_trait = just }
+		modifier = { factor = 1.5 intrigue >= 14 }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_modifier = murim_examination_passed_fraudulently
+			}
+			save_scope_as = fraudulent_official
+		}
+	}
+
+	# Option A: Strip them of position publicly
+	option = {
+		name = murim_imperial_cultivator.0015.a
+		scope:fraudulent_official = {
+			remove_character_modifier = murim_examination_passed_fraudulently
+			add_prestige = -300
+			add_character_modifier = {
+				modifier = murim_disgraced_fraud
+				years = 10
+			}
+		}
+		root = {
+			add_prestige = 100
+			add_piety = 50
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 10 has_trait = honest }
+		}
+	}
+
+	# Option B: Investigate who rigged it
+	option = {
+		name = murim_imperial_cultivator.0015.b
+		root = {
+			add_intrigue_skill = 1
+			add_character_modifier = {
+				modifier = murim_investigating_exam_fraud
+				years = 2
+			}
+			# May discover underground
+			random = {
+				chance = 40
+				set_character_flag = murim_discovered_underground
+				trigger_event = {
+					id = murim_imperial_cultivator.0016
+					days = { 30 90 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 15 intrigue >= 14 }
+			modifier = { add = 10 has_trait = diligent }
+		}
+	}
+
+	# Option C: Use the information as leverage
+	option = {
+		name = murim_imperial_cultivator.0015.c
+		scope:fraudulent_official = {
+			add_opinion = {
+				target = root
+				modifier = murim_knows_my_fraud
+			}
+			add_character_modifier = {
+				modifier = murim_under_blackmail
+				years = 5
+			}
+		}
+		root = {
+			add_gold = 50
+			add_character_modifier = {
+				modifier = murim_leveraging_fraud
+				years = 5
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 10 has_trait = greedy }
+		}
+	}
+}
+
+######################################
+# 0016 - UNDERGROUND NETWORK DISCOVERED
+######################################
+
+murim_imperial_cultivator.0016 = {
+	type = character_event
+	title = murim_imperial_cultivator.0016.t
+	desc = murim_imperial_cultivator.0016.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		has_character_flag = murim_discovered_underground
+	}
+
+	# Option A: Launch full crackdown
+	option = {
+		name = murim_imperial_cultivator.0016.a
+		root = {
+			murim_launch_imperial_crackdown_effect = yes
+			add_prestige = 200
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = zealous }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Option B: Infiltrate and control from within
+	option = {
+		name = murim_imperial_cultivator.0016.b
+		root = {
+			add_intrigue_skill = 2
+			add_character_modifier = {
+				modifier = murim_infiltrating_underground
+				years = 10
+			}
+			set_character_flag = murim_secretly_controlling_underground
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 intrigue >= 16 }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+
+	# Option C: Make a deal with the underground
+	option = {
+		name = murim_imperial_cultivator.0016.c
+		root = {
+			add_gold = 200
+			add_character_modifier = {
+				modifier = murim_underground_deal
+				years = -1
+			}
+			set_character_flag = murim_allied_with_underground
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = pragmatic }
+			modifier = { add = 10 has_trait = greedy }
+		}
+	}
+
+	# Option D: Pretend you saw nothing
+	option = {
+		name = murim_imperial_cultivator.0016.d
+		root = {
+			add_stress = 20
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 15 has_trait = craven }
+			modifier = { add = 10 has_trait = lazy }
+		}
+	}
+}
+
+######################################
+# 0020 - GOVERNOR REVEALED AS PUPPET
+######################################
+
+murim_imperial_cultivator.0020 = {
+	type = character_event
+	title = murim_imperial_cultivator.0020.t
+	desc = murim_imperial_cultivator.0020.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:puppet_governor
+		animation = shame
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_duchy
+		any_vassal = {
+			has_trait = puppet_official
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 intrigue >= 14 }
+	}
+
+	immediate = {
+		random_vassal = {
+			limit = { has_trait = puppet_official }
+			save_scope_as = puppet_governor
+		}
+	}
+
+	# Option A: Remove them and install loyal replacement
+	option = {
+		name = murim_imperial_cultivator.0020.a
+		scope:puppet_governor = {
+			add_prestige = -200
+			remove_trait = puppet_official
+			add_character_modifier = {
+				modifier = murim_exposed_puppet
+				years = 10
+			}
+		}
+		root = {
+			add_prestige = 100
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Option B: Turn the puppet to serve you instead
+	option = {
+		name = murim_imperial_cultivator.0020.b
+		scope:puppet_governor = {
+			add_opinion = {
+				target = root
+				modifier = murim_new_puppet_master
+			}
+			remove_character_modifier = murim_under_sect_control
+			add_character_modifier = {
+				modifier = murim_imperial_puppet
+				years = -1
+			}
+		}
+		root = {
+			add_intrigue_skill = 1
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 intrigue >= 16 }
+		}
+	}
+
+	# Option C: Use evidence to find the puppeteer
+	option = {
+		name = murim_imperial_cultivator.0020.c
+		root = {
+			add_character_modifier = {
+				modifier = murim_hunting_puppeteer
+				years = 3
+			}
+			random = {
+				chance = 50
+				trigger_event = {
+					id = murim_imperial_cultivator.0021
+					days = { 30 120 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 15 has_trait = diligent }
+			modifier = { add = 10 intrigue >= 14 }
+		}
+	}
+}
+
+######################################
+# 0021 - PUPPETEER FOUND
+######################################
+
+murim_imperial_cultivator.0021 = {
+	type = character_event
+	title = murim_imperial_cultivator.0021.t
+	desc = murim_imperial_cultivator.0021.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_modifier = murim_hunting_puppeteer
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_character_modifier = murim_puppet_master
+				is_alive = yes
+			}
+			save_scope_as = puppeteer
+		}
+	}
+
+	# Option A: Public arrest and execution
+	option = {
+		name = murim_imperial_cultivator.0021.a
+		trigger = { exists = scope:puppeteer }
+		scope:puppeteer = {
+			add_prestige = -500
+			imprison = {
+				target = scope:puppeteer
+				type = dungeon
+			}
+		}
+		root = {
+			add_prestige = 300
+			add_piety = 100
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Option B: Force them to work for you
+	option = {
+		name = murim_imperial_cultivator.0021.b
+		trigger = { exists = scope:puppeteer }
+		scope:puppeteer = {
+			add_opinion = {
+				target = root
+				modifier = murim_forced_into_service
+			}
+			add_character_modifier = {
+				modifier = murim_imperial_puppet
+				years = -1
+			}
+		}
+		root = {
+			add_intrigue_skill = 1
+			add_character_modifier = {
+				modifier = murim_controls_puppeteer
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+
+	# Option C: Trail went cold
+	option = {
+		name = murim_imperial_cultivator.0021.c
+		trigger = { NOT = { exists = scope:puppeteer } }
+		root = {
+			add_stress = 15
+			remove_character_modifier = murim_hunting_puppeteer
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+######################################
+# 0025 - IMPERIAL ATTENTION FROM SHELTERING
+######################################
+
+murim_imperial_cultivator.0025 = {
+	type = character_event
+	title = murim_imperial_cultivator.0025.t
+	desc = murim_imperial_cultivator.0025.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		has_character_modifier = murim_cultivator_sanctuary
+		is_ruler = yes
+	}
+
+	# Option A: Deny everything and hide them better
+	option = {
+		name = murim_imperial_cultivator.0025.a
+		root = {
+			add_gold = -50
+			add_intrigue_skill = 1
+			random = {
+				chance = 40
+				add_character_modifier = {
+					modifier = murim_sanctuary_discovered
+					years = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 has_trait = compassionate }
+			modifier = { add = 10 intrigue >= 14 }
+		}
+	}
+
+	# Option B: Turn them over to save yourself
+	option = {
+		name = murim_imperial_cultivator.0025.b
+		root = {
+			remove_character_modifier = murim_cultivator_sanctuary
+			add_prestige = 50
+			# All cultivators lose trust
+			every_courtier = {
+				limit = { murim_is_cultivator_trigger = yes }
+				add_opinion = {
+					target = root
+					modifier = murim_betrayed_cultivators
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 10 has_trait = cynical }
+		}
+	}
+
+	# Option C: Bribe the investigators
+	option = {
+		name = murim_imperial_cultivator.0025.c
+		trigger = { gold >= 100 }
+		root = {
+			add_gold = -100
+			add_stress = 10
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 10 gold >= 300 }
+		}
+	}
+}
+
+######################################
+# 0030 - WAR DECIDED BY HIDDEN DUEL
+######################################
+
+murim_imperial_cultivator.0030 = {
+	type = character_event
+	title = murim_imperial_cultivator.0030.t
+	desc = murim_imperial_cultivator.0030.desc
+	theme = martial
+	left_portrait = {
+		character = scope:allied_cultivator
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:enemy_cultivator
+		animation = rage
+	}
+
+	trigger = {
+		is_at_war = yes
+		any_courtier = {
+			murim_is_cultivator_trigger = yes
+			prowess >= 14
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 any_courtier = { prowess >= 20 murim_is_cultivator_trigger = yes } }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				murim_is_cultivator_trigger = yes
+				prowess >= 14
+			}
+			save_scope_as = allied_cultivator
+		}
+		# Find enemy cultivator
+		random_war_enemy = {
+			random_courtier = {
+				limit = {
+					murim_is_cultivator_trigger = yes
+					prowess >= 12
+				}
+				save_scope_as = enemy_cultivator
+			}
+		}
+	}
+
+	# Option A: Let them fight in the shadows
+	option = {
+		name = murim_imperial_cultivator.0030.a
+		trigger = {
+			exists = scope:allied_cultivator
+			exists = scope:enemy_cultivator
+		}
+		scope:allied_cultivator = {
+			duel = {
+				skill = prowess
+				target = scope:enemy_cultivator
+				50 = {
+					compare_modifier = { value = scope:duel_value multiplier = 3.0 }
+					desc = murim_shadow_duel_victory
+					scope:allied_cultivator = {
+						add_prestige = 200
+						add_prowess_skill = 1
+					}
+					root = {
+						add_character_modifier = {
+							modifier = murim_war_tipped_by_cultivator
+							years = 3
+						}
+						add_prestige = 300
+					}
+				}
+				50 = {
+					compare_modifier = { value = scope:duel_value multiplier = -3.0 }
+					desc = murim_shadow_duel_defeat
+					scope:allied_cultivator = {
+						add_prowess_skill = -1
+						random_list = {
+							70 = { add_character_modifier = { modifier = murim_wounded_in_shadow_duel years = 2 } }
+							30 = { death = { death_reason = death_duel } }
+						}
+					}
+					root = {
+						add_prestige = -200
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 15 has_trait = brave }
+		}
+	}
+
+	# Option B: Keep cultivators out of it - fight normally
+	option = {
+		name = murim_imperial_cultivator.0030.b
+		root = {
+			add_prestige = 25
+		}
+		scope:allied_cultivator = {
+			add_opinion = {
+				target = root
+				modifier = murim_kept_me_from_fighting
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 15 has_trait = just }
+			modifier = { add = 10 has_trait = honest }
+		}
+	}
+
+	# Option C: Publicly deploy cultivators - reveal your hand
+	option = {
+		name = murim_imperial_cultivator.0030.c
+		root = {
+			add_prestige = 200
+			add_character_modifier = {
+				modifier = murim_deployed_cultivators_openly
+				years = 5
+			}
+		}
+		scope:allied_cultivator = {
+			set_character_flag = murim_cultivation_public
+			add_prestige = 100
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 10 has_trait = bold }
+		}
+	}
+}
+
+######################################
+# 0035 - IMPERIAL BAN ON CULTIVATION
+######################################
+
+murim_imperial_cultivator.0035 = {
+	type = character_event
+	title = murim_imperial_cultivator.0035.t
+	desc = murim_imperial_cultivator.0035.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		has_character_flag = murim_discovered_cultivators
+		OR = {
+			has_trait = zealous
+			has_trait = paranoid
+			has_character_flag = murim_cultivator_incident
+		}
+		NOT = { has_character_flag = murim_issued_cultivation_ban }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 3 has_trait = zealous }
+		modifier = { factor = 2 has_trait = paranoid }
+	}
+
+	immediate = {
+		set_character_flag = murim_issued_cultivation_ban
+	}
+
+	# Option A: Total ban - harsh penalties
+	option = {
+		name = murim_imperial_cultivator.0035.a
+		root = {
+			add_piety = 200
+			add_prestige = 100
+			add_tyranny = 20
+			add_character_modifier = {
+				modifier = murim_cultivation_ban_enforcer
+				years = -1
+			}
+		}
+		# All cultivators in realm go underground
+		every_vassal = {
+			limit = { murim_is_cultivator_trigger = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_banned_cultivation
+			}
+			remove_character_flag = murim_cultivation_public
+			add_character_modifier = {
+				modifier = murim_persecuted_cultivator
+				years = -1
+			}
+		}
+		every_courtier = {
+			limit = { murim_is_cultivator_trigger = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_banned_cultivation
+			}
+			add_character_modifier = {
+				modifier = murim_persecuted_cultivator
+				years = -1
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = zealous }
+			modifier = { add = 15 has_trait = paranoid }
+		}
+	}
+
+	# Option B: Regulated cultivation - only with license
+	option = {
+		name = murim_imperial_cultivator.0035.b
+		root = {
+			add_prestige = 150
+			add_gold = 100
+			add_character_modifier = {
+				modifier = murim_cultivation_regulator
+				years = -1
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 has_trait = diligent }
+			modifier = { add = 10 stewardship >= 14 }
+		}
+	}
+
+	# Option C: Decide against it - too risky to enforce
+	option = {
+		name = murim_imperial_cultivator.0035.c
+		root = {
+			add_stress = 15
+			remove_character_flag = murim_issued_cultivation_ban
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 15 has_trait = craven }
+			modifier = { add = 10 has_trait = lazy }
+		}
+	}
+}
+
+######################################
+# 0040 - UNDERGROUND RAILROAD FOR PERSECUTED
+######################################
+
+murim_imperial_cultivator.0040 = {
+	type = character_event
+	title = murim_imperial_cultivator.0040.t
+	desc = murim_imperial_cultivator.0040.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		murim_is_cultivator_trigger = yes
+		is_ruler = yes
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_character_flag = murim_issued_cultivation_ban
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 has_trait = compassionate }
+		modifier = { factor = 1.5 murim_is_jianghu_member_trigger = yes }
+	}
+
+	# Option A: Establish underground railroad
+	option = {
+		name = murim_imperial_cultivator.0040.a
+		root = {
+			add_gold = -100
+			add_piety = 100
+			add_prestige = 75
+			add_character_modifier = {
+				modifier = murim_underground_railroad_operator
+				years = 10
+			}
+			change_variable = { name = murim_jianghu_influence add = 15 }
+			# Gain refugee cultivators as courtiers
+			create_character = {
+				age = { 20 35 }
+				martial = { 8 14 }
+				prowess = { 12 18 }
+				learning = { 8 14 }
+				culture = root.culture
+				faith = root.faith
+				trait = brave
+			}
+			new_character = {
+				set_character_flag = murim_initiated
+				set_character_flag = murim_refugee_cultivator
+				add_opinion = {
+					target = root
+					modifier = murim_saved_my_life
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = 15 has_trait = brave }
+		}
+	}
+
+	# Option B: Profit from their desperation
+	option = {
+		name = murim_imperial_cultivator.0040.b
+		root = {
+			add_gold = 200
+			add_piety = -50
+			add_character_modifier = {
+				modifier = murim_refugee_profiteer
+				years = 5
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = greedy }
+			modifier = { add = 10 has_trait = cynical }
+		}
+	}
+
+	# Option C: Report them to gain favor with the ban-enforcer
+	option = {
+		name = murim_imperial_cultivator.0040.c
+		root = {
+			add_prestige = 50
+			random_neighboring_and_across_water_top_liege_realm_owner = {
+				limit = { has_character_flag = murim_issued_cultivation_ban }
+				add_opinion = {
+					target = root
+					modifier = murim_helped_enforce_ban
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 15 has_trait = cynical }
+			modifier = { add = -20 has_trait = compassionate }
+		}
+	}
+
+	# Option D: Stay out of it
+	option = {
+		name = murim_imperial_cultivator.0040.d
+		root = {
+			add_stress = 10
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
+
+######################################
+# 0045 - SECRET DISCIPLE REVEALED AS PRINCE
+######################################
+
+murim_imperial_cultivator.0045 = {
+	type = character_event
+	title = murim_imperial_cultivator.0045.t
+	desc = murim_imperial_cultivator.0045.desc
+	theme = intrigue
+	left_portrait = {
+		character = scope:secret_prince
+		animation = shame
+	}
+	right_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		murim_is_cultivator_trigger = yes
+		has_character_flag = murim_sect_leader
+		any_courtier = {
+			any_claim = {
+				holder = {
+					highest_held_title_tier >= tier_duchy
+				}
+			}
+			murim_is_cultivator_trigger = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 3 has_trait = ambitious }
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				any_claim = {
+					holder = {
+						highest_held_title_tier >= tier_duchy
+					}
+				}
+				murim_is_cultivator_trigger = yes
+			}
+			save_scope_as = secret_prince
+		}
+	}
+
+	# Option A: Use their claim - install a cultivator ruler
+	option = {
+		name = murim_imperial_cultivator.0045.a
+		trigger = { exists = scope:secret_prince }
+		root = {
+			add_prestige = 200
+			change_variable = { name = murim_jianghu_influence add = 30 }
+			add_character_modifier = {
+				modifier = murim_kingmaker
+				years = 10
+			}
+		}
+		scope:secret_prince = {
+			add_character_modifier = {
+				modifier = murim_claim_activated_by_sect
+				years = 5
+			}
+			add_prestige = 300
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Option B: Keep the secret as leverage
+	option = {
+		name = murim_imperial_cultivator.0045.b
+		trigger = { exists = scope:secret_prince }
+		root = {
+			add_intrigue_skill = 1
+			add_character_modifier = {
+				modifier = murim_holds_royal_secret
+				years = -1
+			}
+		}
+		scope:secret_prince = {
+			add_opinion = {
+				target = root
+				modifier = murim_knows_my_identity
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 15 intrigue >= 16 }
+		}
+	}
+
+	# Option C: Protect them - they're just a disciple
+	option = {
+		name = murim_imperial_cultivator.0045.c
+		trigger = { exists = scope:secret_prince }
+		scope:secret_prince = {
+			add_opinion = {
+				target = root
+				modifier = murim_protects_my_identity
+			}
+		}
+		root = {
+			add_piety = 50
+			add_stress = -10
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+}
