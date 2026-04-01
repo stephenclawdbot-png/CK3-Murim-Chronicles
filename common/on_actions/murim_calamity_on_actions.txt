@@ -1,656 +1,595 @@
 # Murim Chronicles - Great Calamity On-Actions
-# AI AUTONOMY ENGINE. The Calamity runs itself. Player can participate but cannot stop it.
-# DESIGN: Yearly checks -> omen phase (10-20yr) -> gathering storm (5yr) -> great war (2-3yr) -> silence (1yr) -> renewal
-# AI BEHAVIOR: Clan leaders act on personality weights. Aggressive clans strike first. Cunning clans backstab. Honorable clans negotiate then fight.
-# DEATH PROCESSING: AI characters fight and die autonomously. Survivor selection favors young + low cultivation.
+# Hooks for calamity detection, phase transitions, mass death processing, survivor selection.
 # INTEGRATION: murim_calamity_triggers.txt, murim_great_calamity_events.txt, murim_calamity_traits.txt
+# DESIGN: Yearly check for calamity conditions. Phase transitions on timer.
+# MASS DEATH: Iterates all martial artists during Phase 3, kills non-survivors.
 
 # ========================================
-# YEARLY CALAMITY CHECK (fires for every ruler)
-# This is the master clock. Runs every year on_yearly_pulse.
+# YEARLY CALAMITY CHECK
+# Runs every year to detect calamity conditions
 # ========================================
 
 on_yearly_pulse = {
 	effect = {
-		# Only the top liege checks (prevents duplicate fires)
+		# === OMEN PHASE: Start warnings 10-20 years before ===
 		if = {
 			limit = {
-				is_ai = no  # Player character triggers the check
-				is_landed = yes
-				NOT = { has_global_variable = murim_calamity_completed }
+				murim_calamity_omens_should_start_trigger = yes
 			}
-			# OMEN PHASE CHECK: 10-20 years before calamity
-			if = {
+			set_global_variable = {
+				name = murim_calamity_omens_active
+				value = yes
+			}
+			# Fire omen events to random martial artists
+			every_living_character = {
 				limit = {
-					murim_calamity_omen_conditions_met_trigger = yes
-					NOT = { has_global_variable = murim_calamity_omens_started }
-				}
-				set_global_variable = {
-					name = murim_calamity_omens_started
-					value = yes
-				}
-				set_global_variable = {
-					name = murim_calamity_omen_start_year
-					value = current_year
-				}
-				# Fire omen event to ALL martial artists
-				every_living_character = {
-					limit = { has_trait = martial_artist }
-					trigger_event = {
-						id = murim_calamity.0001
-						days = { 1 180 }  # Staggered over 6 months
-					}
-				}
-			}
-			# GATHERING STORM CHECK: Omens ran for 10+ years
-			if = {
-				limit = {
-					has_global_variable = murim_calamity_omens_started
-					NOT = { has_global_variable = murim_calamity_storm_started }
-					murim_calamity_conditions_met_trigger = yes
-				}
-				set_global_variable = {
-					name = murim_calamity_storm_started
-					value = yes
-				}
-				set_global_variable = {
-					name = murim_calamity_storm_start_year
-					value = current_year
-				}
-				# Fire Phase 1 to ALL rulers and clan leaders
-				every_living_character = {
-					limit = {
-						OR = {
-							is_ruler = yes
-							has_trait = martial_artist
-						}
-					}
-					trigger_event = {
-						id = murim_calamity.0010
-						days = { 1 30 }
-					}
-				}
-			}
-		}
-	}
-}
-
-# ========================================
-# MONTHLY AI AUTONOMY PULSE (during active phases)
-# AI clans act on their own every month during the calamity.
-# ========================================
-
-on_monthly_pulse_ruler = {
-	effect = {
-		# --- GATHERING STORM: AI ALLIANCE/BETRAYAL PHASE ---
-		if = {
-			limit = {
-				has_global_variable = murim_calamity_storm_started
-				NOT = { has_global_variable = murim_calamity_war_started }
-				has_trait = martial_artist
-				is_clan_leader_trigger = yes
-			}
-			# AI personality-weighted actions
-			# AGGRESSIVE CLANS: Heavenly Demon, Iron Fist
-			if = {
-				limit = {
-					OR = {
-						has_trait = heavenly_demon_member
-						has_trait = iron_fist_member
-					}
-				}
-				random = {
-					chance = 25  # 25% per month to act aggressively
-					# Pick a rival and escalate
-					random_living_character = {
-						limit = {
-							has_trait = martial_artist
-							is_clan_leader_trigger = yes
-							NOT = { this = prev }
-							NOT = { has_relation_ally = prev }
-						}
-						prev = {
-							trigger_event = {
-								id = murim_calamity.0011  # AI declares hostility
-								days = { 1 15 }
-							}
-						}
-					}
-				}
-			}
-			# CUNNING CLANS: Phantom Blade, Poison Flower, Tang
-			if = {
-				limit = {
-					OR = {
-						has_trait = phantom_blade_member
-						has_trait = poison_flower_member
-						has_trait = tang_clan_member
-					}
-				}
-				random = {
-					chance = 15  # Lower chance - they wait and watch
-					# Form secret alliance or prepare betrayal
-					random_living_character = {
-						limit = {
-							has_trait = martial_artist
-							is_clan_leader_trigger = yes
-							NOT = { this = prev }
-						}
-						prev = {
-							trigger_event = {
-								id = murim_calamity.0012  # AI secret maneuvering
-								days = { 1 15 }
-							}
-						}
-					}
-				}
-			}
-			# HONORABLE CLANS: Shaolin, Wudang, Mount Hua, Beggar Sect
-			if = {
-				limit = {
-					OR = {
-						has_trait = shaolin_member
-						has_trait = wudang_member
-						has_trait = mount_hua_member
-						has_trait = beggar_sect_member
-					}
-				}
-				random = {
-					chance = 20
-					# Try diplomacy first
-					random_living_character = {
-						limit = {
-							has_trait = martial_artist
-							is_clan_leader_trigger = yes
-							NOT = { this = prev }
-						}
-						prev = {
-							trigger_event = {
-								id = murim_calamity.0013  # AI peace attempt
-								days = { 1 15 }
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		# --- GREAT WAR: AI COMBAT PHASE ---
-		if = {
-			limit = {
-				has_global_variable = murim_calamity_war_started
-				NOT = { has_global_variable = murim_calamity_silence_started }
-				has_trait = martial_artist
-			}
-			# AI AUTONOMOUS COMBAT - every martial artist fights monthly
-			random = {
-				chance = 35  # 35% chance of combat encounter each month
-				# Find an enemy to fight
-				random_living_character = {
-					limit = {
-						has_trait = martial_artist
-						NOT = { this = prev }
-						NOT = { has_relation_ally = prev }
-						is_alive = yes
-						# Different faction alignment
-						OR = {
-							AND = {
-								murim_is_orthodox_member_trigger = yes
-								prev = { murim_is_unorthodox_member_trigger = yes }
-							}
-							AND = {
-								murim_is_unorthodox_member_trigger = yes
-								prev = { murim_is_orthodox_member_trigger = yes }
-							}
-							# Clanless fight everyone
-							AND = {
-								NOT = { murim_is_orthodox_member_trigger = yes }
-								NOT = { murim_is_unorthodox_member_trigger = yes }
-							}
-						}
-					}
-					save_scope_as = calamity_opponent
-				}
-				if = {
-					limit = { exists = scope:calamity_opponent }
-					trigger_event = {
-						id = murim_calamity.0020  # AI combat resolution
-						days = { 1 7 }
-					}
-				}
-			}
-			# AI AUTONOMOUS DEATH - war attrition kills characters
-			random = {
-				chance = 8  # 8% monthly death chance during war phase
-				# Higher cultivation = slightly higher survival
-				if = {
-					limit = {
-						OR = {
-							has_trait = murim_fate_blessed
-							has_trait = murim_calamity_survivor
-						}
-					}
-					# Fate-blessed survive this roll
-				}
-				else_if = {
-					limit = {
-						murim_has_high_cultivation_trigger = yes
-					}
-					random = {
-						chance = 40  # 40% of the 8% actually die
-						trigger_event = {
-							id = murim_calamity.0021  # War death event
-							days = { 1 3 }
-						}
-					}
-				}
-				else = {
-					random = {
-						chance = 70  # 70% of the 8% die (low cultivation)
-						trigger_event = {
-							id = murim_calamity.0021
-							days = { 1 3 }
-						}
-					}
-				}
-			}
-			# CIVILIAN DEATH - non-martial characters in war zones
-			if = {
-				limit = {
-					NOT = { has_trait = martial_artist }
+					murim_is_martial_artist_trigger = yes
 					is_ruler = yes
 				}
 				random = {
-					chance = 12  # 12% monthly for civilian rulers
-					trigger_event = {
-						id = murim_calamity.0022  # Civilian casualty
-						days = { 1 10 }
-					}
+					chance = 15
+					trigger_event = { id = murim_calamity.0001 days = { 1 180 } }
+				}
+				random = {
+					chance = 10
+					trigger_event = { id = murim_calamity.0010 days = { 30 270 } }
+				}
+				random = {
+					chance = 8
+					trigger_event = { id = murim_calamity.0020 days = { 60 300 } }
 				}
 			}
 		}
 		
-		# --- EMPEROR FALL ARC ---
+		# === CALAMITY TRIGGER: Conditions met, start Phase 1 ===
 		if = {
 			limit = {
-				has_global_variable = murim_calamity_war_started
-				NOT = { has_global_variable = murim_emperor_fallen }
-				has_title = title:e_china_empire  # Or equivalent empire title
+				murim_calamity_conditions_met_trigger = yes
+				NOT = { has_global_variable = murim_calamity_delayed }
+			}
+			# Fire Phase 1: Gathering Storm to all rulers
+			every_living_character = {
+				limit = { is_ruler = yes }
+				trigger_event = { id = murim_calamity.1000 days = { 1 30 } }
+			}
+			# Schedule Phase 2 transition (5 years later)
+			random_living_character = {
+				limit = { is_ruler = yes }
+				trigger_event = { id = murim_calamity_on_action.0001 days = 1825 }
+			}
+		}
+		
+		# === DELAYED CALAMITY: If delayed, check if delay expired ===
+		if = {
+			limit = {
+				has_global_variable = murim_calamity_delayed
+				# Delay lasts 10 years, then triggers anyway
+				murim_calamity_conditions_met_trigger = yes
+			}
+			# After delay, remove the delay flag (calamity fires next year)
+			random = {
+				chance = 10  # 10% per year after delay = ~10 year average
+				remove_global_variable = murim_calamity_delayed
+			}
+		}
+	}
+}
+
+# ========================================
+# PHASE TRANSITION EVENTS (hidden, process mechanics)
+# ========================================
+
+namespace = murim_calamity_on_action
+
+# Transition to Phase 2: The Great War
+murim_calamity_on_action.0001 = {
+	type = character_event
+	hidden = yes
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_global_variable = murim_calamity_phase_storm
+		NOT = { has_global_variable = murim_calamity_phase_war }
+	}
+	
+	immediate = {
+		# Fire Phase 2 kickoff to all rulers
+		every_living_character = {
+			limit = { is_ruler = yes }
+			trigger_event = { id = murim_calamity.2000 days = { 1 30 } }
+		}
+		# Fire death events to AI martial artists during war
+		every_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				is_ai = yes
+				NOT = { has_trait = murim_fate_blessed }
+				NOT = { has_character_flag = murim_calamity_hiding }
 			}
 			random = {
-				chance = 10  # Emperor has 10% monthly chance of fall event
-				trigger_event = {
-					id = murim_calamity.0025  # Emperor under siege
-					days = { 1 5 }
-				}
+				chance = 30  # 30% chance per martial artist
+				trigger_event = { id = murim_calamity.2010 days = { 30 730 } }
 			}
 		}
+		# Heavenly Demon event for all rulers
+		every_living_character = {
+			limit = { is_ruler = yes }
+			trigger_event = { id = murim_calamity.2020 days = { 180 540 } }
+		}
+		# Schedule Phase 3 transition (2-3 years later)
+		trigger_event = { id = murim_calamity_on_action.0002 days = 912 }
 	}
+	
+	option = { name = ok }
 }
 
-# ========================================
-# WAR PHASE TRANSITION (after 5 years of storm)
-# ========================================
-
-on_yearly_pulse = {
-	effect = {
-		if = {
+# Transition to Phase 3: The Silence
+murim_calamity_on_action.0002 = {
+	type = character_event
+	hidden = yes
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_global_variable = murim_calamity_phase_war
+		NOT = { has_global_variable = murim_calamity_phase_silence }
+	}
+	
+	immediate = {
+		# === SURVIVOR SELECTION ===
+		# Step 1: Mark player dynasty as survivors
+		every_living_character = {
+			limit = { is_ai = no }
+			add_character_flag = murim_calamity_survivor
+		}
+		every_living_character = {
 			limit = {
-				is_ai = no
-				has_global_variable = murim_calamity_storm_started
-				NOT = { has_global_variable = murim_calamity_war_started }
-				# 5 years of gathering storm
-				current_year >= murim_calamity_storm_start_year_plus_5
-			}
-			set_global_variable = {
-				name = murim_calamity_war_started
-				value = yes
-			}
-			set_global_variable = {
-				name = murim_calamity_war_start_year
-				value = current_year
-			}
-			# THE WAR BEGINS - fire to everyone
-			every_living_character = {
-				limit = {
-					OR = {
-						is_ruler = yes
-						has_trait = martial_artist
+				dynasty = {
+					any_dynasty_member = {
+						is_ai = no
 					}
 				}
-				trigger_event = {
-					id = murim_calamity.0019  # The Great War Begins
-					days = { 1 7 }
-				}
+			}
+			# At least 1 dynasty member survives
+			random = {
+				chance = 50
+				add_character_flag = murim_calamity_survivor
 			}
 		}
-	}
-}
-
-# ========================================
-# SILENCE PHASE TRANSITION (after 2-3 years of war)
-# ========================================
-
-on_yearly_pulse = {
-	effect = {
-		if = {
+		
+		# Step 2: Mark fate-blessed as survivors
+		every_living_character = {
 			limit = {
-				is_ai = no
-				has_global_variable = murim_calamity_war_started
-				NOT = { has_global_variable = murim_calamity_silence_started }
-				# 3 years of war
-				current_year >= murim_calamity_war_start_year_plus_3
+				has_trait = murim_fate_blessed
 			}
-			set_global_variable = {
-				name = murim_calamity_silence_started
-				value = yes
-			}
-			# MASS DEATH EVENT - kill remaining excess characters
-			every_living_character = {
-				limit = {
-					has_trait = martial_artist
-					NOT = { murim_is_calamity_survivor_trigger = yes }
-					NOT = { has_trait = murim_calamity_survivor }
-				}
-				random = {
-					chance = 85  # 85% of remaining non-survivors die
-					trigger_event = {
-						id = murim_calamity.0030  # The Silence falls
-						days = { 1 30 }
-					}
-				}
-			}
-			# Fire Silence event to survivors
-			every_living_character = {
-				limit = {
-					OR = {
-						has_trait = murim_calamity_survivor
-						murim_is_calamity_survivor_trigger = yes
-					}
-				}
-				trigger_event = {
-					id = murim_calamity.0031  # Survivor awakens
-					days = { 30 90 }
-				}
-			}
+			add_character_flag = murim_calamity_survivor
 		}
-	}
-}
-
-# ========================================
-# RENEWAL PHASE (1 year after silence)
-# ========================================
-
-on_yearly_pulse = {
-	effect = {
-		if = {
+		
+		# Step 3: Mark 1-3 per clan as survivors (random)
+		# Shaolin
+		random_living_character = {
 			limit = {
-				is_ai = no
-				has_global_variable = murim_calamity_silence_started
-				NOT = { has_global_variable = murim_calamity_renewal_started }
-				# 1 year of silence
-				current_year >= murim_calamity_silence_start_year_plus_1
+				has_trait = shaolin_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
 			}
-			set_global_variable = {
-				name = murim_calamity_renewal_started
-				value = yes
+			add_character_flag = murim_calamity_survivor
+		}
+		random_living_character = {
+			limit = {
+				has_trait = shaolin_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
 			}
-			set_global_variable = {
-				name = murim_calamity_completed
-				value = yes
+			random = {
+				chance = 50
+				add_character_flag = murim_calamity_survivor
 			}
-			# RENEWAL - survivors rebuild
-			every_living_character = {
-				limit = {
-					OR = {
-						has_trait = murim_calamity_survivor
-						murim_is_calamity_survivor_trigger = yes
-					}
+		}
+		# Wudang
+		random_living_character = {
+			limit = {
+				has_trait = wudang_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		random_living_character = {
+			limit = {
+				has_trait = wudang_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			random = {
+				chance = 50
+				add_character_flag = murim_calamity_survivor
+			}
+		}
+		# Mount Hua
+		random_living_character = {
+			limit = {
+				has_trait = mount_hua_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		random_living_character = {
+			limit = {
+				has_trait = mount_hua_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			random = {
+				chance = 40
+				add_character_flag = murim_calamity_survivor
+			}
+		}
+		# Beggar Sect
+		random_living_character = {
+			limit = {
+				has_trait = beggar_sect_member
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		random_living_character = {
+			limit = {
+				has_trait = beggar_sect_member
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			random = {
+				chance = 60  # Beggar Sect has better survival (spy network)
+				add_character_flag = murim_calamity_survivor
+			}
+		}
+		# Iron Fist Gate
+		random_living_character = {
+			limit = {
+				has_trait = iron_fist_member
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		# Tang Clan
+		random_living_character = {
+			limit = {
+				OR = {
+					has_trait = tang_clan_member
+					has_trait = tang_clan_disciple
 				}
-				# Grant renewal traits
-				if = {
-					limit = { NOT = { has_trait = murim_calamity_survivor } }
-					add_trait = murim_calamity_survivor
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		random_living_character = {
+			limit = {
+				OR = {
+					has_trait = tang_clan_member
+					has_trait = tang_clan_disciple
 				}
-				trigger_event = {
-					id = murim_calamity.0040  # The Renewal begins
-					days = { 1 30 }
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			random = {
+				chance = 40
+				add_character_flag = murim_calamity_survivor
+			}
+		}
+		# Heavenly Demon Sect — lower survival, they were at the center
+		random_living_character = {
+			limit = {
+				has_trait = heavenly_demon_disciple
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		# Poison Flower Palace
+		random_living_character = {
+			limit = {
+				has_trait = poison_flower_member
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		# Phantom Blade Sect — assassins survive well
+		random_living_character = {
+			limit = {
+				has_trait = phantom_blade_member
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		random_living_character = {
+			limit = {
+				has_trait = phantom_blade_member
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			random = {
+				chance = 60  # Phantom Blade good at hiding
+				add_character_flag = murim_calamity_survivor
+			}
+		}
+		
+		# Step 4: Characters in seclusion survive
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_calamity_hiding
+			}
+			add_character_flag = murim_calamity_survivor
+		}
+		
+		# Step 5: Young geniuses survive (hope for the future)
+		every_living_character = {
+			limit = {
+				age <= 20
+				OR = {
+					has_trait = genius
+					has_trait = quick
+					has_trait = brave
 				}
 			}
-			# AI AUTO-REBUILD: Survivors start new sects
-			every_living_character = {
-				limit = {
-					has_trait = murim_calamity_survivor
-					is_ai = yes
-					has_trait = martial_artist
-				}
-				# AI claims ruins, recruits wanderers, starts rivalries
-				trigger_event = {
-					id = murim_calamity.0041  # AI rebuild behavior
-					days = { 60 180 }
+			random = {
+				chance = 60
+				add_character_flag = murim_calamity_survivor
+			}
+		}
+		
+		# === MASS DEATH PROCESSING ===
+		# Kill all non-survivor martial artists
+		every_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				is_ai = yes
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			death = {
+				death_reason = death_battle
+			}
+		}
+		
+		# Kill 50-70% of non-martial-artist AI characters (civilians)
+		every_living_character = {
+			limit = {
+				is_ai = yes
+				NOT = { murim_is_martial_artist_trigger = yes }
+				NOT = { has_character_flag = murim_calamity_survivor }
+			}
+			random = {
+				chance = 60
+				death = {
+					death_reason = death_battle
 				}
 			}
-			# Spawn new generation children for survivors
-			every_living_character = {
-				limit = {
-					has_trait = murim_calamity_survivor
-					age >= 16
-					age <= 45
-				}
-				trigger_event = {
-					id = murim_calamity.0042  # New generation spawns
-					days = { 180 365 }
+		}
+		
+		# Fire Phase 3 event to survivors
+		every_living_character = {
+			limit = { is_ruler = yes }
+			trigger_event = { id = murim_calamity.3000 days = { 1 30 } }
+		}
+		
+		# Fire ruin wandering events
+		every_living_character = {
+			limit = {
+				has_character_flag = murim_calamity_survivor
+			}
+			trigger_event = { id = murim_calamity.3020 days = { 60 270 } }
+		}
+		
+		# Schedule Phase 4 transition (1 year later)
+		trigger_event = { id = murim_calamity_on_action.0003 days = 365 }
+	}
+	
+	option = { name = ok }
+}
+
+# Transition to Phase 4: The Renewal
+murim_calamity_on_action.0003 = {
+	type = character_event
+	hidden = yes
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_global_variable = murim_calamity_phase_silence
+	}
+	
+	immediate = {
+		# Fire renewal events
+		every_living_character = {
+			limit = { is_ruler = yes }
+			trigger_event = { id = murim_calamity.4000 days = { 1 30 } }
+		}
+		
+		# Fire legacy events
+		every_living_character = {
+			limit = {
+				has_trait = murim_calamity_survivor
+			}
+			trigger_event = { id = murim_calamity.4030 days = { 60 365 } }
+		}
+		
+		# Fire training events for survivors with children
+		every_living_character = {
+			limit = {
+				has_trait = murim_calamity_survivor
+				any_child = {
+					age >= 10
+					age <= 16
 				}
 			}
+			trigger_event = { id = murim_calamity.4020 days = { 90 365 } }
+		}
+		
+		# Assign hidden fate traits to newborns for next cycle
+		every_living_character = {
+			limit = {
+				age <= 5
+			}
+			random_list = {
+				10 = { add_trait = murim_fate_blessed }
+				10 = { add_trait = murim_fate_doomed }
+				80 = { }  # Most have no special fate
+			}
+		}
+	}
+	
+	option = { name = ok }
+}
+
+# ========================================
+# BIRTH HOOK: Assign fate traits to new characters
+# ========================================
+
+on_birth_child = {
+	effect = {
+		# During non-calamity times, rarely assign fate traits
+		random_list = {
+			5 = { add_trait = murim_fate_blessed }
+			5 = { add_trait = murim_fate_doomed }
+			90 = { }
 		}
 	}
 }
 
 # ========================================
-# DEATH HOOK: CALAMITY KILLS PROCESSING
+# DEATH HOOK: Calamity death processing
 # ========================================
 
 on_death = {
 	effect = {
-		# Track calamity deaths for the Murim Ledger
+		# During calamity, track clan extinction
 		if = {
 			limit = {
-				has_global_variable = murim_calamity_war_started
-				has_trait = martial_artist
+				has_global_variable = murim_great_calamity_active
+				murim_is_martial_artist_trigger = yes
 			}
-			# Add to calamity death counter
-			change_global_variable = {
-				name = murim_calamity_death_count
-				add = 1
-			}
-			# If this was a clan leader, trigger succession crisis
+			# If this was the last member of a clan, set a global flag
 			if = {
-				limit = { is_clan_leader_trigger = yes }
-				# Find next in line within same clan
-				random_living_character = {
+				limit = { has_trait = shaolin_disciple }
+				if = {
 					limit = {
-						has_trait = martial_artist
-						# Same clan check (simplified - full version checks all 9)
-						OR = {
-							AND = {
-								prev = { has_trait = shaolin_member }
-								has_trait = shaolin_member
-							}
-							AND = {
-								prev = { has_trait = wudang_member }
-								has_trait = wudang_member
-							}
-							AND = {
-								prev = { has_trait = mount_hua_member }
-								has_trait = mount_hua_member
-							}
-							AND = {
-								prev = { has_trait = beggar_sect_member }
-								has_trait = beggar_sect_member
-							}
-							AND = {
-								prev = { has_trait = iron_fist_member }
-								has_trait = iron_fist_member
-							}
-							AND = {
-								prev = { has_trait = tang_clan_member }
-								has_trait = tang_clan_member
-							}
-							AND = {
-								prev = { has_trait = heavenly_demon_member }
-								has_trait = heavenly_demon_member
-							}
-							AND = {
-								prev = { has_trait = poison_flower_member }
-								has_trait = poison_flower_member
-							}
-							AND = {
-								prev = { has_trait = phantom_blade_member }
-								has_trait = phantom_blade_member
+						NOT = {
+							any_living_character = {
+								has_trait = shaolin_disciple
+								NOT = { this = root }
 							}
 						}
-						NOT = { this = prev }
 					}
-					# Emergency succession
-					trigger_event = {
-						id = murim_calamity.0023  # Emergency clan succession
-						days = { 1 7 }
+					set_global_variable = { name = murim_shaolin_extinct value = yes }
+				}
+			}
+			if = {
+				limit = { has_trait = wudang_disciple }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = wudang_disciple
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_wudang_extinct value = yes }
+				}
+			}
+			if = {
+				limit = { has_trait = mount_hua_disciple }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = mount_hua_disciple
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_mount_hua_extinct value = yes }
+				}
+			}
+			if = {
+				limit = { has_trait = beggar_sect_member }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = beggar_sect_member
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_beggar_sect_extinct value = yes }
+				}
+			}
+			if = {
+				limit = { has_trait = iron_fist_member }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = iron_fist_member
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_iron_fist_extinct value = yes }
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_trait = tang_clan_member
+						has_trait = tang_clan_disciple
 					}
 				}
-			}
-			# Check if entire clan wiped
-			if = {
-				limit = {
-					has_trait = shaolin_member
-					murim_is_last_clan_member_shaolin_trigger = yes
-				}
-				set_global_variable = {
-					name = murim_shaolin_extinct
-					value = yes
-				}
-				# Fire extinction event to all survivors
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = {
-						id = murim_calamity.0024  # A clan falls forever
-						days = { 1 14 }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								OR = {
+									has_trait = tang_clan_member
+									has_trait = tang_clan_disciple
+								}
+								NOT = { this = root }
+							}
+						}
 					}
-				}
-			}
-			# (Repeat for all 9 clans - abbreviated for readability)
-			if = {
-				limit = {
-					has_trait = wudang_member
-					murim_is_last_clan_member_wudang_trigger = yes
-				}
-				set_global_variable = { name = murim_wudang_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
+					set_global_variable = { name = murim_tang_clan_extinct value = yes }
 				}
 			}
 			if = {
-				limit = {
-					has_trait = mount_hua_member
-					murim_is_last_clan_member_mount_hua_trigger = yes
-				}
-				set_global_variable = { name = murim_mount_hua_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
-				}
-			}
-			if = {
-				limit = {
-					has_trait = beggar_sect_member
-					murim_is_last_clan_member_beggar_trigger = yes
-				}
-				set_global_variable = { name = murim_beggar_sect_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
+				limit = { has_trait = heavenly_demon_disciple }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = heavenly_demon_disciple
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_heavenly_demon_extinct value = yes }
 				}
 			}
 			if = {
-				limit = {
-					has_trait = iron_fist_member
-					murim_is_last_clan_member_iron_fist_trigger = yes
-				}
-				set_global_variable = { name = murim_iron_fist_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
-				}
-			}
-			if = {
-				limit = {
-					has_trait = tang_clan_member
-					murim_is_last_clan_member_tang_trigger = yes
-				}
-				set_global_variable = { name = murim_tang_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
+				limit = { has_trait = poison_flower_member }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = poison_flower_member
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_poison_flower_extinct value = yes }
 				}
 			}
 			if = {
-				limit = {
-					has_trait = heavenly_demon_member
-					murim_is_last_clan_member_heavenly_demon_trigger = yes
-				}
-				set_global_variable = { name = murim_heavenly_demon_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
-				}
-			}
-			if = {
-				limit = {
-					has_trait = poison_flower_member
-					murim_is_last_clan_member_poison_flower_trigger = yes
-				}
-				set_global_variable = { name = murim_poison_flower_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
-				}
-			}
-			if = {
-				limit = {
-					has_trait = phantom_blade_member
-					murim_is_last_clan_member_phantom_blade_trigger = yes
-				}
-				set_global_variable = { name = murim_phantom_blade_extinct value = yes }
-				every_living_character = {
-					limit = { has_trait = murim_calamity_survivor }
-					trigger_event = { id = murim_calamity.0024 days = { 1 14 } }
-				}
-			}
-		}
-	}
-}
-
-# ========================================
-# BATTLE END HOOK: CALAMITY WAR XP
-# ========================================
-
-on_battle_end = {
-	effect = {
-		if = {
-			limit = {
-				has_global_variable = murim_calamity_war_started
-				has_trait = martial_artist
-			}
-			# War veterans gain combat memories
-			create_character_memory = {
-				type = murim_calamity_battle_memory
-			}
-			# Small chance of breakthrough during war
-			random = {
-				chance = 5
-				trigger_event = {
-					id = murim_calamity.0026  # War-forged breakthrough
-					days = { 1 7 }
+				limit = { has_trait = phantom_blade_member }
+				if = {
+					limit = {
+						NOT = {
+							any_living_character = {
+								has_trait = phantom_blade_member
+								NOT = { this = root }
+							}
+						}
+					}
+					set_global_variable = { name = murim_phantom_blade_extinct value = yes }
 				}
 			}
 		}
