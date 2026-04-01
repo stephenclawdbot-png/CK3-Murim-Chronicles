@@ -1,0 +1,961 @@
+###############################################################################
+# MURIM JIANGHU EXPANSION EVENTS
+# 5 deep underworld events: bounty hunter contract, black market technique
+# auction, assassination guild recruitment, info broker network, evil alliance
+# Cross-references: murim_jianghu_events, murim_duel_events, murim_ranking_events,
+#   murim_artifact_events, murim_sect_events, murim_fate_events,
+#   murim_ranker_death_events, murim_politics_events, murim_romance_events
+###############################################################################
+
+namespace = murim_jianghu_exp
+
+###############################################################################
+# 1. BOUNTY HUNTER CONTRACT - HUNT A WANTED MARTIAL ARTIST
+# The underworld posts a massive bounty on a rogue cultivator
+###############################################################################
+murim_jianghu_exp.0001 = {
+	type = character_event
+	title = murim_jianghu_exp.0001.t
+	desc = murim_jianghu_exp.0001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		prowess >= 12
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = bounty_hunter_contract_flag }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = { add = 0.5 has_trait = brave }
+		modifier = { add = 0.5 intrigue >= 12 }
+		modifier = { add = 0.3 has_trait = ambitious }
+		modifier = { add = -0.5 has_trait = compassionate }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = bounty_hunter_contract_flag
+			years = 5
+		}
+		create_character_memory = {
+			type = received_bounty_contract_memory
+		}
+	}
+
+	# Accept the contract - hunt the target down
+	option = {
+		name = murim_jianghu_exp.0001.a
+		add_intrigue_skill = 1
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				25 = {
+					# Clean kill - bounty collected, reputation rises
+					add_gold = 300
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = feared_bounty_hunter
+						years = 5
+					}
+					create_character_memory = {
+						type = bounty_collected_clean_kill_memory
+					}
+					# Your kill attracts ranking attention
+					trigger_event = {
+						id = murim_ranking_events.0001
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Target fights back fiercely - brutal duel
+					add_gold = 200
+					add_trait = wounded_2
+					add_prestige = 150
+					create_character_memory = {
+						type = bounty_target_fought_back_memory
+					}
+					trigger_event = {
+						id = murim_duel_events.0001
+						days = { 1 7 }
+					}
+				}
+				20 = {
+					# Target escapes - you're injured and humiliated
+					add_trait = wounded_1
+					add_prestige = -100
+					add_stress = 20
+					create_character_memory = {
+						type = bounty_target_escaped_memory
+					}
+				}
+				15 = {
+					# Target was innocent - framed by the contractor
+					add_piety = -200
+					add_stress = 40
+					create_character_memory = {
+						type = killed_innocent_bounty_target_memory
+					}
+					random_list = {
+						60 = { add_trait = craven }
+						40 = { add_trait = wrathful }
+					}
+					# Karmic consequence
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 30 60 }
+					}
+				}
+				15 = {
+					# Ambushed by rival bounty hunters
+					add_trait = wounded_3
+					add_stress = 30
+					create_character_memory = {
+						type = ambushed_by_rival_hunters_memory
+					}
+					random_list = {
+						70 = { }
+						30 = { add_trait = incapable }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+
+	# Report the bounty to local authorities - uphold justice
+	option = {
+		name = murim_jianghu_exp.0001.b
+		add_piety = 100
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = upholder_of_martial_justice
+			years = 3
+		}
+		create_character_memory = {
+			type = reported_illegal_bounty_memory
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_politics_events.0001
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 15 has_trait = honest }
+		}
+	}
+
+	# Ignore it - not worth the risk
+	option = {
+		name = murim_jianghu_exp.0001.c
+		add_stress = -10
+		create_character_memory = {
+			type = ignored_bounty_contract_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
+
+###############################################################################
+# 2. BLACK MARKET TECHNIQUE AUCTION
+# A secretive underground auction sells forbidden martial arts scrolls
+###############################################################################
+murim_jianghu_exp.0002 = {
+	type = character_event
+	title = murim_jianghu_exp.0002.t
+	desc = murim_jianghu_exp.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		gold >= 100
+		NOT = { has_character_flag = black_market_auction_flag }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.7
+		modifier = { add = 0.5 intrigue >= 12 }
+		modifier = { add = 0.3 has_trait = deceitful }
+		modifier = { add = 0.3 gold >= 500 }
+		modifier = { add = -0.5 has_trait = just }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = black_market_auction_flag
+			years = 5
+		}
+		create_character_memory = {
+			type = discovered_black_market_auction_memory
+		}
+	}
+
+	# Bid on a forbidden technique scroll
+	option = {
+		name = murim_jianghu_exp.0002.a
+		add_gold = -250
+		add_intrigue_skill = 1
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Genuine forbidden technique - incredible power
+					add_prowess_skill = 4
+					add_prestige = 300
+					add_character_modifier = {
+						modifier = learned_forbidden_technique
+						years = 10
+					}
+					create_character_memory = {
+						type = acquired_forbidden_technique_memory
+					}
+					# Learning forbidden arts draws attention
+					trigger_event = {
+						id = murim_sect_events.0001
+						days = { 30 60 }
+					}
+				}
+				25 = {
+					# Scroll is cursed - demonic qi invasion
+					add_prowess_skill = 2
+					add_stress = 40
+					add_trait = wounded_1
+					create_character_memory = {
+						type = cursed_scroll_demonic_invasion_memory
+					}
+					random_list = {
+						70 = { }
+						30 = {
+							add_trait = possessed
+						}
+					}
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 7 14 }
+					}
+				}
+				25 = {
+					# Outbid by a mysterious figure - forced confrontation
+					add_gold = 250
+					add_stress = 20
+					create_character_memory = {
+						type = outbid_at_auction_confrontation_memory
+					}
+					trigger_event = {
+						id = murim_duel_events.0001
+						days = { 1 3 }
+					}
+				}
+				20 = {
+					# Scroll is a fake - scammed
+					add_stress = 30
+					add_prestige = -100
+					create_character_memory = {
+						type = scammed_at_black_market_memory
+					}
+					trigger_event = {
+						id = murim_jianghu_events.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 15 gold >= 500 }
+		}
+	}
+
+	# Bid on a rare artifact weapon instead
+	option = {
+		name = murim_jianghu_exp.0002.b
+		add_gold = -200
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Genuine ancient weapon
+					add_prowess_skill = 2
+					add_prestige = 200
+					create_character_memory = {
+						type = acquired_black_market_weapon_memory
+					}
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 7 14 }
+					}
+				}
+				30 = {
+					# Weapon is stolen - original owner comes looking
+					add_prowess_skill = 1
+					add_stress = 25
+					create_character_memory = {
+						type = stolen_weapon_owner_revenge_memory
+					}
+					trigger_event = {
+						id = murim_duel_events.0001
+						days = { 14 30 }
+					}
+				}
+				30 = {
+					# Weapon is cursed
+					add_trait = wounded_1
+					create_character_memory = {
+						type = cursed_weapon_from_market_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Raid the auction - seize everything by force
+	option = {
+		name = murim_jianghu_exp.0002.c
+		add_prestige = -100
+		add_intrigue_skill = 1
+		hidden_effect = {
+			random_list = {
+				20 = {
+					# Successful raid - seize scrolls AND gold
+					add_gold = 500
+					add_prowess_skill = 2
+					add_prestige = -200
+					create_character_memory = {
+						type = raided_black_market_auction_memory
+					}
+					add_character_modifier = {
+						modifier = notorious_underworld_raider
+						years = 10
+					}
+				}
+				40 = {
+					# Auction guards fight back viciously
+					add_trait = wounded_2
+					add_stress = 30
+					create_character_memory = {
+						type = auction_guards_fought_back_memory
+					}
+				}
+				40 = {
+					# Trapped and ambushed - the auction was a setup
+					add_trait = wounded_3
+					add_stress = 40
+					create_character_memory = {
+						type = auction_trap_ambush_memory
+					}
+					random_list = {
+						60 = { }
+						40 = { add_trait = incapable }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = wrathful }
+			modifier = { add = 15 has_trait = sadistic }
+		}
+	}
+
+	# Leave quietly - this world is too dangerous
+	option = {
+		name = murim_jianghu_exp.0002.d
+		add_stress = -10
+		create_character_memory = {
+			type = left_black_market_quietly_memory
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = craven }
+		}
+	}
+}
+
+###############################################################################
+# 3. ASSASSINATION GUILD RECRUITMENT
+# A shadow organization offers you membership in their assassination guild
+###############################################################################
+murim_jianghu_exp.0003 = {
+	type = character_event
+	title = murim_jianghu_exp.0003.t
+	desc = murim_jianghu_exp.0003.desc
+	theme = skull
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		intrigue >= 10
+		prowess >= 12
+		NOT = { has_character_flag = assassination_guild_offer_flag }
+		NOT = { has_trait = incapable }
+		NOT = { has_trait = just }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 intrigue >= 15 }
+		modifier = { add = 0.5 has_trait = deceitful }
+		modifier = { add = 0.3 has_trait = callous }
+		modifier = { add = 0.3 has_trait = sadistic }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = assassination_guild_offer_flag
+			years = 10
+		}
+		create_character_memory = {
+			type = assassination_guild_approached_memory
+		}
+	}
+
+	# Accept - become a shadow blade
+	option = {
+		name = murim_jianghu_exp.0003.a
+		add_intrigue_skill = 3
+		add_prowess_skill = 2
+		add_piety = -300
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = shadow_blade_guild_member
+			years = 10
+		}
+		create_character_memory = {
+			type = joined_assassination_guild_memory
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# First contract - kill a corrupt elder
+					add_gold = 400
+					create_character_memory = {
+						type = first_assassination_contract_memory
+					}
+					trigger_event = {
+						id = murim_ranker_death_events.0001
+						days = { 30 60 }
+					}
+				}
+				25 = {
+					# Guild teaches forbidden killing techniques
+					add_prowess_skill = 3
+					add_intrigue_skill = 2
+					create_character_memory = {
+						type = learned_assassination_techniques_memory
+					}
+				}
+				25 = {
+					# Initiation test goes wrong - you must kill an innocent
+					add_stress = 50
+					add_piety = -200
+					create_character_memory = {
+						type = forced_to_kill_innocent_initiation_memory
+					}
+					random_list = {
+						50 = { add_trait = callous }
+						50 = { add_trait = craven }
+					}
+				}
+				20 = {
+					# It was a trap by the orthodox alliance
+					add_trait = wounded_2
+					add_prestige = -200
+					create_character_memory = {
+						type = orthodox_trap_at_guild_recruitment_memory
+					}
+					trigger_event = {
+						id = murim_politics_events.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 20 has_trait = sadistic }
+		}
+	}
+
+	# Decline but learn what you can about them
+	option = {
+		name = murim_jianghu_exp.0003.b
+		add_intrigue_skill = 2
+		add_prestige = 50
+		create_character_memory = {
+			type = declined_guild_gathered_intel_memory
+		}
+		add_character_modifier = {
+			modifier = knows_underworld_secrets
+			years = 5
+		}
+		hidden_effect = {
+			random_list = {
+				50 = { }
+				30 = {
+					# Guild retaliates for your snooping
+					add_trait = wounded_1
+					create_character_memory = {
+						type = guild_retaliation_for_snooping_memory
+					}
+				}
+				20 = {
+					# Sell intel to sect leaders
+					add_gold = 200
+					add_prestige = 200
+					trigger_event = {
+						id = murim_sect_events.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = paranoid }
+			modifier = { add = 15 intrigue >= 15 }
+		}
+	}
+
+	# Report them to the martial alliance immediately
+	option = {
+		name = murim_jianghu_exp.0003.c
+		add_piety = 200
+		add_prestige = 150
+		create_character_memory = {
+			type = reported_assassination_guild_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Alliance rewards your loyalty
+					add_gold = 200
+					add_prestige = 200
+					trigger_event = {
+						id = murim_politics_events.0001
+						days = { 14 30 }
+					}
+				}
+				30 = {
+					# Guild sends assassins after you
+					add_trait = wounded_2
+					add_stress = 30
+					create_character_memory = {
+						type = guild_sent_assassins_after_me_memory
+					}
+					random_list = {
+						70 = { }
+						30 = { add_trait = incapable }
+					}
+				}
+				30 = {
+					# Alliance was compromised - guild moles within
+					add_stress = 25
+					create_character_memory = {
+						type = alliance_compromised_by_guild_moles_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = honest }
+		}
+	}
+}
+
+###############################################################################
+# 4. INFORMATION BROKER NETWORK
+# A shadowy info broker offers valuable intelligence about the martial world
+###############################################################################
+murim_jianghu_exp.0004 = {
+	type = character_event
+	title = murim_jianghu_exp.0004.t
+	desc = murim_jianghu_exp.0004.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		intrigue >= 8
+		NOT = { has_character_flag = info_broker_network_flag }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = { add = 0.5 intrigue >= 14 }
+		modifier = { add = 0.3 has_trait = deceitful }
+		modifier = { add = 0.3 diplomacy >= 12 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = info_broker_network_flag
+			years = 5
+		}
+		create_character_memory = {
+			type = contacted_by_info_broker_memory
+		}
+	}
+
+	# Buy intel on a rival's secret weakness
+	option = {
+		name = murim_jianghu_exp.0004.a
+		add_gold = -150
+		add_intrigue_skill = 2
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Intel is accurate - exploit rival's weakness
+					add_prestige = 300
+					add_character_modifier = {
+						modifier = knows_rivals_weakness
+						years = 5
+					}
+					create_character_memory = {
+						type = exploited_rival_weakness_intel_memory
+					}
+					trigger_event = {
+						id = murim_duel_events.0001
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Intel reveals a hidden treasure location
+					add_gold = 300
+					create_character_memory = {
+						type = intel_led_to_treasure_memory
+					}
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 7 14 }
+					}
+				}
+				20 = {
+					# Intel is a trap - broker sold you to your enemies
+					add_trait = wounded_2
+					add_stress = 30
+					create_character_memory = {
+						type = broker_betrayal_trap_memory
+					}
+				}
+				20 = {
+					# Intel reveals a romance scandal in a rival sect
+					add_intrigue_skill = 1
+					add_prestige = 100
+					create_character_memory = {
+						type = discovered_sect_romance_scandal_memory
+					}
+					trigger_event = {
+						id = murim_romance_events.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 15 intrigue >= 15 }
+		}
+	}
+
+	# Establish your own counter-intelligence network
+	option = {
+		name = murim_jianghu_exp.0004.b
+		add_gold = -200
+		add_intrigue_skill = 3
+		add_diplomacy_skill = 1
+		add_character_modifier = {
+			modifier = spymaster_of_the_jianghu
+			years = 10
+		}
+		create_character_memory = {
+			type = established_counter_intelligence_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 diplomacy >= 12 }
+			modifier = { add = 15 gold >= 500 }
+		}
+	}
+
+	# Feed false information to test the broker's loyalty
+	option = {
+		name = murim_jianghu_exp.0004.c
+		add_intrigue_skill = 1
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Broker passes your test - trustworthy
+					add_prestige = 100
+					create_character_memory = {
+						type = broker_passed_loyalty_test_memory
+					}
+				}
+				30 = {
+					# Broker sold your false intel - untrustworthy
+					add_prestige = -50
+					create_character_memory = {
+						type = broker_failed_loyalty_test_memory
+					}
+				}
+				30 = {
+					# Your false intel accidentally starts a sect war
+					add_stress = 30
+					create_character_memory = {
+						type = false_intel_started_sect_war_memory
+					}
+					trigger_event = {
+						id = murim_sect_events.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = paranoid }
+		}
+	}
+}
+
+###############################################################################
+# 5. EVIL ALLIANCE SUMMIT - GATHERING OF THE UNORTHODOX FACTIONS
+# The dark sects convene a secret summit to unite against the orthodox world
+###############################################################################
+murim_jianghu_exp.0005 = {
+	type = character_event
+	title = murim_jianghu_exp.0005.t
+	desc = murim_jianghu_exp.0005.desc
+	theme = skull
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		prowess >= 15
+		NOT = { has_character_flag = evil_alliance_summit_flag }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 has_trait = ambitious }
+		modifier = { add = 0.5 intrigue >= 12 }
+		modifier = { add = 0.3 has_trait = callous }
+		modifier = { add = -0.5 has_trait = compassionate }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = evil_alliance_summit_flag
+			years = 10
+		}
+		create_character_memory = {
+			type = evil_alliance_summit_invitation_memory
+		}
+	}
+
+	# Attend and join the dark alliance - seize power
+	option = {
+		name = murim_jianghu_exp.0005.a
+		add_intrigue_skill = 2
+		add_prowess_skill = 1
+		add_piety = -500
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = dark_alliance_member
+			years = 10
+		}
+		create_character_memory = {
+			type = joined_dark_alliance_summit_memory
+		}
+		hidden_effect = {
+			random_list = {
+				25 = {
+					# Elected as a leader - gain immense dark power
+					add_prowess_skill = 4
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = dark_alliance_leader
+						years = 10
+					}
+					create_character_memory = {
+						type = elected_dark_alliance_leader_memory
+					}
+					trigger_event = {
+						id = murim_ranking_events.0001
+						days = { 7 14 }
+					}
+				}
+				25 = {
+					# Internal power struggle - duel for leadership
+					add_trait = wounded_1
+					create_character_memory = {
+						type = dark_alliance_leadership_duel_memory
+					}
+					trigger_event = {
+						id = murim_duel_events.0001
+						days = { 1 7 }
+					}
+				}
+				25 = {
+					# Alliance teaches demonic cultivation
+					add_prowess_skill = 3
+					add_stress = 30
+					create_character_memory = {
+						type = learned_demonic_cultivation_memory
+					}
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Orthodox spies attack the summit
+					add_trait = wounded_2
+					add_stress = 25
+					create_character_memory = {
+						type = orthodox_raid_on_summit_memory
+					}
+					random_list = {
+						70 = { }
+						30 = { add_trait = incapable }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 20 has_trait = callous }
+		}
+	}
+
+	# Attend as a spy for the orthodox alliance
+	option = {
+		name = murim_jianghu_exp.0005.b
+		add_intrigue_skill = 3
+		add_piety = 200
+		add_stress = 30
+		create_character_memory = {
+			type = infiltrated_dark_summit_as_spy_memory
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Successfully gather crucial intelligence
+					add_prestige = 400
+					add_gold = 300
+					create_character_memory = {
+						type = dark_summit_intelligence_success_memory
+					}
+					trigger_event = {
+						id = murim_politics_events.0001
+						days = { 14 30 }
+					}
+				}
+				30 = {
+					# Cover blown - fight your way out
+					add_trait = wounded_2
+					add_prowess_skill = 1
+					create_character_memory = {
+						type = cover_blown_at_dark_summit_memory
+					}
+					trigger_event = {
+						id = murim_duel_events.0001
+						days = { 1 3 }
+					}
+				}
+				20 = {
+					# Captured and tortured for information
+					add_trait = wounded_3
+					add_stress = 50
+					create_character_memory = {
+						type = captured_tortured_at_dark_summit_memory
+					}
+					random_list = {
+						50 = { }
+						30 = { add_trait = craven }
+						20 = { add_trait = incapable }
+					}
+				}
+				20 = {
+					# Tempted by dark power - internal conflict
+					add_stress = 40
+					create_character_memory = {
+						type = tempted_by_dark_power_memory
+					}
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 has_trait = honest }
+		}
+	}
+
+	# Refuse all involvement - stay neutral
+	option = {
+		name = murim_jianghu_exp.0005.c
+		add_stress = -10
+		add_prestige = -50
+		create_character_memory = {
+			type = refused_dark_alliance_involvement_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = 15 has_trait = craven }
+		}
+	}
+}
