@@ -1,0 +1,416 @@
+# Murim Chronicles - Top 50 Martial Artist Ranking System
+# Hidden rank score calculated yearly for all martial artists
+# Formula: (prowess x 2) + (cultivation_rank_weight x 10) + (technique_count x 3) + (duel_wins x 5) - (duel_losses x 2) - (wounds x 3)
+# Load-safe: all values have fallback defaults, exists checks on all variables
+
+######################################
+# CULTIVATION RANK WEIGHT
+# Converts cultivation tier to numeric weight for ranking formula
+######################################
+
+murim_cultivation_rank_weight_value = {
+	value = 0
+	# Qi Sensing (lowest)
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = qi_sensing
+				has_trait = murim_qi_sensing
+			}
+		}
+		add = 1
+	}
+	# Qi Condensation
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = qi_condensation
+				has_trait = murim_qi_condensation
+			}
+		}
+		add = 2
+	}
+	# Foundation Establishment
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = foundation_establishment
+				has_trait = murim_foundation_establishment
+			}
+		}
+		add = 3
+	}
+	# Core Formation
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = core_formation
+				has_trait = murim_core_formation
+			}
+		}
+		add = 5
+	}
+	# Nascent Soul
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = nascent_soul
+				has_trait = murim_nascent_soul
+			}
+		}
+		add = 8
+	}
+	# Spirit Severing
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = spirit_severing
+				has_trait = murim_spirit_severing
+			}
+		}
+		add = 12
+	}
+	# Dao Seeking
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = dao_seeking
+				has_trait = murim_dao_seeking
+			}
+		}
+		add = 16
+	}
+	# Immortal Ascension (highest)
+	if = {
+		limit = {
+			exists = this
+			OR = {
+				has_trait = immortal_ascension
+				has_trait = murim_immortal_ascension
+			}
+		}
+		add = 25
+	}
+}
+
+######################################
+# TECHNIQUE COUNT VALUE
+# Counts number of known martial techniques
+######################################
+
+murim_technique_count_value = {
+	value = 0
+	if = {
+		limit = { exists = this has_trait = iron_body_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = iron_fist_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = shadow_step_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = flying_sword_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = palm_strike_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = thousand_cuts_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = dragon_breath_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = heavenly_guard_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = poison_palm_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = blood_art_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = soul_rend_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = jade_skin_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = phantom_movement_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = qi_disruption_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = formation_mastery_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = inner_demon_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = celestial_eye_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = forbidden_soul_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = demonic_conversion_technique }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = body_tempering_technique }
+		add = 1
+	}
+}
+
+######################################
+# WOUND PENALTY VALUE
+# Counts active wounds/injuries that reduce ranking
+######################################
+
+murim_wound_penalty_value = {
+	value = 0
+	if = {
+		limit = { exists = this has_trait = wounded }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = severely_wounded }
+		add = 2
+	}
+	if = {
+		limit = { exists = this has_trait = brutally_wounded }
+		add = 3
+	}
+	if = {
+		limit = { exists = this has_trait = one_eyed }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = one_legged }
+		add = 2
+	}
+	if = {
+		limit = { exists = this has_trait = disfigured }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = blind }
+		add = 3
+	}
+	if = {
+		limit = { exists = this has_trait = infirm }
+		add = 2
+	}
+	# Custom murim trauma penalties
+	if = {
+		limit = { exists = this has_trait = shattered_meridians }
+		add = 3
+	}
+	if = {
+		limit = { exists = this has_trait = qi_crippled }
+		add = 5
+	}
+	if = {
+		limit = { exists = this has_trait = broken_spirit }
+		add = 4
+	}
+	if = {
+		limit = { exists = this has_trait = combat_scarred }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = battle_madness }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = phantom_pain }
+		add = 1
+	}
+	if = {
+		limit = { exists = this has_trait = flinch_reflex }
+		add = 2
+	}
+}
+
+######################################
+# DUEL RECORD VALUES
+# Read from character variables tracking wins/losses
+######################################
+
+murim_duel_wins_value = {
+	value = 0
+	if = {
+		limit = {
+			exists = this
+			has_variable = murim_duel_wins
+		}
+		add = var:murim_duel_wins
+	}
+}
+
+murim_duel_losses_value = {
+	value = 0
+	if = {
+		limit = {
+			exists = this
+			has_variable = murim_duel_losses
+		}
+		add = var:murim_duel_losses
+	}
+}
+
+######################################
+# MASTER RANKING SCORE FORMULA
+# The complete hidden rank score for a martial artist
+# (prowess x 2) + (cultivation x 10) + (techniques x 3) + (wins x 5) - (losses x 2) - (wounds x 3)
+######################################
+
+murim_martial_rank_score = {
+	value = 0
+
+	# Prowess contribution (x2)
+	add = {
+		value = prowess
+		multiply = 2
+	}
+
+	# Cultivation rank contribution (x10)
+	add = {
+		value = murim_cultivation_rank_weight_value
+		multiply = 10
+	}
+
+	# Technique count contribution (x3)
+	add = {
+		value = murim_technique_count_value
+		multiply = 3
+	}
+
+	# Duel wins contribution (x5)
+	add = {
+		value = murim_duel_wins_value
+		multiply = 5
+	}
+
+	# Duel losses penalty (x2)
+	subtract = {
+		value = murim_duel_losses_value
+		multiply = 2
+	}
+
+	# Wound/injury penalty (x3)
+	subtract = {
+		value = murim_wound_penalty_value
+		multiply = 3
+	}
+
+	# Bonus for special achievements
+	if = {
+		limit = { exists = this has_trait = tournament_champion }
+		add = 25
+	}
+	if = {
+		limit = { exists = this has_trait = feared_duelist }
+		add = 15
+	}
+	if = {
+		limit = { exists = this has_trait = martial_prodigy }
+		add = 20
+	}
+	if = {
+		limit = { exists = this has_character_modifier = sect_grandmaster_modifier }
+		add = 30
+	}
+
+	# Floor at 0 -- no negative rankings
+	min = 0
+}
+
+######################################
+# RANKING THRESHOLDS
+# Score thresholds for different ranking tiers
+######################################
+
+murim_rank_threshold_top_50 = {
+	value = 30
+}
+
+murim_rank_threshold_top_20 = {
+	value = 60
+}
+
+murim_rank_threshold_top_10 = {
+	value = 100
+}
+
+murim_rank_threshold_top_5 = {
+	value = 150
+}
+
+murim_rank_threshold_number_one = {
+	value = 200
+}
+
+# Minimum score to even appear on the radar
+murim_rank_threshold_minimum = {
+	value = 10
+}
+
+# Score gain from winning a ranked duel
+murim_ranked_duel_win_score = {
+	value = 5
+	# Bonus for defeating a higher-ranked opponent
+	if = {
+		limit = {
+			exists = scope:opponent
+			scope:opponent = {
+				has_variable = murim_martial_rank_position
+				var:murim_martial_rank_position < root.var:murim_martial_rank_position
+			}
+		}
+		add = 10
+	}
+}
+
+# Score loss from losing a ranked duel
+murim_ranked_duel_loss_score = {
+	value = 2
+	# Extra penalty for losing to a much lower-ranked opponent
+	if = {
+		limit = {
+			exists = scope:opponent
+			scope:opponent = {
+				has_variable = murim_martial_rank_position
+				var:murim_martial_rank_position > root.var:murim_martial_rank_position
+			}
+		}
+		add = 5
+	}
+}
