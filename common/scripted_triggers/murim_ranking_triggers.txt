@@ -142,13 +142,14 @@ murim_is_number_one_ranked_trigger = {
 }
 
 ######################################
-# IS HIDDEN RANKED
-# Has score but not in visible top 50 -- dark horse
+# IS HIDDEN RANKED (outside top 50 but scored)
+# Has a score but not publicly known
 ######################################
 
 murim_is_hidden_ranked_trigger = {
 	exists = this
-	murim_is_ranked_martial_artist_trigger = yes
+	murim_is_martial_artist_trigger = yes
+	has_variable = murim_martial_rank_score
 	OR = {
 		NOT = { has_variable = murim_martial_rank_position }
 		AND = {
@@ -159,157 +160,945 @@ murim_is_hidden_ranked_trigger = {
 }
 
 ######################################
-# CAN CHALLENGE FOR RANK
-# Eligible to challenge a ranked fighter for their position
+# RIVALRY & CHALLENGE TRIGGERS
 ######################################
 
-murim_can_challenge_for_rank_trigger = {
+# Can this character challenge another ranked fighter
+murim_can_challenge_ranked_fighter_trigger = {
 	exists = this
 	murim_is_martial_artist_trigger = yes
 	is_alive = yes
 	is_imprisoned = no
 	NOR = {
 		has_trait = incapable
-		has_trait = broken_spirit
-		has_trait = qi_crippled
+		has_trait = craven
+		has_character_modifier = murim_recovering_from_duel
+		has_character_modifier = murim_challenge_cooldown
 	}
-	# Not recovering from recent combat
-	NOT = { has_character_modifier = murim_recent_combat_modifier }
-	# Not in closed cultivation
-	NOT = { has_character_modifier = murim_closed_cultivation_modifier }
-	# Must not be craven (or if craven, must have override motivation)
+	# Must have some combat readiness
 	OR = {
-		NOT = { has_trait = craven }
-		AND = {
-			has_trait = craven
-			OR = {
-				has_trait = ambitious
-				has_character_modifier = murim_revenge_sworn_modifier
-				has_variable = murim_must_fight_for_sect
-			}
+		prowess >= 12
+		has_variable = murim_martial_rank_score
+	}
+	# Cannot challenge while severely wounded
+	NOR = {
+		has_trait_rank = {
+			trait = wounded
+			rank >= 2
 		}
 	}
-	# Cooldown: can only challenge once per year
-	NOT = { has_character_modifier = murim_rank_challenge_cooldown }
+	# Age limits -- too young or too old without cultivation
+	OR = {
+		AND = {
+			age >= 16
+			age <= 70
+		}
+		# High cultivation transcends age limits
+		has_trait = nascent_soul
+		has_trait = murim_nascent_soul
+		has_trait = spirit_severing
+		has_trait = murim_spirit_severing
+		has_trait = dao_seeking
+		has_trait = murim_dao_seeking
+		has_trait = immortal_ascension
+		has_trait = murim_immortal_ascension
+	}
 }
 
-######################################
-# CAN BE CHALLENGED FOR RANK
-# A ranked fighter who can receive a rank challenge
-######################################
-
-murim_can_be_challenged_for_rank_trigger = {
+# Can this character accept a challenge
+murim_can_accept_challenge_trigger = {
 	exists = this
-	murim_is_top_50_martial_artist_trigger = yes
 	is_alive = yes
 	is_imprisoned = no
 	NOR = {
 		has_trait = incapable
+		has_character_modifier = murim_recovering_from_duel
 	}
-	# Not currently in seclusion
-	NOT = { has_character_modifier = murim_closed_cultivation_modifier }
+	# Even cravens can be forced to accept under certain conditions
+	# but they get penalties elsewhere
+}
+
+# Is this a valid challenge target (ranked higher, within reach)
+murim_is_valid_challenge_target_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	is_alive = yes
+	NOR = {
+		has_trait = incapable
+		this = root # Cannot challenge yourself
+	}
+	# Must be within 20 rank positions to challenge
+	# (prevents rank 50 challenging rank 1)
+	trigger_if = {
+		limit = {
+			root = { has_variable = murim_martial_rank_position }
+			has_variable = murim_martial_rank_position
+		}
+		# Target must be ranked higher (lower number)
+		var:murim_martial_rank_position < root.var:murim_martial_rank_position
+	}
+}
+
+# Are these two characters ranking rivals
+murim_is_ranking_rival_trigger = {
+	exists = this
+	exists = root
+	murim_is_martial_artist_trigger = yes
+	OR = {
+		# Direct rivalry flag
+		has_opinion_modifier = {
+			modifier = murim_ranking_rival_opinion
+			target = root
+		}
+		# Within 3 positions of each other
+		trigger_if = {
+			limit = {
+				has_variable = murim_martial_rank_position
+				root = { has_variable = murim_martial_rank_position }
+			}
+			OR = {
+				AND = {
+					var:murim_martial_rank_position >= 1
+					var:murim_martial_rank_position <= 50
+					root = {
+						var:murim_martial_rank_position >= 1
+						var:murim_martial_rank_position <= 50
+					}
+				}
+			}
+		}
+		# Same-sect competitors
+		AND = {
+			has_variable = murim_sect_id
+			root = { has_variable = murim_sect_id }
+			var:murim_sect_id = root.var:murim_sect_id
+			murim_is_top_50_martial_artist_trigger = yes
+			root = { murim_is_top_50_martial_artist_trigger = yes }
+		}
+	}
 }
 
 ######################################
-# SHOULD AI CHALLENGE FOR RANK
-# AI personality weight for deciding to issue rank challenges
+# WIN/LOSS STREAK TRIGGERS
 ######################################
 
-murim_ai_should_challenge_for_rank_trigger = {
+# On a winning streak (3+ consecutive wins)
+murim_has_winning_streak_trigger = {
 	exists = this
-	murim_can_challenge_for_rank_trigger = yes
-	# Personality-weighted decision
+	has_variable = murim_consecutive_wins
+	var:murim_consecutive_wins >= 3
+}
+
+# On a major winning streak (5+)
+murim_has_major_winning_streak_trigger = {
+	exists = this
+	has_variable = murim_consecutive_wins
+	var:murim_consecutive_wins >= 5
+}
+
+# On a legendary winning streak (10+)
+murim_has_legendary_winning_streak_trigger = {
+	exists = this
+	has_variable = murim_consecutive_wins
+	var:murim_consecutive_wins >= 10
+}
+
+# On an undefeated streak (20+)
+murim_has_undefeated_streak_trigger = {
+	exists = this
+	has_variable = murim_consecutive_wins
+	var:murim_consecutive_wins >= 20
+}
+
+# On a losing streak (3+ consecutive losses)
+murim_has_losing_streak_trigger = {
+	exists = this
+	has_variable = murim_consecutive_losses
+	var:murim_consecutive_losses >= 3
+}
+
+# On a devastating losing streak (5+)
+murim_has_devastating_losing_streak_trigger = {
+	exists = this
+	has_variable = murim_consecutive_losses
+	var:murim_consecutive_losses >= 5
+}
+
+######################################
+# LEGENDARY STATUS TRIGGERS
+######################################
+
+# Has achieved legendary martial status (lifetime achievement)
+murim_is_legendary_martial_artist_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
 	OR = {
-		# Ambitious characters always want to climb
+		# Has been #1 ranked
+		has_variable = murim_times_rank_one
+		# Has 50+ duel wins
 		AND = {
-			has_trait = ambitious
-			prowess >= 15
+			has_variable = murim_duel_wins
+			var:murim_duel_wins >= 50
 		}
-		# Brave characters willing to fight for glory
+		# Has immortal ascension + high prowess
 		AND = {
-			has_trait = brave
+			OR = {
+				has_trait = immortal_ascension
+				has_trait = murim_immortal_ascension
+			}
+			prowess >= 30
+		}
+		# Has the legendary fighter flag
+		has_character_flag = murim_legendary_fighter
+	}
+}
+
+# Is an undefeated legend (never lost a ranked duel)
+murim_is_undefeated_legend_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	has_variable = murim_duel_wins
+	var:murim_duel_wins >= 20
+	OR = {
+		NOT = { has_variable = murim_duel_losses }
+		AND = {
+			has_variable = murim_duel_losses
+			var:murim_duel_losses = 0
+		}
+	}
+}
+
+# Is a fallen legend (was once great, now declining)
+murim_is_fallen_legend_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	has_variable = murim_peak_rank_position
+	var:murim_peak_rank_position <= 10
+	OR = {
+		# No longer in top 50
+		NOT = { murim_is_top_50_martial_artist_trigger = yes }
+		# Dropped significantly from peak
+		AND = {
+			has_variable = murim_martial_rank_position
+			var:murim_martial_rank_position > 30
+		}
+	}
+}
+
+# Rising star -- rapidly climbing ranks
+murim_is_rising_star_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	has_variable = murim_rank_climbed_this_year
+	var:murim_rank_climbed_this_year >= 5
+	OR = {
+		age <= 25
+		# Young for a cultivator
+		AND = {
+			age <= 35
+			OR = {
+				has_trait = martial_prodigy
+				has_trait = foundation_establishment
+				has_trait = murim_foundation_establishment
+			}
+		}
+	}
+}
+
+######################################
+# SECT CHAMPION TRIGGERS
+######################################
+
+# Is the highest ranked member of their sect
+murim_is_sect_champion_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	murim_is_top_50_martial_artist_trigger = yes
+	has_variable = murim_is_sect_champion
+	var:murim_is_sect_champion = 1
+}
+
+# Sect has a champion in top 50
+murim_sect_has_ranked_champion_trigger = {
+	exists = this
+	has_variable = murim_sect_id
+	any_vassal_or_below = {
+		murim_is_top_50_martial_artist_trigger = yes
+	}
+}
+
+# Is eligible to become sect champion
+murim_can_become_sect_champion_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	murim_is_top_50_martial_artist_trigger = yes
+	has_variable = murim_sect_id
+	NOR = {
+		has_character_modifier = murim_sect_champion_cooldown
+	}
+}
+
+######################################
+# DUEL CONSEQUENCE TRIGGERS
+######################################
+
+# Can this character survive a duel loss (not die/become incapable)
+murim_can_survive_duel_loss_trigger = {
+	exists = this
+	is_alive = yes
+	NOR = {
+		# Already severely wounded -- another loss could kill
+		has_trait_rank = {
+			trait = wounded
+			rank >= 2
+		}
+		# Already maimed -- very vulnerable
+		has_trait = maimed
+		# Old and fragile
+		AND = {
+			age >= 65
+			NOR = {
+				has_trait = nascent_soul
+				has_trait = murim_nascent_soul
+				has_trait = spirit_severing
+				has_trait = murim_spirit_severing
+				has_trait = dao_seeking
+				has_trait = murim_dao_seeking
+				has_trait = immortal_ascension
+				has_trait = murim_immortal_ascension
+			}
+		}
+	}
+}
+
+# Should this duel have lethal consequences
+murim_duel_should_be_lethal_trigger = {
+	always = no # default: not lethal
+	# Override conditions where duels become lethal
+	OR = {
+		# Grudge match
+		root = {
+			has_opinion_modifier = {
+				modifier = murim_blood_feud_opinion
+				target = prev
+			}
+		}
+		# Demonic cultivator involved
+		OR = {
+			has_trait = blood_art_technique
+			has_trait = poison_palm_technique
+			root = { has_trait = blood_art_technique }
+			root = { has_trait = poison_palm_technique }
+		}
+		# Death match flag set
+		root = { has_character_flag = murim_death_match_accepted }
+		has_character_flag = murim_death_match_accepted
+		# Tournament finals with lethal rules
+		has_character_flag = murim_lethal_tournament_round
+	}
+}
+
+# Should this duel cause trauma
+murim_duel_should_cause_trauma_trigger = {
+	# Devastating losses cause trauma
+	OR = {
+		# Lost badly (large prowess gap)
+		AND = {
+			exists = root
+			root = {
+				prowess >= prev.prowess
+			}
+		}
+		# Lost a streak
+		murim_has_winning_streak_trigger = yes
+		# Lost sect champion status
+		has_variable = murim_is_sect_champion
+		# Young and impressionable
+		age <= 20
+	}
+}
+
+######################################
+# SPECTATOR & REPUTATION TRIGGERS
+######################################
+
+# Is this character watching a ranked duel (nearby, interested)
+murim_is_duel_spectator_trigger = {
+	exists = this
+	is_alive = yes
+	murim_is_martial_artist_trigger = yes
+	NOR = {
+		has_trait = incapable
+		is_imprisoned = yes
+	}
+	# Must be in same location/realm as duelist
+	OR = {
+		is_vassal_of = root
+		is_liege_of = root
+		any_liege_or_above = {
+			any_vassal_or_below = {
+				this = root
+			}
+		}
+	}
+}
+
+# Does this character's reputation precede them
+murim_has_fearsome_reputation_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	OR = {
+		# Top 10 ranked
+		murim_is_top_10_martial_artist_trigger = yes
+		# Legendary fighter
+		murim_is_legendary_martial_artist_trigger = yes
+		# High dread from combat
+		dread >= 50
+		# Known killer
+		AND = {
+			has_variable = murim_ranked_kills
+			var:murim_ranked_kills >= 3
+		}
+		# Feared duelist trait
+		has_trait = feared_duelist
+	}
+}
+
+# Is this character known for mercy in duels
+murim_is_merciful_fighter_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	OR = {
+		has_trait = compassionate
+		has_trait = forgiving
+		AND = {
+			has_variable = murim_mercies_shown
+			var:murim_mercies_shown >= 5
+		}
+		has_character_flag = murim_known_for_mercy
+	}
+	NOR = {
+		has_trait = sadistic
+		has_trait = callous
+		has_trait = blood_art_technique
+	}
+}
+
+# Is this character a dishonorable fighter (cheats, poisons, ambushes)
+murim_is_dishonorable_fighter_trigger = {
+	exists = this
+	OR = {
+		has_trait = deceitful
+		has_trait = poison_palm_technique
+		has_character_flag = murim_caught_cheating_duel
+		AND = {
+			has_variable = murim_dishonorable_wins
+			var:murim_dishonorable_wins >= 2
+		}
+		# Known poisoner
+		AND = {
+			has_variable = murim_poison_kills
+			var:murim_poison_kills >= 1
+		}
+	}
+}
+
+######################################
+# RANK DECAY & MAINTENANCE TRIGGERS
+######################################
+
+# Is this character's rank at risk of decay (inactive)
+murim_rank_at_risk_of_decay_trigger = {
+	exists = this
+	murim_is_top_50_martial_artist_trigger = yes
+	OR = {
+		# No duels in a long time
+		AND = {
+			has_variable = murim_last_duel_date
+			# Inactive for 3+ years check via flag
+			has_character_flag = murim_duel_inactive_warning
+		}
+		# Severely wounded and unable to fight
+		has_trait_rank = {
+			trait = wounded
+			rank >= 2
+		}
+		# Imprisoned and cannot defend rank
+		is_imprisoned = yes
+		# Stressed/depressed and withdrawn
+		AND = {
+			OR = {
+				has_trait = depressed
+				has_trait_rank = {
+					trait = stressed
+					rank >= 2
+				}
+			}
+			has_character_flag = murim_withdrawn_from_jianghu
+		}
+	}
+}
+
+# Should this character be removed from rankings entirely
+murim_should_remove_from_rankings_trigger = {
+	OR = {
+		is_alive = no
+		has_trait = incapable
+		# Voluntarily retired
+		has_character_flag = murim_retired_from_rankings
+		# Excommunicated from martial world
+		has_character_flag = murim_excommunicated_from_jianghu
+		# Became a monk/renounced violence
+		AND = {
+			has_trait = devoted
+			has_character_flag = murim_renounced_violence
+		}
+	}
+}
+
+# Is eligible for rank restoration (comeback)
+murim_can_restore_rank_trigger = {
+	exists = this
+	is_alive = yes
+	murim_is_martial_artist_trigger = yes
+	NOR = {
+		has_trait = incapable
+		has_character_flag = murim_permanently_banned
+	}
+	# Must have had a previous rank
+	has_variable = murim_peak_rank_position
+	# Must be combat ready again
+	NOR = {
+		has_trait_rank = {
+			trait = wounded
+			rank >= 2
+		}
+		is_imprisoned = yes
+	}
+}
+
+######################################
+# RANK COMPARISON TRIGGERS (relative)
+######################################
+
+# Is ROOT ranked higher than THIS
+murim_root_ranked_higher_trigger = {
+	exists = this
+	exists = root
+	trigger_if = {
+		limit = {
+			has_variable = murim_martial_rank_position
+			root = { has_variable = murim_martial_rank_position }
+		}
+		root = {
+			var:murim_martial_rank_position < prev.var:murim_martial_rank_position
+		}
+	}
+	trigger_else = {
+		# If either lacks rank, compare scores
+		trigger_if = {
+			limit = {
+				has_variable = murim_martial_rank_score
+				root = { has_variable = murim_martial_rank_score }
+			}
+			root = {
+				var:murim_martial_rank_score > prev.var:murim_martial_rank_score
+			}
+		}
+		trigger_else = {
+			# Fallback to prowess comparison
+			root = { prowess > prev.prowess }
+		}
+	}
+}
+
+# Are these two characters closely ranked (within 5 positions)
+murim_closely_ranked_trigger = {
+	exists = this
+	exists = root
+	has_variable = murim_martial_rank_position
+	root = { has_variable = murim_martial_rank_position }
+	# Both must be ranked
+	murim_is_top_50_martial_artist_trigger = yes
+	root = { murim_is_top_50_martial_artist_trigger = yes }
+}
+
+# Has this character recently overtaken ROOT in rankings
+murim_recently_overtook_trigger = {
+	exists = this
+	has_character_flag = murim_recently_overtook_rival
+	# The flag is set with a timeout by ranking effects
+}
+
+######################################
+# SEASONAL / EVENT TRIGGERS
+######################################
+
+# Is it a good time for ranking tournaments
+murim_is_tournament_season_trigger = {
+	# Spring and Autumn are traditional tournament seasons
+	OR = {
+		current_month >= 3
+		current_month <= 5
+		AND = {
+			current_month >= 9
+			current_month <= 11
+		}
+	}
+}
+
+# Is the annual ranking ceremony due
+murim_annual_ranking_ceremony_due_trigger = {
+	# Once per year check
+	OR = {
+		NOT = { has_global_variable = murim_last_ranking_ceremony_year }
+		AND = {
+			has_global_variable = murim_last_ranking_ceremony_year
+			NOT = {
+				current_date = global_var:murim_last_ranking_ceremony_year
+			}
+		}
+	}
+}
+
+# Should a ranking shakeup event fire (upset victory potential)
+murim_ranking_upset_possible_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	OR = {
+		# Rising star with recent wins
+		murim_is_rising_star_trigger = yes
+		# Hidden master revealing strength
+		AND = {
+			murim_is_hidden_ranked_trigger = yes
+			prowess >= 25
+		}
+		# Breakthrough just happened -- power spike
+		has_character_flag = murim_recent_breakthrough
+		# New technique mastered
+		has_character_flag = murim_new_technique_mastered
+		# Bloodline awakened
+		has_character_flag = murim_bloodline_awakened
+	}
+}
+
+######################################
+# ELEMENT / PATH SPECIFIC RANKING
+######################################
+
+# Is the top-ranked sword artist
+murim_is_top_sword_artist_trigger = {
+	exists = this
+	murim_is_top_50_martial_artist_trigger = yes
+	OR = {
+		has_trait = flying_sword_technique
+		has_trait = thousand_cuts_technique
+		has_variable = murim_sword_mastery
+	}
+	has_variable = murim_is_top_sword
+	var:murim_is_top_sword = 1
+}
+
+# Is the top-ranked fist artist
+murim_is_top_fist_artist_trigger = {
+	exists = this
+	murim_is_top_50_martial_artist_trigger = yes
+	OR = {
+		has_trait = iron_fist_technique
+		has_trait = palm_strike_technique
+		has_variable = murim_fist_mastery
+	}
+	has_variable = murim_is_top_fist
+	var:murim_is_top_fist = 1
+}
+
+# Is the top-ranked body cultivator
+murim_is_top_body_cultivator_trigger = {
+	exists = this
+	murim_is_top_50_martial_artist_trigger = yes
+	OR = {
+		has_trait = iron_body_technique
+		has_trait = body_tempering_technique
+		has_variable = murim_body_mastery
+	}
+	has_variable = murim_is_top_body
+	var:murim_is_top_body = 1
+}
+
+# Is the top-ranked poison artist
+murim_is_top_poison_artist_trigger = {
+	exists = this
+	murim_is_top_50_martial_artist_trigger = yes
+	OR = {
+		has_trait = poison_palm_technique
+		has_variable = murim_poison_mastery
+	}
+	has_variable = murim_is_top_poison
+	var:murim_is_top_poison = 1
+}
+
+# Is the top-ranked stealth/shadow artist
+murim_is_top_shadow_artist_trigger = {
+	exists = this
+	murim_is_top_50_martial_artist_trigger = yes
+	OR = {
+		has_trait = shadow_step_technique
+		has_variable = murim_shadow_mastery
+	}
+	has_variable = murim_is_top_shadow
+	var:murim_is_top_shadow = 1
+}
+
+######################################
+# AI BEHAVIOR TRIGGERS
+######################################
+
+# Should AI actively seek duels to climb rankings
+murim_ai_should_seek_duels_trigger = {
+	exists = this
+	is_ai = yes
+	murim_is_martial_artist_trigger = yes
+	murim_can_challenge_ranked_fighter_trigger = yes
+	OR = {
+		# Ambitious AI always seeks duels
+		has_trait = ambitious
+		# AI on a winning streak wants more
+		murim_has_winning_streak_trigger = yes
+		# AI close to breaking into top 50
+		AND = {
+			has_variable = murim_martial_rank_position
+			var:murim_martial_rank_position > 50
+			var:murim_martial_rank_position <= 60
+		}
+		# AI close to breaking into top 10
+		AND = {
+			has_variable = murim_martial_rank_position
+			var:murim_martial_rank_position > 10
+			var:murim_martial_rank_position <= 15
+		}
+		# Young and eager
+		AND = {
+			age <= 30
 			prowess >= 18
 		}
-		# Arrogant characters believe they deserve higher rank
+		# Wrathful AI seeking revenge for losses
 		AND = {
-			has_trait = arrogant
-			prowess >= 12
+			has_trait = wrathful
+			has_variable = murim_consecutive_losses
+			var:murim_consecutive_losses >= 1
 		}
-		# Battle-mad characters fight for the thrill
-		AND = {
-			has_trait = battle_madness
-			is_alive = yes
-		}
-		# Characters with revenge motivation
-		has_character_modifier = murim_revenge_sworn_modifier
-		# Characters ordered by sect to fight
-		has_variable = murim_must_fight_for_sect
-		# Very high prowess -- natural contenders
-		prowess >= 25
 	}
-	# Exclude characters who shouldn't fight
 	NOR = {
-		has_trait = craven
-		has_trait = content
-		has_trait = broken_spirit
-		has_trait = lazy
-		age >= 65
+		# Content AI doesn't seek duels as much
 		AND = {
-			has_trait = wounded
+			has_trait = content
+			murim_is_top_20_martial_artist_trigger = yes
+		}
+		# Craven AI avoids duels
+		has_trait = craven
+		# Lazy AI doesn't bother
+		has_trait = lazy
+	}
+}
+
+# Should AI accept a duel challenge
+murim_ai_should_accept_challenge_trigger = {
+	exists = this
+	is_ai = yes
+	murim_can_accept_challenge_trigger = yes
+	OR = {
+		# Brave characters always accept
+		has_trait = brave
+		# Honor demands it
+		has_trait = just
+		has_trait = honest
+		# Wrathful can't say no
+		has_trait = wrathful
+		# Arrogant thinks they'll win
+		has_trait = arrogant
+		# Ranked higher -- reputation at stake
+		trigger_if = {
+			limit = {
+				has_variable = murim_martial_rank_position
+				root = { has_variable = murim_martial_rank_position }
+			}
+			var:murim_martial_rank_position < root.var:murim_martial_rank_position
+		}
+	}
+	NOR = {
+		# Paranoid suspects a trap
+		AND = {
+			has_trait = paranoid
 			NOT = { has_trait = brave }
 		}
+		# Craven tries to avoid
+		AND = {
+			has_trait = craven
+			NOT = { has_trait = wrathful }
+		}
+	}
+}
+
+# Should AI train to improve rank
+murim_ai_should_train_for_rank_trigger = {
+	exists = this
+	is_ai = yes
+	murim_is_martial_artist_trigger = yes
+	OR = {
+		# Diligent AI trains regularly
+		has_trait = diligent
+		# Ambitious AI works toward goals
+		has_trait = ambitious
+		# AI who recently lost wants to improve
+		AND = {
+			has_variable = murim_consecutive_losses
+			var:murim_consecutive_losses >= 1
+		}
+		# AI close to a ranking milestone
+		AND = {
+			has_variable = murim_martial_rank_position
+			OR = {
+				# Close to top 50
+				AND = {
+					var:murim_martial_rank_position > 45
+					var:murim_martial_rank_position <= 55
+				}
+				# Close to top 20
+				AND = {
+					var:murim_martial_rank_position > 18
+					var:murim_martial_rank_position <= 25
+				}
+				# Close to top 10
+				AND = {
+					var:murim_martial_rank_position > 8
+					var:murim_martial_rank_position <= 12
+				}
+			}
+		}
+	}
+	NOR = {
+		has_trait = lazy
+		has_trait = incapable
 	}
 }
 
 ######################################
-# RANK DUEL INJURY CHECK TRIGGERS
-# Used after rank duels to determine injury severity
+# PLAYER NOTIFICATION TRIGGERS
 ######################################
 
-murim_rank_duel_minor_injury_trigger = {
-	# Sparring-level: low chance of real harm
+# Should the player be notified about a ranking change
+murim_player_should_see_ranking_notification_trigger = {
+	exists = this
+	is_ai = no
+	murim_is_martial_artist_trigger = yes
 	OR = {
-		AND = {
-			has_character_modifier = murim_recent_combat_modifier
-			# Stacked combat = higher injury risk
-			random_chance = { chance = 40 }
+		# Player entered or left top 50
+		has_character_flag = murim_rank_changed_milestone
+		# Player's rank changed by 5+ positions
+		has_character_flag = murim_rank_significant_change
+		# A rival's rank changed
+		any_relation = {
+			type = rival
+			has_character_flag = murim_rank_changed_this_cycle
 		}
-		random_chance = { chance = 15 }
+		# Number 1 position changed
+		has_global_variable = murim_number_one_changed
+		# Tournament results
+		has_character_flag = murim_tournament_results_ready
 	}
 }
 
-murim_rank_duel_major_injury_trigger = {
-	# Death match or serious ranked fight
+# Should show detailed ranking breakdown
+murim_should_show_detailed_ranking_trigger = {
+	exists = this
+	is_ai = no
+	murim_is_top_50_martial_artist_trigger = yes
 	OR = {
-		AND = {
-			has_character_modifier = murim_recent_combat_modifier
-			random_chance = { chance = 25 }
-		}
-		random_chance = { chance = 8 }
+		# Viewing from decision menu
+		has_character_flag = murim_viewing_rankings
+		# Annual ceremony
+		has_character_flag = murim_attending_ranking_ceremony
 	}
 }
 
-murim_rank_duel_devastating_injury_trigger = {
-	# Incapable-level: very rare but real
+######################################
+# RETIREMENT & SUCCESSION TRIGGERS
+######################################
+
+# Is this character considering retirement from rankings
+murim_considering_retirement_trigger = {
+	exists = this
+	murim_is_martial_artist_trigger = yes
+	murim_is_top_50_martial_artist_trigger = yes
 	OR = {
+		# Old age without high cultivation
 		AND = {
-			has_character_modifier = murim_recent_combat_modifier
-			has_trait = wounded
-			random_chance = { chance = 15 }
+			age >= 60
+			NOR = {
+				has_trait = nascent_soul
+				has_trait = murim_nascent_soul
+				has_trait = spirit_severing
+				has_trait = murim_spirit_severing
+				has_trait = dao_seeking
+				has_trait = murim_dao_seeking
+				has_trait = immortal_ascension
+				has_trait = murim_immortal_ascension
+			}
 		}
-		random_chance = { chance = 3 }
+		# Severe injuries
+		AND = {
+			has_trait = maimed
+			has_trait_rank = {
+				trait = wounded
+				rank >= 1
+			}
+		}
+		# Lost too many times recently
+		AND = {
+			has_variable = murim_consecutive_losses
+			var:murim_consecutive_losses >= 5
+			has_trait = content
+		}
+		# Seeking enlightenment instead of combat
+		AND = {
+			OR = {
+				has_trait = dao_seeking
+				has_trait = murim_dao_seeking
+			}
+			has_trait = temperate
+		}
 	}
 }
 
-murim_rank_duel_mental_trauma_trigger = {
-	# Craven/broken spirit chance after brutal loss
-	OR = {
-		AND = {
-			# Lost by a huge margin
-			exists = scope:opponent
-			scope:opponent = { prowess >= 10 }
-			random_chance = { chance = 15 }
+# Can pass ranking knowledge to successor
+murim_can_pass_ranking_legacy_trigger = {
+	exists = this
+	murim_is_legendary_martial_artist_trigger = yes
+	any_child = {
+		murim_is_martial_artist_trigger = yes
+		age >= 16
+		NOR = {
+			has_trait = incapable
 		}
-		random_chance = { chance = 5 }
+	}
+}
+
+# Is a worthy successor available
+murim_has_worthy_successor_trigger = {
+	exists = this
+	OR = {
+		any_child = {
+			murim_is_martial_artist_trigger = yes
+			prowess >= 15
+			age >= 16
+		}
+		any_courtier = {
+			murim_is_martial_artist_trigger = yes
+			has_opinion = {
+				target = root
+				value >= 50
+			}
+			prowess >= 18
+		}
 	}
 }
