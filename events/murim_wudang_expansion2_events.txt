@@ -1,669 +1,694 @@
-namespace = murim_wudang_expansion2
+###############################################
+# MURIM WUDANG SECT - DEEP EXPANSION EVENTS
+# 10 complete events: Taiji mastery, Yin-Yang cultivation,
+# Sword-Qi fusion, internal power struggles, hermit path
+###############################################
 
-# Wudang Sect Deep Expansion - Full Taoist Chain
-# Heartbeat 69 - Sprint Build
-# 10 complete events with full option trees
+namespace = murim_wudang_exp2
 
-####################################
-# Wudang Taiji Sword Initiation
-####################################
-murim_wudang_expansion2.0001 = {
+# === EVENT 0001: TAIJI GRAND MASTERY TRIAL ===
+murim_wudang_exp2.0001 = {
 	type = character_event
-	title = murim_wudang_expansion2.0001.t
-	desc = murim_wudang_expansion2.0001.desc
+	title = murim_wudang_exp2.0001.t
+	desc = murim_wudang_exp2.0001.desc
 	theme = martial_arts
 	
-	left_portrait = { character = root animation = personality_rational }
-	right_portrait = { character = scope:wudang_master animation = personality_compassionate }
-	
 	trigger = {
-		has_trait = wudang_disciple
-		NOT = { has_character_flag = taiji_sword_initiated }
-		age >= 16
-		prowess >= 10
+		has_trait = murim_clan_wudang
+		has_trait_rank = { trait = murim_cultivation_rank value >= 3 }
+		NOT = { has_character_flag = wudang_taiji_grand_trial }
 	}
 	
-	weight_multiplier = { base = 1 modifier = { add = 2 has_trait = patient } }
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 has_trait = murim_rank_peak }
+		modifier = { add = 3 has_trait = murim_technique_taiji }
+	}
 	
 	immediate = {
-		set_character_flag = taiji_sword_initiated
-		random_relation = { type = mentor save_scope_as = wudang_master }
-		if = {
-			limit = { NOT = { exists = scope:wudang_master } }
-			random_courtier = {
-				limit = { has_trait = wudang_elder age >= 50 }
-				save_scope_as = wudang_master
-			}
+		set_character_flag = { flag = wudang_taiji_grand_trial days = 3650 }
+	}
+	
+	# Option A: Attempt the 108 Movements of Heaven and Earth
+	option = {
+		name = murim_wudang_exp2.0001.a
+		duel = {
+			skill = martial
+			value = 20
+			target = scope:wudang_elder
 		}
+		trigger_event = { id = murim_wudang_exp2.0002 days = 30 }
+		stress_impact = { base = -20 }
+		ai_chance = { base = 60 }
 	}
 	
-	# Option A: Embrace the soft-overcomes-hard philosophy
+	# Option B: Meditate on the Dao of Taiji for a year
 	option = {
-		name = murim_wudang_expansion2.0001.a
-		add_character_modifier = { modifier = taiji_sword_student years = 15 }
-		change_prowess = 2
-		add_learning = 1
-		add_prestige = 150
-		set_character_flag = wudang_soft_path
-		ai_chance = { base = 50 }
-	}
-	
-	# Option B: Focus on the explosive hidden power within Taiji
-	option = {
-		name = murim_wudang_expansion2.0001.b
-		add_character_modifier = { modifier = explosive_taiji_student years = 15 }
-		change_prowess = 3
-		add_prestige = 100
-		set_character_flag = wudang_explosive_path
-		ai_chance = { base = 30 modifier = { add = 15 prowess >= 15 } }
-	}
-	
-	# Option C: Refuse the sword - study Taoist alchemy instead
-	option = {
-		name = murim_wudang_expansion2.0001.c
-		add_character_modifier = { modifier = taoist_alchemist_student years = 15 }
-		add_learning = 3
-		add_prestige = 100
-		set_character_flag = wudang_alchemy_path
-		ai_chance = { base = 20 modifier = { add = 20 learning >= 15 } }
-	}
-}
-
-####################################
-# Wudang Mountain Spirit Encounter
-####################################
-murim_wudang_expansion2.0002 = {
-	type = character_event
-	title = murim_wudang_expansion2.0002.t
-	desc = murim_wudang_expansion2.0002.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = shock }
-	
-	trigger = {
-		has_trait = wudang_disciple
-		has_character_flag = taiji_sword_initiated
-		NOT = { has_character_flag = mountain_spirit_met }
-		learning >= 12
-	}
-	
-	weight_multiplier = { base = 1 modifier = { add = 3 has_trait = mystic } }
-	
-	immediate = { set_character_flag = mountain_spirit_met }
-	
-	# Option A: Accept the spirit's wisdom
-	option = {
-		name = murim_wudang_expansion2.0002.a
-		random_list = {
-			40 = {
-				desc = murim_wudang_expansion2.0002.a.blessed
-				modifier = { add = 20 has_trait = mystic }
-				add_trait = spirit_touched
-				add_character_modifier = { modifier = mountain_spirit_blessing years = 30 }
-				change_prowess = 2
-				add_learning = 2
-				add_piety = 300
-			}
-			30 = {
-				desc = murim_wudang_expansion2.0002.a.vision
-				add_character_modifier = { modifier = spirit_vision years = 10 }
-				add_learning = 1
-				add_piety = 100
-			}
-			30 = {
-				desc = murim_wudang_expansion2.0002.a.illusion
-				modifier = { add = -20 has_trait = mystic }
-				add_stress = 20
-				add_character_modifier = { modifier = spirit_confusion years = 3 }
-			}
+		name = murim_wudang_exp2.0001.b
+		add_character_modifier = {
+			modifier = murim_wudang_year_meditation
+			years = 1
 		}
-		ai_chance = { base = 50 }
+		add_learning_skill = 3
+		trigger_event = { id = murim_wudang_exp2.0003 days = 365 }
+		ai_chance = { base = 40 }
 	}
 	
-	# Option B: Reject it as superstition
+	# Option C: Reject the trial - walk the mountain alone
 	option = {
-		name = murim_wudang_expansion2.0002.b
-		add_stress = -10
-		add_character_modifier = { modifier = rational_taoist years = 10 }
-		ai_chance = { base = 30 }
-	}
-	
-	# Option C: Try to trap the spirit for power
-	option = {
-		name = murim_wudang_expansion2.0002.c
-		trigger = { has_trait = ambitious }
-		random = {
-			chance = 20
-			add_character_modifier = { modifier = spirit_enslaver years = 20 }
-			change_prowess = 4
-			add_dread = 20
-		}
-		random = {
-			chance = 80
-			add_character_modifier = { modifier = spirit_cursed years = 15 }
-			change_prowess = -2
-			add_stress = 40
+		name = murim_wudang_exp2.0001.c
+		add_prestige = -500
+		add_piety = 300
+		add_character_modifier = {
+			modifier = murim_wudang_lone_wanderer
+			years = 5
 		}
 		ai_chance = { base = 10 }
 	}
 }
 
-####################################
-# Wudang Yin-Yang Balance Crisis
-####################################
-murim_wudang_expansion2.0003 = {
+# === EVENT 0002: YIN-YANG DUAL CULTIVATION PATH ===
+murim_wudang_exp2.0002 = {
 	type = character_event
-	title = murim_wudang_expansion2.0003.t
-	desc = murim_wudang_expansion2.0003.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = fear }
+	title = murim_wudang_exp2.0002.t
+	desc = murim_wudang_exp2.0002.desc
+	theme = mystic
 	
 	trigger = {
-		has_trait = wudang_disciple
-		age >= 22
-		NOT = { has_character_flag = yin_yang_crisis }
+		has_trait = murim_clan_wudang
 	}
 	
-	weight_multiplier = { base = 1 }
+	immediate = {
+		set_character_flag = { flag = wudang_yinyang_path days = 7300 }
+	}
 	
-	immediate = { set_character_flag = yin_yang_crisis }
-	
-	# Option A: Meditation retreat to restore balance
+	# Option A: Embrace the Yang path - explosive martial power
 	option = {
-		name = murim_wudang_expansion2.0003.a
-		add_character_modifier = { modifier = yin_yang_restored years = 10 }
-		change_prowess = 1
-		add_learning = 1
-		add_piety = 100
-		add_stress = -20
+		name = murim_wudang_exp2.0002.a
+		add_martial_skill = 4
+		add_prowess = 6
+		add_character_modifier = {
+			modifier = murim_wudang_yang_dominant
+			years = 10
+		}
+		# Risk: Yang imbalance can cause qi deviation
+		random = {
+			chance = 20
+			trigger_event = { id = murim_wudang_exp2.0004 days = { 180 730 } }
+		}
 		ai_chance = { base = 40 }
 	}
 	
-	# Option B: Seek a dual-cultivation partner
+	# Option B: Embrace the Yin path - internal energy mastery
 	option = {
-		name = murim_wudang_expansion2.0003.b
-		trigger = { is_married = no }
-		random = {
-			chance = 50
-			add_character_modifier = { modifier = dual_cultivation_harmony years = 20 }
-			change_prowess = 2
-			add_prestige = 200
+		name = murim_wudang_exp2.0002.b
+		add_learning_skill = 4
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = murim_wudang_yin_dominant
+			years = 10
 		}
-		random = {
-			chance = 50
-			add_character_modifier = { modifier = forbidden_love_penalty years = 5 }
-			add_stress = 20
+		add_trait = murim_technique_neigong_master
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Perfect balance - the true Wudang way (hardest)
+	option = {
+		name = murim_wudang_exp2.0002.c
+		add_character_modifier = {
+			modifier = murim_wudang_perfect_balance
+			years = 20
+		}
+		add_martial_skill = 2
+		add_learning_skill = 2
+		add_prowess = 3
+		# Only works if truly skilled
+		trigger = {
+			martial >= 18
+			learning >= 15
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+# === EVENT 0003: WUDANG SWORD-QI FUSION BREAKTHROUGH ===
+murim_wudang_exp2.0003 = {
+	type = character_event
+	title = murim_wudang_exp2.0003.t
+	desc = murim_wudang_exp2.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = murim_clan_wudang
+		OR = {
+			has_character_modifier = murim_wudang_yang_dominant
+			has_character_modifier = murim_wudang_yin_dominant
+			has_character_modifier = murim_wudang_perfect_balance
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = wudang_sword_qi_attempt days = 3650 }
+	}
+	
+	# Option A: Fuse sword intent with internal qi
+	option = {
+		name = murim_wudang_exp2.0003.a
+		random_list = {
+			60 = {
+				# Success: Sword-Qi fusion
+				add_trait = murim_technique_sword_qi_fusion
+				add_prowess = 8
+				add_prestige = 1000
+				add_character_modifier = {
+					modifier = murim_wudang_sword_immortal_aura
+					years = -1
+				}
+			}
+			25 = {
+				# Partial: Gain power but with side effects
+				add_prowess = 4
+				add_trait = murim_combat_trauma_qi_scarred
+				add_prestige = 300
+			}
+			15 = {
+				# Failure: Qi deviation
+				add_trait = murim_combat_trauma_crippled_meridian
+				add_health = -2
+				trigger_event = { id = murim_wudang_exp2.0004 days = 7 }
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option B: Abandon fusion, master sword and qi separately
+	option = {
+		name = murim_wudang_exp2.0003.b
+		add_prowess = 3
+		add_learning_skill = 2
+		add_prestige = 200
+		ai_chance = { base = 30 }
+	}
+}
+
+# === EVENT 0004: QI DEVIATION CRISIS ===
+murim_wudang_exp2.0004 = {
+	type = character_event
+	title = murim_wudang_exp2.0004.t
+	desc = murim_wudang_exp2.0004.desc
+	theme = dread
+	
+	trigger = {
+		has_trait = murim_clan_wudang
+	}
+	
+	# Option A: Seek the Sect Leader's help
+	option = {
+		name = murim_wudang_exp2.0004.a
+		add_opinion = {
+			target = scope:wudang_leader
+			modifier = murim_life_debt_opinion
+			opinion = 40
+		}
+		remove_trait = murim_combat_trauma_qi_scarred
+		add_character_modifier = {
+			modifier = murim_wudang_stabilized_qi
+			years = 5
+		}
+		# Costs prestige - you needed saving
+		add_prestige = -300
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Endure alone through iron will
+	option = {
+		name = murim_wudang_exp2.0004.b
+		random_list = {
+			40 = {
+				# Survive and become stronger
+				remove_trait = murim_combat_trauma_qi_scarred
+				add_trait = murim_iron_will
+				add_prowess = 2
+			}
+			60 = {
+				# Fail - permanent damage
+				add_health = -3
+				add_character_modifier = {
+					modifier = murim_wudang_broken_cultivation
+					years = -1
+				}
+			}
 		}
 		ai_chance = { base = 30 }
 	}
 	
-	# Option C: Embrace the imbalance - dark Taiji path
+	# Option C: Use forbidden Yin technique to drain another's qi
 	option = {
-		name = murim_wudang_expansion2.0003.c
-		trigger = { has_trait = ambitious }
-		add_character_modifier = { modifier = dark_taiji_practitioner years = 20 }
-		change_prowess = 3
-		add_dread = 15
-		add_piety = -200
-		set_character_flag = dark_taiji_path
+		name = murim_wudang_exp2.0004.c
+		add_dread = 30
+		remove_trait = murim_combat_trauma_qi_scarred
+		add_trait = murim_technique_forbidden_drain
+		add_prowess = 4
+		# Victim suffers
+		random_courtier = {
+			limit = { has_trait = murim_martial_artist }
+			add_health = -4
+			add_opinion = {
+				target = root
+				modifier = murim_qi_stolen_opinion
+				opinion = -100
+			}
+		}
+		add_tyranny = 20
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0005: WUDANG INTERNAL POWER STRUGGLE ===
+murim_wudang_exp2.0005 = {
+	type = character_event
+	title = murim_wudang_exp2.0005.t
+	desc = murim_wudang_exp2.0005.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = murim_clan_wudang
+		has_trait = murim_clan_leader
+		any_vassal = {
+			has_trait = murim_clan_wudang
+			martial >= 15
+			has_opinion_modifier = {
+				target = root
+				modifier < 0
+			}
+		}
+	}
+	
+	immediate = {
+		random_vassal = {
+			limit = {
+				has_trait = murim_clan_wudang
+				martial >= 15
+			}
+			save_scope_as = wudang_challenger
+		}
+	}
+	
+	# Option A: Accept the challenge publicly - sect duel
+	option = {
+		name = murim_wudang_exp2.0005.a
+		duel = {
+			skill = prowess
+			target = scope:wudang_challenger
+		}
+		add_prestige = 500
+		trigger_event = { id = murim_wudang_exp2.0006 days = 7 }
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Offer to share power - create Elder Council
+	option = {
+		name = murim_wudang_exp2.0005.b
+		scope:wudang_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_power_sharing_opinion
+				opinion = 30
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_wudang_elder_council
+			years = -1
+		}
+		add_diplomacy_skill = 2
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Eliminate the threat quietly
+	option = {
+		name = murim_wudang_exp2.0005.c
+		add_intrigue_skill = 2
+		add_dread = 20
+		scope:wudang_challenger = {
+			random_list = {
+				50 = { death = { death_reason = death_murder_unknown } }
+				50 = {
+					# They survive - now a sworn enemy
+					add_trait = murim_sworn_enemy
+					add_opinion = {
+						target = root
+						modifier = murim_murder_attempt_opinion
+						opinion = -100
+					}
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0006: HERMIT SAGE PATH ===
+murim_wudang_exp2.0006 = {
+	type = character_event
+	title = murim_wudang_exp2.0006.t
+	desc = murim_wudang_exp2.0006.desc
+	theme = mystic
+	
+	trigger = {
+		has_trait = murim_clan_wudang
+		age >= 50
+		martial >= 20
+		learning >= 18
+	}
+	
+	immediate = {
+		set_character_flag = { flag = wudang_hermit_path days = -1 }
+	}
+	
+	# Option A: Ascend the mountain - become Wudang Hermit Sage
+	option = {
+		name = murim_wudang_exp2.0006.a
+		add_trait = murim_hermit_sage
+		remove_trait = murim_clan_leader
+		add_learning_skill = 5
+		add_health = 2
+		add_character_modifier = {
+			modifier = murim_wudang_mountain_hermit
+			years = -1
+		}
+		# Lose political power, gain spiritual power
+		add_prestige = -1000
+		add_piety = 2000
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Stay and guide the next generation
+	option = {
+		name = murim_wudang_exp2.0006.b
+		add_trait = murim_grand_elder
+		every_child = {
+			limit = { has_trait = murim_clan_wudang }
+			add_martial_skill = 2
+			add_learning_skill = 2
+		}
+		add_prestige = 500
+		ai_chance = { base = 50 }
+	}
+	
+	# Option C: One final journey through the Murim world
+	option = {
+		name = murim_wudang_exp2.0006.c
+		add_character_modifier = {
+			modifier = murim_wudang_wandering_sage
+			years = 5
+		}
+		add_diplomacy_skill = 3
+		trigger_event = { id = murim_wudang_exp2.0007 days = { 180 730 } }
+		ai_chance = { base = 20 }
+	}
+}
+
+# === EVENT 0007: DISCOVERY OF THE LOST WUDANG MANUAL ===
+murim_wudang_exp2.0007 = {
+	type = character_event
+	title = murim_wudang_exp2.0007.t
+	desc = murim_wudang_exp2.0007.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = murim_clan_wudang
+	}
+	
+	immediate = {
+		set_character_flag = { flag = wudang_lost_manual days = 3650 }
+	}
+	
+	# Option A: Study the Pure Yang True Scripture
+	option = {
+		name = murim_wudang_exp2.0007.a
+		add_character_modifier = {
+			modifier = murim_wudang_pure_yang_scripture
+			years = -1
+		}
+		add_martial_skill = 3
+		add_prowess = 5
+		add_learning_skill = 3
+		# Others want it
+		every_ruler = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { has_trait = murim_clan_wudang }
+			}
+			random = {
+				chance = 10
+				trigger_event = { id = murim_wudang_exp2.0008 days = { 30 365 } }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Share the manual with all orthodox sects
+	option = {
+		name = murim_wudang_exp2.0007.b
+		every_ruler = {
+			limit = {
+				has_trait = murim_orthodox_faction
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_shared_knowledge_opinion
+				opinion = 30
+			}
+		}
+		add_prestige = 800
+		add_piety = 500
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Destroy it - too dangerous for this world
+	option = {
+		name = murim_wudang_exp2.0007.c
+		add_piety = 1000
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = murim_wudang_wisdom_of_restraint
+			years = -1
+		}
 		ai_chance = { base = 15 }
 	}
 }
 
-####################################
-# Wudang Pill Furnace Explosion
-####################################
-murim_wudang_expansion2.0004 = {
+# === EVENT 0008: ORTHODOX ALLIANCE LEADERSHIP BID ===
+murim_wudang_exp2.0008 = {
 	type = character_event
-	title = murim_wudang_expansion2.0004.t
-	desc = murim_wudang_expansion2.0004.desc
-	theme = intrigue
-	
-	left_portrait = { character = root animation = shock }
+	title = murim_wudang_exp2.0008.t
+	desc = murim_wudang_exp2.0008.desc
+	theme = diplomacy
 	
 	trigger = {
-		has_trait = wudang_disciple
-		has_character_flag = wudang_alchemy_path
-		NOT = { has_character_flag = pill_furnace_explosion }
+		has_trait = murim_clan_wudang
+		has_trait = murim_clan_leader
+		prestige >= 3000
 	}
 	
-	weight_multiplier = { base = 1 }
-	
-	immediate = { set_character_flag = pill_furnace_explosion }
-	
-	# Option A: Salvage what you can from the wreckage
+	# Option A: Claim leadership of the Orthodox Alliance
 	option = {
-		name = murim_wudang_expansion2.0004.a
-		random_list = {
-			30 = {
-				desc = murim_wudang_expansion2.0004.a.miracle
-				add_character_modifier = { modifier = miracle_pill_created years = 10 }
-				change_prowess = 3
-				add_prestige = 300
-			}
-			40 = {
-				desc = murim_wudang_expansion2.0004.a.nothing
-				add_stress = 15
-				add_gold = -50
-			}
-			30 = {
-				desc = murim_wudang_expansion2.0004.a.poison
-				add_character_modifier = { modifier = alchemical_poisoning years = 5 }
-				change_prowess = -1
-				add_stress = 25
+		name = murim_wudang_exp2.0008.a
+		add_character_modifier = {
+			modifier = murim_orthodox_alliance_leader_bid
+			years = 2
+		}
+		# Shaolin rivalry
+		random_ruler = {
+			limit = { has_trait = murim_clan_shaolin }
+			add_opinion = {
+				target = root
+				modifier = murim_rival_alliance_bid
+				opinion = -40
 			}
 		}
+		# Other orthodox sects vote
+		trigger_event = { id = murim_wudang_exp2.0009 days = 90 }
 		ai_chance = { base = 40 }
 	}
 	
-	# Option B: Rebuild and try again with safer methods
+	# Option B: Support Shaolin's claim - strengthen the alliance
 	option = {
-		name = murim_wudang_expansion2.0004.b
-		add_gold = -100
-		add_character_modifier = { modifier = cautious_alchemist years = 10 }
-		add_learning = 1
-		ai_chance = { base = 40 }
-	}
-	
-	# Option C: Abandon alchemy, return to sword training
-	option = {
-		name = murim_wudang_expansion2.0004.c
-		remove_character_flag = wudang_alchemy_path
-		set_character_flag = wudang_soft_path
-		change_prowess = 1
-		add_stress = -10
-		ai_chance = { base = 20 }
-	}
-}
-
-####################################
-# Wudang vs Mount Hua Rivalry - Sword Philosophy Debate
-####################################
-murim_wudang_expansion2.0005 = {
-	type = character_event
-	title = murim_wudang_expansion2.0005.t
-	desc = murim_wudang_expansion2.0005.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = personality_rational }
-	right_portrait = { character = scope:mount_hua_rival animation = personality_bold }
-	
-	trigger = {
-		has_trait = wudang_disciple
-		prowess >= 15
-		NOT = { has_character_flag = wudang_mount_hua_debate }
-		any_courtier = { has_trait = mount_hua_disciple }
-	}
-	
-	weight_multiplier = { base = 1 }
-	
-	immediate = {
-		set_character_flag = wudang_mount_hua_debate
-		random_courtier = {
-			limit = { has_trait = mount_hua_disciple prowess >= 12 }
-			save_scope_as = mount_hua_rival
-		}
-	}
-	
-	# Option A: Debate with words - Taoist philosophy vs Confucian
-	option = {
-		name = murim_wudang_expansion2.0005.a
-		trigger = { learning >= 14 }
-		random = {
-			chance = 55
-			modifier = { add = 15 learning >= 18 }
-			add_prestige = 400
-			add_character_modifier = { modifier = debate_victor years = 10 }
-		}
-		random = {
-			chance = 45
-			modifier = { add = -15 learning >= 18 }
-			add_prestige = 100
-			add_stress = 10
-		}
-		ai_chance = { base = 35 }
-	}
-	
-	# Option B: Settle it with a friendly sword duel
-	option = {
-		name = murim_wudang_expansion2.0005.b
-		if = {
-			limit = { exists = scope:mount_hua_rival }
-			duel = {
-				skill = prowess
-				target = scope:mount_hua_rival
-				50 = {
-					desc = murim_wudang_expansion2.0005.b.win
-					compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
-					add_prestige = 500
-					add_character_modifier = { modifier = proved_taiji_superior years = 10 }
-				}
-				50 = {
-					desc = murim_wudang_expansion2.0005.b.lose
-					compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
-					add_prestige = -100
-					add_stress = 20
-				}
+		name = murim_wudang_exp2.0008.b
+		random_ruler = {
+			limit = { has_trait = murim_clan_shaolin }
+			add_opinion = {
+				target = root
+				modifier = murim_alliance_support_opinion
+				opinion = 40
 			}
 		}
-		ai_chance = { base = 40 }
-	}
-	
-	# Option C: Propose alliance instead of rivalry
-	option = {
-		name = murim_wudang_expansion2.0005.c
-		trigger = { diplomacy >= 14 }
-		if = {
-			limit = { exists = scope:mount_hua_rival }
-			add_opinion = { target = scope:mount_hua_rival modifier = allied_opinion opinion = 25 }
-		}
-		add_prestige = 200
-		add_character_modifier = { modifier = inter_sect_diplomat years = 10 }
-		ai_chance = { base = 25 }
-	}
-}
-
-####################################
-# Wudang Sect Leader Election
-####################################
-murim_wudang_expansion2.0006 = {
-	type = character_event
-	title = murim_wudang_expansion2.0006.t
-	desc = murim_wudang_expansion2.0006.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = personality_rational }
-	
-	trigger = {
-		has_trait = wudang_disciple
-		age >= 40
-		prowess >= 18
-		NOT = { has_character_flag = wudang_leader_election }
-	}
-	
-	weight_multiplier = { base = 1 modifier = { add = 3 has_trait = spirit_touched } }
-	
-	immediate = {
-		set_character_flag = wudang_leader_election
-		random_courtier = {
-			limit = { has_trait = wudang_disciple age >= 35 NOT = { this = root } }
-			save_scope_as = wudang_rival_candidate
-		}
-	}
-	
-	# Option A: Stand as candidate - demonstrate Taiji mastery
-	option = {
-		name = murim_wudang_expansion2.0006.a
-		random_list = {
-			40 = {
-				modifier = { add = 20 has_trait = spirit_touched }
-				add_trait = wudang_sect_leader
-				add_prestige = 1000
-				add_piety = 300
-				add_character_modifier = { modifier = taoist_sect_leader years = 30 }
-			}
-			30 = { add_prestige = 200 add_stress = 10 }
-			30 = { modifier = { add = -20 has_trait = spirit_touched } add_prestige = -100 add_stress = 20 }
-		}
-		ai_chance = { base = 45 }
-	}
-	
-	# Option B: Support the other candidate
-	option = {
-		name = murim_wudang_expansion2.0006.b
-		if = {
-			limit = { exists = scope:wudang_rival_candidate }
-			add_opinion = { target = scope:wudang_rival_candidate modifier = grateful_opinion opinion = 35 }
-		}
-		add_piety = 200
-		add_character_modifier = { modifier = selfless_elder years = 20 }
-		ai_chance = { base = 30 }
-	}
-	
-	# Option C: Withdraw to hermitage on the peak
-	option = {
-		name = murim_wudang_expansion2.0006.c
-		add_character_modifier = { modifier = mountain_hermit years = 30 }
-		add_piety = 400
-		add_learning = 2
-		set_character_flag = wudang_hermit
-		ai_chance = { base = 25 }
-	}
-}
-
-####################################
-# Wudang Heavenly Sword Formation - Group Technique
-####################################
-murim_wudang_expansion2.0007 = {
-	type = character_event
-	title = murim_wudang_expansion2.0007.t
-	desc = murim_wudang_expansion2.0007.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = personality_bold }
-	
-	trigger = {
-		has_trait = wudang_disciple
-		prowess >= 20
-		NOT = { has_character_flag = heavenly_sword_formation_learned }
-	}
-	
-	weight_multiplier = { base = 1 modifier = { add = 2 has_character_flag = wudang_soft_path } }
-	
-	immediate = { set_character_flag = heavenly_sword_formation_learned }
-	
-	# Option A: Master the formation role of the Crane
-	option = {
-		name = murim_wudang_expansion2.0007.a
-		add_character_modifier = { modifier = crane_formation_master years = 20 }
-		change_prowess = 2
+		add_diplomacy_skill = 2
 		add_prestige = 300
 		ai_chance = { base = 40 }
 	}
 	
-	# Option B: Take the Tiger role - offensive position
+	# Option C: Wudang walks alone - leave the Alliance
 	option = {
-		name = murim_wudang_expansion2.0007.b
-		add_character_modifier = { modifier = tiger_formation_master years = 20 }
-		change_prowess = 3
-		add_prestige = 250
-		ai_chance = { base = 35 }
-	}
-	
-	# Option C: Become the formation coordinator
-	option = {
-		name = murim_wudang_expansion2.0007.c
-		trigger = { martial >= 14 }
-		add_character_modifier = { modifier = formation_coordinator years = 20 }
-		change_martial = 2
-		add_prestige = 350
-		ai_chance = { base = 25 }
-	}
-}
-
-####################################
-# Wudang Taoist Immortality Quest
-####################################
-murim_wudang_expansion2.0008 = {
-	type = character_event
-	title = murim_wudang_expansion2.0008.t
-	desc = murim_wudang_expansion2.0008.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = personality_rational }
-	
-	trigger = {
-		has_trait = wudang_disciple
-		age >= 50
-		learning >= 18
-		NOT = { has_character_flag = immortality_quest_started }
-	}
-	
-	weight_multiplier = { base = 1 modifier = { add = 5 has_character_flag = wudang_alchemy_path } }
-	
-	immediate = { set_character_flag = immortality_quest_started }
-	
-	# Option A: Attempt the Taoist longevity ritual
-	option = {
-		name = murim_wudang_expansion2.0008.a
-		random_list = {
-			20 = {
-				desc = murim_wudang_expansion2.0008.a.success
-				modifier = { add = 15 has_character_flag = wudang_alchemy_path }
-				add_character_modifier = { modifier = taoist_longevity years = 50 }
-				add_prestige = 1000
-				add_piety = 500
-			}
-			40 = {
-				desc = murim_wudang_expansion2.0008.a.partial
-				add_character_modifier = { modifier = extended_vitality years = 20 }
-				add_piety = 200
-			}
-			40 = {
-				desc = murim_wudang_expansion2.0008.a.failure
-				modifier = { add = -15 has_character_flag = wudang_alchemy_path }
-				add_character_modifier = { modifier = aging_backlash years = 10 }
-				add_stress = 40
-			}
+		name = murim_wudang_exp2.0008.c
+		add_trait = murim_independent_sect
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = murim_wudang_independent_path
+			years = -1
 		}
-		ai_chance = { base = 40 }
-	}
-	
-	# Option B: Accept mortality as the Tao
-	option = {
-		name = murim_wudang_expansion2.0008.b
-		add_piety = 300
-		add_character_modifier = { modifier = accepted_mortality_peace years = 30 }
-		add_stress = -30
-		ai_chance = { base = 40 }
-	}
-	
-	# Option C: Seek the legendary Peach of Immortality
-	option = {
-		name = murim_wudang_expansion2.0008.c
-		add_character_modifier = { modifier = peach_seeker_journey years = 5 }
-		add_piety = 100
-		set_character_flag = seeking_immortal_peach
-		hidden_effect = {
-			trigger_event = { id = murim_wudang_expansion2.0009 days = { 365 730 } }
+		every_ruler = {
+			limit = { has_trait = murim_orthodox_faction }
+			add_opinion = {
+				target = root
+				modifier = murim_left_alliance_opinion
+				opinion = -30
+			}
 		}
 		ai_chance = { base = 20 }
 	}
 }
 
-####################################
-# Wudang Immortal Peach Quest Resolution
-####################################
-murim_wudang_expansion2.0009 = {
+# === EVENT 0009: WUDANG TRUE IMMORTAL ASCENSION ===
+murim_wudang_exp2.0009 = {
 	type = character_event
-	title = murim_wudang_expansion2.0009.t
-	desc = murim_wudang_expansion2.0009.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = personality_bold }
-	
-	trigger = { has_character_flag = seeking_immortal_peach }
-	
-	# Option A: Found something - a rare herb
-	option = {
-		name = murim_wudang_expansion2.0009.a
-		add_character_modifier = { modifier = rare_herb_vitality years = 20 }
-		change_prowess = 1
-		add_prestige = 300
-		remove_character_flag = seeking_immortal_peach
-		ai_chance = { base = 40 }
-	}
-	
-	# Option B: Found nothing but gained wisdom
-	option = {
-		name = murim_wudang_expansion2.0009.b
-		add_learning = 3
-		add_piety = 200
-		add_character_modifier = { modifier = journey_wisdom years = 20 }
-		remove_character_flag = seeking_immortal_peach
-		ai_chance = { base = 40 }
-	}
-	
-	# Option C: Was ambushed by bandits during the search
-	option = {
-		name = murim_wudang_expansion2.0009.c
-		add_character_modifier = { modifier = bandit_battle_scars years = 5 }
-		change_prowess = 1
-		add_stress = 20
-		remove_character_flag = seeking_immortal_peach
-		ai_chance = { base = 20 }
-	}
-}
-
-####################################
-# Wudang Ultimate Art - Pure Yang Infinite Sword
-####################################
-murim_wudang_expansion2.0010 = {
-	type = character_event
-	title = murim_wudang_expansion2.0010.t
-	desc = murim_wudang_expansion2.0010.desc
-	theme = martial_arts
-	
-	left_portrait = { character = root animation = personality_bold }
+	title = murim_wudang_exp2.0009.t
+	desc = murim_wudang_exp2.0009.desc
+	theme = mystic
 	
 	trigger = {
-		has_trait = wudang_disciple
-		prowess >= 25
-		learning >= 18
-		age >= 45
-		NOT = { has_character_flag = pure_yang_sword_attempted }
+		has_trait = murim_clan_wudang
+		has_trait = murim_rank_absolute
+		age >= 60
+		learning >= 25
 	}
 	
-	weight_multiplier = { base = 1 modifier = { add = 5 has_trait = wudang_sect_leader } }
-	
-	immediate = { set_character_flag = pure_yang_sword_attempted }
-	
-	# Option A: Attempt the ultimate transcendence
+	# Option A: Attempt True Immortal Ascension
 	option = {
-		name = murim_wudang_expansion2.0010.a
+		name = murim_wudang_exp2.0009.a
 		random_list = {
-			25 = {
-				desc = murim_wudang_expansion2.0010.a.success
-				modifier = { add = 20 prowess >= 30 }
-				add_trait = pure_yang_sword_god
-				change_prowess = 5
+			30 = {
+				# True ascension - becomes legendary
+				add_trait = murim_rank_true_immortal
+				add_health = 5
+				add_prowess = 10
+				add_prestige = 5000
+				add_character_modifier = {
+					modifier = murim_wudang_true_immortal
+					years = -1
+				}
+			}
+			40 = {
+				# Partial - achieves enlightenment but not immortality
+				add_trait = murim_enlightened
+				add_health = 2
+				add_learning_skill = 5
 				add_prestige = 2000
-				add_piety = 1000
-				add_character_modifier = { modifier = transcendent_taoist years = 50 }
 			}
-			35 = {
-				desc = murim_wudang_expansion2.0010.a.partial
-				change_prowess = 2
-				add_prestige = 500
-				add_character_modifier = { modifier = incomplete_pure_yang years = 20 }
-			}
-			40 = {
-				desc = murim_wudang_expansion2.0010.a.backlash
-				modifier = { add = -20 prowess >= 30 }
-				add_character_modifier = { modifier = qi_deviation_severe years = 10 }
-				change_prowess = -3
-				add_stress = 50
+			30 = {
+				# Failure - qi backlash
+				add_health = -6
+				add_trait = murim_combat_trauma_shattered_dantian
+				# May die
+				random = {
+					chance = 50
+					death = { death_reason = death_cultivation_failure }
+				}
 			}
 		}
 		ai_chance = { base = 50 }
 	}
 	
-	# Option B: Pass the technique to a worthy student
+	# Option B: Pass the knowledge to a successor
 	option = {
-		name = murim_wudang_expansion2.0010.b
-		add_piety = 300
-		add_prestige = 300
-		add_character_modifier = { modifier = teacher_of_ultimate_art years = 30 }
+		name = murim_wudang_exp2.0009.b
+		random_child = {
+			limit = { has_trait = murim_clan_wudang }
+			add_trait = murim_technique_immortal_insight
+			add_learning_skill = 5
+			add_martial_skill = 3
+		}
+		add_prestige = 1000
+		add_piety = 1500
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Seal the immortal knowledge away
+	option = {
+		name = murim_wudang_exp2.0009.c
+		add_piety = 2000
+		add_character_modifier = {
+			modifier = murim_wudang_sealed_knowledge
+			years = -1
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+# === EVENT 0010: WUDANG MOUNTAIN DEFENSE - SECT UNDER SIEGE ===
+murim_wudang_exp2.0010 = {
+	type = character_event
+	title = murim_wudang_exp2.0010.t
+	desc = murim_wudang_exp2.0010.desc
+	theme = war
+	
+	trigger = {
+		has_trait = murim_clan_wudang
+		has_trait = murim_clan_leader
+		any_war_enemy = {
+			has_trait = murim_unorthodox_faction
+		}
+	}
+	
+	# Option A: Activate the Seven Star Formation defense
+	option = {
+		name = murim_wudang_exp2.0010.a
+		add_character_modifier = {
+			modifier = murim_wudang_seven_star_formation
+			years = 2
+		}
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang }
+			add_prowess = 3
+			add_character_modifier = {
+				modifier = murim_formation_participant
+				years = 2
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Single combat challenge to enemy leader
+	option = {
+		name = murim_wudang_exp2.0010.b
+		random_war_enemy = {
+			limit = { has_trait = murim_clan_leader }
+			save_scope_as = enemy_leader
+		}
+		duel = {
+			skill = prowess
+			target = scope:enemy_leader
+		}
+		add_prestige = 1000
 		ai_chance = { base = 30 }
 	}
 	
-	# Option C: Seal the technique - too dangerous
+	# Option C: Evacuate disciples, sacrifice yourself
 	option = {
-		name = murim_wudang_expansion2.0010.c
-		add_piety = 200
-		add_character_modifier = { modifier = sealed_technique_guardian years = 30 }
-		add_prestige = 200
+		name = murim_wudang_exp2.0010.c
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang }
+			add_character_modifier = {
+				modifier = murim_wudang_evacuated_safely
+				years = 5
+			}
+		}
+		add_prestige = 2000
+		add_health = -8
+		random = {
+			chance = 60
+			death = { death_reason = death_heroic_sacrifice }
+		}
 		ai_chance = { base = 20 }
 	}
 }
