@@ -1,0 +1,549 @@
+namespace = murim_entry_exp
+
+# Entry Path Expansion Events
+# 4 paths into the martial world expanded with follow-ups
+# Path 1: Discovered by Sect Scout
+# Path 2: Awakened by Near-Death Experience
+# Path 3: Inherited from Hidden Bloodline
+# Path 4: Self-Taught from Found Manual
+
+###################################
+# Path 1 Expansion: Scout Brings You to Clan
+###################################
+murim_entry_exp.0001 = {
+	type = character_event
+	title = murim_entry_exp.0001.t
+	desc = murim_entry_exp.0001.desc
+	theme = education
+	
+	trigger = {
+		has_character_flag = murim_entry_scout_discovered
+		NOT = { has_character_flag = entry_scout_followup }
+		age >= 12
+	}
+	
+	immediate = {
+		add_character_flag = entry_scout_followup
+	}
+	
+	option = {
+		name = murim_entry_exp.0001.a
+		# Accept invitation to Mount Hua Sect
+		add_trait = trait_mount_hua_sect
+		add_trait = murim_martial_artist
+		add_trait = murim_rank_unranked
+		add_prowess = 2
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_new_disciple_eagerness
+			years = 3
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0001.b
+		# Accept invitation to Shaolin Temple
+		add_trait = trait_shaolin_temple
+		add_trait = murim_martial_artist
+		add_trait = murim_rank_unranked
+		add_prowess = 2
+		add_piety = 100
+		add_character_modifier = {
+			modifier = murim_new_disciple_eagerness
+			years = 3
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0001.c
+		# Accept invitation to Beggar Sect
+		add_trait = trait_beggar_sect
+		add_trait = murim_martial_artist
+		add_trait = murim_rank_unranked
+		add_prowess = 1
+		add_intrigue = 2
+		add_character_modifier = {
+			modifier = murim_new_disciple_eagerness
+			years = 3
+		}
+		ai_chance = { base = 15 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0001.d
+		# Refuse all - stay in normal life
+		add_stress = 10
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Path 2 Expansion: Near-Death Awakening Follow-up
+###################################
+murim_entry_exp.0002 = {
+	type = character_event
+	title = murim_entry_exp.0002.t
+	desc = murim_entry_exp.0002.desc
+	theme = martial
+	
+	trigger = {
+		has_character_flag = murim_entry_near_death
+		has_trait = murim_martial_artist
+		NOT = { has_character_flag = near_death_followup }
+	}
+	
+	immediate = {
+		add_character_flag = near_death_followup
+	}
+	
+	option = {
+		name = murim_entry_exp.0002.a
+		# The qi surge was wild - seek a mentor to control it
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				OR = {
+					has_trait = murim_rank_first_rate
+					has_trait = murim_rank_peak_master
+				}
+			}
+			save_scope_as = potential_mentor
+			add_opinion = {
+				target = root
+				modifier = murim_mentor_interest
+				opinion = 15
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_wild_qi_awakening
+			years = 5
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0002.b
+		# Try to control it alone - dangerous
+		random_list = {
+			30 = {
+				add_prowess = 4
+				add_character_modifier = {
+					modifier = murim_self_controlled_qi
+					years = 10
+				}
+			}
+			40 = {
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = murim_unstable_qi
+					years = 5
+				}
+			}
+			30 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_qi_deviation
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Path 3 Expansion: Bloodline Secret Revealed
+###################################
+murim_entry_exp.0003 = {
+	type = character_event
+	title = murim_entry_exp.0003.t
+	desc = murim_entry_exp.0003.desc
+	theme = faith
+	
+	trigger = {
+		has_character_flag = murim_entry_bloodline
+		has_trait = murim_martial_artist
+		NOT = { has_character_flag = bloodline_secret_revealed }
+	}
+	
+	immediate = {
+		add_character_flag = bloodline_secret_revealed
+	}
+	
+	option = {
+		name = murim_entry_exp.0003.a
+		# Your ancestor was a transcendent master
+		add_character_modifier = {
+			modifier = murim_transcendent_bloodline
+			years = 20
+		}
+		add_prowess = 3
+		add_prestige = 300
+		# Other clans want your bloodline
+		every_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_bloodline_interest
+				opinion = 20
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0003.b
+		# Your ancestor was a notorious villain
+		add_character_modifier = {
+			modifier = murim_villain_bloodline
+			years = 20
+		}
+		add_prowess = 4
+		add_dread = 20
+		# Orthodox clans distrust you
+		every_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				OR = {
+					has_trait = trait_mount_hua_sect
+					has_trait = trait_shaolin_temple
+					has_trait = trait_wudang_sect
+				}
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_villain_bloodline_distrust
+				opinion = -30
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+###################################
+# Path 4 Expansion: Manual Study Progress
+###################################
+murim_entry_exp.0004 = {
+	type = character_event
+	title = murim_entry_exp.0004.t
+	desc = murim_entry_exp.0004.desc
+	theme = education
+	
+	trigger = {
+		has_character_flag = murim_entry_found_manual
+		has_trait = murim_martial_artist
+		NOT = { has_character_flag = manual_study_progress }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = manual_study_progress
+			days = 730
+		}
+	}
+	
+	option = {
+		name = murim_entry_exp.0004.a
+		# Study intensely - risk qi deviation
+		random_list = {
+			35 = {
+				# Breakthrough! Decoded the manual
+				add_prowess = 5
+				add_learning = 2
+				add_character_modifier = {
+					modifier = murim_manual_decoded
+					years = 10
+				}
+			}
+			35 = {
+				# Partial understanding
+				add_prowess = 2
+				add_learning = 1
+			}
+			30 = {
+				# Qi deviation from misreading
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_qi_deviation
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0004.b
+		# Study carefully and slowly
+		add_prowess = 2
+		add_learning = 2
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Entry Path: First Real Fight
+# Universal for all entry paths
+###################################
+murim_entry_exp.0005 = {
+	type = character_event
+	title = murim_entry_exp.0005.t
+	desc = murim_entry_exp.0005.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_trait = murim_rank_unranked
+		OR = {
+			has_character_flag = murim_entry_scout_discovered
+			has_character_flag = murim_entry_near_death
+			has_character_flag = murim_entry_bloodline
+			has_character_flag = murim_entry_found_manual
+		}
+		NOT = { has_character_flag = first_real_fight }
+	}
+	
+	immediate = {
+		add_character_flag = first_real_fight
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				has_trait = murim_rank_unranked
+				NOT = { this = root }
+			}
+			save_scope_as = first_opponent
+		}
+	}
+	
+	option = {
+		name = murim_entry_exp.0005.a
+		# Fight with everything you have
+		duel = {
+			skill = prowess
+			target = scope:first_opponent
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_entry_exp.0005.victory
+				add_prestige = 100
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = murim_first_victory
+					years = 3
+				}
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_entry_exp.0005.defeat
+				add_trait = wounded_1
+				add_prowess = 1
+				add_character_modifier = {
+					modifier = murim_first_defeat_lesson
+					years = 2
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0005.b
+		# Avoid the fight
+		add_stress = 15
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Entry Path: Choose Your Specialization
+###################################
+murim_entry_exp.0006 = {
+	type = character_event
+	title = murim_entry_exp.0006.t
+	desc = murim_entry_exp.0006.desc
+	theme = education
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_trait = murim_rank_unranked
+		has_character_flag = first_real_fight
+		NOT = { has_character_flag = specialization_chosen }
+	}
+	
+	immediate = {
+		add_character_flag = specialization_chosen
+	}
+	
+	option = {
+		name = murim_entry_exp.0006.a
+		# External martial arts - body cultivation
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = murim_external_arts_focus
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0006.b
+		# Internal cultivation - qi development
+		add_learning = 2
+		add_prowess = 1
+		add_character_modifier = {
+			modifier = murim_internal_arts_focus
+			years = 10
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0006.c
+		# Weapon mastery
+		add_prowess = 2
+		add_martial = 1
+		add_character_modifier = {
+			modifier = murim_weapon_arts_focus
+			years = 10
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0006.d
+		# Poison and medicine
+		add_intrigue = 2
+		add_learning = 1
+		add_character_modifier = {
+			modifier = murim_poison_medicine_focus
+			years = 10
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Entry Path: Encounter with the Jianghu
+###################################
+murim_entry_exp.0007 = {
+	type = character_event
+	title = murim_entry_exp.0007.t
+	desc = murim_entry_exp.0007.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_character_flag = specialization_chosen
+		NOT = { has_character_flag = jianghu_encounter }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = jianghu_encounter
+			days = 1095
+		}
+	}
+	
+	option = {
+		name = murim_entry_exp.0007.a
+		# Help a traveling merchant ambushed by bandits
+		random_list = {
+			50 = {
+				add_prestige = 100
+				add_gold = 50
+				add_prowess = 1
+				add_character_modifier = {
+					modifier = murim_jianghu_hero_reputation
+					years = 5
+				}
+			}
+			30 = {
+				add_prestige = 50
+				add_trait = wounded_1
+			}
+			20 = {
+				# Bandits were from a clan - you made enemies
+				add_prestige = 50
+				add_character_flag = {
+					flag = murim_bandit_clan_enemy
+					days = 1825
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0007.b
+		# Mind your own business
+		add_stress = 10
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Entry Path: First Rank Breakthrough Attempt
+###################################
+murim_entry_exp.0008 = {
+	type = character_event
+	title = murim_entry_exp.0008.t
+	desc = murim_entry_exp.0008.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_trait = murim_rank_unranked
+		prowess >= 10
+		NOT = { has_character_flag = first_rank_attempt }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = first_rank_attempt
+			days = 365
+		}
+	}
+	
+	option = {
+		name = murim_entry_exp.0008.a
+		# Attempt breakthrough to Third-Rate
+		random_list = {
+			40 = {
+				# Successful breakthrough!
+				remove_trait = murim_rank_unranked
+				add_trait = murim_rank_third_rate
+				add_prowess = 3
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_breakthrough_euphoria
+					years = 1
+				}
+			}
+			35 = {
+				# Almost there - need more training
+				add_prowess = 1
+				add_prestige = 50
+			}
+			25 = {
+				# Qi deviation during attempt
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = murim_qi_deviation
+					years = 2
+				}
+				add_stress = 30
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_entry_exp.0008.b
+		# Not ready - keep training
+		add_prowess = 1
+		ai_chance = { base = 30 }
+	}
+}
