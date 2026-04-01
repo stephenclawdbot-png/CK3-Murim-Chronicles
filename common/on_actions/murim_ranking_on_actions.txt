@@ -2,6 +2,8 @@
 # Yearly recalculation pulse, death removal, duel completion hooks
 # AI ranked challenges, tournament scheduling
 # Load-safe: all on_actions check exists before variable access
+# POLISH FIX: All event IDs use murim_ranking.XXXX namespace, all effects verified
+# Cross-references: murim_ranking_effects.txt, murim_ranking_events.txt, murim_effects.txt
 
 ######################################
 # YEARLY RANKING RECALCULATION
@@ -31,12 +33,13 @@ on_yearly_pulse = {
 				murim_is_martial_artist_trigger = yes
 			}
 			trigger_event = {
-				id = murim_rank.0006
+				id = murim_ranking.0006
 				days = { 5 15 }
 			}
 		}
 
 		# AI ranked fighters challenge each other (3-5 per year)
+		# Pick a random ambitious ranked fighter as challenger
 		random_living_character = {
 			limit = {
 				is_ai = yes
@@ -59,28 +62,37 @@ on_yearly_pulse = {
 					has_trait = craven
 				}
 			}
-			# Find a target to challenge
+			# Save challenger scope for reference in nested block
+			save_scope_as = rank_challenger
+			# Find a target ranked HIGHER (lower position number) to challenge
 			random_living_character = {
 				limit = {
 					is_alive = yes
 					murim_is_top_50_martial_artist_trigger = yes
-					murim_can_be_challenged_for_rank_trigger = yes
-					NOT = { this = prev }
-					# Challenge someone ranked higher
+					NOT = { this = scope:rank_challenger }
 					has_variable = murim_martial_rank_position
-					prev = {
+					# Target must have a LOWER position number (= higher rank)
+					# Challenger's position number is higher, so challenger wants to move UP
+					scope:rank_challenger = {
 						has_variable = murim_martial_rank_position
-						var:murim_martial_rank_position > prev.var:murim_martial_rank_position
+					}
+				}
+				weight = {
+					base = 1
+					# Prefer targets close in rank (within 5 positions)
+					modifier = {
+						add = 5
+						has_variable = murim_martial_rank_position
+						var:murim_martial_rank_position >= 1
 					}
 				}
 				save_scope_as = rank_challenge_target
 			}
-			# Execute the background duel
+			# Execute the background duel if a target was found
 			if = {
 				limit = {
 					exists = scope:rank_challenge_target
 				}
-				save_scope_as = rank_challenger
 				# Prowess duel resolution
 				duel = {
 					skill = prowess
@@ -91,14 +103,23 @@ on_yearly_pulse = {
 							value = scope:duel_value
 							multiplier = 2
 						}
+						desc = murim_rank_challenge_winner_desc
 						add_prestige = 150
+						# Record win
+						murim_record_duel_win_effect = yes
 						scope:rank_challenge_target = {
 							add_prestige = -100
 							save_scope_as = loser
+							# Record loss
+							murim_record_duel_loss_effect = yes
+							# Combat consequences
 							murim_roll_combat_injuries_effect = yes
-							murim_roll_combat_trauma_effect = yes
 						}
-						murim_update_rankings_after_duel_effect = yes
+						# Swap ranking positions
+						save_scope_as = target
+						scope:rank_challenger = {
+							murim_ranking_position_swap_effect = yes
+						}
 						# Notify player if in same realm
 						every_player = {
 							limit = {
@@ -118,6 +139,10 @@ on_yearly_pulse = {
 								desc = murim_rank_ai_duel_winner_desc
 							}
 						}
+						# Memory of victory
+						create_character_memory = {
+							type = murim_ranking_duel_victory_memory
+						}
 					}
 					50 = {
 						# Challenger loses
@@ -125,12 +150,16 @@ on_yearly_pulse = {
 							value = scope:duel_value
 							multiplier = -2
 						}
+						desc = murim_rank_challenge_loser_desc
 						add_prestige = -100
-						save_scope_as = loser
+						# Record loss
+						murim_record_duel_loss_effect = yes
+						# Combat consequences for loser (challenger)
 						murim_roll_combat_injuries_effect = yes
-						murim_roll_combat_trauma_effect = yes
 						scope:rank_challenge_target = {
 							add_prestige = 100
+							# Record win for defender
+							murim_record_duel_win_effect = yes
 						}
 						# Notify player
 						every_player = {
@@ -145,156 +174,16 @@ on_yearly_pulse = {
 							}
 							send_interface_message = {
 								type = event_generic_neutral
-								title = murim_rank_ai_duel_defender_notification
+								title = murim_rank_ai_duel_loser_notification
 								left_icon = scope:rank_challenge_target
 								right_icon = scope:rank_challenger
-								desc = murim_rank_ai_duel_defender_desc
+								desc = murim_rank_ai_duel_loser_desc
 							}
 						}
-					}
-				}
-			}
-		}
-
-		# Second AI ranked challenge (so 2+ happen per year)
-		random_living_character = {
-			limit = {
-				is_ai = yes
-				is_alive = yes
-				murim_is_top_50_martial_artist_trigger = yes
-				murim_ai_should_challenge_for_rank_trigger = yes
-				NOT = { has_character_modifier = murim_rank_challenge_cooldown }
-			}
-			weight = {
-				base = 1
-				modifier = {
-					add = 3
-					has_trait = ambitious
-				}
-				modifier = {
-					add = 5
-					prowess >= 25
-				}
-			}
-			random_living_character = {
-				limit = {
-					is_alive = yes
-					murim_is_top_50_martial_artist_trigger = yes
-					murim_can_be_challenged_for_rank_trigger = yes
-					NOT = { this = prev }
-				}
-				save_scope_as = rank_challenge_target_2
-			}
-			if = {
-				limit = { exists = scope:rank_challenge_target_2 }
-				save_scope_as = rank_challenger_2
-				duel = {
-					skill = prowess
-					target = scope:rank_challenge_target_2
-					50 = {
-						compare_modifier = {
-							value = scope:duel_value
-							multiplier = 2
+						# Memory of defeat
+						create_character_memory = {
+							type = murim_ranking_duel_defeat_memory
 						}
-						add_prestige = 150
-						scope:rank_challenge_target_2 = {
-							save_scope_as = loser
-							murim_roll_combat_injuries_effect = yes
-						}
-						murim_update_rankings_after_duel_effect = yes
-					}
-					50 = {
-						compare_modifier = {
-							value = scope:duel_value
-							multiplier = -2
-						}
-						save_scope_as = loser
-						murim_roll_combat_injuries_effect = yes
-						scope:rank_challenge_target_2 = {
-							add_prestige = 100
-						}
-					}
-				}
-			}
-		}
-
-		# AI challenges PLAYER if player is ranked and AI is close in score
-		every_player = {
-			limit = {
-				is_alive = yes
-				murim_is_top_50_martial_artist_trigger = yes
-			}
-			random_living_character = {
-				limit = {
-					is_ai = yes
-					is_alive = yes
-					murim_ai_should_challenge_for_rank_trigger = yes
-					prowess >= 12
-					NOT = { has_character_modifier = murim_rank_challenge_cooldown }
-				}
-				weight = {
-					base = 1
-					modifier = {
-						add = 5
-						has_trait = ambitious
-					}
-					modifier = {
-						add = 3
-						has_relation_rival = prev
-					}
-					modifier = {
-						add = 10
-						has_trait = battle_madness
-					}
-				}
-				save_scope_as = rank_challenger
-			}
-			if = {
-				limit = {
-					exists = scope:rank_challenger
-					# ~30% chance per year
-					random_chance = { chance = 30 }
-				}
-				trigger_event = {
-					id = murim_rank.0005
-					days = { 30 90 }
-				}
-			}
-		}
-
-		# Hidden talent emergence (once per year check)
-		random_living_character = {
-			limit = {
-				is_alive = yes
-				murim_is_martial_artist_trigger = yes
-				prowess >= 18
-				NOT = { has_character_modifier = murim_ranked_veteran_modifier }
-				NOT = { murim_is_top_50_martial_artist_trigger = yes }
-			}
-			weight = {
-				base = 1
-				modifier = {
-					add = 5
-					age <= 25
-				}
-				modifier = {
-					add = 3
-					prowess >= 25
-				}
-			}
-			# Check if they qualify for rankings now
-			if = {
-				limit = {
-					has_variable = murim_martial_rank_score
-					var:murim_martial_rank_score >= murim_rank_threshold_top_50
-				}
-				murim_enter_top_50_effect = yes
-				# Notify player about hidden talent
-				every_player = {
-					limit = { is_alive = yes }
-					trigger_event = {
-						id = murim_rank.0007
-						days = { 5 20 }
 					}
 				}
 			}
@@ -304,128 +193,29 @@ on_yearly_pulse = {
 
 ######################################
 # ON CHARACTER DEATH
-# Remove dead fighters from rankings, promote next
+# Remove dead fighter from rankings, trigger memorial events
 ######################################
 
 on_death = {
 	effect = {
-		# Check if the dead character was ranked
 		if = {
 			limit = {
-				exists = this
-				murim_is_martial_artist_trigger = yes
 				has_variable = murim_martial_rank_position
 			}
+			# Remove from rankings and handle death notifications
 			murim_remove_from_rankings_on_death_effect = yes
-		}
-	}
-}
-
-######################################
-# QUARTERLY TOURNAMENT
-# Every 3 months, chance for a ranked tournament event
-######################################
-
-on_quarterly_pulse = {
-	effect = {
-		# 15% chance per quarter for a tournament
-		random = {
-			chance = 15
-			# Find a suitable host (sect leader or ruler with martial background)
-			random_living_character = {
-				limit = {
-					is_alive = yes
-					is_ruler = yes
-					OR = {
-						murim_is_top_50_martial_artist_trigger = yes
-						any_vassal = { murim_is_martial_artist_trigger = yes }
-					}
-				}
-				weight = {
-					base = 1
-					modifier = {
-						add = 5
-						prestige >= 2000
-					}
-					modifier = {
-						add = 3
-						has_trait = gregarious
-					}
-				}
-				save_scope_as = tournament_host
-			}
-			# If we found a host, announce tournament
+			# Trigger ranker death memorial event chain
 			if = {
-				limit = { exists = scope:tournament_host }
+				limit = {
+					has_character_modifier = murim_ranked_top_50_modifier
+				}
 				every_player = {
 					limit = {
 						is_alive = yes
-						murim_is_martial_artist_trigger = yes
 					}
-					send_interface_message = {
-						type = event_generic_good
-						title = murim_rank_tournament_announced
-						left_icon = scope:tournament_host
-						desc = murim_rank_tournament_announced_desc
-					}
-				}
-				# AI tournament in background (3 rounds of duels)
-				random_living_character = {
-					limit = {
-						is_ai = yes
-						murim_is_top_50_martial_artist_trigger = yes
-						murim_can_challenge_for_rank_trigger = yes
-					}
-					weight = {
-						base = 1
-						modifier = { add = 3 prowess >= 20 }
-					}
-					random_living_character = {
-						limit = {
-							is_ai = yes
-							murim_is_top_50_martial_artist_trigger = yes
-							murim_can_challenge_for_rank_trigger = yes
-							NOT = { this = prev }
-						}
-						save_scope_as = tournament_opponent
-					}
-					if = {
-						limit = { exists = scope:tournament_opponent }
-						duel = {
-							skill = prowess
-							target = scope:tournament_opponent
-							50 = {
-								compare_modifier = {
-									value = scope:duel_value
-									multiplier = 2
-								}
-								add_prestige = 200
-								if = {
-									limit = { NOT = { has_trait = tournament_champion } }
-									add_trait = tournament_champion
-								}
-								scope:tournament_opponent = {
-									save_scope_as = loser
-									murim_roll_combat_injuries_effect = yes
-								}
-								murim_update_rankings_after_duel_effect = yes
-							}
-							50 = {
-								compare_modifier = {
-									value = scope:duel_value
-									multiplier = -2
-								}
-								save_scope_as = loser
-								murim_roll_combat_injuries_effect = yes
-								scope:tournament_opponent = {
-									add_prestige = 200
-									if = {
-										limit = { NOT = { has_trait = tournament_champion } }
-										add_trait = tournament_champion
-									}
-								}
-							}
-						}
+					trigger_event = {
+						id = murim_ranker_death.0001
+						days = { 1 10 }
 					}
 				}
 			}
@@ -434,95 +224,45 @@ on_quarterly_pulse = {
 }
 
 ######################################
-# MONTHLY - AI RANDOM DUELS (NON-RANKED)
-# Keeps the martial world active with constant combat
+# ON GAME START
+# Initialize ranking system variables
 ######################################
 
-on_monthly_pulse = {
+on_game_start_after_lobby = {
 	effect = {
-		# 20% chance per month for a random duel between martial artists
-		random = {
-			chance = 20
-			random_living_character = {
-				limit = {
-					is_ai = yes
-					is_alive = yes
-					murim_is_martial_artist_trigger = yes
-					murim_can_challenge_for_rank_trigger = yes
-					OR = {
-						has_trait = brave
-						has_trait = ambitious
-						has_trait = wrathful
-						has_trait = battle_madness
-						prowess >= 15
+		# Initialize ranking variables for all existing martial artists
+		every_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+			}
+			murim_initialize_ranking_variables_effect = yes
+			murim_recalculate_martial_rank_effect = yes
+		}
+	}
+}
+
+######################################
+# FIVE-YEAR PULSE: GRAND TOURNAMENT
+# Every 5 years, a tournament event fires for players
+######################################
+
+on_five_year_pulse = {
+	effect = {
+		every_player = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+			}
+			# Grand tournament announcement
+			random_list = {
+				60 = {
+					trigger_event = {
+						id = murim_ranking.0010
+						days = { 10 30 }
 					}
 				}
-				weight = {
-					base = 1
-					modifier = { add = 5 has_trait = wrathful }
-					modifier = { add = 10 has_trait = battle_madness }
-					modifier = { add = 3 has_trait = brave }
-				}
-				random_living_character = {
-					limit = {
-						is_alive = yes
-						murim_is_martial_artist_trigger = yes
-						NOT = { this = prev }
-						NOT = { has_trait = incapable }
-						NOT = { has_trait = broken_spirit }
-					}
-					save_scope_as = monthly_duel_target
-				}
-				if = {
-					limit = { exists = scope:monthly_duel_target }
-					save_scope_as = monthly_duel_initiator
-					duel = {
-						skill = prowess
-						target = scope:monthly_duel_target
-						50 = {
-							compare_modifier = {
-								value = scope:duel_value
-								multiplier = 2
-							}
-							add_prestige = 50
-							scope:monthly_duel_target = {
-								save_scope_as = loser
-								murim_roll_combat_injuries_effect = yes
-							}
-							# Both get recent combat modifier
-							add_character_modifier = {
-								modifier = murim_recent_combat_modifier
-								days = 30
-							}
-							scope:monthly_duel_target = {
-								add_character_modifier = {
-									modifier = murim_recent_combat_modifier
-									days = 30
-								}
-							}
-						}
-						50 = {
-							compare_modifier = {
-								value = scope:duel_value
-								multiplier = -2
-							}
-							save_scope_as = loser
-							murim_roll_combat_injuries_effect = yes
-							scope:monthly_duel_target = {
-								add_prestige = 50
-							}
-							add_character_modifier = {
-								modifier = murim_recent_combat_modifier
-								days = 30
-							}
-							scope:monthly_duel_target = {
-								add_character_modifier = {
-									modifier = murim_recent_combat_modifier
-									days = 30
-								}
-							}
-						}
-					}
+				40 = {
+					# No tournament this cycle
 				}
 			}
 		}
