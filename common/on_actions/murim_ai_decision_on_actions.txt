@@ -1,0 +1,546 @@
+# Murim Chronicles Phase 3 - AI Decision On Actions
+# AI NPCs autonomously: attempt breakthroughs, join/leave sects, challenge rivals,
+# pursue forbidden arts, teach disciples. Personality-driven behavior.
+
+######################################
+# YEARLY AI DECISION PULSE
+######################################
+
+on_yearly_pulse = {
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				age >= 16
+				has_character_flag = murim_initiated
+				is_ai = yes
+			}
+
+			# ==============================
+			# BREAKTHROUGH ATTEMPTS
+			# ==============================
+			if = {
+				limit = {
+					murim_can_attempt_breakthrough_trigger = yes
+					NOT = { has_character_flag = murim_breakthrough_cooldown }
+					NOT = { has_character_flag = murim_breakthrough_in_progress }
+				}
+				random = {
+					chance = 20
+					modifier = {
+						add = 25
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 15
+						prowess >= 18
+					}
+					modifier = {
+						add = 10
+						has_trait = diligent
+					}
+					modifier = {
+						add = -15
+						has_trait = lazy
+					}
+					modifier = {
+						add = -10
+						has_trait = craven
+					}
+					modifier = {
+						add = 10
+						exists = var:murim_cultivation_xp
+						var:murim_cultivation_xp >= 200
+					}
+					trigger_event = {
+						id = murim_breakthrough.0001
+						days = { 30 180 }
+					}
+				}
+			}
+
+			# ==============================
+			# SECT JOINING
+			# ==============================
+			if = {
+				limit = {
+					NOT = { has_character_flag = murim_sect_member }
+					NOT = { has_character_flag = murim_sect_recruitment_cooldown }
+					NOT = { has_character_flag = murim_cultivator_pariah }
+					prowess >= 8
+				}
+				random = {
+					chance = 15
+					modifier = {
+						add = 20
+						has_trait = gregarious
+					}
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = -20
+						has_trait = shy
+					}
+					modifier = {
+						add = -10
+						has_trait = paranoid
+					}
+					modifier = {
+						add = 10
+						age < 25
+					}
+					trigger_event = {
+						id = murim_sect.0001
+						days = { 30 180 }
+					}
+				}
+			}
+
+			# ==============================
+			# SECT DEPARTURE (voluntary)
+			# ==============================
+			if = {
+				limit = {
+					has_character_flag = murim_sect_member
+					NOT = { has_character_flag = murim_sect_leader }
+					OR = {
+						has_trait = ambitious
+						has_trait = arrogant
+						has_trait = content
+					}
+				}
+				random = {
+					chance = 5
+					modifier = {
+						add = 10
+						has_trait = arrogant
+						has_character_flag = murim_sect_outer_disciple
+					}
+					modifier = {
+						add = 15
+						has_trait = ambitious
+						prowess >= 20
+						has_character_flag = murim_sect_outer_disciple
+					}
+					modifier = {
+						add = -10
+						has_trait = loyal
+					}
+					# Leave sect peacefully
+					remove_character_flag = murim_sect_member
+					remove_character_flag = murim_sect_outer_disciple
+					remove_character_flag = murim_sect_inner_disciple
+					remove_character_flag = murim_sect_core_disciple
+					remove_character_modifier = murim_sect_inner_disciple_status
+					remove_character_modifier = murim_sect_core_disciple_status
+					remove_character_modifier = murim_sect_probationary_status
+					add_prestige = -100
+				}
+			}
+
+			# ==============================
+			# CHALLENGE RIVALS
+			# ==============================
+			if = {
+				limit = {
+					prowess >= 12
+					NOT = { has_character_flag = murim_duel_cooldown }
+					any_relation = {
+						type = rival
+						has_character_flag = murim_initiated
+						is_alive = yes
+					}
+				}
+				random = {
+					chance = 25
+					modifier = {
+						add = 30
+						has_trait = wrathful
+					}
+					modifier = {
+						add = 20
+						has_trait = vengeful
+					}
+					modifier = {
+						add = 15
+						has_trait = brave
+					}
+					modifier = {
+						add = -20
+						has_trait = craven
+					}
+					modifier = {
+						add = -15
+						has_trait = forgiving
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					random_relation = {
+						type = rival
+						limit = {
+							has_character_flag = murim_initiated
+							is_alive = yes
+						}
+						save_scope_as = duel_challenger
+					}
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 14 90 }
+					}
+				}
+			}
+
+			# ==============================
+			# PURSUE FORBIDDEN ARTS
+			# ==============================
+			if = {
+				limit = {
+					NOT = { has_trait = murim_forbidden_art_consumed }
+					OR = {
+						# Already corrupted, may deepen
+						has_trait = murim_forbidden_art_initiate
+						has_trait = murim_forbidden_art_practitioner
+						has_trait = murim_forbidden_art_master
+						# Personality makes them seek dark arts
+						AND = {
+							has_trait = ambitious
+							intrigue >= 12
+						}
+						AND = {
+							has_trait = deceitful
+							intrigue >= 14
+						}
+						AND = {
+							has_trait = sadistic
+							prowess >= 10
+						}
+					}
+				}
+				random = {
+					chance = 8
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = deceitful
+					}
+					modifier = {
+						add = 20
+						has_trait = sadistic
+					}
+					modifier = {
+						add = -15
+						has_trait = just
+					}
+					modifier = {
+						add = -20
+						has_trait = compassionate
+					}
+					modifier = {
+						add = -10
+						has_trait = zealous
+					}
+					modifier = {
+						add = 10
+						has_trait = murim_forbidden_art_practitioner
+					}
+					modifier = {
+						add = 15
+						has_trait = murim_forbidden_art_master
+					}
+					# Deepen corruption
+					murim_apply_forbidden_corruption_effect = yes
+				}
+			}
+
+			# ==============================
+			# TEACH DISCIPLES
+			# ==============================
+			if = {
+				limit = {
+					prowess >= 16
+					age >= 30
+					OR = {
+						has_trait = compassionate
+						has_trait = patient
+						has_trait = zealous
+						has_character_flag = murim_sect_core_disciple
+						has_character_flag = murim_sect_leader
+					}
+					any_courtier = {
+						has_character_flag = murim_initiated
+						age < root.age
+						prowess < root.prowess
+					}
+				}
+				random = {
+					chance = 30
+					modifier = {
+						add = 25
+						has_trait = compassionate
+					}
+					modifier = {
+						add = 20
+						has_trait = patient
+					}
+					modifier = {
+						add = 15
+						has_character_flag = murim_sect_leader
+					}
+					modifier = {
+						add = -15
+						has_trait = callous
+					}
+					modifier = {
+						add = -20
+						has_trait = paranoid
+					}
+					# Teach a random disciple
+					random_courtier = {
+						limit = {
+							has_character_flag = murim_initiated
+							age < root.age
+							prowess < root.prowess
+						}
+						change_variable = {
+							name = murim_cultivation_xp
+							add = 25
+						}
+						add_opinion = {
+							target = root
+							modifier = murim_grateful_student
+						}
+					}
+					add_piety = 50
+					add_prestige = 25
+				}
+			}
+
+			# ==============================
+			# SECT LEADERSHIP CHALLENGE
+			# ==============================
+			if = {
+				limit = {
+					has_character_flag = murim_sect_core_disciple
+					NOT = { has_character_flag = murim_sect_leader }
+					prowess >= 20
+					has_trait = ambitious
+					age >= 30
+				}
+				random = {
+					chance = 5
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						prowess >= 25
+					}
+					modifier = {
+						add = -10
+						has_trait = content
+					}
+					modifier = {
+						add = -15
+						has_trait = loyal
+					}
+					set_character_flag = murim_sect_leadership_challenger
+					trigger_event = {
+						id = murim_sect.0310
+						days = { 30 90 }
+					}
+				}
+			}
+
+			# ==============================
+			# HOST TOURNAMENT (rulers only)
+			# ==============================
+			if = {
+				limit = {
+					is_ruler = yes
+					prestige >= 500
+					gold >= 100
+					NOT = { has_character_flag = murim_tournament_cooldown }
+					OR = {
+						has_trait = gregarious
+						has_trait = ambitious
+						diplomacy >= 14
+					}
+				}
+				random = {
+					chance = 10
+					modifier = {
+						add = 15
+						has_trait = gregarious
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						diplomacy >= 16
+					}
+					trigger_event = {
+						id = murim_duel.1000
+						days = { 60 180 }
+					}
+				}
+			}
+
+			# ==============================
+			# BODY TEMPERING PURSUIT
+			# ==============================
+			if = {
+				limit = {
+					murim_has_body_tempering_trigger = yes
+					NOT = { has_trait = murim_body_temper_9_void_body }
+				}
+				random = {
+					chance = 20
+					modifier = {
+						add = 15
+						has_trait = brave
+					}
+					modifier = {
+						add = 10
+						has_trait = diligent
+					}
+					modifier = {
+						add = -10
+						has_trait = lazy
+					}
+					modifier = {
+						add = -15
+						has_trait = craven
+					}
+					murim_apply_body_tempering_effect = yes
+				}
+			}
+
+			# ==============================
+			# SEEK REVENGE (after duel loss)
+			# ==============================
+			if = {
+				limit = {
+					has_character_modifier = murim_vengeance_sworn
+					any_relation = {
+						type = rival
+						is_alive = yes
+						has_character_flag = murim_initiated
+					}
+					prowess >= 14
+					NOT = { has_character_flag = murim_duel_cooldown }
+				}
+				random = {
+					chance = 40
+					modifier = {
+						add = 25
+						has_trait = vengeful
+					}
+					modifier = {
+						add = 20
+						has_trait = wrathful
+					}
+					random_relation = {
+						type = rival
+						limit = {
+							has_character_flag = murim_initiated
+							is_alive = yes
+						}
+						save_scope_as = duel_challenger
+					}
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 7 30 }
+					}
+				}
+			}
+		}
+	}
+}
+
+######################################
+# ON DEATH - SECT SUCCESSION
+######################################
+
+on_death = {
+	effect = {
+		if = {
+			limit = {
+				has_character_flag = murim_sect_leader
+			}
+			# Find strongest sect member to succeed
+			random_courtier = {
+				limit = {
+					has_character_flag = murim_sect_member
+					prowess >= 14
+					is_alive = yes
+				}
+				weight = {
+					base = 1
+					modifier = {
+						add = 5
+						has_character_flag = murim_sect_core_disciple
+					}
+					modifier = {
+						add = 3
+						prowess >= 20
+					}
+					modifier = {
+						add = 2
+						diplomacy >= 12
+					}
+				}
+				set_character_flag = murim_sect_leader
+				remove_character_flag = murim_sect_core_disciple
+				remove_character_flag = murim_sect_inner_disciple
+				add_character_modifier = {
+					modifier = murim_sect_patriarch_status
+					years = -1
+				}
+				add_prestige = 500
+			}
+		}
+	}
+}
+
+######################################
+# ON BIRTHDAY - CULTIVATION XP GAIN
+######################################
+
+on_birthday = {
+	effect = {
+		if = {
+			limit = {
+				has_character_flag = murim_initiated
+				is_alive = yes
+				is_ai = yes
+			}
+			# Passive annual XP gain based on diligence
+			change_variable = {
+				name = murim_cultivation_xp
+				add = 10
+			}
+			if = {
+				limit = { has_trait = diligent }
+				change_variable = { name = murim_cultivation_xp add = 10 }
+			}
+			if = {
+				limit = { has_character_flag = murim_sect_member }
+				change_variable = { name = murim_cultivation_xp add = 5 }
+			}
+			if = {
+				limit = { has_trait = lazy }
+				change_variable = { name = murim_cultivation_xp add = -5 }
+			}
+		}
+	}
+}
