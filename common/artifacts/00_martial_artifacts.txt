@@ -1,11 +1,14 @@
-# Martial Artifacts - Scrolls, Books, Swords, and Trinkets
-# Used to learn martial techniques
+# Martial Artifacts - Scrolls, Books, Swords, Robes, Accessories, and More
+# Complete artifact system for cultivation, combat, and alchemy
+# All artifacts have proper rarity tiers, modifier effects, and learning requirements
 
-# SCROLLS - Ancient cultivation manuals
+# ==========================================
+# SECTION 1: SCROLLS - Ancient Cultivation Manuals
+# ==========================================
 scroll_tier = {
 	scroll_mortal = {
 		name = "Dusty Cultivation Scroll"
-		description = "A basic manual for beginners. Yellowed with age."
+		description = "A basic manual for beginners. Yellowed with age but the fundamentals remain clear."
 		icon = scroll_basic
 		
 		learning_requirement = {
@@ -13,20 +16,22 @@ scroll_tier = {
 		}
 		
 		effect = {
-			add_trait = qi_refinement
+			if = {
+				limit = { NOT = { has_trait = qi_refinement } }
+				add_trait = qi_refinement
+			}
 			custom_tooltip = tt_learned_basic_cultivation
 		}
 		
 		rarity = common
 		quality = 1
-		
 		unique = no
 		indestructible = no
 	}
 	
 	scroll_earth = {
 		name = "Earth-Grade Technique Manual"
-		description = "Recorded by Foundation realm cultivators. Standard sect fare."
+		description = "Recorded by Foundation realm cultivators. Standard sect fare, but reliable."
 		icon = scroll_intermediate
 		
 		learning_requirement = {
@@ -35,8 +40,14 @@ scroll_tier = {
 		}
 		
 		effect = {
-			remove_trait = qi_refinement
-			add_trait = foundation
+			if = {
+				limit = { has_trait = qi_refinement }
+				remove_trait = qi_refinement
+			}
+			if = {
+				limit = { NOT = { has_trait = foundation } }
+				add_trait = foundation
+			}
 			add_prestige = 100
 		}
 		
@@ -55,8 +66,14 @@ scroll_tier = {
 		}
 		
 		effect = {
-			remove_trait = core_formation
-			add_trait = nascent_soul
+			if = {
+				limit = { has_trait = core_formation }
+				remove_trait = core_formation
+			}
+			if = {
+				limit = { NOT = { has_trait = nascent_soul } }
+				add_trait = nascent_soul
+			}
 			add_prestige = 500
 		}
 		
@@ -67,7 +84,7 @@ scroll_tier = {
 	
 	scroll_divine = {
 		name = "Divine Technique Manual"
-		description = "Knowledge from immortals. One in ten thousand cultivators may comprehend."
+		description = "Knowledge from immortals. One in ten thousand cultivators may comprehend its mysteries."
 		icon = scroll_divine
 		
 		learning_requirement = {
@@ -77,7 +94,10 @@ scroll_tier = {
 		}
 		
 		effect = {
-			add_trait = secret_manual_holder
+			if = {
+				limit = { NOT = { has_trait = secret_manual_holder } }
+				add_trait = secret_manual_holder
+			}
 			add_martial = 10
 			add_prowess = 10
 			custom_tooltip = tt_comprehended_divine_tech
@@ -88,13 +108,71 @@ scroll_tier = {
 		indestructible = yes
 		unique = yes
 	}
+	
+	scroll_forbidden = {
+		name = "Forbidden Demonic Scripture"
+		description = "A blood-red scroll sealed with demonic qi. Its teachings grant immense power at terrible cost."
+		icon = scroll_demonic
+		
+		learning_requirement = {
+			OR = {
+				has_trait = demonic_aptitude_1
+				has_trait = demonic_aptitude_2
+				has_trait = demonic_aptitude_3
+			}
+			intrigue >= 12
+		}
+		
+		effect = {
+			add_prowess = 8
+			add_intrigue = 5
+			add_dread = 20
+			add_stress = 30
+			add_piety = -200
+		}
+		
+		rarity = rare
+		quality = 6
+		unique = no
+		
+		decay = {
+			add = 1
+			years = 50
+		}
+	}
+	
+	scroll_heavenly_tribulation = {
+		name = "Heavenly Tribulation Survival Guide"
+		description = "Written by a cultivator who survived nine tribulations. Each page is scorched by divine lightning."
+		icon = scroll_tribulation
+		
+		learning_requirement = {
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+			learning >= 15
+		}
+		
+		effect = {
+			add_learning = 5
+			add_health = 1
+			add_piety = 200
+		}
+		
+		rarity = rare
+		quality = 6
+		indestructible = yes
+	}
 }
 
-# SWORDS - Spiritual weapons
+# ==========================================
+# SECTION 2: SWORDS - Spiritual Weapons
+# ==========================================
 sword_artifact = {
 	broken_iron_sword = {
 		name = "Broken Iron Sword"
-		description = "The first sword of many cultivators. Humble beginnings."
+		description = "The first sword of many cultivators. Humble beginnings forge great warriors."
 		icon = sword_poor
 		quality = 1
 		rarity = common
@@ -106,7 +184,7 @@ sword_artifact = {
 	
 	sect_disciple_sword = {
 		name = "Sect Disciple's Sword"
-		description = "Issued to approved outer sect disciples."
+		description = "Issued to approved outer sect disciples. Serviceable and well-balanced."
 		icon = sword_standard
 		quality = 3
 		rarity = common
@@ -118,6 +196,24 @@ sword_artifact = {
 		
 		learning_requirement = {
 			has_trait = qi_refinement
+		}
+	}
+	
+	inner_disciple_blade = {
+		name = "Inner Disciple Spirit Blade"
+		description = "Forged with spiritual metal and inscribed with qi-channeling formations. Reserved for inner sect members."
+		icon = sword_spirit
+		quality = 4
+		rarity = uncommon
+		
+		modifier = {
+			prowess = 6
+			martial = 2
+			knight_effectiveness = 0.05
+		}
+		
+		learning_requirement = {
+			has_trait = foundation
 		}
 	}
 	
@@ -143,7 +239,7 @@ sword_artifact = {
 	
 	blood_moon_blade = {
 		name = "Blood Moon Blade"
-		description = "Forged from demonic essence. Hungers for qi."
+		description = "Forged from demonic essence. Hungers for qi and grows stronger with each kill."
 		icon = sword_demonic
 		quality = 7
 		rarity = rare
@@ -156,7 +252,11 @@ sword_artifact = {
 		}
 		
 		learning_requirement = {
-			has_trait = demonic_aptitude_1
+			OR = {
+				has_trait = demonic_aptitude_1
+				has_trait = demonic_aptitude_2
+				has_trait = demonic_aptitude_3
+			}
 		}
 		
 		decay = {
@@ -165,9 +265,32 @@ sword_artifact = {
 		}
 	}
 	
+	nine_heaven_sword = {
+		name = "Nine Heavens Sword"
+		description = "Forged at the peak of Mount Kunlun during a celestial alignment. Contains nine layers of sword intent."
+		icon = sword_celestial
+		quality = 8
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			prowess = 18
+			martial = 6
+			army_damage_mult = 0.15
+			knight_effectiveness = 0.2
+		}
+		
+		learning_requirement = {
+			has_trait = sword_aptitude_3
+			martial >= 20
+		}
+		
+		grants_trait = sword_aptitude_4
+	}
+	
 	immortal_slash = {
 		name = "Immortal Slashing Sword"
-		description = "Weapon of ancient immortals. Contains sword dao comprehension."
+		description = "Weapon of ancient immortals. Contains sword dao comprehension from beyond the mortal realm."
 		icon = sword_immortal
 		quality = 10
 		rarity = legendary
@@ -190,11 +313,114 @@ sword_artifact = {
 	}
 }
 
-# BOOKS - Technique compendiums
+# ==========================================
+# SECTION 3: SABERS, SPEARS & OTHER WEAPONS
+# ==========================================
+weapon_artifact = {
+	wanderer_saber = {
+		name = "Wanderer's Curved Saber"
+		description = "The weapon of choice for jianghu wanderers. Fast, brutal, and unpretentious."
+		icon = saber_basic
+		quality = 2
+		rarity = common
+		
+		modifier = {
+			prowess = 2
+			martial = 1
+		}
+	}
+	
+	dragon_crescent_saber = {
+		name = "Dragon Crescent Moon Saber"
+		description = "A masterwork saber with a crescent-shaped guard. Favored by northern martial heroes."
+		icon = saber_dragon
+		quality = 5
+		rarity = uncommon
+		
+		modifier = {
+			prowess = 7
+			martial = 3
+			army_damage_mult = 0.05
+		}
+		
+		learning_requirement = {
+			martial >= 12
+		}
+	}
+	
+	heaven_piercing_spear = {
+		name = "Heaven-Piercing Spear"
+		description = "An eight-foot spear of cold iron. Its tip was quenched in the blood of a spirit beast."
+		icon = spear_heaven
+		quality = 6
+		rarity = rare
+		
+		modifier = {
+			prowess = 9
+			martial = 4
+			knight_effectiveness = 0.15
+		}
+		
+		learning_requirement = {
+			prowess >= 12
+		}
+	}
+	
+	soul_severing_whip = {
+		name = "Soul Severing Chain Whip"
+		description = "A flexible weapon inscribed with soul-rending formations. Strikes both body and spirit."
+		icon = whip_soul
+		quality = 7
+		rarity = rare
+		
+		modifier = {
+			prowess = 10
+			intrigue = 4
+			martial = 2
+		}
+		
+		learning_requirement = {
+			intrigue >= 14
+			OR = {
+				has_trait = foundation
+				has_trait = core_formation
+				has_trait = nascent_soul
+			}
+		}
+	}
+	
+	demon_god_halberd = {
+		name = "Demon God's Halberd"
+		description = "A colossal weapon radiating demonic energy. Said to have been wielded by an ancient demon sovereign."
+		icon = halberd_demon
+		quality = 9
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			prowess = 20
+			martial = 8
+			army_damage_mult = 0.2
+			dread_baseline_add = 15
+		}
+		
+		learning_requirement = {
+			prowess >= 20
+			OR = {
+				has_trait = demonic_aptitude_2
+				has_trait = demonic_aptitude_3
+			}
+		}
+	}
+}
+
+# ==========================================
+# SECTION 4: BOOKS - Technique Compendiums
+# ==========================================
 book_artifact = {
 	mortal_arts_manual = {
 		name = "Mortal Arts Manual"
-		description = "Basic fighting techniques. Available in any market."
+		description = "Basic fighting techniques. Available in any market town."
 		icon = book_basic
 		quality = 1
 		rarity = common
@@ -207,213 +433,706 @@ book_artifact = {
 	
 	orthodox_compendium = {
 		name = "Orthodox Sect Compendium"
-		description = "Collected techniques from righteous sects."
+		description = "Collected techniques from the righteous sects. A balanced education in the martial way."
 		icon = book_orthodox
+		quality = 3
+		rarity = uncommon
+		
+		modifier = {
+			prowess = 3
+			martial = 2
+			learning = 1
+		}
+		
+		learning_requirement = {
+			has_trait = qi_refinement
+		}
+	}
+	
+	five_elements_treatise = {
+		name = "Five Elements Treatise"
+		description = "A comprehensive study of the five elemental phases. Essential for elemental cultivation."
+		icon = book_elements
 		quality = 4
 		rarity = uncommon
 		
 		modifier = {
+			learning = 4
 			martial = 2
-			learning = 2
 		}
 		
-		decisions = {
-			can_use = study_orthodox_manual
+		learning_requirement = {
+			learning >= 10
 		}
 	}
 	
-	forbidden_demon_tome = {
-		name = "Forbidden Demon Tome"
-		description = "Heretical techniques written in blood. Dangerous knowledge."
-		icon = book_demonic
-		quality = 6
+	poison_kings_compendium = {
+		name = "Poison King's Compendium"
+		description = "Detailed poison recipes and antidote formulas. Handle with extreme caution."
+		icon = book_poison
+		quality = 5
 		rarity = rare
 		
 		modifier = {
-			martial = 3
-			intrigue = 3
-			prowess = 3
-			piety = -0.5
+			intrigue = 5
+			learning = 3
 		}
-		
-		stress_gain = 0.1
 		
 		learning_requirement = {
-			OR = {
-				has_trait = greedy
-				has_trait = ambitious
-			}
-		}
-		
-		decisions = {
-			can_use = study_demonic_manual
+			intrigue >= 10
 		}
 	}
 	
-	immortal_comprehension = {
-		name = "Immortal's Comprehension"
-		description = "Insights from beyond the heavens. Only Great Vehicle cultivators may read."
-		icon = book_immortal
+	dao_of_war_scripture = {
+		name = "Dao of War Scripture"
+		description = "Written by the legendary War Saint. Combines cultivation with battlefield command."
+		icon = book_war
+		quality = 7
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			martial = 8
+			prowess = 5
+			army_damage_mult = 0.1
+			knight_effectiveness = 0.1
+		}
+		
+		learning_requirement = {
+			martial >= 20
+			OR = {
+				has_trait = core_formation
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
+	}
+	
+	book_of_heaven = {
+		name = "Heavenly Codex"
+		description = "A book that fell from the sky during a celestial event. Its pages shift and change, revealing new secrets to worthy readers."
+		icon = book_heavenly
 		quality = 9
 		rarity = legendary
 		unique = yes
 		indestructible = yes
 		
 		modifier = {
+			learning = 10
 			martial = 5
-			learning = 5
-			prowess = 5
-			lifespan = 20
+			diplomacy = 3
+			piety = 0.5
 		}
 		
 		learning_requirement = {
-			martial >= 25
-			learning >= 15
-			prestige_level >= 4
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+			learning >= 18
 		}
 	}
 }
 
-# TRINKETS - Rings, amulets, talismans
-trinket_artifact = {
-	qi_gathering_ring = {
-		name = "Qi Gathering Ring"
-		description = "Common artifact for outer sect disciples."
-		icon = ring_basic
-		quality = 2
+# ==========================================
+# SECTION 5: CULTIVATION ROBES & ARMOR
+# ==========================================
+robe_artifact = {
+	disciple_robes = {
+		name = "Outer Disciple Robes"
+		description = "Simple white robes marking an outer disciple. Clean and functional."
+		icon = robe_disciple
+		quality = 1
 		rarity = common
-		slot = finger
 		
 		modifier = {
-			martial = 1
-			prowess = 1
+			diplomacy = 1
+			monthly_piety = 0.1
 		}
 	}
 	
-	body_protection_amulet = {
-		name = "Body Protection Amulet"
-		description = "Deflects mortal blows. Core Formation level."
-		icon = amulet_basic
+	inner_sect_robes = {
+		name = "Inner Sect Elder Robes"
+		description = "Deep blue silk robes embroidered with formation patterns. Provide minor qi enhancement."
+		icon = robe_elder
+		quality = 3
+		rarity = uncommon
+		
+		modifier = {
+			diplomacy = 2
+			martial = 1
+			monthly_prestige = 0.2
+		}
+		
+		learning_requirement = {
+			has_trait = foundation
+		}
+	}
+	
+	spirit_weave_robe = {
+		name = "Spirit Weave Cultivation Robe"
+		description = "Woven from spirit silk by Foundation cultivators. Enhances qi flow during meditation."
+		icon = robe_spirit
+		quality = 5
+		rarity = rare
+		
+		modifier = {
+			learning = 3
+			health = 0.5
+			monthly_piety = 0.3
+		}
+		
+		learning_requirement = {
+			OR = {
+				has_trait = core_formation
+				has_trait = nascent_soul
+			}
+		}
+	}
+	
+	celestial_dragon_robe = {
+		name = "Celestial Dragon Robe"
+		description = "Golden robes inscribed with a nine-clawed dragon. Radiates imperial authority and cultivation pressure."
+		icon = robe_dragon
+		quality = 7
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			diplomacy = 5
+			martial = 3
+			monthly_prestige = 1.0
+			dread_baseline_add = 10
+		}
+		
+		learning_requirement = {
+			prestige_level >= 4
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
+	}
+	
+	void_sovereign_mantle = {
+		name = "Void Sovereign's Mantle"
+		description = "A cloak woven from void energy. Renders the wearer partially ethereal. Attacks pass through harmlessly."
+		icon = robe_void
+		quality = 9
+		rarity = legendary
+		unique = yes
+		indestructible = yes
+		
+		modifier = {
+			diplomacy = 3
+			martial = 5
+			prowess = 8
+			health = 2
+			monthly_prestige = 1.5
+		}
+		
+		learning_requirement = {
+			has_trait = great_vehicle
+			prestige_level >= 5
+		}
+	}
+}
+
+# ==========================================
+# SECTION 6: MARTIAL ARMOR
+# ==========================================
+armor_artifact = {
+	iron_body_vest = {
+		name = "Iron Body Training Vest"
+		description = "Weighted vest used for body tempering. Crude but effective."
+		icon = armor_iron
+		quality = 1
+		rarity = common
+		
+		modifier = {
+			prowess = 1
+			health = 0.25
+		}
+	}
+	
+	spirit_chain_mail = {
+		name = "Spirit Chain Armor"
+		description = "Light chain mail infused with spiritual energy. Deflects both physical and qi attacks."
+		icon = armor_spirit
 		quality = 4
 		rarity = uncommon
-		slot = neck
 		
 		modifier = {
-			prowess = 2
-			enemy_captive_chance = -0.1
+			prowess = 4
+			health = 0.5
+			knight_effectiveness = 0.05
 		}
 		
 		learning_requirement = {
-			has_trait = core_formation
+			has_trait = foundation
 		}
 	}
 	
-	spatial_storage_ring = {
-		name = "Spatial Storage Ring"
-		description = "Holds items in subspace. Nascent Soul level required."
-		icon = ring_spatial
+	golden_bell_armor = {
+		name = "Golden Bell Body Armor"
+		description = "Forged by a master who practiced the Golden Bell technique. Resonates with body cultivation."
+		icon = armor_golden
 		quality = 6
 		rarity = rare
-		slot = finger
 		
 		modifier = {
-			stewardship = 5
-			monthly_income = 1
-		}
-		
-		learning_requirement = {
-			has_trait = nascent_soul
-		}
-	}
-	
-	soul_protector_jade = {
-		name = "Soul Protector Jade"
-		description = "Guards the Nascent Soul from harm."
-		icon = jade_soul
-		quality = 7
-		rarity = rare
-		slot = neck
-		
-		modifier = {
+			prowess = 7
 			health = 1
-			prowess = 3
-			stress_gain = -0.1
+			martial = 2
 		}
 		
 		learning_requirement = {
-			has_trait = nascent_soul
+			OR = {
+				has_trait = body_cultivator_2
+				has_trait = body_cultivator_3
+				has_trait = body_cultivator_4
+			}
 		}
-		
-		indestructible = yes
 	}
 	
-	heavenly_mandate_seal = {
-		name = "Heavenly Mandate Seal"
-		description = "Proof of celestial recognition. Only orthodox emperors may wield."
-		icon = seal_heavenly
+	dragonscale_armor = {
+		name = "Dragonscale Battle Armor"
+		description = "Forged from the scales of a true dragon. Nearly impervious to mortal weapons."
+		icon = armor_dragon
+		quality = 8
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			prowess = 12
+			health = 2
+			martial = 4
+			army_damage_mult = 0.1
+		}
+		
+		learning_requirement = {
+			prowess >= 18
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
+	}
+	
+	heavenly_sovereign_plate = {
+		name = "Heavenly Sovereign War Plate"
+		description = "Armor of the first Heavenly Emperor. Absorbs attacks and converts them into qi."
+		icon = armor_sovereign
 		quality = 10
 		rarity = legendary
 		unique = yes
-		slot = court_adornment
 		indestructible = yes
 		
 		modifier = {
-			martial = 5
-			diplomacy = 5
-			legitimacy = 1
-			vassal_opinion = 10
-			dynasty_prestige = 2
+			prowess = 18
+			health = 3
+			martial = 6
+			army_damage_mult = 0.15
+			knight_effectiveness = 0.25
 		}
 		
 		learning_requirement = {
-			has_title = empire
-			has_doctrine = orthodox_dao
+			has_trait = great_vehicle
+			martial >= 25
 		}
 	}
 }
 
-# Artifact Decisions
-study_orthodox_manual = {
-	descision = {
-		name = "Study Orthodox Manual"
-		desc = "Study the righteous techniques recorded within."
+# ==========================================
+# SECTION 7: ACCESSORIES & TRINKETS
+# ==========================================
+accessory_artifact = {
+	spirit_detection_compass = {
+		name = "Spirit Detection Compass"
+		description = "Points toward concentrations of spiritual energy. Useful for finding resources and avoiding danger."
+		icon = trinket_compass
+		quality = 2
+		rarity = uncommon
 		
-		is_shown = {
-			has_trait = orthodox_compendium
+		modifier = {
+			learning = 2
+			stewardship = 1
+		}
+	}
+	
+	jade_pendant_of_clarity = {
+		name = "Jade Pendant of Clarity"
+		description = "A cold jade pendant that calms the mind and prevents qi deviation during cultivation."
+		icon = trinket_jade
+		quality = 4
+		rarity = uncommon
+		
+		modifier = {
+			learning = 3
+			health = 0.5
+			stress_loss_mult = 0.1
 		}
 		
-		effect = {
-			add_learning = 1
-			random_list = {
-				30 = { add_trait = sword_aptitude_1 }
-				20 = { add_trait = alchemist_1 }
-				50 = { add_prestige = 50 }
+		learning_requirement = {
+			has_trait = qi_refinement
+		}
+	}
+	
+	dragon_pearl = {
+		name = "Dragon Pearl"
+		description = "A luminous pearl found in the nest of a spirit dragon. Accelerates qi absorption dramatically."
+		icon = trinket_pearl
+		quality = 6
+		rarity = rare
+		
+		modifier = {
+			learning = 4
+			martial = 2
+			monthly_piety = 0.5
+		}
+		
+		learning_requirement = {
+			OR = {
+				has_trait = core_formation
+				has_trait = nascent_soul
 			}
 		}
+	}
+	
+	eye_of_the_abyss = {
+		name = "Eye of the Abyss"
+		description = "A black gemstone that sees through lies and illusions. Whispers secrets to its owner."
+		icon = trinket_abyss
+		quality = 7
+		rarity = epic
 		
-		cooldown = { months = 6 }
+		modifier = {
+			intrigue = 6
+			learning = 3
+			diplomacy = -2
+			dread_baseline_add = 5
+		}
+		
+		learning_requirement = {
+			intrigue >= 15
+		}
+	}
+	
+	heart_of_the_phoenix = {
+		name = "Heart of the Phoenix"
+		description = "A crystallized phoenix heart. Radiates warmth and grants regeneration to the bearer."
+		icon = trinket_phoenix
+		quality = 8
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			health = 3
+			prowess = 5
+			martial = 2
+		}
+		
+		learning_requirement = {
+			prowess >= 15
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
+	}
+	
+	mandate_seal = {
+		name = "Mandate of Heaven Seal"
+		description = "An ancient imperial seal that commands respect from heaven and earth. Its bearer is recognized as a sovereign by all."
+		icon = trinket_mandate
+		quality = 10
+		rarity = legendary
+		unique = yes
+		indestructible = yes
+		
+		modifier = {
+			diplomacy = 10
+			martial = 5
+			monthly_prestige = 2.0
+			dread_baseline_add = 20
+		}
+		
+		learning_requirement = {
+			prestige_level >= 5
+			diplomacy >= 20
+		}
 	}
 }
 
-study_demonic_manual = {
-	decision = {
-		name = "Study Demonic Manual"
-		desc = "Delve into forbidden knowledge. Risk corruption."
+# ==========================================
+# SECTION 8: ALCHEMY EQUIPMENT
+# ==========================================
+alchemy_artifact = {
+	clay_pill_furnace = {
+		name = "Clay Pill Furnace"
+		description = "A basic clay furnace for pill refinement. Cracks easily and produces impure pills."
+		icon = alchemy_clay
+		quality = 1
+		rarity = common
 		
-		is_shown = {
-			has_trait = forbidden_demon_tome
+		modifier = {
+			learning = 1
+		}
+	}
+	
+	bronze_cauldron = {
+		name = "Bronze Spirit Cauldron"
+		description = "A proper alchemy cauldron inscribed with heat-control formations. Standard equipment for sect alchemists."
+		icon = alchemy_bronze
+		quality = 3
+		rarity = uncommon
+		
+		modifier = {
+			learning = 3
+			stewardship = 1
 		}
 		
-		effect = {
-			add_intrigue = 1
-			add_stress = 20
-			random_list = {
-				40 = { add_trait = demonic_aptitude_1 }
-				30 = { add_stress = 30 }
-				30 = { add_prestige = 100 }
+		learning_requirement = {
+			OR = {
+				has_trait = alchemist_1
+				has_trait = alchemist_2
+				has_trait = alchemist_3
 			}
 		}
+	}
+	
+	azure_flame_furnace = {
+		name = "Azure Flame Furnace"
+		description = "A furnace powered by spirit flames. Produces high-purity pills with minimal waste."
+		icon = alchemy_azure
+		quality = 5
+		rarity = rare
 		
-		cooldown = { months = 6 }
+		modifier = {
+			learning = 5
+			stewardship = 2
+			health = 0.5
+		}
+		
+		learning_requirement = {
+			has_trait = alchemist_2
+			learning >= 12
+		}
+	}
+	
+	nirvana_cauldron = {
+		name = "Nirvana Rebirth Cauldron"
+		description = "An ancient cauldron capable of refining life-extending pills. Said to have belonged to an immortal alchemist."
+		icon = alchemy_nirvana
+		quality = 8
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			learning = 8
+			stewardship = 4
+			health = 1.5
+		}
+		
+		learning_requirement = {
+			has_trait = alchemist_3
+			learning >= 18
+		}
+	}
+	
+	heaven_defying_furnace = {
+		name = "Heaven-Defying Pill Furnace"
+		description = "The supreme alchemy artifact. Can refine pills that defy the heavens and reverse mortality."
+		icon = alchemy_heaven
+		quality = 10
+		rarity = legendary
+		unique = yes
+		indestructible = yes
+		
+		modifier = {
+			learning = 10
+			stewardship = 5
+			health = 3
+			monthly_prestige = 1.0
+		}
+		
+		learning_requirement = {
+			has_trait = alchemist_3
+			learning >= 25
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
+	}
+}
+
+# ==========================================
+# SECTION 9: FORMATION FLAGS & SPIRIT BEASTS
+# ==========================================
+formation_artifact = {
+	basic_ward_flag = {
+		name = "Basic Ward Formation Flag"
+		description = "A simple formation flag that creates a protective barrier. Used to guard sect grounds."
+		icon = formation_basic
+		quality = 2
+		rarity = uncommon
+		
+		modifier = {
+			fort_level = 0.5
+			garrison_size = 0.05
+		}
+	}
+	
+	five_element_array = {
+		name = "Five Element Formation Array"
+		description = "A set of five flags representing metal, wood, water, fire, and earth. Creates a powerful defensive array."
+		icon = formation_elements
+		quality = 5
+		rarity = rare
+		
+		modifier = {
+			fort_level = 1
+			garrison_size = 0.1
+			levy_size = 0.05
+		}
+		
+		learning_requirement = {
+			learning >= 12
+		}
+	}
+	
+	heavenly_killing_array = {
+		name = "Heavenly Killing Formation"
+		description = "An offensive formation that traps enemies in a killing field of qi blades. Devastating in war."
+		icon = formation_killing
+		quality = 7
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			army_damage_mult = 0.15
+			knight_effectiveness = 0.2
+			levy_size = 0.1
+		}
+		
+		learning_requirement = {
+			martial >= 18
+			OR = {
+				has_trait = core_formation
+				has_trait = nascent_soul
+			}
+		}
+	}
+	
+	world_sealing_array = {
+		name = "World Sealing Grand Formation"
+		description = "The ultimate defensive formation. Creates an impenetrable spatial barrier around an entire domain."
+		icon = formation_world
+		quality = 10
+		rarity = legendary
+		unique = yes
+		indestructible = yes
+		
+		modifier = {
+			fort_level = 3
+			garrison_size = 0.25
+			levy_size = 0.15
+			army_damage_mult = 0.1
+		}
+		
+		learning_requirement = {
+			has_trait = great_vehicle
+			learning >= 20
+			martial >= 20
+		}
+	}
+}
+
+# SPIRIT BEAST COMPANIONS
+spirit_beast_artifact = {
+	spirit_hawk = {
+		name = "Spirit Hawk"
+		description = "A qi-enhanced hawk that serves as scout and messenger. Its keen eyes miss nothing."
+		icon = beast_hawk
+		quality = 2
+		rarity = uncommon
+		
+		modifier = {
+			intrigue = 2
+			martial = 1
+		}
+	}
+	
+	jade_serpent = {
+		name = "Jade Spirit Serpent"
+		description = "A small serpent infused with jade essence. Provides poison resistance and alchemical insight."
+		icon = beast_serpent
+		quality = 4
+		rarity = rare
+		
+		modifier = {
+			intrigue = 3
+			learning = 3
+			health = 0.5
+		}
+		
+		learning_requirement = {
+			OR = {
+				has_trait = qi_refinement
+				has_trait = foundation
+				has_trait = core_formation
+			}
+		}
+	}
+	
+	fire_lion = {
+		name = "Crimson Fire Lion"
+		description = "A lion spirit beast with a mane of living flame. Loyal, fearsome, and incredibly powerful in battle."
+		icon = beast_lion
+		quality = 7
+		rarity = epic
+		unique = yes
+		
+		modifier = {
+			prowess = 8
+			martial = 4
+			dread_baseline_add = 10
+			knight_effectiveness = 0.15
+		}
+		
+		learning_requirement = {
+			prowess >= 15
+			OR = {
+				has_trait = nascent_soul
+				has_trait = great_vehicle
+			}
+		}
+	}
+	
+	divine_dragon = {
+		name = "Celestial Azure Dragon"
+		description = "A true dragon that has chosen to bond with a mortal. Grants access to draconic cultivation arts."
+		icon = beast_dragon
+		quality = 10
+		rarity = legendary
+		unique = yes
+		indestructible = yes
+		
+		modifier = {
+			prowess = 15
+			martial = 8
+			diplomacy = 5
+			health = 2
+			army_damage_mult = 0.2
+			knight_effectiveness = 0.3
+			monthly_prestige = 2.0
+		}
+		
+		learning_requirement = {
+			has_trait = great_vehicle
+			prowess >= 25
+			prestige_level >= 5
+		}
 	}
 }
