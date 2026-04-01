@@ -1,0 +1,319 @@
+# Murim Chronicles Phase 2 - AI Autonomy On Actions
+# Gives AI characters autonomous cultivation behavior
+
+######################################
+# MONTHLY PULSE - Routine Training
+######################################
+
+on_monthly = {
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				age >= 16
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					murim_has_body_tempering_trigger = yes
+					murim_has_forbidden_mark_trigger = yes
+					exists = var:murim_cultivation_rank
+				}
+			}
+			random_list = {
+				# Meditation - safe, common
+				30 = {
+					modifier = {
+						add = 15
+						has_trait = patient
+					}
+					modifier = {
+						add = 10
+						has_trait = content
+					}
+					modifier = {
+						add = 10
+						has_trait = murim_hermit_cultivator
+					}
+					modifier = {
+						add = 10
+						has_trait = zealous
+					}
+					trigger_event = { id = murim_grind.0001 }
+				}
+				# Body Tempering - moderate risk
+				20 = {
+					modifier = {
+						add = 15
+						has_trait = brave
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 10
+						has_trait = wrathful
+					}
+					modifier = {
+						add = 5
+						has_trait = murim_sparring_addict
+					}
+					trigger = {
+						prowess >= 8
+						NOT = { has_trait = murim_qi_deviation_crippling }
+						NOT = { has_character_flag = murim_tempering_cooldown }
+					}
+					trigger_event = { id = murim_grind.0010 }
+				}
+				# Qi Circulation - moderate
+				20 = {
+					modifier = {
+						add = 10
+						has_trait = patient
+					}
+					modifier = {
+						add = 10
+						has_trait = diligent
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					trigger = {
+						exists = var:murim_cultivation_rank
+						NOT = { murim_has_qi_deviation_trigger = yes }
+					}
+					trigger_event = { id = murim_grind.0020 }
+				}
+				# Forbidden Study - rare, requires personality
+				5 = {
+					modifier = {
+						add = 15
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 15
+						has_trait = sadistic
+					}
+					modifier = {
+						add = 10
+						has_trait = cynical
+					}
+					modifier = {
+						add = 10
+						murim_has_forbidden_mark_trigger = yes
+					}
+					trigger = {
+						OR = {
+							has_trait = ambitious
+							has_trait = sadistic
+							has_trait = cynical
+							murim_has_forbidden_mark_trigger = yes
+						}
+						intrigue >= 10
+						NOT = { has_trait = murim_forbidden_mark_3 }
+						NOT = { has_character_flag = murim_forbidden_study_cooldown }
+					}
+					trigger_event = { id = murim_grind.0030 }
+				}
+				# Do nothing - most common
+				50 = {
+					modifier = {
+						add = 20
+						has_trait = lazy
+					}
+					modifier = {
+						add = 10
+						has_trait = content
+					}
+				}
+			}
+		}
+	}
+}
+
+######################################
+# YEARLY PULSE - Major Milestones
+######################################
+
+on_yearly_pulse = {
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				age >= 16
+				OR = {
+					has_character_flag = murim_cultivation_enabled
+					exists = var:murim_cultivation_rank
+					murim_has_body_tempering_trigger = yes
+				}
+			}
+			# Attempt Breakthrough
+			if = {
+				limit = {
+					murim_can_attempt_breakthrough_trigger = yes
+					OR = {
+						# Outer Qi -> Qi Gathering (prowess >= 10)
+						AND = {
+							exists = var:murim_cultivation_rank
+							var:murim_cultivation_rank >= 1
+							var:murim_cultivation_rank < 2
+							prowess >= 10
+						}
+						# Qi Gathering -> Foundation (prowess >= 14)
+						AND = {
+							var:murim_cultivation_rank >= 2
+							var:murim_cultivation_rank < 3
+							prowess >= 14
+						}
+						# Foundation -> Golden Core (prowess >= 18)
+						AND = {
+							var:murim_cultivation_rank >= 3
+							var:murim_cultivation_rank < 4
+							prowess >= 18
+						}
+						# Golden Core -> Nascent Soul (prowess >= 22)
+						AND = {
+							var:murim_cultivation_rank >= 4
+							var:murim_cultivation_rank < 5
+							prowess >= 22
+						}
+						# Nascent Soul -> Spirit Severing (prowess >= 26)
+						AND = {
+							var:murim_cultivation_rank >= 5
+							var:murim_cultivation_rank < 6
+							prowess >= 26
+						}
+					}
+				}
+				random = {
+					chance = 40
+					modifier = {
+						add = 20
+						has_trait = ambitious
+					}
+					modifier = {
+						add = 15
+						has_trait = brave
+					}
+					modifier = {
+						add = 10
+						has_trait = diligent
+					}
+					trigger_event = { id = murim_grind.0040 }
+				}
+			}
+			# Attempt Tribulation
+			if = {
+				limit = {
+					murim_can_attempt_tribulation_trigger = yes
+					exists = var:murim_cultivation_rank
+					var:murim_cultivation_rank >= 3
+				}
+				random = {
+					chance = 25
+					modifier = {
+						add = 15
+						has_trait = brave
+					}
+					modifier = {
+						add = 10
+						has_trait = wrathful
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					trigger_event = { id = murim_grind.0050 }
+				}
+			}
+		}
+	}
+}
+
+######################################
+# WAR STARTED - Martial Tempering
+######################################
+
+on_war_started = {
+	effect = {
+		root = {
+			if = {
+				limit = {
+					is_alive = yes
+					age >= 16
+					prowess >= 12
+					exists = var:murim_cultivation_rank
+					NOT = { has_trait = murim_qi_deviation_crippling }
+					NOT = { has_character_flag = murim_tempering_cooldown }
+				}
+				random = {
+					chance = 50
+					modifier = {
+						add = 20
+						has_trait = brave
+					}
+					modifier = {
+						add = 15
+						has_trait = wrathful
+					}
+					modifier = {
+						add = 10
+						has_trait = ambitious
+					}
+					trigger_event = { id = murim_grind.0010 days = { 5 15 } }
+				}
+			}
+		}
+	}
+}
+
+######################################
+# BIRTHDAY - Coming of Age Cultivation
+######################################
+
+on_birthday = {
+	effect = {
+		if = {
+			limit = {
+				age = 16
+				is_alive = yes
+				NOT = { has_character_flag = murim_cultivation_enabled }
+				NOT = { exists = var:murim_cultivation_rank }
+				NOT = { murim_has_body_tempering_trigger = yes }
+			}
+			random = {
+				chance = 30
+				modifier = {
+					add = 15
+					has_trait = brave
+				}
+				modifier = {
+					add = 15
+					has_trait = ambitious
+				}
+				modifier = {
+					add = 10
+					has_trait = wrathful
+				}
+				modifier = {
+					add = 10
+					prowess >= 8
+				}
+				modifier = {
+					add = 5
+					has_trait = diligent
+				}
+				modifier = {
+					add = -15
+					has_trait = craven
+				}
+				modifier = {
+					add = -10
+					has_trait = lazy
+				}
+				add_character_flag = murim_cultivation_enabled
+				trigger_event = { id = murim_grind.0001 days = { 10 30 } }
+			}
+		}
+	}
+}
