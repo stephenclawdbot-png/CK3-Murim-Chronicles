@@ -1,0 +1,717 @@
+###############################################################################
+# MURIM EMERGENCY RECRUITMENT EVENTS
+# When clan youth count drops below 3, emergency recruitment activates.
+# All 9 clans: Mount Hua, Shaolin, Wudang, Tang Clan, Beggar Sect,
+#   Iron Fist Gate, Heavenly Demon Sect, Poison Flower Palace, Phantom Blade Sect
+# Cross-refs: murim_clan_scout_events, murim_on_actions.txt (yearly check),
+#   murim_clan_membership_effects.txt, murim_entry_path_events.txt
+# GENDER: Men and women equally recruited.
+# GEOGRAPHY: China center, Goryeo secondary, periphery elsewhere.
+###############################################################################
+
+namespace = murim_emergency
+
+###############################################################################
+# 1. EMERGENCY RECRUITMENT TRIGGERED
+# Clan leader realizes youth count is critically low
+###############################################################################
+murim_emergency.0001 = {
+	type = character_event
+	title = murim_emergency.0001.t
+	desc = murim_emergency.0001.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_variable = murim_clan_leader
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_disciple
+			has_trait = beggar_sect_disciple
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		# Emergency condition: fewer than 3 young disciples
+		NOT = { has_character_flag = emergency_recruitment_active }
+	}
+
+	weight_multiplier = {
+		base = 0.3
+		modifier = { add = 1.0 has_variable_value = { name = murim_clan_youth_count value <= 2 } }
+	}
+
+	immediate = {
+		set_character_flag = { flag = emergency_recruitment_active years = 2 }
+		create_character_memory = {
+			type = emergency_recruitment_triggered_memory
+		}
+	}
+
+	# Send all available scouts immediately - maximum urgency
+	option = {
+		name = murim_emergency.0001.a
+		add_prestige = -100
+		add_gold = -100
+		add_stress = 30
+		add_character_modifier = {
+			modifier = murim_emergency_recruitment_mode
+			years = 2
+		}
+		hidden_effect = {
+			# Fast-track scout deployment
+			trigger_event = { id = murim_emergency.0002 days = { 30 60 } }
+			trigger_event = { id = murim_emergency.0003 days = { 60 120 } }
+		}
+		create_character_memory = {
+			type = dispatched_all_scouts_urgently_memory
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 25 has_trait = diligent }
+		}
+	}
+
+	# Lower recruitment standards - accept anyone with basic aptitude
+	option = {
+		name = murim_emergency.0001.b
+		add_prestige = -50
+		add_character_modifier = {
+			modifier = murim_lowered_recruitment_standards
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_emergency.0004 days = { 14 30 } }
+		}
+		create_character_memory = {
+			type = lowered_recruitment_standards_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = pragmatic }
+		}
+	}
+
+	# Accept fate - perhaps the clan's time has come
+	option = {
+		name = murim_emergency.0001.c
+		add_stress = -10
+		add_piety = 100
+		create_character_memory = {
+			type = accepted_clan_decline_fate_memory
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+}
+
+###############################################################################
+# 2. EMERGENCY SCOUT RETURNS WITH ORPHAN PRODIGIES
+# Scout finds talented orphans in war-torn regions
+###############################################################################
+murim_emergency.0002 = {
+	type = character_event
+	title = murim_emergency.0002.t
+	desc = murim_emergency.0002.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_character_flag = emergency_recruitment_active
+	}
+
+	weight_multiplier = {
+		base = 1.0
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = emergency_scout_returned_with_orphans_memory
+		}
+	}
+
+	# Accept all orphans - train them as outer disciples immediately
+	option = {
+		name = murim_emergency.0002.a
+		add_prestige = 100
+		add_gold = -30
+		hidden_effect = {
+			# Create 2-3 young recruits
+			create_character = {
+				age = { 12 16 }
+				random_traits = yes
+				save_scope_as = orphan_recruit_1
+			}
+			scope:orphan_recruit_1 = {
+				add_trait = martial_artist
+				add_trait = murim_outer_qi
+				set_variable = { name = murim_cultivation_rank value = 1 }
+				set_variable = { name = murim_clan_rank value = 5 }
+				# Assign same clan trait as leader
+				if = {
+					limit = { root = { has_trait = mount_hua_disciple } }
+					add_trait = mount_hua_disciple
+				}
+				if = {
+					limit = { root = { has_trait = shaolin_disciple } }
+					add_trait = shaolin_disciple
+				}
+				if = {
+					limit = { root = { has_trait = wudang_disciple } }
+					add_trait = wudang_disciple
+				}
+				if = {
+					limit = { root = { has_trait = tang_clan_disciple } }
+					add_trait = tang_clan_disciple
+				}
+				if = {
+					limit = { root = { has_trait = beggar_sect_disciple } }
+					add_trait = beggar_sect_disciple
+				}
+				if = {
+					limit = { root = { has_trait = iron_fist_disciple } }
+					add_trait = iron_fist_disciple
+				}
+				if = {
+					limit = { root = { has_trait = heavenly_demon_disciple } }
+					add_trait = heavenly_demon_disciple
+				}
+				if = {
+					limit = { root = { has_trait = poison_flower_disciple } }
+					add_trait = poison_flower_disciple
+				}
+				if = {
+					limit = { root = { has_trait = phantom_blade_disciple } }
+					add_trait = phantom_blade_disciple
+				}
+			}
+			create_character = {
+				age = { 13 17 }
+				random_traits = yes
+				save_scope_as = orphan_recruit_2
+			}
+			scope:orphan_recruit_2 = {
+				add_trait = martial_artist
+				add_trait = murim_outer_qi
+				set_variable = { name = murim_cultivation_rank value = 1 }
+				set_variable = { name = murim_clan_rank value = 5 }
+			}
+			change_variable = { name = murim_clan_youth_count add = 2 }
+		}
+		create_character_memory = {
+			type = accepted_orphan_recruits_memory
+		}
+		ai_chance = {
+			base = 70
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Only accept the most talented - quality over quantity
+	option = {
+		name = murim_emergency.0002.b
+		add_prestige = 50
+		add_gold = -15
+		hidden_effect = {
+			create_character = {
+				age = { 13 16 }
+				trait = genius
+				save_scope_as = talented_orphan
+			}
+			scope:talented_orphan = {
+				add_trait = martial_artist
+				add_trait = murim_outer_qi
+				add_prowess_skill = 3
+				set_variable = { name = murim_cultivation_rank value = 1 }
+				set_variable = { name = murim_clan_rank value = 5 }
+			}
+			change_variable = { name = murim_clan_youth_count add = 1 }
+		}
+		create_character_memory = {
+			type = selected_talented_orphan_only_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+}
+
+###############################################################################
+# 3. RIVAL CLAN POACHING DURING EMERGENCY
+# A rival clan tries to recruit your remaining youth during your crisis
+###############################################################################
+murim_emergency.0003 = {
+	type = character_event
+	title = murim_emergency.0003.t
+	desc = murim_emergency.0003.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_character_flag = emergency_recruitment_active
+	}
+
+	weight_multiplier = {
+		base = 0.8
+	}
+
+	immediate = {
+		create_character_memory = {
+			type = rival_clan_poaching_during_crisis_memory
+		}
+	}
+
+	# Confront the rival scout and challenge them
+	option = {
+		name = murim_emergency.0003.a
+		add_prestige = 100
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Drive off the rival scout
+					add_prowess_skill = 1
+					add_prestige = 200
+					create_character_memory = {
+						type = drove_off_rival_scout_memory
+					}
+				}
+				30 = {
+					# Scout escapes but drops intelligence about their clan
+					add_intrigue_skill = 1
+					create_character_memory = {
+						type = captured_rival_intelligence_memory
+					}
+				}
+				20 = {
+					# Rival scout is too strong - lose a disciple
+					change_variable = { name = murim_clan_youth_count add = -1 }
+					create_character_memory = {
+						type = lost_disciple_to_rival_poaching_memory
+					}
+					trigger_event = { id = murim_faction_war.0001 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+
+	# Offer the rival a non-aggression pact - share recruitment zones
+	option = {
+		name = murim_emergency.0003.b
+		add_diplomacy_skill = 1
+		add_prestige = -50
+		add_character_modifier = {
+			modifier = murim_recruitment_zone_pact
+			years = 3
+		}
+		create_character_memory = {
+			type = negotiated_recruitment_pact_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 diplomacy >= 16 }
+		}
+	}
+
+	# Set an ambush for the rival scouts
+	option = {
+		name = murim_emergency.0003.c
+		add_intrigue_skill = 1
+		add_dread = 20
+		hidden_effect = {
+			random_list = {
+				60 = {
+					add_prestige = 200
+					create_character_memory = {
+						type = ambushed_rival_scouts_successfully_memory
+					}
+				}
+				40 = {
+					add_trait = wounded_1
+					create_character_memory = {
+						type = ambush_on_rival_scouts_backfired_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+}
+
+###############################################################################
+# 4. LOWERED STANDARDS RECRUITMENT - UNEXPECTED PRODIGY
+# Among the unqualified recruits, one turns out to be a hidden genius
+###############################################################################
+murim_emergency.0004 = {
+	type = character_event
+	title = murim_emergency.0004.t
+	desc = murim_emergency.0004.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_character_modifier = murim_lowered_recruitment_standards
+	}
+
+	weight_multiplier = {
+		base = 1.0
+	}
+
+	immediate = {
+		create_character = {
+			age = { 14 18 }
+			random_traits = yes
+			save_scope_as = hidden_prodigy
+		}
+		scope:hidden_prodigy = {
+			add_trait = martial_artist
+			add_trait = murim_outer_qi
+			add_trait = brave
+			add_prowess_skill = 5
+			set_variable = { name = murim_cultivation_rank value = 1 }
+			set_variable = { name = murim_clan_rank value = 5 }
+		}
+		create_character_memory = {
+			type = discovered_hidden_prodigy_among_recruits_memory
+		}
+	}
+
+	# Take the prodigy as personal disciple - fast-track them
+	option = {
+		name = murim_emergency.0004.a
+		add_prestige = 200
+		hidden_effect = {
+			scope:hidden_prodigy = {
+				set_variable = { name = murim_clan_rank value = 4 }
+				add_prowess_skill = 2
+				add_opinion = { modifier = grateful_opinion target = root opinion = 30 }
+			}
+			change_variable = { name = murim_clan_youth_count add = 1 }
+			trigger_event = { id = murim_mentor.0001 days = { 7 14 } }
+		}
+		create_character_memory = {
+			type = took_prodigy_as_personal_disciple_memory
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Assign them to the best elder for training
+	option = {
+		name = murim_emergency.0004.b
+		add_prestige = 100
+		hidden_effect = {
+			scope:hidden_prodigy = {
+				add_prowess_skill = 1
+			}
+			change_variable = { name = murim_clan_youth_count add = 1 }
+		}
+		create_character_memory = {
+			type = assigned_prodigy_to_elder_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Test them further before committing resources
+	option = {
+		name = murim_emergency.0004.c
+		add_stress = 5
+		hidden_effect = {
+			change_variable = { name = murim_clan_youth_count add = 1 }
+			trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		}
+		create_character_memory = {
+			type = testing_prodigy_further_memory
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+###############################################################################
+# 5. GORYEO RECRUITMENT EXPEDITION
+# Emergency expedition to Goryeo (secondary martial region) for recruits
+###############################################################################
+murim_emergency.0005 = {
+	type = character_event
+	title = murim_emergency.0005.t
+	desc = murim_emergency.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_character_flag = emergency_recruitment_active
+		NOT = { has_character_flag = goryeo_expedition_sent }
+	}
+
+	weight_multiplier = {
+		base = 0.7
+		modifier = { add = 0.5 culture = { has_cultural_pillar = heritage_chinese } }
+	}
+
+	immediate = {
+		set_character_flag = { flag = goryeo_expedition_sent years = 5 }
+		create_character_memory = {
+			type = sent_goryeo_recruitment_expedition_memory
+		}
+	}
+
+	# Send a senior disciple to lead the Goryeo expedition
+	option = {
+		name = murim_emergency.0005.a
+		add_gold = -75
+		add_prestige = 50
+		hidden_effect = {
+			random_list = {
+				45 = {
+					# Expedition succeeds - Goryeo martial talent found
+					create_character = {
+						age = { 15 20 }
+						culture = culture:korean
+						random_traits = yes
+						save_scope_as = goryeo_recruit
+					}
+					scope:goryeo_recruit = {
+						add_trait = martial_artist
+						add_trait = murim_outer_qi
+						add_prowess_skill = 3
+						set_variable = { name = murim_cultivation_rank value = 1 }
+						set_variable = { name = murim_clan_rank value = 5 }
+					}
+					change_variable = { name = murim_clan_youth_count add = 1 }
+					create_character_memory = {
+						type = goryeo_expedition_success_memory
+					}
+				}
+				30 = {
+					# Expedition finds recruits but they need extra training
+					create_character = {
+						age = { 14 18 }
+						culture = culture:korean
+						random_traits = yes
+						save_scope_as = goryeo_raw_recruit
+					}
+					scope:goryeo_raw_recruit = {
+						add_trait = martial_artist
+						add_trait = murim_outer_qi
+						set_variable = { name = murim_cultivation_rank value = 1 }
+						set_variable = { name = murim_clan_rank value = 5 }
+					}
+					change_variable = { name = murim_clan_youth_count add = 1 }
+					create_character_memory = {
+						type = goryeo_expedition_partial_success_memory
+					}
+				}
+				25 = {
+					# Expedition fails - Goryeo clans refuse cooperation
+					add_prestige = -100
+					create_character_memory = {
+						type = goryeo_expedition_failed_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Go personally to Goryeo - lead by example
+	option = {
+		name = murim_emergency.0005.b
+		add_gold = -100
+		add_stress = 25
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Personal charisma wins over Goryeo talent
+					create_character = {
+						age = { 14 19 }
+						culture = culture:korean
+						trait = quick
+						save_scope_as = goryeo_star_recruit
+					}
+					scope:goryeo_star_recruit = {
+						add_trait = martial_artist
+						add_trait = murim_outer_qi
+						add_prowess_skill = 4
+						set_variable = { name = murim_cultivation_rank value = 1 }
+						set_variable = { name = murim_clan_rank value = 5 }
+						add_opinion = { modifier = grateful_opinion target = root opinion = 25 }
+					}
+					change_variable = { name = murim_clan_youth_count add = 1 }
+					add_prestige = 300
+					create_character_memory = {
+						type = personally_recruited_goryeo_star_memory
+					}
+				}
+				40 = {
+					# Challenged by a Goryeo martial master during recruitment
+					add_prowess_skill = 1
+					create_character_memory = {
+						type = challenged_by_goryeo_master_memory
+					}
+					trigger_event = { id = murim_duel.0001 days = { 7 14 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 diplomacy >= 16 }
+		}
+	}
+
+	# Postpone - focus on training existing members better
+	option = {
+		name = murim_emergency.0005.c
+		add_stress = -5
+		hidden_effect = {
+			trigger_event = { id = murim_training.0001 days = { 30 60 } }
+		}
+		create_character_memory = {
+			type = focused_on_training_over_recruitment_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+###############################################################################
+# 6. EMERGENCY RECRUITMENT AFTERMATH - CLAN STABILIZED OR DISSOLVED
+# Follow-up event: did the emergency recruitment save the clan?
+###############################################################################
+murim_emergency.0006 = {
+	type = character_event
+	title = murim_emergency.0006.t
+	desc = murim_emergency.0006.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = martial_artist
+		has_character_flag = emergency_recruitment_active
+		NOT = { has_character_flag = recruitment_aftermath_handled }
+	}
+
+	weight_multiplier = {
+		base = 1.0
+	}
+
+	immediate = {
+		set_character_flag = { flag = recruitment_aftermath_handled years = 5 }
+		remove_character_flag = emergency_recruitment_active
+		create_character_memory = {
+			type = emergency_recruitment_aftermath_memory
+		}
+	}
+
+	# Clan stabilized - celebrate the new generation
+	option = {
+		name = murim_emergency.0006.a
+		trigger = {
+			has_variable_value = { name = murim_clan_youth_count value >= 3 }
+		}
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_clan_revival_pride
+			years = 5
+		}
+		hidden_effect = {
+			change_variable = { name = murim_clan_harmony add = 20 }
+		}
+		create_character_memory = {
+			type = clan_stabilized_new_generation_memory
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Clan barely surviving - merge with ally clan for survival
+	option = {
+		name = murim_emergency.0006.b
+		trigger = {
+			has_variable_value = { name = murim_clan_youth_count value <= 2 }
+		}
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = murim_clan_merger_negotiations
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_custom_clan.0001 days = { 30 60 } }
+		}
+		create_character_memory = {
+			type = clan_merger_for_survival_memory
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Double down - recruit from the periphery regions
+	option = {
+		name = murim_emergency.0006.c
+		add_gold = -50
+		add_stress = 15
+		hidden_effect = {
+			trigger_event = { id = murim_scout.0001 days = { 30 90 } }
+		}
+		create_character_memory = {
+			type = expanded_recruitment_to_periphery_memory
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+}
