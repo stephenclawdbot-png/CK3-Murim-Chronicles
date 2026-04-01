@@ -4,6 +4,8 @@
 #   murim_custom_clan_events.txt (clan founding),
 #   murim_ranking_events.txt (challenge ranking)
 # GENDER: All decisions equally available to men and women.
+# POLISH FIX HB#57: Added tang_clan_disciple to exclusion list (was missing 9th clan)
+# POLISH FIX HB#57: Fixed event namespace murim_ranking -> murim_rank
 
 # ============================================================
 # OPEN THE MURIM LEDGER
@@ -34,6 +36,7 @@ murim_create_custom_clan_decision = {
 				has_trait = iron_fist_disciple
 				has_trait = poison_flower_disciple
 				has_trait = phantom_blade_disciple
+				has_trait = tang_clan_disciple
 			}
 		}
 		prowess >= 20
@@ -132,6 +135,8 @@ murim_begin_training_decision = {
 
 # ============================================================
 # SEEK MURIM ENTRY (for non-martial characters)
+# Four entry paths: landless adventurer, landed noble,
+# courtier exposure, exploration discovery
 # ============================================================
 murim_seek_entry_decision = {
 	title = murim_seek_entry_decision_title
@@ -160,7 +165,7 @@ murim_seek_entry_decision = {
 	}
 
 	cost = {
-		prestige = 25
+		prestige = 50
 	}
 
 	cooldown = {
@@ -168,35 +173,112 @@ murim_seek_entry_decision = {
 	}
 
 	effect = {
-		# Route to appropriate entry path
+		add_character_flag = murim_entry_attempted
+		# Determine entry path based on character situation
 		if = {
-			limit = { is_landed = no is_courtier = no }
-			trigger_event = { id = murim_entry.0001 }
+			limit = {
+				is_landed = no
+				is_courtier = no
+			}
+			# Landless adventurer path
+			trigger_event = { id = murim_entry_path.0001 days = { 5 15 } }
 		}
 		else_if = {
-			limit = { is_landed = yes }
-			trigger_event = { id = murim_entry.0002 }
+			limit = {
+				is_landed = yes
+				highest_held_title_tier >= tier_county
+			}
+			# Landed noble path
+			trigger_event = { id = murim_entry_path.0003 days = { 5 15 } }
 		}
 		else_if = {
-			limit = { is_courtier = yes }
-			trigger_event = { id = murim_entry.0003 }
+			limit = {
+				is_courtier = yes
+				any_liege_or_above = {
+					any_courtier = { has_trait = martial_artist }
+				}
+			}
+			# Courtier exposure path
+			trigger_event = { id = murim_entry_path.0005 days = { 5 15 } }
 		}
 		else = {
-			trigger_event = { id = murim_entry.0004 }
+			# Exploration discovery path
+			trigger_event = { id = murim_entry_path.0007 days = { 5 15 } }
 		}
 	}
 
 	ai_potential = {
+		prowess >= 10
 		OR = {
-			prowess >= 10
+			has_trait = brave
 			has_trait = ambitious
 		}
 	}
 
 	ai_will_do = {
 		base = 5
-		modifier = { add = 10 has_trait = brave }
+		modifier = { add = 10 prowess >= 15 }
 		modifier = { add = 10 has_trait = ambitious }
-		modifier = { add = -20 has_trait = craven }
+		modifier = { add = 5 has_trait = brave }
+		modifier = { add = -15 age >= 40 }
+		# Higher chance in China/Goryeo
+		modifier = {
+			add = 10
+			OR = {
+				culture = { has_cultural_pillar = heritage_chinese }
+				culture = { has_cultural_pillar = heritage_korean }
+			}
+		}
+	}
+}
+
+# ============================================================
+# CHALLENGE FOR RANKING (Quick-access from main decisions)
+# Redirects to murim_rank namespace events
+# ============================================================
+murim_challenge_ranking_decision = {
+	title = murim_challenge_ranking_decision_title
+	desc = murim_challenge_ranking_decision_desc
+
+	ai_check_interval = 180
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_martial_rank_position
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_modifier = murim_recent_challenge_cooldown }
+		NOT = { has_variable = murim_active_duel }
+	}
+
+	cost = {
+		prestige = 50
+	}
+
+	cooldown = {
+		days = 365
+	}
+
+	effect = {
+		trigger_event = { id = murim_rank.0001 }
+		add_character_modifier = {
+			modifier = murim_recent_challenge_cooldown
+			years = 1
+		}
+	}
+
+	ai_potential = {
+		prowess >= 15
+		has_trait = ambitious
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { add = 15 has_trait = ambitious }
+		modifier = { add = 10 has_trait = brave }
+		modifier = { add = -25 has_trait = craven }
 	}
 }
