@@ -1,0 +1,997 @@
+namespace = murim_forbidden_arts
+
+# Forbidden Arts Events - Dark cultivation paths, demonic techniques, soul corruption
+# Cross-references: murim_cultivation, murim_jianghu, murim_fate, murim_duel, murim_ranking, murim_sect, murim_artifact, murim_mentor
+
+###############################################
+# murim_forbidden_arts.0001 - Demonic Qi Awakening
+# Character discovers a dark power source within themselves
+###############################################
+murim_forbidden_arts.0001 = {
+	type = character_event
+	title = murim_forbidden_arts.0001.t
+	desc = murim_forbidden_arts.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	
+	trigger = {
+		is_alive = yes
+		NOT = { has_trait = demonic_cultivator }
+		NOT = { has_character_flag = demonic_awakening_cooldown }
+		OR = {
+			has_trait = wounded
+			has_trait = incapable
+			has_trait = lunatic
+			stress >= 50
+		}
+		prowess >= 10
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 2
+			has_trait = vengeful
+		}
+		modifier = {
+			add = 2
+			stress >= 80
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = demonic_awakening_cooldown
+			years = 10
+		}
+	}
+	
+	# Option A: Embrace the demonic qi fully
+	option = {
+		name = murim_forbidden_arts.0001.a
+		add_trait = demonic_cultivator
+		add_prowess_skill = 5
+		add_character_modifier = {
+			modifier = demonic_qi_surge
+			years = 3
+		}
+		create_character_memory = {
+			type = embraced_demonic_qi_memory
+		}
+		# Healing through dark power
+		if = {
+			limit = { has_trait = wounded }
+			remove_trait = wounded
+		}
+		if = {
+			limit = { has_trait = incapable }
+			remove_trait = incapable
+		}
+		# But at a cost - sanity
+		random_list = {
+			40 = { add_trait = lunatic }
+			30 = {
+				add_trait = sadistic
+			}
+			30 = { }
+		}
+		# Orthodox sects react
+		every_relation = {
+			type = friend
+			limit = {
+				NOT = { has_trait = demonic_cultivator }
+			}
+			add_opinion = {
+				target = root
+				modifier = embraced_dark_path
+				opinion = -40
+			}
+		}
+		# Chain: jianghu underworld welcomes you
+		trigger_event = {
+			id = murim_jianghu.0001
+			days = { 14 30 }
+		}
+		# Chain: fate turns dark
+		trigger_event = {
+			id = murim_fate.0001
+			days = { 30 60 }
+		}
+		stress_impact = {
+			zealous = major_stress_impact_gain
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = vengeful
+			}
+		}
+	}
+	
+	# Option B: Partially absorb the demonic qi - controlled corruption
+	option = {
+		name = murim_forbidden_arts.0001.b
+		add_prowess_skill = 2
+		add_character_modifier = {
+			modifier = partially_corrupted_qi
+			years = 5
+		}
+		create_character_memory = {
+			type = partial_demonic_absorption_memory
+		}
+		# Unstable - periodic qi deviations
+		random_list = {
+			30 = {
+				trigger_event = {
+					id = murim_cultivation.0003
+					days = { 60 180 }
+				}
+			}
+			40 = {
+				add_trait = scarred
+			}
+			30 = { }
+		}
+		# Chain: training to control it
+		trigger_event = {
+			id = murim_training.0001
+			days = { 14 30 }
+		}
+		stress_impact = {
+			brave = medium_stress_loss
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Seal the demonic qi and purge it
+	option = {
+		name = murim_forbidden_arts.0001.c
+		add_piety = 100
+		create_character_memory = {
+			type = purged_demonic_qi_memory
+		}
+		# Purging causes backlash
+		random_list = {
+			40 = { add_trait = wounded }
+			20 = {
+				add_trait = incapable
+				trigger_event = {
+					id = murim_mentor.0001
+					days = { 7 14 }
+				}
+			}
+			40 = { }
+		}
+		# Sect respects your choice
+		add_prestige = 100
+		stress_impact = {
+			zealous = medium_stress_loss
+			compassionate = medium_stress_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = just
+			}
+		}
+	}
+}
+
+###############################################
+# murim_forbidden_arts.0002 - Blood Refining Ritual
+# Discovered an ancient blood-based cultivation technique
+###############################################
+murim_forbidden_arts.0002 = {
+	type = character_event
+	title = murim_forbidden_arts.0002.t
+	desc = murim_forbidden_arts.0002.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_callous
+	}
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = demonic_cultivator
+			has_variable = murim_forbidden_knowledge
+		}
+		NOT = { has_character_flag = blood_ritual_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = sadistic
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = blood_ritual_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Perform the blood ritual using captured enemies
+	option = {
+		name = murim_forbidden_arts.0002.a
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = blood_refined_meridians
+			years = 5
+		}
+		add_dread = 40
+		add_tyranny = 20
+		create_character_memory = {
+			type = performed_blood_ritual_memory
+		}
+		# Cultivation breakthrough through dark means
+		change_variable = {
+			name = murim_cultivation_level
+			add = 1
+		}
+		# Massive moral cost
+		random_list = {
+			30 = { add_trait = sadistic }
+			30 = { add_trait = callous }
+			20 = { add_trait = lunatic }
+			20 = { }
+		}
+		# Every sect turns against you
+		every_relation = {
+			type = friend
+			add_opinion = {
+				target = root
+				modifier = performed_blood_ritual
+				opinion = -60
+			}
+		}
+		# Chain: sect retribution
+		trigger_event = {
+			id = murim_sect.0003
+			days = { 14 30 }
+		}
+		# Chain: ranking reaction
+		trigger_event = {
+			id = murim_ranking.0001
+			days = { 3 7 }
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+	
+	# Option B: Modify the ritual to use only your own blood
+	option = {
+		name = murim_forbidden_arts.0002.b
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = self_blood_refined
+			years = 3
+		}
+		create_character_memory = {
+			type = self_blood_ritual_memory
+		}
+		# Self-sacrifice costs
+		random_list = {
+			40 = {
+				add_trait = wounded
+				add_character_modifier = {
+					modifier = weakened_constitution
+					years = 2
+				}
+			}
+			30 = {
+				add_trait = scarred
+			}
+			20 = {
+				add_trait = incapable
+				# Chain: desperate healing
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 30 60 }
+				}
+			}
+			10 = { }
+		}
+		stress_impact = {
+			brave = medium_stress_loss
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Destroy the blood ritual knowledge
+	option = {
+		name = murim_forbidden_arts.0002.c
+		add_piety = 200
+		add_prestige = 100
+		create_character_memory = {
+			type = destroyed_blood_ritual_memory
+		}
+		# Chain: artifact destruction
+		trigger_event = {
+			id = murim_artifact.0001
+			days = { 3 7 }
+		}
+		stress_impact = {
+			zealous = medium_stress_loss
+			just = medium_stress_loss
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 25
+				has_trait = just
+			}
+		}
+	}
+}
+
+###############################################
+# murim_forbidden_arts.0003 - Soul Devouring Technique
+# A forbidden technique that absorbs the martial power of defeated opponents
+###############################################
+murim_forbidden_arts.0003 = {
+	type = character_event
+	title = murim_forbidden_arts.0003.t
+	desc = murim_forbidden_arts.0003.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:soul_devour_victim
+		animation = fear
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = demonic_cultivator
+		NOT = { has_character_flag = soul_devour_cooldown }
+		any_prisoner = {
+			prowess >= 12
+			is_alive = yes
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = sadistic
+		}
+	}
+	
+	immediate = {
+		random_prisoner = {
+			limit = {
+				prowess >= 12
+				is_alive = yes
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					prowess >= 20
+				}
+			}
+			save_scope_as = soul_devour_victim
+		}
+		add_character_flag = {
+			flag = soul_devour_cooldown
+			years = 2
+		}
+	}
+	
+	# Option A: Devour their martial soul completely
+	option = {
+		name = murim_forbidden_arts.0003.a
+		add_prowess_skill = 4
+		add_dread = 50
+		add_tyranny = 30
+		create_character_memory = {
+			type = devoured_martial_soul_memory
+			participants = {
+				soul_victim = scope:soul_devour_victim
+			}
+		}
+		scope:soul_devour_victim = {
+			death = {
+				death_reason = death_murder
+				killer = root
+			}
+		}
+		# Power surge but instability
+		random_list = {
+			30 = {
+				add_character_modifier = {
+					modifier = unstable_absorbed_power
+					years = 3
+				}
+				add_trait = lunatic
+			}
+			30 = {
+				add_character_modifier = {
+					modifier = soul_devour_mastery
+					years = 5
+				}
+			}
+			20 = {
+				# Victim's memories haunt you
+				add_trait = lunatic
+				trigger_event = {
+					id = murim_fate.0001
+					days = { 30 90 }
+				}
+			}
+			20 = {
+				# Perfect absorption
+				add_trait_xp = {
+					trait = martial_arts_master
+					tracks = martial_arts_track
+					value = 50
+				}
+			}
+		}
+		# Chains: whole martial world reacts
+		trigger_event = {
+			id = murim_jianghu.0001
+			days = { 7 14 }
+		}
+		trigger_event = {
+			id = murim_ranking.0001
+			days = { 3 7 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+	
+	# Option B: Partially absorb - leave them alive but crippled
+	option = {
+		name = murim_forbidden_arts.0003.b
+		add_prowess_skill = 2
+		add_dread = 25
+		create_character_memory = {
+			type = partial_soul_devour_memory
+			participants = {
+				weakened_victim = scope:soul_devour_victim
+			}
+		}
+		scope:soul_devour_victim = {
+			add_trait = incapable
+			add_prowess_skill = -5
+			create_character_memory = {
+				type = had_soul_partially_devoured_memory
+				participants = {
+					soul_devourer = root
+				}
+			}
+			# Chain: victim seeks revenge years later
+			trigger_event = {
+				id = murim_legendary_duel.0004
+				days = { 365 730 }
+			}
+		}
+		random_list = {
+			40 = { add_trait = lunatic }
+			60 = { }
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Release the prisoner instead
+	option = {
+		name = murim_forbidden_arts.0003.c
+		scope:soul_devour_victim = {
+			release_from_prison = yes
+			add_opinion = {
+				target = root
+				modifier = showed_mercy_released_me
+				opinion = 30
+			}
+		}
+		add_piety = 50
+		create_character_memory = {
+			type = showed_mercy_to_prisoner_memory
+			participants = {
+				freed_prisoner = scope:soul_devour_victim
+			}
+		}
+		stress_impact = {
+			sadistic = major_stress_impact_gain
+			compassionate = medium_stress_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = compassionate
+			}
+		}
+	}
+}
+
+###############################################
+# murim_forbidden_arts.0004 - Heavenly Demon Transformation
+# The ultimate forbidden technique - transforming into a heavenly demon
+###############################################
+murim_forbidden_arts.0004 = {
+	type = character_event
+	title = murim_forbidden_arts.0004.t
+	desc = murim_forbidden_arts.0004.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = demonic_cultivator
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 7
+		NOT = { has_character_flag = heavenly_demon_attempt }
+		prowess >= 25
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			var:murim_ranking_position <= 5
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = heavenly_demon_attempt
+		}
+	}
+	
+	# Option A: Attempt the heavenly demon transformation
+	option = {
+		name = murim_forbidden_arts.0004.a
+		custom_tooltip = murim_forbidden_arts.0004.a.tt
+		random_list = {
+			30 = {
+				# SUCCESS - Become the Heavenly Demon
+				add_trait = heavenly_demon
+				add_prowess_skill = 10
+				add_character_modifier = {
+					modifier = heavenly_demon_aura
+					years = -1
+				}
+				add_prestige = 2000
+				create_character_memory = {
+					type = became_heavenly_demon_memory
+				}
+				# The world trembles
+				every_living_character = {
+					limit = {
+						has_variable = murim_ranking_position
+						var:murim_ranking_position <= 50
+						NOT = { this = root }
+					}
+					add_opinion = {
+						target = root
+						modifier = fear_of_heavenly_demon
+						opinion = -30
+					}
+				}
+				# Chain: politics upheaval
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 7 14 }
+				}
+				# Chain: all sects unite against you
+				trigger_event = {
+					id = murim_sect.0001
+					days = { 14 30 }
+				}
+				# Chain: ranking shattered
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 1 3 }
+				}
+			}
+			40 = {
+				# PARTIAL SUCCESS - Power gained but body breaking
+				add_prowess_skill = 5
+				add_trait = wounded
+				add_trait = lunatic
+				add_character_modifier = {
+					modifier = incomplete_demon_transformation
+					years = 5
+				}
+				create_character_memory = {
+					type = failed_demon_transformation_memory
+				}
+				# Chain: desperate cultivation to stabilize
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				# FAILURE - Catastrophic backlash
+				add_trait = incapable
+				add_trait = lunatic
+				add_prowess_skill = -5
+				create_character_memory = {
+					type = catastrophic_demon_transformation_memory
+				}
+				# Chain: near death
+				random_list = {
+					50 = {
+						trigger_event = {
+							id = murim_ranker_death.0001
+							days = { 7 30 }
+						}
+					}
+					50 = {
+						# Saved by unexpected ally
+						trigger_event = {
+							id = murim_mentor.0001
+							days = { 3 7 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Seek an ancient seal to control the transformation
+	option = {
+		name = murim_forbidden_arts.0004.b
+		custom_tooltip = murim_forbidden_arts.0004.b.tt
+		create_character_memory = {
+			type = seeking_demon_seal_memory
+		}
+		# Chain: artifact quest for the seal
+		trigger_event = {
+			id = murim_artifact.0001
+			days = { 30 60 }
+		}
+		# Chain: training to prepare
+		trigger_event = {
+			id = murim_training.0001
+			days = { 7 14 }
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Reject the path of the heavenly demon
+	option = {
+		name = murim_forbidden_arts.0004.c
+		add_piety = 300
+		remove_trait = demonic_cultivator
+		add_character_modifier = {
+			modifier = redeemed_from_dark_path
+			years = 10
+		}
+		create_character_memory = {
+			type = rejected_heavenly_demon_path_memory
+		}
+		# Lose demonic power but gain orthodox respect
+		add_prowess_skill = -3
+		add_prestige = 500
+		every_relation = {
+			type = friend
+			add_opinion = {
+				target = root
+				modifier = returned_to_righteous_path
+				opinion = 30
+			}
+		}
+		# Chain: fate rewards redemption
+		trigger_event = {
+			id = murim_fate.0002
+			days = { 30 90 }
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+			just = medium_stress_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = just
+			}
+		}
+	}
+}
+
+###############################################
+# murim_forbidden_arts.0005 - Yin-Yang Inversion Calamity
+# A catastrophic cultivation accident from mixing orthodox and demonic techniques
+###############################################
+murim_forbidden_arts.0005 = {
+	type = character_event
+	title = murim_forbidden_arts.0005.t
+	desc = murim_forbidden_arts.0005.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = demonic_cultivator
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		NOT = { has_character_flag = yin_yang_inversion_cooldown }
+		OR = {
+			has_trait = martial_arts_master
+			has_trait = cultivation_prodigy
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			stress >= 60
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = yin_yang_inversion_cooldown
+			years = 10
+		}
+	}
+	
+	# Option A: Force balance through sheer willpower
+	option = {
+		name = murim_forbidden_arts.0005.a
+		custom_tooltip = murim_forbidden_arts.0005.a.tt
+		random_list = {
+			25 = {
+				# Perfect balance achieved
+				add_trait = yin_yang_harmony
+				add_prowess_skill = 4
+				add_character_modifier = {
+					modifier = balanced_dual_cultivation
+					years = -1
+				}
+				create_character_memory = {
+					type = achieved_yin_yang_balance_memory
+				}
+				# Chain: ranking update - massive power boost
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 3 7 }
+				}
+			}
+			35 = {
+				# Partial success - one meridian damaged
+				add_prowess_skill = 1
+				add_trait = scarred
+				create_character_memory = {
+					type = partial_yin_yang_balance_memory
+				}
+				# Chain: training to repair
+				trigger_event = {
+					id = murim_training.0001
+					days = { 14 30 }
+				}
+			}
+			25 = {
+				# Failure - qi deviation
+				add_trait = wounded
+				add_trait = lunatic
+				create_character_memory = {
+					type = yin_yang_inversion_failure_memory
+				}
+				# Chain: cultivation regression
+				trigger_event = {
+					id = murim_cultivation.0003
+					days = { 3 7 }
+				}
+			}
+			15 = {
+				# Catastrophic failure
+				add_trait = incapable
+				random_list = {
+					50 = {
+						death = {
+							death_reason = death_qi_deviation
+						}
+					}
+					50 = {
+						# Barely survive
+						trigger_event = {
+							id = murim_ranker_death.0003
+							days = { 1 3 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Seek a dual-cultivation partner to stabilize
+	option = {
+		name = murim_forbidden_arts.0005.b
+		trigger = {
+			any_relation = {
+				type = lover
+				is_alive = yes
+			}
+		}
+		random_relation = {
+			type = lover
+			save_scope_as = dual_cultivation_partner
+		}
+		create_character_memory = {
+			type = dual_cultivation_stabilization_memory
+			participants = {
+				partner = scope:dual_cultivation_partner
+			}
+		}
+		random_list = {
+			50 = {
+				# Partner helps stabilize
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = partner_stabilized_qi
+					years = 3
+				}
+				scope:dual_cultivation_partner = {
+					add_opinion = {
+						target = root
+						modifier = saved_through_dual_cultivation
+						opinion = 40
+					}
+				}
+				# Chain: romance deepens
+				trigger_event = {
+					id = murim_romance.0001
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				# Partner injured in the process
+				scope:dual_cultivation_partner = {
+					add_trait = wounded
+					create_character_memory = {
+						type = injured_saving_lover_memory
+						participants = {
+							saved_lover = root
+						}
+					}
+				}
+				# Chain: mentor for healing
+				trigger_event = {
+					id = murim_mentor.0001
+					days = { 7 14 }
+				}
+			}
+			20 = {
+				# Partner dies from the backlash
+				scope:dual_cultivation_partner = {
+					death = {
+						death_reason = death_qi_deviation
+					}
+				}
+				root = {
+					add_trait = depressed
+					create_character_memory = {
+						type = lover_died_from_qi_backlash_memory
+						participants = {
+							dead_lover = scope:dual_cultivation_partner
+						}
+					}
+					# Chain: vengeance against the world
+					trigger_event = {
+						id = murim_forbidden_arts.0001
+						days = { 30 60 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Seal all cultivation and become a mortal
+	option = {
+		name = murim_forbidden_arts.0005.c
+		remove_trait = demonic_cultivator
+		if = {
+			limit = { has_trait = martial_arts_master }
+			remove_trait = martial_arts_master
+		}
+		add_prowess_skill = -8
+		set_variable = {
+			name = murim_cultivation_level
+			value = 0
+		}
+		add_piety = 500
+		create_character_memory = {
+			type = sealed_all_cultivation_memory
+		}
+		add_character_modifier = {
+			modifier = former_cultivator_mortal
+			years = -1
+		}
+		# Chain: daily life as mortal
+		trigger_event = {
+			id = murim_daily_life.0001
+			days = { 30 60 }
+		}
+		# Chain: fate may restore powers later
+		trigger_event = {
+			id = murim_fate.0001
+			days = { 365 730 }
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = content
+			}
+		}
+	}
+}
