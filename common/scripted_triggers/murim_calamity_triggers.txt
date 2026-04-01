@@ -1,0 +1,377 @@
+# Murim Chronicles - Great Calamity Scripted Triggers
+# CONDITIONS: Detects when the Murim world is overdue for apocalyptic reset.
+# INTEGRATION: murim_calamity_on_actions.txt fires these checks yearly.
+# DESIGN: Warning omens 10-20 years before. Full calamity after threshold.
+# GAME RULE: murim_calamity_timing controls year threshold (150/175/200/off).
+
+# ========================================
+# MASTER CALAMITY CHECK
+# ========================================
+
+murim_calamity_conditions_met_trigger = {
+	# Must not already be in a calamity
+	NOT = { has_global_variable = murim_great_calamity_active }
+	# Must not have completed a calamity in the last 50 years
+	OR = {
+		NOT = { has_global_variable = murim_last_calamity_year }
+		global_var:murim_last_calamity_year < { # At least 50 years since last
+			value = current_year
+			subtract = 50
+		}
+	}
+	# At least one condition must be true
+	OR = {
+		murim_calamity_time_threshold_met_trigger = yes
+		murim_calamity_overpopulation_trigger = yes
+		murim_calamity_power_concentration_trigger = yes
+	}
+}
+
+# ========================================
+# CONDITION 1: TIME THRESHOLD
+# Game has been running long enough for power creep
+# ========================================
+
+murim_calamity_time_threshold_met_trigger = {
+	# Check game rule for timing
+	OR = {
+		AND = {
+			has_game_rule = murim_calamity_timing_150
+			current_date >= 1216.1.1  # ~150 years after 1066 start
+		}
+		AND = {
+			has_game_rule = murim_calamity_timing_175
+			current_date >= 1241.1.1  # ~175 years
+		}
+		AND = {
+			has_game_rule = murim_calamity_timing_200
+			current_date >= 1266.1.1  # ~200 years
+		}
+		# Default: 175 years if no rule set
+		AND = {
+			NOT = { has_game_rule = murim_calamity_timing_150 }
+			NOT = { has_game_rule = murim_calamity_timing_175 }
+			NOT = { has_game_rule = murim_calamity_timing_200 }
+			NOT = { has_game_rule = murim_calamity_timing_off }
+			current_date >= 1241.1.1
+		}
+	}
+}
+
+# ========================================
+# CONDITION 2: OVERPOPULATION
+# Too many martial artists alive at once
+# ========================================
+
+murim_calamity_overpopulation_trigger = {
+	any_living_character = {
+		count >= 200
+		has_trait = martial_artist
+	}
+}
+
+# ========================================
+# CONDITION 3: POWER CONCENTRATION
+# 3+ clans at maximum power simultaneously
+# ========================================
+
+murim_calamity_power_concentration_trigger = {
+	# Count clans with supreme-tier leaders
+	calc_true_if = {
+		amount >= 3
+		# Shaolin
+		any_living_character = {
+			has_trait = shaolin_disciple
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Wudang
+		any_living_character = {
+			has_trait = wudang_disciple
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Mount Hua
+		any_living_character = {
+			has_trait = mount_hua_disciple
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Beggar Sect
+		any_living_character = {
+			has_trait = beggar_sect_member
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Iron Fist Gate
+		any_living_character = {
+			has_trait = iron_fist_member
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Tang Clan
+		any_living_character = {
+			OR = {
+				has_trait = tang_clan_member
+				has_trait = tang_clan_disciple
+			}
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Heavenly Demon Sect
+		any_living_character = {
+			has_trait = heavenly_demon_disciple
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Poison Flower Palace
+		any_living_character = {
+			has_trait = poison_flower_member
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+		# Phantom Blade Sect
+		any_living_character = {
+			has_trait = phantom_blade_member
+			murim_is_grandmaster_or_above_trigger = yes
+			is_ai = yes
+		}
+	}
+}
+
+# ========================================
+# OMEN/WARNING TRIGGERS
+# These fire 10-20 years before calamity
+# ========================================
+
+murim_calamity_omens_should_start_trigger = {
+	NOT = { has_global_variable = murim_great_calamity_active }
+	NOT = { has_global_variable = murim_calamity_omens_active }
+	# Omens start when we're within 20 years of any threshold
+	OR = {
+		AND = {
+			has_game_rule = murim_calamity_timing_150
+			current_date >= 1196.1.1  # 20 years before 1216
+		}
+		AND = {
+			has_game_rule = murim_calamity_timing_175
+			current_date >= 1221.1.1  # 20 years before 1241
+		}
+		AND = {
+			has_game_rule = murim_calamity_timing_200
+			current_date >= 1246.1.1  # 20 years before 1266
+		}
+		AND = {
+			NOT = { has_game_rule = murim_calamity_timing_150 }
+			NOT = { has_game_rule = murim_calamity_timing_175 }
+			NOT = { has_game_rule = murim_calamity_timing_200 }
+			NOT = { has_game_rule = murim_calamity_timing_off }
+			current_date >= 1221.1.1
+		}
+		# Overpopulation approaching
+		any_living_character = {
+			count >= 150
+			has_trait = martial_artist
+		}
+	}
+}
+
+# ========================================
+# SURVIVOR SELECTION TRIGGERS
+# Who lives through the calamity
+# ========================================
+
+murim_calamity_is_player_dynasty_trigger = {
+	exists = player_heir
+	dynasty = root.dynasty
+}
+
+murim_calamity_survivor_candidate_trigger = {
+	is_alive = yes
+	age >= 10
+	OR = {
+		# Player dynasty always survives
+		murim_calamity_is_player_dynasty_trigger = yes
+		# High cultivation increases survival chance
+		AND = {
+			murim_is_martial_artist_trigger = yes
+			OR = {
+				murim_is_grandmaster_or_above_trigger = yes
+				has_trait = murim_fate_blessed  # Hidden fate trait
+			}
+		}
+		# Young characters with potential
+		AND = {
+			age <= 25
+			OR = {
+				has_trait = genius
+				has_trait = quick
+				has_trait = shrewd
+				has_trait = brave
+			}
+		}
+		# Characters in remote/hidden locations
+		AND = {
+			has_character_modifier = murim_in_seclusion
+		}
+	}
+}
+
+murim_calamity_is_clan_last_member_trigger = {
+	# Check if this character is the last surviving member of their clan
+	OR = {
+		AND = {
+			has_trait = shaolin_disciple
+			NOT = {
+				any_living_character = {
+					has_trait = shaolin_disciple
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = wudang_disciple
+			NOT = {
+				any_living_character = {
+					has_trait = wudang_disciple
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = mount_hua_disciple
+			NOT = {
+				any_living_character = {
+					has_trait = mount_hua_disciple
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = beggar_sect_member
+			NOT = {
+				any_living_character = {
+					has_trait = beggar_sect_member
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = iron_fist_member
+			NOT = {
+				any_living_character = {
+					has_trait = iron_fist_member
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			OR = {
+				has_trait = tang_clan_member
+				has_trait = tang_clan_disciple
+			}
+			NOT = {
+				any_living_character = {
+					OR = {
+						has_trait = tang_clan_member
+						has_trait = tang_clan_disciple
+					}
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = heavenly_demon_disciple
+			NOT = {
+				any_living_character = {
+					has_trait = heavenly_demon_disciple
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = poison_flower_member
+			NOT = {
+				any_living_character = {
+					has_trait = poison_flower_member
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+		AND = {
+			has_trait = phantom_blade_member
+			NOT = {
+				any_living_character = {
+					has_trait = phantom_blade_member
+					NOT = { this = root }
+					has_character_flag = murim_calamity_survivor
+				}
+			}
+		}
+	}
+}
+
+# ========================================
+# CALAMITY PHASE CHECKS
+# ========================================
+
+murim_calamity_in_gathering_storm_trigger = {
+	has_global_variable = murim_great_calamity_active
+	has_global_variable = murim_calamity_phase_storm
+	NOT = { has_global_variable = murim_calamity_phase_war }
+}
+
+murim_calamity_in_great_war_trigger = {
+	has_global_variable = murim_great_calamity_active
+	has_global_variable = murim_calamity_phase_war
+	NOT = { has_global_variable = murim_calamity_phase_silence }
+}
+
+murim_calamity_in_silence_trigger = {
+	has_global_variable = murim_great_calamity_active
+	has_global_variable = murim_calamity_phase_silence
+	NOT = { has_global_variable = murim_calamity_phase_renewal }
+}
+
+murim_calamity_in_renewal_trigger = {
+	has_global_variable = murim_great_calamity_active
+	has_global_variable = murim_calamity_phase_renewal
+}
+
+# ========================================
+# PREVENTION TRIGGERS
+# Can the player stop the calamity?
+# ========================================
+
+murim_calamity_prevention_possible_trigger = {
+	# Only during Gathering Storm phase
+	murim_calamity_in_gathering_storm_trigger = yes
+	# Player must be a supreme-tier martial artist
+	murim_is_grandmaster_or_above_trigger = yes
+	# Player must control both orthodox and unorthodox respect
+	diplomacy >= 20
+	martial >= 25
+	# Must not have accelerated the calamity
+	NOT = { has_character_flag = murim_accelerated_calamity }
+}
+
+murim_calamity_delay_possible_trigger = {
+	murim_calamity_in_gathering_storm_trigger = yes
+	# Delaying is easier than preventing
+	murim_is_martial_artist_trigger = yes
+	diplomacy >= 15
+	OR = {
+		has_trait = just
+		has_trait = compassionate
+		has_trait = diplomat
+		has_trait = august
+	}
+}
