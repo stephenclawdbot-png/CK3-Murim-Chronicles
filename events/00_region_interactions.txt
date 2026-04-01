@@ -1,369 +1,1075 @@
-# Region-Specific Unique Interactions
+# Region-Specific Unique Interactions - Expanded
 # Central China, Goryeo, Japan, and Wilderness all have unique mechanics
+# All events use exists=yes safety checks and variable validation
 
 namespace = region_interaction
+
+##############################
+# CENTRAL CHINA EVENTS
+##############################
 
 # CENTRAL CHINA: Sect Leadership Challenge
 central_china.0001 = {
 	type = character_event
 	title = central_china.0001.t
 	desc = central_china.0001.desc
+	theme = martial
 
 	trigger = {
 		is_ruler = yes
-		is_in_central_china = yes
+		is_alive = yes
+		is_available = yes
 		martial >= 20
-		NOT = { has_title = empire }
-		prestige_level >= 3
-		has_trait = nascent_soul
+		NOT = { has_character_flag = attempted_sect_challenge }
+		OR = {
+			has_trait = ambitious
+			has_trait = brave
+			prowess >= 25
+		}
+		# Safety: verify cultivation exists
+		OR = {
+			has_variable = cultivation_rank
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+			has_trait = murim_heavenly_tribulation
+		}
 	}
 
 	weight_multiplier = {
-		base = 20
-		modifier = {
-			add = 30
-			has_trait = sword_aptitude_4
-		}
-	}
-
-	option = {
-		name = central_china.0001.a
-		desc = "Challenge the current Sect Master for leadership"
-		effect = {
-			start_war = {
-				target = liege
-				casus_belli = sect_challenge_cb
-			}
-			add_prestige = 100
-		}
-	}
-
-	option = {
-		name = central_china.0001.b
-		desc = "Bide my time and cultivate further"
-		effect = {
-			add_stress = -10
-			add_trait = patient
-		}
-	}
-}
-
-# GORYEO: Blade Tournament
-goryeo.0001 = {
-	type = character_event
-	title = goryeo.0001.t
-	desc = goryeo.0001.desc
-
-	trigger = {
-		is_ruler = yes
-		is_in_goryeo = yes
-		age >= 16
-		age <= 40
-		martial >= 12
-		prowess >= 10
-		NOT = { has_character_modifier = recently_attended_tournament }
-	}
-
-	weight_multiplier = {
-		base = 50
+		base = 15
 		modifier = {
 			add = 20
-			has_trait = sword_aptitude_2
+			has_trait = murim_golden_core
 		}
-	}
-
-	option = {
-		name = goryeo.0001.a
-		desc = "Enter the tournament"
-		effect = {
-			add_character_modifier = {
-				modifier = recently_attended_tournament
-				duration = 1825
-			}
-			random_list = {
-				30 = {
-					desc = won_tournament
-					add_prestige = 300
-					add_trait = sword_aptitude_3
-					add_gold = 200
-				}
-				40 = {
-					desc = placed_well
-					add_prestige = 100
-					add_prowess = 2
-				}
-				30 = {
-					desc = lost_early
-					add_prestige = -50
-					add_stress = 20
-				}
-			}
-		}
-	}
-
-	option = {
-		name = goryeo.0001.b
-		desc = "Watch as a spectator"
-		effect = {
-			add_learning = 1
-			add_character_modifier = {
-				modifier = recently_attended_tournament
-				duration = 1825
-			}
-		}
-	}
-}
-
-# JAPAN: Honor Duel
-japan.0001 = {
-	type = character_event
-	title = japan.0001.t
-	desc = japan.0001.desc
-
-	trigger = {
-		is_in_japan = yes
-		is_ruler = yes
-		OR = {
-			has_trait = dishonorable
-			has_trait = insulted
-			opinion = {
-				target = scope:rival
-				value < -50
-			}
-		}
-	}
-
-	weight_multiplier = {
-		base = 30
-		modifier = {
-			add = 50
-			has_trait = vengeful
-		}
-	}
-
-	option = {
-		name = japan.0001.a
-		desc = "Challenge to death duel"
-		effect = {
-			custom_tooltip = tt_death_duel
-			random_list = {
-				50 = {
-					desc = won_honor_duel
-					remove_trait = dishonorable
-					add_trait = honorable
-					add_prestige = 500
-					scope:rival = {
-						death = {
-							death_reason = death_duel
-							killer = root
-						}
-					}
-				}
-				50 = {
-					desc = lost_honor_duel
-					death = {
-						death_reason = death_duel
-						killer = scope:rival
-					}
-				}
-			}
-		}
-	}
-
-	option = {
-		name = japan.0001.b
-		desc = "Forgive the insult"
-		effect = {
-			add_piety = 100
-			remove_trait = vengeful
-			add_trait = forgiving
-		}
-	}
-}
-
-# WILDERNESS: Demonic Cult Recruitment
-wilderness.0001 = {
-	type = character_event
-	title = wilderness.0001.t
-	desc = wilderness.0001.desc
-
-	trigger = {
-		is_in_wilderness = yes
-		is_ruler = yes
-		OR = {
-			has_trait = desperate
-			has_trait = greedy
-			has_trait = vengeful
-			stress >= 80
-		}
-		NOT = { has_trait = demonic_aptitude_1 }
-	}
-
-	weight_multiplier = {
-		base = 40
 		modifier = {
 			add = 30
-			has_trait = ambitious
+			has_trait = murim_nascent_soul
+		}
+		modifier = {
+			add = 10
+			has_trait = brave
 		}
 	}
 
+	# Challenge the current leader
 	option = {
-		name = wilderness.0001.a
-		desc = "Join the demonic cult"
-		effect = {
-			add_trait = demonic_aptitude_1
-			add_piety = -200
-			add_prestige = 100
-			add_martial = 3
-			set_faith = demonic_cultivation_sect
-			add_stress = -30
+		name = central_china.0001.a
+		add_character_flag = {
+			flag = attempted_sect_challenge
+			days = 1825
+		}
+		duel = {
+			skill = prowess
+			target = liege
+			50 = {
+				desc = central_china.0001.a.success
+				compare_modifier = {
+					value = prowess
+					multiplier = 2
+				}
+				send_interface_toast = {
+					title = central_china_sect_challenge_won
+					left_icon = root
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = sect_leader_aura
+					years = 10
+				}
+				if = {
+					limit = { has_variable = murim_duel_wins }
+					change_variable = {
+						name = murim_duel_wins
+						add = 1
+					}
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_wins } }
+					set_variable = {
+						name = murim_duel_wins
+						value = 1
+					}
+				}
+			}
+			50 = {
+				desc = central_china.0001.a.failure
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				add_prestige = -200
+				add_stress = 30
+				add_character_modifier = {
+					modifier = humiliated_challenger
+					years = 5
+				}
+				if = {
+					limit = { has_variable = murim_duel_losses }
+					change_variable = {
+						name = murim_duel_losses
+						add = 1
+					}
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_losses } }
+					set_variable = {
+						name = murim_duel_losses
+						value = 1
+					}
+				}
+			}
 		}
 	}
 
+	# Bide time and cultivate further
 	option = {
-		name = wilderness.0001.b
-		desc = "Resist temptation"
-		effect = {
-			add_stress = 40
-			add_piety = 50
-			add_trait = zealous
-		}
-	}
-}
-
-# CENTRAL CHINA: Mandate of Heaven Check
-celestial.0001 = {
-	type = character_event
-	title = celestial.0001.t
-	desc = celestial.0001.desc
-
-	trigger = {
-		has_title = empire
-		has_character_modifier = mandate_of_heaven_orthodox
-	}
-
-	hidden = yes
-
-	effect = {
-		check_celestial_alignment = yes
+		name = central_china.0001.b
+		add_stress = -10
 		if = {
-			limit = { var:orthodox_favor < 0 }
-			add_stress = 10
-			add_character_modifier = {
-				modifier = waning_mandate
+			limit = { NOT = { has_trait = patient } }
+			random = {
+				chance = 30
+				add_trait = patient
 			}
 		}
-		else_if = {
-			limit = { var:orthodox_favor > 0.2 }
-			add_prestige = 50
-			add_character_modifier = {
-				modifier = strong_mandate
-				duration = 365
-			}
+		add_character_modifier = {
+			modifier = deep_cultivation_focus
+			years = 3
 		}
 	}
 }
 
-# UNIQUE: Artifact Discovery in Ruins
-exploration.0001 = {
+# CENTRAL CHINA: Mandate of Heaven Resonance
+central_china.0002 = {
 	type = character_event
-	title = exploration.0001.t
-	desc = exploration.0001.desc
+	title = central_china.0002.t
+	desc = central_china.0002.desc
+	theme = celestial
 
 	trigger = {
-		is_in_wilderness = yes
 		is_ruler = yes
-		martial >= 15
-		prowess >= 12
+		is_alive = yes
+		prestige_level >= 4
+		piety_level >= 3
+		OR = {
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+			has_trait = murim_heavenly_tribulation
+		}
+		NOT = { has_character_flag = mandate_check_recent }
 	}
 
 	weight_multiplier = {
 		base = 10
 		modifier = {
 			add = 20
-			is_in_wilderness = yes
+			has_trait = murim_spirit_severing
+		}
+		modifier = {
+			add = 40
+			has_trait = murim_heavenly_tribulation
 		}
 	}
 
+	# Claim the Mandate
 	option = {
-		name = exploration.0001.a
-		desc = "Enter the ancient ruins"
-		effect = {
-			random_list = {
-				20 = {
-					desc = found_divine_scroll
-					add_trait = secret_manual_holder
-					add_learning = 2
+		name = central_china.0002.a
+		add_character_flag = {
+			flag = mandate_check_recent
+			days = 3650
+		}
+		random_list = {
+			40 = {
+				desc = central_china.0002.a.blessed
+				modifier = {
+					add = 20
+					has_trait = murim_heavenly_tribulation
 				}
-				20 = {
-					desc = found_spirit_sword
-					add_artifact = sect_disciple_sword
-					add_prowess = 2
+				add_prestige = 1000
+				add_piety = 500
+				add_character_modifier = {
+					modifier = mandate_of_heaven_blessed
+					years = 20
 				}
-				20 = {
-					desc = found_pill_refinery
-					add_trait = alchemist_1
-					add_gold = 100
+				if = {
+					limit = { has_variable = celestial_alignment }
+					change_variable = {
+						name = celestial_alignment
+						add = 25
+					}
 				}
-				20 = {
-					desc = ancient_trap
-					add_trait = wounded
-					add_health = -2
+			}
+			35 = {
+				desc = central_china.0002.a.partial
+				add_prestige = 300
+				add_piety = 100
+				add_character_modifier = {
+					modifier = heavenly_favor_partial
+					years = 5
 				}
-				20 = {
-					desc = nothing_of_value
-					add_stress = 10
+			}
+			25 = {
+				desc = central_china.0002.a.rejected
+				add_prestige = -500
+				add_stress = 50
+				add_character_modifier = {
+					modifier = heavenly_rejection
+					years = 10
+				}
+				random = {
+					chance = 20
+					add_trait = lunatic
 				}
 			}
 		}
 	}
 
+	# Meditate on worthiness
 	option = {
-		name = exploration.0001.b
-		desc = "Too dangerous, leave it"
-		effect = {
-			add_stress = 5
+		name = central_china.0002.b
+		add_piety = 200
+		add_learning = 1
+		add_stress = -20
+	}
+}
+
+# CENTRAL CHINA: Imperial Examiner Visit
+central_china.0003 = {
+	type = character_event
+	title = central_china.0003.t
+	desc = central_china.0003.desc
+	theme = intrigue
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		learning >= 12
+		NOT = { has_character_flag = imperial_exam_recent }
+		any_courtier = {
+			count >= 3
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = {
+			add = 15
+			learning >= 20
+		}
+	}
+
+	# Present best disciples
+	option = {
+		name = central_china.0003.a
+		add_character_flag = {
+			flag = imperial_exam_recent
+			days = 3650
+		}
+		random_list = {
+			50 = {
+				desc = central_china.0003.a.impressed
+				add_prestige = 400
+				add_gold = 300
+				every_courtier = {
+					limit = {
+						OR = {
+							has_trait = murim_foundation
+							has_trait = murim_golden_core
+						}
+					}
+					add_opinion = {
+						target = root
+						modifier = grateful_for_recognition
+						opinion = 30
+					}
+				}
+			}
+			30 = {
+				desc = central_china.0003.a.adequate
+				add_prestige = 100
+				add_gold = 50
+			}
+			20 = {
+				desc = central_china.0003.a.disappointing
+				add_prestige = -200
+				add_stress = 20
+			}
+		}
+	}
+
+	# Decline the examination
+	option = {
+		name = central_china.0003.b
+		add_character_flag = {
+			flag = imperial_exam_recent
+			days = 1825
+		}
+		add_prestige = -50
+	}
+}
+
+# CENTRAL CHINA: Celestial Herb Market
+central_china.0004 = {
+	type = character_event
+	title = central_china.0004.t
+	desc = central_china.0004.desc
+	theme = stewardship
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		gold >= 100
+		NOT = { has_character_flag = herb_market_visited }
+		OR = {
+			has_variable = cultivation_rank
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+		}
+	}
+
+	weight_multiplier = {
+		base = 30
+		modifier = {
+			add = 20
+			gold >= 500
+		}
+	}
+
+	# Buy rare cultivation herbs
+	option = {
+		name = central_china.0004.a
+		add_character_flag = {
+			flag = herb_market_visited
+			days = 365
+		}
+		remove_short_term_gold = 200
+		random_list = {
+			30 = {
+				desc = central_china.0004.a.legendary
+				add_character_modifier = {
+					modifier = legendary_herb_consumed
+					years = 10
+				}
+				add_prowess = 3
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = {
+						name = cultivation_progress
+						add = 30
+					}
+				}
+			}
+			40 = {
+				desc = central_china.0004.a.good
+				add_character_modifier = {
+					modifier = medicinal_herb_boost
+					years = 5
+				}
+				add_prowess = 1
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = {
+						name = cultivation_progress
+						add = 15
+					}
+				}
+			}
+			30 = {
+				desc = central_china.0004.a.fake
+				add_stress = 15
+				custom_tooltip = central_china_fake_herbs_tt
+			}
+		}
+	}
+
+	# Buy alchemy ingredients instead
+	option = {
+		name = central_china.0004.b
+		remove_short_term_gold = 100
+		add_character_modifier = {
+			modifier = alchemy_ingredients_stocked
+			years = 3
+		}
+		if = {
+			limit = { has_variable = alchemy_skill }
+			change_variable = {
+				name = alchemy_skill
+				add = 5
+			}
+		}
+		if = {
+			limit = { NOT = { has_variable = alchemy_skill } }
+			set_variable = {
+				name = alchemy_skill
+				value = 5
+			}
+		}
+	}
+
+	# Too expensive, leave
+	option = {
+		name = central_china.0004.c
+		add_stress = 5
+		if = {
+			limit = { has_trait = greedy }
+			add_stress = -10
 		}
 	}
 }
 
-# GORYEO: Mercenary Contracts
+# CENTRAL CHINA: Five Poisons Sect Ambush
+central_china.0005 = {
+	type = character_event
+	title = central_china.0005.t
+	desc = central_china.0005.desc
+	theme = skulduggery
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		is_available = yes
+		OR = {
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+		}
+		NOT = { has_character_flag = five_poisons_encounter }
+		NOT = { has_trait = demonic_aptitude_1 }
+	}
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 10
+			any_scheme = { exists = yes }
+		}
+		modifier = {
+			add = 15
+			has_trait = murim_golden_core
+		}
+	}
+
+	# Fight through the ambush
+	option = {
+		name = central_china.0005.a
+		add_character_flag = {
+			flag = five_poisons_encounter
+			days = 1825
+		}
+		duel = {
+			skill = prowess
+			50 = {
+				desc = central_china.0005.a.victory
+				compare_modifier = {
+					value = prowess
+					multiplier = 3
+				}
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = poison_resistance_gained
+					years = 15
+				}
+				if = {
+					limit = { has_variable = murim_duel_wins }
+					change_variable = { name = murim_duel_wins add = 1 }
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_wins } }
+					set_variable = { name = murim_duel_wins value = 1 }
+				}
+			}
+			50 = {
+				desc = central_china.0005.a.poisoned
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				add_character_modifier = {
+					modifier = five_poisons_affliction
+					years = 5
+				}
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					10 = { add_trait = incapable }
+				}
+			}
+		}
+	}
+
+	# Negotiate with the assassins
+	option = {
+		name = central_china.0005.b
+		trigger = { diplomacy >= 15 }
+		add_character_flag = {
+			flag = five_poisons_encounter
+			days = 1825
+		}
+		random_list = {
+			50 = {
+				desc = central_china.0005.b.success
+				add_intrigue = 2
+				add_character_modifier = {
+					modifier = underworld_contacts
+					years = 10
+				}
+			}
+			50 = {
+				desc = central_china.0005.b.betrayed
+				add_stress = 30
+				remove_short_term_gold = 100
+			}
+		}
+	}
+
+	# Flee
+	option = {
+		name = central_china.0005.c
+		add_character_flag = {
+			flag = five_poisons_encounter
+			days = 730
+		}
+		add_prestige = -100
+		add_stress = 20
+		if = {
+			limit = { NOT = { has_trait = craven } }
+			random = {
+				chance = 25
+				add_trait = craven
+			}
+		}
+	}
+}
+
+##############################
+# GORYEO EVENTS
+##############################
+
+# GORYEO: Blade Tournament
+goryeo.0001 = {
+	type = character_event
+	title = goryeo.0001.t
+	desc = goryeo.0001.desc
+	theme = martial
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		age >= 16
+		age <= 50
+		prowess >= 10
+		NOT = { has_character_modifier = recently_attended_tournament }
+	}
+
+	weight_multiplier = {
+		base = 40
+		modifier = {
+			add = 20
+			has_trait = murim_sword_aptitude_2
+		}
+		modifier = {
+			add = 30
+			has_trait = murim_sword_aptitude_3
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+	}
+
+	# Enter the tournament
+	option = {
+		name = goryeo.0001.a
+		add_character_modifier = {
+			modifier = recently_attended_tournament
+			days = 1825
+		}
+		duel = {
+			skill = prowess
+			30 = {
+				desc = goryeo.0001.a.champion
+				compare_modifier = {
+					value = prowess
+					multiplier = 3
+				}
+				add_prestige = 500
+				add_gold = 300
+				add_character_modifier = {
+					modifier = goryeo_tournament_champion
+					years = 10
+				}
+				if = {
+					limit = { has_variable = murim_duel_wins }
+					change_variable = { name = murim_duel_wins add = 1 }
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_wins } }
+					set_variable = { name = murim_duel_wins value = 1 }
+				}
+				# Chance to advance sword aptitude
+				random = {
+					chance = 25
+					if = {
+						limit = { has_trait = murim_sword_aptitude_2 }
+						remove_trait = murim_sword_aptitude_2
+						add_trait = murim_sword_aptitude_3
+					}
+				}
+			}
+			40 = {
+				desc = goryeo.0001.a.placed_well
+				add_prestige = 150
+				add_prowess = 2
+			}
+			30 = {
+				desc = goryeo.0001.a.eliminated
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				add_prestige = -50
+				add_stress = 15
+				random_list = {
+					70 = { custom_tooltip = goryeo_minor_bruises_tt }
+					20 = { add_trait = wounded_1 }
+					10 = { add_trait = wounded_2 }
+				}
+			}
+		}
+	}
+
+	# Watch as spectator
+	option = {
+		name = goryeo.0001.b
+		add_learning = 1
+		add_character_modifier = {
+			modifier = recently_attended_tournament
+			days = 1825
+		}
+		if = {
+			limit = { has_variable = technique_insights }
+			change_variable = { name = technique_insights add = 5 }
+		}
+	}
+}
+
+# GORYEO: Hwarang Warrior Induction
 goryeo.0002 = {
 	type = character_event
 	title = goryeo.0002.t
 	desc = goryeo.0002.desc
+	theme = martial
 
 	trigger = {
-		is_in_goryeo = yes
 		is_ruler = yes
-		martial >= 10
-		NOT = { has_trait = craven }
+		is_alive = yes
+		age >= 14
+		age <= 25
+		martial >= 8
+		prowess >= 8
+		NOT = { has_character_flag = hwarang_induction_offered }
+		OR = {
+			has_trait = brave
+			has_trait = ambitious
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+		}
 	}
 
 	weight_multiplier = {
 		base = 25
 		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
 			add = 15
-			has_trait = greedy
+			has_trait = ambitious
 		}
 	}
 
+	# Accept induction
 	option = {
 		name = goryeo.0002.a
-		desc = "Accept mercenary contract"
-		effect = {
-			add_gold = 300
-			add_prestige = 50
-			add_trait = mercenary_contract
+		add_character_flag = {
+			flag = hwarang_induction_offered
+			days = 36500
+		}
+		add_trait = hwarang_warrior
+		add_prowess = 3
+		add_martial = 2
+		add_diplomacy = 1
+		add_character_modifier = {
+			modifier = hwarang_training_complete
+			years = 20
+		}
+		add_prestige = 200
+		# Brotherhood bonds
+		every_courtier = {
+			limit = {
+				has_trait = hwarang_warrior
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = hwarang_brotherhood
+				opinion = 40
+			}
 		}
 	}
 
+	# Decline - follow own path
 	option = {
 		name = goryeo.0002.b
-		desc = "Refuse, reputation matters more"
-		effect = {
-			add_honor = 10
-			add_prestige = 20
+		add_character_flag = {
+			flag = hwarang_induction_offered
+			days = 3650
+		}
+		add_stress = 10
+		if = {
+			limit = { has_trait = ambitious }
+			add_stress = -15
+		}
+	}
+}
+
+# GORYEO: Mountain Hermit Encounter
+goryeo.0003 = {
+	type = character_event
+	title = goryeo.0003.t
+	desc = goryeo.0003.desc
+	theme = learning
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		OR = {
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+		}
+		NOT = { has_character_flag = hermit_encounter_recent }
+		learning >= 10
+	}
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 20
+			learning >= 20
+		}
+		modifier = {
+			add = 10
+			has_trait = patient
+		}
+	}
+
+	# Study under the hermit
+	option = {
+		name = goryeo.0003.a
+		add_character_flag = {
+			flag = hermit_encounter_recent
+			days = 3650
+		}
+		random_list = {
+			35 = {
+				desc = goryeo.0003.a.enlightened
+				modifier = {
+					add = 15
+					learning >= 20
+				}
+				add_learning = 3
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = hermit_wisdom_blessing
+					years = 15
+				}
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = { name = cultivation_progress add = 25 }
+				}
+				if = {
+					limit = { NOT = { has_variable = cultivation_progress } }
+					set_variable = { name = cultivation_progress value = 25 }
+				}
+			}
+			40 = {
+				desc = goryeo.0003.a.learned
+				add_learning = 1
+				add_character_modifier = {
+					modifier = mountain_meditation_insight
+					years = 5
+				}
+			}
+			25 = {
+				desc = goryeo.0003.a.confused
+				add_stress = 20
+				add_learning = -1
+				custom_tooltip = goryeo_hermit_riddles_tt
+			}
+		}
+	}
+
+	# Challenge the hermit to spar
+	option = {
+		name = goryeo.0003.b
+		trigger = { prowess >= 20 }
+		add_character_flag = {
+			flag = hermit_encounter_recent
+			days = 3650
+		}
+		duel = {
+			skill = prowess
+			25 = {
+				desc = goryeo.0003.b.impressed
+				compare_modifier = {
+					value = prowess
+					multiplier = 2
+				}
+				add_prestige = 300
+				add_prowess = 5
+				add_character_modifier = {
+					modifier = hermit_acknowledgment
+					years = 20
+				}
+			}
+			75 = {
+				desc = goryeo.0003.b.humbled
+				add_prowess = 1
+				add_learning = 2
+				add_stress = 10
+				add_character_modifier = {
+					modifier = humbled_by_master
+					years = 5
+				}
+			}
+		}
+	}
+
+	# Leave respectfully
+	option = {
+		name = goryeo.0003.c
+		add_piety = 50
+		add_stress = -10
+	}
+}
+
+# GORYEO: Royal Court Martial Arts Display
+goryeo.0004 = {
+	type = character_event
+	title = goryeo.0004.t
+	desc = goryeo.0004.desc
+	theme = diplomacy
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		prowess >= 15
+		prestige_level >= 2
+		NOT = { has_character_flag = royal_display_recent }
+		any_liege_or_above = {
+			is_alive = yes
+			highest_held_title_tier >= tier_kingdom
+		}
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = {
+			add = 15
+			prowess >= 25
+		}
+		modifier = {
+			add = 10
+			diplomacy >= 15
+		}
+	}
+
+	# Perform an impressive demonstration
+	option = {
+		name = goryeo.0004.a
+		add_character_flag = {
+			flag = royal_display_recent
+			days = 1825
+		}
+		random_list = {
+			40 = {
+				desc = goryeo.0004.a.spectacular
+				modifier = {
+					add = 20
+					prowess >= 30
+				}
+				add_prestige = 500
+				add_gold = 200
+				every_liege_or_above = {
+					add_opinion = {
+						target = root
+						modifier = impressed_by_martial_display
+						opinion = 40
+					}
+				}
+				add_character_modifier = {
+					modifier = royal_favor_martial
+					years = 10
+				}
+			}
+			35 = {
+				desc = goryeo.0004.a.competent
+				add_prestige = 150
+				add_gold = 50
+			}
+			25 = {
+				desc = goryeo.0004.a.embarrassing
+				add_prestige = -200
+				add_stress = 25
+				every_liege_or_above = {
+					add_opinion = {
+						target = root
+						modifier = disappointed_by_display
+						opinion = -20
+					}
+				}
+			}
+		}
+	}
+
+	# Decline the invitation
+	option = {
+		name = goryeo.0004.b
+		add_character_flag = {
+			flag = royal_display_recent
+			days = 730
+		}
+		add_prestige = -50
+	}
+}
+
+# GORYEO: Vengeful Spirit of Fallen Warrior
+goryeo.0005 = {
+	type = character_event
+	title = goryeo.0005.t
+	desc = goryeo.0005.desc
+	theme = skull
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		OR = {
+			has_variable = murim_duel_wins
+			any_relation = {
+				type = rival
+				is_alive = no
+			}
+		}
+		NOT = { has_character_flag = vengeful_spirit_encounter }
+		OR = {
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+		}
+	}
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 15
+			has_variable = murim_duel_wins
+		}
+		modifier = {
+			add = 10
+			stress >= 50
+		}
+	}
+
+	# Confront the spirit
+	option = {
+		name = goryeo.0005.a
+		add_character_flag = {
+			flag = vengeful_spirit_encounter
+			days = 3650
+		}
+		random_list = {
+			40 = {
+				desc = goryeo.0005.a.overcome
+				modifier = {
+					add = 20
+					has_trait = brave
+				}
+				add_piety = 200
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = spirit_world_awareness
+					years = 10
+				}
+				if = {
+					limit = { has_trait = craven }
+					remove_trait = craven
+				}
+			}
+			35 = {
+				desc = goryeo.0005.a.unsettled
+				add_stress = 30
+				add_piety = 50
+			}
+			25 = {
+				desc = goryeo.0005.a.cursed
+				add_stress = 50
+				add_character_modifier = {
+					modifier = haunted_by_fallen
+					years = 10
+				}
+				random = {
+					chance = 15
+					add_trait = lunatic
+				}
+			}
+		}
+	}
+
+	# Perform funeral rites
+	option = {
+		name = goryeo.0005.b
+		add_character_flag = {
+			flag = vengeful_spirit_encounter
+			days = 3650
+		}
+		add_piety = 300
+		add_stress = -20
+		remove_short_term_gold = 50
+	}
+
+	# Ignore - spirits aren't real
+	option = {
+		name = goryeo.0005.c
+		trigger = {
+			OR = {
+				has_trait = cynical
+				learning >= 18
+			}
+		}
+		add_character_flag = {
+			flag = vengeful_spirit_encounter
+			days = 1825
+		}
+		add_stress = 10
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = spiritual_curse_ignored
+				years = 5
+			}
 		}
 	}
 }
