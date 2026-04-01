@@ -1,0 +1,941 @@
+###############################################################################
+# MURIM POLITICS EXPANSION 2 EVENTS
+# Advanced martial world diplomacy: congress voting, martial law,
+# secret pacts, defectors, elder succession crises
+# Cross-references: murim_politics_events, murim_politics_expansion_events,
+#   murim_sect_events, murim_duel_events, murim_jianghu_events,
+#   murim_ranking_events, murim_faction_events
+###############################################################################
+
+namespace = murim_politics_exp2
+
+##############################
+# 1. Wulin Congress Emergency Vote
+# The martial alliance calls an emergency congress.
+# A critical vote determines the fate of the entire murim world.
+##############################
+murim_politics_exp2.0001 = {
+	type = character_event
+	title = murim_politics_exp2.0001.t
+	desc = murim_politics_exp2.0001.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		diplomacy >= 8
+		NOT = { has_character_modifier = wulin_congress_vote_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			diplomacy >= 15
+		}
+		modifier = {
+			add = 0.3
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = wulin_congress_vote_cooldown
+			years = 5
+		}
+	}
+
+	# Vote to mobilize the entire orthodox alliance against the unorthodox threat
+	option = {
+		name = murim_politics_exp2.0001.a
+		add_prestige = 200
+		add_diplomacy_skill = 1
+		add_piety = 100
+		add_character_modifier = {
+			modifier = orthodox_war_mobilization
+			years = 3
+		}
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_righteous_leader_opinion
+				opinion = 15
+			}
+		}
+		create_character_memory = {
+			type = murim_congress_war_vote_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Vote passes - massive war preparation
+					trigger_event = { id = murim_faction_war.0001 days = { 30 60 } }
+				}
+				40 = {
+					# Vote fails - political humiliation
+					add_prestige = -300
+					add_stress = 40
+					trigger_event = { id = murim_politics.0001 days = { 14 30 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = zealous }
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+
+	# Vote for diplomatic resolution - propose a grand tournament to settle disputes
+	option = {
+		name = murim_politics_exp2.0001.b
+		add_prestige = 100
+		add_diplomacy_skill = 2
+		add_character_modifier = {
+			modifier = peace_broker_fame
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_congress_peace_vote_memory
+		}
+		# Chain: grand tournament organized
+		trigger_event = { id = murim_duel.0005 days = { 60 120 } }
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	# Secretly vote to protect your own sect's interests above all
+	option = {
+		name = murim_politics_exp2.0001.c
+		add_intrigue_skill = 2
+		add_gold = 200
+		add_piety = -100
+		add_character_modifier = {
+			modifier = political_schemer_reputation
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_congress_self_interest_vote_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Scheme discovered - reputation damaged
+					every_vassal = {
+						limit = { is_alive = yes }
+						add_opinion = {
+							target = root
+							modifier = murim_political_schemer_opinion
+							opinion = -25
+						}
+					}
+				}
+				60 = { }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 15 has_trait = greedy }
+		}
+	}
+}
+
+##############################
+# 2. Martial Law Declaration
+# A sect leader declares martial law over their territory
+# after a devastating attack or internal crisis.
+##############################
+murim_politics_exp2.0002 = {
+	type = character_event
+	title = murim_politics_exp2.0002.t
+	desc = murim_politics_exp2.0002.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		martial >= 10
+		OR = {
+			any_vassal = {
+				opinion = { target = root value <= -30 }
+			}
+			has_trait = paranoid
+			has_character_modifier = sect_under_attack
+		}
+		NOT = { has_character_modifier = martial_law_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = {
+			add = 0.5
+			has_trait = paranoid
+		}
+		modifier = {
+			add = 0.3
+			martial >= 15
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = martial_law_cooldown
+			years = 5
+		}
+	}
+
+	# Full martial law - lock down all sect territory
+	option = {
+		name = murim_politics_exp2.0002.a
+		add_prestige = 100
+		add_martial_skill = 1
+		add_tyranny = 20
+		add_character_modifier = {
+			modifier = martial_law_enforced
+			years = 2
+		}
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_martial_law_opinion
+				opinion = -20
+			}
+		}
+		create_character_memory = {
+			type = murim_martial_law_declared_memory
+		}
+		hidden_effect = {
+			# Some may rebel
+			random_vassal = {
+				limit = {
+					is_alive = yes
+					opinion = { target = root value <= -10 }
+				}
+				weight = {
+					base = 1
+					modifier = {
+						add = 2
+						has_trait = brave
+					}
+				}
+				save_scope_as = potential_rebel
+				random_list = {
+					40 = {
+						# Vassal rebels openly
+						trigger_event = { id = murim_sect.0003 days = { 14 30 } }
+					}
+					60 = { }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+
+	# Selective curfew - target only suspected dissidents
+	option = {
+		name = murim_politics_exp2.0002.b
+		add_intrigue_skill = 1
+		add_tyranny = 5
+		add_character_modifier = {
+			modifier = selective_crackdown
+			years = 2
+		}
+		create_character_memory = {
+			type = murim_selective_crackdown_memory
+		}
+		random_list = {
+			60 = {
+				# Successfully root out traitors
+				add_prestige = 200
+				random_vassal = {
+					limit = {
+						is_alive = yes
+						opinion = { target = root value <= -20 }
+					}
+					save_scope_as = caught_dissident
+					imprison = {
+						target = scope:caught_dissident
+						type = dungeon
+					}
+				}
+			}
+			40 = {
+				# Wrong people targeted - unrest grows
+				add_stress = 30
+				every_vassal = {
+					limit = { is_alive = yes }
+					add_opinion = {
+						target = root
+						modifier = murim_false_accusation_opinion
+						opinion = -15
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+
+	# Show strength without martial law - hold a public demonstration
+	option = {
+		name = murim_politics_exp2.0002.c
+		add_prestige = 50
+		add_stress = 20
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min = 5
+				desc = murim_politics_exp2.0002.c.success
+				add_prestige = 300
+				every_vassal = {
+					limit = { is_alive = yes }
+					add_opinion = {
+						target = root
+						modifier = murim_strength_demonstration_opinion
+						opinion = 20
+					}
+				}
+				create_character_memory = {
+					type = murim_power_demonstration_memory
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min = 5
+				desc = murim_politics_exp2.0002.c.failure
+				add_prestige = -200
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_failed_demonstration_memory
+				}
+				# Chain: emboldened rebels
+				trigger_event = { id = murim_sect.0003 days = { 7 14 } }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+}
+
+##############################
+# 3. Secret Alliance Treaty
+# An enemy sect secretly proposes a non-aggression pact
+# or even a hidden alliance against a common threat.
+##############################
+murim_politics_exp2.0003 = {
+	type = character_event
+	title = murim_politics_exp2.0003.t
+	desc = murim_politics_exp2.0003.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:secret_envoy
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		intrigue >= 8
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			is_alive = yes
+			NOT = { has_truce = root }
+		}
+		NOT = { has_character_modifier = secret_alliance_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = {
+			add = 0.4
+			intrigue >= 14
+		}
+		modifier = {
+			add = 0.3
+			has_trait = deceitful
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = secret_alliance_cooldown
+			years = 5
+		}
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				is_alive = yes
+				NOT = { has_truce = root }
+			}
+			save_scope_as = secret_envoy
+		}
+	}
+
+	# Accept the secret alliance - mutual benefit
+	option = {
+		name = murim_politics_exp2.0003.a
+		add_intrigue_skill = 1
+		add_gold = 100
+		scope:secret_envoy = {
+			add_opinion = {
+				target = root
+				modifier = murim_secret_alliance_opinion
+				opinion = 40
+			}
+		}
+		add_character_modifier = {
+			modifier = secret_pact_active
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_secret_alliance_formed_memory
+			participants = { ally = scope:secret_envoy }
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Alliance discovered by others
+					every_vassal = {
+						limit = { is_alive = yes }
+						add_opinion = {
+							target = root
+							modifier = murim_secret_dealings_opinion
+							opinion = -20
+						}
+					}
+				}
+				70 = { }
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+
+	# Reject and expose their treachery publicly
+	option = {
+		name = murim_politics_exp2.0003.b
+		add_prestige = 200
+		add_piety = 100
+		scope:secret_envoy = {
+			add_opinion = {
+				target = root
+				modifier = murim_betrayed_trust_opinion
+				opinion = -60
+			}
+			add_prestige = -200
+		}
+		create_character_memory = {
+			type = murim_exposed_secret_envoy_memory
+			participants = { exposed = scope:secret_envoy }
+		}
+		# Chain: may trigger retaliation war
+		hidden_effect = {
+			random_list = {
+				50 = {
+					scope:secret_envoy = {
+						trigger_event = { id = murim_duel.0001 days = { 30 60 } }
+					}
+				}
+				50 = { }
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = honest }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Pretend to accept but plan a counter-scheme
+	option = {
+		name = murim_politics_exp2.0003.c
+		add_intrigue_skill = 2
+		scope:secret_envoy = {
+			add_opinion = {
+				target = root
+				modifier = murim_secret_alliance_opinion
+				opinion = 30
+			}
+		}
+		add_character_modifier = {
+			modifier = double_agent_scheme
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_double_cross_planned_memory
+			participants = { target = scope:secret_envoy }
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Counter-scheme succeeds brilliantly
+					trigger_event = { id = murim_politics_exp2.0003 days = { 180 365 } }
+				}
+				30 = {
+					# They see through your scheme
+					scope:secret_envoy = {
+						add_opinion = {
+							target = root
+							modifier = murim_betrayed_trust_opinion
+							opinion = -80
+						}
+					}
+					add_stress = 50
+				}
+				20 = {
+					# Both schemes cancel out - mutual respect
+					scope:secret_envoy = {
+						add_opinion = {
+							target = root
+							modifier = murim_mutual_respect_opinion
+							opinion = 20
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = deceitful }
+		}
+	}
+}
+
+##############################
+# 4. Defector Asylum Crisis
+# A high-ranking member of a rival sect seeks asylum
+# in your territory, bringing secrets but also enemies.
+##############################
+murim_politics_exp2.0004 = {
+	type = character_event
+	title = murim_politics_exp2.0004.t
+	desc = murim_politics_exp2.0004.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		diplomacy >= 8
+		NOT = { has_character_modifier = defector_asylum_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.7
+		modifier = {
+			add = 0.4
+			diplomacy >= 14
+		}
+		modifier = {
+			add = 0.3
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = defector_asylum_cooldown
+			years = 5
+		}
+		# Create the defector
+		create_character = {
+			location = root.location
+			template = murim_defector_template
+			save_scope_as = defector
+		}
+	}
+
+	# Grant full asylum and integrate the defector
+	option = {
+		name = murim_politics_exp2.0004.a
+		add_prestige = 100
+		add_learning_skill = 1
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 100
+		}
+		scope:defector = {
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_asylum_opinion
+				opinion = 50
+			}
+		}
+		add_character_modifier = {
+			modifier = harboring_defector
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_granted_asylum_memory
+		}
+		# Chain: rival sect sends assassin
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_jianghu.0004 days = { 60 120 } }
+				}
+				30 = {
+					# Defector provides valuable intelligence
+					add_gold = 200
+					change_variable = {
+						name = murim_cultivation_xp
+						add = 150
+					}
+				}
+				20 = {
+					# Defector was a spy all along
+					scope:defector = {
+						add_opinion = {
+							target = root
+							modifier = murim_spy_revealed_opinion
+							opinion = -100
+						}
+					}
+					add_stress = 50
+					trigger_event = { id = murim_sect.0005 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Extract their knowledge then turn them away
+	option = {
+		name = murim_politics_exp2.0004.b
+		add_intrigue_skill = 1
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 75
+		}
+		add_piety = -50
+		scope:defector = {
+			add_opinion = {
+				target = root
+				modifier = murim_used_and_discarded_opinion
+				opinion = -60
+			}
+		}
+		create_character_memory = {
+			type = murim_extracted_defector_knowledge_memory
+		}
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+
+	# Return the defector to their original sect for a reward
+	option = {
+		name = murim_politics_exp2.0004.c
+		add_gold = 300
+		add_prestige = -100
+		add_piety = -200
+		scope:defector = {
+			death = { death_reason = death_execution }
+		}
+		create_character_memory = {
+			type = murim_defector_returned_memory
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = greedy }
+			modifier = { add = 15 has_trait = callous }
+		}
+	}
+
+	# Challenge the defector to prove their worth in combat
+	option = {
+		name = murim_politics_exp2.0004.d
+		duel = {
+			skill = prowess
+			target = scope:defector
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min = 5
+				desc = murim_politics_exp2.0004.d.win
+				# Defector proves worthy - accept as inner disciple
+				add_prestige = 150
+				scope:defector = {
+					add_opinion = {
+						target = root
+						modifier = murim_respected_master_opinion
+						opinion = 40
+					}
+				}
+				create_character_memory = {
+					type = murim_defector_trial_combat_memory
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min = 5
+				desc = murim_politics_exp2.0004.d.lose
+				# Defector is stronger than expected - humiliating
+				add_prestige = -100
+				random_list = {
+					70 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+				}
+				create_character_memory = {
+					type = murim_defector_defeated_host_memory
+				}
+				# Chain: ranking implications
+				trigger_event = { id = murim_ranking.0003 days = { 14 30 } }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+}
+
+##############################
+# 5. Grand Elder Succession Crisis
+# The Grand Elder of the martial alliance is dying.
+# Multiple factions compete for the succession.
+##############################
+murim_politics_exp2.0005 = {
+	type = character_event
+	title = murim_politics_exp2.0005.t
+	desc = murim_politics_exp2.0005.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		age >= 30
+		OR = {
+			diplomacy >= 12
+			martial >= 12
+			prowess >= 15
+		}
+		NOT = { has_character_modifier = elder_succession_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.6
+		modifier = {
+			add = 0.4
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 0.3
+			prestige >= 2000
+		}
+	}
+
+	immediate = {
+		add_character_modifier = {
+			modifier = elder_succession_cooldown
+			years = 10
+		}
+	}
+
+	# Declare candidacy and campaign openly
+	option = {
+		name = murim_politics_exp2.0005.a
+		add_prestige = 100
+		add_diplomacy_skill = 1
+		add_character_modifier = {
+			modifier = grand_elder_candidate
+			years = 2
+		}
+		create_character_memory = {
+			type = murim_elder_candidacy_declared_memory
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Elected as Grand Elder
+					add_prestige = 1000
+					add_piety = 500
+					add_character_modifier = {
+						modifier = grand_elder_of_wulin
+						years = 20
+					}
+					create_character_memory = {
+						type = murim_became_grand_elder_memory
+					}
+					# Chain: massive political power
+					trigger_event = { id = murim_politics.0001 days = { 30 60 } }
+				}
+				40 = {
+					# Lost election - rival becomes Grand Elder
+					add_prestige = -200
+					add_stress = 30
+					create_character_memory = {
+						type = murim_lost_elder_election_memory
+					}
+				}
+				30 = {
+					# Election contested - leads to grand tournament
+					trigger_event = { id = murim_duel.0005 days = { 30 60 } }
+					create_character_memory = {
+						type = murim_contested_succession_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Support another candidate as kingmaker
+	option = {
+		name = murim_politics_exp2.0005.b
+		add_intrigue_skill = 2
+		add_gold = 100
+		add_character_modifier = {
+			modifier = political_kingmaker
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_kingmaker_role_memory
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# Your candidate wins - you gain influence
+					add_prestige = 500
+					add_gold = 200
+				}
+				40 = {
+					# Your candidate loses - enemies made
+					add_prestige = -100
+					add_stress = 20
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Sabotage all candidates to create chaos you can exploit
+	option = {
+		name = murim_politics_exp2.0005.c
+		add_intrigue_skill = 2
+		add_piety = -200
+		add_character_modifier = {
+			modifier = succession_saboteur
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_succession_sabotage_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Chaos created - you seize power in the vacuum
+					add_prestige = 800
+					add_character_modifier = {
+						modifier = grand_elder_by_force
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_seized_elder_position_memory
+					}
+				}
+				30 = {
+					# Sabotage traced back to you
+					add_prestige = -500
+					every_vassal = {
+						limit = { is_alive = yes }
+						add_opinion = {
+							target = root
+							modifier = murim_political_saboteur_opinion
+							opinion = -40
+						}
+					}
+				}
+				30 = {
+					# Creates a power vacuum that jianghu underworld exploits
+					trigger_event = { id = murim_jianghu.0001 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+
+	# Stay neutral and watch from the sidelines
+	option = {
+		name = murim_politics_exp2.0005.d
+		add_stress = -20
+		add_piety = 50
+		create_character_memory = {
+			type = murim_succession_observer_memory
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = content }
+		}
+	}
+}
