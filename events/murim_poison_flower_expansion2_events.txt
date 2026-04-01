@@ -1,0 +1,689 @@
+namespace = murim_poison_flower_expansion2
+
+# Poison Flower Palace — Deep Expansion: Poison mastery, internal intrigue, romance entanglement
+# 8 events covering full depth of Poison Flower Palace martial culture
+
+### EVENT 0001 — The Thousand Petal Poison Refinement
+# Poison Flower disciple attempts to master the legendary Thousand Petal poison
+murim_poison_flower_expansion2.0001 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0001.t
+	desc = murim_poison_flower_expansion2.0001.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		has_trait = murim_martial_artist
+		intrigue >= 14
+		NOT = { has_character_flag = attempted_thousand_petal_poison }
+		age >= 22
+	}
+	
+	immediate = {
+		set_character_flag = attempted_thousand_petal_poison
+	}
+	
+	# Option A: Ingest the thousand petals one by one to build immunity
+	option = {
+		name = murim_poison_flower_expansion2.0001.a
+		custom_tooltip = murim_thousand_petal_ingestion_tt
+		random_list = {
+			20 = {
+				desc = murim_poison_flower_expansion2.0001.a.perfect
+				add_trait = murim_thousand_petal_master
+				add_intrigue_skill = 5
+				add_prowess = 4
+				add_character_modifier = {
+					modifier = murim_poison_body_perfected
+					years = 50
+				}
+				custom_tooltip = murim_body_becomes_living_poison_tt
+			}
+			30 = {
+				desc = murim_poison_flower_expansion2.0001.a.partial
+				add_intrigue_skill = 3
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = murim_partial_poison_immunity
+					years = 20
+				}
+			}
+			30 = {
+				desc = murim_poison_flower_expansion2.0001.a.sick
+				add_trait = ill
+				add_stress = 30
+				add_character_modifier = {
+					modifier = murim_poison_rejection_sickness
+					years = 5
+				}
+			}
+			20 = {
+				desc = murim_poison_flower_expansion2.0001.a.critical
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_poison_meridian_damage
+					years = 30
+				}
+				custom_tooltip = murim_poison_nearly_killed_you_tt
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+	
+	# Option B: Research the poison theoretically first
+	option = {
+		name = murim_poison_flower_expansion2.0001.b
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = murim_studying_poison_theory
+			years = 5
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Refuse — the poison arts path is too dangerous
+	option = {
+		name = murim_poison_flower_expansion2.0001.c
+		add_stress = -10
+		ai_chance = { base = 25 }
+	}
+}
+
+### EVENT 0002 — The Palace Mistress Selection
+# Competition to choose the next Poison Flower Palace Mistress
+murim_poison_flower_expansion2.0002 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0002.t
+	desc = murim_poison_flower_expansion2.0002.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:palace_rival
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		has_trait = murim_martial_artist
+		is_female = yes
+		intrigue >= 12
+		age >= 25
+		NOT = { has_character_flag = palace_mistress_selection }
+	}
+	
+	immediate = {
+		set_character_flag = palace_mistress_selection
+		random_living_character = {
+			limit = {
+				has_trait = murim_poison_flower_clan
+				is_female = yes
+				NOT = { this = root }
+				age >= 20
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 intrigue >= 14 }
+				modifier = { add = 3 has_trait = ambitious }
+			}
+			save_scope_as = palace_rival
+		}
+	}
+	
+	# Option A: Compete through poison mastery demonstration
+	option = {
+		name = murim_poison_flower_expansion2.0002.a
+		duel = {
+			skill = intrigue
+			target = scope:palace_rival
+			50 = {
+				desc = murim_poison_flower_expansion2.0002.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 600
+				add_character_modifier = {
+					modifier = murim_palace_mistress_candidate
+					years = 20
+				}
+			}
+			50 = {
+				desc = murim_poison_flower_expansion2.0002.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -200
+				add_stress = 25
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Undermine the rival with gossip and manipulation
+	option = {
+		name = murim_poison_flower_expansion2.0002.b
+		add_intrigue_skill = 3
+		scope:palace_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_palace_scheming
+				opinion = -40
+			}
+		}
+		random_list = {
+			50 = { add_prestige = 400 custom_tooltip = murim_rival_discredited_tt }
+			50 = { add_prestige = -100 custom_tooltip = murim_scheme_exposed_tt }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+	
+	# Option C: Support the rival and become her advisor
+	option = {
+		name = murim_poison_flower_expansion2.0002.c
+		scope:palace_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_loyal_palace_sister
+				opinion = 40
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_palace_advisor
+			years = 20
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = content }
+		}
+	}
+}
+
+### EVENT 0003 — The Forbidden Love Poison
+# A Poison Flower member discovers a love poison that creates genuine feelings
+murim_poison_flower_expansion2.0003 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0003.t
+	desc = murim_poison_flower_expansion2.0003.desc
+	theme = seduction
+	
+	left_portrait = {
+		character = root
+		animation = flirtation
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		has_trait = murim_martial_artist
+		intrigue >= 10
+		NOT = { has_character_flag = discovered_love_poison }
+	}
+	
+	immediate = {
+		set_character_flag = discovered_love_poison
+	}
+	
+	# Option A: Use it on a powerful martial artist for political advantage
+	option = {
+		name = murim_poison_flower_expansion2.0003.a
+		add_intrigue_skill = 2
+		add_character_modifier = {
+			modifier = murim_love_poison_wielder
+			years = 15
+		}
+		random_list = {
+			40 = {
+				add_prestige = 300
+				custom_tooltip = murim_target_becomes_devoted_tt
+			}
+			30 = {
+				add_gold = 200
+				custom_tooltip = murim_target_shares_wealth_tt
+			}
+			30 = {
+				add_stress = 30
+				custom_tooltip = murim_love_poison_backfires_tt
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+	
+	# Option B: Study it to create an antidote
+	option = {
+		name = murim_poison_flower_expansion2.0003.b
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = murim_love_poison_antidote_maker
+			years = 20
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Destroy it — love should never be manufactured
+	option = {
+		name = murim_poison_flower_expansion2.0003.c
+		add_piety = 200
+		add_stress = -15
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = honest }
+		}
+	}
+}
+
+### EVENT 0004 — The Poison Garden Expansion
+# The Palace expands its legendary poison garden with rare specimens
+murim_poison_flower_expansion2.0004 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0004.t
+	desc = murim_poison_flower_expansion2.0004.desc
+	theme = stewardship
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		gold >= 200
+		NOT = { has_character_flag = expanded_poison_garden }
+	}
+	
+	immediate = {
+		set_character_flag = expanded_poison_garden
+	}
+	
+	# Option A: Import rare toxic flowers from the southern seas
+	option = {
+		name = murim_poison_flower_expansion2.0004.a
+		add_gold = -300
+		add_character_modifier = {
+			modifier = murim_exotic_poison_garden
+			years = 30
+		}
+		custom_tooltip = murim_new_poison_varieties_unlocked_tt
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Cultivate the legendary Seven-Colored Death Bloom
+	option = {
+		name = murim_poison_flower_expansion2.0004.b
+		add_gold = -200
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = murim_seven_colored_death_bloom
+					years = 50
+				}
+				custom_tooltip = murim_deadliest_poison_created_tt
+			}
+			60 = {
+				add_stress = 20
+				custom_tooltip = murim_bloom_failed_to_grow_tt
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Open the garden to allied clans for healing herbs
+	option = {
+		name = murim_poison_flower_expansion2.0004.c
+		add_gold = 100
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_poison_flower_healer_reputation
+			years = 15
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+### EVENT 0005 — Poison Flower Assassin Contract
+# The Palace receives a lucrative assassination contract
+murim_poison_flower_expansion2.0005 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0005.t
+	desc = murim_poison_flower_expansion2.0005.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		has_trait = murim_martial_artist
+		intrigue >= 12
+		NOT = { has_character_flag = poison_flower_assassination_contract }
+	}
+	
+	immediate = {
+		set_character_flag = poison_flower_assassination_contract
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { has_trait = murim_poison_flower_clan }
+				NOT = { this = root }
+				age >= 20
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 prestige >= 1000 }
+			}
+			save_scope_as = assassination_target
+		}
+	}
+	
+	# Option A: Accept the contract — execute with poison precision
+	option = {
+		name = murim_poison_flower_expansion2.0005.a
+		add_gold = 500
+		add_dread = 20
+		random_list = {
+			60 = {
+				custom_tooltip = murim_assassination_successful_tt
+				add_prestige = 200
+				scope:assassination_target = {
+					death = {
+						death_reason = death_murder_known
+						killer = root
+					}
+				}
+			}
+			40 = {
+				custom_tooltip = murim_assassination_failed_tt
+				add_stress = 30
+				scope:assassination_target = {
+					add_opinion = {
+						target = root
+						modifier = murim_tried_to_kill_me
+						opinion = -100
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = sadistic }
+		}
+	}
+	
+	# Option B: Accept but use a non-lethal poison instead
+	option = {
+		name = murim_poison_flower_expansion2.0005.b
+		add_gold = 300
+		add_character_modifier = {
+			modifier = murim_merciful_poisoner
+			years = 10
+		}
+		scope:assassination_target = {
+			add_trait = ill
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Reject the contract — Poison Flower has honor
+	option = {
+		name = murim_poison_flower_expansion2.0005.c
+		add_prestige = 100
+		add_piety = 100
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+}
+
+### EVENT 0006 — The Poison Flower Palace vs Orthodox Alliance
+# Orthodox sects unite to demand Poison Flower cease their dark arts
+murim_poison_flower_expansion2.0006 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0006.t
+	desc = murim_poison_flower_expansion2.0006.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		has_trait = murim_martial_artist
+		age >= 20
+		NOT = { has_character_flag = orthodox_confrontation_poison }
+	}
+	
+	immediate = {
+		set_character_flag = orthodox_confrontation_poison
+	}
+	
+	# Option A: Defy them — prepare the poison defenses
+	option = {
+		name = murim_poison_flower_expansion2.0006.a
+		add_dread = 30
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_poison_flower_defiant
+			years = 15
+		}
+		custom_tooltip = murim_poison_traps_set_around_palace_tt
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = brave }
+		}
+	}
+	
+	# Option B: Negotiate — offer poison antidotes as gesture of goodwill
+	option = {
+		name = murim_poison_flower_expansion2.0006.b
+		add_prestige = 100
+		add_gold = -100
+		add_character_modifier = {
+			modifier = murim_poison_flower_diplomat
+			years = 10
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Relocate the Palace to a hidden location
+	option = {
+		name = murim_poison_flower_expansion2.0006.c
+		add_gold = -200
+		add_character_modifier = {
+			modifier = murim_hidden_poison_palace
+			years = 30
+		}
+		custom_tooltip = murim_palace_vanishes_from_map_tt
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+}
+
+### EVENT 0007 — The Male Disciple Exception
+# A rare male martial artist seeks to join the traditionally all-female palace
+murim_poison_flower_expansion2.0007 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0007.t
+	desc = murim_poison_flower_expansion2.0007.desc
+	theme = vassal
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	right_portrait = {
+		character = scope:male_applicant
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		is_female = yes
+		NOT = { has_character_flag = male_disciple_request }
+	}
+	
+	immediate = {
+		set_character_flag = male_disciple_request
+		create_character = {
+			age = { 16 25 }
+			gender = male
+			trait = murim_martial_artist
+			trait = diligent
+			culture = root.culture
+			faith = root.faith
+			save_scope_as = male_applicant
+		}
+	}
+	
+	# Option A: Accept him — talent knows no gender
+	option = {
+		name = murim_poison_flower_expansion2.0007.a
+		scope:male_applicant = {
+			add_trait = murim_poison_flower_clan
+			set_relation_mentor = root
+			add_opinion = {
+				target = root
+				modifier = murim_accepted_against_tradition
+				opinion = 50
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_tradition_breaker
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Accept as an outer disciple only — limited access
+	option = {
+		name = murim_poison_flower_expansion2.0007.b
+		scope:male_applicant = {
+			add_character_modifier = {
+				modifier = murim_outer_disciple_status
+				years = 20
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Reject — tradition must be maintained
+	option = {
+		name = murim_poison_flower_expansion2.0007.c
+		add_piety = 50
+		scope:male_applicant = {
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_by_palace
+				opinion = -30
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = zealous }
+		}
+	}
+}
+
+### EVENT 0008 — The Poison Flower Cure Breakthrough
+# A palace member discovers a universal poison antidote
+murim_poison_flower_expansion2.0008 = {
+	type = character_event
+	title = murim_poison_flower_expansion2.0008.t
+	desc = murim_poison_flower_expansion2.0008.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	
+	trigger = {
+		has_trait = murim_poison_flower_clan
+		learning >= 12
+		NOT = { has_character_flag = universal_antidote_discovery }
+	}
+	
+	immediate = {
+		set_character_flag = universal_antidote_discovery
+	}
+	
+	# Option A: Share it with the martial world — earn universal respect
+	option = {
+		name = murim_poison_flower_expansion2.0008.a
+		add_prestige = 1000
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_savior_of_the_poisoned
+			years = 30
+		}
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_shared_antidote
+				opinion = 20
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+	
+	# Option B: Keep it secret — knowledge is power
+	option = {
+		name = murim_poison_flower_expansion2.0008.b
+		add_intrigue_skill = 4
+		add_character_modifier = {
+			modifier = murim_universal_antidote_keeper
+			years = 50
+		}
+		custom_tooltip = murim_antidote_leverage_over_all_tt
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+	
+	# Option C: Sell it to the highest bidder
+	option = {
+		name = murim_poison_flower_expansion2.0008.c
+		add_gold = 1000
+		add_character_modifier = {
+			modifier = murim_antidote_merchant
+			years = 15
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+}
