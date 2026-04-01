@@ -1,0 +1,928 @@
+# Murim Chronicles - Phantom Blade Sect Events
+# Dedicated event chain for the Phantom Blade Sect (Unorthodox)
+# Cross-refs: murim_faction_war_events.txt, murim_duel_events.txt
+# murim_clan_traits.txt, murim_ranking_events.txt, murim_artifact_events.txt
+# All 9 clans referenced. GENDER: No restrictions.
+
+namespace = murim_phantom
+
+########################################
+# BLADE SPIRIT COMMUNION
+# Phantom Blade disciple communes with their blade's spirit
+########################################
+murim_phantom.0001 = {
+	type = character_event
+	title = murim_phantom.0001.t
+	desc = murim_phantom.0001.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_flag = blade_spirit_communion_done }
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = cultivation_stage_3
+		}
+		modifier = {
+			add = 3
+			prowess >= 18
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = blade_spirit_communion_done
+		}
+	}
+
+	# Fully bond with the blade spirit
+	option = {
+		name = murim_phantom.0001.a
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_blade_spirit_bonded
+			years = 10
+		}
+		add_prestige = 200
+		stress_impact = {
+			craven = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:blade_spirit_full_bond
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Partial bond - maintain independence
+	option = {
+		name = murim_phantom.0001.b
+		add_prowess_skill = 1
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = murim_blade_spirit_partial
+			years = 5
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:blade_spirit_partial_bond
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Reject the spirit - forge your own path
+	option = {
+		name = murim_phantom.0001.c
+		add_martial_skill = 3
+		add_stress = 20
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:blade_spirit_rejected
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+########################################
+# ASSASSINATION CONTRACT
+# Phantom Blade receives a high-profile assassination target
+########################################
+murim_phantom.0002 = {
+	type = character_event
+	title = murim_phantom.0002.t
+	desc = murim_phantom.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 2
+		intrigue >= 12
+		NOT = { has_character_flag = assassination_contract_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			intrigue >= 18
+		}
+		modifier = {
+			add = 2
+			prowess >= 16
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = assassination_contract_cooldown
+			days = 1095
+		}
+	}
+
+	# Accept the contract - target is an Orthodox elder
+	option = {
+		name = murim_phantom.0002.a
+		random_list = {
+			40 = {
+				desc = murim_phantom.0002.a.success
+				add_gold = 200
+				add_prestige = 300
+				add_dread = 25
+				add_character_modifier = {
+					modifier = murim_phantom_assassin_fame
+					years = 5
+				}
+			}
+			35 = {
+				desc = murim_phantom.0002.a.partial
+				add_gold = 100
+				add_trait = wounded_1
+				add_prestige = 100
+			}
+			25 = {
+				desc = murim_phantom.0002.a.fail
+				add_trait = wounded_2
+				add_prestige = -200
+				add_character_modifier = {
+					modifier = murim_failed_assassin_hunted
+					years = 3
+				}
+				# Cross-ref: Orthodox clans now hunting you
+				trigger_event = {
+					id = murim_faction_war.0004
+					days = { 10 30 }
+				}
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:assassination_contract_accepted
+			}
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Refuse the contract - maintain honor
+	option = {
+		name = murim_phantom.0002.b
+		add_piety = 50
+		add_prestige = -50
+		stress_impact = {
+			greedy = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:assassination_contract_refused
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Warn the target instead - betray the contract
+	option = {
+		name = murim_phantom.0002.c
+		trigger = {
+			OR = {
+				has_trait = compassionate
+				has_trait = just
+				has_trait = honest
+			}
+		}
+		add_piety = 100
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = murim_contract_betrayer
+			years = 5
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:assassination_contract_betrayed
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# PHANTOM STEP MASTERY
+# The sect's legendary movement technique breakthrough
+########################################
+murim_phantom.0003 = {
+	type = character_event
+	title = murim_phantom.0003.t
+	desc = murim_phantom.0003.desc
+	theme = education
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		murim_is_martial_artist_trigger = yes
+		prowess >= 14
+		NOT = { has_character_flag = phantom_step_attempted }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = cultivation_stage_3
+		}
+		modifier = {
+			add = 2
+			prowess >= 20
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = phantom_step_attempted
+		}
+	}
+
+	# Pursue the Nine Phantom Steps technique
+	option = {
+		name = murim_phantom.0003.a
+		random_list = {
+			40 = {
+				desc = murim_phantom.0003.a.mastery
+				add_prowess_skill = 4
+				add_character_modifier = {
+					modifier = murim_nine_phantom_steps_mastered
+					years = -1
+				}
+				add_prestige = 400
+			}
+			35 = {
+				desc = murim_phantom.0003.a.partial
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = murim_phantom_steps_partial
+					years = 5
+				}
+			}
+			25 = {
+				desc = murim_phantom.0003.a.fail
+				add_trait = wounded_1
+				add_stress = 30
+				add_character_modifier = {
+					modifier = murim_phantom_steps_failed
+					years = 2
+				}
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:phantom_step_training
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Focus on blade work instead
+	option = {
+		name = murim_phantom.0003.b
+		add_prowess_skill = 2
+		add_martial_skill = 1
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:phantom_step_skipped_blade_focus
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+########################################
+# BLADE FORGING RITUAL
+# Sect elder oversees creation of a signature phantom blade
+########################################
+murim_phantom.0004 = {
+	type = character_event
+	title = murim_phantom.0004.t
+	desc = murim_phantom.0004.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 2
+		gold >= 50
+		NOT = { has_character_flag = blade_forging_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			gold >= 100
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = blade_forging_done
+		}
+	}
+
+	# Commission a Shadow Fang blade (offensive focus)
+	option = {
+		name = murim_phantom.0004.a
+		add_gold = -75
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_shadow_fang_blade
+			years = -1
+		}
+		add_prestige = 200
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:shadow_fang_blade_forged
+			}
+			# Cross-ref: artifact system
+			trigger_event = {
+				id = murim_artifact.0003
+				days = { 30 60 }
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Commission a Ghost Whisper blade (stealth focus)
+	option = {
+		name = murim_phantom.0004.b
+		add_gold = -75
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = murim_ghost_whisper_blade
+			years = -1
+		}
+		add_prestige = 150
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:ghost_whisper_blade_forged
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Reforge an ancestor's broken blade
+	option = {
+		name = murim_phantom.0004.c
+		add_gold = -50
+		add_prowess_skill = 2
+		add_piety = 100
+		add_character_modifier = {
+			modifier = murim_ancestral_blade_reforged
+			years = -1
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:ancestral_blade_reforged
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# SECT INFILTRATION MISSION
+# Phantom Blade agent sent to infiltrate an Orthodox clan
+########################################
+murim_phantom.0005 = {
+	type = character_event
+	title = murim_phantom.0005.t
+	desc = murim_phantom.0005.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_cynical
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		intrigue >= 14
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 2
+		NOT = { has_character_flag = phantom_infiltration_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			intrigue >= 20
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = phantom_infiltration_cooldown
+			days = 1825
+		}
+	}
+
+	# Infiltrate Mount Hua Sect
+	option = {
+		name = murim_phantom.0005.a
+		random_list = {
+			35 = {
+				desc = murim_phantom.0005.a.success
+				add_intrigue_skill = 3
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = murim_mount_hua_secrets_stolen
+					years = 5
+				}
+			}
+			35 = {
+				desc = murim_phantom.0005.a.partial
+				add_intrigue_skill = 1
+				add_prestige = 100
+			}
+			30 = {
+				desc = murim_phantom.0005.a.caught
+				add_trait = wounded_2
+				add_prestige = -300
+				add_dread = -10
+				add_character_modifier = {
+					modifier = murim_exposed_infiltrator
+					years = 5
+				}
+				# Cross-ref: Orthodox revenge
+				trigger_event = {
+					id = murim_faction_war.0007
+					days = { 10 30 }
+				}
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:infiltrated_mount_hua
+			}
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Infiltrate Shaolin Temple
+	option = {
+		name = murim_phantom.0005.b
+		random_list = {
+			30 = {
+				desc = murim_phantom.0005.b.success
+				add_learning_skill = 3
+				add_prestige = 350
+				add_character_modifier = {
+					modifier = murim_shaolin_secrets_stolen
+					years = 5
+				}
+			}
+			35 = {
+				desc = murim_phantom.0005.b.partial
+				add_learning_skill = 1
+				add_prestige = 100
+			}
+			35 = {
+				desc = murim_phantom.0005.b.caught
+				add_trait = wounded_3
+				add_prestige = -400
+				add_character_modifier = {
+					modifier = murim_shaolin_enemy
+					years = 10
+				}
+			}
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:infiltrated_shaolin
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Decline - too risky
+	option = {
+		name = murim_phantom.0005.c
+		add_stress = -10
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:infiltration_declined
+			}
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+}
+
+########################################
+# BLADE DANCER TOURNAMENT
+# Internal Phantom Blade Sect competition
+########################################
+murim_phantom.0006 = {
+	type = character_event
+	title = murim_phantom.0006.t
+	desc = murim_phantom.0006.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:blade_rival
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		prowess >= 12
+		NOT = { has_character_flag = blade_dance_tourney_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			prowess >= 18
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = blade_dance_tourney_cooldown
+			days = 1095
+		}
+		random_any_court_province_or_below = {
+			limit = {
+				any_pool_character = {
+					has_trait = phantom_blade_disciple
+					prowess >= 12
+					NOT = { this = root }
+				}
+			}
+			random_pool_character = {
+				limit = {
+					has_trait = phantom_blade_disciple
+					prowess >= 12
+					NOT = { this = root }
+				}
+				save_scope_as = blade_rival
+			}
+		}
+	}
+
+	# Enter the Blade Dance - all-out attack style
+	option = {
+		name = murim_phantom.0006.a
+		trigger = {
+			exists = scope:blade_rival
+		}
+		duel = {
+			skill = prowess
+			target = scope:blade_rival
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_phantom.0006.a.win
+				add_prestige = 300
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = murim_blade_dance_champion
+					years = 3
+				}
+				scope:blade_rival = {
+					add_trait = wounded_1
+				}
+				hidden_effect = {
+					add_to_variable_list = {
+						name = murim_combat_memories
+						target = flag:blade_dance_victory
+					}
+					# Cross-ref: ranking update
+					trigger_event = {
+						id = murim_rank.0001
+						days = { 5 15 }
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				desc = murim_phantom.0006.a.lose
+				add_prestige = -100
+				add_trait = wounded_1
+				scope:blade_rival = {
+					add_prestige = 200
+				}
+				hidden_effect = {
+					add_to_variable_list = {
+						name = murim_combat_memories
+						target = flag:blade_dance_defeat
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Forfeit - not ready yet
+	option = {
+		name = murim_phantom.0006.b
+		add_prestige = -50
+		stress_impact = {
+			brave = medium_stress_impact_gain
+			ambitious = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:blade_dance_forfeit
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+}
+
+########################################
+# SHADOW MARKET CONNECTIONS
+# Phantom Blade Sect's underworld network
+########################################
+murim_phantom.0007 = {
+	type = character_event
+	title = murim_phantom.0007.t
+	desc = murim_phantom.0007.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 2
+		NOT = { has_character_flag = shadow_market_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			stewardship >= 14
+		}
+		modifier = {
+			add = 2
+			intrigue >= 16
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = shadow_market_cooldown
+			days = 1460
+		}
+	}
+
+	# Establish a poison trade route with Poison Flower Palace
+	option = {
+		name = murim_phantom.0007.a
+		add_gold = 100
+		add_character_modifier = {
+			modifier = murim_poison_trade_route
+			years = 5
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:poison_trade_established
+			}
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Set up an intelligence network across all 9 clans
+	option = {
+		name = murim_phantom.0007.b
+		add_gold = -50
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = murim_shadow_intelligence_network
+			years = 10
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:shadow_intel_network_built
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Smuggle rare martial arts manuals for profit
+	option = {
+		name = murim_phantom.0007.c
+		add_gold = 200
+		add_prestige = -100
+		stress_impact = {
+			honest = major_stress_impact_gain
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:manual_smuggling_operation
+			}
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+########################################
+# PHANTOM BLADE LEGACY INHERITANCE
+# The sect's founding blade is passed to a new generation
+########################################
+murim_phantom.0008 = {
+	type = character_event
+	title = murim_phantom.0008.t
+	desc = murim_phantom.0008.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		has_trait = phantom_blade_disciple
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 4
+		age >= 50
+		NOT = { has_character_flag = phantom_legacy_given }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			age >= 60
+		}
+		modifier = {
+			add = 3
+			has_trait = ill
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = phantom_legacy_given
+		}
+	}
+
+	# Pass the Phantom Founding Blade to most talented disciple
+	option = {
+		name = murim_phantom.0008.a
+		add_prestige = 500
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_phantom_legacy_passed
+			years = -1
+		}
+		# Cross-ref: artifact transfer event
+		trigger_event = {
+			id = murim_artifact.0005
+			days = { 10 30 }
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:phantom_legacy_talent_heir
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Pass it to your own bloodline heir
+	option = {
+		name = murim_phantom.0008.b
+		add_prestige = 300
+		add_dynasty_prestige = 200
+		add_character_modifier = {
+			modifier = murim_phantom_legacy_bloodline
+			years = -1
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:phantom_legacy_bloodline_heir
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Destroy the blade - no one should wield such power
+	option = {
+		name = murim_phantom.0008.c
+		add_piety = 400
+		add_prestige = -200
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+			greedy = major_stress_impact_gain
+		}
+		hidden_effect = {
+			add_to_variable_list = {
+				name = murim_combat_memories
+				target = flag:phantom_legacy_destroyed
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
