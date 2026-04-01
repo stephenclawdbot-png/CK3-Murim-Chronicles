@@ -1,0 +1,1510 @@
+###############################################################################
+# MURIM DAILY LIFE ADVANCED EVENTS (0011-0020)
+# Scholar encounters, poisoned wine, orphan talent, ancient tombs, bridge
+# guardians, spirit beasts, calligraphy insights, floods, night music,
+# retired grandmasters. All with combat consequences and cross-references.
+###############################################################################
+
+namespace = murim_daily_life
+
+######################################
+# murim_daily_life.0011 - Scholar of the Martial Arts
+# A wandering scholar documents martial history
+######################################
+murim_daily_life.0011 = {
+	type = character_event
+	title = murim_daily_life.0011.t
+	desc = murim_daily_life.0011.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = met_martial_scholar }
+		has_trait = murim_cultivator
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			learning >= 12
+		}
+		modifier = {
+			add = 0.5
+			has_trait = scholar
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = met_martial_scholar
+			years = 3
+		}
+	}
+
+	# Allow the scholar to observe and record your techniques
+	option = {
+		name = murim_daily_life.0011.a
+		add_prestige = 100
+		add_learning_skill = 1
+		create_character_memory = {
+			type = murim_scholar_documented_memory
+		}
+		# Your reputation spreads through their writings
+		random_list = {
+			50 = {
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 60 120 }
+				}
+			}
+			30 = {
+				# Scholar reveals technique insight in exchange
+				add_prowess_skill = 1
+			}
+			20 = {
+				# Scholar was actually a spy from a rival sect!
+				trigger_event = {
+					id = murim_jianghu_events.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = gregarious
+			}
+		}
+	}
+
+	# Refuse -- your techniques are secret
+	option = {
+		name = murim_daily_life.0011.b
+		add_prestige = -25
+		create_character_memory = {
+			type = murim_refused_scholar_memory
+		}
+		stress_impact = {
+			paranoid = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = paranoid
+			}
+		}
+	}
+
+	# Share only basic knowledge, guard the secrets
+	option = {
+		name = murim_daily_life.0011.c
+		add_prestige = 50
+		add_learning_skill = 1
+		create_character_memory = {
+			type = murim_partial_scholar_share_memory
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0012 - Poisoned Wine at a Banquet
+# Detect poison at a martial arts gathering
+######################################
+murim_daily_life.0012 = {
+	type = character_event
+	title = murim_daily_life.0012.t
+	desc = murim_daily_life.0012.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = poisoned_wine_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			intrigue >= 12
+		}
+		modifier = {
+			add = 0.5
+			has_trait = paranoid
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = poisoned_wine_event
+			years = 3
+		}
+	}
+
+	# Warn everyone -- expose the plot
+	option = {
+		name = murim_daily_life.0012.a
+		add_prestige = 200
+		add_piety = 50
+		create_character_memory = {
+			type = murim_exposed_poison_plot_memory
+		}
+		# The poisoner is revealed
+		random_list = {
+			40 = {
+				# Poisoner flees, becomes your enemy
+				trigger_event = {
+					id = murim_jianghu_events.0001
+					days = { 15 45 }
+				}
+			}
+			30 = {
+				# Poisoner attacks you in desperation
+				random_list = {
+					60 = {
+						add_trait = wounded_1
+					}
+					40 = {
+						# You dodge their attack
+						add_prowess_skill = 1
+					}
+				}
+				trigger_event = {
+					id = murim_duel_events.0001
+					days = { 1 5 }
+				}
+			}
+			30 = {
+				# Poisoner escapes cleanly
+				add_intrigue_skill = 1
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = honest
+			}
+		}
+	}
+
+	# Quietly swap cups and investigate later
+	option = {
+		name = murim_daily_life.0012.b
+		add_intrigue_skill = 1
+		create_character_memory = {
+			type = murim_quiet_poison_investigation_memory
+		}
+		trigger_event = {
+			id = murim_jianghu_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Drink it anyway to build poison resistance
+	option = {
+		name = murim_daily_life.0012.c
+		trait = brave
+		random_list = {
+			30 = {
+				# Build poison resistance
+				add_prowess_skill = 1
+				create_character_memory = {
+					type = murim_poison_resistance_memory
+				}
+			}
+			40 = {
+				# Poisoned but survive
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_survived_poisoning_memory
+				}
+			}
+			30 = {
+				# Seriously poisoned
+				add_trait = wounded_2
+				trigger_event = {
+					id = murim_cultivation_events.0005
+					days = { 5 15 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0013 - Orphan with Martial Talent
+# Discover a gifted orphan in the streets
+######################################
+murim_daily_life.0013 = {
+	type = character_event
+	title = murim_daily_life.0013.t
+	desc = murim_daily_life.0013.desc
+	theme = education
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = found_talented_orphan }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = found_talented_orphan
+			years = 5
+		}
+		create_character = {
+			location = root.location
+			template = murim_talented_youth_template
+			save_scope_as = talented_orphan
+		}
+		scope:talented_orphan = {
+			add_trait = murim_cultivator
+		}
+	}
+
+	# Take them as your disciple
+	option = {
+		name = murim_daily_life.0013.a
+		add_prestige = 100
+		add_piety = 50
+		set_relation_guardian = scope:talented_orphan
+		scope:talented_orphan = {
+			add_opinion = {
+				target = root
+				modifier = murim_saved_and_trained
+				opinion = 50
+			}
+		}
+		create_character_memory = {
+			type = murim_adopted_talented_orphan_memory
+			participants = {
+				orphan = scope:talented_orphan
+			}
+		}
+		trigger_event = {
+			id = murim_mentor_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Send them to your sect for proper training
+	option = {
+		name = murim_daily_life.0013.b
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_sent_orphan_to_sect_memory
+			participants = {
+				orphan = scope:talented_orphan
+			}
+		}
+		trigger_event = {
+			id = murim_sect_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Ignore them -- the jianghu is harsh
+	option = {
+		name = murim_daily_life.0013.c
+		add_stress = 10
+		create_character_memory = {
+			type = murim_ignored_orphan_memory
+		}
+		# The orphan may grow up to become your rival
+		random_list = {
+			50 = {
+				# They become someone else's prodigy
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 365 730 }
+				}
+			}
+			50 = {
+				# Nothing comes of it
+			}
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			callous = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = callous
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0014 - Ancient Tomb Discovery
+# A cultivator's tomb with treasures and dangers
+######################################
+murim_daily_life.0014 = {
+	type = character_event
+	title = murim_daily_life.0014.t
+	desc = murim_daily_life.0014.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = ancient_tomb_discovery }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			has_trait = adventurer
+		}
+		modifier = {
+			add = 0.5
+			has_trait = brave
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = ancient_tomb_discovery
+			years = 5
+		}
+	}
+
+	# Enter the tomb alone
+	option = {
+		name = murim_daily_life.0014.a
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				desc = murim_daily_life.0014.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 300
+				# Find ancient treasure
+				random_list = {
+					40 = {
+						add_prowess_skill = 2
+						create_character_memory = {
+							type = murim_ancient_technique_discovery_memory
+						}
+						trigger_event = {
+							id = murim_artifact_events.0001
+							days = { 5 15 }
+						}
+					}
+					30 = {
+						add_prowess_skill = 1
+						add_gold = 200
+						create_character_memory = {
+							type = murim_tomb_treasure_memory
+						}
+					}
+					30 = {
+						# Find cultivation manual
+						trigger_event = {
+							id = murim_cultivation_events.0001
+							days = { 10 30 }
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_daily_life.0014.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				# Tomb traps activate
+				random_list = {
+					40 = {
+						add_trait = wounded_2
+					}
+					30 = {
+						add_trait = wounded_1
+						add_trait = scarred
+					}
+					30 = {
+						add_trait = incapable
+					}
+				}
+				create_character_memory = {
+					type = murim_tomb_trap_injury_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Gather a team to explore safely
+	option = {
+		name = murim_daily_life.0014.b
+		add_gold = -50
+		create_character_memory = {
+			type = murim_organized_tomb_expedition_memory
+		}
+		random_list = {
+			60 = {
+				add_prestige = 200
+				add_prowess_skill = 1
+				trigger_event = {
+					id = murim_artifact_events.0001
+					days = { 15 30 }
+				}
+			}
+			40 = {
+				# Team encounters guardian spirit beast
+				add_trait = wounded_1
+				trigger_event = {
+					id = murim_duel_events.0001
+					days = { 5 15 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Report to the local sect and let them handle it
+	option = {
+		name = murim_daily_life.0014.c
+		add_prestige = 50
+		add_piety = 25
+		create_character_memory = {
+			type = murim_reported_tomb_memory
+		}
+		trigger_event = {
+			id = murim_sect_events.0001
+			days = { 15 30 }
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0015 - Bridge Guardian Challenge
+# A martial artist blocks a bridge, challenges all
+######################################
+murim_daily_life.0015 = {
+	type = character_event
+	title = murim_daily_life.0015.t
+	desc = murim_daily_life.0015.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:bridge_guardian
+		animation = anger
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = bridge_guardian_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			prowess >= 12
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = bridge_guardian_event
+			years = 2
+		}
+		create_character = {
+			location = root.location
+			template = murim_martial_challenger_template
+			save_scope_as = bridge_guardian
+		}
+		scope:bridge_guardian = {
+			add_trait = murim_cultivator
+			add_trait = brave
+		}
+	}
+
+	# Accept the challenge
+	option = {
+		name = murim_daily_life.0015.a
+		duel = {
+			skill = prowess
+			target = scope:bridge_guardian
+			50 = {
+				desc = murim_daily_life.0015.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				add_prestige = 150
+				scope:bridge_guardian = {
+					random_list = {
+						50 = {
+							add_trait = wounded_1
+						}
+						30 = {
+							add_trait = wounded_2
+						}
+						20 = {
+							# Impressed, becomes friend
+							set_relation_friend = root
+						}
+					}
+				}
+				create_character_memory = {
+					type = murim_defeated_bridge_guardian_memory
+					participants = {
+						guardian = scope:bridge_guardian
+					}
+				}
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 30 60 }
+				}
+			}
+			50 = {
+				desc = murim_daily_life.0015.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				add_prestige = -50
+				random_list = {
+					50 = {
+						add_trait = wounded_1
+					}
+					30 = {
+						add_trait = wounded_2
+					}
+					20 = {
+						add_trait = craven
+					}
+				}
+				create_character_memory = {
+					type = murim_lost_to_bridge_guardian_memory
+					participants = {
+						guardian = scope:bridge_guardian
+					}
+				}
+				trigger_event = {
+					id = murim_training_events.0001
+					days = { 15 30 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Find another way around
+	option = {
+		name = murim_daily_life.0015.b
+		add_prestige = -25
+		create_character_memory = {
+			type = murim_avoided_bridge_challenge_memory
+		}
+		stress_impact = {
+			brave = medium_stress_impact_gain
+			craven = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+
+	# Befriend the guardian through conversation
+	option = {
+		name = murim_daily_life.0015.c
+		duel = {
+			skill = diplomacy
+			target = scope:bridge_guardian
+			60 = {
+				desc = murim_daily_life.0015.c.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 1.5
+				}
+				set_relation_friend = scope:bridge_guardian
+				add_prestige = 75
+				create_character_memory = {
+					type = murim_befriended_bridge_guardian_memory
+					participants = {
+						guardian = scope:bridge_guardian
+					}
+				}
+			}
+			40 = {
+				desc = murim_daily_life.0015.c.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -1.0
+				}
+				# They attack you for wasting their time
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_angered_bridge_guardian_memory
+					participants = {
+						guardian = scope:bridge_guardian
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = gregarious
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0016 - Spirit Beast in the Mountains
+# A dangerous spirit beast threatens the area
+######################################
+murim_daily_life.0016 = {
+	type = character_event
+	title = murim_daily_life.0016.t
+	desc = murim_daily_life.0016.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		prowess >= 10
+		NOT = { has_character_flag = spirit_beast_hunt }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			prowess >= 15
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = spirit_beast_hunt
+			years = 3
+		}
+	}
+
+	# Hunt the spirit beast alone
+	option = {
+		name = murim_daily_life.0016.a
+		duel = {
+			skill = prowess
+			target = root
+			40 = {
+				desc = murim_daily_life.0016.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				add_prestige = 400
+				add_prowess_skill = 2
+				create_character_memory = {
+					type = murim_slew_spirit_beast_memory
+				}
+				# Harvest spirit beast core
+				trigger_event = {
+					id = murim_artifact_events.0001
+					days = { 5 15 }
+				}
+			}
+			60 = {
+				desc = murim_daily_life.0016.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				random_list = {
+					30 = {
+						add_trait = wounded_2
+					}
+					30 = {
+						add_trait = wounded_3
+					}
+					20 = {
+						add_trait = incapable
+					}
+					20 = {
+						add_trait = maimed
+						add_trait = one_eyed
+					}
+				}
+				create_character_memory = {
+					type = murim_spirit_beast_mauled_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				prowess >= 18
+			}
+		}
+	}
+
+	# Tame the spirit beast through spiritual resonance
+	option = {
+		name = murim_daily_life.0016.b
+		duel = {
+			skill = learning
+			target = root
+			50 = {
+				desc = murim_daily_life.0016.b.tamed
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 300
+				add_prowess_skill = 1
+				create_character_memory = {
+					type = murim_tamed_spirit_beast_memory
+				}
+				trigger_event = {
+					id = murim_cultivation_events.0001
+					days = { 30 60 }
+				}
+			}
+			50 = {
+				desc = murim_daily_life.0016.b.rejected
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_spirit_beast_rejected_bond_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				learning >= 15
+			}
+		}
+	}
+
+	# Report it and let the local sect handle it
+	option = {
+		name = murim_daily_life.0016.c
+		add_prestige = 25
+		create_character_memory = {
+			type = murim_reported_spirit_beast_memory
+		}
+		trigger_event = {
+			id = murim_sect_events.0001
+			days = { 10 30 }
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+
+	# Avoid the mountains entirely
+	option = {
+		name = murim_daily_life.0016.d
+		add_stress = -10
+		create_character_memory = {
+			type = murim_avoided_spirit_beast_memory
+		}
+		stress_impact = {
+			brave = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0017 - Calligraphy Master's Insight
+# Martial arts hidden within brush strokes
+######################################
+murim_daily_life.0017 = {
+	type = character_event
+	title = murim_daily_life.0017.t
+	desc = murim_daily_life.0017.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = calligraphy_insight }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			learning >= 12
+		}
+		modifier = {
+			add = 0.5
+			has_trait = scholar
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = calligraphy_insight
+			years = 5
+		}
+	}
+
+	# Study the brush strokes intently
+	option = {
+		name = murim_daily_life.0017.a
+		add_learning_skill = 1
+		add_prowess_skill = 1
+		create_character_memory = {
+			type = murim_calligraphy_martial_insight_memory
+		}
+		trigger_event = {
+			id = murim_technique_events.0001
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+
+	# Ask the master to teach you directly
+	option = {
+		name = murim_daily_life.0017.b
+		random_list = {
+			40 = {
+				# Master agrees
+				add_prowess_skill = 2
+				create_character_memory = {
+					type = murim_calligraphy_master_teaching_memory
+				}
+				trigger_event = {
+					id = murim_mentor_events.0001
+					days = { 15 30 }
+				}
+			}
+			30 = {
+				# Master tests you first
+				trigger_event = {
+					id = murim_training_events.0001
+					days = { 10 20 }
+				}
+			}
+			30 = {
+				# Master refuses
+				add_stress = 10
+				create_character_memory = {
+					type = murim_calligraphy_master_refused_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Simply enjoy the art
+	option = {
+		name = murim_daily_life.0017.c
+		add_stress = -20
+		add_prestige = 25
+		create_character_memory = {
+			type = murim_appreciated_calligraphy_memory
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0018 - Flood Threatens the Village
+# Use cultivation power to save lives
+######################################
+murim_daily_life.0018 = {
+	type = character_event
+	title = murim_daily_life.0018.t
+	desc = murim_daily_life.0018.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = flood_rescue_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = flood_rescue_event
+			years = 5
+		}
+	}
+
+	# Use your qi to reinforce the dam
+	option = {
+		name = murim_daily_life.0018.a
+		duel = {
+			skill = prowess
+			target = root
+			60 = {
+				desc = murim_daily_life.0018.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				add_prestige = 500
+				add_piety = 100
+				create_character_memory = {
+					type = murim_saved_village_from_flood_memory
+				}
+				# Village reveres you
+				add_opinion = {
+					target = root
+					modifier = murim_hero_of_the_people
+					opinion = 40
+				}
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 15 30 }
+				}
+			}
+			40 = {
+				desc = murim_daily_life.0018.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				# Exhausted your qi trying
+				add_trait = wounded_1
+				add_stress = 30
+				create_character_memory = {
+					type = murim_failed_flood_rescue_memory
+				}
+				trigger_event = {
+					id = murim_cultivation_events.0005
+					days = { 10 20 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Organize evacuation with diplomacy
+	option = {
+		name = murim_daily_life.0018.b
+		add_prestige = 200
+		add_diplomacy_skill = 1
+		create_character_memory = {
+			type = murim_organized_flood_evacuation_memory
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# The village is not your responsibility
+	option = {
+		name = murim_daily_life.0018.c
+		add_stress = 15
+		create_character_memory = {
+			type = murim_ignored_flood_village_memory
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			callous = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = callous
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0019 - Mysterious Night Music
+# Haunting flute music from the forest
+######################################
+murim_daily_life.0019 = {
+	type = character_event
+	title = murim_daily_life.0019.t
+	desc = murim_daily_life.0019.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = mysterious_night_music }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			learning >= 12
+		}
+		modifier = {
+			add = 0.5
+			has_trait = mystic
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = mysterious_night_music
+			years = 3
+		}
+	}
+
+	# Follow the music deep into the forest
+	option = {
+		name = murim_daily_life.0019.a
+		random_list = {
+			30 = {
+				# Find a hidden cultivator -- gain enlightenment
+				add_prowess_skill = 2
+				add_learning_skill = 1
+				create_character_memory = {
+					type = murim_forest_enlightenment_memory
+				}
+				trigger_event = {
+					id = murim_cultivation_events.0001
+					days = { 10 30 }
+				}
+			}
+			25 = {
+				# Find a spirit beast
+				trigger_event = {
+					id = murim_daily_life.0016
+					days = { 1 5 }
+				}
+			}
+			25 = {
+				# Trapped by illusion formation
+				add_trait = wounded_1
+				add_stress = 30
+				create_character_memory = {
+					type = murim_trapped_in_illusion_memory
+				}
+				trigger_event = {
+					id = murim_fate_events.0001
+					days = { 5 15 }
+				}
+			}
+			20 = {
+				# Find ancient ruins
+				trigger_event = {
+					id = murim_daily_life.0014
+					days = { 3 10 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Meditate to the music from a safe distance
+	option = {
+		name = murim_daily_life.0019.b
+		add_learning_skill = 1
+		add_stress = -15
+		create_character_memory = {
+			type = murim_meditated_to_forest_music_memory
+		}
+		trigger_event = {
+			id = murim_training_events.0001
+			days = { 15 30 }
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+
+	# Block your ears and avoid the forest
+	option = {
+		name = murim_daily_life.0019.c
+		create_character_memory = {
+			type = murim_avoided_forest_music_memory
+		}
+		stress_impact = {
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+######################################
+# murim_daily_life.0020 - Retired Grandmaster's Garden
+# An unassuming elder is actually a supreme master
+######################################
+murim_daily_life.0020 = {
+	type = character_event
+	title = murim_daily_life.0020.t
+	desc = murim_daily_life.0020.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_available_adult = yes
+		has_trait = murim_cultivator
+		NOT = { has_character_flag = retired_grandmaster_event }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			has_trait = humble
+		}
+		modifier = {
+			add = 0.5
+			has_trait = patient
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = retired_grandmaster_event
+			years = 10
+		}
+		create_character = {
+			location = root.location
+			template = murim_elder_master_template
+			save_scope_as = retired_grandmaster
+		}
+		scope:retired_grandmaster = {
+			add_trait = murim_cultivator
+			add_trait = patient
+			add_trait = content
+		}
+	}
+
+	# Humbly ask for guidance
+	option = {
+		name = murim_daily_life.0020.a
+		random_list = {
+			40 = {
+				# Grandmaster agrees to teach one technique
+				add_prowess_skill = 3
+				create_character_memory = {
+					type = murim_retired_grandmaster_taught_memory
+					participants = {
+						master = scope:retired_grandmaster
+					}
+				}
+				trigger_event = {
+					id = murim_mentor_events.0001
+					days = { 15 30 }
+				}
+			}
+			30 = {
+				# Grandmaster gives cryptic advice
+				add_learning_skill = 2
+				create_character_memory = {
+					type = murim_cryptic_grandmaster_advice_memory
+					participants = {
+						master = scope:retired_grandmaster
+					}
+				}
+			}
+			30 = {
+				# Grandmaster tests you first
+				duel = {
+					skill = prowess
+					target = scope:retired_grandmaster
+					20 = {
+						desc = murim_daily_life.0020.a.impress
+						compare_modifier = {
+							value = scope:duel_value
+							multiplier = 5.0
+						}
+						# Impressed! Full teaching
+						add_prowess_skill = 4
+						set_relation_friend = scope:retired_grandmaster
+						create_character_memory = {
+							type = murim_impressed_grandmaster_memory
+							participants = {
+								master = scope:retired_grandmaster
+							}
+						}
+					}
+					80 = {
+						desc = murim_daily_life.0020.a.humbled
+						compare_modifier = {
+							value = scope:duel_value
+							multiplier = -1.0
+						}
+						# Humbled but learn from defeat
+						add_prowess_skill = 1
+						create_character_memory = {
+							type = murim_humbled_by_grandmaster_memory
+							participants = {
+								master = scope:retired_grandmaster
+							}
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
+		}
+	}
+
+	# Challenge them -- prove your strength
+	option = {
+		name = murim_daily_life.0020.b
+		duel = {
+			skill = prowess
+			target = scope:retired_grandmaster
+			10 = {
+				desc = murim_daily_life.0020.b.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 5.0
+				}
+				add_prestige = 500
+				create_character_memory = {
+					type = murim_defeated_retired_grandmaster_memory
+					participants = {
+						master = scope:retired_grandmaster
+					}
+				}
+				trigger_event = {
+					id = murim_ranking_events.0001
+					days = { 10 30 }
+				}
+			}
+			90 = {
+				desc = murim_daily_life.0020.b.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -5.0
+				}
+				# Utterly demolished by the grandmaster
+				random_list = {
+					50 = {
+						add_trait = wounded_2
+					}
+					30 = {
+						add_trait = wounded_3
+					}
+					20 = {
+						add_trait = incapable
+					}
+				}
+				add_prestige = -200
+				create_character_memory = {
+					type = murim_crushed_by_grandmaster_memory
+					participants = {
+						master = scope:retired_grandmaster
+					}
+				}
+				# Humiliation drives training
+				trigger_event = {
+					id = murim_training_events.0001
+					days = { 15 30 }
+				}
+			}
+		}
+		stress_impact = {
+			humble = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = arrogant
+			}
+		}
+	}
+
+	# Simply help tend the garden and enjoy the peace
+	option = {
+		name = murim_daily_life.0020.c
+		add_stress = -30
+		add_piety = 50
+		create_character_memory = {
+			type = murim_peaceful_garden_memory
+			participants = {
+				elder = scope:retired_grandmaster
+			}
+		}
+		# Inner peace leads to subtle cultivation insight
+		random_list = {
+			50 = {
+				add_prowess_skill = 1
+			}
+			50 = {
+				add_learning_skill = 1
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+}
