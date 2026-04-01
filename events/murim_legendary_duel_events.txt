@@ -1,0 +1,1145 @@
+namespace = murim_legendary_duel
+
+# Legendary Duel Events - Epic high-stakes confrontations between top-ranked martial artists
+# Cross-references: murim_ranking, murim_ranker_death, murim_artifact, murim_fate, murim_sect, murim_duel, murim_politics
+
+###############################################
+# murim_legendary_duel.0001 - Challenge of the Heavenly Sword
+# A top-10 ranked martial artist challenges the player for their position
+###############################################
+murim_legendary_duel.0001 = {
+	type = character_event
+	title = murim_legendary_duel.0001.t
+	desc = murim_legendary_duel.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:legendary_challenger
+		animation = personality_vengeful
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_ranking_position
+		var:murim_ranking_position <= 10
+		NOT = { has_character_flag = legendary_duel_cooldown }
+		any_living_character = {
+			has_variable = murim_ranking_position
+			var:murim_ranking_position <= 20
+			NOT = { this = root }
+			prowess >= 20
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = martial_arts_master
+		}
+		modifier = {
+			add = 1
+			var:murim_ranking_position <= 5
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_variable = murim_ranking_position
+				var:murim_ranking_position <= 20
+				NOT = { this = root }
+				prowess >= 20
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					prowess >= root.prowess
+				}
+			}
+			save_scope_as = legendary_challenger
+		}
+		add_character_flag = {
+			flag = legendary_duel_cooldown
+			years = 3
+		}
+	}
+	
+	# Option A: Accept the challenge with full power
+	option = {
+		name = murim_legendary_duel.0001.a
+		duel = {
+			skill = prowess
+			target = scope:legendary_challenger
+			50 = {
+				desc = murim_legendary_duel.0001.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0001.a.success.toast
+					left_icon = root
+					root = {
+						add_prestige = 500
+						create_character_memory = {
+							type = legendary_duel_victory_memory
+							participants = {
+								defeated_legend = scope:legendary_challenger
+							}
+						}
+						if = {
+							limit = { has_trait = wounded }
+							remove_trait = wounded
+						}
+						add_trait_xp = {
+							trait = martial_arts_master
+							tracks = martial_arts_track
+							value = 30
+						}
+						# Chain to ranking update
+						trigger_event = {
+							id = murim_ranking.0001
+							days = { 3 7 }
+						}
+					}
+					scope:legendary_challenger = {
+						add_prestige = -300
+						create_character_memory = {
+							type = legendary_duel_defeat_memory
+							participants = {
+								victorious_legend = root
+							}
+						}
+						random_list = {
+							30 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							50 = { }
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_legendary_duel.0001.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0001.a.failure.toast
+					left_icon = root
+					root = {
+						add_prestige = -300
+						create_character_memory = {
+							type = legendary_duel_defeat_memory
+							participants = {
+								victorious_legend = scope:legendary_challenger
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							10 = { add_trait = one_eyed }
+							30 = { }
+						}
+						# Chain to ranker death if incapable
+						if = {
+							limit = { has_trait = incapable }
+							trigger_event = {
+								id = murim_ranker_death.0001
+								days = { 10 30 }
+							}
+						}
+					}
+					scope:legendary_challenger = {
+						add_prestige = 500
+						trigger_event = {
+							id = murim_ranking.0001
+							days = { 3 7 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Propose a conditional duel with artifact stakes
+	option = {
+		name = murim_legendary_duel.0001.b
+		custom_tooltip = murim_legendary_duel.0001.b.tt
+		create_character_memory = {
+			type = artifact_stake_duel_memory
+			participants = {
+				duel_opponent = scope:legendary_challenger
+			}
+		}
+		trigger_event = {
+			id = murim_artifact.0001
+			days = { 5 15 }
+		}
+		trigger_event = {
+			id = murim_legendary_duel.0002
+			days = { 30 60 }
+		}
+		stress_impact = {
+			ambitious = medium_stress_loss
+			greedy = medium_stress_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+	
+	# Option C: Refuse and lose face
+	option = {
+		name = murim_legendary_duel.0001.c
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = coward_of_the_martial_world
+			years = 5
+		}
+		create_character_memory = {
+			type = refused_legendary_duel_memory
+			participants = {
+				challenger = scope:legendary_challenger
+			}
+		}
+		random_list = {
+			40 = { add_trait = craven }
+			60 = { }
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+###############################################
+# murim_legendary_duel.0002 - Artifact-Staked Showdown
+# Duel where both fighters wager their most prized martial artifacts
+###############################################
+murim_legendary_duel.0002 = {
+	type = character_event
+	title = murim_legendary_duel.0002.t
+	desc = murim_legendary_duel.0002.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = war_over_tie
+	}
+	right_portrait = {
+		character = scope:legendary_challenger
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		exists = scope:legendary_challenger
+	}
+	
+	immediate = {
+		# Set up the stakes
+	}
+	
+	# Option A: Fight with everything - full power unleashed
+	option = {
+		name = murim_legendary_duel.0002.a
+		duel = {
+			skill = prowess
+			target = scope:legendary_challenger
+			55 = {
+				desc = murim_legendary_duel.0002.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0002.a.success.toast
+					left_icon = root
+					root = {
+						add_prestige = 750
+						add_gold = 200
+						create_character_memory = {
+							type = artifact_duel_victory_memory
+							participants = {
+								defeated_rival = scope:legendary_challenger
+							}
+						}
+						# Won their artifact - chain to artifact events
+						trigger_event = {
+							id = murim_artifact.0001
+							days = { 1 3 }
+						}
+					}
+					scope:legendary_challenger = {
+						add_prestige = -500
+						random_list = {
+							30 = { add_trait = wounded }
+							15 = { add_trait = one_eyed }
+							15 = { add_trait = incapable }
+							40 = { }
+						}
+						create_character_memory = {
+							type = lost_artifact_in_duel_memory
+							participants = {
+								artifact_winner = root
+							}
+						}
+					}
+				}
+			}
+			45 = {
+				desc = murim_legendary_duel.0002.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0002.a.failure.toast
+					left_icon = root
+					root = {
+						add_prestige = -500
+						add_gold = -200
+						random_list = {
+							35 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							10 = { add_trait = scarred }
+							35 = { }
+						}
+						create_character_memory = {
+							type = lost_artifact_in_duel_memory
+							participants = {
+								artifact_winner = scope:legendary_challenger
+							}
+						}
+						# Devastating loss chains to training
+						trigger_event = {
+							id = murim_training.0001
+							days = { 30 90 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Use a secret forbidden technique
+	option = {
+		name = murim_legendary_duel.0002.b
+		trigger = {
+			OR = {
+				has_trait = forbidden_technique_practitioner
+				has_variable = murim_forbidden_knowledge
+			}
+		}
+		add_prestige = 300
+		create_character_memory = {
+			type = used_forbidden_technique_in_duel_memory
+			participants = {
+				duel_victim = scope:legendary_challenger
+			}
+		}
+		scope:legendary_challenger = {
+			random_list = {
+				50 = { add_trait = wounded }
+				30 = { add_trait = incapable }
+				20 = {
+					death = {
+						death_reason = death_duel
+						killer = root
+					}
+					root = {
+						trigger_event = {
+							id = murim_ranker_death.0001
+							days = { 1 3 }
+						}
+					}
+				}
+			}
+		}
+		# Backlash from using forbidden arts
+		random_list = {
+			30 = {
+				add_trait = wounded
+				trigger_event = {
+					id = murim_forbidden_arts.0001
+					days = { 7 14 }
+				}
+			}
+			20 = { add_trait = lunatic }
+			50 = { }
+		}
+		# Jianghu reacts to forbidden technique use
+		trigger_event = {
+			id = murim_jianghu.0001
+			days = { 5 15 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+		}
+	}
+	
+	# Option C: Withdraw before the fight
+	option = {
+		name = murim_legendary_duel.0002.c
+		add_prestige = -400
+		add_gold = -100
+		create_character_memory = {
+			type = withdrew_from_artifact_duel_memory
+			participants = {
+				disappointed_opponent = scope:legendary_challenger
+			}
+		}
+		random_list = {
+			50 = { add_trait = craven }
+			50 = { }
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+###############################################
+# murim_legendary_duel.0003 - Battle at the Summit of Heaven
+# Once-in-a-generation duel between the two strongest martial artists
+###############################################
+murim_legendary_duel.0003 = {
+	type = character_event
+	title = murim_legendary_duel.0003.t
+	desc = murim_legendary_duel.0003.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	right_portrait = {
+		character = scope:summit_rival
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_ranking_position
+		var:murim_ranking_position <= 3
+		NOT = { has_character_flag = summit_duel_happened }
+		any_living_character = {
+			has_variable = murim_ranking_position
+			var:murim_ranking_position <= 3
+			NOT = { this = root }
+			prowess >= 25
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			var:murim_ranking_position = 1
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_variable = murim_ranking_position
+				var:murim_ranking_position <= 3
+				NOT = { this = root }
+				prowess >= 25
+			}
+			save_scope_as = summit_rival
+		}
+		add_character_flag = {
+			flag = summit_duel_happened
+			years = 10
+		}
+	}
+	
+	# Option A: Accept - this will determine the strongest under heaven
+	option = {
+		name = murim_legendary_duel.0003.a
+		duel = {
+			skill = prowess
+			target = scope:summit_rival
+			50 = {
+				desc = murim_legendary_duel.0003.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 5.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0003.a.victory.toast
+					left_icon = root
+					root = {
+						add_prestige = 1000
+						add_character_modifier = {
+							modifier = strongest_under_heaven
+							years = 10
+						}
+						create_character_memory = {
+							type = summit_battle_victory_memory
+							participants = {
+								summit_opponent = scope:summit_rival
+							}
+						}
+						# Wounds even in victory
+						random_list = {
+							40 = { add_trait = wounded }
+							20 = { add_trait = scarred }
+							40 = { }
+						}
+						# Chain: politics shift after summit duel
+						trigger_event = {
+							id = murim_politics.0001
+							days = { 10 30 }
+						}
+						# Chain: fate acknowledges the strongest
+						trigger_event = {
+							id = murim_fate.0001
+							days = { 30 90 }
+						}
+					}
+					scope:summit_rival = {
+						add_prestige = 200
+						create_character_memory = {
+							type = summit_battle_honorable_defeat_memory
+							participants = {
+								summit_victor = root
+							}
+						}
+						random_list = {
+							50 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							30 = { add_trait = scarred }
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_legendary_duel.0003.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -5.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0003.a.defeat.toast
+					left_icon = root
+					root = {
+						add_prestige = 200
+						create_character_memory = {
+							type = summit_battle_honorable_defeat_memory
+							participants = {
+								summit_victor = scope:summit_rival
+							}
+						}
+						random_list = {
+							50 = { add_trait = wounded }
+							25 = { add_trait = incapable }
+							25 = { add_trait = scarred }
+						}
+						# If incapable, chain to death events
+						if = {
+							limit = { has_trait = incapable }
+							trigger_event = {
+								id = murim_ranker_death.0003
+								days = { 5 15 }
+							}
+						}
+					}
+					scope:summit_rival = {
+						add_prestige = 1000
+						add_character_modifier = {
+							modifier = strongest_under_heaven
+							years = 10
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Propose mutual cultivation instead of battle
+	option = {
+		name = murim_legendary_duel.0003.b
+		custom_tooltip = murim_legendary_duel.0003.b.tt
+		add_prestige = 200
+		create_character_memory = {
+			type = summit_mutual_cultivation_memory
+			participants = {
+				cultivation_partner = scope:summit_rival
+			}
+		}
+		# Chain to cultivation breakthrough
+		trigger_event = {
+			id = murim_cultivation.0001
+			days = { 30 60 }
+		}
+		scope:summit_rival = {
+			add_opinion = {
+				target = root
+				modifier = respected_martial_peer
+				opinion = 30
+			}
+		}
+		stress_impact = {
+			ambitious = medium_stress_loss
+			calm = medium_stress_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = calm
+			}
+		}
+	}
+	
+	# Option C: Decline - not yet ready
+	option = {
+		name = murim_legendary_duel.0003.c
+		add_prestige = -200
+		create_character_memory = {
+			type = declined_summit_battle_memory
+			participants = {
+				challenger = scope:summit_rival
+			}
+		}
+		trigger_event = {
+			id = murim_training.0001
+			days = { 7 30 }
+		}
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+###############################################
+# murim_legendary_duel.0004 - Ghost of the Fallen Master
+# Player is confronted by a disciple seeking vengeance for their dead master
+###############################################
+murim_legendary_duel.0004 = {
+	type = character_event
+	title = murim_legendary_duel.0004.t
+	desc = murim_legendary_duel.0004.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:vengeance_disciple
+		animation = personality_vengeful
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_ranking_position
+		any_living_character = {
+			has_opinion_modifier = {
+				target = root
+				modifier = murdered_my_master
+			}
+			prowess >= 15
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			any_living_character = {
+				count >= 2
+				has_opinion_modifier = {
+					target = root
+					modifier = murdered_my_master
+				}
+			}
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_opinion_modifier = {
+					target = root
+					modifier = murdered_my_master
+				}
+				prowess >= 15
+			}
+			save_scope_as = vengeance_disciple
+		}
+	}
+	
+	# Option A: Face the disciple honorably
+	option = {
+		name = murim_legendary_duel.0004.a
+		duel = {
+			skill = prowess
+			target = scope:vengeance_disciple
+			60 = {
+				desc = murim_legendary_duel.0004.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0004.a.victory.toast
+					left_icon = root
+					root = {
+						add_prestige = 100
+						create_character_memory = {
+							type = defeated_vengeance_disciple_memory
+							participants = {
+								vengeance_seeker = scope:vengeance_disciple
+							}
+						}
+						random_list = {
+							20 = { add_trait = wounded }
+							80 = { }
+						}
+					}
+					scope:vengeance_disciple = {
+						random_list = {
+							40 = {
+								add_trait = wounded
+								create_character_memory = {
+									type = failed_vengeance_memory
+									participants = {
+										masters_killer = root
+									}
+								}
+							}
+							30 = {
+								add_trait = incapable
+								# Chain: broken disciple joins jianghu underworld
+								trigger_event = {
+									id = murim_jianghu.0005
+									days = { 30 90 }
+								}
+							}
+							30 = {
+								death = {
+									death_reason = death_duel
+									killer = root
+								}
+								root = {
+									trigger_event = {
+										id = murim_ranker_death.0005
+										days = { 1 5 }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			40 = {
+				desc = murim_legendary_duel.0004.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0004.a.defeat.toast
+					left_icon = root
+					root = {
+						add_prestige = -200
+						create_character_memory = {
+							type = defeated_by_vengeance_disciple_memory
+							participants = {
+								avenger = scope:vengeance_disciple
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							30 = { add_trait = incapable }
+							20 = { add_trait = scarred }
+							10 = {
+								death = {
+									death_reason = death_duel
+									killer = scope:vengeance_disciple
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option B: Try to reason with the disciple
+	option = {
+		name = murim_legendary_duel.0004.b
+		custom_tooltip = murim_legendary_duel.0004.b.tt
+		create_character_memory = {
+			type = attempted_peace_with_disciple_memory
+			participants = {
+				angry_disciple = scope:vengeance_disciple
+			}
+		}
+		random_list = {
+			30 = {
+				scope:vengeance_disciple = {
+					add_opinion = {
+						target = root
+						modifier = showed_mercy_to_disciple
+						opinion = 20
+					}
+				}
+				# Chain: mentor relationship forms
+				trigger_event = {
+					id = murim_mentor.0001
+					days = { 30 60 }
+				}
+			}
+			70 = {
+				# Reasoning fails, ambush
+				trigger_event = {
+					id = murim_duel.0005
+					days = { 3 7 }
+				}
+			}
+		}
+		stress_impact = {
+			compassionate = medium_stress_loss
+			sadistic = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option C: Eliminate the threat before it grows
+	option = {
+		name = murim_legendary_duel.0004.c
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				has_trait = callous
+				has_trait = ruthless
+			}
+		}
+		scope:vengeance_disciple = {
+			death = {
+				death_reason = death_murder
+				killer = root
+			}
+		}
+		root = {
+			add_prestige = -100
+			add_dread = 30
+			create_character_memory = {
+				type = murdered_vengeance_disciple_memory
+				participants = {
+					murdered_disciple = scope:vengeance_disciple
+				}
+			}
+			# Chain: more disciples come for vengeance
+			trigger_event = {
+				id = murim_legendary_duel.0004
+				days = { 180 365 }
+			}
+			# Chain: jianghu reacts to murder
+			trigger_event = {
+				id = murim_jianghu.0001
+				days = { 5 15 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+}
+
+###############################################
+# murim_legendary_duel.0005 - The Unranked Prodigy
+# An unknown martial artist with incredible power appears and challenges a ranker
+###############################################
+murim_legendary_duel.0005 = {
+	type = character_event
+	title = murim_legendary_duel.0005.t
+	desc = murim_legendary_duel.0005.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_ranking_position
+		var:murim_ranking_position <= 30
+		NOT = { has_character_flag = prodigy_challenged_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			var:murim_ranking_position <= 10
+		}
+	}
+	
+	immediate = {
+		create_character = {
+			location = root.location
+			template = murim_prodigy_template
+			save_scope_as = unranked_prodigy
+		}
+		scope:unranked_prodigy = {
+			set_variable = {
+				name = murim_hidden_talent
+				value = yes
+			}
+			add_prowess_skill = 5
+		}
+		add_character_flag = {
+			flag = prodigy_challenged_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Accept the prodigy's challenge
+	option = {
+		name = murim_legendary_duel.0005.a
+		duel = {
+			skill = prowess
+			target = scope:unranked_prodigy
+			45 = {
+				desc = murim_legendary_duel.0005.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0005.a.victory.toast
+					left_icon = root
+					root = {
+						add_prestige = 300
+						create_character_memory = {
+							type = defeated_prodigy_memory
+							participants = {
+								prodigy = scope:unranked_prodigy
+							}
+						}
+					}
+					scope:unranked_prodigy = {
+						add_prestige = 100
+						create_character_memory = {
+							type = prodigy_debut_loss_memory
+							participants = {
+								established_master = root
+							}
+						}
+						random_list = {
+							30 = { add_trait = wounded }
+							70 = { }
+						}
+						# Prodigy enters ranking
+						trigger_event = {
+							id = murim_ranking.0001
+							days = { 5 15 }
+						}
+					}
+				}
+			}
+			55 = {
+				desc = murim_legendary_duel.0005.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_legendary_duel.0005.a.defeat.toast
+					left_icon = root
+					root = {
+						add_prestige = -200
+						create_character_memory = {
+							type = defeated_by_prodigy_memory
+							participants = {
+								prodigy = scope:unranked_prodigy
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							40 = { }
+						}
+						# Chain to training after humiliation
+						trigger_event = {
+							id = murim_training.0001
+							days = { 14 30 }
+						}
+					}
+					scope:unranked_prodigy = {
+						add_prestige = 500
+						# Prodigy shoots up rankings
+						set_variable = {
+							name = murim_ranking_position
+							value = root.var:murim_ranking_position
+						}
+						trigger_event = {
+							id = murim_ranking.0001
+							days = { 1 3 }
+						}
+						# Chain: fate of the prodigy
+						trigger_event = {
+							id = murim_fate.0002
+							days = { 30 90 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Test the prodigy first through conversation
+	option = {
+		name = murim_legendary_duel.0005.b
+		custom_tooltip = murim_legendary_duel.0005.b.tt
+		create_character_memory = {
+			type = evaluated_prodigy_memory
+			participants = {
+				prodigy = scope:unranked_prodigy
+			}
+		}
+		random_list = {
+			40 = {
+				# Prodigy is genuine - take as disciple
+				trigger_event = {
+					id = murim_mentor.0001
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				# Prodigy is dangerous - sect war potential
+				trigger_event = {
+					id = murim_sect.0003
+					days = { 14 30 }
+				}
+			}
+			30 = {
+				# Prodigy is assassin in disguise
+				trigger_event = {
+					id = murim_jianghu.0001
+					days = { 1 3 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Option C: Have your sect deal with this upstart
+	option = {
+		name = murim_legendary_duel.0005.c
+		trigger = {
+			has_variable = murim_sect_leader
+		}
+		add_prestige = -100
+		create_character_memory = {
+			type = sent_sect_against_prodigy_memory
+			participants = {
+				prodigy = scope:unranked_prodigy
+			}
+		}
+		# Chain: sect politics
+		trigger_event = {
+			id = murim_sect.0001
+			days = { 3 7 }
+		}
+		# Prodigy may seek vengeance
+		scope:unranked_prodigy = {
+			add_opinion = {
+				target = root
+				modifier = sent_sect_against_me
+				opinion = -50
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
