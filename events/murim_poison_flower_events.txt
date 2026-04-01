@@ -1,1100 +1,1130 @@
 # Murim Chronicles - Poison Flower Palace Clan Events
-# THE BEAUTIFUL DEATH. Female-dominated poison and seduction experts.
-# SIGNATURE: Thousand Petal Poison, Bewitching Arts, Flower Dance Sword, Antidote Mastery
+# UNORTHODOX. All-female sect (with rare male exceptions). Masters of poison, seduction, and assassination.
+# SIGNATURE: Thousand Poison Hand, Flower Petal Blade Dance, Heart Devouring Gu, Bewitching Arts
 # PHILOSOPHY: Beauty is the deadliest weapon. Control through desire and fear.
-# INTERNAL POLITICS: Palace Mistress (absolute ruler) vs Elder Concubines vs Young Flowers.
-# INTEGRATION: murim_clan_triggers.txt (is_poison_flower_member), murim_faction_war_events.txt
-# UNIQUE: Only clan with seduction-based combat. Poison immunity training is mandatory.
-# UNORTHODOX faction. Allied with Heavenly Demon but maintains independence.
+# INTERNAL POLITICS: Palace Mistress vs Elder Council. Pure poison path vs seduction path rivalry.
+# UNIQUE: Only clan with gu (poison insect) cultivation. Gender-locked recruitment (mostly).
+# INTEGRATION: murim_poison_arts_events.txt, murim_romance_events.txt, murim_shadow_politics_events.txt
 
 namespace = murim_poison_flower
 
-# POISON_FLOWER.0001 - The Garden of a Thousand Poisons
-# New disciples must survive walking through the poison garden barefoot.
+##############################
+# EVENT 1: INITIATION - THE GARDEN OF TEN THOUSAND POISONS
+# New disciples must walk through a garden filled with poisonous plants.
+# Those who survive develop basic poison resistance.
+##############################
 murim_poison_flower.0001 = {
 	type = character_event
 	title = murim_poison_flower.0001.t
 	desc = murim_poison_flower.0001.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
+		is_poison_flower_member_trigger = yes
+		NOT = { has_character_flag = poison_flower_garden_trial }
+		age >= 14
 	}
-
-	# Walk through with confidence (pure willpower)
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			learning >= 12
+		}
+	}
+	
+	immediate = {
+		set_character_flag = poison_flower_garden_trial
+		create_character_memory = {
+			type = poison_flower_garden_trial_memory
+		}
+	}
+	
+	# Option A: Walk through slowly, building resistance naturally
 	option = {
 		name = murim_poison_flower.0001.a
 		random_list = {
-			40 = {
+			50 = {
 				add_character_modifier = {
-					modifier = poison_flower_garden_survivor
+					modifier = poison_flower_basic_resistance_modifier
 					years = -1
 				}
-				add_prowess_skill = 2
-				add_intrigue_skill = 2
-				create_character_memory = {
-					type = poison_flower_garden_trial_memory
-				}
+				add_intrigue_xp = 300
 			}
-			35 = {
-				add_prowess_skill = 1
+			30 = {
+				# Partial resistance - some poisons still affect you
 				add_character_modifier = {
-					modifier = poison_flower_partial_immunity
+					modifier = poison_flower_partial_resistance_modifier
 					years = 5
 				}
+				add_trait = wounded_1
 			}
-			25 = {
+			20 = {
+				# Severe poisoning - bedridden for months
 				add_trait = wounded_2
 				add_character_modifier = {
-					modifier = poison_flower_garden_scarred
-					years = 5
+					modifier = poison_flower_chronic_poisoning_modifier
+					years = 3
 				}
-				add_health = -0.5
+				create_character_memory = {
+					type = poison_flower_garden_collapse_memory
+				}
 			}
 		}
-		ai_chance = {
-			base = 50
-		}
+		ai_chance = { base = 45 }
 	}
-
-	# Prepare antidotes beforehand (clever approach)
+	
+	# Option B: Use a secret antidote prepared beforehand (cheating)
 	option = {
 		name = murim_poison_flower.0001.b
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				learning >= 14
+			}
+		}
 		random_list = {
 			60 = {
 				add_character_modifier = {
-					modifier = poison_flower_clever_survivor
+					modifier = poison_flower_artificial_resistance_modifier
 					years = 5
 				}
-				add_learning_skill = 3
-				add_intrigue_skill = 1
+				add_intrigue_xp = 200
 			}
-			25 = {
-				add_learning_skill = 1
-			}
-			15 = {
-				add_trait = wounded_1
+			40 = {
+				# Elder detects the antidote - punishment
 				add_character_modifier = {
-					modifier = poison_flower_antidote_failure
-					years = 2
+					modifier = poison_flower_cheater_mark_modifier
+					years = 5
+				}
+				every_courtier = {
+					limit = {
+						is_poison_flower_member_trigger = yes
+					}
+					add_opinion = {
+						modifier = poison_flower_cheater_opinion
+						target = root
+						opinion = -20
+					}
 				}
 			}
 		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 25
-				learning >= 12
-			}
-		}
+		ai_chance = { base = 25 }
 	}
-
-	# Refuse the trial - demand an alternative test
+	
+	# Option C: Deliberately inhale the strongest poisons (extreme path)
 	option = {
 		name = murim_poison_flower.0001.c
-		add_prestige = -200
-		add_character_modifier = {
-			modifier = poison_flower_coward_label
-			years = 5
+		trigger = {
+			OR = {
+				has_trait = brave
+				has_trait = ambitious
+			}
 		}
-		add_opinion = {
-			target = scope:palace_mistress
-			modifier = disappointed_opinion
-			opinion = -30
+		random_list = {
+			25 = {
+				# Supreme resistance achieved immediately
+				add_character_modifier = {
+					modifier = poison_flower_supreme_resistance_modifier
+					years = -1
+				}
+				add_intrigue_xp = 500
+				add_prowess_xp = 300
+			}
+			35 = {
+				# Near death but transformed
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = poison_flower_poison_body_modifier
+					years = -1
+				}
+				# Your very touch becomes poisonous
+			}
+			40 = {
+				# Nearly die - permanent damage
+				add_trait = wounded_3
+				add_trait = incapable
+				create_character_memory = {
+					type = poison_flower_near_death_poisoning_memory
+				}
+			}
 		}
-		ai_chance = {
-			base = 10
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# POISON_FLOWER.0002 - The Bewitching Arts Training
-# Learn to use beauty and charm as weapons. Seduction-based combat.
+##############################
+# EVENT 2: THOUSAND POISON HAND CULTIVATION
+# The Palace's signature offensive technique. Poison qi infuses your strikes.
+##############################
 murim_poison_flower.0002 = {
 	type = character_event
 	title = murim_poison_flower.0002.t
 	desc = murim_poison_flower.0002.desc
-	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = flirtation
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
-		intrigue >= 10
+		is_poison_flower_member_trigger = yes
+		OR = {
+			has_character_modifier = poison_flower_basic_resistance_modifier
+			has_character_modifier = poison_flower_supreme_resistance_modifier
+			has_character_modifier = poison_flower_poison_body_modifier
+		}
+		NOT = { has_character_flag = poison_flower_thousand_hand }
 	}
-
-	# Master the Bewitching Dance (combat + seduction)
+	
+	immediate = {
+		set_character_flag = poison_flower_thousand_hand
+		create_character_memory = {
+			type = poison_flower_thousand_hand_memory
+		}
+	}
+	
+	# Option A: Learn the standard Five Poison Strike
 	option = {
 		name = murim_poison_flower.0002.a
-		random_list = {
-			45 = {
-				add_character_modifier = {
-					modifier = poison_flower_bewitching_master
-					years = -1
-				}
-				add_prowess_skill = 3
-				add_intrigue_skill = 3
-				add_attraction_opinion = 20
-				create_character_memory = {
-					type = poison_flower_bewitching_mastery_memory
-				}
-			}
-			35 = {
-				add_intrigue_skill = 2
-				add_attraction_opinion = 10
-			}
-			20 = {
-				add_character_modifier = {
-					modifier = poison_flower_bewitching_backfire
-					years = 3
-				}
-				add_stress = 30
-			}
-		}
-		ai_chance = {
-			base = 40
-		}
-	}
-
-	# Focus on poison needle techniques hidden in dance
-	option = {
-		name = murim_poison_flower.0002.b
-		add_prowess_skill = 4
-		add_intrigue_skill = 2
+		add_prowess_xp = 500
+		add_intrigue_xp = 300
+		add_trait = thousand_poison_hand
 		add_character_modifier = {
-			modifier = poison_flower_needle_dancer
+			modifier = poison_flower_five_poison_strike_modifier
 			years = -1
 		}
-		create_character_memory = {
-			type = poison_flower_needle_dance_memory
-		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 40 }
 	}
-
-	# Reject the seduction path - pure poison focus
+	
+	# Option B: Specialize in the Heartbreak Needle technique (assassination)
+	option = {
+		name = murim_poison_flower.0002.b
+		trigger = {
+			intrigue >= 14
+		}
+		add_intrigue_xp = 600
+		add_prowess_xp = 300
+		add_trait = thousand_poison_hand
+		add_character_modifier = {
+			modifier = poison_flower_heartbreak_needle_modifier
+			years = -1
+		}
+		# Assassination capability
+		trigger_event = {
+			id = murim_shadow.0004
+			days = { 60 120 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Develop the Poison Mist Cloud (area attack, forbidden)
 	option = {
 		name = murim_poison_flower.0002.c
-		add_learning_skill = 3
-		add_intrigue_skill = 2
-		add_character_modifier = {
-			modifier = poison_flower_pure_poisoner
-			years = 5
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				has_trait = callous
+			}
 		}
-		add_opinion = {
-			target = scope:bewitching_elder
-			modifier = disappointed_opinion
-			opinion = -20
+		random_list = {
+			40 = {
+				add_prowess_xp = 800
+				add_intrigue_xp = 500
+				add_trait = thousand_poison_hand
+				add_character_modifier = {
+					modifier = poison_flower_mist_cloud_modifier
+					years = -1
+				}
+				add_dread = 40
+			}
+			60 = {
+				# Mist backfires - poison yourself
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = qi_deviation_modifier
+					years = 3
+				}
+			}
 		}
-		ai_chance = {
-			base = 25
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# POISON_FLOWER.0003 - Palace Mistress vs Elder Concubines
-# Power struggle within the Palace. The Mistress's authority is challenged.
+##############################
+# EVENT 3: THE BEWITCHING ARTS PATH
+# Poison Flower's secondary technique tree: seduction and mental manipulation.
+# Controversial even within the Palace.
+##############################
 murim_poison_flower.0003 = {
 	type = character_event
 	title = murim_poison_flower.0003.t
 	desc = murim_poison_flower.0003.desc
-	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	theme = seduction
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
+		is_poison_flower_member_trigger = yes
+		is_adult = yes
+		NOT = { has_character_flag = poison_flower_bewitching_arts }
 		OR = {
-			has_trait = inner_disciple
-			has_trait = elder_rank
+			diplomacy >= 12
+			intrigue >= 12
+			has_trait = lustful
 		}
 	}
-
-	# Support the Palace Mistress (loyalty)
+	
+	immediate = {
+		set_character_flag = poison_flower_bewitching_arts
+		create_character_memory = {
+			type = poison_flower_bewitching_arts_memory
+		}
+	}
+	
+	# Option A: Learn the Enchanting Voice technique (diplomacy based)
 	option = {
 		name = murim_poison_flower.0003.a
-		add_intrigue_skill = 2
+		add_diplomacy_xp = 500
 		add_character_modifier = {
-			modifier = poison_flower_mistress_loyalist
-			years = 5
+			modifier = poison_flower_enchanting_voice_modifier
+			years = -1
 		}
-		add_opinion = {
-			target = scope:palace_mistress
-			modifier = grateful_opinion
-			opinion = 40
-		}
-		create_character_memory = {
-			type = poison_flower_loyalty_memory
-		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Join the Elder Concubines' conspiracy
+	
+	# Option B: Master the Alluring Fragrance (pheromone-like qi)
 	option = {
 		name = murim_poison_flower.0003.b
-		add_intrigue_skill = 4
-		random_list = {
-			40 = {
-				add_character_modifier = {
-					modifier = poison_flower_conspirator
-					years = 10
-				}
-				trigger_event = {
-					id = murim_succession_crisis.0001
-					days = { 60 120 }
-				}
-			}
-			60 = {
-				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = poison_flower_failed_conspirator
-					years = 5
-				}
-			}
+		trigger = {
+			intrigue >= 14
 		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 25
-				has_trait = ambitious
-			}
+		add_intrigue_xp = 500
+		add_character_modifier = {
+			modifier = poison_flower_alluring_fragrance_modifier
+			years = -1
 		}
+		# Can now seduce targets for intelligence
+		trigger_event = {
+			id = murim_romance.0005
+			days = { 30 60 }
+		}
+		ai_chance = { base = 30 }
 	}
-
-	# Play both sides (gather secrets from each)
+	
+	# Option C: Develop the Soul Binding Gaze (mind control, forbidden)
 	option = {
 		name = murim_poison_flower.0003.c
-		add_intrigue_skill = 5
+		trigger = {
+			intrigue >= 18
+		}
 		random_list = {
 			30 = {
+				add_intrigue_xp = 800
 				add_character_modifier = {
-					modifier = poison_flower_shadow_broker
-					years = 10
-				}
-				add_gold = 300
-			}
-			40 = {
-				add_character_modifier = {
-					modifier = poison_flower_exposed_spy
-					years = 5
-				}
-			}
-			30 = {
-				add_trait = wounded_1
-				trigger_event = {
-					id = murim_poison_arts.0001
-					days = { 30 60 }
-				}
-			}
-		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 25
-				intrigue >= 18
-			}
-		}
-	}
-
-	# Propose yourself as a compromise leader
-	option = {
-		name = murim_poison_flower.0003.d
-		random_list = {
-			20 = {
-				add_trait = leader_rank
-				add_character_modifier = {
-					modifier = poison_flower_new_mistress
+					modifier = poison_flower_soul_binding_gaze_modifier
 					years = -1
 				}
-				add_prestige = 800
+				add_dread = 30
+				add_secret = {
+					type = secret_mind_control_technique
+					target = root
+				}
 			}
-			80 = {
-				add_prestige = -300
-				add_character_modifier = {
-					modifier = poison_flower_rejected_pretender
-					years = 5
+			70 = {
+				# Mind technique backlash - your own mind fractures
+				add_trait = lunatic
+				add_stress = 60
+				create_character_memory = {
+					type = poison_flower_mind_shattered_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 15
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Refuse the bewitching arts (pure poison path)
+	option = {
+		name = murim_poison_flower.0003.d
+		add_prowess_xp = 200
+		add_character_modifier = {
+			modifier = poison_flower_pure_poison_devotee_modifier
+			years = 5
 		}
+		stress_impact = {
+			lustful = medium_stress_impact_gain
+		}
+		ai_chance = { base = 20 }
 	}
 }
 
-# POISON_FLOWER.0004 - The Thousand Petal Poison
-# Attempt to master the Palace's deadliest creation - a poison with no known antidote.
+##############################
+# EVENT 4: GU CULTIVATION - THE LIVING POISON
+# Poison Flower's unique mechanic: raising gu insects that live inside your body.
+# They enhance your poison abilities but require feeding.
+##############################
 murim_poison_flower.0004 = {
 	type = character_event
 	title = murim_poison_flower.0004.t
 	desc = murim_poison_flower.0004.desc
-	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = dread
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
-		intrigue >= 15
+		is_poison_flower_member_trigger = yes
 		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+			has_trait = thousand_poison_hand
+			has_character_modifier = poison_flower_supreme_resistance_modifier
+		}
+		NOT = { has_character_flag = poison_flower_gu_cultivation }
+	}
+	
+	immediate = {
+		set_character_flag = poison_flower_gu_cultivation
+		create_character_memory = {
+			type = poison_flower_gu_cultivation_memory
 		}
 	}
-
-	# Attempt full mastery through gradual self-poisoning
+	
+	# Option A: Raise a Heart Devouring Gu (assassination tool)
 	option = {
 		name = murim_poison_flower.0004.a
 		random_list = {
-			30 = {
+			50 = {
+				add_intrigue_xp = 600
 				add_character_modifier = {
-					modifier = poison_flower_thousand_petal_master
+					modifier = poison_flower_heart_devouring_gu_modifier
 					years = -1
 				}
-				add_intrigue_skill = 5
-				add_prowess_skill = 3
-				add_dread = 25
-				create_character_memory = {
-					type = poison_flower_thousand_petal_memory
-				}
-				trigger_event = {
-					id = murim_ranking.0001
-					days = { 7 14 }
+				add_dread = 20
+			}
+			30 = {
+				# Gu is weak - needs more feeding
+				add_intrigue_xp = 200
+				add_character_modifier = {
+					modifier = poison_flower_weak_gu_modifier
+					years = 3
 				}
 			}
-			35 = {
-				add_intrigue_skill = 2
+			20 = {
+				# Gu turns on you
+				add_trait = wounded_2
 				add_character_modifier = {
-					modifier = poison_flower_partial_petal
-					years = 10
-				}
-			}
-			35 = {
-				add_trait = wounded_3
-				add_health = -1
-				add_character_modifier = {
-					modifier = poison_flower_self_poisoned
+					modifier = poison_flower_gu_rebellion_modifier
 					years = 5
 				}
 				create_character_memory = {
-					type = poison_flower_poisoned_self_memory
+					type = poison_flower_gu_attack_memory
 				}
 			}
 		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Study the poison theoretically (safer, less powerful)
+	
+	# Option B: Raise a Golden Silkworm Gu (legendary tier)
 	option = {
 		name = murim_poison_flower.0004.b
-		add_learning_skill = 4
-		add_intrigue_skill = 2
-		add_character_modifier = {
-			modifier = poison_flower_scholar
-			years = 5
+		trigger = {
+			learning >= 16
+			intrigue >= 16
 		}
-		ai_chance = {
-			base = 35
-		}
-	}
-
-	# Attempt to create an antidote (would change the jianghu)
-	option = {
-		name = murim_poison_flower.0004.c
 		random_list = {
-			20 = {
+			15 = {
+				# Golden Silkworm - most feared gu in the martial world
+				add_intrigue_xp = 1000
 				add_character_modifier = {
-					modifier = poison_flower_antidote_creator
+					modifier = poison_flower_golden_silkworm_gu_modifier
 					years = -1
 				}
-				add_learning_skill = 5
-				add_prestige = 1000
-				create_character_memory = {
-					type = poison_flower_antidote_breakthrough_memory
+				add_dread = 50
+				# Everyone fears you
+				every_known_character = {
+					limit = {
+						NOT = { is_poison_flower_member_trigger = yes }
+					}
+					add_opinion = {
+						modifier = poison_flower_golden_gu_terror_opinion
+						target = root
+						opinion = -30
+					}
 				}
 			}
-			40 = {
-				add_learning_skill = 2
+			45 = {
+				# Gu dies during cultivation
+				add_intrigue_xp = 300
+				add_stress = 40
+				add_gold = -200
 			}
 			40 = {
-				add_trait = wounded_2
-				add_health = -0.5
+				# Golden Silkworm is too powerful - it takes partial control
+				add_character_modifier = {
+					modifier = poison_flower_gu_symbiosis_modifier
+					years = -1
+				}
+				add_trait = lunatic
+				add_intrigue_xp = 500
 			}
 		}
-		ai_chance = {
-			base = 25
+		ai_chance = { base = 20 }
+	}
+	
+	# Option C: Refuse gu cultivation (it's too cruel)
+	option = {
+		name = murim_poison_flower.0004.c
+		add_stress = -20
+		add_piety = 100
+		add_character_modifier = {
+			modifier = poison_flower_gu_refuser_modifier
+			years = 5
 		}
+		# Some elders respect your compassion
+		random_courtier = {
+			limit = {
+				is_poison_flower_member_trigger = yes
+				has_trait = compassionate
+			}
+			add_opinion = {
+				modifier = poison_flower_compassion_opinion
+				target = root
+				opinion = 15
+			}
+		}
+		ai_chance = { base = 25 }
 	}
 }
 
-# POISON_FLOWER.0005 - Seduction Mission
-# The Palace sends you to seduce and manipulate a target for political gain.
+##############################
+# EVENT 5: PALACE MISTRESS VS ELDER COUNCIL POWER STRUGGLE
+# Internal politics: the Palace Mistress rules absolutely, but the Elder Council
+# wants more power. You must pick a side.
+##############################
 murim_poison_flower.0005 = {
 	type = character_event
 	title = murim_poison_flower.0005.t
 	desc = murim_poison_flower.0005.desc
-	theme = seduction
-	left_portrait = {
-		character = root
-		animation = flirtation
-	}
-
+	theme = intrigue
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
-		intrigue >= 12
+		is_poison_flower_member_trigger = yes
+		is_adult = yes
+		NOT = { has_character_flag = poison_flower_power_struggle }
 	}
-
-	# Seduce the target perfectly (full mission success)
+	
+	immediate = {
+		set_character_flag = poison_flower_power_struggle
+		create_character_memory = {
+			type = poison_flower_power_struggle_memory
+		}
+	}
+	
+	# Option A: Support the Palace Mistress (absolute authority)
 	option = {
 		name = murim_poison_flower.0005.a
-		random_list = {
-			45 = {
-				add_intrigue_skill = 3
-				add_gold = 400
-				add_character_modifier = {
-					modifier = poison_flower_perfect_seductress
-					years = 10
-				}
-				create_character_memory = {
-					type = poison_flower_seduction_success_memory
-				}
+		add_character_modifier = {
+			modifier = poison_flower_mistress_loyalist_modifier
+			years = 10
+		}
+		add_intrigue_xp = 300
+		# Elder Council becomes your enemy
+		random_courtier = {
+			limit = {
+				is_poison_flower_member_trigger = yes
+				age >= 40
 			}
-			30 = {
-				add_intrigue_skill = 1
-				add_gold = 100
-			}
-			25 = {
-				add_character_modifier = {
-					modifier = poison_flower_seduction_exposed
-					years = 5
-				}
-				add_prestige = -200
-				trigger_event = {
-					id = murim_politics.0001
-					days = { 30 60 }
-				}
+			add_opinion = {
+				modifier = poison_flower_political_enemy_opinion
+				target = root
+				opinion = -30
 			}
 		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Fall in love with the target (betray the mission)
+	
+	# Option B: Support the Elder Council (collective rule)
 	option = {
 		name = murim_poison_flower.0005.b
 		add_character_modifier = {
-			modifier = poison_flower_forbidden_love
-			years = -1
+			modifier = poison_flower_elder_faction_modifier
+			years = 10
 		}
-		trigger_event = {
-			id = murim_romance.0001
-			days = { 30 60 }
+		add_diplomacy_xp = 400
+		# Palace Mistress marks you as a threat
+		add_character_modifier = {
+			modifier = poison_flower_mistress_suspicion_modifier
+			years = 5
 		}
-		add_opinion = {
-			target = scope:palace_mistress
-			modifier = betrayed_opinion
-			opinion = -50
-		}
-		create_character_memory = {
-			type = poison_flower_forbidden_love_memory
-		}
-		ai_chance = {
-			base = 20
-			modifier = {
-				add = 25
-				has_trait = compassionate
-			}
-		}
+		ai_chance = { base = 30 }
 	}
-
-	# Poison the target instead of seducing them
+	
+	# Option C: Attempt to overthrow the Palace Mistress yourself
 	option = {
 		name = murim_poison_flower.0005.c
-		add_dread = 20
-		add_intrigue_skill = 3
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				intrigue >= 18
+			}
+		}
 		random_list = {
-			50 = {
+			20 = {
+				# Successful coup - you are the new Palace Mistress
 				add_character_modifier = {
-					modifier = poison_flower_silent_killer
-					years = 10
+					modifier = poison_flower_palace_mistress_modifier
+					years = -1
 				}
+				add_prestige = 1000
+				add_intrigue_xp = 500
 			}
 			50 = {
-				add_character_modifier = {
-					modifier = poison_flower_clumsy_poisoner
-					years = 3
+				# Failed coup - imprisoned
+				add_trait = imprisoned
+				add_prestige = -500
+				create_character_memory = {
+					type = poison_flower_failed_coup_memory
 				}
-				trigger_event = {
-					id = murim_jianghu.0003
-					days = { 30 60 }
+			}
+			30 = {
+				# Caught before acting - poisoned as punishment
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = poison_flower_punishment_poison_modifier
+					years = 5
 				}
 			}
 		}
-		ai_chance = {
-			base = 25
-		}
+		ai_chance = { base = 15 }
 	}
-
-	# Refuse the mission entirely
+	
+	# Option D: Play both sides (information broker)
 	option = {
 		name = murim_poison_flower.0005.d
-		add_prestige = -200
-		add_opinion = {
-			target = scope:palace_mistress
-			modifier = disappointed_opinion
-			opinion = -35
+		trigger = {
+			intrigue >= 16
 		}
-		stress_impact = {
-			ambitious = minor_stress_impact_gain
+		add_intrigue_xp = 500
+		add_character_modifier = {
+			modifier = poison_flower_double_agent_modifier
+			years = 5
 		}
-		ai_chance = {
-			base = 10
+		random_list = {
+			50 = {
+				# Both sides think you're loyal to them
+				add_gold = 300
+			}
+			50 = {
+				# One side discovers your game
+				add_stress = 40
+				add_secret = {
+					type = secret_double_dealing
+					target = root
+				}
+			}
 		}
+		ai_chance = { base = 20 }
 	}
 }
 
-# POISON_FLOWER.0006 - The Flower Dance Sword
-# The Palace's signature weapon art - beautiful and lethal.
+##############################
+# EVENT 6: THE FLOWER PETAL BLADE DANCE
+# Poison Flower's most beautiful and deadly technique.
+# Hidden blades disguised as flower petals. Assassination art.
+##############################
 murim_poison_flower.0006 = {
 	type = character_event
 	title = murim_poison_flower.0006.t
 	desc = murim_poison_flower.0006.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
+		is_poison_flower_member_trigger = yes
 		prowess >= 14
+		NOT = { has_character_flag = poison_flower_blade_dance }
 	}
-
-	# Master the complete Flower Dance (all 36 forms)
+	
+	immediate = {
+		set_character_flag = poison_flower_blade_dance
+		create_character_memory = {
+			type = poison_flower_blade_dance_memory
+		}
+	}
+	
+	# Option A: Master the Falling Petal technique (grace + lethality)
 	option = {
 		name = murim_poison_flower.0006.a
-		random_list = {
-			40 = {
-				add_character_modifier = {
-					modifier = poison_flower_dance_master
-					years = -1
-				}
-				add_prowess_skill = 5
-				create_character_memory = {
-					type = poison_flower_dance_mastery_memory
-				}
-			}
-			35 = {
-				add_prowess_skill = 2
-				add_character_modifier = {
-					modifier = poison_flower_dance_adept
-					years = 5
-				}
-			}
-			25 = {
-				add_trait = wounded_1
-			}
+		add_prowess_xp = 600
+		add_character_modifier = {
+			modifier = poison_flower_falling_petal_modifier
+			years = -1
 		}
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 40 }
 	}
-
-	# Combine the dance with poison needle projection
+	
+	# Option B: Combine blade dance with poison coating (hybrid art)
 	option = {
 		name = murim_poison_flower.0006.b
-		random_list = {
-			35 = {
-				add_character_modifier = {
-					modifier = poison_flower_lethal_dance
-					years = -1
-				}
-				add_prowess_skill = 4
-				add_intrigue_skill = 3
-			}
-			35 = {
-				add_prowess_skill = 2
-				add_intrigue_skill = 1
-			}
-			30 = {
-				add_trait = wounded_1
-				add_character_modifier = {
-					modifier = poison_flower_self_pricked
-					years = 2
-				}
-			}
+		trigger = {
+			has_trait = thousand_poison_hand
 		}
-		ai_chance = {
-			base = 35
+		add_prowess_xp = 500
+		add_intrigue_xp = 400
+		add_character_modifier = {
+			modifier = poison_flower_venomous_petal_dance_modifier
+			years = -1
 		}
+		ai_chance = { base = 35 }
 	}
-
-	# Create a new variant (your personal style)
+	
+	# Option C: Develop the Blood Blossom variant (kills by beauty)
 	option = {
 		name = murim_poison_flower.0006.c
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				prowess >= 20
+			}
+		}
 		random_list = {
-			25 = {
+			35 = {
+				add_prowess_xp = 1000
 				add_character_modifier = {
-					modifier = poison_flower_unique_dance
+					modifier = poison_flower_blood_blossom_modifier
 					years = -1
 				}
-				add_prowess_skill = 4
-				add_prestige = 300
+				add_dread = 30
 			}
-			75 = {
-				add_prowess_skill = 1
-				add_prestige = -50
+			65 = {
+				# Technique's beauty entrances you too
+				add_trait = lunatic
+				add_prowess_xp = 300
 			}
 		}
-		ai_chance = {
-			base = 25
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# POISON_FLOWER.0007 - Heavenly Demon Alliance Tension
-# The HD demands more subservience. The Palace values its independence.
+##############################
+# EVENT 7: THE SEDUCTION MISSION
+# Palace sends you to seduce a target for intelligence or assassination.
+# Moral dilemma: duty vs personal feelings.
+##############################
 murim_poison_flower.0007 = {
 	type = character_event
 	title = murim_poison_flower.0007.t
 	desc = murim_poison_flower.0007.desc
-	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	theme = seduction
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
+		is_poison_flower_member_trigger = yes
+		is_adult = yes
 		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
-			has_trait = leader_rank
+			has_character_modifier = poison_flower_enchanting_voice_modifier
+			has_character_modifier = poison_flower_alluring_fragrance_modifier
+			intrigue >= 14
+		}
+		NOT = { has_character_flag = poison_flower_seduction_mission }
+	}
+	
+	immediate = {
+		set_character_flag = poison_flower_seduction_mission
+		create_character_memory = {
+			type = poison_flower_seduction_mission_memory
+		}
+		create_character = {
+			template = orthodox_sect_leader_template
+			save_scope_as = seduction_target
 		}
 	}
-
-	# Submit to the Heavenly Demon's demands
+	
+	# Option A: Complete the mission perfectly (cold professional)
 	option = {
 		name = murim_poison_flower.0007.a
+		add_intrigue_xp = 600
 		add_character_modifier = {
-			modifier = poison_flower_hd_vassal
-			years = 10
-		}
-		add_gold = 300
-		add_prestige = -200
-		ai_chance = {
-			base = 25
-		}
-	}
-
-	# Resist and assert independence
-	option = {
-		name = murim_poison_flower.0007.b
-		add_prestige = 300
-		add_character_modifier = {
-			modifier = poison_flower_independence_champion
+			modifier = poison_flower_successful_seductress_modifier
 			years = 5
 		}
-		random_list = {
-			40 = {
-				trigger_event = {
-					id = murim_faction_war.0003
-					days = { 60 180 }
-				}
-			}
-			60 = {
-				add_opinion = {
-					target = scope:heavenly_demon_leader
-					modifier = disappointed_opinion
-					opinion = -40
-				}
-			}
+		add_prestige = 300
+		# Chains to shadow politics
+		trigger_event = {
+			id = murim_shadow.0006
+			days = { 30 60 }
 		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Secretly contact the orthodox alliance
+	
+	# Option B: Fall in love with the target (forbidden romance)
 	option = {
-		name = murim_poison_flower.0007.c
-		add_intrigue_skill = 4
-		random_list = {
-			35 = {
-				add_character_modifier = {
-					modifier = poison_flower_double_agent
-					years = 10
-				}
-				trigger_event = {
-					id = murim_shadow_politics.0001
-					days = { 60 120 }
-				}
-			}
-			65 = {
-				add_character_modifier = {
-					modifier = poison_flower_exposed_traitor
-					years = 10
-				}
-				add_trait = wounded_2
-			}
+		name = murim_poison_flower.0007.b
+		set_relation_lover = scope:seduction_target
+		add_stress = 40
+		add_character_modifier = {
+			modifier = poison_flower_forbidden_love_modifier
+			years = -1
+		}
+		# Palace discovers - you're in danger
+		trigger_event = {
+			id = murim_romance.0008
+			days = { 60 120 }
 		}
 		ai_chance = {
 			base = 20
 			modifier = {
-				add = 25
-				intrigue >= 18
+				add = 15
+				has_trait = lustful
 			}
 		}
 	}
-
-	# Poison the HD envoy as a message
+	
+	# Option C: Assassinate the target instead of seducing (efficient)
+	option = {
+		name = murim_poison_flower.0007.c
+		trigger = {
+			has_trait = thousand_poison_hand
+		}
+		random_list = {
+			60 = {
+				add_intrigue_xp = 500
+				add_dread = 20
+				add_prestige = 200
+			}
+			40 = {
+				# Target survives - now the sect has an enemy
+				add_stress = 30
+				add_prestige = -200
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Refuse the mission (rebellion against Palace orders)
 	option = {
 		name = murim_poison_flower.0007.d
-		add_dread = 30
+		add_stress = -20
+		add_piety = 100
+		add_character_modifier = {
+			modifier = poison_flower_disobedient_disciple_modifier
+			years = 5
+		}
+		# Palace Mistress punishes you
 		random_list = {
-			40 = {
+			50 = {
 				add_character_modifier = {
-					modifier = poison_flower_feared_palace
-					years = 10
+					modifier = poison_flower_punishment_poison_modifier
+					years = 2
 				}
-				add_prestige = 400
 			}
-			60 = {
-				trigger_event = {
-					id = murim_faction_war.0001
-					days = { 30 60 }
-				}
-				add_character_modifier = {
-					modifier = poison_flower_war_starter
-					years = 5
-				}
+			50 = {
+				# Assigned to menial duties instead
+				add_prestige = -200
 			}
 		}
-		ai_chance = {
-			base = 15
-			modifier = {
-				add = 25
-				has_trait = sadistic
-			}
-		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# POISON_FLOWER.0008 - The Young Flower's First Kill
-# A new disciple must make her first kill using poison. A rite of passage.
+##############################
+# EVENT 8: POISON FLOWER PALACE SUCCESSION
+# The Palace Mistress has no heir. Multiple candidates compete.
+# Unique: succession involves a poison resistance tournament.
+##############################
 murim_poison_flower.0008 = {
 	type = character_event
 	title = murim_poison_flower.0008.t
 	desc = murim_poison_flower.0008.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
-		NOT = { has_character_modifier = poison_flower_first_kill_complete }
+		is_poison_flower_member_trigger = yes
+		OR = {
+			has_poison_flower_rank_elder_trigger = yes
+			intrigue >= 18
+		}
+		NOT = { has_character_flag = poison_flower_succession }
 	}
-
-	# Complete the kill cleanly
+	
+	immediate = {
+		set_character_flag = poison_flower_succession
+		create_character_memory = {
+			type = poison_flower_succession_memory
+		}
+	}
+	
+	# Option A: Win the poison resistance tournament
 	option = {
 		name = murim_poison_flower.0008.a
-		add_intrigue_skill = 3
-		add_dread = 10
-		add_character_modifier = {
-			modifier = poison_flower_first_kill_complete
-			years = -1
+		trigger = {
+			has_character_modifier = poison_flower_supreme_resistance_modifier
 		}
-		create_character_memory = {
-			type = poison_flower_first_kill_memory
-		}
-		stress_impact = {
-			compassionate = major_stress_impact_gain
-		}
-		ai_chance = {
-			base = 45
-		}
-	}
-
-	# Hesitate - spare the target
-	option = {
-		name = murim_poison_flower.0008.b
-		add_character_modifier = {
-			modifier = poison_flower_soft_heart
-			years = 5
-		}
-		add_opinion = {
-			target = scope:palace_mistress
-			modifier = disappointed_opinion
-			opinion = -30
-		}
-		add_piety = 200
-		create_character_memory = {
-			type = poison_flower_spared_target_memory
-		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 25
-				has_trait = compassionate
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = poison_flower_palace_mistress_modifier
+					years = -1
+				}
+				add_prestige = 1000
+				add_intrigue_xp = 500
+			}
+			50 = {
+				# Another candidate's poison is stronger
+				add_trait = wounded_2
+				add_stress = 50
 			}
 		}
+		ai_chance = { base = 35 }
 	}
-
-	# Turn the target into an informant instead
+	
+	# Option B: Poison all other candidates before the tournament
+	option = {
+		name = murim_poison_flower.0008.b
+		trigger = {
+			intrigue >= 18
+		}
+		random_list = {
+			40 = {
+				add_character_modifier = {
+					modifier = poison_flower_palace_mistress_modifier
+					years = -1
+				}
+				add_prestige = 800
+				add_secret = {
+					type = secret_poisoned_rivals
+					target = root
+				}
+			}
+			60 = {
+				# One rival has an antidote - exposed
+				add_prestige = -500
+				add_trait = imprisoned
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option C: Form an alliance with the Elder Council to be appointed
 	option = {
 		name = murim_poison_flower.0008.c
-		add_intrigue_skill = 4
+		trigger = {
+			diplomacy >= 14
+		}
 		random_list = {
 			45 = {
 				add_character_modifier = {
-					modifier = poison_flower_spymaster_talent
+					modifier = poison_flower_puppet_mistress_modifier
 					years = 10
 				}
+				add_prestige = 600
+				# But you owe the elders
 			}
 			55 = {
-				add_character_modifier = {
-					modifier = poison_flower_disobeyed_orders
-					years = 3
-				}
+				# Elders choose someone else
+				add_stress = 30
 			}
 		}
-		ai_chance = {
-			base = 25
+		ai_chance = { base = 30 }
+	}
+	
+	# Option D: Refuse and leave the Palace entirely
+	option = {
+		name = murim_poison_flower.0008.d
+		remove_trait = poison_flower_member
+		add_character_modifier = {
+			modifier = poison_flower_exile_modifier
+			years = -1
 		}
+		add_stress = -40
+		# You know too many secrets - they'll hunt you
+		trigger_event = {
+			id = murim_jianghu.0012
+			days = { 60 120 }
+		}
+		ai_chance = { base = 10 }
 	}
 }
 
-# POISON_FLOWER.0009 - The Palace Mistress's Secret
-# You discover the Palace Mistress is slowly dying from her own poisons.
+##############################
+# EVENT 9: THE MALE EXCEPTION
+# A male martial artist seeks to join Poison Flower Palace.
+# Controversial. Elders are split. Player must decide.
+##############################
 murim_poison_flower.0009 = {
 	type = character_event
 	title = murim_poison_flower.0009.t
 	desc = murim_poison_flower.0009.desc
 	theme = intrigue
-	left_portrait = {
-		character = root
-		animation = worry
-	}
-
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
+		is_poison_flower_member_trigger = yes
 		OR = {
-			has_trait = elder_rank
-			has_trait = vice_leader_rank
+			has_poison_flower_rank_elder_trigger = yes
+			has_character_modifier = poison_flower_palace_mistress_modifier
+		}
+		NOT = { has_character_flag = poison_flower_male_exception }
+	}
+	
+	immediate = {
+		set_character_flag = poison_flower_male_exception
+		create_character_memory = {
+			type = poison_flower_male_exception_memory
+		}
+		create_character = {
+			template = male_poison_prodigy_template
+			save_scope_as = male_applicant
 		}
 	}
-
-	# Try to cure her
+	
+	# Option A: Accept him (progressive, angers traditionalists)
 	option = {
 		name = murim_poison_flower.0009.a
-		add_learning_skill = 3
-		random_list = {
-			35 = {
-				add_character_modifier = {
-					modifier = poison_flower_healer
-					years = -1
-				}
-				add_opinion = {
-					target = scope:palace_mistress
-					modifier = grateful_opinion
-					opinion = 60
-				}
-				add_prestige = 500
-			}
-			35 = {
-				add_learning_skill = 1
-			}
-			30 = {
-				add_trait = wounded_1
-				add_health = -0.5
-			}
-		}
-		ai_chance = {
-			base = 35
-		}
-	}
-
-	# Use this knowledge to seize power
-	option = {
-		name = murim_poison_flower.0009.b
-		add_intrigue_skill = 4
-		random_list = {
-			35 = {
-				add_trait = leader_rank
-				add_character_modifier = {
-					modifier = poison_flower_usurper_mistress
-					years = -1
-				}
-				add_prestige = 800
-				add_dread = 20
-			}
-			65 = {
-				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = poison_flower_failed_usurper
-					years = 10
-				}
-			}
-		}
-		ai_chance = {
-			base = 30
-			modifier = {
-				add = 25
-				has_trait = ambitious
-			}
-		}
-	}
-
-	# Keep the secret and prepare for succession
-	option = {
-		name = murim_poison_flower.0009.c
-		add_intrigue_skill = 2
+		add_diplomacy_xp = 300
 		add_character_modifier = {
-			modifier = poison_flower_secret_keeper
-			years = 10
-		}
-		trigger_event = {
-			id = murim_succession_crisis.0001
-			days = { 180 365 }
-		}
-		ai_chance = {
-			base = 25
-		}
-	}
-
-	# Spread the news to cause chaos
-	option = {
-		name = murim_poison_flower.0009.d
-		add_character_modifier = {
-			modifier = poison_flower_chaos_agent
+			modifier = poison_flower_progressive_modifier
 			years = 5
 		}
+		# Some elders furious
+		random_courtier = {
+			limit = {
+				is_poison_flower_member_trigger = yes
+				age >= 40
+			}
+			add_opinion = {
+				modifier = poison_flower_tradition_broken_opinion
+				target = root
+				opinion = -25
+			}
+		}
+		# But the male prodigy is talented
 		trigger_event = {
-			id = murim_succession_crisis.0001
-			days = { 30 60 }
+			id = murim_clan_recruitment.0005
+			days = { 14 30 }
 		}
-		ai_chance = {
-			base = 10
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Reject him (tradition preserved)
+	option = {
+		name = murim_poison_flower.0009.b
+		add_prestige = 100
+		# Traditionalists approve
+		random_courtier = {
+			limit = {
+				is_poison_flower_member_trigger = yes
+				age >= 40
+			}
+			add_opinion = {
+				modifier = poison_flower_tradition_upheld_opinion
+				target = root
+				opinion = 15
+			}
 		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Accept him secretly as your personal disciple
+	option = {
+		name = murim_poison_flower.0009.c
+		trigger = {
+			intrigue >= 12
+		}
+		add_intrigue_xp = 300
+		set_relation_mentor = scope:male_applicant
+		add_secret = {
+			type = secret_hidden_disciple
+			target = root
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Use him as a spy/assassin tool (ruthless)
+	option = {
+		name = murim_poison_flower.0009.d
+		trigger = {
+			OR = {
+				has_trait = callous
+				has_trait = sadistic
+			}
+		}
+		add_intrigue_xp = 400
+		add_character_modifier = {
+			modifier = poison_flower_male_weapon_modifier
+			years = 5
+		}
+		# Chains to shadow politics
+		trigger_event = {
+			id = murim_shadow.0004
+			days = { 60 120 }
+		}
+		ai_chance = { base = 15 }
 	}
 }
 
-# POISON_FLOWER.0010 - The Orthodox Suitor
-# An orthodox sect's young master has fallen for a Poison Flower disciple.
-# Cross-faction forbidden love with political consequences.
+##############################
+# EVENT 10: THE POISON EMPRESS ASCENSION
+# You have mastered all poison arts. You are called the Poison Empress.
+# The martial world trembles at your name.
+##############################
 murim_poison_flower.0010 = {
 	type = character_event
 	title = murim_poison_flower.0010.t
 	desc = murim_poison_flower.0010.desc
-	theme = seduction
-	left_portrait = {
-		character = root
-		animation = flirtation
-	}
-
+	theme = dread
+	
 	trigger = {
-		murim_is_poison_flower_member_trigger = yes
+		is_poison_flower_member_trigger = yes
+		intrigue >= 25
+		has_trait = thousand_poison_hand
+		OR = {
+			has_character_modifier = poison_flower_golden_silkworm_gu_modifier
+			has_character_modifier = poison_flower_supreme_resistance_modifier
+		}
+		NOT = { has_character_flag = poison_flower_empress }
 	}
-
-	# Exploit the romance for intelligence
+	
+	immediate = {
+		set_character_flag = poison_flower_empress
+		create_character_memory = {
+			type = poison_flower_empress_memory
+		}
+	}
+	
+	# Option A: Declare yourself Poison Empress and demand recognition
 	option = {
 		name = murim_poison_flower.0010.a
-		add_intrigue_skill = 3
 		add_character_modifier = {
-			modifier = poison_flower_honey_trap
-			years = 5
+			modifier = poison_flower_poison_empress_modifier
+			years = -1
 		}
-		add_gold = 200
-		create_character_memory = {
-			type = poison_flower_exploited_romance_memory
+		add_prestige = 2000
+		add_dread = 60
+		# All of murim reacts
+		trigger_event = {
+			id = murim_faction_war.0008
+			days = { 60 120 }
 		}
-		ai_chance = {
-			base = 35
-		}
+		ai_chance = { base = 40 }
 	}
-
-	# Genuinely pursue the relationship (forbidden love)
+	
+	# Option B: Rule from the shadows - puppet masters behind orthodox leaders
 	option = {
 		name = murim_poison_flower.0010.b
 		add_character_modifier = {
-			modifier = poison_flower_cross_faction_love
+			modifier = poison_flower_shadow_empress_modifier
 			years = -1
 		}
+		add_intrigue_xp = 1000
+		# Chains to shadow politics endgame
 		trigger_event = {
-			id = murim_romance.0001
+			id = murim_shadow.0015
 			days = { 30 60 }
 		}
-		add_opinion = {
-			target = scope:palace_mistress
-			modifier = disappointed_opinion
-			opinion = -30
-		}
-		create_character_memory = {
-			type = poison_flower_forbidden_love_orthodox_memory
-		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 25
-				has_trait = compassionate
-			}
-		}
+		ai_chance = { base = 35 }
 	}
-
-	# Poison him as a warning to other orthodox sects
+	
+	# Option C: Attempt to cure all poisons in the world (redemption arc)
 	option = {
 		name = murim_poison_flower.0010.c
-		add_dread = 20
-		add_intrigue_skill = 2
-		random_list = {
-			50 = {
-				add_character_modifier = {
-					modifier = poison_flower_orthodox_warning
-					years = 5
-				}
-				add_prestige = 200
-			}
-			50 = {
-				trigger_event = {
-					id = murim_faction_war.0001
-					days = { 30 60 }
-				}
-			}
+		trigger = {
+			has_trait = compassionate
 		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 20
-				has_trait = sadistic
-			}
+		add_character_modifier = {
+			modifier = poison_flower_healer_empress_modifier
+			years = -1
 		}
-	}
-
-	# Reject him politely - maintain boundaries
-	option = {
-		name = murim_poison_flower.0010.d
-		add_diplomacy_skill = 2
-		add_prestige = 100
-		ai_chance = {
-			base = 15
-		}
+		add_prestige = 1500
+		add_piety = 1000
+		add_stress = -80
+		ai_chance = { base = 15 }
 	}
 }
