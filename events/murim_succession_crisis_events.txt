@@ -1,0 +1,1191 @@
+namespace = murim_succession
+
+# Succession Crisis Events - Sect leadership transitions, power struggles, elder betrayals
+# Cross-references: murim_sect, murim_politics, murim_duel, murim_ranking, murim_fate, murim_jianghu, murim_mentor, murim_artifact
+
+###############################################
+# murim_succession.0001 - The Sect Master Falls
+# Current sect master dies or becomes incapable, triggering succession crisis
+###############################################
+murim_succession.0001 = {
+	type = character_event
+	title = murim_succession.0001.t
+	desc = murim_succession.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_sect_member
+		NOT = { has_character_flag = succession_crisis_active }
+		OR = {
+			has_variable = murim_sect_elder
+			has_variable = murim_sect_inner_disciple
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_variable = murim_sect_elder
+		}
+		modifier = {
+			add = 2
+			prowess >= 20
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = succession_crisis_active
+			years = 3
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_sect_member
+				NOT = { this = root }
+				prowess >= 15
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					has_variable = murim_sect_elder
+				}
+			}
+			save_scope_as = succession_rival
+		}
+	}
+	
+	# Option A: Claim leadership through martial might
+	option = {
+		name = murim_succession.0001.a
+		duel = {
+			skill = prowess
+			target = scope:succession_rival
+			50 = {
+				desc = murim_succession.0001.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_succession.0001.a.victory.toast
+					left_icon = root
+					root = {
+						add_prestige = 500
+						set_variable = {
+							name = murim_sect_leader
+							value = yes
+						}
+						add_character_modifier = {
+							modifier = new_sect_master
+							years = 5
+						}
+						create_character_memory = {
+							type = claimed_sect_leadership_by_combat_memory
+							participants = {
+								defeated_rival = scope:succession_rival
+							}
+						}
+						random_list = {
+							30 = { add_trait = wounded }
+							70 = { }
+						}
+						# Chain: sect politics after new leader
+						trigger_event = {
+							id = murim_sect.0001
+							days = { 14 30 }
+						}
+						# Chain: ranking acknowledges new sect master
+						trigger_event = {
+							id = murim_ranking.0001
+							days = { 3 7 }
+						}
+					}
+					scope:succession_rival = {
+						add_prestige = -300
+						create_character_memory = {
+							type = lost_succession_duel_memory
+							participants = {
+								new_sect_master = root
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							40 = { }
+						}
+						# Rival may plot revenge
+						random_list = {
+							40 = {
+								trigger_event = {
+									id = murim_jianghu.0005
+									days = { 90 180 }
+								}
+							}
+							60 = { }
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_succession.0001.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_succession.0001.a.defeat.toast
+					left_icon = root
+					root = {
+						add_prestige = -300
+						create_character_memory = {
+							type = lost_succession_duel_memory
+							participants = {
+								new_sect_master = scope:succession_rival
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							25 = { add_trait = incapable }
+							35 = { }
+						}
+						# Chain: expelled or leave sect
+						trigger_event = {
+							id = murim_sect.0003
+							days = { 7 14 }
+						}
+					}
+					scope:succession_rival = {
+						set_variable = {
+							name = murim_sect_leader
+							value = yes
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Rally the elders through diplomacy
+	option = {
+		name = murim_succession.0001.b
+		custom_tooltip = murim_succession.0001.b.tt
+		create_character_memory = {
+			type = diplomatic_succession_bid_memory
+			participants = {
+				succession_opponent = scope:succession_rival
+			}
+		}
+		random_list = {
+			40 = {
+				# Elders support you
+				set_variable = {
+					name = murim_sect_leader
+					value = yes
+				}
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = elder_backed_sect_master
+					years = 5
+				}
+				# Chain: politics after election
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				# Elders are split - civil war
+				trigger_event = {
+					id = murim_sect.0003
+					days = { 14 30 }
+				}
+				# Chain: sect war
+				trigger_event = {
+					id = murim_faction_war.0001
+					days = { 30 60 }
+				}
+			}
+			30 = {
+				# Elders choose the rival
+				add_prestige = -200
+				scope:succession_rival = {
+					set_variable = {
+						name = murim_sect_leader
+						value = yes
+					}
+				}
+				# Chain: daily life - wandering after rejection
+				trigger_event = {
+					id = murim_daily_life.0001
+					days = { 7 14 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 25
+				diplomacy >= 15
+			}
+		}
+	}
+	
+	# Option C: Leave the sect and forge your own path
+	option = {
+		name = murim_succession.0001.c
+		remove_variable = murim_sect_member
+		remove_variable = murim_sect_elder
+		add_prestige = 100
+		create_character_memory = {
+			type = left_sect_during_succession_memory
+		}
+		# Chain: found your own sect
+		trigger_event = {
+			id = murim_sect.0001
+			days = { 30 60 }
+		}
+		# Chain: jianghu wandering
+		trigger_event = {
+			id = murim_daily_life.0001
+			days = { 7 14 }
+		}
+		stress_impact = {
+			gregarious = medium_stress_impact_gain
+			content = medium_stress_loss
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+###############################################
+# murim_succession.0002 - Elder Council Betrayal
+# An elder conspires to seize power through poison and assassination
+###############################################
+murim_succession.0002 = {
+	type = character_event
+	title = murim_succession.0002.t
+	desc = murim_succession.0002.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	right_portrait = {
+		character = scope:traitor_elder
+		animation = personality_callous
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_sect_leader
+		NOT = { has_character_flag = elder_betrayal_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			any_vassal = {
+				has_trait = ambitious
+				has_opinion_modifier = {
+					target = root
+					modifier = disapproves_of_leadership
+				}
+			}
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_variable = murim_sect_member
+				NOT = { this = root }
+				has_trait = ambitious
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					has_trait = deceitful
+				}
+			}
+			save_scope_as = traitor_elder
+		}
+		add_character_flag = {
+			flag = elder_betrayal_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Confront the traitor directly in combat
+	option = {
+		name = murim_succession.0002.a
+		duel = {
+			skill = prowess
+			target = scope:traitor_elder
+			55 = {
+				desc = murim_succession.0002.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_succession.0002.a.victory.toast
+					left_icon = root
+					root = {
+						add_prestige = 300
+						add_dread = 20
+						create_character_memory = {
+							type = crushed_elder_rebellion_memory
+							participants = {
+								traitor = scope:traitor_elder
+							}
+						}
+					}
+					scope:traitor_elder = {
+						random_list = {
+							40 = {
+								add_trait = wounded
+								imprison = {
+									target = scope:traitor_elder
+									type = dungeon
+								}
+							}
+							30 = {
+								add_trait = incapable
+							}
+							30 = {
+								death = {
+									death_reason = death_duel
+									killer = root
+								}
+								root = {
+									# Chain: memorial for dead elder
+									trigger_event = {
+										id = murim_ranker_death.0005
+										days = { 3 7 }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			45 = {
+				desc = murim_succession.0002.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_succession.0002.a.defeat.toast
+					left_icon = root
+					root = {
+						add_prestige = -500
+						remove_variable = murim_sect_leader
+						create_character_memory = {
+							type = deposed_by_traitor_elder_memory
+							participants = {
+								usurper = scope:traitor_elder
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							30 = { add_trait = incapable }
+							30 = { }
+						}
+						# Chain: exile and vengeance
+						trigger_event = {
+							id = murim_jianghu.0001
+							days = { 7 14 }
+						}
+						trigger_event = {
+							id = murim_training.0001
+							days = { 30 60 }
+						}
+					}
+					scope:traitor_elder = {
+						set_variable = {
+							name = murim_sect_leader
+							value = yes
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Expose the conspiracy to the entire sect
+	option = {
+		name = murim_succession.0002.b
+		custom_tooltip = murim_succession.0002.b.tt
+		create_character_memory = {
+			type = exposed_elder_conspiracy_memory
+			participants = {
+				exposed_traitor = scope:traitor_elder
+			}
+		}
+		random_list = {
+			50 = {
+				# Sect rallies behind you
+				add_prestige = 400
+				scope:traitor_elder = {
+					add_prestige = -500
+					add_character_modifier = {
+						modifier = exposed_traitor
+						years = -1
+					}
+					# Traitor expelled
+					remove_variable = murim_sect_member
+				}
+				# Chain: politics strengthened
+				trigger_event = {
+					id = murim_politics.0002
+					days = { 7 14 }
+				}
+			}
+			30 = {
+				# Sect is divided
+				trigger_event = {
+					id = murim_sect.0003
+					days = { 7 14 }
+				}
+			}
+			20 = {
+				# Evidence was planted - you look paranoid
+				add_prestige = -200
+				add_trait = paranoid
+				scope:traitor_elder = {
+					add_prestige = 200
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				diplomacy >= 15
+			}
+		}
+	}
+	
+	# Option C: Make a deal with the traitor - share power
+	option = {
+		name = murim_succession.0002.c
+		custom_tooltip = murim_succession.0002.c.tt
+		create_character_memory = {
+			type = power_sharing_with_traitor_memory
+			participants = {
+				co_leader = scope:traitor_elder
+			}
+		}
+		scope:traitor_elder = {
+			add_opinion = {
+				target = root
+				modifier = shared_power_with_me
+				opinion = 20
+			}
+		}
+		add_character_modifier = {
+			modifier = weakened_sect_authority
+			years = 3
+		}
+		# Unstable alliance
+		random_list = {
+			40 = {
+				# Uneasy peace holds
+				trigger_event = {
+					id = murim_politics.0001
+					days = { 90 180 }
+				}
+			}
+			60 = {
+				# Traitor strikes again later
+				trigger_event = {
+					id = murim_succession.0002
+					days = { 365 730 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+###############################################
+# murim_succession.0003 - The Disciple's Challenge
+# A senior disciple formally challenges the sect master for leadership
+###############################################
+murim_succession.0003 = {
+	type = character_event
+	title = murim_succession.0003.t
+	desc = murim_succession.0003.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	right_portrait = {
+		character = scope:challenging_disciple
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_sect_leader
+		NOT = { has_character_flag = disciple_challenge_cooldown }
+		any_living_character = {
+			has_variable = murim_sect_member
+			NOT = { this = root }
+			prowess >= 18
+			age >= 25
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			age >= 50
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_variable = murim_sect_member
+				NOT = { this = root }
+				prowess >= 18
+				age >= 25
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					prowess >= root.prowess
+				}
+			}
+			save_scope_as = challenging_disciple
+		}
+		add_character_flag = {
+			flag = disciple_challenge_cooldown
+			years = 5
+		}
+	}
+	
+	# Option A: Accept the formal challenge with honor
+	option = {
+		name = murim_succession.0003.a
+		duel = {
+			skill = prowess
+			target = scope:challenging_disciple
+			50 = {
+				desc = murim_succession.0003.a.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_succession.0003.a.victory.toast
+					left_icon = root
+					root = {
+						add_prestige = 300
+						create_character_memory = {
+							type = defended_sect_leadership_memory
+							participants = {
+								challenger = scope:challenging_disciple
+							}
+						}
+						random_list = {
+							30 = { add_trait = wounded }
+							70 = { }
+						}
+					}
+					scope:challenging_disciple = {
+						add_opinion = {
+							target = root
+							modifier = honorable_defeat_in_challenge
+							opinion = 20
+						}
+						create_character_memory = {
+							type = honorable_challenge_defeat_memory
+							participants = {
+								sect_master = root
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							20 = { add_trait = incapable }
+							40 = { }
+						}
+						# Chain: disciple trains harder
+						trigger_event = {
+							id = murim_training.0001
+							days = { 14 30 }
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_succession.0003.a.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_succession.0003.a.defeat.toast
+					left_icon = root
+					root = {
+						add_prestige = -200
+						remove_variable = murim_sect_leader
+						add_character_modifier = {
+							modifier = graceful_abdication
+							years = 5
+						}
+						create_character_memory = {
+							type = abdicated_sect_leadership_memory
+							participants = {
+								new_master = scope:challenging_disciple
+							}
+						}
+						random_list = {
+							40 = { add_trait = wounded }
+							60 = { }
+						}
+						# Chain: mentor role after abdication
+						trigger_event = {
+							id = murim_mentor.0001
+							days = { 30 60 }
+						}
+					}
+					scope:challenging_disciple = {
+						set_variable = {
+							name = murim_sect_leader
+							value = yes
+						}
+						add_prestige = 400
+						# Chain: politics after leadership change
+						trigger_event = {
+							id = murim_politics.0001
+							days = { 7 14 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Set impossible trials instead of direct combat
+	option = {
+		name = murim_succession.0003.b
+		custom_tooltip = murim_succession.0003.b.tt
+		create_character_memory = {
+			type = set_succession_trials_memory
+			participants = {
+				trial_challenger = scope:challenging_disciple
+			}
+		}
+		random_list = {
+			30 = {
+				# Disciple passes all trials
+				scope:challenging_disciple = {
+					add_prestige = 500
+					add_prowess_skill = 3
+					create_character_memory = {
+						type = passed_succession_trials_memory
+						participants = {
+							trial_setter = root
+						}
+					}
+				}
+				root = {
+					remove_variable = murim_sect_leader
+					add_character_modifier = {
+						modifier = trial_master_respect
+						years = 5
+					}
+				}
+				# Chain: ranking update
+				trigger_event = {
+					id = murim_ranking.0001
+					days = { 7 14 }
+				}
+			}
+			40 = {
+				# Disciple fails - nearly dies
+				scope:challenging_disciple = {
+					random_list = {
+						50 = { add_trait = wounded }
+						30 = { add_trait = incapable }
+						20 = {
+							death = {
+								death_reason = death_training_accident
+							}
+							root = {
+								trigger_event = {
+									id = murim_ranker_death.0005
+									days = { 1 3 }
+								}
+							}
+						}
+					}
+				}
+			}
+			30 = {
+				# Trials reveal hidden talent
+				scope:challenging_disciple = {
+					add_trait = cultivation_prodigy
+					# Chain: fate recognizes prodigy
+					trigger_event = {
+						id = murim_fate.0002
+						days = { 30 60 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+	
+	# Option C: Step down voluntarily and name them successor
+	option = {
+		name = murim_succession.0003.c
+		remove_variable = murim_sect_leader
+		add_prestige = 200
+		add_piety = 100
+		create_character_memory = {
+			type = voluntary_abdication_memory
+			participants = {
+				chosen_successor = scope:challenging_disciple
+			}
+		}
+		scope:challenging_disciple = {
+			set_variable = {
+				name = murim_sect_leader
+				value = yes
+			}
+			add_opinion = {
+				target = root
+				modifier = honored_me_with_succession
+				opinion = 50
+			}
+		}
+		# Chain: peaceful transition to mentorship
+		trigger_event = {
+			id = murim_mentor.0001
+			days = { 7 14 }
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+			content = medium_stress_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 25
+				age >= 60
+			}
+		}
+	}
+}
+
+###############################################
+# murim_succession.0004 - Inheritance of the Secret Manual
+# The previous sect master left a hidden technique manual - multiple factions want it
+###############################################
+murim_succession.0004 = {
+	type = character_event
+	title = murim_succession.0004.t
+	desc = murim_succession.0004.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_variable = murim_sect_leader
+		NOT = { has_character_flag = secret_manual_found }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			learning >= 15
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = secret_manual_found
+		}
+	}
+	
+	# Option A: Study the manual yourself to strengthen your position
+	option = {
+		name = murim_succession.0004.a
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = secret_technique_mastered
+			years = -1
+		}
+		create_character_memory = {
+			type = mastered_secret_manual_memory
+		}
+		# Others learn you have it
+		random_list = {
+			40 = {
+				# Rival sects want the manual
+				trigger_event = {
+					id = murim_sect.0003
+					days = { 30 60 }
+				}
+			}
+			30 = {
+				# Jianghu thieves target you
+				trigger_event = {
+					id = murim_jianghu.0001
+					days = { 14 30 }
+				}
+			}
+			30 = {
+				# Peaceful - technique mastered in secret
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Share the manual with the entire sect
+	option = {
+		name = murim_succession.0004.b
+		add_prestige = 400
+		add_character_modifier = {
+			modifier = generous_sect_master
+			years = 5
+		}
+		create_character_memory = {
+			type = shared_secret_manual_memory
+		}
+		# Sect grows stronger
+		every_living_character = {
+			limit = {
+				has_variable = murim_sect_member
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = shared_sect_secrets_with_us
+				opinion = 30
+			}
+		}
+		# Chain: sect becomes powerful - attracts attention
+		trigger_event = {
+			id = murim_politics.0001
+			days = { 30 60 }
+		}
+		# Chain: artifact status of manual
+		trigger_event = {
+			id = murim_artifact.0001
+			days = { 7 14 }
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = generous
+			}
+		}
+	}
+	
+	# Option C: Destroy the manual - it contains forbidden techniques
+	option = {
+		name = murim_succession.0004.c
+		add_piety = 300
+		create_character_memory = {
+			type = destroyed_forbidden_manual_memory
+		}
+		random_list = {
+			50 = {
+				# Wise decision - sect respects you
+				add_prestige = 200
+			}
+			30 = {
+				# Some elders are furious
+				trigger_event = {
+					id = murim_succession.0002
+					days = { 30 60 }
+				}
+			}
+			20 = {
+				# The manual was actually the key to countering a future threat
+				trigger_event = {
+					id = murim_fate.0001
+					days = { 180 365 }
+				}
+			}
+		}
+		stress_impact = {
+			zealous = medium_stress_loss
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = just
+			}
+		}
+	}
+}
+
+###############################################
+# murim_succession.0005 - The Founding of a New Sect
+# After succession crisis, a martial artist decides to found their own sect
+###############################################
+murim_succession.0005 = {
+	type = character_event
+	title = murim_succession.0005.t
+	desc = murim_succession.0005.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		NOT = { has_variable = murim_sect_leader }
+		NOT = { has_variable = murim_sect_member }
+		NOT = { has_character_flag = sect_founding_cooldown }
+		prowess >= 18
+		prestige >= 500
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 3
+			has_character_memory = left_sect_during_succession_memory
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = sect_founding_cooldown
+			years = 10
+		}
+	}
+	
+	# Option A: Found an orthodox sect based on righteous martial arts
+	option = {
+		name = murim_succession.0005.a
+		add_prestige = 500
+		set_variable = {
+			name = murim_sect_leader
+			value = yes
+		}
+		set_variable = {
+			name = murim_sect_type
+			value = orthodox
+		}
+		add_character_modifier = {
+			modifier = sect_founder_orthodox
+			years = -1
+		}
+		create_character_memory = {
+			type = founded_orthodox_sect_memory
+		}
+		# Chain: recruit disciples
+		trigger_event = {
+			id = murim_sect.0001
+			days = { 30 60 }
+		}
+		# Chain: politics - join the orthodox alliance
+		trigger_event = {
+			id = murim_politics.0002
+			days = { 60 120 }
+		}
+		# Chain: ranking acknowledges new sect
+		trigger_event = {
+			id = murim_ranking.0001
+			days = { 14 30 }
+		}
+		stress_impact = {
+			just = medium_stress_loss
+			zealous = medium_stress_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option B: Found an unorthodox sect that follows its own path
+	option = {
+		name = murim_succession.0005.b
+		add_prestige = 400
+		add_dread = 20
+		set_variable = {
+			name = murim_sect_leader
+			value = yes
+		}
+		set_variable = {
+			name = murim_sect_type
+			value = unorthodox
+		}
+		add_character_modifier = {
+			modifier = sect_founder_unorthodox
+			years = -1
+		}
+		create_character_memory = {
+			type = founded_unorthodox_sect_memory
+		}
+		# Chain: jianghu connections
+		trigger_event = {
+			id = murim_jianghu.0001
+			days = { 14 30 }
+		}
+		# Chain: orthodox sects react
+		trigger_event = {
+			id = murim_sect.0003
+			days = { 60 120 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option C: Found a hidden sect in the mountains
+	option = {
+		name = murim_succession.0005.c
+		add_prestige = 300
+		set_variable = {
+			name = murim_sect_leader
+			value = yes
+		}
+		set_variable = {
+			name = murim_sect_type
+			value = hidden
+		}
+		add_character_modifier = {
+			modifier = hidden_sect_founder
+			years = -1
+		}
+		create_character_memory = {
+			type = founded_hidden_sect_memory
+		}
+		# Chain: training in isolation
+		trigger_event = {
+			id = murim_training.0001
+			days = { 30 60 }
+		}
+		# Chain: fate of the hidden sect
+		trigger_event = {
+			id = murim_fate.0001
+			days = { 180 365 }
+		}
+		# Chain: daily life in seclusion
+		trigger_event = {
+			id = murim_daily_life.0001
+			days = { 14 30 }
+		}
+		stress_impact = {
+			shy = medium_stress_loss
+			gregarious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = shy
+			}
+		}
+	}
+	
+	# Option D: Abandon the idea - the martial world has enough sects
+	option = {
+		name = murim_succession.0005.d
+		add_prestige = 50
+		create_character_memory = {
+			type = decided_against_founding_sect_memory
+		}
+		# Chain: wandering martial artist life
+		trigger_event = {
+			id = murim_daily_life.0001
+			days = { 7 14 }
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+			content = medium_stress_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+}
