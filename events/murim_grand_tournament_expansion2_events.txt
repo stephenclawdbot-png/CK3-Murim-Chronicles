@@ -1,0 +1,639 @@
+namespace = murim_grand_tourn_exp2
+
+# Grand Tournament Expansion 2 - Championship Bracket, Legendary Matchups, Prizes
+# 8 events with full interaction trees
+
+### EVENT 1: Grand Tournament Opening Ceremony ###
+murim_grand_tourn_exp2.0001 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0001.t
+	desc = murim_grand_tourn_exp2.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		martial >= 14
+		prowess >= 12
+		NOT = { has_character_flag = grand_tournament_entered }
+		age >= 16
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = tournament_champion }
+		modifier = { add = 2 prowess >= 18 }
+	}
+	
+	# Option A: Enter as clan representative
+	option = {
+		name = murim_grand_tourn_exp2.0001.a
+		add_character_flag = { flag = grand_tournament_entered days = -1 }
+		add_character_flag = { flag = clan_representative days = -1 }
+		add_prestige = 300
+		hidden_effect = {
+			set_variable = { name = tournament_wins value = 0 }
+			set_variable = { name = tournament_bracket value = 1 }
+			trigger_event = { id = murim_grand_tourn_exp2.0002 days = { 3 7 } }
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Enter as independent challenger
+	option = {
+		name = murim_grand_tourn_exp2.0001.b
+		add_character_flag = { flag = grand_tournament_entered days = -1 }
+		add_character_flag = { flag = independent_challenger days = -1 }
+		add_prestige = 200
+		add_dread = 10
+		hidden_effect = {
+			set_variable = { name = tournament_wins value = 0 }
+			set_variable = { name = tournament_bracket value = 1 }
+			trigger_event = { id = murim_grand_tourn_exp2.0002 days = { 3 7 } }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Enter in disguise
+	option = {
+		name = murim_grand_tourn_exp2.0001.c
+		trigger = { intrigue >= 14 }
+		add_character_flag = { flag = grand_tournament_entered days = -1 }
+		add_character_flag = { flag = disguised_fighter days = -1 }
+		add_intrigue_skill = 1
+		add_prestige = 100
+		hidden_effect = {
+			set_variable = { name = tournament_wins value = 0 }
+			set_variable = { name = tournament_bracket value = 1 }
+			trigger_event = { id = murim_grand_tourn_exp2.0002 days = { 3 7 } }
+		}
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Attend as spectator and scout talent
+	option = {
+		name = murim_grand_tourn_exp2.0001.d
+		add_prestige = 100
+		add_diplomacy_skill = 1
+		add_learning_skill = 1
+		hidden_effect = {
+			trigger_event = { id = murim_grand_tourn_exp2.0006 days = { 7 14 } }
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 2: First Round Match ###
+murim_grand_tourn_exp2.0002 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0002.t
+	desc = murim_grand_tourn_exp2.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = grand_tournament_entered
+		has_variable = tournament_bracket
+		var:tournament_bracket == 1
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				NOT = { this = root }
+				prowess >= 10
+				martial >= 10
+				is_alive = yes
+			}
+			save_scope_as = first_round_opponent
+		}
+	}
+	
+	# Option A: Fight with full power from the start
+	option = {
+		name = murim_grand_tourn_exp2.0002.a
+		duel = {
+			skill = prowess
+			target = scope:first_round_opponent
+			60 = {
+				desc = murim_grand_tourn_exp2.0002.a.success
+				compare_modifier = { value = scope:duel_value multiplier = 3.0 min = -49 }
+				add_prestige = 400
+				change_variable = { name = tournament_wins add = 1 }
+				set_variable = { name = tournament_bracket value = 2 }
+				hidden_effect = {
+					trigger_event = { id = murim_grand_tourn_exp2.0003 days = { 3 7 } }
+				}
+			}
+			40 = {
+				desc = murim_grand_tourn_exp2.0002.a.failure
+				compare_modifier = { value = scope:duel_value multiplier = -3.0 min = -49 }
+				add_prestige = -200
+				increase_wounds_effect = { reason = tournament }
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Test the opponent first - defensive strategy
+	option = {
+		name = murim_grand_tourn_exp2.0002.b
+		duel = {
+			skill = martial
+			target = scope:first_round_opponent
+			55 = {
+				desc = murim_grand_tourn_exp2.0002.b.success
+				compare_modifier = { value = scope:duel_value multiplier = 2.5 min = -49 }
+				add_prestige = 300
+				add_martial_skill = 1
+				change_variable = { name = tournament_wins add = 1 }
+				set_variable = { name = tournament_bracket value = 2 }
+				hidden_effect = {
+					trigger_event = { id = murim_grand_tourn_exp2.0003 days = { 3 7 } }
+				}
+			}
+			45 = {
+				desc = murim_grand_tourn_exp2.0002.b.failure
+				compare_modifier = { value = scope:duel_value multiplier = -2.5 min = -49 }
+				add_prestige = -100
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Use a secret technique to end it quickly
+	option = {
+		name = murim_grand_tourn_exp2.0002.c
+		trigger = {
+			OR = {
+				has_trait = technique_master
+				has_trait = custom_offensive_art
+				has_trait = void_blade_master
+			}
+		}
+		duel = {
+			skill = prowess
+			target = scope:first_round_opponent
+			75 = {
+				desc = murim_grand_tourn_exp2.0002.c.success
+				add_prestige = 600
+				add_dread = 15
+				change_variable = { name = tournament_wins add = 1 }
+				set_variable = { name = tournament_bracket value = 2 }
+				hidden_effect = {
+					trigger_event = { id = murim_grand_tourn_exp2.0003 days = { 3 7 } }
+				}
+			}
+			25 = {
+				desc = murim_grand_tourn_exp2.0002.c.failure
+				add_prestige = -300
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+### EVENT 3: Semi-Finals ###
+murim_grand_tourn_exp2.0003 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0003.t
+	desc = murim_grand_tourn_exp2.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = grand_tournament_entered
+		has_variable = tournament_bracket
+		var:tournament_bracket == 2
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				NOT = { this = root }
+				prowess >= 15
+				martial >= 15
+				is_alive = yes
+			}
+			save_scope_as = semifinal_opponent
+		}
+	}
+	
+	# Option A: All-out attack
+	option = {
+		name = murim_grand_tourn_exp2.0003.a
+		duel = {
+			skill = prowess
+			target = scope:semifinal_opponent
+			50 = {
+				desc = murim_grand_tourn_exp2.0003.a.success
+				compare_modifier = { value = scope:duel_value multiplier = 4.0 min = -49 }
+				add_prestige = 800
+				change_variable = { name = tournament_wins add = 1 }
+				set_variable = { name = tournament_bracket value = 3 }
+				hidden_effect = {
+					trigger_event = { id = murim_grand_tourn_exp2.0004 days = { 5 10 } }
+				}
+			}
+			50 = {
+				desc = murim_grand_tourn_exp2.0003.a.failure
+				compare_modifier = { value = scope:duel_value multiplier = -4.0 min = -49 }
+				increase_wounds_effect = { reason = tournament }
+				add_prestige = -300
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Strategic approach - exploit weakness
+	option = {
+		name = murim_grand_tourn_exp2.0003.b
+		trigger = { learning >= 14 }
+		duel = {
+			skill = martial
+			target = scope:semifinal_opponent
+			55 = {
+				desc = murim_grand_tourn_exp2.0003.b.success
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				add_prestige = 700
+				add_learning_skill = 1
+				change_variable = { name = tournament_wins add = 1 }
+				set_variable = { name = tournament_bracket value = 3 }
+				hidden_effect = {
+					trigger_event = { id = murim_grand_tourn_exp2.0004 days = { 5 10 } }
+				}
+			}
+			45 = {
+				desc = murim_grand_tourn_exp2.0003.b.failure
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				add_prestige = -200
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Forfeit - save strength for clan wars
+	option = {
+		name = murim_grand_tourn_exp2.0003.c
+		add_prestige = -100
+		add_health = 1
+		remove_character_flag = grand_tournament_entered
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 4: The Grand Finals ###
+murim_grand_tourn_exp2.0004 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0004.t
+	desc = murim_grand_tourn_exp2.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = grand_tournament_entered
+		has_variable = tournament_bracket
+		var:tournament_bracket == 3
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				NOT = { this = root }
+				prowess >= 18
+				martial >= 18
+				is_alive = yes
+			}
+			save_scope_as = finals_opponent
+		}
+	}
+	
+	# Option A: Fight with everything you have
+	option = {
+		name = murim_grand_tourn_exp2.0004.a
+		duel = {
+			skill = prowess
+			target = scope:finals_opponent
+			45 = {
+				desc = murim_grand_tourn_exp2.0004.a.success
+				compare_modifier = { value = scope:duel_value multiplier = 5.0 min = -49 }
+				add_prestige = 3000
+				add_trait = grand_tournament_champion
+				add_prowess = 5
+				add_martial_skill = 3
+				add_dread = 30
+				change_variable = { name = tournament_wins add = 1 }
+				remove_character_flag = grand_tournament_entered
+			}
+			55 = {
+				desc = murim_grand_tourn_exp2.0004.a.failure
+				compare_modifier = { value = scope:duel_value multiplier = -5.0 min = -49 }
+				increase_wounds_effect = { reason = tournament }
+				add_prestige = 500
+				add_trait = grand_tournament_runner_up
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Use forbidden technique to win at any cost
+	option = {
+		name = murim_grand_tourn_exp2.0004.b
+		trigger = {
+			OR = {
+				has_trait = custom_forbidden_art
+				has_trait = void_blade_master
+				has_trait = demon_blade_fusion
+			}
+		}
+		duel = {
+			skill = prowess
+			target = scope:finals_opponent
+			65 = {
+				desc = murim_grand_tourn_exp2.0004.b.success
+				add_prestige = 2500
+				add_trait = grand_tournament_champion
+				add_prowess = 5
+				add_dread = 50
+				add_tyranny = 10
+				scope:finals_opponent = {
+					increase_wounds_effect = { reason = tournament }
+				}
+				remove_character_flag = grand_tournament_entered
+			}
+			35 = {
+				desc = murim_grand_tourn_exp2.0004.b.failure
+				increase_wounds_effect = { reason = tournament }
+				add_prestige = -500
+				add_character_flag = { flag = forbidden_technique_exposed days = 365 }
+				remove_character_flag = grand_tournament_entered
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option C: Offer a draw - mutual respect
+	option = {
+		name = murim_grand_tourn_exp2.0004.c
+		trigger = { diplomacy >= 16 }
+		add_prestige = 1500
+		add_trait = tournament_co_champion
+		reverse_add_opinion = {
+			target = scope:finals_opponent
+			modifier = mutual_respect_opinion
+			opinion = 40
+		}
+		remove_character_flag = grand_tournament_entered
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Reveal your true identity (if disguised)
+	option = {
+		name = murim_grand_tourn_exp2.0004.d
+		trigger = { has_character_flag = disguised_fighter }
+		remove_character_flag = disguised_fighter
+		add_prestige = 2000
+		add_dread = 20
+		hidden_effect = {
+			trigger_event = { id = murim_grand_tourn_exp2.0004 days = 0 }
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 5: Champion's Reward ###
+murim_grand_tourn_exp2.0005 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0005.t
+	desc = murim_grand_tourn_exp2.0005.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_trait = grand_tournament_champion
+		NOT = { has_character_flag = champion_reward_claimed }
+	}
+	
+	weight_multiplier = { base = 10 }
+	
+	# Option A: Claim the legendary weapon
+	option = {
+		name = murim_grand_tourn_exp2.0005.a
+		add_character_flag = { flag = champion_reward_claimed days = -1 }
+		add_trait = legendary_weapon_wielder
+		add_prowess = 8
+		add_prestige = 1000
+		ai_chance = { base = 35 }
+	}
+	
+	# Option B: Claim gold and territory
+	option = {
+		name = murim_grand_tourn_exp2.0005.b
+		add_character_flag = { flag = champion_reward_claimed days = -1 }
+		add_gold = 1000
+		add_prestige = 500
+		add_stewardship_skill = 2
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Claim the right to challenge any clan leader
+	option = {
+		name = murim_grand_tourn_exp2.0005.c
+		add_character_flag = { flag = champion_reward_claimed days = -1 }
+		add_character_flag = { flag = champion_challenge_right days = 365 }
+		add_prestige = 1500
+		add_dread = 20
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Reject the reward - the glory is enough
+	option = {
+		name = murim_grand_tourn_exp2.0005.d
+		trigger = { has_trait = humble }
+		add_character_flag = { flag = champion_reward_claimed days = -1 }
+		add_prestige = 2000
+		add_piety = 500
+		add_stress = -30
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 6: Spectator Scouts a Prodigy ###
+murim_grand_tourn_exp2.0006 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0006.t
+	desc = murim_grand_tourn_exp2.0006.desc
+	theme = diplomacy
+	
+	trigger = {
+		NOT = { has_character_flag = grand_tournament_entered }
+		diplomacy >= 12
+		NOT = { has_character_flag = prodigy_scouted }
+	}
+	
+	# Option A: Recruit the prodigy to your clan
+	option = {
+		name = murim_grand_tourn_exp2.0006.a
+		add_character_flag = { flag = prodigy_scouted days = -1 }
+		add_prestige = 400
+		add_gold = -100
+		hidden_effect = {
+			create_character = {
+				age = 18
+				martial = 14
+				prowess = 16
+				trait = tournament_prodigy
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Sponsor the prodigy's training
+	option = {
+		name = murim_grand_tourn_exp2.0006.b
+		add_character_flag = { flag = prodigy_scouted days = -1 }
+		add_gold = -200
+		add_prestige = 300
+		add_piety = 200
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Report the prodigy to rival clans (sabotage)
+	option = {
+		name = murim_grand_tourn_exp2.0006.c
+		trigger = { intrigue >= 14 }
+		add_character_flag = { flag = prodigy_scouted days = -1 }
+		add_intrigue_skill = 1
+		add_prestige = -100
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 7: Tournament Rigging Exposed ###
+murim_grand_tourn_exp2.0007 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0007.t
+	desc = murim_grand_tourn_exp2.0007.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = grand_tournament_entered
+		NOT = { has_character_flag = rigging_dealt_with }
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 3 intrigue >= 16 } }
+	
+	# Option A: Expose the riggers publicly
+	option = {
+		name = murim_grand_tourn_exp2.0007.a
+		add_character_flag = { flag = rigging_dealt_with days = -1 }
+		add_prestige = 500
+		add_piety = 200
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Use the rigging to your advantage
+	option = {
+		name = murim_grand_tourn_exp2.0007.b
+		add_character_flag = { flag = rigging_dealt_with days = -1 }
+		add_intrigue_skill = 2
+		add_prestige = 200
+		stress_impact = { honest = medium_stress_impact_gain }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Blackmail the riggers
+	option = {
+		name = murim_grand_tourn_exp2.0007.c
+		trigger = { intrigue >= 16 }
+		add_character_flag = { flag = rigging_dealt_with days = -1 }
+		add_gold = 300
+		add_intrigue_skill = 2
+		ai_chance = { base = 20 }
+	}
+}
+
+### EVENT 8: Young Dragon vs Grand Master - Legendary Matchup ###
+murim_grand_tourn_exp2.0008 = {
+	type = character_event
+	title = murim_grand_tourn_exp2.0008.t
+	desc = murim_grand_tourn_exp2.0008.desc
+	theme = martial_arts
+	
+	trigger = {
+		OR = {
+			AND = { age <= 25 prowess >= 18 }
+			AND = { age >= 45 prowess >= 20 }
+		}
+		NOT = { has_character_flag = legendary_matchup_done }
+	}
+	
+	weight_multiplier = { base = 1 modifier = { add = 5 has_trait = grand_tournament_champion } }
+	
+	immediate = {
+		if = {
+			limit = { age <= 25 }
+			random_ruler = {
+				limit = { age >= 45 prowess >= 18 martial >= 18 }
+				save_scope_as = legendary_opponent
+			}
+		}
+		else = {
+			random_ruler = {
+				limit = { age <= 25 prowess >= 16 martial >= 14 }
+				save_scope_as = legendary_opponent
+			}
+		}
+	}
+	
+	# Option A: Fight the legendary battle
+	option = {
+		name = murim_grand_tourn_exp2.0008.a
+		add_character_flag = { flag = legendary_matchup_done days = -1 }
+		duel = {
+			skill = prowess
+			target = scope:legendary_opponent
+			50 = {
+				desc = murim_grand_tourn_exp2.0008.a.success
+				compare_modifier = { value = scope:duel_value multiplier = 4.0 min = -49 }
+				add_prestige = 2000
+				add_trait = legendary_duelist
+				add_prowess = 5
+			}
+			50 = {
+				desc = murim_grand_tourn_exp2.0008.a.failure
+				compare_modifier = { value = scope:duel_value multiplier = -4.0 min = -49 }
+				add_prestige = 500
+				add_martial_skill = 2
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Decline - mutual respect without combat
+	option = {
+		name = murim_grand_tourn_exp2.0008.b
+		add_character_flag = { flag = legendary_matchup_done days = -1 }
+		add_prestige = 800
+		reverse_add_opinion = {
+			target = scope:legendary_opponent
+			modifier = worthy_rival_opinion
+			opinion = 30
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Train together instead of fighting
+	option = {
+		name = murim_grand_tourn_exp2.0008.c
+		add_character_flag = { flag = legendary_matchup_done days = -1 }
+		add_martial_skill = 3
+		add_prowess = 3
+		add_prestige = 600
+		scope:legendary_opponent = {
+			add_martial_skill = 2
+			add_prowess = 2
+		}
+		ai_chance = { base = 15 }
+	}
+}
