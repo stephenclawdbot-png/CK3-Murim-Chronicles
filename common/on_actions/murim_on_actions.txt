@@ -7,9 +7,12 @@
 # random events, and demonic activity.
 # Yearly pulses handle breakthroughs,
 # sect politics, and AI duels.
+# 5-Year pulses handle tournaments.
 # Death/war/battle hooks create dramatic
 # consequences for cultivator conflicts.
-# POLISH PASS: Heartbeat #52 - Fixed all var: prefix misuse, trait name errors
+# POLISH PASS: Heartbeat #58 - Added all
+# new system hooks (tournament, shadow
+# politics, faction war, scouts, entry paths)
 ############################################
 
 # ==========================================
@@ -89,7 +92,6 @@ on_monthly_character_pulse = {
 			}
 
 			# Bonus XP scaling with rank
-			# Higher rank cultivators train more efficiently
 			if = {
 				limit = {
 					var:murim_cultivation_rank >= 3
@@ -126,8 +128,6 @@ on_monthly_character_pulse = {
 	# ------------------------------------------
 	# Random Cultivation Event Firing
 	# Monthly chance for cultivation events.
-	# Higher rank = more frequent events.
-	# Uses the events from murim_cultivation_events.
 	# ------------------------------------------
 	effect = {
 		if = {
@@ -139,7 +139,6 @@ on_monthly_character_pulse = {
 			}
 
 			random_list = {
-				# Rank 1-2: Low event frequency
 				70 = {
 					# Nothing happens this month
 					modifier = {
@@ -185,11 +184,29 @@ on_monthly_character_pulse = {
 					}
 					modifier = {
 						factor = 1.5
-						learning >= 12
+						has_trait = curious
 					}
 				}
 				4 = {
-					# Duel challenge
+					# Spirit Root Discovery
+					trigger_event = {
+						id = murim_cultivation.0004
+						days = { 3 15 }
+					}
+					modifier = {
+						factor = 2.0
+						var:murim_cultivation_rank >= 4
+					}
+				}
+				3 = {
+					# Daily life random event
+					trigger_event = {
+						id = murim_daily.0001
+						days = { 1 28 }
+					}
+				}
+				2 = {
+					# Random duel challenge
 					trigger_event = {
 						id = murim_duel.0001
 						days = { 3 20 }
@@ -198,218 +215,303 @@ on_monthly_character_pulse = {
 						factor = 2.0
 						has_trait = brave
 					}
-					modifier = {
-						factor = 1.5
-						prowess >= 15
+				}
+				2 = {
+					# Mentor interaction
+					trigger_event = {
+						id = murim_mentor.0001
+						days = { 5 25 }
 					}
 				}
-				3 = {
-					# Artifact discovery
+			}
+
+			# Set cooldown to prevent event spam
+			add_character_flag = {
+				flag = murim_event_cooldown
+				days = 20
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Shadow Politics Monthly Check
+	# Heavenly Demon puppet emperor intrigue
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				OR = {
+					has_trait = heavenly_demon_disciple
+					has_variable = murim_shadow_politics_aware
+				}
+				NOT = { has_character_flag = murim_shadow_event_cooldown }
+			}
+			random_list = {
+				85 = { }
+				8 = {
+					# Court infiltration whispers
 					trigger_event = {
-						id = murim_artifact.0001
+						id = murim_shadow.0001
 						days = { 5 25 }
 					}
 					modifier = {
-						factor = 1.5
-						var:murim_cultivation_rank >= 3
+						factor = 2.0
+						has_trait = heavenly_demon_disciple
 					}
 				}
-				2 = {
-					# Jianghu encounter
+				4 = {
+					# Puppet emperor manipulation
 					trigger_event = {
-						id = murim_jianghu.0001
-						days = { 1 15 }
+						id = murim_shadow.0003
+						days = { 10 28 }
+					}
+					modifier = {
+						factor = 3.0
+						has_variable = murim_is_shadow_operative
+					}
+				}
+				3 = {
+					# Discovery event
+					trigger_event = {
+						id = murim_shadow.0005
+						days = { 5 20 }
+					}
+					modifier = {
+						factor = 2.0
+						intrigue >= 16
+					}
+				}
+			}
+			add_character_flag = {
+				flag = murim_shadow_event_cooldown
+				days = 45
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Faction War Skirmish Monthly Check
+	# Orthodox vs Unorthodox tensions
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				OR = {
+					has_variable = murim_faction_orthodox
+					has_variable = murim_faction_unorthodox
+				}
+				NOT = { has_character_flag = murim_faction_event_cooldown }
+			}
+			random_list = {
+				88 = { }
+				5 = {
+					# Faction border skirmish
+					trigger_event = {
+						id = murim_faction_war.0001
+						days = { 3 20 }
+					}
+				}
+				4 = {
+					# Alliance recruitment drive
+					trigger_event = {
+						id = murim_faction_war.0004
+						days = { 5 25 }
+					}
+				}
+				3 = {
+					# Faction betrayal opportunity
+					trigger_event = {
+						id = murim_faction_war.0007
+						days = { 10 28 }
 					}
 					modifier = {
 						factor = 2.0
 						has_trait = deceitful
 					}
-					modifier = {
-						factor = 1.5
-						intrigue >= 12
-					}
 				}
-				2 = {
-					# Daily life event - tea house
+			}
+			add_character_flag = {
+				flag = murim_faction_event_cooldown
+				days = 60
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Clan Scout Progress Check
+	# Scouts on 5-6 year travel cycles
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				has_variable = murim_scout_dispatched
+				NOT = { has_character_flag = murim_scout_update_cooldown }
+			}
+			random_list = {
+				92 = { }
+				5 = {
+					# Scout travel update
 					trigger_event = {
-						id = murim_daily_life.0001
-						days = { 1 28 }
+						id = murim_scout.0003
+						days = { 5 20 }
+					}
+				}
+				3 = {
+					# Rival scouts encounter
+					trigger_event = {
+						id = murim_scout.0006
+						days = { 10 25 }
 					}
 				}
 			}
-		}
-	}
-
-	# ------------------------------------------
-	# Sect Member Monthly Duties
-	# Sect members gain small prestige and
-	# occasionally face sect politics events.
-	# ------------------------------------------
-	effect = {
-		if = {
-			limit = {
-				has_variable = murim_sect_member
-				is_alive = yes
-			}
-			# Small monthly prestige from sect membership
-			add_prestige = 5
-			# Random sect event
-			random = {
-				chance = 8
-				modifier = {
-					add = 5
-					has_variable = murim_sect_elder
-				}
-				modifier = {
-					add = 10
-					has_variable = murim_sect_leader
-				}
-				trigger_event = {
-					id = murim_sect.0001
-					days = { 5 25 }
-				}
-			}
-		}
-	}
-
-	# ------------------------------------------
-	# Training Events for Player
-	# Player cultivators get periodic training
-	# opportunities.
-	# ------------------------------------------
-	effect = {
-		if = {
-			limit = {
-				is_ai = no
-				has_variable = murim_cultivator
-				is_alive = yes
-				is_imprisoned = no
-			}
-			random = {
-				chance = 10
-				modifier = {
-					add = 5
-					has_trait = diligent
-				}
-				modifier = {
-					add = 3
-					learning >= 14
-				}
-				trigger_event = {
-					id = murim_training.0001
-					days = { 3 20 }
-				}
+			add_character_flag = {
+				flag = murim_scout_update_cooldown
+				days = 30
 			}
 		}
 	}
 }
 
 # ==========================================
-# YEARLY CHARACTER PULSE
-# Annual milestones, breakthrough attempts,
-# sect politics, and rivalry updates.
+# YEARLY PULSE
+# Sect politics, breakthroughs, AI duels.
 # ==========================================
 
 on_yearly_pulse = {
 
 	# ------------------------------------------
-	# AI Breakthrough Attempts
-	# Yearly check if AI cultivator has enough
-	# XP to attempt advancement to next rank.
+	# Cultivation Breakthrough Check
+	# Characters who accumulated enough XP
+	# attempt to break through to next rank.
 	# ------------------------------------------
 	effect = {
 		every_living_character = {
 			limit = {
-				is_ai = yes
-				has_variable = murim_cultivation_rank
-				var:murim_cultivation_rank >= 1
-				var:murim_cultivation_rank < 7
 				is_alive = yes
-				NOT = { has_trait = incapable }
-				NOT = { has_trait = shattered_dantian }
+				has_variable = murim_cultivation_rank
+				has_variable = murim_cultivation_xp
+				var:murim_cultivation_rank >= 1
+				var:murim_cultivation_rank <= 8
 			}
-
-			# Check if enough XP for next breakthrough
+			# Check XP thresholds for breakthrough
 			if = {
 				limit = {
-					has_variable = murim_cultivation_xp
-					# XP threshold scales: 100, 250, 500, 1000, 2500, 5000
-					OR = {
-						AND = {
-							var:murim_cultivation_rank = 1
-							var:murim_cultivation_xp >= 100
-						}
-						AND = {
-							var:murim_cultivation_rank = 2
-							var:murim_cultivation_xp >= 250
-						}
-						AND = {
-							var:murim_cultivation_rank = 3
-							var:murim_cultivation_xp >= 500
-						}
-						AND = {
-							var:murim_cultivation_rank = 4
-							var:murim_cultivation_xp >= 1000
-						}
-						AND = {
-							var:murim_cultivation_rank = 5
-							var:murim_cultivation_xp >= 2500
-						}
-						AND = {
-							var:murim_cultivation_rank = 6
-							var:murim_cultivation_xp >= 5000
-						}
-					}
+					var:murim_cultivation_xp >= 500
+					NOT = { has_character_flag = murim_breakthrough_attempted }
 				}
-
-				# Attempt breakthrough
 				random_list = {
-					60 = {
-						# Success! Advance to next rank
+					40 = {
+						# Successful breakthrough
+						trigger_event = {
+							id = murim_cultivation.0008
+							days = { 10 60 }
+						}
 						modifier = {
 							factor = 1.5
-							learning >= 15
-						}
-						modifier = {
-							factor = 1.3
-							has_trait = patient
-						}
-						modifier = {
-							factor = 0.5
-							has_trait = impatient
-						}
-						change_variable = {
-							name = murim_cultivation_rank
-							add = 1
-						}
-						set_variable = {
-							name = murim_cultivation_xp
-							value = 0
-						}
-						# Trigger breakthrough event
-						trigger_event = {
-							id = murim_cultivation.0100
-							days = { 1 5 }
+							learning >= 16
 						}
 					}
 					30 = {
-						# Failure - lose some XP but survive
+						# Partial progress
 						change_variable = {
 							name = murim_cultivation_xp
-							add = -50
+							add = -100
 						}
-						add_stress = 15
 					}
-					10 = {
-						# Critical failure - qi deviation
+					30 = {
+						# Qi deviation during attempt
 						trigger_event = {
 							id = murim_cultivation.0002
-							days = { 1 3 }
+							days = { 5 30 }
 						}
-						modifier = {
-							factor = 2.0
-							has_trait = demonic_cultivator
-						}
+					}
+				}
+				add_character_flag = {
+					flag = murim_breakthrough_attempted
+					years = 1
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Sect Politics Yearly Events
+	# Leadership challenges, internal disputes,
+	# clan harmony shifts.
+	# ------------------------------------------
+	effect = {
+		every_player = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_disciple
+					has_trait = shaolin_monk
+					has_trait = heavenly_demon_disciple
+					has_trait = beggar_sect_member
+					has_trait = iron_fist_disciple
+					has_trait = poison_flower_disciple
+					has_trait = phantom_blade_disciple
+					has_trait = tang_clan_disciple
+				}
+			}
+			random_list = {
+				40 = { }
+				15 = {
+					# Internal succession dispute
+					trigger_event = {
+						id = murim_sect.0001
+						days = { 30 180 }
+					}
+				}
+				12 = {
+					# Clan harmony event
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 20 150 }
+					}
+				}
+				10 = {
+					# Elder council meeting
+					trigger_event = {
+						id = murim_politics.0003
+						days = { 60 200 }
+					}
+				}
+				8 = {
+					# Succession crisis
+					trigger_event = {
+						id = murim_succession.0001
+						days = { 30 120 }
+					}
+					modifier = {
+						factor = 2.0
+						has_trait = ambitious
+					}
+				}
+				8 = {
+					# Romance event
+					trigger_event = {
+						id = murim_romance.0001
+						days = { 30 200 }
+					}
+				}
+				7 = {
+					# Custom clan founding opportunity
+					trigger_event = {
+						id = murim_custom_clan.0001
+						days = { 60 250 }
+					}
+					modifier = {
+						factor = 3.0
+						var:murim_cultivation_rank >= 6
 					}
 				}
 			}
@@ -417,266 +519,171 @@ on_yearly_pulse = {
 	}
 
 	# ------------------------------------------
-	# AI Duel Generation
-	# Yearly pulse for AI-initiated duels.
-	# Creates organic martial world activity.
+	# Emergency Clan Recruitment Check
+	# If any clan has fewer than 3 youth,
+	# trigger emergency recruitment.
 	# ------------------------------------------
 	effect = {
-		# Generate 2-4 random duels per year among AI cultivators
+		# Check each clan for youth shortage
 		random_living_character = {
 			limit = {
-				is_ai = yes
 				is_alive = yes
-				murim_is_martial_artist_trigger = yes
-				murim_can_duel_trigger = yes
-				prowess >= 12
+				has_variable = murim_is_clan_leader
+			}
+			weight = {
+				base = 1
+			}
+			trigger_event = {
+				id = murim_scout.0010
+				days = { 30 90 }
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Entry Path Discovery for Non-Martial
+	# Characters near China/Goryeo may stumble
+	# upon the martial world.
+	# ------------------------------------------
+	effect = {
+		random_living_character = {
+			limit = {
+				is_alive = yes
+				NOT = { has_trait = martial_artist }
+				NOT = { has_character_flag = murim_entry_path_rejected }
+				age >= 14
+				age <= 45
+				prowess >= 8
+				OR = {
+					murim_is_china_region_trigger = yes
+					murim_is_goryeo_region_trigger = yes
+				}
 			}
 			weight = {
 				base = 1
 				modifier = {
 					add = 5
-					has_trait = ambitious
+					prowess >= 12
 				}
 				modifier = {
 					add = 3
+					learning >= 12
+				}
+				modifier = {
+					add = 10
 					has_trait = brave
 				}
-				modifier = {
-					add = 3
-					has_trait = wrathful
-				}
-				modifier = {
-					add = -5
-					has_trait = craven
-				}
-				modifier = {
-					add = -3
-					has_trait = content
-				}
 			}
-
-			# Find an opponent
-			random_living_character = {
-				limit = {
-					is_alive = yes
-					murim_is_martial_artist_trigger = yes
-					murim_can_duel_trigger = yes
-					NOT = { this = prev }
-					prowess >= 8
-				}
-				save_scope_as = ai_duel_target
-			}
-
-			if = {
-				limit = {
-					exists = scope:ai_duel_target
-				}
-				save_scope_as = ai_duel_challenger
-
-				# Background duel resolution
-				duel = {
-					skill = prowess
-					target = scope:ai_duel_target
-					50 = {
-						# Challenger wins
-						compare_modifier = {
-							value = scope:duel_value
-							multiplier = 3.5
-						}
-						add_prestige = 100
-						scope:ai_duel_target = {
-							add_prestige = -50
-							# Combat consequences
-							random_list = {
-								60 = { }
-								20 = {
-									add_trait = wounded_1
-								}
-								10 = {
-									add_trait = wounded_2
-								}
-								5 = {
-									add_trait = wounded_3
-								}
-								3 = {
-									add_trait = one_eyed
-								}
-								2 = {
-									add_trait = incapable
-								}
-							}
-						}
-						# Notify nearby players
-						every_player = {
-							limit = {
-								is_alive = yes
-								OR = {
-									any_vassal = { this = scope:ai_duel_challenger }
-									any_vassal = { this = scope:ai_duel_target }
-									any_courtier = { this = scope:ai_duel_challenger }
-									any_courtier = { this = scope:ai_duel_target }
-								}
-							}
-							trigger_event = {
-								id = murim_duel.0005
-								days = { 1 10 }
-							}
-						}
-					}
-					50 = {
-						# Challenger loses
-						compare_modifier = {
-							value = scope:duel_value
-							multiplier = -3.5
-						}
-						add_prestige = -50
-						# Combat consequences for loser
-						random_list = {
-							60 = { }
-							20 = {
-								add_trait = wounded_1
-							}
-							10 = {
-								add_trait = wounded_2
-							}
-							5 = {
-								add_trait = wounded_3
-							}
-							3 = {
-								add_trait = one_eyed
-							}
-							2 = {
-								add_trait = incapable
-							}
-						}
-						scope:ai_duel_target = {
-							add_prestige = 100
-						}
-					}
-				}
+			# Trigger entry path discovery
+			trigger_event = {
+				id = murim_entry.0001
+				days = { 30 180 }
 			}
 		}
 	}
+}
+
+# ==========================================
+# 5-YEAR PULSE (TOURNAMENTS)
+# Young Dragon Tournament fires every 5 years.
+# Grand Tournament fires every 10 years.
+# ==========================================
+
+on_five_year_pulse = {
 
 	# ------------------------------------------
-	# Sect Politics Yearly
-	# Sect power dynamics shift annually.
+	# Young Dragon Tournament (Under-30)
+	# Global event for young martial artists.
+	# All 9 clans send their best youth.
 	# ------------------------------------------
 	effect = {
 		every_living_character = {
 			limit = {
-				has_variable = murim_sect_leader
 				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				age >= 14
+				age <= 30
+				NOT = { has_character_modifier = murim_young_dragon_cooldown }
 			}
-			# Sect leader stability check
+			# Only trigger for a fraction to prevent spam
 			random = {
-				chance = 15
+				chance = 35
+				modifier = {
+					add = 15
+					prowess >= 14
+				}
 				modifier = {
 					add = 10
-					has_trait = ambitious
+					OR = {
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+						has_trait = shaolin_monk
+						has_trait = heavenly_demon_disciple
+						has_trait = beggar_sect_member
+						has_trait = iron_fist_disciple
+						has_trait = poison_flower_disciple
+						has_trait = phantom_blade_disciple
+						has_trait = tang_clan_disciple
+					}
 				}
 				trigger_event = {
-					id = murim_sect.0003
-					days = { 10 60 }
+					id = murim_tournament.0001
+					days = { 15 60 }
 				}
 			}
 		}
 	}
 
 	# ------------------------------------------
-	# Fate & Destiny Events
-	# Yearly chance for major fate events.
+	# Clan Scout Dispatch Cycle
+	# Every 5 years, clans send scouts to recruit.
 	# ------------------------------------------
 	effect = {
-		every_player = {
+		random_living_character = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_is_clan_leader
+			}
+			weight = {
+				base = 1
+			}
+			# Dispatch scouts from leader's clan
+			trigger_event = {
+				id = murim_scout.0001
+				days = { 30 90 }
+			}
+		}
+	}
+}
+
+# ==========================================
+# 10-YEAR PULSE (GRAND TOURNAMENT)
+# Grand Tournament for ALL ranked martial artists.
+# ==========================================
+
+on_ten_year_pulse = {
+
+	effect = {
+		every_living_character = {
 			limit = {
 				is_alive = yes
 				murim_is_martial_artist_trigger = yes
+				prowess >= 12
+				NOT = { has_character_modifier = murim_grand_tournament_cooldown }
 			}
 			random = {
-				chance = 5
+				chance = 25
 				modifier = {
-					add = 5
-					murim_is_peak_cultivator_trigger = yes
-				}
-				trigger_event = {
-					id = murim_fate.0001
-					days = { 30 180 }
-				}
-			}
-		}
-	}
-
-	# ------------------------------------------
-	# Mentor Events
-	# Young/unranked cultivators may find mentors.
-	# ------------------------------------------
-	effect = {
-		every_player = {
-			limit = {
-				is_alive = yes
-				murim_is_martial_artist_trigger = yes
-				NOT = { murim_is_advanced_cultivator_trigger = yes }
-				age <= 30
-			}
-			random = {
-				chance = 12
-				trigger_event = {
-					id = murim_mentor.0001
-					days = { 10 90 }
-				}
-			}
-		}
-	}
-
-	# ------------------------------------------
-	# Romance Events
-	# Yearly chance for romance events for cultivators.
-	# ------------------------------------------
-	effect = {
-		every_player = {
-			limit = {
-				is_alive = yes
-				murim_is_martial_artist_trigger = yes
-				age >= 16
-			}
-			random = {
-				chance = 8
-				modifier = {
-					add = 5
-					has_trait = lustful
+					add = 20
+					murim_is_top_50_martial_artist_trigger = yes
 				}
 				modifier = {
-					add = 3
-					attraction_opinion >= 10
+					add = 10
+					prowess >= 18
 				}
 				trigger_event = {
-					id = murim_romance.0001
-					days = { 15 120 }
-				}
-			}
-		}
-	}
-
-	# ------------------------------------------
-	# Politics Events
-	# Martial alliance and congress events.
-	# ------------------------------------------
-	effect = {
-		every_player = {
-			limit = {
-				is_alive = yes
-				murim_is_martial_artist_trigger = yes
-				OR = {
-					is_ruler = yes
-					murim_is_sect_leader_trigger = yes
-				}
-			}
-			random = {
-				chance = 10
-				trigger_event = {
-					id = murim_politics.0001
-					days = { 20 120 }
+					id = murim_tournament.0005
+					days = { 15 60 }
 				}
 			}
 		}
@@ -684,243 +691,140 @@ on_yearly_pulse = {
 }
 
 # ==========================================
-# ON CHARACTER DEATH
-# Handles aftermath of cultivator deaths.
+# DEATH HOOKS
+# When a cultivator dies, trigger events
+# for allies and rivals.
 # ==========================================
 
 on_death = {
-	effect = {
-		# Remove from rankings if ranked
-		if = {
-			limit = {
-				murim_is_top_50_martial_artist_trigger = yes
-			}
-			murim_remove_from_rankings_on_death_effect = yes
-		}
 
-		# Trigger ranker death events
+	# ------------------------------------------
+	# Ranker Death Event
+	# If a Top 50 ranked martial artist dies,
+	# notify the martial world.
+	# ------------------------------------------
+	effect = {
 		if = {
 			limit = {
-				OR = {
-					murim_is_top_50_martial_artist_trigger = yes
-					has_trait = murim_legendary_fighter
-				}
+				murim_is_martial_artist_trigger = yes
+				has_variable = murim_martial_rank_position
 			}
+			# Notify nearby players about ranker death
 			every_player = {
 				limit = {
 					is_alive = yes
 					murim_is_martial_artist_trigger = yes
+					NOT = { this = root }
 				}
 				trigger_event = {
 					id = murim_ranker_death.0001
-					days = { 1 10 }
-				}
-			}
-		}
-
-		# Sect leader death - succession crisis
-		if = {
-			limit = {
-				has_variable = murim_sect_leader
-			}
-			every_player = {
-				limit = {
-					is_alive = yes
-					has_variable = murim_sect_member
-				}
-				trigger_event = {
-					id = murim_sect.0005
-					days = { 3 15 }
-				}
-			}
-		}
-
-		# Mentor death
-		if = {
-			limit = {
-				has_variable = murim_is_mentor
-			}
-			every_player = {
-				limit = {
-					is_alive = yes
-					has_variable = murim_has_mentor
-				}
-				trigger_event = {
-					id = murim_mentor.0005
 					days = { 1 5 }
 				}
+			}
+			# Trigger inheritance of techniques
+			if = {
+				limit = {
+					var:murim_martial_rank_position <= 10
+				}
+				every_player = {
+					limit = {
+						is_alive = yes
+						murim_is_martial_artist_trigger = yes
+					}
+					trigger_event = {
+						id = murim_ranker_death.0005
+						days = { 5 15 }
+					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Clan Leader Death - Succession
+	# If a clan leader dies, trigger succession.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				has_variable = murim_is_clan_leader
+			}
+			trigger_event = {
+				id = murim_succession.0001
+				days = { 1 3 }
 			}
 		}
 	}
 }
 
 # ==========================================
-# ON BATTLE/WAR HOOKS
-# Murim events triggered by vanilla wars.
+# BATTLE/WAR HOOKS
+# Martial artists gain XP from real battles.
 # ==========================================
 
-on_combat_end_winner = {
+on_battle_end = {
+
 	effect = {
-		if = {
-			limit = {
-				murim_is_martial_artist_trigger = yes
-			}
-			# Combat XP gain
+		# Winning commander who is a martial artist gains combat XP
+		every_in_list = {
+			list = winners
 			if = {
 				limit = {
-					has_variable = murim_cultivation_xp
+					murim_is_martial_artist_trigger = yes
+					is_alive = yes
 				}
 				change_variable = {
 					name = murim_cultivation_xp
 					add = 25
 				}
-			}
-			# Chance for combat trauma
-			random = {
-				chance = 5
-				modifier = {
-					add = 5
-					prowess < 10
+				# Battle memory
+				create_character_memory = {
+					type = murim_battle_victory_memory
 				}
-				random_list = {
-					50 = {
-						add_trait = wounded_1
-					}
-					30 = {
-						add_stress = 20
-					}
-					15 = {
-						add_trait = wounded_2
-					}
-					5 = {
-						add_trait = one_eyed
+				# Chance for combat trauma
+				random = {
+					chance = 15
+					trigger_event = {
+						id = murim_training.0008
+						days = { 3 10 }
 					}
 				}
 			}
 		}
-	}
-}
 
-on_combat_end_loser = {
-	effect = {
-		if = {
-			limit = {
-				murim_is_martial_artist_trigger = yes
-			}
-			# Less XP for losing
+		# Losing martial artists suffer injuries/trauma
+		every_in_list = {
+			list = losers
 			if = {
 				limit = {
-					has_variable = murim_cultivation_xp
+					murim_is_martial_artist_trigger = yes
+					is_alive = yes
 				}
 				change_variable = {
 					name = murim_cultivation_xp
 					add = 10
 				}
-			}
-			# Higher chance of trauma for losers
-			random = {
-				chance = 15
-				modifier = {
-					add = 10
-					prowess < 8
-				}
-				random_list = {
-					30 = {
-						add_trait = wounded_1
-					}
-					25 = {
-						add_trait = wounded_2
-					}
-					20 = {
-						add_stress = 30
-					}
-					10 = {
-						add_trait = wounded_3
-					}
-					8 = {
-						add_trait = one_eyed
-					}
-					5 = {
-						add_trait = incapable
-					}
-					2 = {
-						# Shattered dantian from major defeat
-						if = {
-							limit = {
-								murim_is_cultivator_trigger = yes
-								NOT = { has_trait = shattered_dantian }
-							}
-							add_trait = shattered_dantian
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-# ==========================================
-# ON IMPRISONMENT
-# Cultivators face qi sealing when imprisoned.
-# ==========================================
-
-on_imprison = {
-	effect = {
-		if = {
-			limit = {
-				murim_is_cultivator_trigger = yes
-			}
-			random = {
-				chance = 30
-				modifier = {
-					add = 20
-					murim_is_advanced_cultivator_trigger = yes
-				}
-				if = {
-					limit = {
-						NOT = { has_trait = qi_sealed_by_enemy }
-					}
-					add_trait = qi_sealed_by_enemy
-				}
-			}
-			add_stress = 25
-		}
-	}
-}
-
-# ==========================================
-# ON RELEASE FROM PRISON
-# Cultivators may recover or seek vengeance.
-# ==========================================
-
-on_release_from_prison = {
-	effect = {
-		if = {
-			limit = {
-				murim_is_cultivator_trigger = yes
-			}
-			# Remove qi seal on release
-			if = {
-				limit = {
-					has_trait = qi_sealed_by_enemy
-				}
+				# Combat trauma chance higher for losers
 				random = {
-					chance = 60
-					remove_trait = qi_sealed_by_enemy
+					chance = 30
+					murim_roll_combat_injuries_effect = yes
 				}
-			}
-			# Possible vengeance event
-			random = {
-				chance = 25
-				modifier = {
-					add = 15
-					has_trait = vengeful
-				}
-				trigger_event = {
-					id = murim_duel.0003
-					days = { 30 90 }
+				create_character_memory = {
+					type = murim_battle_defeat_memory
 				}
 			}
 		}
+	}
+}
+
+# ==========================================
+# GAME START HOOK
+# Initialize the martial world on new game.
+# ==========================================
+
+on_game_start = {
+	effect = {
+		# Handled by murim_game_start_on_actions.txt
+		# and murim_game_start_effects.txt
 	}
 }
