@@ -1,0 +1,1955 @@
+# Murim Chronicles - Tang Poison Clan Events
+# The Tang Family: masters of poison arts, hidden weapons, assassination
+# Fighting style: indirect, deceptive, lethal from distance
+# High lethality but low direct prowess — fights through attrition and poison stacking
+# Cross-refs: murim_duel (poison duels), murim_jianghu (black market poison trade),
+#             murim_artifact (alchemy cauldrons), murim_rank (infamy), murim_clan_war (righteous vs demonic)
+# All combat uses murim_injury_chance + murim_poison_injury_chance values
+# Tang Clan is NEUTRAL — sells poison to both righteous and demonic sides
+
+namespace = murim_tang
+
+########################################
+# 0001 - TANG CLAN POISON REFINEMENT
+# Core alchemy chain: refine poisons for use/trade
+# Entry point to Tang Clan identity
+########################################
+
+murim_tang.0001 = {
+	type = character_event
+	title = murim_tang.0001.t
+	desc = murim_tang.0001.desc
+	theme = intrigue_activity
+	
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_trait = tang_poison_master
+		NOT = { has_character_flag = tang_refining_cooldown }
+		OR = {
+			intrigue >= 12
+			learning >= 10
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = tang_clan_heir
+		}
+		modifier = {
+			add = 0.3
+			intrigue >= 16
+		}
+		modifier = {
+			add = 0.2
+			learning >= 14
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_refining_cooldown
+			years = 1
+		}
+	}
+
+	# Option A: Refine lethal combat poison (high risk, high reward)
+	option = {
+		name = murim_tang.0001.a
+		trigger = {
+			intrigue >= 14
+		}
+		random_list = {
+			# Success: deadly poison created
+			60 = {
+				modifier = {
+					add = 15
+					learning >= 16
+				}
+				modifier = {
+					add = 10
+					has_trait = alchemy_master
+				}
+				send_interface_toast = {
+					title = murim_tang_refine_success
+					left_icon = root
+				}
+				add_character_modifier = {
+					modifier = tang_lethal_poison_prepared
+					years = 3
+				}
+				# Poison gives huge intrigue boost in next combat
+				change_intrigue = 1
+				add_prestige = 100
+				if = {
+					limit = { has_variable = tang_poisons_refined }
+					change_variable = { name = tang_poisons_refined add = 1 }
+				}
+				if = {
+					limit = { NOT = { has_variable = tang_poisons_refined } }
+					set_variable = { name = tang_poisons_refined value = 1 }
+				}
+			}
+			# Partial success: weaker poison
+			25 = {
+				send_interface_toast = {
+					title = murim_tang_refine_partial
+					left_icon = root
+				}
+				add_character_modifier = {
+					modifier = tang_mild_poison_prepared
+					years = 2
+				}
+				add_prestige = 30
+			}
+			# Failure: poisoned yourself
+			15 = {
+				modifier = {
+					add = -10
+					has_trait = poison_resistance_trained
+				}
+				send_interface_toast = {
+					title = murim_tang_refine_fail
+					left_icon = root
+				}
+				add_character_modifier = {
+					modifier = tang_self_poisoned
+					years = 1
+				}
+				# Health damage from accidental exposure
+				add_trait = wounded_1
+				change_intrigue = -1
+				stress_impact = {
+					base = 15
+					paranoid = medium_stress_impact_gain
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				intrigue >= 18
+			}
+		}
+	}
+
+	# Option B: Brew healing antidotes (safe, diplomatic value)
+	option = {
+		name = murim_tang.0001.b
+		# Antidotes are always safe to make
+		add_character_modifier = {
+			modifier = tang_antidote_stock
+			years = 3
+		}
+		add_prestige = 50
+		add_piety = 25
+		# Can be traded for favors later
+		if = {
+			limit = { NOT = { has_variable = tang_antidotes_stocked } }
+			set_variable = { name = tang_antidotes_stocked value = 1 }
+		}
+		if = {
+			limit = { has_variable = tang_antidotes_stocked }
+			change_variable = { name = tang_antidotes_stocked add = 1 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+			modifier = {
+				add = 15
+				diplomacy >= 14
+			}
+		}
+	}
+
+	# Option C: Craft hidden weapons (throwing needles, smoke bombs)
+	option = {
+		name = murim_tang.0001.c
+		trigger = {
+			OR = {
+				has_trait = tang_hidden_weapon_expert
+				martial >= 10
+			}
+		}
+		random_list = {
+			70 = {
+				modifier = {
+					add = 10
+					has_trait = tang_hidden_weapon_expert
+				}
+				add_character_modifier = {
+					modifier = tang_hidden_weapons_ready
+					years = 3
+				}
+				change_prowess = 2
+				add_prestige = 75
+			}
+			30 = {
+				# Accident during crafting
+				send_interface_toast = {
+					title = murim_tang_weapon_accident
+					left_icon = root
+				}
+				add_trait = wounded_1
+				stress_impact = {
+					base = 10
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = tang_hidden_weapon_expert
+			}
+		}
+	}
+
+	# Option D: Study poison theory (learning path, no risk)
+	option = {
+		name = murim_tang.0001.d
+		change_learning = 1
+		add_prestige = 25
+		stress_impact = {
+			base = -5
+			diligent = minor_stress_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = diligent
+			}
+		}
+	}
+}
+
+########################################
+# 0002 - ASSASSINATION CONTRACT
+# Tang Clan receives contract to eliminate a target
+# Morality choice + execution chain
+########################################
+
+murim_tang.0002 = {
+	type = character_event
+	title = murim_tang.0002.t
+	desc = murim_tang.0002.desc
+	theme = intrigue_activity
+
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+	right_portrait = {
+		character = scope:tang_target
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		OR = {
+			has_trait = tang_poison_master
+			has_trait = tang_hidden_weapon_expert
+		}
+		intrigue >= 10
+		any_relation = {
+			type = rival
+			is_alive = yes
+		}
+		NOT = { has_character_flag = tang_contract_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = callous
+		}
+		modifier = {
+			add = 0.3
+			has_trait = sadistic
+		}
+		modifier = {
+			subtract = 0.5
+			has_trait = compassionate
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_contract_cooldown
+			years = 2
+		}
+		# Pick a rival as the target
+		random_relation = {
+			type = rival
+			limit = { is_alive = yes }
+			save_scope_as = tang_target
+		}
+	}
+
+	# Option A: Accept the contract — poison assassination
+	option = {
+		name = murim_tang.0002.a
+		trigger = {
+			exists = scope:tang_target
+			has_character_modifier = tang_lethal_poison_prepared
+		}
+		# Create fight memory
+		create_character_memory = {
+			type = tang_assassination_attempt_memory
+			participants = { target = scope:tang_target }
+		}
+		random_list = {
+			# Clean kill — target dies, no evidence
+			40 = {
+				modifier = {
+					add = 15
+					intrigue >= 18
+				}
+				modifier = {
+					add = 10
+					has_trait = tang_poison_master
+				}
+				modifier = {
+					add = 5
+					has_character_modifier = tang_hidden_weapons_ready
+				}
+				scope:tang_target = {
+					death = {
+						death_reason = death_murder_unknown
+						killer = root
+					}
+				}
+				add_prestige = 200
+				add_gold = 150
+				remove_character_modifier = tang_lethal_poison_prepared
+				# Infamy if anyone suspects
+				random_list = {
+					70 = {
+						# Clean — no suspicion
+						custom_tooltip = murim_tang_clean_kill_tt
+					}
+					30 = {
+						# Rumored
+						add_character_modifier = {
+							modifier = suspected_poisoner
+							years = 5
+						}
+					}
+				}
+			}
+			# Target survives but poisoned
+			35 = {
+				scope:tang_target = {
+					add_character_modifier = {
+						modifier = tang_slow_poison_afflicted
+						years = 3
+					}
+					add_trait = wounded_2
+					# Target creates memory of assassination attempt
+					create_character_memory = {
+						type = tang_survived_poison_memory
+						participants = { attacker = root }
+					}
+				}
+				add_prestige = 50
+				remove_character_modifier = tang_lethal_poison_prepared
+				# Target now knows and wants revenge
+				scope:tang_target = {
+					add_opinion = {
+						target = root
+						modifier = attempted_murder_opinion
+						opinion = -80
+					}
+				}
+			}
+			# Complete failure — caught
+			25 = {
+				modifier = {
+					add = -10
+					intrigue >= 16
+				}
+				# Exposed as assassin
+				add_character_modifier = {
+					modifier = exposed_tang_assassin
+					years = 5
+				}
+				add_prestige = -200
+				# All righteous faction members hate you
+				every_living_character = {
+					limit = {
+						OR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_taoist
+							has_trait = shaolin_monk
+						}
+						NOT = { this = root }
+					}
+					add_opinion = {
+						target = root
+						modifier = exposed_assassin_opinion
+						opinion = -40
+					}
+				}
+				# Target gets +opinion from sympathizers
+				scope:tang_target = {
+					add_prestige = 100
+				}
+				stress_impact = {
+					base = 30
+					paranoid = major_stress_impact_gain
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = sadistic
+			}
+			modifier = {
+				add = 15
+				has_trait = vengeful
+			}
+			modifier = {
+				add = -30
+				has_trait = just
+			}
+		}
+	}
+
+	# Option B: Decline — too dishonorable
+	option = {
+		name = murim_tang.0002.b
+		add_piety = 50
+		stress_impact = {
+			base = -10
+			just = minor_stress_loss
+			compassionate = minor_stress_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+
+	# Option C: Warn the target instead (flip sides)
+	option = {
+		name = murim_tang.0002.c
+		trigger = {
+			exists = scope:tang_target
+		}
+		scope:tang_target = {
+			add_opinion = {
+				target = root
+				modifier = warned_of_danger_opinion
+				opinion = 40
+			}
+		}
+		add_piety = 75
+		add_prestige = -50
+		# Whoever hired you is now your enemy
+		stress_impact = {
+			base = 5
+			honest = minor_stress_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				has_trait = honest
+			}
+			modifier = {
+				add = 15
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option D: Blackmail the contractor instead
+	option = {
+		name = murim_tang.0002.d
+		trigger = {
+			intrigue >= 16
+		}
+		add_gold = 200
+		add_character_modifier = {
+			modifier = tang_blackmail_leverage
+			years = 3
+		}
+		stress_impact = {
+			base = 10
+			greedy = minor_stress_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+			modifier = {
+				add = 10
+				intrigue >= 20
+			}
+		}
+	}
+}
+
+########################################
+# 0003 - ANTIDOTE TRADING / LEVERAGE
+# Tang Clan uses antidotes as diplomatic weapons
+# Someone important has been poisoned — only Tang can help
+########################################
+
+murim_tang.0003 = {
+	type = character_event
+	title = murim_tang.0003.t
+	desc = murim_tang.0003.desc
+	theme = diplomacy_majesty_focus
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:poisoned_person
+		animation = pain
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = tang_poison_master
+		has_character_modifier = tang_antidote_stock
+		any_living_character = {
+			has_character_modifier = tang_slow_poison_afflicted
+			NOT = { this = root }
+			is_alive = yes
+		}
+		NOT = { has_character_flag = tang_antidote_trade_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			diplomacy >= 14
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_antidote_trade_cooldown
+			years = 2
+		}
+		random_living_character = {
+			limit = {
+				has_character_modifier = tang_slow_poison_afflicted
+				is_alive = yes
+				NOT = { this = root }
+			}
+			save_scope_as = poisoned_person
+		}
+	}
+
+	# Option A: Cure them for free (righteous reputation)
+	option = {
+		name = murim_tang.0003.a
+		trigger = {
+			exists = scope:poisoned_person
+		}
+		scope:poisoned_person = {
+			remove_character_modifier = tang_slow_poison_afflicted
+			add_opinion = {
+				target = root
+				modifier = tang_saved_my_life_opinion
+				opinion = 60
+			}
+			# Create gratitude memory
+			create_character_memory = {
+				type = tang_antidote_gratitude_memory
+				participants = { savior = root }
+			}
+		}
+		add_piety = 100
+		add_prestige = 150
+		# Righteous factions respect this
+		every_living_character = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_taoist
+					has_trait = shaolin_monk
+				}
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = tang_healer_reputation_opinion
+				opinion = 15
+			}
+		}
+		stress_impact = {
+			base = -10
+			compassionate = minor_stress_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option B: Demand gold payment
+	option = {
+		name = murim_tang.0003.b
+		trigger = {
+			exists = scope:poisoned_person
+		}
+		scope:poisoned_person = {
+			remove_character_modifier = tang_slow_poison_afflicted
+			add_opinion = {
+				target = root
+				modifier = tang_expensive_cure_opinion
+				opinion = 10
+			}
+		}
+		add_gold = 300
+		add_prestige = 50
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Option C: Demand a favor / technique exchange
+	option = {
+		name = murim_tang.0003.c
+		trigger = {
+			exists = scope:poisoned_person
+		}
+		scope:poisoned_person = {
+			remove_character_modifier = tang_slow_poison_afflicted
+			add_opinion = {
+				target = root
+				modifier = tang_owes_favor_opinion
+				opinion = -10
+			}
+			# They owe you a hook
+			root = {
+				add_hook = {
+					type = favor_hook
+					target = scope:poisoned_person
+				}
+			}
+		}
+		add_prestige = 100
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option D: Let them suffer (cruel path)
+	option = {
+		name = murim_tang.0003.d
+		trigger = {
+			exists = scope:poisoned_person
+		}
+		scope:poisoned_person = {
+			add_opinion = {
+				target = root
+				modifier = tang_refused_cure_opinion
+				opinion = -60
+			}
+		}
+		add_dread = 25
+		stress_impact = {
+			base = -5
+			sadistic = minor_stress_loss
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				has_trait = sadistic
+			}
+			modifier = {
+				add = -20
+				has_trait = compassionate
+			}
+		}
+	}
+}
+
+########################################
+# 0004 - POISON RESISTANCE TRAINING
+# Tang Clan member builds immunity through micro-dosing
+# Dangerous but essential for mastery
+########################################
+
+murim_tang.0004 = {
+	type = character_event
+	title = murim_tang.0004.t
+	desc = murim_tang.0004.desc
+	theme = martial_activity
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		OR = {
+			has_trait = tang_poison_master
+			has_trait = tang_clan_heir
+		}
+		NOT = { has_trait = poison_resistance_trained }
+		NOT = { has_character_flag = tang_resistance_training_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = brave
+		}
+		modifier = {
+			subtract = 0.3
+			has_trait = craven
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_resistance_training_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: Full intensity training (high risk, full immunity)
+	option = {
+		name = murim_tang.0004.a
+		trigger = {
+			prowess >= 8
+		}
+		random_list = {
+			# Success: full poison resistance gained
+			35 = {
+				modifier = {
+					add = 15
+					constitution_value >= 10
+				}
+				modifier = {
+					add = 10
+					has_trait = iron_body
+				}
+				modifier = {
+					add = 10
+					learning >= 14
+				}
+				add_trait = poison_resistance_trained
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = tang_hundred_poisons_body
+					years = -1
+				}
+				change_prowess = 1
+				create_character_memory = {
+					type = tang_resistance_training_success_memory
+				}
+				stress_impact = {
+					base = -15
+					brave = minor_stress_loss
+				}
+			}
+			# Partial: some resistance, some damage
+			35 = {
+				add_character_modifier = {
+					modifier = tang_partial_poison_resistance
+					years = 5
+				}
+				add_trait = wounded_1
+				add_prestige = 75
+				stress_impact = {
+					base = 10
+				}
+			}
+			# Failure: severe poisoning
+			30 = {
+				modifier = {
+					add = -15
+					learning >= 14
+				}
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = tang_training_poisoning
+					years = 2
+				}
+				change_prowess = -2
+				stress_impact = {
+					base = 30
+					craven = major_stress_impact_gain
+				}
+				# Create traumatic memory
+				create_character_memory = {
+					type = tang_resistance_training_failure_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option B: Gradual training (safe, takes longer, partial resistance)
+	option = {
+		name = murim_tang.0004.b
+		add_character_modifier = {
+			modifier = tang_partial_poison_resistance
+			years = 5
+		}
+		add_prestige = 50
+		change_learning = 1
+		stress_impact = {
+			base = -5
+			patient = minor_stress_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+			modifier = {
+				add = 15
+				has_trait = calm
+			}
+		}
+	}
+
+	# Option C: Refuse (too dangerous)
+	option = {
+		name = murim_tang.0004.c
+		stress_impact = {
+			base = -10
+			craven = minor_stress_loss
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				has_trait = craven
+			}
+		}
+	}
+}
+
+########################################
+# 0005 - POISONED BANQUET PLOT
+# Tang Clan member plots to poison a feast
+# Political assassination through subtlety
+########################################
+
+murim_tang.0005 = {
+	type = character_event
+	title = murim_tang.0005.t
+	desc = murim_tang.0005.desc
+	theme = intrigue_activity
+
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:banquet_host
+		animation = happiness
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_trait = tang_poison_master
+		has_character_modifier = tang_lethal_poison_prepared
+		intrigue >= 14
+		any_liege_or_above = {
+			is_alive = yes
+		}
+		NOT = { has_character_flag = tang_banquet_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = {
+			add = 0.5
+			has_trait = deceitful
+		}
+		modifier = {
+			add = 0.3
+			any_relation = {
+				type = rival
+				is_ruler = yes
+			}
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_banquet_cooldown
+			years = 5
+		}
+		liege = {
+			save_scope_as = banquet_host
+		}
+	}
+
+	# Option A: Poison the main course (target the host)
+	option = {
+		name = murim_tang.0005.a
+		trigger = {
+			exists = scope:banquet_host
+		}
+		# Create memory of the plot
+		create_character_memory = {
+			type = tang_banquet_poison_plot_memory
+			participants = { target = scope:banquet_host }
+		}
+		random_list = {
+			# Success: host poisoned
+			35 = {
+				modifier = {
+					add = 15
+					intrigue >= 20
+				}
+				modifier = {
+					add = 10
+					has_trait = deceitful
+				}
+				scope:banquet_host = {
+					add_character_modifier = {
+						modifier = tang_slow_poison_afflicted
+						years = 3
+					}
+					# Serious health damage
+					random_list = {
+						50 = { add_trait = wounded_2 }
+						30 = { add_trait = ill }
+						20 = {
+							death = {
+								death_reason = death_murder_unknown
+								killer = root
+							}
+						}
+					}
+				}
+				remove_character_modifier = tang_lethal_poison_prepared
+				add_prestige = -50
+				add_gold = 100
+			}
+			# Partial: wrong person poisoned
+			30 = {
+				custom_tooltip = murim_tang_wrong_target_tt
+				# Random courtier dies/gets sick instead
+				scope:banquet_host = {
+					random_courtier = {
+						limit = {
+							is_alive = yes
+							NOT = { this = root }
+						}
+						add_character_modifier = {
+							modifier = tang_slow_poison_afflicted
+							years = 2
+						}
+						add_trait = wounded_1
+					}
+				}
+				remove_character_modifier = tang_lethal_poison_prepared
+				stress_impact = {
+					base = 15
+					compassionate = medium_stress_impact_gain
+				}
+			}
+			# Caught: disaster
+			35 = {
+				modifier = {
+					add = -15
+					intrigue >= 18
+				}
+				custom_tooltip = murim_tang_banquet_caught_tt
+				add_character_modifier = {
+					modifier = exposed_tang_assassin
+					years = 10
+				}
+				scope:banquet_host = {
+					add_opinion = {
+						target = root
+						modifier = attempted_poisoning_opinion
+						opinion = -100
+					}
+					# Imprisonment attempt
+					imprison = {
+						target = root
+						type = dungeon
+					}
+				}
+				add_prestige = -500
+				# Every righteous martial artist now hunts you
+				every_living_character = {
+					limit = {
+						OR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_taoist
+							has_trait = shaolin_monk
+						}
+						NOT = { this = root }
+					}
+					add_opinion = {
+						target = root
+						modifier = tang_banquet_poisoner_opinion
+						opinion = -60
+					}
+				}
+				remove_character_modifier = tang_lethal_poison_prepared
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+			modifier = {
+				add = -30
+				has_trait = just
+			}
+		}
+	}
+
+	# Option B: Poison the wine subtly (lower risk, lower impact)
+	option = {
+		name = murim_tang.0005.b
+		trigger = {
+			exists = scope:banquet_host
+		}
+		random_list = {
+			# Mild poisoning — host feels sick but survives
+			55 = {
+				scope:banquet_host = {
+					add_character_modifier = {
+						modifier = tang_mild_poison_afflicted
+						years = 1
+					}
+					add_trait = ill
+				}
+				remove_character_modifier = tang_lethal_poison_prepared
+				add_prestige = -25
+			}
+			# No effect (poison too diluted)
+			30 = {
+				custom_tooltip = murim_tang_no_effect_tt
+				remove_character_modifier = tang_lethal_poison_prepared
+			}
+			# Caught
+			15 = {
+				add_character_modifier = {
+					modifier = suspected_poisoner
+					years = 5
+				}
+				scope:banquet_host = {
+					add_opinion = {
+						target = root
+						modifier = suspected_poisoner_opinion
+						opinion = -40
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Option C: Attend the banquet honestly (no poison)
+	option = {
+		name = murim_tang.0005.c
+		add_prestige = 25
+		stress_impact = {
+			base = -5
+			honest = minor_stress_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 25
+				has_trait = honest
+			}
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+
+	# Option D: Skip the banquet entirely
+	option = {
+		name = murim_tang.0005.d
+		stress_impact = {
+			base = -5
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+########################################
+# 0006 - TANG HIDDEN WEAPON CHALLENGE
+# Someone challenges the Tang's hidden weapon supremacy
+# Public demonstration / combat event
+########################################
+
+murim_tang.0006 = {
+	type = character_event
+	title = murim_tang.0006.t
+	desc = murim_tang.0006.desc
+	theme = martial_activity
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:tang_challenger
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_trait = tang_hidden_weapon_expert
+		NOT = { has_character_flag = tang_challenge_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.3
+			prowess >= 14
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_challenge_cooldown
+			years = 2
+		}
+		# Find a martial artist challenger
+		random_living_character = {
+			limit = {
+				is_alive = yes
+				prowess >= 10
+				NOT = { this = root }
+				NOT = { has_trait = tang_hidden_weapon_expert }
+				NOT = { has_trait = tang_poison_master }
+			}
+			save_scope_as = tang_challenger
+		}
+	}
+
+	# Option A: Accept the challenge — hidden weapon duel
+	option = {
+		name = murim_tang.0006.a
+		trigger = {
+			exists = scope:tang_challenger
+		}
+		# Create fight memory
+		create_character_memory = {
+			type = tang_hidden_weapon_duel_memory
+			participants = { opponent = scope:tang_challenger }
+		}
+		scope:tang_challenger = {
+			create_character_memory = {
+				type = tang_hidden_weapon_duel_memory
+				participants = { opponent = root }
+			}
+		}
+		# Combat resolution — Tang uses intrigue instead of raw prowess
+		random_list = {
+			# Victory: Tang hidden weapons dominate
+			50 = {
+				modifier = {
+					add = 15
+					intrigue >= 18
+				}
+				modifier = {
+					add = 10
+					has_character_modifier = tang_hidden_weapons_ready
+				}
+				modifier = {
+					add = 10
+					has_trait = tang_clan_heir
+				}
+				# Victory! Hidden weapons proven superior
+				add_prestige = 250
+				change_prowess = 1
+				# Challenger takes injury (use poison injury chance)
+				scope:tang_challenger = {
+					random_list = {
+						40 = { add_trait = wounded_1 }
+						30 = {
+							add_character_modifier = {
+								modifier = tang_needle_wound
+								years = 2
+							}
+						}
+						20 = { add_trait = wounded_2 }
+						10 = {
+							# Needle hit eye
+							add_trait = one_eyed
+						}
+					}
+					add_opinion = {
+						target = root
+						modifier = tang_defeated_me_opinion
+						opinion = -30
+					}
+				}
+				# Winner injury check (Tang style = low injury for winner)
+				random_list = {
+					value = murim_sparring_unscathed_weight
+					# Unscathed (Tang ranged style = very safe for user)
+					80 = {
+						custom_tooltip = murim_tang_unscathed_tt
+					}
+				}
+				random_list = {
+					value = murim_sparring_minor_wound_weight
+					15 = {
+						add_trait = wounded_1
+					}
+				}
+				random_list = {
+					value = murim_sparring_accident_weight
+					5 = {
+						add_trait = wounded_2
+					}
+				}
+			}
+			# Draw: mutual respect
+			25 = {
+				add_prestige = 75
+				scope:tang_challenger = {
+					add_opinion = {
+						target = root
+						modifier = tang_worthy_opponent_opinion
+						opinion = 15
+					}
+				}
+			}
+			# Defeat: hidden weapons countered
+			25 = {
+				modifier = {
+					add = -10
+					intrigue >= 16
+				}
+				add_prestige = -100
+				# Tang injury — use honor duel loser rates
+				random_list = {
+					20 = {
+						custom_tooltip = murim_tang_unscathed_loss_tt
+					}
+					30 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					15 = {
+						# Humiliating defeat — martial reputation damaged
+						add_character_modifier = {
+							modifier = tang_hidden_weapon_countered
+							years = 3
+						}
+						change_prowess = -2
+					}
+					5 = {
+						add_trait = one_eyed
+					}
+				}
+				stress_impact = {
+					base = 20
+					arrogant = medium_stress_impact_gain
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+			modifier = {
+				add = -20
+				has_trait = craven
+			}
+		}
+	}
+
+	# Option B: Decline — beneath your notice
+	option = {
+		name = murim_tang.0006.b
+		add_prestige = -50
+		stress_impact = {
+			base = 5
+			arrogant = minor_stress_loss
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = lazy
+			}
+		}
+	}
+
+	# Option C: Offer to teach them instead (diplomatic)
+	option = {
+		name = murim_tang.0006.c
+		trigger = {
+			exists = scope:tang_challenger
+			diplomacy >= 12
+		}
+		scope:tang_challenger = {
+			add_opinion = {
+				target = root
+				modifier = tang_offered_teaching_opinion
+				opinion = 30
+			}
+		}
+		add_prestige = 75
+		add_piety = 25
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = gregarious
+			}
+		}
+	}
+}
+
+########################################
+# 0007 - TANG CLAN POISON TRADE (BLACK MARKET)
+# Selling poisons and antidotes on the jianghu underground
+# Cross-references murim_jianghu system
+########################################
+
+murim_tang.0007 = {
+	type = character_event
+	title = murim_tang.0007.t
+	desc = murim_tang.0007.desc
+	theme = intrigue_activity
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_trait = tang_poison_master
+		OR = {
+			has_character_modifier = tang_lethal_poison_prepared
+			has_character_modifier = tang_antidote_stock
+			has_character_modifier = tang_mild_poison_prepared
+		}
+		NOT = { has_character_flag = tang_trade_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.3
+			has_variable = jianghu_reputation
+		}
+		modifier = {
+			add = 0.2
+			has_trait = greedy
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_trade_cooldown
+			years = 1
+		}
+	}
+
+	# Option A: Sell to the highest bidder (max gold, any faction)
+	option = {
+		name = murim_tang.0007.a
+		add_gold = 400
+		add_prestige = -25
+		# Neutral reputation — selling to everyone
+		if = {
+			limit = { NOT = { has_variable = tang_trade_count } }
+			set_variable = { name = tang_trade_count value = 1 }
+		}
+		if = {
+			limit = { has_variable = tang_trade_count }
+			change_variable = { name = tang_trade_count add = 1 }
+		}
+		# Risk: buyer uses poison on innocents, blame traces back
+		random_list = {
+			70 = {
+				custom_tooltip = murim_tang_trade_clean_tt
+			}
+			30 = {
+				add_character_modifier = {
+					modifier = tang_trade_blowback
+					years = 2
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Option B: Sell only to righteous sects (defensive poisons/antidotes)
+	option = {
+		name = murim_tang.0007.b
+		add_gold = 200
+		add_prestige = 75
+		# Righteous factions appreciate this
+		every_living_character = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_taoist
+					has_trait = shaolin_monk
+				}
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = tang_righteous_supplier_opinion
+				opinion = 10
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+
+	# Option C: Sell to demonic sect (highest price, worst reputation)
+	option = {
+		name = murim_tang.0007.c
+		add_gold = 600
+		add_prestige = -100
+		add_dread = 15
+		# Demonic faction appreciates
+		every_living_character = {
+			limit = {
+				has_trait = heavenly_demon_body
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = tang_demonic_supplier_opinion
+				opinion = 20
+			}
+		}
+		# Righteous factions angry
+		every_living_character = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = wudang_taoist
+					has_trait = shaolin_monk
+				}
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = tang_sold_to_demons_opinion
+				opinion = -25
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+			modifier = {
+				add = -20
+				has_trait = just
+			}
+		}
+	}
+
+	# Option D: Keep stock for personal use
+	option = {
+		name = murim_tang.0007.d
+		stress_impact = {
+			base = -5
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# 0008 - TANG CLAN SUCCESSION CRISIS
+# The Tang family head is dying/dead — who inherits?
+# Political intrigue within the poison clan
+########################################
+
+murim_tang.0008 = {
+	type = character_event
+	title = murim_tang.0008.t
+	desc = murim_tang.0008.desc
+	theme = intrigue_activity
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = tang_clan_heir
+		NOT = { has_character_flag = tang_succession_resolved }
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = {
+			add = 0.5
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_succession_resolved
+		}
+	}
+
+	# Option A: Claim leadership through poison mastery trial
+	option = {
+		name = murim_tang.0008.a
+		trigger = {
+			has_trait = tang_poison_master
+			intrigue >= 14
+		}
+		random_list = {
+			# Pass the trial: become Tang Clan head
+			55 = {
+				modifier = {
+					add = 15
+					intrigue >= 18
+				}
+				modifier = {
+					add = 10
+					has_trait = poison_resistance_trained
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = tang_clan_head
+					years = -1
+				}
+				change_intrigue = 2
+				# All Tang members respect you
+				create_character_memory = {
+					type = tang_succession_victory_memory
+				}
+			}
+			# Fail: poisoned during trial
+			45 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = tang_succession_failure
+					years = 3
+				}
+				add_prestige = -200
+				stress_impact = {
+					base = 30
+					ambitious = major_stress_impact_gain
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option B: Challenge rival heir to poison duel
+	option = {
+		name = murim_tang.0008.b
+		trigger = {
+			intrigue >= 12
+		}
+		# Create fight memory for succession duel
+		create_character_memory = {
+			type = tang_succession_duel_memory
+		}
+		random_list = {
+			# Win the poison duel
+			50 = {
+				modifier = {
+					add = 10
+					has_trait = tang_hidden_weapon_expert
+				}
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = tang_clan_head
+					years = -1
+				}
+				change_prowess = 1
+				change_intrigue = 1
+			}
+			# Lose — exiled from main branch
+			50 = {
+				add_prestige = -300
+				add_character_modifier = {
+					modifier = tang_branch_exile
+					years = 5
+				}
+				stress_impact = {
+					base = 25
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option C: Support another candidate (political play)
+	option = {
+		name = murim_tang.0008.c
+		add_prestige = 100
+		add_piety = 50
+		# You become kingmaker — powerful position behind the scenes
+		add_character_modifier = {
+			modifier = tang_kingmaker
+			years = -1
+		}
+		change_diplomacy = 1
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				diplomacy >= 14
+			}
+		}
+	}
+
+	# Option D: Leave the clan entirely (independence)
+	option = {
+		name = murim_tang.0008.d
+		remove_trait = tang_clan_heir
+		add_character_modifier = {
+			modifier = tang_independent_poisoner
+			years = -1
+		}
+		add_prestige = 50
+		stress_impact = {
+			base = -15
+			content = minor_stress_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+}
+
+########################################
+# 0009 - POISON VS MEDICINE PHILOSOPHICAL EVENT
+# Tang Clan member faces moral dilemma:
+# Poison and medicine are two sides of the same coin
+########################################
+
+murim_tang.0009 = {
+	type = character_event
+	title = murim_tang.0009.t
+	desc = murim_tang.0009.desc
+	theme = learning_theology_focus
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = tang_poison_master
+		learning >= 12
+		NOT = { has_character_flag = tang_philosophy_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.8
+		modifier = {
+			add = 0.3
+			learning >= 16
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_philosophy_cooldown
+			years = 5
+		}
+	}
+
+	# Option A: Embrace the poison path fully (dark mastery)
+	option = {
+		name = murim_tang.0009.a
+		change_intrigue = 2
+		add_dread = 20
+		add_prestige = 150
+		add_character_modifier = {
+			modifier = tang_poison_dao_embraced
+			years = -1
+		}
+		# Righteous sects fear you more
+		stress_impact = {
+			base = -10
+			sadistic = minor_stress_loss
+			compassionate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = callous
+			}
+		}
+	}
+
+	# Option B: Pursue the medicine path (healer archetype)
+	option = {
+		name = murim_tang.0009.b
+		change_learning = 2
+		add_piety = 100
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = tang_medicine_dao_embraced
+			years = -1
+		}
+		# Become the healing poisoner — respected by all
+		stress_impact = {
+			base = -15
+			compassionate = minor_stress_loss
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option C: Walk the dual path (balance poison and medicine)
+	option = {
+		name = murim_tang.0009.c
+		trigger = {
+			learning >= 16
+			intrigue >= 14
+		}
+		change_learning = 1
+		change_intrigue = 1
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = tang_dual_dao_master
+			years = -1
+		}
+		# True mastery — both feared and respected
+		stress_impact = {
+			base = -20
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option D: Abandon poison study (leave the Tang path)
+	option = {
+		name = murim_tang.0009.d
+		add_piety = 150
+		remove_trait = tang_poison_master
+		stress_impact = {
+			base = 20
+			zealous = minor_stress_loss
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+########################################
+# 0010 - TANG CLAN JOINT DEFENSE PACT
+# Tang Clan offers poison expertise to defend a region
+# Cross-references clan_war system
+########################################
+
+murim_tang.0010 = {
+	type = character_event
+	title = murim_tang.0010.t
+	desc = murim_tang.0010.desc
+	theme = diplomacy_majesty_focus
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_trait = tang_poison_master
+		is_ruler = yes
+		NOT = { has_character_flag = tang_defense_pact_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = {
+			add = 0.5
+			any_war_enemy = {
+				is_alive = yes
+			}
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = tang_defense_pact_cooldown
+			years = 5
+		}
+	}
+
+	# Option A: Offer poison traps to defend territory
+	option = {
+		name = murim_tang.0010.a
+		add_character_modifier = {
+			modifier = tang_poison_defenses_active
+			years = 3
+		}
+		add_prestige = 200
+		# Enemies approaching territory risk poisoning
+		change_martial = 1
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				martial >= 12
+			}
+		}
+	}
+
+	# Option B: Offer antidotes to allied forces
+	option = {
+		name = murim_tang.0010.b
+		add_prestige = 150
+		add_piety = 50
+		# Allied forces gain poison resistance in wars
+		add_character_modifier = {
+			modifier = tang_allied_antidote_supply
+			years = 3
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option C: Stay neutral (Tang tradition)
+	option = {
+		name = murim_tang.0010.c
+		add_prestige = 50
+		stress_impact = {
+			base = -5
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
