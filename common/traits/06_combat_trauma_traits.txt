@@ -2,6 +2,7 @@
 # Real lasting consequences from duels and combat
 # These traits fundamentally change how a character fights, cultivates, and behaves
 # Load-safe: all traits have defaults and graceful degradation
+# 18 total trauma traits covering physical, spiritual, and psychological damage
 
 ######################################
 # SHATTERED MERIDIANS
@@ -29,6 +30,7 @@ shattered_meridians = {
 	# Incompatible with qi_crippled (meridians must exist to be shattered vs fully gone)
 	opposites = {
 		qi_crippled
+		meridian_blockage
 	}
 
 	desc = {
@@ -80,6 +82,7 @@ qi_crippled = {
 
 	opposites = {
 		shattered_meridians
+		meridian_blockage
 	}
 
 	desc = {
@@ -174,10 +177,10 @@ broken_spirit = {
 		is_alive = yes
 	}
 
-	# Incompatible with brave or battle_madness
+	# Incompatible with brave or berserker_trauma
 	opposites = {
 		brave
-		battle_madness
+		berserker_trauma
 	}
 
 	desc = {
@@ -199,15 +202,14 @@ broken_spirit = {
 	ai_rationality = 50
 
 	flag = murim_combat_trauma
-	flag = murim_permanent_injury
-	flag = cannot_initiate_duels
-	flag = refuses_duel_challenges
+	flag = murim_psychological_trauma
+	flag = cannot_challenge_duels
 }
 
 ######################################
 # BATTLE MADNESS
-# Too many kills - gains prowess but randomly attacks allies
-# Caused by: killing 5+ opponents in duels/combat, forbidden berserker techniques
+# Unhinged from too much violence - charges into every fight regardless of odds
+# Caused by: killing 10+ people in duels or combat without mental recovery
 ######################################
 
 battle_madness = {
@@ -218,14 +220,13 @@ battle_madness = {
 		prowess = 6
 		martial = 3
 		monthly_prestige = 0.3
-		diplomacy = -6
-		intrigue = -3
-		stress_gain_mult = -0.15
-		vassal_opinion = -20
-		courtier_opinion = -25
-		attraction_opinion = -10
-		hostile_scheme_power_mult = 0.2
-		tyranny_gain_mult = -0.25
+		stress_loss_mult = 0.20
+		health = -0.5
+		diplomacy = -4
+		learning = -3
+		attraction_opinion = -20
+		vassal_opinion = -15
+		dread_baseline_add = 20
 	}
 
 	can_have = {
@@ -233,10 +234,10 @@ battle_madness = {
 	}
 
 	opposites = {
+		broken_spirit
 		craven
 		calm
-		compassionate
-		broken_spirit
+		duel_ptsd
 	}
 
 	desc = {
@@ -250,34 +251,133 @@ battle_madness = {
 		}
 	}
 
-	# AI impact: extremely aggressive, always seeks combat, ignores risk
-	ai_energy = 50
+	# AI impact: will ALWAYS seek duels, never backs down, reckless in all combat
+	ai_energy = 75
 	ai_boldness = 100
-	ai_honor = -50
+	ai_honor = -20
 	ai_greed = 10
-	ai_rationality = -75
+	ai_rationality = -50
 
 	flag = murim_combat_trauma
-	flag = murim_berserker
-	flag = attacks_allies_randomly
+	flag = murim_psychological_trauma
+	flag = always_accepts_duels
+	flag = berserker_behavior
 }
 
 ######################################
-# PHANTOM PAIN
-# Old wound that flares up - random events where old injury causes problems
-# Caused by: any serious wound that heals but leaves lasting nerve damage
+# CRIPPLED ARM
+# One arm severely damaged - reduced combat effectiveness
+# Caused by: critical hit in duel targeting arm, failed weapon technique
 ######################################
 
-phantom_pain = {
+crippled_arm = {
 	index = 6
 	category = personality
 
 	character_modifier = {
-		prowess = -1
+		prowess = -3
+		martial = -2
+		monthly_prestige = -0.1
+		duel_advantage = -30
+		attraction_opinion = -5
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	opposites = {
+		severed_tendons
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = crippled_arm
+				}
+				desc = trait_crippled_arm_desc
+			}
+		}
+	}
+
+	# AI adapts fighting style - avoids weapon-heavy techniques
+	ai_energy = -15
+	ai_boldness = -10
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 20
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = reduced_combat_ability
+}
+
+######################################
+# NERVE DAMAGE
+# Nerve strikes or pressure point attacks caused lasting numbness
+# Caused by: acupuncture attacks, pressure point combat, poisoned needles
+######################################
+
+nerve_damage = {
+	index = 7
+	category = personality
+
+	character_modifier = {
+		prowess = -2
+		martial = -1
+		intrigue = -2
 		health = -0.15
 		stress_gain_mult = 0.10
-		monthly_piety = 0.1
+		# Reduced reaction speed affects all physical activities
+		monthly_lifestyle_xp_gain_mult = -0.10
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = nerve_damage
+				}
+				desc = trait_nerve_damage_desc
+			}
+		}
+	}
+
+	# AI slightly less effective overall but can still function
+	ai_energy = -10
+	ai_boldness = -5
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 10
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = pressure_point_vulnerability
+}
+
+######################################
+# PHANTOM PAIN
+# Chronic pain from old combat wounds that never fully healed
+# Caused by: accumulating 3+ wounds from different duels, improperly healed injuries
+######################################
+
+phantom_pain = {
+	index = 8
+	category = personality
+
+	character_modifier = {
+		stress_gain_mult = 0.20
+		health = -0.20
+		prowess = -1
+		monthly_piety = 0.2
 		learning = 1
+		# Pain brings wisdom but constant suffering
+		monthly_lifestyle_xp_gain_mult = 0.05
 	}
 
 	can_have = {
@@ -295,34 +395,144 @@ phantom_pain = {
 		}
 	}
 
-	# AI impact: slightly cautious, occasional disadvantage in combat
-	ai_energy = -10
+	# AI learns to endure - slightly more cautious but functional
+	ai_energy = -15
 	ai_boldness = -10
 	ai_honor = 5
 	ai_greed = 0
-	ai_rationality = 10
+	ai_rationality = 20
 
 	flag = murim_combat_trauma
 	flag = murim_chronic_condition
-	flag = random_flareup_events
+	flag = pain_endurance
 }
 
 ######################################
-# FLINCH REFLEX
-# Lost badly to a specific technique type - disadvantage against that type forever
-# Caused by: traumatic defeat involving a specific technique category
-# Uses flags to track which technique type: flinch_sword, flinch_palm, flinch_fire, flinch_poison, flinch_shadow
+# QI DEVIATION SCARRED
+# Survived a qi deviation but left with unstable internal energy
+# Caused by: qi deviation during combat, forced breakthrough under pressure
 ######################################
 
-flinch_reflex = {
-	index = 7
+qi_deviation_scarred = {
+	index = 9
 	category = personality
 
 	character_modifier = {
-		prowess = -2
+		health = -0.30
 		stress_gain_mult = 0.15
-		martial = -1
-		monthly_prestige = -0.1
+		prowess = -2
+		learning = -2
+		monthly_piety = -0.3
+		# Unstable qi can randomly surge - dangerous but sometimes powerful
+		dread_baseline_add = 5
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	# Not compatible with full qi loss
+	opposites = {
+		qi_crippled
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = qi_deviation_scarred
+				}
+				desc = trait_qi_deviation_scarred_desc
+			}
+		}
+	}
+
+	# AI is cautious about cultivation but not completely averse
+	ai_energy = -20
+	ai_boldness = -15
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 25
+
+	flag = murim_combat_trauma
+	flag = murim_qi_instability
+	flag = cultivation_risk_increased
+	flag = qi_deviation_survivor
+}
+
+######################################
+# MERIDIAN BLOCKAGE
+# Partial blockage of meridian channels - slowed cultivation, reduced qi flow
+# Caused by: targeted meridian strikes, incomplete healing after combat
+######################################
+
+meridian_blockage = {
+	index = 10
+	category = personality
+
+	character_modifier = {
+		health = -0.10
+		learning = -2
+		monthly_piety = -0.2
+		stress_gain_mult = 0.05
+		# Slower cultivation progress
+		monthly_lifestyle_xp_gain_mult = -0.15
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	# Less severe than shattered or crippled
+	opposites = {
+		shattered_meridians
+		qi_crippled
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = meridian_blockage
+				}
+				desc = trait_meridian_blockage_desc
+			}
+		}
+	}
+
+	# AI can still cultivate but much slower - may seek healers
+	ai_energy = -10
+	ai_boldness = 0
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 15
+
+	flag = murim_combat_trauma
+	flag = murim_chronic_condition
+	flag = slowed_cultivation
+	flag = can_be_healed
+}
+
+######################################
+# SOUL WOUND
+# Deep spiritual damage from soul-attacking techniques or demonic encounters
+# Caused by: soul attacks, demonic cultivation gone wrong, forbidden technique exposure
+######################################
+
+soul_wound = {
+	index = 11
+	category = personality
+
+	character_modifier = {
+		health = -0.40
+		stress_gain_mult = 0.25
+		monthly_piety = -0.5
+		learning = -3
+		diplomacy = -2
+		prowess = -1
+		# Soul damage affects everything at a fundamental level
+		fertility = -0.15
+		attraction_opinion = -10
 	}
 
 	can_have = {
@@ -333,137 +543,394 @@ flinch_reflex = {
 		first_valid = {
 			triggered_desc = {
 				trigger = {
-					AND = {
-						has_trait = flinch_reflex
-						has_character_flag = flinch_sword
-					}
+					has_trait = soul_wound
 				}
-				desc = trait_flinch_reflex_sword_desc
-			}
-			triggered_desc = {
-				trigger = {
-					AND = {
-						has_trait = flinch_reflex
-						has_character_flag = flinch_palm
-					}
-				}
-				desc = trait_flinch_reflex_palm_desc
-			}
-			triggered_desc = {
-				trigger = {
-					AND = {
-						has_trait = flinch_reflex
-						has_character_flag = flinch_fire
-					}
-				}
-				desc = trait_flinch_reflex_fire_desc
-			}
-			triggered_desc = {
-				trigger = {
-					AND = {
-						has_trait = flinch_reflex
-						has_character_flag = flinch_poison
-					}
-				}
-				desc = trait_flinch_reflex_poison_desc
-			}
-			triggered_desc = {
-				trigger = {
-					AND = {
-						has_trait = flinch_reflex
-						has_character_flag = flinch_shadow
-					}
-				}
-				desc = trait_flinch_reflex_shadow_desc
-			}
-			triggered_desc = {
-				trigger = {
-					has_trait = flinch_reflex
-				}
-				desc = trait_flinch_reflex_generic_desc
+				desc = trait_soul_wound_desc
 			}
 		}
 	}
 
-	# AI impact: avoids fights against the technique type that traumatized them
+	# AI deeply affected - avoids all spiritual/cultivation activity
+	ai_energy = -40
+	ai_boldness = -25
+	ai_honor = 0
+	ai_greed = -10
+	ai_rationality = 30
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = murim_spiritual_damage
+	flag = soul_vulnerability
+}
+
+######################################
+# DEATH QI CONTAMINATED
+# Exposed to concentrated death energy from killing fields or necromantic techniques
+# Caused by: mass battlefield exposure, death qi cultivation gone wrong, cursed weapon wounds
+######################################
+
+death_qi_contaminated = {
+	index = 12
+	category = personality
+
+	character_modifier = {
+		health = -0.35
+		monthly_piety = -0.8
+		stress_gain_mult = 0.10
+		prowess = 2
+		martial = 1
+		dread_baseline_add = 15
+		# Death energy makes others uncomfortable
+		attraction_opinion = -20
+		vassal_opinion = -5
+		same_faith_opinion = -15
+		fertility = -0.20
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = death_qi_contaminated
+				}
+				desc = trait_death_qi_contaminated_desc
+			}
+		}
+	}
+
+	# AI becomes more aggressive and isolated - death energy amplifies violence
+	ai_energy = 10
+	ai_boldness = 15
+	ai_honor = -20
+	ai_greed = 10
+	ai_rationality = -15
+
+	flag = murim_combat_trauma
+	flag = murim_qi_contamination
+	flag = death_energy_carrier
+	flag = social_pariah
+}
+
+######################################
+# BERSERKER TRAUMA
+# Uncontrollable rage episodes triggered by combat stimuli
+# Caused by: extreme emotional trauma during combat, witnessing ally death in battle
+######################################
+
+berserker_trauma = {
+	index = 13
+	category = personality
+
+	character_modifier = {
+		prowess = 4
+		martial = 2
+		stress_gain_mult = 0.15
+		health = -0.20
+		diplomacy = -5
+		intrigue = -2
+		learning = -2
+		dread_baseline_add = 10
+		vassal_opinion = -10
+		# Rage episodes are uncontrollable
+		attraction_opinion = -15
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	opposites = {
+		broken_spirit
+		calm
+		craven
+		duel_ptsd
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = berserker_trauma
+				}
+				desc = trait_berserker_trauma_desc
+			}
+		}
+	}
+
+	# AI becomes unpredictable - high combat drive but poor judgment
+	ai_energy = 50
+	ai_boldness = 75
+	ai_honor = -15
+	ai_greed = 5
+	ai_rationality = -40
+
+	flag = murim_combat_trauma
+	flag = murim_psychological_trauma
+	flag = rage_episodes
+	flag = always_accepts_duels
+}
+
+######################################
+# DUEL PTSD
+# Paralyzing fear triggered specifically by formal duel situations
+# Caused by: near-death experience in a formal duel, watching a close friend die in duel
+######################################
+
+duel_ptsd = {
+	index = 14
+	category = personality
+
+	character_modifier = {
+		prowess = -3
+		martial = -1
+		stress_gain_mult = 0.25
+		monthly_prestige = -0.2
+		duel_advantage = -50
+		# Functions normally outside of duel context
+		diplomacy = 1
+		learning = 1
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	opposites = {
+		brave
+		berserker_trauma
+		battle_madness
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = duel_ptsd
+				}
+				desc = trait_duel_ptsd_desc
+			}
+		}
+	}
+
+	# AI will actively avoid all duel situations but functions normally otherwise
+	ai_energy = -20
+	ai_boldness = -60
+	ai_honor = -10
+	ai_greed = 0
+	ai_rationality = 40
+
+	flag = murim_combat_trauma
+	flag = murim_psychological_trauma
+	flag = cannot_challenge_duels
+	flag = duel_panic
+}
+
+######################################
+# TECHNIQUE BACKLASH CRIPPLE
+# A powerful technique backfired and permanently damaged the user
+# Caused by: using a technique beyond one's cultivation level, forbidden technique misfire
+######################################
+
+technique_backlash_cripple = {
+	index = 15
+	category = personality
+
+	character_modifier = {
+		prowess = -2
+		health = -0.25
+		stress_gain_mult = 0.10
+		monthly_piety = -0.3
+		# Lost ability to use certain technique types
+		martial = -1
+		monthly_lifestyle_xp_gain_mult = -0.10
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	# Not as severe as full qi cripple
+	opposites = {
+		qi_crippled
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = technique_backlash_cripple
+				}
+				desc = trait_technique_backlash_cripple_desc
+			}
+		}
+	}
+
+	# AI avoids using advanced techniques, sticks to basics
 	ai_energy = -15
-	ai_boldness = -20
+	ai_boldness = -10
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 25
+
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = technique_restricted
+	flag = backlash_survivor
+}
+
+######################################
+# CHRONIC INTERNAL BLEEDING
+# Ongoing internal damage that slowly degrades health
+# Caused by: powerful body-shattering palm strikes, internal qi explosions
+######################################
+
+chronic_internal_bleeding = {
+	index = 16
+	category = personality
+
+	character_modifier = {
+		health = -0.60
+		prowess = -2
+		martial = -1
+		stress_gain_mult = 0.15
+		monthly_prestige = -0.1
+		# Gradually worsening condition
+		fertility = -0.10
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = chronic_internal_bleeding
+				}
+				desc = trait_chronic_internal_bleeding_desc
+			}
+		}
+	}
+
+	# AI becomes very cautious - knows another hit could be fatal
+	ai_energy = -30
+	ai_boldness = -40
+	ai_honor = 0
+	ai_greed = 0
+	ai_rationality = 50
+
+	flag = murim_combat_trauma
+	flag = murim_chronic_condition
+	flag = murim_life_threatening
+	flag = can_be_healed
+	flag = worsens_over_time
+}
+
+######################################
+# SEVERED TENDONS
+# Permanently reduced mobility and combat flexibility
+# Caused by: blade strikes targeting legs/arms, deliberate crippling by victorious opponent
+######################################
+
+severed_tendons = {
+	index = 17
+	category = personality
+
+	character_modifier = {
+		prowess = -4
+		martial = -2
+		monthly_prestige = -0.2
+		attraction_opinion = -10
+		duel_advantage = -40
+		# Cannot perform complex movements
+		monthly_lifestyle_xp_gain_mult = -0.05
+	}
+
+	can_have = {
+		is_alive = yes
+	}
+
+	opposites = {
+		crippled_arm
+	}
+
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = severed_tendons
+				}
+				desc = trait_severed_tendons_desc
+			}
+		}
+	}
+
+	# AI adapts to stationary fighting style - avoids mobile combat
+	ai_energy = -20
+	ai_boldness = -15
 	ai_honor = 0
 	ai_greed = 0
 	ai_rationality = 20
 
 	flag = murim_combat_trauma
-	flag = murim_technique_phobia
+	flag = murim_permanent_injury
+	flag = reduced_mobility
+	flag = cannot_flee_combat
 }
 
 ######################################
-# RECENT COMBAT MODIFIER TRAIT (STACKING RISK)
-# Not a permanent trait - tracks recent fight activity
-# Used by combat events to increase wound severity if fighting again within 30 days
+# BLINDED IN COMBAT
+# Lost one or both eyes in battle - must rely on other senses
+# Caused by: direct eye strike, flash technique, acid/poison splash in combat
 ######################################
 
-recent_combat_fatigue = {
-	index = 8
+blinded_in_combat = {
+	index = 18
 	category = personality
 
 	character_modifier = {
-		prowess = -1
-		health = -0.1
-		stress_gain_mult = 0.05
+		prowess = -3
+		martial = -1
+		intrigue = -3
+		diplomacy = -1
+		attraction_opinion = -15
+		# But heightened other senses over time
+		learning = 2
+		monthly_piety = 0.3
+		# Must rely on qi sense or hearing
+		duel_advantage = -25
 	}
 
 	can_have = {
 		is_alive = yes
 	}
 
-	# Expires naturally - events should remove after 30 days
-	# Stacks conceptually via flags: recent_combat_1, recent_combat_2, recent_combat_3
-	# Each stack increases injury chance in next fight
-
 	desc = {
 		first_valid = {
 			triggered_desc = {
 				trigger = {
-					has_trait = recent_combat_fatigue
+					has_trait = blinded_in_combat
 				}
-				desc = trait_recent_combat_fatigue_desc
+				desc = trait_blinded_in_combat_desc
 			}
 		}
 	}
 
-	ai_energy = -5
-	ai_boldness = -10
-	ai_honor = 0
+	# AI adapts - uses qi sensing, becomes more contemplative
+	ai_energy = -10
+	ai_boldness = -20
+	ai_honor = 10
 	ai_greed = 0
-	ai_rationality = 15
+	ai_rationality = 30
 
-	flag = murim_combat_fatigue
-	flag = murim_temporary_condition
+	flag = murim_combat_trauma
+	flag = murim_permanent_injury
+	flag = sensory_impairment
+	flag = heightened_qi_sense
+	flag = blind_fighter
 }
-
-######################################
-# SCRIPTED TRIGGERS FOR COMBAT TRAUMA CHECKS
-# Load-safe: all have exists checks and fallback defaults
-######################################
-
-# Use these in all duel/combat events before allowing participation:
-#
-# murim_can_participate_in_duel_trigger:
-#   NOT = { has_trait = incapable }
-#   NOT = { has_trait = broken_spirit }  # refuses all duels
-#   trigger_if = {
-#     trigger = { has_trait = craven }
-#     # craven characters CAN duel but with massive AI penalty
-#   }
-#
-# murim_duel_injury_severity_value:
-#   Base severity from fight type (sparring=1, honor=2, death_match=3, ambush=4)
-#   + recent_combat_fatigue stacks
-#   + wounded/severely_wounded existing conditions
-#   - has_trait = robust (reduces severity)
-#
-# murim_roll_combat_trauma:
-#   Called after every duel resolution
-#   Rolls for: physical injury, mental trauma, technique phobia
-#   Scales with severity value above
-#   Winners roll at 50% of loser's chance (winners can still get hurt)
