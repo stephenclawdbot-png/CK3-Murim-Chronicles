@@ -1,0 +1,856 @@
+namespace = murim_calamity_ai_exp
+
+# Calamity AI Expansion — Autonomous war declarations, betrayals, mass death, survivor rebuilding
+# 10 complete events expanding the Great Calamity AI system
+
+######################################
+# EVENT 0001 — AI Clan War Escalation
+# AI clans autonomously escalate from skirmish to total war
+######################################
+murim_calamity_ai_exp.0001 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0001.t
+	desc = murim_calamity_ai_exp.0001.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	right_portrait = {
+		character = scope:enemy_clan_leader
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_calamity_active
+		has_variable = murim_clan_id
+		any_ruler = {
+			has_variable = murim_clan_id
+			NOT = { var:murim_clan_id = root.var:murim_clan_id }
+			NOT = { has_character_flag = calamity_destroyed }
+		}
+		NOT = { has_character_flag = calamity_war_escalated }
+	}
+
+	weight_multiplier = {
+		base = 5
+		modifier = {
+			add = 10
+			has_trait = wrathful
+		}
+		modifier = {
+			add = 5
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = calamity_war_escalated days = 180 }
+		random_ruler = {
+			limit = {
+				has_variable = murim_clan_id
+				NOT = { var:murim_clan_id = root.var:murim_clan_id }
+				NOT = { has_character_flag = calamity_destroyed }
+			}
+			save_scope_as = enemy_clan_leader
+		}
+	}
+
+	# Full-scale clan war declaration
+	option = {
+		name = murim_calamity_ai_exp.0001.a
+		start_war = {
+			cb = murim_clan_annihilation_cb
+			target = scope:enemy_clan_leader
+		}
+		add_character_modifier = {
+			modifier = calamity_total_war
+			years = 5
+		}
+		add_dread = 40
+		every_courtier = {
+			limit = { has_variable = murim_clan_id }
+			add_opinion = {
+				target = root
+				modifier = clan_war_rally
+				opinion = 20
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Targeted assassination of enemy leader
+	option = {
+		name = murim_calamity_ai_exp.0001.b
+		trigger = {
+			intrigue >= 12
+		}
+		duel = {
+			skill = intrigue
+			target = scope:enemy_clan_leader
+			50 = {
+				desc = murim_calamity_ai_exp.0001.b.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				scope:enemy_clan_leader = {
+					death = {
+						death_reason = death_murder
+						killer = root
+					}
+				}
+				add_prestige = 500
+			}
+			50 = {
+				desc = murim_calamity_ai_exp.0001.b.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				health = -2
+				add_prestige = -200
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Betray own alliance and switch sides
+	option = {
+		name = murim_calamity_ai_exp.0001.c
+		add_trait = betrayer
+		scope:enemy_clan_leader = {
+			add_opinion = {
+				target = root
+				modifier = calamity_betrayal_alliance
+				opinion = 30
+			}
+		}
+		every_courtier = {
+			limit = { has_variable = murim_clan_id }
+			add_opinion = {
+				target = root
+				modifier = betrayed_our_clan
+				opinion = -50
+			}
+		}
+		add_character_modifier = {
+			modifier = calamity_turncoat
+			years = 10
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+######################################
+# EVENT 0002 — AI Mass Slaughter Phase
+# AI-driven mass casualty event during calamity
+######################################
+murim_calamity_ai_exp.0002 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0002.t
+	desc = murim_calamity_ai_exp.0002.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		has_variable = murim_calamity_active
+		has_variable = murim_clan_id
+		NOT = { has_character_flag = mass_slaughter_processed }
+		any_courtier = {
+			count >= 3
+			has_variable = murim_clan_id
+		}
+	}
+
+	weight_multiplier = {
+		base = 10
+	}
+
+	immediate = {
+		set_character_flag = { flag = mass_slaughter_processed days = 365 }
+		# Kill 70-90% of courtiers
+		every_courtier = {
+			limit = {
+				has_variable = murim_clan_id
+				NOT = { has_character_flag = calamity_survivor_protected }
+				NOT = { has_trait = protagonist_protection }
+			}
+			random = {
+				chance = 80
+				death = {
+					death_reason = death_battle
+				}
+			}
+		}
+	}
+
+	# Witness the devastation
+	option = {
+		name = murim_calamity_ai_exp.0002.a
+		add_trait = calamity_witness
+		add_stress = 80
+		add_character_modifier = {
+			modifier = witnessed_mass_death
+			years = 20
+		}
+		add_prestige = -300
+		ai_chance = { base = 100 }
+	}
+}
+
+######################################
+# EVENT 0003 — AI Emperor Assassination
+# AI autonomously targets the Murim Emperor during calamity
+######################################
+murim_calamity_ai_exp.0003 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0003.t
+	desc = murim_calamity_ai_exp.0003.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:murim_emperor
+		animation = fear
+	}
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_calamity_active
+		has_trait = heavenly_demon_member
+		any_ruler = {
+			has_trait = murim_emperor
+			NOT = { has_character_flag = emperor_already_fallen }
+		}
+	}
+
+	weight_multiplier = {
+		base = 8
+		modifier = {
+			add = 10
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_trait = murim_emperor
+				NOT = { has_character_flag = emperor_already_fallen }
+			}
+			save_scope_as = murim_emperor
+		}
+	}
+
+	# Storm the Imperial Palace
+	option = {
+		name = murim_calamity_ai_exp.0003.a
+		duel = {
+			skill = prowess
+			target = scope:murim_emperor
+			45 = {
+				desc = murim_calamity_ai_exp.0003.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				scope:murim_emperor = {
+					set_character_flag = emperor_already_fallen
+					death = {
+						death_reason = death_battle
+						killer = root
+					}
+				}
+				add_trait = emperor_slayer
+				add_prestige = 3000
+				add_dread = 100
+				add_character_modifier = {
+					modifier = slew_the_murim_emperor
+					years = 50
+				}
+			}
+			55 = {
+				desc = murim_calamity_ai_exp.0003.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				death = {
+					death_reason = death_battle
+					killer = scope:murim_emperor
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+
+	# Poison the Emperor instead
+	option = {
+		name = murim_calamity_ai_exp.0003.b
+		trigger = {
+			intrigue >= 18
+		}
+		scope:murim_emperor = {
+			set_character_flag = emperor_already_fallen
+			add_character_modifier = {
+				modifier = fatally_poisoned
+				years = 1
+			}
+			health = -6
+		}
+		add_dread = 60
+		add_character_modifier = {
+			modifier = poisoned_the_emperor
+			years = 20
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0004 — AI Civilian Massacre Wave
+# Unorthodox forces slaughter martial world civilians
+######################################
+murim_calamity_ai_exp.0004 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0004.t
+	desc = murim_calamity_ai_exp.0004.desc
+	theme = war_theme
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_calamity_active
+		OR = {
+			has_trait = heavenly_demon_member
+			has_trait = phantom_blade_member
+		}
+		NOT = { has_character_flag = civilian_massacre_done }
+	}
+
+	weight_multiplier = {
+		base = 5
+		modifier = {
+			add = 10
+			has_trait = sadistic
+		}
+	}
+
+	immediate = {
+		set_character_flag = { flag = civilian_massacre_done days = 365 }
+	}
+
+	# Massacre the civilian population
+	option = {
+		name = murim_calamity_ai_exp.0004.a
+		add_tyranny = 80
+		add_dread = 60
+		add_character_modifier = {
+			modifier = civilian_blood_on_hands
+			years = 30
+		}
+		every_held_title = {
+			every_county_province = {
+				add_province_modifier = {
+					modifier = province_devastated_by_calamity
+					years = 20
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Spare the civilians — take them as servants
+	option = {
+		name = murim_calamity_ai_exp.0004.b
+		add_gold = 500
+		add_character_modifier = {
+			modifier = enslaved_population
+			years = 10
+		}
+		add_tyranny = 30
+		ai_chance = { base = 30 }
+	}
+
+	# Refuse orders — protect civilians
+	option = {
+		name = murim_calamity_ai_exp.0004.c
+		trigger = {
+			has_trait = compassionate
+		}
+		add_piety = 500
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = protector_of_innocents
+			years = 20
+		}
+		remove_trait = heavenly_demon_member
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+}
+
+######################################
+# EVENT 0005 — AI Survivor Selection
+# 1-3 survivors chosen per clan by fate/strength
+######################################
+murim_calamity_ai_exp.0005 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0005.t
+	desc = murim_calamity_ai_exp.0005.desc
+	theme = death_theme
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		has_variable = murim_calamity_active
+		has_variable = murim_clan_id
+		NOT = { has_character_flag = survivor_selection_complete }
+		any_courtier = {
+			count >= 1
+			has_variable = murim_clan_id
+			is_alive = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 15
+	}
+
+	immediate = {
+		set_character_flag = { flag = survivor_selection_complete }
+		# Mark 1-3 survivors
+		random_courtier = {
+			limit = {
+				has_variable = murim_clan_id
+				is_alive = yes
+				prowess >= 10
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					prowess >= 15
+				}
+			}
+			set_character_flag = calamity_survivor_protected
+			add_trait = calamity_survivor
+		}
+		random_courtier = {
+			limit = {
+				has_variable = murim_clan_id
+				is_alive = yes
+				NOT = { has_character_flag = calamity_survivor_protected }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					has_trait = brave
+				}
+			}
+			random = {
+				chance = 60
+				set_character_flag = calamity_survivor_protected
+				add_trait = calamity_survivor
+			}
+		}
+	}
+
+	# Accept the devastating losses
+	option = {
+		name = murim_calamity_ai_exp.0005.a
+		add_trait = calamity_witness
+		add_stress = 60
+		add_character_modifier = {
+			modifier = clan_nearly_wiped_out
+			years = 30
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+######################################
+# EVENT 0006 — AI Dynasty Protection Override
+# Player dynasty ALWAYS survives — divine intervention narrative
+######################################
+murim_calamity_ai_exp.0006 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0006.t
+	desc = murim_calamity_ai_exp.0006.desc
+	theme = faith_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ai = no
+		has_variable = murim_calamity_active
+		NOT = { has_character_flag = dynasty_protection_activated }
+	}
+
+	weight_multiplier = {
+		base = 100
+	}
+
+	immediate = {
+		set_character_flag = dynasty_protection_activated
+		add_trait = heavens_chosen_survivor
+		add_character_modifier = {
+			modifier = divine_protection_calamity
+			years = 50
+		}
+	}
+
+	# The heavens spared your bloodline
+	option = {
+		name = murim_calamity_ai_exp.0006.a
+		add_prestige = 1000
+		add_piety = 1000
+		add_character_modifier = {
+			modifier = last_of_the_bloodline
+			years = 30
+		}
+		every_child = {
+			add_trait = calamity_survivor
+			add_character_flag = calamity_survivor_protected
+		}
+	}
+
+	# Rage against the heavens for choosing you
+	option = {
+		name = murim_calamity_ai_exp.0006.b
+		add_stress = 60
+		add_trait = wrathful
+		add_character_modifier = {
+			modifier = survivor_guilt_rage
+			years = 20
+		}
+		add_prowess_skill = 5
+	}
+}
+
+######################################
+# EVENT 0007 — AI Mythology Formation
+# Previous era becomes myth — survivors pass down stories
+######################################
+murim_calamity_ai_exp.0007 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0007.t
+	desc = murim_calamity_ai_exp.0007.desc
+	theme = education_theme
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:young_disciple
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = calamity_survivor
+		any_child = {
+			age >= 10
+		}
+		NOT = { has_character_flag = mythology_passed_down }
+	}
+
+	weight_multiplier = {
+		base = 3
+		modifier = {
+			add = 5
+			learning >= 14
+		}
+	}
+
+	immediate = {
+		set_character_flag = mythology_passed_down
+		random_child = {
+			limit = { age >= 10 }
+			save_scope_as = young_disciple
+		}
+	}
+
+	# Tell the heroic version — inspire the next generation
+	option = {
+		name = murim_calamity_ai_exp.0007.a
+		scope:young_disciple = {
+			add_trait = inspired_by_legends
+			add_character_modifier = {
+				modifier = heroic_mythology_education
+				years = 15
+			}
+			add_diplomacy_skill = 2
+			add_martial_skill = 2
+		}
+		add_prestige = 300
+		ai_chance = { base = 50 }
+	}
+
+	# Tell the truth — the horror of what happened
+	option = {
+		name = murim_calamity_ai_exp.0007.b
+		scope:young_disciple = {
+			add_trait = calamity_aware
+			add_character_modifier = {
+				modifier = truth_of_the_calamity
+				years = 15
+			}
+			add_learning_skill = 3
+			add_stress = 20
+		}
+		add_piety = 200
+		ai_chance = { base = 30 }
+	}
+
+	# Say nothing — bury the past
+	option = {
+		name = murim_calamity_ai_exp.0007.c
+		add_stress = 30
+		add_character_modifier = {
+			modifier = buried_the_past
+			years = 10
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0008 — AI Autonomous Rebuilding Phase
+# Survivors begin rebuilding martial world
+######################################
+murim_calamity_ai_exp.0008 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0008.t
+	desc = murim_calamity_ai_exp.0008.desc
+	theme = realm_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_trait = calamity_survivor
+		NOT = { has_character_flag = rebuilding_phase_started }
+	}
+
+	weight_multiplier = {
+		base = 10
+	}
+
+	immediate = {
+		set_character_flag = rebuilding_phase_started
+	}
+
+	# Rebuild your original clan from scratch
+	option = {
+		name = murim_calamity_ai_exp.0008.a
+		add_character_modifier = {
+			modifier = clan_rebuilder
+			years = 30
+		}
+		add_trait = rebuilder
+		add_prestige = 500
+		add_gold = 300
+		# Spawn new disciples
+		create_character = {
+			template = murim_young_disciple_template
+			save_scope_as = new_disciple_1
+		}
+		create_character = {
+			template = murim_young_disciple_template
+			save_scope_as = new_disciple_2
+		}
+		create_character = {
+			template = murim_young_disciple_template
+			save_scope_as = new_disciple_3
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Found an entirely new sect
+	option = {
+		name = murim_calamity_ai_exp.0008.b
+		add_trait = sect_founder
+		add_prestige = 800
+		add_character_modifier = {
+			modifier = new_sect_post_calamity
+			years = 50
+		}
+		change_variable = { name = murim_cultivation_level add = 1 }
+		ai_chance = { base = 30 }
+	}
+
+	# Become a wanderer — no clan ties
+	option = {
+		name = murim_calamity_ai_exp.0008.c
+		add_trait = wandering_swordsman
+		add_character_modifier = {
+			modifier = lone_survivor_wanderer
+			years = 20
+		}
+		add_prowess_skill = 3
+		add_stress = -30
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0009 — AI Calamity Cycle Warning
+# New generation detects signs of next calamity cycle
+######################################
+murim_calamity_ai_exp.0009 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0009.t
+	desc = murim_calamity_ai_exp.0009.desc
+	theme = mystic_theme
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		has_trait = calamity_aware
+		NOT = { has_character_flag = cycle_warning_issued }
+		NOT = { has_variable = murim_calamity_active }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			learning >= 18
+		}
+	}
+
+	immediate = {
+		set_character_flag = cycle_warning_issued
+	}
+
+	# Warn all clans and prepare defenses
+	option = {
+		name = murim_calamity_ai_exp.0009.a
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = calamity_prophet_warning
+			years = 10
+		}
+		every_ruler = {
+			limit = { has_variable = murim_clan_id }
+			add_opinion = {
+				target = root
+				modifier = warned_of_calamity
+				opinion = 20
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Research how to prevent the cycle
+	option = {
+		name = murim_calamity_ai_exp.0009.b
+		add_learning_skill = 3
+		add_character_modifier = {
+			modifier = researching_calamity_prevention
+			years = 15
+		}
+		change_variable = { name = murim_cultivation_level add = 1 }
+		ai_chance = { base = 30 }
+	}
+
+	# Keep silent — knowledge is power
+	option = {
+		name = murim_calamity_ai_exp.0009.c
+		add_intrigue_skill = 2
+		add_character_modifier = {
+			modifier = secret_calamity_knowledge
+			years = 20
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+######################################
+# EVENT 0010 — AI Calamity Complete Reset
+# Full cycle completes — new era begins
+######################################
+murim_calamity_ai_exp.0010 = {
+	type = character_event
+	title = murim_calamity_ai_exp.0010.t
+	desc = murim_calamity_ai_exp.0010.desc
+	theme = faith_theme
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_variable = murim_calamity_active
+		has_character_flag = rebuilding_phase_started
+		NOT = { has_character_flag = calamity_cycle_reset_done }
+	}
+
+	weight_multiplier = {
+		base = 3
+	}
+
+	immediate = {
+		set_character_flag = calamity_cycle_reset_done
+		remove_variable = murim_calamity_active
+		set_global_variable = {
+			name = murim_calamity_count
+			value = 1
+		}
+	}
+
+	# Dawn of a new martial era
+	option = {
+		name = murim_calamity_ai_exp.0010.a
+		add_prestige = 1000
+		add_piety = 500
+		add_character_modifier = {
+			modifier = dawn_of_new_era
+			years = 50
+		}
+		every_ruler = {
+			limit = { has_trait = calamity_survivor }
+			add_prestige = 500
+			add_character_modifier = {
+				modifier = founding_generation
+				years = 30
+			}
+		}
+		# Reset province devastation
+		every_held_title = {
+			every_county_province = {
+				remove_province_modifier = province_devastated_by_calamity
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
