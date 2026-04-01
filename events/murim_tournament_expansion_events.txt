@@ -1,0 +1,848 @@
+############################################
+# MURIM TOURNAMENT EXPANSION EVENTS
+# Exhibition matches, dark horse upsets,
+# tournament rigging, spectator recruitment,
+# champion retirement, legacy challenge.
+# Cross-refs: murim_tournament_events.txt,
+#   murim_ranking_effects.txt, murim_clan_traits.txt,
+#   murim_faction_war_events.txt, murim_mentor_events.txt
+# All 9 clans integrated. GENDER: Equal.
+# GEOGRAPHY: China heartland, Goryeo secondary.
+############################################
+
+namespace = murim_tourney_exp
+
+############################################
+# INTER-CLAN EXHIBITION MATCH
+# Two clans arrange a friendly exhibition
+# during tournament season. High stakes for
+# clan prestige but no killing.
+############################################
+murim_tourney_exp.0001 = {
+	type = character_event
+	title = murim_tourney_exp.0001.t
+	desc = murim_tourney_exp.0001.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:exhibition_opponent
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_monk
+			has_trait = wudang_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		has_variable = murim_clan_rank
+		var:murim_clan_rank >= 3
+		prowess >= 14
+		NOT = { has_character_modifier = murim_exhibition_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 prowess >= 18 }
+		modifier = { add = 2 has_trait = brave }
+		modifier = { add = 1 diplomacy >= 12 }
+	}
+
+	immediate = {
+		# Find opponent from a DIFFERENT clan
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				prowess >= 12
+				NOT = { this = root }
+				# Different clan check
+				trigger_if = {
+					limit = { root = { has_trait = mount_hua_disciple } }
+					NOT = { has_trait = mount_hua_disciple }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = shaolin_monk } }
+					NOT = { has_trait = shaolin_monk }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = wudang_disciple } }
+					NOT = { has_trait = wudang_disciple }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = heavenly_demon_disciple } }
+					NOT = { has_trait = heavenly_demon_disciple }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = tang_clan_member } }
+					NOT = { has_trait = tang_clan_member }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = beggar_sect_member } }
+					NOT = { has_trait = beggar_sect_member }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = iron_fist_disciple } }
+					NOT = { has_trait = iron_fist_disciple }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = poison_flower_disciple } }
+					NOT = { has_trait = poison_flower_disciple }
+				}
+				trigger_if = {
+					limit = { root = { has_trait = phantom_blade_disciple } }
+					NOT = { has_trait = phantom_blade_disciple }
+				}
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_monk
+					has_trait = wudang_disciple
+					has_trait = tang_clan_member
+					has_trait = beggar_sect_member
+					has_trait = iron_fist_disciple
+					has_trait = heavenly_demon_disciple
+					has_trait = poison_flower_disciple
+					has_trait = phantom_blade_disciple
+				}
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 prowess >= 16 }
+				modifier = { add = 10 has_variable = murim_clan_rank var:murim_clan_rank >= 3 }
+			}
+			save_scope_as = exhibition_opponent
+		}
+	}
+
+	# Fight with honor - hold back killing moves
+	option = {
+		name = murim_tourney_exp.0001.a
+		trigger = { exists = scope:exhibition_opponent }
+		duel = {
+			skill = prowess
+			target = scope:exhibition_opponent
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_tourney_exp.0001.a.win
+				add_prestige = 150
+				add_character_modifier = { modifier = murim_exhibition_victor years = 3 }
+				scope:exhibition_opponent = {
+					add_opinion = { target = root modifier = respect_martial_prowess opinion = 20 }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:exhibition_victory }
+				}
+			}
+			50 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:exhibition_opponent }
+				desc = murim_tourney_exp.0001.a.lose
+				add_prestige = 50
+				add_stress = 10
+				scope:exhibition_opponent = {
+					add_prestige = 150
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:exhibition_defeat_graceful }
+				}
+			}
+		}
+		add_character_modifier = { modifier = murim_exhibition_cooldown years = 2 }
+		stress_impact = { brave = minor_stress_impact_loss craven = medium_stress_impact_gain }
+		ai_chance = { base = 60 }
+	}
+
+	# Go all out - disregard exhibition rules
+	option = {
+		name = murim_tourney_exp.0001.b
+		trigger = { exists = scope:exhibition_opponent }
+		duel = {
+			skill = prowess
+			target = scope:exhibition_opponent
+			60 = {
+				compare_modifier = { value = prowess multiplier = 3 }
+				desc = murim_tourney_exp.0001.b.win
+				add_prestige = 200
+				add_dread = 15
+				scope:exhibition_opponent = {
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = scarred }
+					}
+					add_opinion = { target = root modifier = insult_opinion opinion = -30 }
+				}
+				# Cross-ref: This causes faction tension
+				trigger_event = { id = murim_faction_war.0003 days = { 5 15 } }
+			}
+			40 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:exhibition_opponent }
+				desc = murim_tourney_exp.0001.b.lose
+				add_trait = wounded_1
+				add_prestige = -100
+				add_dread = -10
+			}
+		}
+		add_character_modifier = { modifier = murim_exhibition_cooldown years = 2 }
+		stress_impact = { compassionate = major_stress_impact_gain wrathful = minor_stress_impact_loss }
+		ai_chance = { base = 25 modifier = { add = 25 has_trait = wrathful } }
+	}
+
+	# Decline the exhibition politely
+	option = {
+		name = murim_tourney_exp.0001.c
+		add_prestige = -25
+		add_character_modifier = { modifier = murim_exhibition_cooldown years = 2 }
+		ai_chance = { base = 15 }
+	}
+}
+
+############################################
+# DARK HORSE UPSET
+# Unknown martial artist defeats a ranked
+# fighter, shaking up the Murim rankings.
+############################################
+murim_tourney_exp.0002 = {
+	type = character_event
+	title = murim_tourney_exp.0002.t
+	desc = murim_tourney_exp.0002.desc
+	theme = martial
+	override_background = { reference = tournament_grounds }
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		prowess >= 16
+		NOT = { has_variable = murim_ranking_position }
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_monk
+			has_trait = wudang_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = dark_horse_upset_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 prowess >= 20 }
+		modifier = { add = 2 age <= 25 }
+		modifier = { add = 1 has_trait = brave }
+	}
+
+	immediate = {
+		add_character_flag = { flag = dark_horse_upset_done }
+		# Find a ranked fighter
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				has_variable = murim_ranking_position
+				var:murim_ranking_position <= 50
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 5 var:murim_ranking_position <= 20 }
+			}
+			save_scope_as = ranked_victim
+		}
+	}
+
+	# Challenge them openly on the tournament stage
+	option = {
+		name = murim_tourney_exp.0002.a
+		trigger = { exists = scope:ranked_victim }
+		duel = {
+			skill = prowess
+			target = scope:ranked_victim
+			45 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_tourney_exp.0002.a.upset
+				add_prestige = 500
+				add_character_modifier = { modifier = murim_dark_horse_fame years = 10 }
+				# Take their approximate ranking
+				set_variable = { name = murim_ranking_position value = 45 }
+				# Every clan wants you now
+				trigger_event = { id = murim_tourney_exp.0006 days = { 10 30 } }
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:dark_horse_upset_legendary }
+				}
+			}
+			55 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:ranked_victim }
+				desc = murim_tourney_exp.0002.a.crushed
+				add_prestige = 50
+				add_stress = 25
+				random_list = {
+					40 = { add_trait = wounded_1 }
+					35 = { add_trait = wounded_2 }
+					15 = { add_trait = maimed }
+					10 = { add_trait = scarred }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:dark_horse_humiliation }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 50 modifier = { add = 30 has_trait = ambitious } }
+	}
+
+	# Wait for a better opportunity
+	option = {
+		name = murim_tourney_exp.0002.b
+		add_prestige = 25
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:dark_horse_patience }
+		}
+		ai_chance = { base = 50 modifier = { add = 30 has_trait = patient } }
+	}
+}
+
+############################################
+# TOURNAMENT RIGGING DISCOVERED
+# Someone has been poisoning opponents or
+# bribing judges. Orthodox/Unorthodox tension.
+############################################
+murim_tourney_exp.0003 = {
+	type = character_event
+	title = murim_tourney_exp.0003.t
+	desc = murim_tourney_exp.0003.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_monk
+			has_trait = wudang_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		intrigue >= 10
+		NOT = { has_character_flag = tournament_rigging_discovered }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 intrigue >= 16 }
+		modifier = { add = 2 OR = { has_trait = poison_flower_disciple has_trait = phantom_blade_disciple } }
+	}
+
+	immediate = {
+		add_character_flag = { flag = tournament_rigging_discovered days = 1825 }
+		# The rigger - usually unorthodox
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				intrigue >= 14
+				is_alive = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 OR = { has_trait = heavenly_demon_disciple has_trait = poison_flower_disciple has_trait = phantom_blade_disciple } }
+				modifier = { add = 5 intrigue >= 18 }
+			}
+			save_scope_as = tournament_rigger
+		}
+	}
+
+	# Expose the rigging publicly - honor demands it
+	option = {
+		name = murim_tourney_exp.0003.a
+		trigger = { exists = scope:tournament_rigger }
+		add_prestige = 200
+		add_piety = 100
+		scope:tournament_rigger = {
+			add_prestige = -500
+			add_dread = -20
+			add_character_modifier = { modifier = murim_exposed_cheater years = 10 }
+			add_opinion = { target = root modifier = insult_opinion opinion = -40 }
+		}
+		# Cross-ref: faction tension rises
+		trigger_event = { id = murim_faction_war.0001 days = { 5 15 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:tournament_rigger_exposed }
+		}
+		stress_impact = { just = minor_stress_impact_loss deceitful = medium_stress_impact_gain }
+		ai_chance = { base = 50 modifier = { add = 30 has_trait = just } modifier = { add = -20 has_trait = deceitful } }
+	}
+
+	# Blackmail the rigger - profit from silence
+	option = {
+		name = murim_tourney_exp.0003.b
+		trigger = { exists = scope:tournament_rigger }
+		add_gold = 150
+		add_intrigue_skill = 1
+		scope:tournament_rigger = {
+			add_opinion = { target = root modifier = blackmail_opinion opinion = -20 }
+		}
+		add_character_modifier = { modifier = murim_knows_dark_secrets years = 5 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:tournament_rigging_blackmail }
+		}
+		stress_impact = { just = major_stress_impact_gain deceitful = minor_stress_impact_loss }
+		ai_chance = { base = 30 modifier = { add = 30 has_trait = greedy } }
+	}
+
+	# Ignore it - not your problem
+	option = {
+		name = murim_tourney_exp.0003.c
+		add_stress = 10
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:tournament_rigging_ignored }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+############################################
+# SPECTATOR RECRUITMENT - CLAN SCOUT APPROACH
+# After witnessing a tournament, a clan scout
+# approaches an unaffiliated spectator.
+############################################
+murim_tourney_exp.0004 = {
+	type = character_event
+	title = murim_tourney_exp.0004.t
+	desc = murim_tourney_exp.0004.desc
+	theme = education
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 12
+		age <= 35
+		prowess >= 8
+		NOR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_monk
+			has_trait = wudang_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = spectator_recruited }
+		# Near China/Goryeo
+		OR = {
+			murim_is_in_china_trigger = yes
+			murim_is_in_goryeo_trigger = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 prowess >= 12 }
+		modifier = { add = 2 age <= 20 }
+		modifier = { add = 1 martial >= 10 }
+	}
+
+	immediate = {
+		add_character_flag = { flag = spectator_recruited }
+	}
+
+	# Accept Mount Hua / Shaolin / Wudang (Orthodox)
+	option = {
+		name = murim_tourney_exp.0004.a
+		random_list = {
+			34 = {
+				add_trait = mount_hua_disciple
+				custom_tooltip = murim_tourney_exp.0004.a.mount_hua_tt
+			}
+			33 = {
+				add_trait = shaolin_monk
+				custom_tooltip = murim_tourney_exp.0004.a.shaolin_tt
+			}
+			33 = {
+				add_trait = wudang_disciple
+				custom_tooltip = murim_tourney_exp.0004.a.wudang_tt
+			}
+		}
+		add_trait = martial_artist
+		set_variable = { name = murim_clan_rank value = 1 }
+		set_variable = { name = murim_faction value = flag:orthodox }
+		add_prestige = 100
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:recruited_at_tournament }
+		}
+		ai_chance = { base = 35 }
+	}
+
+	# Accept Tang / Beggar / Iron Fist (Orthodox)
+	option = {
+		name = murim_tourney_exp.0004.b
+		random_list = {
+			34 = {
+				add_trait = tang_clan_member
+				custom_tooltip = murim_tourney_exp.0004.b.tang_tt
+			}
+			33 = {
+				add_trait = beggar_sect_member
+				custom_tooltip = murim_tourney_exp.0004.b.beggar_tt
+			}
+			33 = {
+				add_trait = iron_fist_disciple
+				custom_tooltip = murim_tourney_exp.0004.b.iron_fist_tt
+			}
+		}
+		add_trait = martial_artist
+		set_variable = { name = murim_clan_rank value = 1 }
+		set_variable = { name = murim_faction value = flag:orthodox }
+		add_prestige = 100
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:recruited_at_tournament }
+		}
+		ai_chance = { base = 25 }
+	}
+
+	# Accept Heavenly Demon / Poison Flower / Phantom Blade (Unorthodox)
+	option = {
+		name = murim_tourney_exp.0004.c
+		random_list = {
+			34 = {
+				add_trait = heavenly_demon_disciple
+				custom_tooltip = murim_tourney_exp.0004.c.demon_tt
+			}
+			33 = {
+				add_trait = poison_flower_disciple
+				custom_tooltip = murim_tourney_exp.0004.c.poison_tt
+			}
+			33 = {
+				add_trait = phantom_blade_disciple
+				custom_tooltip = murim_tourney_exp.0004.c.phantom_tt
+			}
+		}
+		add_trait = martial_artist
+		set_variable = { name = murim_clan_rank value = 1 }
+		set_variable = { name = murim_faction value = flag:unorthodox }
+		add_prestige = 75
+		add_dread = 10
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:recruited_at_tournament_dark }
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Decline - return to normal life
+	option = {
+		name = murim_tourney_exp.0004.d
+		add_stress = 5
+		ai_chance = { base = 20 }
+	}
+}
+
+############################################
+# CHAMPION RETIREMENT CEREMONY
+# An aging champion decides to retire,
+# passing their title and wisdom to a successor.
+############################################
+murim_tourney_exp.0005 = {
+	type = character_event
+	title = murim_tourney_exp.0005.t
+	desc = murim_tourney_exp.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		age >= 50
+		has_variable = murim_ranking_position
+		var:murim_ranking_position <= 10
+		OR = {
+			has_trait = mount_hua_disciple
+			has_trait = shaolin_monk
+			has_trait = wudang_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+			has_trait = iron_fist_disciple
+			has_trait = heavenly_demon_disciple
+			has_trait = poison_flower_disciple
+			has_trait = phantom_blade_disciple
+		}
+		NOT = { has_character_flag = champion_retirement_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 age >= 60 }
+		modifier = { add = 2 health <= 3 }
+		modifier = { add = 1 OR = { has_trait = wounded_2 has_trait = wounded_3 } }
+	}
+
+	immediate = {
+		add_character_flag = { flag = champion_retirement_done }
+		# Find a worthy successor from same clan
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				age >= 18
+				age <= 40
+				prowess >= 14
+				NOT = { this = root }
+				# Same clan
+				trigger_if = {
+					limit = { root = { has_trait = mount_hua_disciple } }
+					has_trait = mount_hua_disciple
+				}
+				trigger_if = {
+					limit = { root = { has_trait = shaolin_monk } }
+					has_trait = shaolin_monk
+				}
+				trigger_if = {
+					limit = { root = { has_trait = wudang_disciple } }
+					has_trait = wudang_disciple
+				}
+				trigger_if = {
+					limit = { root = { has_trait = tang_clan_member } }
+					has_trait = tang_clan_member
+				}
+				trigger_if = {
+					limit = { root = { has_trait = beggar_sect_member } }
+					has_trait = beggar_sect_member
+				}
+				trigger_if = {
+					limit = { root = { has_trait = iron_fist_disciple } }
+					has_trait = iron_fist_disciple
+				}
+				trigger_if = {
+					limit = { root = { has_trait = heavenly_demon_disciple } }
+					has_trait = heavenly_demon_disciple
+				}
+				trigger_if = {
+					limit = { root = { has_trait = poison_flower_disciple } }
+					has_trait = poison_flower_disciple
+				}
+				trigger_if = {
+					limit = { root = { has_trait = phantom_blade_disciple } }
+					has_trait = phantom_blade_disciple
+				}
+			}
+			weight = {
+				base = 10
+				modifier = { add = 15 prowess >= 18 }
+				modifier = { add = 10 has_variable = murim_clan_rank var:murim_clan_rank >= 3 }
+			}
+			save_scope_as = retirement_successor
+		}
+	}
+
+	# Formal retirement - pass the mantle with ceremony
+	option = {
+		name = murim_tourney_exp.0005.a
+		trigger = { exists = scope:retirement_successor }
+		add_prestige = 500
+		add_piety = 200
+		add_character_modifier = { modifier = murim_retired_champion years = -1 }
+		# Pass ranking to successor
+		scope:retirement_successor = {
+			set_variable = { name = murim_ranking_position value = root.var:murim_ranking_position }
+			add_prestige = 300
+			add_prowess_skill = 2
+			add_character_modifier = { modifier = murim_champions_heir years = 10 }
+			add_opinion = { target = root modifier = respect_martial_prowess opinion = 40 }
+		}
+		# Root loses ranking
+		remove_variable = murim_ranking_position
+		# Cross-ref: mentor chain
+		trigger_event = { id = murim_mentor.0001 days = { 5 15 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:champion_retirement_graceful }
+		}
+		stress_impact = { ambitious = major_stress_impact_gain content = minor_stress_impact_loss }
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = content } }
+	}
+
+	# One last fight - go out in glory
+	option = {
+		name = murim_tourney_exp.0005.b
+		trigger = { exists = scope:retirement_successor }
+		duel = {
+			skill = prowess
+			target = scope:retirement_successor
+			40 = {
+				compare_modifier = { value = prowess multiplier = 1.5 }
+				desc = murim_tourney_exp.0005.b.old_wins
+				add_prestige = 300
+				add_character_modifier = { modifier = murim_undying_champion years = 5 }
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:champion_last_stand_victory }
+				}
+			}
+			60 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:retirement_successor }
+				desc = murim_tourney_exp.0005.b.youth_prevails
+				add_prestige = 200
+				scope:retirement_successor = {
+					set_variable = { name = murim_ranking_position value = root.var:murim_ranking_position }
+					add_prestige = 400
+					add_character_modifier = { modifier = murim_champions_heir years = 10 }
+				}
+				remove_variable = murim_ranking_position
+				add_character_modifier = { modifier = murim_retired_champion years = -1 }
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:champion_last_stand_defeat }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss craven = major_stress_impact_gain }
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = brave } }
+	}
+
+	# Refuse to retire - cling to power
+	option = {
+		name = murim_tourney_exp.0005.c
+		add_stress = 30
+		add_prestige = -100
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:champion_refuses_retirement }
+		}
+		stress_impact = { ambitious = minor_stress_impact_loss content = major_stress_impact_gain }
+		ai_chance = { base = 20 modifier = { add = 40 has_trait = ambitious } }
+	}
+}
+
+############################################
+# LEGACY CHALLENGE - CLAN HONOR DUEL
+# Multi-clan showdown after recruitment.
+# Triggered by dark horse upset (0002).
+############################################
+murim_tourney_exp.0006 = {
+	type = character_event
+	title = murim_tourney_exp.0006.t
+	desc = murim_tourney_exp.0006.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		has_character_flag = murim_tournament_memory_win
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		# Multiple clans send recruiters
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				is_alive = yes
+				has_variable = murim_clan_rank
+				var:murim_clan_rank >= 4
+				NOT = { this = root }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 10 diplomacy >= 14 }
+			}
+			save_scope_as = clan_recruiter
+		}
+	}
+
+	# Accept the recruiter's clan offer
+	option = {
+		name = murim_tourney_exp.0006.a
+		trigger = { exists = scope:clan_recruiter }
+		add_prestige = 200
+		scope:clan_recruiter = {
+			add_opinion = { target = root modifier = respect_martial_prowess opinion = 25 }
+		}
+		# Cross-ref: begin mentor chain
+		trigger_event = { id = murim_mentor.0003 days = { 10 30 } }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:legacy_recruitment_accepted }
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Challenge the recruiter to prove your worth
+	option = {
+		name = murim_tourney_exp.0006.b
+		trigger = { exists = scope:clan_recruiter }
+		duel = {
+			skill = prowess
+			target = scope:clan_recruiter
+			45 = {
+				compare_modifier = { value = prowess multiplier = 2 }
+				desc = murim_tourney_exp.0006.b.win
+				add_prestige = 300
+				add_prowess_skill = 1
+				scope:clan_recruiter = {
+					add_opinion = { target = root modifier = respect_martial_prowess opinion = 30 }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:legacy_challenge_won }
+				}
+			}
+			55 = {
+				compare_modifier = { value = prowess multiplier = 2 target = scope:clan_recruiter }
+				desc = murim_tourney_exp.0006.b.lose
+				add_prestige = 50
+				add_stress = 15
+				random_list = {
+					60 = { }
+					30 = { add_trait = wounded_1 }
+					10 = { add_trait = scarred }
+				}
+				hidden_effect = {
+					add_to_variable_list = { name = murim_combat_memories target = flag:legacy_challenge_lost }
+				}
+			}
+		}
+		stress_impact = { brave = minor_stress_impact_loss }
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = ambitious } }
+	}
+
+	# Walk your own path - refuse all clans
+	option = {
+		name = murim_tourney_exp.0006.c
+		add_prestige = 100
+		add_martial_skill = 1
+		add_character_modifier = { modifier = murim_lone_wolf_pride years = 5 }
+		hidden_effect = {
+			add_to_variable_list = { name = murim_combat_memories target = flag:legacy_lone_wolf }
+		}
+		ai_chance = { base = 10 }
+	}
+}
