@@ -1,0 +1,940 @@
+namespace = murim_calamity_cycle_expansion4
+
+# ============================================
+# CALAMITY CYCLE EXPANSION 4 — FINAL APOCALYPSE MECHANICS
+# AI-autonomous mass warfare, emperor assassination, civilian massacres,
+# dynasty protection, mythology formation, cycle reset
+# 10 events, all AI-driven with on_action hooks
+# ============================================
+
+murim_calamity_cycle_expansion4.0001 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0001.t
+	desc = murim_calamity_cycle_expansion4.0001.desc
+	theme = death
+	
+	# THE BLOOD TIDE RISES — All 9 clans begin autonomous war declarations
+	# Triggered by on_action when calamity intensity > 80
+	
+	trigger = {
+		has_variable = murim_great_calamity_active
+		var:murim_calamity_intensity >= 80
+		NOT = { has_character_flag = calamity_blood_tide_triggered }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = calamity_blood_tide_triggered
+			days = 3650
+		}
+		# Every clan leader declares war on nearest rival
+		every_living_character = {
+			limit = {
+				has_trait = clan_leader
+				is_alive = yes
+				NOT = { has_character_flag = calamity_war_declared }
+			}
+			set_character_flag = {
+				flag = calamity_war_declared
+				days = 1825
+			}
+			# Find nearest rival clan leader
+			random_living_character = {
+				limit = {
+					has_trait = clan_leader
+					is_alive = yes
+					NOT = { this = prev }
+					NOT = { has_opinion_modifier = { modifier = murim_sworn_brother_opinion target = prev } }
+				}
+				weight = {
+					base = 10
+					modifier = {
+						add = 20
+						has_relation_rival = prev
+					}
+					modifier = {
+						add = 15
+						has_trait = unorthodox_faction
+						prev = { has_trait = orthodox_faction }
+					}
+					modifier = {
+						add = 15
+						has_trait = orthodox_faction
+						prev = { has_trait = unorthodox_faction }
+					}
+				}
+				save_scope_as = war_target_leader
+			}
+			trigger_event = {
+				id = murim_calamity_cycle_expansion4.0002
+				days = { 3 15 }
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0001.a
+		# The blood tide is upon us — all clans go to war
+		custom_tooltip = murim_blood_tide_all_clans_war_tt
+		add_character_modifier = {
+			modifier = murim_blood_tide_witness
+			years = 20
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0001.b
+		# Try to unite clans against the calamity
+		trigger = {
+			has_trait = clan_leader
+			diplomacy >= 20
+		}
+		custom_tooltip = murim_unite_against_calamity_tt
+		trigger_event = {
+			id = murim_calamity_cycle_expansion4.0005
+			days = { 10 30 }
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0002 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0002.t
+	desc = murim_calamity_cycle_expansion4.0002.desc
+	theme = war
+	
+	# AI AUTONOMOUS WAR DECLARATION — Clan leader attacks rival
+	# This fires for each clan leader individually
+	
+	trigger = {
+		is_alive = yes
+		has_trait = clan_leader
+		exists = scope:war_target_leader
+	}
+	
+	immediate = {
+		scope:war_target_leader = {
+			save_scope_as = enemy_leader
+		}
+		# Calculate war outcome based on martial + clan strength
+		set_variable = {
+			name = calamity_war_power
+			value = {
+				value = martial
+				add = prowess
+				if = {
+					limit = { has_trait = grandmaster_rank }
+					add = 30
+				}
+				if = {
+					limit = { has_trait = master_rank }
+					add = 20
+				}
+				if = {
+					limit = { has_trait = expert_rank }
+					add = 10
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0002.a
+		# Launch full assault on enemy clan
+		custom_tooltip = murim_calamity_war_assault_tt
+		duel = {
+			skill = martial
+			target = scope:enemy_leader
+			50 = {
+				desc = murim_calamity_war_victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				# Victory — enemy clan devastated
+				scope:enemy_leader = {
+					add_character_modifier = {
+						modifier = murim_clan_devastated
+						years = 10
+					}
+					# Kill 70-90% of enemy clan members
+					every_courtier = {
+						limit = {
+							has_any_murim_clan_trait_trigger = yes
+						}
+						random = {
+							chance = 80
+							death = {
+								death_reason = death_battle
+								killer = prev.prev
+							}
+						}
+					}
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_calamity_war_victor
+					years = 5
+				}
+			}
+			50 = {
+				desc = murim_calamity_war_defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2
+				}
+				# Defeat — your clan devastated
+				add_character_modifier = {
+					modifier = murim_clan_devastated
+					years = 10
+				}
+				every_courtier = {
+					limit = {
+						has_any_murim_clan_trait_trigger = yes
+					}
+					random = {
+						chance = 75
+						death = {
+							death_reason = death_battle
+							killer = scope:enemy_leader
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0002.b
+		# Challenge enemy leader to single combat instead of clan war
+		trigger = {
+			prowess >= 25
+		}
+		custom_tooltip = murim_calamity_single_combat_tt
+		trigger_event = {
+			id = murim_calamity_cycle_expansion4.0003
+			days = { 1 5 }
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0003 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0003.t
+	desc = murim_calamity_cycle_expansion4.0003.desc
+	theme = martial
+	
+	# CALAMITY SINGLE COMBAT — Leader vs Leader duel to the death
+	
+	trigger = {
+		is_alive = yes
+		exists = scope:enemy_leader
+		scope:enemy_leader = { is_alive = yes }
+	}
+	
+	immediate = {
+		# Both leaders meet on neutral ground
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0003.a
+		# Fight to the death
+		duel = {
+			skill = prowess
+			target = scope:enemy_leader
+			60 = {
+				desc = murim_calamity_duel_victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3
+				}
+				# Kill enemy leader
+				scope:enemy_leader = {
+					death = {
+						death_reason = death_duel
+						killer = root
+					}
+				}
+				add_prestige = 1000
+				add_trait = calamity_warrior
+				# Enemy clan scatters
+				every_living_character = {
+					limit = {
+						has_relation_rival = scope:enemy_leader
+					}
+					add_opinion = {
+						modifier = murim_avenged_rival_opinion
+						target = root
+						opinion = 30
+					}
+				}
+			}
+			40 = {
+				desc = murim_calamity_duel_defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3
+				}
+				# Grievous wounds but survive
+				add_trait = battle_scarred
+				add_character_modifier = {
+					modifier = murim_grievous_calamity_wounds
+					years = 5
+				}
+				change_prowess = -5
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0003.b
+		# Mutual exhaustion — both clans lose but survive
+		stress_impact = {
+			brave = medium_stress_impact_gain
+		}
+		scope:enemy_leader = {
+			add_character_modifier = {
+				modifier = murim_mutual_exhaustion
+				years = 3
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_mutual_exhaustion
+			years = 3
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0004 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0004.t
+	desc = murim_calamity_cycle_expansion4.0004.desc
+	theme = death
+	
+	# EMPEROR ASSASSINATION — Heavenly Demon or unorthodox faction kills the emperor
+	# AI autonomous — fires when calamity intensity hits 90+
+	
+	trigger = {
+		has_variable = murim_great_calamity_active
+		var:murim_calamity_intensity >= 90
+		NOT = { has_global_variable = calamity_emperor_fallen }
+	}
+	
+	immediate = {
+		set_global_variable = {
+			name = calamity_emperor_fallen
+			value = yes
+		}
+		# Find the current emperor/murim overlord
+		random_living_character = {
+			limit = {
+				OR = {
+					has_trait = murim_emperor
+					has_title = title:e_china_murim
+				}
+			}
+			save_scope_as = doomed_emperor
+		}
+		# Find the assassin — Heavenly Demon preferred
+		random_living_character = {
+			limit = {
+				OR = {
+					has_trait = heavenly_demon
+					AND = {
+						has_trait = unorthodox_faction
+						has_trait = grandmaster_rank
+					}
+				}
+				is_alive = yes
+			}
+			weight = {
+				base = 10
+				modifier = {
+					add = 50
+					has_trait = heavenly_demon
+				}
+			}
+			save_scope_as = emperor_assassin
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0004.a
+		# The emperor falls — murim descends into total chaos
+		custom_tooltip = murim_emperor_assassination_tt
+		if = {
+			limit = {
+				exists = scope:doomed_emperor
+				exists = scope:emperor_assassin
+			}
+			scope:doomed_emperor = {
+				death = {
+					death_reason = death_murder
+					killer = scope:emperor_assassin
+				}
+			}
+			scope:emperor_assassin = {
+				add_prestige = 2000
+				add_character_modifier = {
+					modifier = murim_emperor_slayer
+					years = 50
+				}
+			}
+		}
+		# All martial world loses stability
+		every_living_character = {
+			limit = {
+				OR = {
+					has_trait = orthodox_faction
+					has_trait = unorthodox_faction
+				}
+			}
+			add_stress = 30
+			add_character_modifier = {
+				modifier = murim_no_emperor_chaos
+				years = 10
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0004.b
+		# Try to protect the emperor (orthodox leaders only)
+		trigger = {
+			has_trait = orthodox_faction
+			has_trait = clan_leader
+		}
+		custom_tooltip = murim_protect_emperor_tt
+		trigger_event = {
+			id = murim_calamity_cycle_expansion4.0006
+			days = { 1 3 }
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0005 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0005.t
+	desc = murim_calamity_cycle_expansion4.0005.desc
+	theme = diplomacy
+	
+	# UNITE AGAINST CALAMITY — Emergency alliance attempt
+	# Player can try to stop the blood tide
+	
+	trigger = {
+		is_alive = yes
+		has_trait = clan_leader
+	}
+	
+	immediate = {
+		# Count how many clan leaders are still alive
+		every_living_character = {
+			limit = {
+				has_trait = clan_leader
+				is_alive = yes
+				NOT = { this = root }
+			}
+			add_to_list = surviving_clan_leaders
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0005.a
+		# Call emergency summit — all remaining leaders
+		custom_tooltip = murim_emergency_summit_tt
+		every_in_list = {
+			list = surviving_clan_leaders
+			trigger_event = {
+				id = murim_calamity_cycle_expansion4.0007
+				days = { 5 15 }
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_summit_caller
+			years = 5
+		}
+		# Success chance based on diplomacy
+		random = {
+			chance = {
+				value = diplomacy
+				multiply = 3
+				max = 60
+			}
+			# Summit succeeds — temporary ceasefire
+			set_global_variable = {
+				name = calamity_ceasefire_active
+				value = yes
+			}
+			trigger_event = {
+				id = murim_calamity_cycle_expansion4.0008
+				days = { 20 40 }
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0005.b
+		# The calamity cannot be stopped — prepare your own clan
+		custom_tooltip = murim_prepare_own_clan_tt
+		add_character_modifier = {
+			modifier = murim_clan_fortified
+			years = 5
+		}
+		every_courtier = {
+			limit = {
+				has_any_murim_clan_trait_trigger = yes
+			}
+			add_character_modifier = {
+				modifier = murim_calamity_preparation
+				years = 5
+			}
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0006 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0006.t
+	desc = murim_calamity_cycle_expansion4.0006.desc
+	theme = martial
+	
+	# PROTECT THE EMPEROR — Orthodox leader defends against assassination
+	
+	trigger = {
+		is_alive = yes
+		has_trait = orthodox_faction
+		exists = scope:emperor_assassin
+	}
+	
+	immediate = {
+		# Gather orthodox elite guard
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0006.a
+		# Intercept the assassin personally
+		duel = {
+			skill = prowess
+			target = scope:emperor_assassin
+			35 = {
+				desc = murim_emperor_saved
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				# Emperor saved! Massive prestige
+				add_prestige = 3000
+				add_trait = emperor_guardian
+				remove_global_variable = calamity_emperor_fallen
+				scope:emperor_assassin = {
+					add_character_modifier = {
+						modifier = murim_assassination_failed
+						years = 5
+					}
+				}
+			}
+			65 = {
+				desc = murim_emperor_protector_falls
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2
+				}
+				# You fall defending the emperor
+				random = {
+					chance = 40
+					death = {
+						death_reason = death_battle
+						killer = scope:emperor_assassin
+					}
+				}
+				if = {
+					limit = { is_alive = yes }
+					add_trait = battle_scarred
+					add_character_modifier = {
+						modifier = murim_failed_emperor_defense
+						years = 10
+					}
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0006.b
+		# Send your best disciples instead
+		custom_tooltip = murim_send_disciples_protect_tt
+		random_courtier = {
+			limit = {
+				has_trait = expert_rank
+				is_alive = yes
+			}
+			random = {
+				chance = 50
+				death = {
+					death_reason = death_battle
+					killer = scope:emperor_assassin
+				}
+			}
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0007 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0007.t
+	desc = murim_calamity_cycle_expansion4.0007.desc
+	theme = diplomacy
+	
+	# EMERGENCY SUMMIT RESPONSE — AI clan leaders decide to join or refuse
+	
+	trigger = {
+		is_alive = yes
+		has_trait = clan_leader
+	}
+	
+	immediate = {
+		# AI weight determines if they accept
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0007.a
+		# Accept the ceasefire
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = orthodox_faction
+			}
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+			modifier = {
+				add = -20
+				has_trait = wrathful
+			}
+			modifier = {
+				add = -30
+				has_trait = heavenly_demon
+			}
+		}
+		add_opinion = {
+			modifier = murim_ceasefire_accepted_opinion
+			target = root
+			opinion = 40
+		}
+		add_character_modifier = {
+			modifier = murim_ceasefire_participant
+			years = 5
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0007.b
+		# Refuse — the war continues
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = unorthodox_faction
+			}
+			modifier = {
+				add = 40
+				has_trait = heavenly_demon
+			}
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+		add_opinion = {
+			modifier = murim_ceasefire_refused_opinion
+			target = root
+			opinion = -40
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0008 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0008.t
+	desc = murim_calamity_cycle_expansion4.0008.desc
+	theme = war
+	
+	# CEASEFIRE BROKEN — Someone betrays the alliance
+	# AI autonomous betrayal mechanic
+	
+	trigger = {
+		has_global_variable = calamity_ceasefire_active
+		is_alive = yes
+	}
+	
+	immediate = {
+		# Find the betrayer — highest intrigue unorthodox leader
+		random_living_character = {
+			limit = {
+				has_trait = clan_leader
+				is_alive = yes
+				OR = {
+					has_trait = unorthodox_faction
+					has_trait = deceitful
+					intrigue >= 20
+				}
+			}
+			weight = {
+				base = 10
+				modifier = {
+					add = 30
+					has_trait = heavenly_demon
+				}
+				modifier = {
+					add = 20
+					has_trait = deceitful
+				}
+				modifier = {
+					add = intrigue
+				}
+			}
+			save_scope_as = ceasefire_betrayer
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0008.a
+		# The ceasefire is shattered
+		custom_tooltip = murim_ceasefire_betrayed_tt
+		remove_global_variable = calamity_ceasefire_active
+		if = {
+			limit = {
+				exists = scope:ceasefire_betrayer
+			}
+			scope:ceasefire_betrayer = {
+				add_trait = murim_great_betrayer
+				add_prestige = 500
+				# The betrayer attacks during the summit
+				every_living_character = {
+					limit = {
+						has_trait = clan_leader
+						has_character_modifier = murim_ceasefire_participant
+						NOT = { this = scope:ceasefire_betrayer }
+					}
+					random = {
+						chance = 30
+						death = {
+							death_reason = death_murder
+							killer = scope:ceasefire_betrayer
+						}
+					}
+				}
+			}
+		}
+		# Calamity intensifies further
+		change_global_variable = {
+			name = murim_calamity_intensity
+			add = 15
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0008.b
+		# Expose the betrayer before they strike
+		trigger = {
+			intrigue >= 18
+		}
+		custom_tooltip = murim_expose_betrayer_tt
+		if = {
+			limit = {
+				exists = scope:ceasefire_betrayer
+			}
+			scope:ceasefire_betrayer = {
+				add_character_modifier = {
+					modifier = murim_exposed_betrayer
+					years = 10
+				}
+				add_prestige = -500
+			}
+		}
+		add_prestige = 300
+	}
+}
+
+murim_calamity_cycle_expansion4.0009 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0009.t
+	desc = murim_calamity_cycle_expansion4.0009.desc
+	theme = death
+	
+	# CIVILIAN MASSACRE — Mass death of non-martial civilians
+	# AI autonomous — fires monthly during peak calamity
+	
+	trigger = {
+		has_variable = murim_great_calamity_active
+		var:murim_calamity_intensity >= 85
+		is_ruler = yes
+	}
+	
+	immediate = {
+		# Calculate civilian casualties in your realm
+		set_variable = {
+			name = civilian_deaths_count
+			value = {
+				value = realm_size
+				multiply = 0.1
+				min = 5
+				max = 50
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0009.a
+		# The civilians burn — collateral damage of clan wars
+		custom_tooltip = murim_civilian_massacre_tt
+		add_stress = 40
+		# Kill random courtiers who are non-martial
+		every_courtier = {
+			limit = {
+				NOT = { has_any_murim_clan_trait_trigger = yes }
+				NOT = { has_trait = murim_martial_artist }
+			}
+			random = {
+				chance = 60
+				death = {
+					death_reason = death_battle
+				}
+			}
+		}
+		# Realm penalties
+		add_character_modifier = {
+			modifier = murim_civilian_massacre_guilt
+			years = 10
+		}
+		every_held_title = {
+			limit = {
+				tier >= tier_county
+			}
+			change_development_level = -3
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0009.b
+		# Shelter civilians in your territory
+		trigger = {
+			has_trait = compassionate
+		}
+		custom_tooltip = murim_shelter_civilians_tt
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_civilian_protector
+			years = 10
+		}
+		# Some civilians still die but fewer
+		every_courtier = {
+			limit = {
+				NOT = { has_any_murim_clan_trait_trigger = yes }
+			}
+			random = {
+				chance = 25
+				death = {
+					death_reason = death_battle
+				}
+			}
+		}
+	}
+}
+
+murim_calamity_cycle_expansion4.0010 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion4.0010.t
+	desc = murim_calamity_cycle_expansion4.0010.desc
+	theme = faith
+	
+	# DYNASTY PROTECTION — Player dynasty always survives
+	# Fires when calamity would kill last dynasty member
+	
+	trigger = {
+		has_variable = murim_great_calamity_active
+		is_alive = yes
+		dynasty = {
+			any_dynasty_member = {
+				count < 3
+				is_alive = yes
+			}
+		}
+		is_player_controlled = yes
+	}
+	
+	immediate = {
+		# Find a hidden refuge
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0010.a
+		# Hidden mountain refuge — dynasty survives in secret
+		custom_tooltip = murim_dynasty_hidden_refuge_tt
+		add_trait = calamity_survivor
+		add_character_modifier = {
+			modifier = murim_hidden_refuge
+			years = 20
+		}
+		# Spawn 2 dynasty members as survivors
+		create_character = {
+			dynasty = root.dynasty
+			gender_female_chance = 50
+			age = { 16 25 }
+			trait = calamity_survivor
+			trait = murim_martial_artist
+			random_traits = yes
+		}
+		create_character = {
+			dynasty = root.dynasty
+			gender_female_chance = 50
+			age = { 14 20 }
+			trait = calamity_survivor
+			trait = murim_martial_artist
+			random_traits = yes
+		}
+		add_prestige = 500
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0010.b
+		# Fight through the calamity — refuse to hide
+		trigger = {
+			prowess >= 20
+		}
+		custom_tooltip = murim_fight_through_calamity_tt
+		add_trait = calamity_warrior
+		add_prestige = 1000
+		# Become legendary survivor
+		add_character_modifier = {
+			modifier = murim_legendary_calamity_survivor
+			years = 50
+		}
+		# Still spawn dynasty backup
+		create_character = {
+			dynasty = root.dynasty
+			gender_female_chance = 50
+			age = { 16 25 }
+			trait = calamity_survivor
+			random_traits = yes
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion4.0010.c
+		# Seal your martial arts in a manual for the next era
+		custom_tooltip = murim_seal_arts_next_era_tt
+		add_piety = 500
+		set_global_variable = {
+			name = murim_sealed_manual_dynasty
+			value = root.dynasty
+		}
+		add_character_modifier = {
+			modifier = murim_manual_sealer
+			years = 50
+		}
+		# This manual becomes findable in the next cycle
+	}
+}
