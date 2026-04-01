@@ -1,0 +1,784 @@
+namespace = murim_custom_clan_exp3
+
+# Custom Clan Expansion 3 - Supreme Path & Vote Path Deep Events
+# 10 events covering both clan creation paths
+
+### EVENT 1: The Supreme Path - Declaring Yourself Grandmaster ###
+murim_custom_clan_exp3.0001 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0001.t
+	desc = murim_custom_clan_exp3.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		has_character_flag = supreme_path_chosen
+		NOT = { has_character_flag = grandmaster_declared }
+		martial >= 20
+		prowess >= 18
+	}
+	
+	weight_multiplier = {
+		base = 2
+		modifier = { add = 3 has_trait = ambitious }
+		modifier = { add = 2 prowess >= 22 }
+	}
+	
+	# Option A: Declare supreme authority - all must obey
+	option = {
+		name = murim_custom_clan_exp3.0001.a
+		add_character_flag = { flag = grandmaster_declared days = -1 }
+		add_trait = supreme_grandmaster
+		add_prestige = 1500
+		add_dread = 50
+		add_martial_skill = 3
+		hidden_effect = {
+			set_variable = { name = clan_obedience value = 80 }
+			set_variable = { name = clan_fear value = 60 }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Earn respect through demonstration of power
+	option = {
+		name = murim_custom_clan_exp3.0001.b
+		add_character_flag = { flag = grandmaster_declared days = -1 }
+		add_trait = proven_grandmaster
+		add_prestige = 1000
+		add_prowess = 5
+		hidden_effect = {
+			set_variable = { name = clan_obedience value = 90 }
+			set_variable = { name = clan_fear value = 30 }
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Rule through wisdom, not force
+	option = {
+		name = murim_custom_clan_exp3.0001.c
+		trigger = { learning >= 18 }
+		add_character_flag = { flag = grandmaster_declared days = -1 }
+		add_trait = scholarly_grandmaster
+		add_prestige = 800
+		add_learning_skill = 3
+		add_diplomacy_skill = 2
+		hidden_effect = {
+			set_variable = { name = clan_obedience value = 70 }
+			set_variable = { name = clan_fear value = 10 }
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+### EVENT 2: The Vote Path - Clan Council Election ###
+murim_custom_clan_exp3.0002 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0002.t
+	desc = murim_custom_clan_exp3.0002.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		has_character_flag = vote_path_chosen
+		NOT = { has_character_flag = council_election_held }
+	}
+	
+	weight_multiplier = {
+		base = 3
+	}
+	
+	# Option A: Campaign for leader position fairly
+	option = {
+		name = murim_custom_clan_exp3.0002.a
+		add_character_flag = { flag = council_election_held days = -1 }
+		hidden_effect = {
+			random_list = {
+				60 = {
+					modifier = { add = 20 diplomacy >= 18 }
+					root = {
+						add_trait = elected_leader
+						add_prestige = 1000
+						add_diplomacy_skill = 2
+					}
+				}
+				40 = {
+					root = {
+						add_prestige = -300
+						add_stress = 20
+						add_character_flag = { flag = election_lost days = 365 }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Bribe voters
+	option = {
+		name = murim_custom_clan_exp3.0002.b
+		trigger = { gold >= 200 }
+		add_character_flag = { flag = council_election_held days = -1 }
+		add_gold = -200
+		add_trait = elected_leader
+		add_prestige = 600
+		add_intrigue_skill = 1
+		stress_impact = { honest = medium_stress_impact_gain }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Threaten voters
+	option = {
+		name = murim_custom_clan_exp3.0002.c
+		trigger = { martial >= 18 }
+		add_character_flag = { flag = council_election_held days = -1 }
+		add_trait = elected_leader
+		add_prestige = 400
+		add_dread = 30
+		add_tyranny = 15
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Withdraw and support another candidate
+	option = {
+		name = murim_custom_clan_exp3.0002.d
+		add_character_flag = { flag = council_election_held days = -1 }
+		add_prestige = 200
+		add_piety = 200
+		add_diplomacy_skill = 2
+		ai_chance = { base = 15 }
+	}
+}
+
+### EVENT 3: Supreme Path - First Disciple Test ###
+murim_custom_clan_exp3.0003 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0003.t
+	desc = murim_custom_clan_exp3.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = grandmaster_declared
+		has_character_flag = custom_clan_founded
+		NOT = { has_character_flag = first_disciple_tested }
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = { age >= 16 age <= 30 martial >= 8 }
+			save_scope_as = disciple_candidate
+		}
+	}
+	
+	# Option A: Brutal trial by combat
+	option = {
+		name = murim_custom_clan_exp3.0003.a
+		add_character_flag = { flag = first_disciple_tested days = -1 }
+		duel = {
+			skill = prowess
+			target = scope:disciple_candidate
+			70 = {
+				desc = murim_custom_clan_exp3.0003.a.success
+				scope:disciple_candidate = {
+					add_trait = custom_clan_disciple
+					add_martial_skill = 2
+					add_prowess = 3
+				}
+				root = { add_prestige = 300 }
+			}
+			30 = {
+				desc = murim_custom_clan_exp3.0003.a.failure
+				scope:disciple_candidate = {
+					increase_wounds_effect = { reason = training }
+				}
+				root = { add_stress = 15 }
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Wisdom and knowledge test
+	option = {
+		name = murim_custom_clan_exp3.0003.b
+		add_character_flag = { flag = first_disciple_tested days = -1 }
+		scope:disciple_candidate = {
+			add_trait = custom_clan_disciple
+			add_learning_skill = 2
+			add_martial_skill = 1
+		}
+		add_prestige = 200
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Loyalty test - send on a dangerous mission
+	option = {
+		name = murim_custom_clan_exp3.0003.c
+		add_character_flag = { flag = first_disciple_tested days = -1 }
+		hidden_effect = {
+			random_list = {
+				60 = {
+					scope:disciple_candidate = {
+						add_trait = custom_clan_disciple
+						add_trait = battle_tested
+						add_prowess = 4
+					}
+					root = { add_prestige = 400 }
+				}
+				40 = {
+					scope:disciple_candidate = {
+						death = { death_reason = death_battle }
+					}
+					root = { add_stress = 30 add_prestige = -200 }
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+### EVENT 4: Vote Path - Council Disagreement ###
+murim_custom_clan_exp3.0004 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0004.t
+	desc = murim_custom_clan_exp3.0004.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		has_character_flag = vote_path_chosen
+		has_trait = elected_leader
+		NOT = { has_character_flag = council_disagreement_resolved }
+	}
+	
+	# Option A: Override the council - use leader authority
+	option = {
+		name = murim_custom_clan_exp3.0004.a
+		add_character_flag = { flag = council_disagreement_resolved days = -1 }
+		add_prestige = 300
+		add_dread = 15
+		add_tyranny = 10
+		stress_impact = { just = medium_stress_impact_gain }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Compromise - find middle ground
+	option = {
+		name = murim_custom_clan_exp3.0004.b
+		add_character_flag = { flag = council_disagreement_resolved days = -1 }
+		add_prestige = 200
+		add_diplomacy_skill = 2
+		add_stress = 10
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Let the council decide - democratic process
+	option = {
+		name = murim_custom_clan_exp3.0004.c
+		add_character_flag = { flag = council_disagreement_resolved days = -1 }
+		add_prestige = 100
+		add_piety = 200
+		hidden_effect = {
+			random_list = {
+				50 = { root = { add_prestige = 200 } }
+				50 = { root = { add_prestige = -100 add_stress = 15 } }
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Dissolve the council and switch to supreme path
+	option = {
+		name = murim_custom_clan_exp3.0004.d
+		trigger = { martial >= 20 }
+		add_character_flag = { flag = council_disagreement_resolved days = -1 }
+		remove_character_flag = vote_path_chosen
+		add_character_flag = { flag = supreme_path_chosen days = -1 }
+		remove_trait = elected_leader
+		add_trait = usurper_grandmaster
+		add_prestige = 500
+		add_dread = 40
+		add_tyranny = 25
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 5: Custom Clan - Developing Signature Technique ###
+murim_custom_clan_exp3.0005 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0005.t
+	desc = murim_custom_clan_exp3.0005.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		NOT = { has_character_flag = signature_technique_created }
+		martial >= 16
+	}
+	
+	# Option A: Create an offensive technique
+	option = {
+		name = murim_custom_clan_exp3.0005.a
+		add_character_flag = { flag = signature_technique_created days = -1 }
+		add_trait = custom_offensive_art
+		add_prowess = 6
+		add_martial_skill = 2
+		add_prestige = 800
+		hidden_effect = {
+			set_variable = { name = technique_type value = 1 }
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option B: Create a defensive technique
+	option = {
+		name = murim_custom_clan_exp3.0005.b
+		add_character_flag = { flag = signature_technique_created days = -1 }
+		add_trait = custom_defensive_art
+		add_prowess = 3
+		add_martial_skill = 3
+		add_health = 1
+		add_prestige = 700
+		hidden_effect = {
+			set_variable = { name = technique_type value = 2 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Create a healing/support technique
+	option = {
+		name = murim_custom_clan_exp3.0005.c
+		trigger = { learning >= 14 }
+		add_character_flag = { flag = signature_technique_created days = -1 }
+		add_trait = custom_healing_art
+		add_learning_skill = 3
+		add_health = 2
+		add_prestige = 600
+		hidden_effect = {
+			set_variable = { name = technique_type value = 3 }
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Create a forbidden dark art
+	option = {
+		name = murim_custom_clan_exp3.0005.d
+		trigger = { intrigue >= 16 }
+		add_character_flag = { flag = signature_technique_created days = -1 }
+		add_trait = custom_forbidden_art
+		add_prowess = 8
+		add_martial_skill = 3
+		add_dread = 30
+		add_prestige = 500
+		add_piety = -300
+		hidden_effect = {
+			set_variable = { name = technique_type value = 4 }
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+### EVENT 6: Rival Clan Challenges Your Right to Exist ###
+murim_custom_clan_exp3.0006 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0006.t
+	desc = murim_custom_clan_exp3.0006.desc
+	theme = war
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		NOT = { has_character_flag = existence_challenge_resolved }
+	}
+	
+	weight_multiplier = {
+		base = 2
+		modifier = { add = 3 has_character_flag = supreme_path_chosen }
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_disciple
+					has_trait = wudang_disciple
+					has_trait = tang_clan_member
+					has_trait = iron_fist_member
+				}
+				martial >= 15
+			}
+			save_scope_as = rival_clan_leader
+		}
+	}
+	
+	# Option A: Accept the challenge duel
+	option = {
+		name = murim_custom_clan_exp3.0006.a
+		add_character_flag = { flag = existence_challenge_resolved days = -1 }
+		duel = {
+			skill = prowess
+			target = scope:rival_clan_leader
+			50 = {
+				desc = murim_custom_clan_exp3.0006.a.success
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				add_prestige = 1500
+				add_trait = legitimized_clan_leader
+				reverse_add_opinion = {
+					target = scope:rival_clan_leader
+					modifier = respected_rival_opinion
+					opinion = 20
+				}
+			}
+			50 = {
+				desc = murim_custom_clan_exp3.0006.a.failure
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				increase_wounds_effect = { reason = duel }
+				add_prestige = -500
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Negotiate recognition through diplomacy
+	option = {
+		name = murim_custom_clan_exp3.0006.b
+		trigger = { diplomacy >= 16 }
+		add_character_flag = { flag = existence_challenge_resolved days = -1 }
+		add_prestige = 600
+		add_diplomacy_skill = 2
+		reverse_add_opinion = {
+			target = scope:rival_clan_leader
+			modifier = diplomatic_recognition_opinion
+			opinion = 10
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Prove worth through a public demonstration
+	option = {
+		name = murim_custom_clan_exp3.0006.c
+		add_character_flag = { flag = existence_challenge_resolved days = -1 }
+		add_prestige = 800
+		add_martial_skill = 1
+		add_prowess = 3
+		ai_chance = { base = 20 }
+	}
+	
+	# Option D: Ignore them and build power quietly
+	option = {
+		name = murim_custom_clan_exp3.0006.d
+		add_character_flag = { flag = existence_challenge_resolved days = -1 }
+		add_prestige = -200
+		add_intrigue_skill = 2
+		add_stress = 15
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 7: Custom Clan - Recruiting from Other Clans ###
+murim_custom_clan_exp3.0007 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0007.t
+	desc = murim_custom_clan_exp3.0007.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		NOT = { has_character_flag = cross_recruitment_done }
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				OR = {
+					has_trait = mount_hua_disciple
+					has_trait = shaolin_disciple
+					has_trait = wudang_disciple
+					has_trait = tang_clan_member
+					has_trait = beggar_sect_member
+					has_trait = iron_fist_member
+					has_trait = phantom_blade_member
+					has_trait = poison_flower_member
+				}
+				opinion = { target = liege value <= -10 }
+			}
+			save_scope_as = potential_recruit
+		}
+	}
+	
+	# Option A: Offer them a better position in your clan
+	option = {
+		name = murim_custom_clan_exp3.0007.a
+		add_character_flag = { flag = cross_recruitment_done days = -1 }
+		add_prestige = 400
+		add_gold = -100
+		scope:potential_recruit = {
+			add_opinion = { target = root modifier = recruitment_offer_opinion opinion = 30 }
+		}
+		hidden_effect = {
+			random_list = {
+				60 = {
+					scope:potential_recruit = {
+						add_trait = custom_clan_disciple
+						add_opinion = { target = root modifier = recruited_opinion opinion = 40 }
+					}
+					root = { add_prestige = 300 }
+				}
+				40 = {
+					root = { add_stress = 10 }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Challenge their clan leader for the right to recruit
+	option = {
+		name = murim_custom_clan_exp3.0007.b
+		trigger = { martial >= 18 }
+		add_character_flag = { flag = cross_recruitment_done days = -1 }
+		add_prestige = 200
+		add_dread = 15
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Secret recruitment - steal members quietly
+	option = {
+		name = murim_custom_clan_exp3.0007.c
+		trigger = { intrigue >= 16 }
+		add_character_flag = { flag = cross_recruitment_done days = -1 }
+		add_intrigue_skill = 2
+		add_prestige = 300
+		hidden_effect = {
+			random_list = {
+				70 = {
+					scope:potential_recruit = { add_trait = custom_clan_disciple }
+					root = { add_prestige = 200 }
+				}
+				30 = {
+					root = {
+						add_prestige = -400
+						add_character_flag = { flag = poaching_exposed days = 365 }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	# Option D: Train new disciples from scratch instead
+	option = {
+		name = murim_custom_clan_exp3.0007.d
+		add_character_flag = { flag = cross_recruitment_done days = -1 }
+		add_prestige = 200
+		add_learning_skill = 2
+		add_piety = 100
+		ai_chance = { base = 15 }
+	}
+}
+
+### EVENT 8: Custom Clan - Choosing Faction Alignment ###
+murim_custom_clan_exp3.0008 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0008.t
+	desc = murim_custom_clan_exp3.0008.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		NOT = { has_character_flag = faction_alignment_chosen }
+	}
+	
+	# Option A: Join the Orthodox faction
+	option = {
+		name = murim_custom_clan_exp3.0008.a
+		add_character_flag = { flag = faction_alignment_chosen days = -1 }
+		add_character_flag = { flag = custom_clan_orthodox days = -1 }
+		add_prestige = 500
+		add_piety = 300
+		hidden_effect = {
+			every_ruler = {
+				limit = {
+					OR = {
+						has_trait = mount_hua_disciple
+						has_trait = shaolin_disciple
+						has_trait = wudang_disciple
+					}
+				}
+				add_opinion = { target = root modifier = orthodox_ally_opinion opinion = 20 }
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option B: Join the Unorthodox faction
+	option = {
+		name = murim_custom_clan_exp3.0008.b
+		add_character_flag = { flag = faction_alignment_chosen days = -1 }
+		add_character_flag = { flag = custom_clan_unorthodox days = -1 }
+		add_prestige = 400
+		add_dread = 20
+		add_intrigue_skill = 2
+		hidden_effect = {
+			every_ruler = {
+				limit = {
+					OR = {
+						has_trait = phantom_blade_member
+						has_trait = poison_flower_member
+						has_trait = heavenly_demon_heir
+					}
+				}
+				add_opinion = { target = root modifier = unorthodox_ally_opinion opinion = 20 }
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Stay neutral - independent path
+	option = {
+		name = murim_custom_clan_exp3.0008.c
+		add_character_flag = { flag = faction_alignment_chosen days = -1 }
+		add_character_flag = { flag = custom_clan_neutral days = -1 }
+		add_prestige = 300
+		add_diplomacy_skill = 2
+		add_learning_skill = 1
+		ai_chance = { base = 30 }
+	}
+	
+	# Option D: Create a third faction
+	option = {
+		name = murim_custom_clan_exp3.0008.d
+		trigger = { diplomacy >= 20 prestige >= 2000 }
+		add_character_flag = { flag = faction_alignment_chosen days = -1 }
+		add_character_flag = { flag = third_faction_founder days = -1 }
+		add_prestige = 1000
+		add_trait = faction_founder
+		ai_chance = { base = 10 }
+	}
+}
+
+### EVENT 9: Supreme Path - Rebellion Against the Grandmaster ###
+murim_custom_clan_exp3.0009 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0009.t
+	desc = murim_custom_clan_exp3.0009.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = supreme_path_chosen
+		has_character_flag = grandmaster_declared
+		has_variable = clan_obedience
+		var:clan_obedience <= 50
+		NOT = { has_character_flag = internal_rebellion_dealt }
+	}
+	
+	# Option A: Crush the rebellion with force
+	option = {
+		name = murim_custom_clan_exp3.0009.a
+		add_character_flag = { flag = internal_rebellion_dealt days = -1 }
+		add_dread = 50
+		add_tyranny = 20
+		add_prestige = 300
+		hidden_effect = {
+			change_variable = { name = clan_obedience add = 30 }
+			change_variable = { name = clan_fear add = 40 }
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Address grievances and reform
+	option = {
+		name = murim_custom_clan_exp3.0009.b
+		add_character_flag = { flag = internal_rebellion_dealt days = -1 }
+		add_prestige = 200
+		add_diplomacy_skill = 2
+		add_piety = 200
+		hidden_effect = {
+			change_variable = { name = clan_obedience add = 20 }
+		}
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Duel the rebellion leader
+	option = {
+		name = murim_custom_clan_exp3.0009.c
+		add_character_flag = { flag = internal_rebellion_dealt days = -1 }
+		duel = {
+			skill = prowess
+			target = scope:rebellion_leader
+			60 = {
+				desc = murim_custom_clan_exp3.0009.c.success
+				add_prestige = 800
+				add_dread = 30
+				hidden_effect = { change_variable = { name = clan_obedience add = 40 } }
+			}
+			40 = {
+				desc = murim_custom_clan_exp3.0009.c.failure
+				increase_wounds_effect = { reason = duel }
+				add_prestige = -400
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+### EVENT 10: Custom Clan - Achieving Recognition as 10th Great Clan ###
+murim_custom_clan_exp3.0010 = {
+	type = character_event
+	title = murim_custom_clan_exp3.0010.t
+	desc = murim_custom_clan_exp3.0010.desc
+	theme = martial_arts
+	
+	trigger = {
+		has_character_flag = custom_clan_founded
+		has_character_flag = existence_challenge_resolved
+		has_character_flag = signature_technique_created
+		has_character_flag = faction_alignment_chosen
+		prestige >= 3000
+		NOT = { has_character_flag = great_clan_recognized }
+	}
+	
+	weight_multiplier = { base = 3 }
+	
+	# Option A: Accept the title with grand ceremony
+	option = {
+		name = murim_custom_clan_exp3.0010.a
+		add_character_flag = { flag = great_clan_recognized days = -1 }
+		add_trait = great_clan_patriarch
+		add_prestige = 3000
+		add_piety = 500
+		add_diplomacy_skill = 2
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Reject the title - stay independent
+	option = {
+		name = murim_custom_clan_exp3.0010.b
+		add_character_flag = { flag = great_clan_recognized days = -1 }
+		add_prestige = 1000
+		add_martial_skill = 2
+		add_trait = independent_legend
+		ai_chance = { base = 25 }
+	}
+	
+	# Option C: Demand a higher title - challenge the Nine Clans
+	option = {
+		name = murim_custom_clan_exp3.0010.c
+		trigger = { martial >= 25 prowess >= 22 }
+		add_character_flag = { flag = great_clan_recognized days = -1 }
+		add_prestige = 2000
+		add_dread = 40
+		add_trait = supreme_clan_challenger
+		hidden_effect = {
+			trigger_event = { id = murim_faction_war_exp2.0001 days = { 30 90 } }
+		}
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Merge with an existing great clan
+	option = {
+		name = murim_custom_clan_exp3.0010.d
+		add_character_flag = { flag = great_clan_recognized days = -1 }
+		add_prestige = 500
+		add_diplomacy_skill = 3
+		ai_chance = { base = 10 }
+	}
+}
