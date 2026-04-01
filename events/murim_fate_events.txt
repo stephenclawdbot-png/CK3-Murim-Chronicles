@@ -1,0 +1,1323 @@
+###############################################################################
+# MURIM FATE EVENTS
+# Fate & destiny mechanics: heavenly tribulation, karmic debt, reincarnation,
+# prophecy, chosen one, destiny threads, fate defiance, celestial mandate
+# Cross-references: murim_cultivation_events, murim_ranking_events,
+#                   murim_duel_events, murim_artifact_events, murim_politics_events
+###############################################################################
+
+namespace = murim_fate
+
+##############################
+# 1. Heavenly Tribulation Descends
+##############################
+murim_fate.0001 = {
+	type = character_event
+	title = murim_fate.0001.t
+	desc = murim_fate.0001.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 7
+		NOT = { has_character_flag = survived_heavenly_tribulation }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			var:murim_cultivation_level >= 9
+		}
+		modifier = {
+			add = 0.5
+			has_trait = brave
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = undergoing_tribulation
+			days = 30
+		}
+	}
+
+	# Face the tribulation head-on with full power
+	option = {
+		name = murim_fate.0001.a
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				desc = murim_fate.0001.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 1000
+				add_piety = 500
+				set_character_flag = {
+					flag = survived_heavenly_tribulation
+				}
+				add_character_modifier = {
+					modifier = murim_tribulation_survivor
+					years = -1
+				}
+				create_character_memory = {
+					type = murim_tribulation_survived_memory
+				}
+				hidden_effect = {
+					change_variable = {
+						name = murim_cultivation_level
+						add = 1
+					}
+					trigger_event = { id = murim_ranking_events.0001 days = { 7 30 } }
+				}
+			}
+			50 = {
+				desc = murim_fate.0001.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -500
+				random_list = {
+					25 = {
+						add_trait = wounded_3
+						create_character_memory = {
+							type = murim_tribulation_nearly_killed_memory
+						}
+					}
+					25 = {
+						add_trait = incapable
+						create_character_memory = {
+							type = murim_tribulation_crippled_memory
+						}
+					}
+					20 = {
+						add_trait = wounded_2
+						hidden_effect = {
+							change_variable = {
+								name = murim_cultivation_level
+								add = -2
+							}
+						}
+						create_character_memory = {
+							type = murim_tribulation_cultivation_destroyed_memory
+						}
+					}
+					30 = {
+						death = { death_reason = death_murder }
+						create_character_memory = {
+							type = murim_tribulation_death_memory
+						}
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+
+	# Use a protective artifact to shield yourself
+	option = {
+		name = murim_fate.0001.b
+		trigger = {
+			has_variable = murim_has_protective_artifact
+		}
+		add_prestige = 500
+		set_character_flag = {
+			flag = survived_heavenly_tribulation
+		}
+		random_list = {
+			70 = {
+				add_character_modifier = {
+					modifier = murim_tribulation_survivor
+					years = -1
+				}
+				create_character_memory = {
+					type = murim_tribulation_artifact_shield_memory
+				}
+			}
+			30 = {
+				add_trait = wounded_1
+				create_character_memory = {
+					type = murim_tribulation_artifact_cracked_memory
+				}
+				hidden_effect = {
+					remove_variable = murim_has_protective_artifact
+				}
+			}
+		}
+		hidden_effect = {
+			change_variable = {
+				name = murim_cultivation_level
+				add = 1
+			}
+		}
+		ai_chance = {
+			base = 80
+		}
+	}
+
+	# Flee and delay the tribulation
+	option = {
+		name = murim_fate.0001.c
+		add_prestige = -300
+		add_trait = craven
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = murim_tribulation_fled_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0001 days = { 365 730 } }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 40
+				has_trait = craven
+			}
+		}
+	}
+}
+
+##############################
+# 2. Karmic Debt Awakening
+##############################
+murim_fate.0002 = {
+	type = character_event
+	title = murim_fate.0002.t
+	desc = murim_fate.0002.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = sadistic
+			has_trait = callous
+			has_trait = vengeful
+			num_of_kills >= 3
+		}
+		NOT = { has_character_flag = karmic_debt_resolved }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			num_of_kills >= 5
+		}
+		modifier = {
+			add = 0.5
+			has_trait = sadistic
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = karmic_debt_active
+			days = 1825
+		}
+	}
+
+	# Accept the karmic burden and seek redemption
+	option = {
+		name = murim_fate.0002.a
+		add_piety = 300
+		add_character_modifier = {
+			modifier = murim_karmic_penance
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_karmic_debt_accepted_memory
+		}
+		stress_impact = {
+			sadistic = major_stress_impact_gain
+			callous = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_fate.0006 days = { 365 730 } }
+				}
+				50 = {
+					trigger_event = { id = murim_cultivation_events.0001 days = { 180 365 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Defy karma - the strong make their own fate
+	option = {
+		name = murim_fate.0002.b
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_karma_defied
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_karma_defied_memory
+		}
+		hidden_effect = {
+			random_list = {
+				30 = {
+					trigger_event = { id = murim_fate.0007 days = { 180 365 } }
+				}
+				40 = {
+					trigger_event = { id = murim_fate.0001 days = { 365 730 } }
+				}
+				30 = {
+					add_trait = wounded_1
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = arrogant
+			}
+		}
+	}
+
+	# Perform a blood sacrifice to transfer the debt
+	option = {
+		name = murim_fate.0002.c
+		add_tyranny = 20
+		add_dread = 30
+		add_character_modifier = {
+			modifier = murim_karmic_transfer
+			years = 3
+		}
+		create_character_memory = {
+			type = murim_karmic_sacrifice_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_jianghu_events.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+}
+
+##############################
+# 3. Reincarnation Memories Surface
+##############################
+murim_fate.0003 = {
+	type = character_event
+	title = murim_fate.0003.t
+	desc = murim_fate.0003.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		age <= 25
+		learning >= 10
+		NOT = { has_character_flag = reincarnation_awakened }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			learning >= 15
+		}
+		modifier = {
+			add = 0.5
+			has_trait = genius
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = reincarnation_awakened
+		}
+	}
+
+	# Embrace the past life memories - gain ancient knowledge
+	option = {
+		name = murim_fate.0003.a
+		add_learning_skill = 2
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_reincarnated_master
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_reincarnation_awakened_memory
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_cultivation_level
+				value = 5
+			}
+			trigger_event = { id = murim_artifact_events.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Selectively recall only combat techniques
+	option = {
+		name = murim_fate.0003.b
+		add_prowess_skill = 5
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = murim_reincarnated_warrior
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_reincarnation_warrior_memory
+		}
+		hidden_effect = {
+			set_variable = {
+				name = murim_cultivation_level
+				value = 3
+			}
+			trigger_event = { id = murim_duel_events.0001 days = { 30 60 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+
+	# Suppress the memories - they are too painful
+	option = {
+		name = murim_fate.0003.c
+		stress_impact = {
+			base = major_stress_impact_gain
+		}
+		add_character_modifier = {
+			modifier = murim_suppressed_memories
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_reincarnation_suppressed_memory
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_fate.0003 days = { 730 1460 } }
+				}
+				50 = { }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+}
+
+##############################
+# 4. Prophecy Revelation
+##############################
+murim_fate.0004 = {
+	type = character_event
+	title = murim_fate.0004.t
+	desc = murim_fate.0004.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		OR = {
+			has_trait = mystic_1
+			has_trait = mystic_2
+			has_trait = mystic_3
+			learning >= 18
+			piety >= 1000
+		}
+		NOT = { has_character_flag = received_prophecy }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			has_trait = mystic_3
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = received_prophecy
+			days = 3650
+		}
+		random_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes }
+			save_scope_as = prophecy_subject
+		}
+	}
+
+	# The prophecy speaks of a great calamity - prepare
+	option = {
+		name = murim_fate.0004.a
+		add_piety = 300
+		add_character_modifier = {
+			modifier = murim_prophet_of_doom
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_prophecy_calamity_memory
+		}
+		hidden_effect = {
+			random_list = {
+				40 = {
+					trigger_event = { id = murim_fate.0001 days = { 365 730 } }
+				}
+				30 = {
+					trigger_event = { id = murim_politics.0009 days = { 180 365 } }
+				}
+				30 = {
+					trigger_event = { id = murim_sect_events.0001 days = { 365 730 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# The prophecy names a chosen one - it could be you
+	option = {
+		name = murim_fate.0004.b
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_self_proclaimed_chosen
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_prophecy_chosen_self_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0005 days = { 90 365 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Dismiss the prophecy as madness
+	option = {
+		name = murim_fate.0004.c
+		add_prestige = -100
+		stress_impact = {
+			zealous = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = murim_prophecy_dismissed_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = cynical
+			}
+		}
+	}
+}
+
+##############################
+# 5. Chosen One Emergence
+##############################
+murim_fate.0005 = {
+	type = character_event
+	title = murim_fate.0005.t
+	desc = murim_fate.0005.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		prowess >= 15
+		OR = {
+			has_character_flag = reincarnation_awakened
+			has_character_modifier = murim_self_proclaimed_chosen
+			has_trait = genius
+		}
+		NOT = { has_character_flag = chosen_one_confirmed }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			prowess >= 25
+		}
+		modifier = {
+			add = 0.5
+			has_character_flag = reincarnation_awakened
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = chosen_one_confirmed
+		}
+	}
+
+	# Accept the mantle of the Chosen One
+	option = {
+		name = murim_fate.0005.a
+		add_prestige = 1000
+		add_piety = 500
+		add_prowess_skill = 5
+		add_character_modifier = {
+			modifier = murim_chosen_one
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_chosen_one_accepted_memory
+		}
+		every_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_chosen_one_opinion
+				opinion = 20
+			}
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_fate.0001 days = { 365 730 } }
+				}
+				50 = {
+					trigger_event = { id = murim_duel_events.0001 days = { 30 90 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Reject the burden - walk your own path
+	option = {
+		name = murim_fate.0005.b
+		add_prestige = 200
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		create_character_memory = {
+			type = murim_chosen_one_rejected_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0007 days = { 180 365 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = content
+			}
+		}
+	}
+}
+
+##############################
+# 6. Destiny Thread Revealed
+##############################
+murim_fate.0006 = {
+	type = character_event
+	title = murim_fate.0006.t
+	desc = murim_fate.0006.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:destiny_linked
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		learning >= 10
+		any_relation = {
+			type = friend
+			is_alive = yes
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = mystic_1
+		}
+	}
+
+	immediate = {
+		random_relation = {
+			type = friend
+			limit = { is_alive = yes }
+			save_scope_as = destiny_linked
+		}
+	}
+
+	# Embrace the shared destiny - become cultivation partners
+	option = {
+		name = murim_fate.0006.a
+		add_prestige = 200
+		scope:destiny_linked = {
+			add_opinion = {
+				target = root
+				modifier = murim_destiny_bond_opinion
+				opinion = 40
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_destiny_bound
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_destiny_thread_bound_memory
+			participants = { partner = scope:destiny_linked }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation_events.0001 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = gregarious
+			}
+		}
+	}
+
+	# Cut the destiny thread - forge your own path
+	option = {
+		name = murim_fate.0006.b
+		add_prestige = 100
+		scope:destiny_linked = {
+			add_opinion = {
+				target = root
+				modifier = murim_destiny_severed_opinion
+				opinion = -30
+			}
+		}
+		create_character_memory = {
+			type = murim_destiny_thread_severed_memory
+			participants = { partner = scope:destiny_linked }
+		}
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0007 days = { 90 180 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = callous
+			}
+		}
+	}
+
+	# Investigate the thread further before deciding
+	option = {
+		name = murim_fate.0006.c
+		add_learning_skill = 1
+		create_character_memory = {
+			type = murim_destiny_investigated_memory
+			participants = { partner = scope:destiny_linked }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0004 days = { 60 180 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				learning >= 15
+			}
+		}
+	}
+}
+
+##############################
+# 7. Fate Defiance - Breaking Destiny's Chains
+##############################
+murim_fate.0007 = {
+	type = character_event
+	title = murim_fate.0007.t
+	desc = murim_fate.0007.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_character_modifier = murim_karma_defied
+			has_character_flag = chosen_one_confirmed
+			has_character_flag = reincarnation_awakened
+		}
+		prowess >= 20
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			prowess >= 30
+		}
+	}
+
+	# Shatter the chains of fate entirely
+	option = {
+		name = murim_fate.0007.a
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				desc = murim_fate.0007.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 2000
+				add_piety = 1000
+				add_character_modifier = {
+					modifier = murim_fate_breaker
+					years = -1
+				}
+				create_character_memory = {
+					type = murim_fate_shattered_memory
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_ranking_events.0001 days = { 7 30 } }
+				}
+			}
+			50 = {
+				desc = murim_fate.0007.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_prestige = -500
+				random_list = {
+					30 = { add_trait = wounded_3 }
+					20 = { add_trait = incapable }
+					20 = {
+						hidden_effect = {
+							change_variable = {
+								name = murim_cultivation_level
+								add = -3
+							}
+						}
+					}
+					30 = {
+						death = { death_reason = death_murder }
+					}
+				}
+				create_character_memory = {
+					type = murim_fate_defiance_failed_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+
+	# Gradually erode fate through cultivation
+	option = {
+		name = murim_fate.0007.b
+		add_character_modifier = {
+			modifier = murim_fate_eroding
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_fate_gradual_erosion_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_cultivation_events.0001 days = { 90 180 } }
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+
+	# Accept fate - find peace within its bounds
+	option = {
+		name = murim_fate.0007.c
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_fate_accepted
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_fate_accepted_memory
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+}
+
+##############################
+# 8. Karmic Retribution Strikes
+##############################
+murim_fate.0008 = {
+	type = character_event
+	title = murim_fate.0008.t
+	desc = murim_fate.0008.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_character_flag = karmic_debt_active
+			has_trait = sadistic
+			tyranny >= 20
+		}
+		NOT = { has_character_flag = karmic_retribution_suffered }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			tyranny >= 40
+		}
+		modifier = {
+			add = 0.5
+			num_of_kills >= 5
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = karmic_retribution_suffered
+			days = 1825
+		}
+	}
+
+	# Endure the retribution with stoic resolve
+	option = {
+		name = murim_fate.0008.a
+		random_list = {
+			30 = {
+				add_trait = wounded_2
+				create_character_memory = {
+					type = murim_karmic_retribution_wound_memory
+				}
+			}
+			25 = {
+				add_trait = ill
+				create_character_memory = {
+					type = murim_karmic_retribution_illness_memory
+				}
+			}
+			20 = {
+				hidden_effect = {
+					change_variable = {
+						name = murim_cultivation_level
+						add = -2
+					}
+				}
+				create_character_memory = {
+					type = murim_karmic_retribution_cultivation_loss_memory
+				}
+			}
+			25 = {
+				add_prestige = -500
+				every_vassal = {
+					limit = { is_alive = yes }
+					add_opinion = {
+						target = root
+						modifier = murim_karmic_curse_opinion
+						opinion = -20
+					}
+				}
+				create_character_memory = {
+					type = murim_karmic_retribution_reputation_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Redirect the karma onto an enemy
+	option = {
+		name = murim_fate.0008.b
+		trigger = {
+			any_relation = {
+				type = rival
+				is_alive = yes
+			}
+		}
+		random_relation = {
+			type = rival
+			limit = { is_alive = yes }
+			save_scope_as = karma_target
+			random_list = {
+				40 = { add_trait = wounded_2 }
+				30 = { add_trait = ill }
+				30 = { add_prestige = -500 }
+			}
+		}
+		add_tyranny = 10
+		create_character_memory = {
+			type = murim_karmic_redirect_memory
+			participants = { target = scope:karma_target }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0002 days = { 365 730 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+		}
+	}
+
+	# Seek a holy master to purify the karma
+	option = {
+		name = murim_fate.0008.c
+		remove_short_term_gold = 300
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_karma_purification
+			years = 3
+		}
+		set_character_flag = {
+			flag = karmic_debt_resolved
+		}
+		create_character_memory = {
+			type = murim_karma_purified_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = zealous
+			}
+		}
+	}
+}
+
+##############################
+# 9. Celestial Mandate Bestowed
+##############################
+murim_fate.0009 = {
+	type = character_event
+	title = murim_fate.0009.t
+	desc = murim_fate.0009.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		prestige >= 2000
+		piety >= 1000
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 8
+		NOT = { has_character_flag = celestial_mandate_received }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 1
+			var:murim_cultivation_level >= 10
+		}
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = celestial_mandate_received
+		}
+	}
+
+	# Accept the Celestial Mandate - become the Martial Emperor
+	option = {
+		name = murim_fate.0009.a
+		add_prestige = 3000
+		add_piety = 1000
+		add_character_modifier = {
+			modifier = murim_celestial_mandate
+			years = -1
+		}
+		create_character_memory = {
+			type = murim_celestial_mandate_accepted_memory
+		}
+		every_neighboring_top_liege_realm_owner = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = murim_celestial_emperor_opinion
+				opinion = -30
+			}
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = { id = murim_politics.0009 days = { 90 365 } }
+				}
+				50 = {
+					trigger_event = { id = murim_ranking_events.0001 days = { 30 60 } }
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Decline - the heavens do not command me
+	option = {
+		name = murim_fate.0009.b
+		add_prestige = 500
+		add_piety = -500
+		create_character_memory = {
+			type = murim_celestial_mandate_refused_memory
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_fate.0007 days = { 30 90 } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = cynical
+			}
+		}
+	}
+}
+
+##############################
+# 10. Wheel of Fate Turns
+##############################
+murim_fate.0010 = {
+	type = character_event
+	title = murim_fate.0010.t
+	desc = murim_fate.0010.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 40
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 5
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			age >= 60
+		}
+	}
+
+	# Spin the wheel - accept whatever fate decrees
+	option = {
+		name = murim_fate.0010.a
+		random_list = {
+			15 = {
+				# Great fortune - cultivation breakthrough
+				add_prestige = 500
+				hidden_effect = {
+					change_variable = {
+						name = murim_cultivation_level
+						add = 2
+					}
+				}
+				create_character_memory = {
+					type = murim_wheel_fortune_memory
+				}
+				trigger_event = { id = murim_cultivation_events.0001 days = { 7 30 } }
+			}
+			15 = {
+				# Artifact discovery
+				add_prestige = 300
+				create_character_memory = {
+					type = murim_wheel_artifact_memory
+				}
+				trigger_event = { id = murim_artifact_events.0001 days = { 7 30 } }
+			}
+			15 = {
+				# New rival emerges
+				create_character_memory = {
+					type = murim_wheel_rival_memory
+				}
+				trigger_event = { id = murim_duel_events.0001 days = { 30 60 } }
+			}
+			15 = {
+				# Political upheaval
+				create_character_memory = {
+					type = murim_wheel_upheaval_memory
+				}
+				trigger_event = { id = murim_politics.0006 days = { 30 90 } }
+			}
+			10 = {
+				# Calamity - lose cultivation
+				hidden_effect = {
+					change_variable = {
+						name = murim_cultivation_level
+						add = -2
+					}
+				}
+				create_character_memory = {
+					type = murim_wheel_calamity_memory
+				}
+			}
+			10 = {
+				# Student appears
+				create_character_memory = {
+					type = murim_wheel_student_memory
+				}
+				trigger_event = { id = murim_training_events.0001 days = { 15 30 } }
+			}
+			10 = {
+				# Old enemy returns
+				create_character_memory = {
+					type = murim_wheel_enemy_memory
+				}
+				trigger_event = { id = murim_jianghu_events.0001 days = { 30 60 } }
+			}
+			10 = {
+				# Heavenly tribulation approaches
+				create_character_memory = {
+					type = murim_wheel_tribulation_memory
+				}
+				trigger_event = { id = murim_fate.0001 days = { 90 180 } }
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Refuse to gamble with fate
+	option = {
+		name = murim_fate.0010.b
+		add_prestige = 50
+		create_character_memory = {
+			type = murim_wheel_refused_memory
+		}
+		stress_impact = {
+			brave = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
