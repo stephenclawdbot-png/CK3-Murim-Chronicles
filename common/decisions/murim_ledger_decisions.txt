@@ -1,0 +1,250 @@
+# Murim Chronicles - Murim Ledger Decision
+# Player-only UI: opens a martial world overview window via event chain.
+# INTEGRATION: Fires murim_ledger events (events/murim_ledger_events.txt)
+# INTEGRATION: Reads data from murim_ranking_values.txt, murim_harmony_values.txt,
+#              murim_clan_triggers.txt, murim_tournament_values.txt
+# DESIGN: VANILLA SEPARATION — this is a martial-layer UI only.
+#         No political information shown. No feudal rank displayed.
+#         Pure martial world data: rankings, clans, profile, events, tournaments.
+# GENDER: No gender restrictions on access.
+
+# ============================================================
+# OPEN THE MURIM LEDGER
+# ============================================================
+open_murim_ledger_decision = {
+	title = open_murim_ledger_decision_title
+	# "Open the Murim Ledger"
+	
+	desc = open_murim_ledger_decision_desc
+	# "Consult the records of the martial world — rankings, clans, 
+	#  your own martial profile, recent events, and upcoming tournaments.
+	#  The Murim Ledger is maintained by the information networks of 
+	#  the six great clans and updated by wandering scribes who track 
+	#  the deeds of martial artists across the world."
+	
+	selection_tooltip = open_murim_ledger_decision_tooltip
+	# "Open the Murim Ledger to view the state of the martial world."
+	
+	picture = "gfx/interface/illustrations/decisions/murim_ledger.dds"
+	
+	# Always available — no cooldown, no cost
+	ai_check_interval = 0  # AI never uses this — player-only UI
+	
+	is_shown = {
+		# Only shown if character has martial awareness or any martial trait
+		OR = {
+			has_trait = martial_awareness
+			murim_is_martial_artist_trigger = yes
+			# Also show if character has witnessed martial arts (has the variable)
+			has_variable = murim_witnessed_martial_arts
+		}
+		# Player only — AI should never see this
+		is_ai = no
+	}
+	
+	is_valid = {
+		# Always valid if shown. No restrictions.
+		is_alive = yes
+		is_imprisoned = no  # Can't consult a ledger from prison
+	}
+	
+	cost = {
+		# Free. No gold, no piety, no prestige cost.
+	}
+	
+	cooldown = {
+		# No cooldown. Can open any time.
+		days = 0
+	}
+	
+	effect = {
+		# Fire the main menu event
+		trigger_event = {
+			id = murim_ledger.0001
+		}
+	}
+}
+
+# ============================================================
+# ADDITIONAL MARTIAL DECISIONS (always available to martial characters)
+# ============================================================
+
+# Quick-access: Challenge a ranked fighter
+murim_challenge_ranked_decision = {
+	title = murim_challenge_ranked_decision_title
+	# "Challenge a Ranked Martial Artist"
+	
+	desc = murim_challenge_ranked_decision_desc
+	# "Issue a formal challenge to someone in the martial rankings.
+	#  If they accept, a duel will be arranged. If you win, you take 
+	#  their rank. If you lose, you drop in the rankings and gain 
+	#  a reputation for ambition — or foolishness."
+	
+	ai_check_interval = 120  # AI checks every 10 years
+	
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		# Must have a ranking to challenge
+		has_variable = murim_ranking_position
+	}
+	
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		# Must not be currently in a duel chain
+		NOT = { has_variable = murim_active_duel }
+		# Must not have challenged in the last year
+		NOT = {
+			has_character_modifier = murim_recent_challenge_cooldown
+		}
+	}
+	
+	cost = {
+		prestige = 25  # Costs prestige to issue a formal challenge
+	}
+	
+	cooldown = {
+		days = 365  # Once per year
+	}
+	
+	effect = {
+		trigger_event = {
+			id = murim_ranking.0001  # Ranking challenge event
+		}
+		add_character_modifier = {
+			modifier = murim_recent_challenge_cooldown
+			years = 1
+		}
+	}
+	
+	ai_potential = {
+		prowess >= 12
+		has_trait = ambitious
+	}
+	
+	ai_will_do = {
+		base = 5
+		modifier = {
+			add = 10
+			has_trait = brave
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+	}
+}
+
+# Quick-access: Request clan membership
+murim_request_clan_membership_decision = {
+	title = murim_request_clan_membership_decision_title
+	# "Request to Join a Martial Clan"
+	
+	desc = murim_request_clan_membership_decision_desc
+	# "Approach one of the six great clans and request admission.
+	#  Each clan has different standards and preferences. Your 
+	#  chances depend on your skills, personality, and the clan's 
+	#  current needs."
+	
+	ai_check_interval = 60  # AI checks every 5 years
+	
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		# Must not already be in a clan
+		NOT = { murim_is_any_clan_member_trigger = yes }
+	}
+	
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		age >= 12  # Minimum age to request membership
+	}
+	
+	cost = {
+		# No cost — requesting is free. Getting accepted is another matter.
+	}
+	
+	effect = {
+		trigger_event = {
+			id = murim_recruit.0020  # Normal mode recruitment — self-initiated
+		}
+	}
+	
+	ai_potential = {
+		prowess >= 8
+		NOT = { has_trait = content }
+	}
+	
+	ai_will_do = {
+		base = 10
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 10
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -15
+			has_trait = shy
+		}
+	}
+}
+
+# Quick-access: Begin martial training
+murim_begin_training_decision = {
+	title = murim_begin_training_decision_title
+	# "Train Your Martial Arts"
+	
+	desc = murim_begin_training_decision_desc
+	# "Dedicate time to improving your martial skills through 
+	#  rigorous training. Your progress depends on your current 
+	#  tier, available resources, and whether you have a master."
+	
+	ai_check_interval = 12  # AI checks yearly
+	
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+	}
+	
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		NOT = { has_character_modifier = murim_currently_training }
+	}
+	
+	cost = {
+		# Training costs nothing directly — the time investment is the cost
+	}
+	
+	cooldown = {
+		days = 180  # Can initiate training every 6 months
+	}
+	
+	effect = {
+		trigger_event = {
+			id = murim_training.0001  # Training event chain
+		}
+		add_character_modifier = {
+			modifier = murim_currently_training
+			months = 6
+		}
+	}
+	
+	ai_potential = {
+		prowess >= 4
+	}
+	
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 15
+			has_trait = diligent
+		}
+		modifier = {
+			add = -20
+			has_trait = lazy
+		}
+	}
+}
