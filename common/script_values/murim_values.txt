@@ -2,7 +2,8 @@
 # Core values for martial power calculation, cultivation checks, technique mastery,
 # duel resolution, sect management, and jianghu reputation
 # Cross-references: murim_triggers, murim_effects, murim_modifiers, all event files
-# FIXED: Uses OR blocks for trait name compatibility across systems
+# POLISH FIX: All trait references now match actual definitions in trait files
+# Uses OR blocks for compatibility between 01_martial_traits.txt and murim_cultivation_traits.txt
 
 # ==========================================
 # MARTIAL POWER VALUES
@@ -11,117 +12,119 @@
 murim_base_martial_power_value = {
 	value = prowess
 	add = martial
+	# Tier 1: Outer Qi / Mortal Realm
 	if = {
 		limit = {
 			OR = {
 				has_trait = murim_outer_qi
-				has_trait = cultivation_body_tempering
+				has_trait = mortal_realm
 			}
 		}
 		add = 5
 	}
+	# Tier 2: Qi Gathering / Qi Condensation Realm
 	if = {
 		limit = {
 			OR = {
 				has_trait = murim_qi_gathering
-				has_trait = cultivation_meridian_opening
+				has_trait = qi_condensation_realm
 			}
 		}
 		add = 10
 	}
+	# Tier 3: Foundation / Foundation Realm
 	if = {
 		limit = {
 			OR = {
 				has_trait = murim_foundation
-				has_trait = cultivation_foundation
+				has_trait = foundation_realm
 			}
 		}
 		add = 18
 	}
+	# Tier 4: Golden Core / Core Formation Realm
 	if = {
 		limit = {
 			OR = {
 				has_trait = murim_golden_core
-				has_trait = cultivation_core_formation
+				has_trait = core_formation_realm
 			}
 		}
 		add = 30
 	}
+	# Tier 5: Nascent Soul / Nascent Soul Realm
 	if = {
 		limit = {
 			OR = {
 				has_trait = murim_nascent_soul
-				has_trait = cultivation_nascent_soul
+				has_trait = nascent_soul_realm
 			}
 		}
 		add = 50
 	}
+	# Tier 6: Spirit Severing / Ascension Realm
 	if = {
 		limit = {
 			OR = {
 				has_trait = murim_spirit_severing
-				has_trait = spirit_severing
+				has_trait = ascension_realm
 			}
 		}
 		add = 80
 	}
+	# Tier 7: Heavenly Tribulation (highest)
 	if = {
 		limit = {
-			OR = {
-				has_trait = murim_heavenly_tribulation
-				has_trait = immortal_ascension
-			}
+			has_trait = murim_heavenly_tribulation
 		}
 		add = 150
 	}
-	# Technique bonuses
+	# Technique bonuses (from murim_technique_traits.txt)
 	if = {
-		limit = {
-			OR = {
-				has_trait = sword_qi_mastery
-				has_trait = sword_qi_wielder
-			}
-		}
+		limit = { has_trait = sword_qi_mastery }
 		add = 5
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = iron_fist_mastery
-				has_trait = iron_body_practitioner
-			}
-		}
+		limit = { has_trait = heavenly_sword_intent }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = iron_fist_mastery }
 		add = 5
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = healing_palm_mastery
-				has_trait = poison_hand_master
-			}
-		}
+		limit = { has_trait = tyrant_body_technique }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = healing_palm_mastery }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = poison_hand_master }
 		add = 5
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = tyrant_body_technique
-				has_trait = body_tempering_technique
-			}
-		}
+		limit = { has_trait = shadow_step_technique }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = lightfoot_mastery }
+		add = 3
+	}
+	if = {
+		limit = { has_trait = drunken_immortal_fist }
 		add = 4
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = shadow_step_technique
-				has_trait = movement_technique_master
-				has_trait = lightfoot_mastery
-			}
-		}
-		add = 3
+		limit = { has_trait = qi_circulation_grandmaster }
+		add = 4
 	}
-	# Combat traits
+	if = {
+		limit = { has_trait = forbidden_blood_art }
+		add = 6
+	}
+	# Combat state modifiers
 	if = {
 		limit = { has_trait = brave }
 		add = 2
@@ -141,6 +144,36 @@ murim_base_martial_power_value = {
 	if = {
 		limit = { has_trait = incapable }
 		add = -30
+	}
+	# Combat trauma penalties (from murim_combat_trauma_traits.txt)
+	if = {
+		limit = { has_trait = shattered_dantian }
+		add = -15
+	}
+	if = {
+		limit = { has_trait = severed_meridians }
+		add = -10
+	}
+	if = {
+		limit = { has_trait = internal_qi_damage }
+		add = -5
+	}
+	if = {
+		limit = { has_trait = qi_sealed_by_enemy }
+		add = -12
+	}
+	# Psychological trait bonuses
+	if = {
+		limit = { has_trait = killer_instinct }
+		add = 4
+	}
+	if = {
+		limit = { has_trait = berserker_qi }
+		add = 6
+	}
+	if = {
+		limit = { has_trait = duel_ptsd }
+		add = -3
 	}
 	min = 0
 }
@@ -184,6 +217,14 @@ murim_effective_combat_power_value = {
 		limit = { has_character_modifier = defeat_shame }
 		add = -3
 	}
+	if = {
+		limit = { has_character_modifier = strongest_under_heaven }
+		add = 10
+	}
+	if = {
+		limit = { has_character_modifier = forbidden_technique_mastered }
+		add = 8
+	}
 	min = 0
 }
 
@@ -199,7 +240,7 @@ murim_cultivation_tier_value = {
 		limit = {
 			OR = {
 				has_trait = murim_outer_qi
-				has_trait = cultivation_body_tempering
+				has_trait = mortal_realm
 			}
 		}
 		add = 1
@@ -208,7 +249,7 @@ murim_cultivation_tier_value = {
 		limit = {
 			OR = {
 				has_trait = murim_qi_gathering
-				has_trait = cultivation_meridian_opening
+				has_trait = qi_condensation_realm
 			}
 		}
 		add = 2
@@ -217,7 +258,7 @@ murim_cultivation_tier_value = {
 		limit = {
 			OR = {
 				has_trait = murim_foundation
-				has_trait = cultivation_foundation
+				has_trait = foundation_realm
 			}
 		}
 		add = 3
@@ -226,7 +267,7 @@ murim_cultivation_tier_value = {
 		limit = {
 			OR = {
 				has_trait = murim_golden_core
-				has_trait = cultivation_core_formation
+				has_trait = core_formation_realm
 			}
 		}
 		add = 4
@@ -235,7 +276,7 @@ murim_cultivation_tier_value = {
 		limit = {
 			OR = {
 				has_trait = murim_nascent_soul
-				has_trait = cultivation_nascent_soul
+				has_trait = nascent_soul_realm
 			}
 		}
 		add = 5
@@ -244,131 +285,98 @@ murim_cultivation_tier_value = {
 		limit = {
 			OR = {
 				has_trait = murim_spirit_severing
-				has_trait = spirit_severing
+				has_trait = ascension_realm
 			}
 		}
 		add = 6
 	}
 	if = {
 		limit = {
-			OR = {
-				has_trait = murim_heavenly_tribulation
-				has_trait = immortal_ascension
-			}
+			has_trait = murim_heavenly_tribulation
 		}
 		add = 7
 	}
 }
 
-murim_breakthrough_difficulty_value = {
-	# Difficulty scales with current tier
-	value = 50
+murim_breakthrough_success_chance_value = {
+	# Base chance modified by traits and state
+	value = 30
 	if = {
-		limit = {
-			OR = {
-				has_trait = murim_outer_qi
-				has_trait = cultivation_body_tempering
-			}
-		}
+		limit = { has_trait = cultivation_prodigy }
 		add = 20
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = murim_qi_gathering
-				has_trait = cultivation_meridian_opening
-			}
-		}
-		add = 40
-	}
-	if = {
-		limit = {
-			OR = {
-				has_trait = murim_foundation
-				has_trait = cultivation_foundation
-			}
-		}
-		add = 70
-	}
-	if = {
-		limit = {
-			OR = {
-				has_trait = murim_golden_core
-				has_trait = cultivation_core_formation
-			}
-		}
-		add = 100
-	}
-	# Age penalty for breakthrough
-	if = {
-		limit = { age >= 40 }
-		add = 15
-	}
-	if = {
-		limit = { age >= 50 }
-		add = 20
-	}
-	if = {
-		limit = { age >= 60 }
-		add = 30
-	}
-	# Prodigy bonus
-	if = {
-		limit = {
-			OR = {
-				has_trait = cultivation_prodigy
-				has_trait = genius
-			}
-		}
-		add = -25
-	}
-	if = {
-		limit = { has_trait = quick }
-		add = -5
-	}
-	# Patient cultivation helps
-	if = {
-		limit = { has_trait = patient }
-		add = -10
-	}
-	# Dual cultivation bonus
-	if = {
-		limit = { has_character_modifier = dual_cultivation_harmony }
-		add = -15
-	}
-	min = 10
-}
-
-# ==========================================
-# DUEL VALUES
-# ==========================================
-
-murim_duel_win_chance_value = {
-	# Chance to win based on combat power comparison with scope:target
-	value = 50
-	# Power advantage/disadvantage
-	if = {
-		limit = {
-			murim_effective_combat_power_value > scope:target.murim_effective_combat_power_value
-		}
-		add = 15
-	}
-	if = {
-		limit = {
-			murim_effective_combat_power_value >= scope:target.murim_effective_combat_power_value
-		}
-		add = 5
-	}
-	# Prowess edge
-	if = {
-		limit = { prowess > scope:target.prowess }
+		limit = { has_trait = genius }
 		add = 10
 	}
 	if = {
-		limit = { prowess < scope:target.prowess }
+		limit = { has_trait = patient }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = diligent }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = qi_deviation_survivor }
 		add = -10
 	}
-	# Brave/craven modifiers
+	if = {
+		limit = { has_trait = reckless }
+		add = -5
+	}
+	if = {
+		limit = { has_character_modifier = cultivation_seclusion }
+		add = 15
+	}
+	if = {
+		limit = { has_character_modifier = qi_stagnation }
+		add = -15
+	}
+	# Higher tiers are harder to break through
+	if = {
+		limit = { murim_cultivation_tier_value >= 4 }
+		add = -10
+	}
+	if = {
+		limit = { murim_cultivation_tier_value >= 6 }
+		add = -15
+	}
+	min = 5
+	max = 85
+}
+
+# ==========================================
+# DUEL RESOLUTION VALUES
+# ==========================================
+
+murim_duel_power_comparison_value = {
+	# Compares ROOT's combat power against scope:target
+	value = murim_effective_combat_power_value
+	subtract = scope:target.murim_effective_combat_power_value
+}
+
+murim_duel_win_chance_value = {
+	# Percentage chance ROOT wins against scope:target in a duel
+	value = 50
+	# Power differential shifts odds
+	if = {
+		limit = { murim_duel_power_comparison_value >= 20 }
+		add = 25
+	}
+	if = {
+		limit = { murim_duel_power_comparison_value >= 50 }
+		add = 15
+	}
+	if = {
+		limit = { murim_duel_power_comparison_value <= -20 }
+		add = -25
+	}
+	if = {
+		limit = { murim_duel_power_comparison_value <= -50 }
+		add = -15
+	}
+	# Trait modifiers
 	if = {
 		limit = { has_trait = brave }
 		add = 5
@@ -377,149 +385,70 @@ murim_duel_win_chance_value = {
 		limit = { has_trait = craven }
 		add = -10
 	}
-	# Wounded penalties
 	if = {
-		limit = { has_trait = wounded_1 }
-		add = -5
-	}
-	if = {
-		limit = { has_trait = wounded_2 }
-		add = -15
-	}
-	# Technique advantage
-	if = {
-		limit = {
-			OR = {
-				has_trait = sword_qi_mastery
-				has_trait = iron_fist_mastery
-				has_trait = heavenly_sword_intent
-			}
-		}
+		limit = { has_trait = killer_instinct }
 		add = 5
+	}
+	if = {
+		limit = { has_trait = berserker_qi }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = duel_ptsd }
+		add = -8
 	}
 	min = 5
 	max = 95
 }
 
-murim_duel_injury_severity_value = {
-	# How severe injuries are in this duel - higher = worse
-	value = 30
-	# Both at high level = more dangerous
+murim_duel_death_chance_value = {
+	# Chance of lethal outcome in a duel
+	value = 10
 	if = {
-		limit = { prowess >= 20 }
+		limit = { has_trait = sadistic }
 		add = 10
 	}
 	if = {
-		limit = { scope:target = { prowess >= 20 } }
+		limit = { has_trait = killer_instinct }
 		add = 10
 	}
-	# Death match modifier
 	if = {
-		limit = { has_character_flag = murim_death_match }
-		add = 30
+		limit = { has_trait = compassionate }
+		add = -8
 	}
-	# Weapons increase danger
 	if = {
-		limit = { has_character_modifier = ancient_weapon_wielder }
+		limit = { has_character_modifier = killing_intent_aura }
+		add = 10
+	}
+	# Forbidden techniques are more lethal
+	if = {
+		limit = { has_trait = forbidden_blood_art }
 		add = 15
 	}
-	min = 10
-	max = 90
+	if = {
+		limit = { has_character_modifier = forbidden_technique_mastered }
+		add = 10
+	}
+	min = 2
+	max = 50
 }
 
 # ==========================================
-# SECT VALUES
+# SECT & REPUTATION VALUES
 # ==========================================
 
-murim_sect_prestige_value = {
-	# Sect prestige contribution to character power
+murim_sect_standing_value = {
+	# Measures character's standing within their sect/organization
 	value = 0
+	add = diplomacy
 	if = {
-		limit = { has_variable = murim_sect_member }
+		limit = { has_trait = brave }
 		add = 5
 	}
 	if = {
-		limit = {
-			OR = {
-				has_trait = shaolin_monk
-				has_trait = wudang_disciple
-				has_trait = mount_hua_disciple
-			}
-		}
-		add = 10
+		limit = { has_trait = ambitious }
+		add = 3
 	}
-	if = {
-		limit = {
-			OR = {
-				has_trait = tang_clan_member
-				has_trait = beggar_sect_member
-			}
-		}
-		add = 8
-	}
-	if = {
-		limit = {
-			OR = {
-				has_trait = heavenly_demon_follower
-			}
-		}
-		add = 12
-	}
-}
-
-# ==========================================
-# JIANGHU REPUTATION VALUES
-# ==========================================
-
-murim_jianghu_reputation_value = {
-	# Overall martial world reputation
-	value = 0
-	# Combat record
-	if = {
-		limit = { has_variable = murim_duel_wins }
-		add = {
-			value = var:murim_duel_wins
-			multiply = 3
-		}
-	}
-	if = {
-		limit = { has_variable = murim_duel_losses }
-		add = {
-			value = var:murim_duel_losses
-			multiply = -1
-		}
-	}
-	# Cultivation tier
-	add = {
-		value = murim_cultivation_tier_value
-		multiply = 10
-	}
-	# Base prestige contribution
-	add = {
-		value = prestige_level
-		multiply = 5
-	}
-	# Sect membership
-	add = murim_sect_prestige_value
-	# Infamy from hostile actions
-	if = {
-		limit = { has_trait = sadistic }
-		add = -10
-	}
-	if = {
-		limit = { has_trait = just }
-		add = 10
-	}
-	min = -100
-}
-
-# ==========================================
-# TRAINING VALUES
-# ==========================================
-
-murim_training_gain_value = {
-	# How much training XP gained per session
-	value = 10
 	if = {
 		limit = { has_trait = diligent }
 		add = 5
@@ -528,55 +457,104 @@ murim_training_gain_value = {
 		limit = { has_trait = lazy }
 		add = -5
 	}
+	# Cultivation tier boosts sect standing
+	add = {
+		value = murim_cultivation_tier_value
+		multiply = 3
+	}
+	# Ranked fighters get extra standing
 	if = {
-		limit = { learning >= 12 }
+		limit = { has_character_modifier = murim_ranked_top_50_modifier }
+		add = 10
+	}
+	min = 0
+}
+
+murim_jianghu_reputation_value = {
+	# Underground/jianghu reputation score
+	value = intrigue
+	add = {
+		value = prowess
+		divide = 2
+	}
+	if = {
+		limit = { has_trait = sadistic }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = deceitful }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = killer_instinct }
+		add = 8
+	}
+	if = {
+		limit = { has_trait = demonic_cultivator }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = poison_hand_master }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = forbidden_blood_art }
+		add = 8
+	}
+	if = {
+		limit = { has_character_modifier = killing_intent_aura }
+		add = 5
+	}
+	if = {
+		limit = { has_character_modifier = black_market_connections }
+		add = 5
+	}
+	min = 0
+}
+
+# ==========================================
+# TRAINING VALUES
+# ==========================================
+
+murim_training_effectiveness_value = {
+	# How effective training sessions are for this character
+	value = learning
+	if = {
+		limit = { has_trait = diligent }
+		add = 5
+	}
+	if = {
+		limit = { has_trait = patient }
 		add = 3
 	}
 	if = {
-		limit = { learning >= 18 }
-		add = 5
+		limit = { has_trait = cultivation_prodigy }
+		add = 10
+	}
+	if = {
+		limit = { has_trait = lazy }
+		add = -8
+	}
+	if = {
+		limit = { has_trait = impatient }
+		add = -3
+	}
+	if = {
+		limit = { has_character_modifier = cultivation_seclusion }
+		add = 8
 	}
 	if = {
 		limit = { has_character_modifier = intense_training_regime }
 		add = 5
 	}
+	# Young characters learn faster
 	if = {
 		limit = { age < 25 }
-		add = 3
-	}
-	if = {
-		limit = { age >= 50 }
-		add = -3
-	}
-	min = 1
-}
-
-# ==========================================
-# AGE-EXPERIENCE VALUES
-# ==========================================
-
-murim_age_experience_bonus_value = {
-	# Older martial artists have experience but slower reflexes
-	value = 0
-	if = {
-		limit = { age >= 30 }
-		add = 3
-	}
-	if = {
-		limit = { age >= 40 }
 		add = 5
 	}
 	if = {
-		limit = { age >= 50 }
-		add = 7
-	}
-	if = {
 		limit = { age >= 60 }
-		add = 8
+		add = -3
 	}
-	# Very old - decline
-	if = {
-		limit = { age >= 70 }
-		add = -5
-	}
+	min = 1
 }
