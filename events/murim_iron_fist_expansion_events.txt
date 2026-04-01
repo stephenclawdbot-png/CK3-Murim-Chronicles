@@ -1,0 +1,1011 @@
+# Murim Chronicles - Iron Fist Gate Expansion Events
+# Deeper Iron Fist Gate content: advanced body cultivation, inter-clan rivalries,
+# internal faction struggles, and the path to becoming the strongest fist in Murim.
+# INTEGRATION: murim_iron_fist_events.txt, murim_faction_war_events.txt, murim_duel_events.txt
+# INTEGRATION: murim_ranking_events.txt, murim_training_events.txt, murim_mentor_events.txt
+# GENDER: Fully equal. Men and women compete identically in all events.
+
+namespace = murim_iron_fist_exp
+
+##############################
+# EVENT 1: THE IRON BODY FORGING FURNACE
+# The legendary volcanic furnace beneath Iron Fist Gate's mountain.
+# Only those who have completed Stage 3 Iron Body may attempt this.
+# Success = near-invulnerable body. Failure = crippling burns.
+##############################
+murim_iron_fist_exp.0001 = {
+	type = character_event
+	title = murim_iron_fist_exp.0001.t
+	desc = murim_iron_fist_exp.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_iron_fist_member_trigger = yes
+		has_character_modifier = iron_fist_iron_body_stage_one_modifier
+		prowess >= 20
+		age >= 25
+		NOT = { has_character_flag = iron_fist_furnace_attempted }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = brave
+		}
+		modifier = {
+			add = 2
+			prowess >= 25
+		}
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_furnace_attempted
+		create_character_memory = {
+			type = iron_fist_furnace_trial_memory
+		}
+	}
+	
+	# Option A: Enter the furnace with pure body conditioning (traditionalist)
+	option = {
+		name = murim_iron_fist_exp.0001.a
+		random_list = {
+			35 = {
+				modifier = {
+					add = 15
+					prowess >= 28
+				}
+				# Perfect forging - body becomes near-invulnerable
+				add_prowess_xp = 1000
+				add_character_modifier = {
+					modifier = iron_fist_forged_body_modifier
+					years = -1
+				}
+				add_prestige = 500
+				create_character_memory = {
+					type = iron_fist_furnace_mastery_memory
+				}
+				# All Iron Fist members hear of your achievement
+				every_living_character = {
+					limit = {
+						is_iron_fist_member_trigger = yes
+						NOT = { this = root }
+					}
+					add_opinion = {
+						modifier = iron_fist_furnace_respect_opinion
+						target = root
+						opinion = 30
+					}
+				}
+			}
+			40 = {
+				# Partial success - scarred but stronger
+				add_prowess_xp = 500
+				add_trait = scarred
+				add_character_modifier = {
+					modifier = iron_fist_partial_forging_modifier
+					years = 10
+				}
+			}
+			25 = {
+				# Failure - severe burns, may lose martial ability
+				add_trait = wounded_3
+				add_stress = 60
+				add_character_modifier = {
+					modifier = iron_fist_furnace_burns_modifier
+					years = 5
+				}
+				create_character_memory = {
+					type = iron_fist_furnace_failure_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Use qi reinforcement during the forging (reformist approach)
+	option = {
+		name = murim_iron_fist_exp.0001.b
+		trigger = {
+			has_trait = qi_cultivator
+		}
+		random_list = {
+			55 = {
+				# Qi-body fusion - creates hybrid defense
+				add_prowess_xp = 800
+				add_character_modifier = {
+					modifier = iron_fist_qi_body_fusion_modifier
+					years = -1
+				}
+				add_prestige = 300
+			}
+			25 = {
+				# Qi disrupted by volcanic heat - internal injury
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = iron_fist_qi_disruption_modifier
+					years = 3
+				}
+			}
+			20 = {
+				# Elder discovers your qi use mid-trial
+				add_character_modifier = {
+					modifier = iron_fist_cheater_stigma_modifier
+					years = 10
+				}
+				add_stress = 30
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 10
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option C: Decline - the furnace is not worth the risk
+	option = {
+		name = murim_iron_fist_exp.0001.c
+		add_stress = -15
+		add_prestige = -100
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = craven
+			}
+		}
+	}
+}
+
+##############################
+# EVENT 2: MOUNTAIN SPLITTING COMPETITION
+# Annual strength contest held at Iron Fist Gate.
+# All 9 clans may send their strongest to compete.
+# Pure physical power contest - no weapons, no qi tricks.
+##############################
+murim_iron_fist_exp.0002 = {
+	type = character_event
+	title = murim_iron_fist_exp.0002.t
+	desc = murim_iron_fist_exp.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		prowess >= 14
+		NOT = { has_character_flag = mountain_split_competed_recently }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			is_iron_fist_member_trigger = yes
+		}
+		modifier = {
+			add = 1
+			prowess >= 20
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = mountain_split_competed_recently
+			years = 3
+		}
+		# Generate opponent from another clan
+		random_living_character = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				prowess >= 14
+				NOT = { this = root }
+				NOT = {
+					OR = {
+						AND = {
+							is_iron_fist_member_trigger = yes
+							root = { is_iron_fist_member_trigger = yes }
+						}
+					}
+				}
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					prowess >= 18
+				}
+				modifier = {
+					add = 2
+					is_iron_fist_member_trigger = yes
+				}
+				modifier = {
+					add = 1
+					is_shaolin_member_trigger = yes
+				}
+			}
+			save_scope_as = competition_rival
+		}
+		create_character_memory = {
+			type = mountain_splitting_competition_memory
+			participants = { rival = scope:competition_rival }
+		}
+	}
+	
+	# Option A: Compete with raw strength (standard approach)
+	option = {
+		name = murim_iron_fist_exp.0002.a
+		duel = {
+			skill = prowess
+			target = scope:competition_rival
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				opinion_modifier = {
+					who = scope:competition_rival
+					modifier = mountain_split_defeated_opinion
+					opinion = -15
+				}
+				# Victory!
+				add_prowess_xp = 600
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = mountain_split_champion_modifier
+					years = 3
+				}
+				create_character_memory = {
+					type = mountain_split_victory_memory
+					participants = { defeated = scope:competition_rival }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:competition_rival.prowess
+				# Defeat
+				add_prowess_xp = 200
+				add_stress = 20
+				add_character_modifier = {
+					modifier = mountain_split_humbled_modifier
+					years = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+	
+	# Option B: Use a special technique during the contest
+	option = {
+		name = murim_iron_fist_exp.0002.b
+		trigger = {
+			OR = {
+				has_trait = vajra_fist_user
+				has_trait = mountain_splitting_palm_user
+				has_trait = iron_shirt_master
+			}
+		}
+		add_prowess_xp = 800
+		add_prestige = 400
+		add_character_modifier = {
+			modifier = mountain_split_technique_champion_modifier
+			years = 5
+		}
+		scope:competition_rival = {
+			add_opinion = {
+				modifier = mountain_split_technique_awe_opinion
+				target = root
+				opinion = 10
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Forfeit to show respect (diplomatic path)
+	option = {
+		name = murim_iron_fist_exp.0002.c
+		add_diplomacy_xp = 300
+		scope:competition_rival = {
+			add_opinion = {
+				modifier = mountain_split_gracious_opinion
+				target = root
+				opinion = 20
+			}
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+##############################
+# EVENT 3: REFORMIST REBELLION
+# The Reformist faction within Iron Fist Gate rises up.
+# They want to incorporate qi cultivation alongside body training.
+# Traditionalists see this as betrayal of the Iron Fist Way.
+##############################
+murim_iron_fist_exp.0003 = {
+	type = character_event
+	title = murim_iron_fist_exp.0003.t
+	desc = murim_iron_fist_exp.0003.desc
+	theme = intrigue
+	
+	trigger = {
+		is_iron_fist_member_trigger = yes
+		OR = {
+			murim_is_clan_leader_trigger = yes
+			murim_is_clan_elder_trigger = yes
+		}
+		NOT = { has_character_flag = iron_fist_reformist_crisis }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			any_courtier = {
+				count >= 3
+				is_iron_fist_member_trigger = yes
+				has_trait = qi_cultivator
+			}
+		}
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_reformist_crisis
+		# Find the reformist leader
+		random_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+				has_trait = qi_cultivator
+				prowess >= 12
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					has_trait = ambitious
+				}
+			}
+			save_scope_as = reformist_leader
+		}
+		create_character_memory = {
+			type = iron_fist_reformist_rebellion_memory
+			participants = { rebel = scope:reformist_leader }
+		}
+	}
+	
+	# Option A: Crush the rebellion with force (traditionalist)
+	option = {
+		name = murim_iron_fist_exp.0003.a
+		duel = {
+			skill = prowess
+			target = scope:reformist_leader
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				# Crush the reformists
+				scope:reformist_leader = {
+					add_trait = wounded_2
+					add_opinion = {
+						modifier = iron_fist_crushed_rebel_opinion
+						target = root
+						opinion = -40
+					}
+				}
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = iron_fist_tradition_enforcer_modifier
+					years = 10
+				}
+				# Clan harmony drops from internal violence
+				change_variable = {
+					name = murim_clan_harmony
+					add = -15
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:reformist_leader.prowess
+				# Reformist proves qi-body hybrid works
+				add_trait = wounded_1
+				add_stress = 40
+				scope:reformist_leader = {
+					add_prestige = 400
+				}
+				# Gate splits into two factions
+				change_variable = {
+					name = murim_clan_harmony
+					add = -25
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = wrathful
+			}
+		}
+	}
+	
+	# Option B: Negotiate a compromise (allow limited qi training)
+	option = {
+		name = murim_iron_fist_exp.0003.b
+		add_diplomacy_xp = 500
+		scope:reformist_leader = {
+			add_opinion = {
+				modifier = iron_fist_compromise_opinion
+				target = root
+				opinion = 15
+			}
+		}
+		add_character_modifier = {
+			modifier = iron_fist_moderate_leader_modifier
+			years = 10
+		}
+		# Harmony preserved
+		change_variable = {
+			name = murim_clan_harmony
+			add = 5
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option C: Side with the reformists (betray tradition)
+	option = {
+		name = murim_iron_fist_exp.0003.c
+		trigger = {
+			has_trait = qi_cultivator
+		}
+		add_character_modifier = {
+			modifier = iron_fist_reformed_leader_modifier
+			years = -1
+		}
+		scope:reformist_leader = {
+			add_opinion = {
+				modifier = iron_fist_ally_opinion
+				target = root
+				opinion = 30
+			}
+		}
+		# Traditionalist elders furious
+		every_courtier = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+				NOT = { has_trait = qi_cultivator }
+				age >= 40
+			}
+			add_opinion = {
+				modifier = iron_fist_tradition_betrayer_opinion
+				target = root
+				opinion = -35
+			}
+		}
+		change_variable = {
+			name = murim_clan_harmony
+			add = -10
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+##############################
+# EVENT 4: IRON FIST VS PHANTOM BLADE DUEL
+# The eternal rivalry: pure body vs pure blade.
+# Iron Fist Gate's strongest vs Phantom Blade Sect's finest.
+# "Can a fist break a blade?" — the question that defines both clans.
+##############################
+murim_iron_fist_exp.0004 = {
+	type = character_event
+	title = murim_iron_fist_exp.0004.t
+	desc = murim_iron_fist_exp.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_iron_fist_member_trigger = yes
+		prowess >= 16
+		any_living_character = {
+			is_phantom_blade_member_trigger = yes
+			prowess >= 16
+		}
+		NOT = { has_character_flag = iron_vs_blade_duel_recent }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 2
+			has_trait = vajra_fist_user
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = iron_vs_blade_duel_recent
+			years = 5
+		}
+		random_living_character = {
+			limit = {
+				is_phantom_blade_member_trigger = yes
+				prowess >= 16
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 3
+					prowess >= 20
+				}
+			}
+			save_scope_as = blade_rival
+		}
+		create_character_memory = {
+			type = iron_fist_vs_blade_duel_memory
+			participants = { opponent = scope:blade_rival }
+		}
+	}
+	
+	# Option A: Fight bare-fisted against their blade (honor duel)
+	option = {
+		name = murim_iron_fist_exp.0004.a
+		duel = {
+			skill = prowess
+			target = scope:blade_rival
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				# Fist breaks the blade!
+				add_prowess_xp = 800
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = iron_fist_blade_breaker_modifier
+					years = 10
+				}
+				create_character_memory = {
+					type = fist_broke_blade_memory
+					participants = { defeated = scope:blade_rival }
+				}
+				# Iron Fist members celebrate
+				every_living_character = {
+					limit = { is_iron_fist_member_trigger = yes }
+					add_opinion = {
+						modifier = iron_fist_pride_opinion
+						target = root
+						opinion = 20
+					}
+				}
+				# Phantom Blade members hostile
+				every_living_character = {
+					limit = { is_phantom_blade_member_trigger = yes }
+					add_opinion = {
+						modifier = phantom_blade_humiliated_opinion
+						target = root
+						opinion = -20
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:blade_rival.prowess
+				# Blade cuts through — injured
+				add_trait = wounded_2
+				add_stress = 30
+				add_prowess_xp = 300
+				create_character_memory = {
+					type = blade_cut_fist_memory
+					participants = { victor = scope:blade_rival }
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Challenge them to weaponless combat (force equal terms)
+	option = {
+		name = murim_iron_fist_exp.0004.b
+		# Demand they fight without blades — removes their advantage
+		duel = {
+			skill = prowess
+			target = scope:blade_rival
+			60 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min_compared_to = root.prowess
+				# Dominant victory without weapons
+				add_prowess_xp = 600
+				add_prestige = 300
+			}
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:blade_rival.prowess
+				# Even without blade, their speed overwhelms
+				add_trait = wounded_1
+				add_prowess_xp = 200
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Refuse — this rivalry is pointless
+	option = {
+		name = murim_iron_fist_exp.0004.c
+		add_stress = -10
+		add_diplomacy_xp = 200
+		scope:blade_rival = {
+			add_opinion = {
+				modifier = iron_fist_coward_refused_opinion
+				target = root
+				opinion = -10
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+##############################
+# EVENT 5: BODY CULTIVATION BREAKTHROUGH
+# The Iron Fist practitioner transcends normal human physical limits.
+# Their skin becomes metallic, their bones denser than steel.
+# This is the peak of external martial arts.
+##############################
+murim_iron_fist_exp.0005 = {
+	type = character_event
+	title = murim_iron_fist_exp.0005.t
+	desc = murim_iron_fist_exp.0005.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_iron_fist_member_trigger = yes
+		prowess >= 25
+		has_character_modifier = iron_fist_forged_body_modifier
+		age >= 30
+		NOT = { has_character_flag = iron_fist_body_transcendence }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			prowess >= 30
+		}
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_body_transcendence
+		create_character_memory = {
+			type = iron_fist_body_transcendence_memory
+		}
+	}
+	
+	# Option A: Push through the pain barrier (pure will)
+	option = {
+		name = murim_iron_fist_exp.0005.a
+		random_list = {
+			40 = {
+				modifier = {
+					add = 20
+					prowess >= 30
+				}
+				# Complete transcendence — body becomes weapon
+				add_prowess_xp = 1500
+				add_character_modifier = {
+					modifier = iron_fist_transcendent_body_modifier
+					years = -1
+				}
+				add_prestige = 800
+				# Your reputation spreads across all 9 clans
+				every_living_character = {
+					limit = {
+						murim_is_martial_artist_trigger = yes
+					}
+					add_opinion = {
+						modifier = iron_fist_living_legend_opinion
+						target = root
+						opinion = 15
+					}
+				}
+				create_character_memory = {
+					type = iron_fist_transcendence_achieved_memory
+				}
+				# Cross-ref: may trigger ranking challenge
+				trigger_event = {
+					id = murim_rank.0001
+					days = { 30 90 }
+				}
+			}
+			35 = {
+				# Partial breakthrough — stronger but not transcendent
+				add_prowess_xp = 800
+				add_character_modifier = {
+					modifier = iron_fist_near_transcendence_modifier
+					years = 10
+				}
+			}
+			25 = {
+				# Body rejects the transformation — backlash
+				add_trait = wounded_2
+				add_stress = 50
+				add_character_modifier = {
+					modifier = iron_fist_backlash_modifier
+					years = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 55
+		}
+	}
+	
+	# Option B: Meditate on the body-mind connection (slower, safer)
+	option = {
+		name = murim_iron_fist_exp.0005.b
+		add_prowess_xp = 600
+		add_learning_xp = 400
+		add_character_modifier = {
+			modifier = iron_fist_contemplative_strength_modifier
+			years = -1
+		}
+		stress_impact = {
+			patient = minor_stress_impact_loss
+			impatient = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Abandon the attempt — not ready yet
+	option = {
+		name = murim_iron_fist_exp.0005.c
+		add_stress = -20
+		remove_character_flag = iron_fist_body_transcendence
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+##############################
+# EVENT 6: GATE GUARDIAN CHALLENGE
+# Iron Fist Gate tradition: their strongest stands at the gate.
+# Any martial artist may challenge the Gate Guardian for glory.
+# Defeating the Guardian earns fame across ALL clans.
+# The Guardian rotates annually — it's a heavy burden.
+##############################
+murim_iron_fist_exp.0006 = {
+	type = character_event
+	title = murim_iron_fist_exp.0006.t
+	desc = murim_iron_fist_exp.0006.desc
+	theme = martial_arts
+	
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		prowess >= 15
+		NOT = { is_iron_fist_member_trigger = yes }
+		NOT = { has_character_flag = gate_guardian_challenged_recently }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 2
+			prowess >= 22
+		}
+		# Clan-specific weights — each clan has different motivation
+		modifier = {
+			add = 1
+			is_phantom_blade_member_trigger = yes
+		}
+		modifier = {
+			add = 1
+			is_shaolin_member_trigger = yes
+		}
+		modifier = {
+			add = 1
+			is_heavenly_demon_member_trigger = yes
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = gate_guardian_challenged_recently
+			years = 3
+		}
+		# Find the current Gate Guardian
+		random_living_character = {
+			limit = {
+				is_iron_fist_member_trigger = yes
+				prowess >= 20
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					prowess >= 25
+				}
+				modifier = {
+					add = 3
+					murim_is_clan_elder_trigger = yes
+				}
+			}
+			save_scope_as = gate_guardian
+		}
+		create_character_memory = {
+			type = gate_guardian_challenge_memory
+			participants = { guardian = scope:gate_guardian }
+		}
+	}
+	
+	# Option A: Challenge the Guardian head-on
+	option = {
+		name = murim_iron_fist_exp.0006.a
+		duel = {
+			skill = prowess
+			target = scope:gate_guardian
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				min_compared_to = root.prowess
+				# Victory over the Gate Guardian!
+				add_prowess_xp = 1000
+				add_prestige = 600
+				add_character_modifier = {
+					modifier = gate_guardian_slayer_modifier
+					years = 5
+				}
+				scope:gate_guardian = {
+					add_trait = wounded_1
+					add_stress = 30
+				}
+				create_character_memory = {
+					type = gate_guardian_defeated_memory
+					participants = { guardian = scope:gate_guardian }
+				}
+				# Cross-ref: might get recruitment offer from Iron Fist
+				trigger_event = {
+					id = murim_recruit.0005
+					days = { 30 60 }
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:gate_guardian.prowess
+				# Guardian's iron body is too strong
+				add_trait = wounded_2
+				add_stress = 25
+				add_prowess_xp = 400
+				scope:gate_guardian = {
+					add_prestige = 200
+				}
+				create_character_memory = {
+					type = gate_guardian_defeated_me_memory
+					participants = { guardian = scope:gate_guardian }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Study the Guardian's stance before fighting (tactical approach)
+	option = {
+		name = murim_iron_fist_exp.0006.b
+		trigger = {
+			learning >= 12
+		}
+		# Observation gives tactical edge
+		add_learning_xp = 300
+		duel = {
+			skill = prowess
+			target = scope:gate_guardian
+			60 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				min_compared_to = root.prowess
+				add_prowess_xp = 700
+				add_prestige = 400
+				add_character_modifier = {
+					modifier = gate_guardian_tactical_victor_modifier
+					years = 5
+				}
+			}
+			40 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				min_compared_to = scope:gate_guardian.prowess
+				add_trait = wounded_1
+				add_prowess_xp = 300
+			}
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+	
+	# Option C: Pay respects and leave (no fight)
+	option = {
+		name = murim_iron_fist_exp.0006.c
+		add_diplomacy_xp = 200
+		scope:gate_guardian = {
+			add_opinion = {
+				modifier = gate_guardian_respect_opinion
+				target = root
+				opinion = 15
+			}
+		}
+		ai_chance = {
+			base = 15
+		}
+	}
+}
