@@ -1,0 +1,663 @@
+namespace = murim_tang_clan_expansion2
+
+# Tang Clan Deep Expansion - Poison & Mechanism Full Chain
+# Heartbeat 69 - Sprint Build
+# 10 complete events with full option trees
+
+####################################
+# Tang Clan Hidden Weapon Initiation
+####################################
+murim_tang_clan_expansion2.0001 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0001.t
+	desc = murim_tang_clan_expansion2.0001.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_bold }
+	right_portrait = { character = scope:tang_elder animation = personality_rational }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		NOT = { has_character_flag = tang_hidden_weapon_initiation }
+		age >= 14
+		prowess >= 8
+	}
+	weight_multiplier = { base = 1 modifier = { add = 2 has_trait = dexterous } }
+	
+	immediate = {
+		set_character_flag = tang_hidden_weapon_initiation
+		random_courtier = {
+			limit = { has_trait = tang_clan_elder age >= 45 }
+			save_scope_as = tang_elder
+		}
+	}
+	
+	# Option A: Rainstorm Pear Blossom Needles specialty
+	option = {
+		name = murim_tang_clan_expansion2.0001.a
+		add_character_modifier = { modifier = pear_blossom_needle_student years = 15 }
+		change_prowess = 2
+		add_intrigue = 1
+		set_character_flag = tang_needle_path
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Mechanism trap building specialty
+	option = {
+		name = murim_tang_clan_expansion2.0001.b
+		add_character_modifier = { modifier = mechanism_trap_student years = 15 }
+		add_intrigue = 2
+		change_prowess = 1
+		set_character_flag = tang_mechanism_path
+		ai_chance = { base = 35 modifier = { add = 15 intrigue >= 12 } }
+	}
+	
+	# Option C: Poison arts specialty
+	option = {
+		name = murim_tang_clan_expansion2.0001.c
+		add_character_modifier = { modifier = tang_poison_student years = 15 }
+		add_learning = 1
+		add_intrigue = 1
+		change_prowess = 1
+		set_character_flag = tang_poison_path
+		ai_chance = { base = 25 modifier = { add = 15 learning >= 12 } }
+	}
+}
+
+####################################
+# Tang Clan Poison Garden Trial
+####################################
+murim_tang_clan_expansion2.0002 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0002.t
+	desc = murim_tang_clan_expansion2.0002.desc
+	theme = intrigue
+	left_portrait = { character = root animation = fear }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		has_character_flag = tang_hidden_weapon_initiation
+		NOT = { has_character_flag = poison_garden_trial }
+		age >= 18
+	}
+	weight_multiplier = { base = 1 modifier = { add = 3 has_character_flag = tang_poison_path } }
+	
+	immediate = { set_character_flag = poison_garden_trial }
+	
+	# Option A: Walk through the Hundred Poison Garden
+	option = {
+		name = murim_tang_clan_expansion2.0002.a
+		random_list = {
+			35 = {
+				desc = murim_tang_clan_expansion2.0002.a.immune
+				modifier = { add = 15 has_character_flag = tang_poison_path }
+				add_trait = poison_immune
+				add_character_modifier = { modifier = hundred_poison_body years = 30 }
+				change_prowess = 2
+				add_prestige = 400
+			}
+			35 = {
+				desc = murim_tang_clan_expansion2.0002.a.partial
+				add_character_modifier = { modifier = partial_poison_resistance years = 10 }
+				change_prowess = 1
+				add_prestige = 150
+			}
+			30 = {
+				desc = murim_tang_clan_expansion2.0002.a.poisoned
+				modifier = { add = -15 has_character_flag = tang_poison_path }
+				add_character_modifier = { modifier = poison_damage_lingering years = 5 }
+				change_prowess = -1
+				add_stress = 30
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Study poisons from scrolls instead
+	option = {
+		name = murim_tang_clan_expansion2.0002.b
+		add_character_modifier = { modifier = theoretical_poisoner years = 10 }
+		add_learning = 2
+		add_prestige = 100
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Refuse - too dangerous
+	option = {
+		name = murim_tang_clan_expansion2.0002.c
+		add_stress = 10
+		add_prestige = -50
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# Tang Clan Mechanism Workshop - Build Your First Trap
+####################################
+murim_tang_clan_expansion2.0003 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0003.t
+	desc = murim_tang_clan_expansion2.0003.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		has_character_flag = tang_mechanism_path
+		NOT = { has_character_flag = first_trap_built }
+	}
+	weight_multiplier = { base = 1 }
+	
+	immediate = { set_character_flag = first_trap_built }
+	
+	# Option A: Build a defensive crossbow trap
+	option = {
+		name = murim_tang_clan_expansion2.0003.a
+		add_character_modifier = { modifier = crossbow_trap_designer years = 10 }
+		add_intrigue = 1
+		change_martial = 1
+		add_prestige = 200
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Build a poison gas mechanism
+	option = {
+		name = murim_tang_clan_expansion2.0003.b
+		add_character_modifier = { modifier = gas_trap_designer years = 10 }
+		add_intrigue = 2
+		add_prestige = 200
+		add_dread = 10
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Build an elaborate maze trap
+	option = {
+		name = murim_tang_clan_expansion2.0003.c
+		trigger = { learning >= 14 }
+		add_character_modifier = { modifier = maze_trap_architect years = 10 }
+		add_learning = 1
+		add_intrigue = 1
+		add_prestige = 250
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# Tang Clan Assassination Contract
+####################################
+murim_tang_clan_expansion2.0004 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0004.t
+	desc = murim_tang_clan_expansion2.0004.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		intrigue >= 12
+		age >= 20
+		NOT = { has_character_flag = tang_assassination_contract }
+	}
+	weight_multiplier = { base = 1 modifier = { add = 2 has_character_flag = tang_needle_path } }
+	
+	immediate = {
+		set_character_flag = tang_assassination_contract
+		random_courtier = {
+			limit = { NOT = { has_trait = tang_clan_member } prowess >= 10 }
+			save_scope_as = assassination_target
+		}
+	}
+	
+	# Option A: Accept the contract
+	option = {
+		name = murim_tang_clan_expansion2.0004.a
+		if = {
+			limit = { exists = scope:assassination_target }
+			random = {
+				chance = 60
+				modifier = { add = 20 intrigue >= 18 }
+				add_gold = 200
+				add_character_modifier = { modifier = successful_assassin years = 5 }
+				add_dread = 15
+				add_prestige = 100
+			}
+			random = {
+				chance = 40
+				modifier = { add = -20 intrigue >= 18 }
+				add_character_modifier = { modifier = botched_assassination years = 5 }
+				add_stress = 30
+				add_prestige = -200
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Refuse - Tang Clan has honor
+	option = {
+		name = murim_tang_clan_expansion2.0004.b
+		add_piety = 50
+		add_prestige = 100
+		add_character_modifier = { modifier = honorable_tang years = 10 }
+		ai_chance = { base = 35 modifier = { add = 20 has_trait = honest } }
+	}
+	
+	# Option C: Double-cross the contractor
+	option = {
+		name = murim_tang_clan_expansion2.0004.c
+		trigger = { intrigue >= 16 }
+		random = {
+			chance = 50
+			add_gold = 400
+			add_character_modifier = { modifier = double_agent_profit years = 5 }
+			add_dread = 10
+		}
+		random = {
+			chance = 50
+			add_character_modifier = { modifier = double_cross_exposed years = 5 }
+			add_stress = 25
+			add_prestige = -300
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+####################################
+# Tang Clan Trade Empire - Weapon Sales
+####################################
+murim_tang_clan_expansion2.0005 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0005.t
+	desc = murim_tang_clan_expansion2.0005.desc
+	theme = stewardship
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		stewardship >= 10
+		age >= 22
+		NOT = { has_character_flag = tang_trade_empire_started }
+	}
+	weight_multiplier = { base = 1 modifier = { add = 2 stewardship >= 15 } }
+	
+	immediate = { set_character_flag = tang_trade_empire_started }
+	
+	# Option A: Sell to orthodox sects only
+	option = {
+		name = murim_tang_clan_expansion2.0005.a
+		add_gold = 200
+		add_prestige = 200
+		add_character_modifier = { modifier = orthodox_weapon_supplier years = 15 }
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Sell to everyone - profit is king
+	option = {
+		name = murim_tang_clan_expansion2.0005.b
+		add_gold = 500
+		add_prestige = -100
+		add_character_modifier = { modifier = universal_arms_dealer years = 15 }
+		add_dread = 10
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Sell to unorthodox sects exclusively for premium prices
+	option = {
+		name = murim_tang_clan_expansion2.0005.c
+		trigger = { has_trait = deceitful }
+		add_gold = 400
+		add_prestige = -200
+		add_character_modifier = { modifier = dark_arms_dealer years = 15 }
+		add_dread = 20
+		ai_chance = { base = 15 }
+	}
+}
+
+####################################
+# Tang Clan Rival Family Attack
+####################################
+murim_tang_clan_expansion2.0006 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0006.t
+	desc = murim_tang_clan_expansion2.0006.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		NOT = { has_character_flag = tang_rival_family_attack }
+	}
+	weight_multiplier = { base = 1 }
+	
+	immediate = {
+		set_character_flag = tang_rival_family_attack
+		random_courtier = {
+			limit = { NOT = { has_trait = tang_clan_member } prowess >= 14 }
+			save_scope_as = rival_attacker
+		}
+	}
+	
+	# Option A: Activate the clan compound defenses
+	option = {
+		name = murim_tang_clan_expansion2.0006.a
+		trigger = { has_character_flag = tang_mechanism_path }
+		add_character_modifier = { modifier = fortress_defender years = 10 }
+		add_prestige = 500
+		change_martial = 1
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Personal combat - meet the attackers head on
+	option = {
+		name = murim_tang_clan_expansion2.0006.b
+		if = {
+			limit = { exists = scope:rival_attacker }
+			duel = {
+				skill = prowess
+				target = scope:rival_attacker
+				50 = {
+					desc = murim_tang_clan_expansion2.0006.b.victory
+					compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+					add_prestige = 600
+					change_prowess = 2
+					add_character_modifier = { modifier = tang_clan_hero years = 10 }
+				}
+				50 = {
+					desc = murim_tang_clan_expansion2.0006.b.wounded
+					compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+					add_character_modifier = { modifier = battle_wounded years = 3 }
+					add_stress = 20
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Use poison smoke to drive them back
+	option = {
+		name = murim_tang_clan_expansion2.0006.c
+		trigger = { has_character_flag = tang_poison_path }
+		add_character_modifier = { modifier = poison_warfare_master years = 10 }
+		add_prestige = 400
+		add_dread = 15
+		ai_chance = { base = 30 }
+	}
+}
+
+####################################
+# Tang Clan Secret Recipe Theft
+####################################
+murim_tang_clan_expansion2.0007 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0007.t
+	desc = murim_tang_clan_expansion2.0007.desc
+	theme = intrigue
+	left_portrait = { character = root animation = shock }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		NOT = { has_character_flag = tang_recipe_theft }
+	}
+	weight_multiplier = { base = 1 }
+	
+	immediate = {
+		set_character_flag = tang_recipe_theft
+		random_courtier = {
+			limit = { has_trait = tang_clan_member NOT = { this = root } }
+			save_scope_as = suspected_thief
+		}
+	}
+	
+	# Option A: Investigate the theft personally
+	option = {
+		name = murim_tang_clan_expansion2.0007.a
+		trigger = { intrigue >= 14 }
+		random = {
+			chance = 60
+			modifier = { add = 15 intrigue >= 18 }
+			add_prestige = 300
+			add_character_modifier = { modifier = clan_detective years = 10 }
+		}
+		random = {
+			chance = 40
+			modifier = { add = -15 intrigue >= 18 }
+			add_stress = 20
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Blame the suspected thief immediately
+	option = {
+		name = murim_tang_clan_expansion2.0007.b
+		if = {
+			limit = { exists = scope:suspected_thief }
+			add_opinion = { target = scope:suspected_thief modifier = accused_opinion opinion = -40 }
+		}
+		random = {
+			chance = 50
+			add_prestige = 200
+		}
+		random = {
+			chance = 50
+			add_prestige = -100
+			add_stress = 15
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Change all the recipes to bait the real thief
+	option = {
+		name = murim_tang_clan_expansion2.0007.c
+		trigger = { intrigue >= 16 }
+		add_character_modifier = { modifier = master_counter_spy years = 10 }
+		add_prestige = 400
+		add_intrigue = 1
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# Tang Clan Head Succession
+####################################
+murim_tang_clan_expansion2.0008 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0008.t
+	desc = murim_tang_clan_expansion2.0008.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		age >= 35
+		NOT = { has_character_flag = tang_succession_event }
+	}
+	weight_multiplier = { base = 1 modifier = { add = 3 intrigue >= 18 } }
+	
+	immediate = {
+		set_character_flag = tang_succession_event
+		random_courtier = {
+			limit = { has_trait = tang_clan_member age >= 30 NOT = { this = root } }
+			save_scope_as = tang_rival
+		}
+	}
+	
+	# Option A: Demonstrate mastery of all three Tang arts
+	option = {
+		name = murim_tang_clan_expansion2.0008.a
+		trigger = { prowess >= 18 intrigue >= 15 }
+		random_list = {
+			50 = {
+				modifier = { add = 15 prowess >= 22 }
+				add_trait = tang_clan_head
+				add_prestige = 1000
+				add_character_modifier = { modifier = tang_patriarch_authority years = 30 }
+			}
+			30 = { add_prestige = 200 add_stress = 10 }
+			20 = { add_prestige = -100 add_stress = 20 }
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Win through political maneuvering
+	option = {
+		name = murim_tang_clan_expansion2.0008.b
+		trigger = { diplomacy >= 14 }
+		random = {
+			chance = 50
+			modifier = { add = 20 diplomacy >= 18 }
+			add_trait = tang_clan_head
+			add_prestige = 800
+			add_character_modifier = { modifier = political_patriarch years = 30 }
+		}
+		random = {
+			chance = 50
+			modifier = { add = -20 diplomacy >= 18 }
+			add_stress = 20
+			add_prestige = -100
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Support another candidate, gain influence
+	option = {
+		name = murim_tang_clan_expansion2.0008.c
+		if = {
+			limit = { exists = scope:tang_rival }
+			add_opinion = { target = scope:tang_rival modifier = grateful_opinion opinion = 35 }
+		}
+		add_character_modifier = { modifier = tang_kingmaker years = 15 }
+		add_prestige = 300
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# Tang Clan Ultimate Weapon - Annihilation Crossbow
+####################################
+murim_tang_clan_expansion2.0009 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0009.t
+	desc = murim_tang_clan_expansion2.0009.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		intrigue >= 18
+		has_character_flag = tang_mechanism_path
+		age >= 35
+		NOT = { has_character_flag = annihilation_crossbow_attempted }
+	}
+	weight_multiplier = { base = 1 modifier = { add = 3 has_trait = tang_clan_head } }
+	
+	immediate = { set_character_flag = annihilation_crossbow_attempted }
+	
+	# Option A: Build the legendary weapon
+	option = {
+		name = murim_tang_clan_expansion2.0009.a
+		random_list = {
+			30 = {
+				desc = murim_tang_clan_expansion2.0009.a.success
+				modifier = { add = 15 intrigue >= 22 }
+				add_character_modifier = { modifier = annihilation_crossbow_wielder years = 50 }
+				change_prowess = 4
+				add_prestige = 1500
+				add_dread = 30
+			}
+			35 = {
+				desc = murim_tang_clan_expansion2.0009.a.partial
+				add_character_modifier = { modifier = prototype_crossbow years = 15 }
+				change_prowess = 2
+				add_prestige = 500
+			}
+			35 = {
+				desc = murim_tang_clan_expansion2.0009.a.explosion
+				modifier = { add = -15 intrigue >= 22 }
+				add_character_modifier = { modifier = mechanism_backfire_injury years = 10 }
+				change_prowess = -2
+				add_stress = 40
+				add_gold = -200
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Seal the blueprints - too destructive
+	option = {
+		name = murim_tang_clan_expansion2.0009.b
+		add_piety = 200
+		add_prestige = 200
+		add_character_modifier = { modifier = weapon_sealer years = 20 }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Sell the blueprints to the highest bidder
+	option = {
+		name = murim_tang_clan_expansion2.0009.c
+		trigger = { has_trait = greedy }
+		add_gold = 1000
+		add_prestige = -500
+		add_dread = 20
+		add_character_modifier = { modifier = arms_dealer_infamy years = 20 }
+		ai_chance = { base = 10 }
+	}
+}
+
+####################################
+# Tang Clan Legacy - Thousand Mechanisms Codex
+####################################
+murim_tang_clan_expansion2.0010 = {
+	type = character_event
+	title = murim_tang_clan_expansion2.0010.t
+	desc = murim_tang_clan_expansion2.0010.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_trait = tang_clan_member
+		age >= 50
+		NOT = { has_character_flag = tang_legacy_codex }
+	}
+	weight_multiplier = { base = 1 modifier = { add = 3 has_trait = tang_clan_head } }
+	
+	immediate = {
+		set_character_flag = tang_legacy_codex
+		random_courtier = {
+			limit = { has_trait = tang_clan_member age <= 25 }
+			save_scope_as = tang_heir
+		}
+	}
+	
+	# Option A: Write the complete codex for future generations
+	option = {
+		name = murim_tang_clan_expansion2.0010.a
+		add_character_modifier = { modifier = codex_author years = 30 }
+		add_prestige = 500
+		add_learning = 2
+		if = {
+			limit = { exists = scope:tang_heir }
+			scope:tang_heir = {
+				add_character_modifier = { modifier = codex_inheritor years = 20 }
+				add_intrigue = 2
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Encode it so only bloodline can read it
+	option = {
+		name = murim_tang_clan_expansion2.0010.b
+		add_character_modifier = { modifier = blood_encoded_codex years = 30 }
+		add_prestige = 400
+		add_intrigue = 1
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Destroy it all - knowledge is dangerous
+	option = {
+		name = murim_tang_clan_expansion2.0010.c
+		add_piety = 100
+		add_prestige = -200
+		add_character_modifier = { modifier = knowledge_destroyer years = 20 }
+		add_stress = -20
+		ai_chance = { base = 20 }
+	}
+}
