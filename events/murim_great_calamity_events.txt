@@ -1,18 +1,18 @@
-# Murim Chronicles - THE GREAT CALAMITY
-# The cyclical apocalypse of the martial world. Heaven's judgment on mortal hubris.
-# 4 PHASES: Gathering Storm (5yr) -> Great War (2-3yr) -> Silence (1yr) -> Renewal
-# INTEGRATION: murim_calamity_triggers.txt, murim_calamity_on_actions.txt, murim_calamity_traits.txt
-# DESIGN: Player sees omens 10-20 years before. Can attempt to prevent/delay/accelerate.
-# DEVASTATION: 70-90% character death. 1-3 survivors per clan. Some clans wiped entirely.
-# NAMESPACE: murim_calamity.XXXX
-
-# ========================================
-# PRE-CALAMITY OMEN EVENTS (fire 10-20 years before)
-# ========================================
+# Murim Chronicles - The Great Calamity Event Chain
+# THE APOCALYPSE. Cyclical world reset after 150-200 years.
+# 4 PHASES: Gathering Storm (5yr) -> Great War (2-3yr) -> The Silence (1yr) -> Renewal
+# AI AUTONOMY: All events fire autonomously via on_actions. Player participates but cannot prevent.
+# INTEGRATION: murim_calamity_on_actions.txt, murim_calamity_triggers.txt, murim_calamity_traits.txt
+# DESIGN: Every playthrough different. Weighted random outcomes. Clan personality drives AI behavior.
 
 namespace = murim_calamity
 
-# OMEN 1: Strange Qi Disturbance
+# ========================================
+# PHASE 0: OMENS (10-20 years before)
+# ========================================
+
+# 0001 - The First Omen: Qi Disturbance
+# Fires to all martial artists when omen phase begins.
 murim_calamity.0001 = {
 	type = character_event
 	title = murim_calamity.0001.t
@@ -28,1240 +28,1362 @@ murim_calamity.0001 = {
 	theme = death
 	
 	trigger = {
-		murim_is_martial_artist_trigger = yes
-		NOT = { has_character_flag = murim_received_qi_omen }
-		murim_calamity_omens_should_start_trigger = yes
-	}
-	
-	weight_multiplier = {
-		base = 1
-		modifier = {
-			add = 2
-			has_trait = murim_omen_seer
-		}
-		modifier = {
-			add = 1
-			murim_is_grandmaster_or_above_trigger = yes
-		}
+		has_trait = martial_artist
+		is_alive = yes
+		NOT = { has_character_flag = received_first_omen }
 	}
 	
 	immediate = {
-		add_character_flag = {
-			flag = murim_received_qi_omen
-			days = 1825  # 5 years cooldown
-		}
+		set_character_flag = received_first_omen
+		create_character_memory = { type = murim_first_omen_memory }
 	}
 	
 	# Option A: Meditate on the disturbance
 	option = {
 		name = murim_calamity.0001.a
-		add_stress = 10
 		add_character_modifier = {
-			modifier = murim_qi_disturbance_awareness
+			modifier = murim_omen_meditation
 			years = 5
 		}
+		# 20% chance to gain Omen Seer trait
 		random = {
-			chance = 40
+			chance = 20
 			add_trait = murim_omen_seer
-		}
-		create_character_memory = {
-			type = murim_felt_qi_omen
-		}
-		ai_chance = {
-			base = 50
-			modifier = {
-				add = 30
-				has_trait = patient
-			}
-		}
-	}
-	
-	# Option B: Dismiss it as nothing
-	option = {
-		name = murim_calamity.0001.b
-		add_prestige = 50
-		random = {
-			chance = 30
-			add_trait = murim_omen_denier
 		}
 		ai_chance = {
 			base = 40
 			modifier = {
-				add = 20
-				has_trait = arrogant
+				add = 30
+				OR = {
+					has_trait = shaolin_member
+					has_trait = wudang_member
+				}
 			}
 		}
 	}
 	
-	# Option C: Warn others (diplomacy check)
+	# Option B: Ignore it - just a tremor
+	option = {
+		name = murim_calamity.0001.b
+		add_character_modifier = {
+			modifier = murim_omen_denial
+			years = 3
+		}
+		stress_impact = {
+			paranoid = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = iron_fist_member
+			}
+		}
+	}
+	
+	# Option C: Warn others - something terrible approaches
 	option = {
 		name = murim_calamity.0001.c
-		trigger = { diplomacy >= 12 }
 		add_prestige = -100
-		add_piety = 50
-		stress_impact = {
-			paranoid = medium_stress_impact_loss
-		}
-		every_courtier = {
-			limit = {
-				murim_is_martial_artist_trigger = yes
-			}
-			random = {
-				chance = 25
-				add_trait = murim_omen_seer
+		# Warn nearby characters
+		every_courtier_or_guest = {
+			limit = { has_trait = martial_artist }
+			trigger_event = {
+				id = murim_calamity.0002
+				days = { 7 30 }
 			}
 		}
 		ai_chance = {
-			base = 20
+			base = 30
 			modifier = {
 				add = 30
-				has_trait = compassionate
+				OR = {
+					has_trait = beggar_sect_member
+					has_trait = mount_hua_member
+				}
 			}
 		}
 	}
 }
 
-# OMEN 2: Animals Flee the Mountains
+# 0002 - Omen Warning Received (from another martial artist)
+murim_calamity.0002 = {
+	type = character_event
+	title = murim_calamity.0002.t
+	desc = murim_calamity.0002.desc
+	theme = skull
+	
+	trigger = {
+		has_trait = martial_artist
+		NOT = { has_character_flag = received_omen_warning }
+	}
+	
+	immediate = {
+		set_character_flag = received_omen_warning
+	}
+	
+	option = {
+		name = murim_calamity.0002.a  # Heed the warning
+		add_character_modifier = {
+			modifier = murim_heeded_omen_warning
+			years = 10
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity.0002.b  # Dismiss as superstition
+		add_stress = 10
+		ai_chance = { base = 50 }
+	}
+}
+
+# 0003 - Recurring Omen: Animals Flee (yearly during omen phase)
+murim_calamity.0003 = {
+	type = character_event
+	title = murim_calamity.0003.t
+	desc = murim_calamity.0003.desc
+	theme = death
+	
+	trigger = {
+		is_ruler = yes
+		has_global_variable = murim_calamity_omens_started
+		NOT = { has_global_variable = murim_calamity_storm_started }
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_animals_flee_memory }
+	}
+	
+	option = {
+		name = murim_calamity.0003.a  # Stockpile resources
+		add_gold = -50
+		add_character_modifier = {
+			modifier = murim_emergency_stockpile
+			years = 5
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_calamity.0003.b  # Ignore the signs
+		ai_chance = { base = 40 }
+	}
+}
+
+# 0004 - Prophetic Dream: Vision of the End
+murim_calamity.0004 = {
+	type = character_event
+	title = murim_calamity.0004.t
+	desc = murim_calamity.0004.desc
+	theme = mystic
+	
+	trigger = {
+		has_trait = martial_artist
+		OR = {
+			has_trait = murim_omen_seer
+			has_trait = murim_fate_blessed
+		}
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_prophetic_dream_memory }
+	}
+	
+	option = {
+		name = murim_calamity.0004.a  # Accept the vision - prepare
+		add_trait = murim_heaven_touched
+		add_piety = 200
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_calamity.0004.b  # Resist fate - try to prevent it
+		add_trait = murim_calamity_peacemaker
+		add_stress = 30
+		ai_chance = { base = 40 }
+	}
+}
+
+# ========================================
+# PHASE 1: THE GATHERING STORM (5 years)
+# ========================================
+
+# 0010 - The Gathering Storm Begins
 murim_calamity.0010 = {
 	type = character_event
 	title = murim_calamity.0010.t
 	desc = murim_calamity.0010.desc
-	theme = hunt_activity
-	
-	trigger = {
-		is_ruler = yes
-		NOT = { has_character_flag = murim_animals_fled_omen }
-		murim_calamity_omens_should_start_trigger = yes
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = murim_animals_fled_omen
-			days = 3650
-		}
-	}
-	
-	# Option A: Send scouts to investigate
-	option = {
-		name = murim_calamity.0010.a
-		add_gold = -50
-		hidden_effect = {
-			random = {
-				chance = 50
-				trigger_event = { id = murim_calamity.0011 days = 30 }
-			}
-		}
-		ai_chance = { base = 50 }
-	}
-	
-	# Option B: Pray for guidance
-	option = {
-		name = murim_calamity.0010.b
-		add_piety = 100
-		add_stress = 15
-		ai_chance = { base = 30 }
-	}
-	
-	# Option C: Ignore it — animals are stupid
-	option = {
-		name = murim_calamity.0010.c
-		add_prestige = 25
-		ai_chance = { base = 20 }
-	}
-}
-
-# OMEN 2 follow-up: Scout report
-murim_calamity.0011 = {
-	type = character_event
-	title = murim_calamity.0011.t
-	desc = murim_calamity.0011.desc
-	theme = skull
-	
-	option = {
-		name = murim_calamity.0011.a
-		# The scouts found dead qi zones — land where no cultivation is possible
-		add_character_modifier = {
-			modifier = murim_dead_qi_zone_knowledge
-			years = 10
-		}
-		add_stress = 20
-		create_character_memory = {
-			type = murim_discovered_dead_qi
-		}
-	}
-}
-
-# OMEN 3: Prophetic Dream
-murim_calamity.0020 = {
-	type = character_event
-	title = murim_calamity.0020.t
-	desc = murim_calamity.0020.desc
-	theme = faith
-	
-	trigger = {
-		murim_is_martial_artist_trigger = yes
-		NOT = { has_character_flag = murim_prophetic_dream }
-		murim_calamity_omens_should_start_trigger = yes
-		OR = {
-			has_trait = murim_omen_seer
-			has_trait = mystic
-			has_trait = murim_fate_blessed
-			learning >= 15
-		}
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = murim_prophetic_dream
-			days = 7300
-		}
-	}
-	
-	# Option A: Prepare for what's coming
-	option = {
-		name = murim_calamity.0020.a
-		add_character_modifier = {
-			modifier = murim_preparing_for_calamity
-			years = 20
-		}
-		add_stress = 30
-		add_piety = 200
-		create_character_memory = {
-			type = murim_saw_calamity_vision
-		}
-		ai_chance = { base = 40 }
-	}
-	
-	# Option B: Try to warn the Murim Alliance
-	option = {
-		name = murim_calamity.0020.b
-		trigger = { diplomacy >= 15 }
-		add_prestige = -200
-		add_piety = 100
-		# Most people think you're crazy
-		add_character_modifier = {
-			modifier = murim_doomsayer_reputation
-			years = 10
-		}
-		# But some listen
-		random = {
-			chance = 30
-			set_global_variable = {
-				name = murim_calamity_warning_given
-				value = yes
-			}
-		}
-		ai_chance = { base = 30 }
-	}
-	
-	# Option C: Dismiss the dream
-	option = {
-		name = murim_calamity.0020.c
-		add_stress = -20
-		add_prestige = 50
-		ai_chance = { base = 30 }
-	}
-}
-
-# ========================================
-# PHASE 1: THE GATHERING STORM (fires when calamity triggers)
-# ========================================
-
-# Main Phase 1 kickoff event — fires for ALL rulers
-murim_calamity.1000 = {
-	type = character_event
-	title = murim_calamity.1000.t
-	desc = murim_calamity.1000.desc
 	theme = war
 	
 	trigger = {
-		is_ruler = yes
+		OR = {
+			is_ruler = yes
+			has_trait = martial_artist
+		}
+		NOT = { has_character_flag = storm_acknowledged }
 	}
 	
 	immediate = {
-		# Set global calamity flags
-		set_global_variable = {
-			name = murim_great_calamity_active
-			value = yes
+		set_character_flag = storm_acknowledged
+		create_character_memory = { type = murim_storm_begins_memory }
+	}
+	
+	# Option A: Rally your clan for war
+	option = {
+		name = murim_calamity.0010.a
+		trigger = { has_trait = martial_artist }
+		add_character_modifier = {
+			modifier = murim_rallying_for_war
+			years = 5
 		}
-		set_global_variable = {
-			name = murim_calamity_phase_storm
-			value = yes
-		}
-		set_global_variable = {
-			name = murim_calamity_start_year
-			value = current_year
+		add_trait = murim_calamity_accelerator
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = iron_fist_member
+				}
+			}
 		}
 	}
 	
-	# Option A: Rally your forces — prepare for war
+	# Option B: Seek alliances - strength in unity
 	option = {
-		name = murim_calamity.1000.a
-		add_martial_skill = 2
+		name = murim_calamity.0010.b
+		trigger = { has_trait = martial_artist }
 		add_character_modifier = {
-			modifier = murim_rallying_for_calamity
+			modifier = murim_seeking_allies
 			years = 5
 		}
-		add_prestige = 200
-		create_character_memory = {
-			type = murim_calamity_storm_began
+		# Find a potential ally
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				NOT = { this = prev }
+				NOT = { has_relation_rival = prev }
+			}
+			add_opinion = {
+				target = prev
+				modifier = murim_alliance_proposal_opinion
+			}
 		}
 		ai_chance = {
 			base = 40
 			modifier = {
-				add = 20
-				has_trait = brave
-			}
-		}
-	}
-	
-	# Option B: Seek alliance — try to unite clans
-	option = {
-		name = murim_calamity.1000.b
-		trigger = { diplomacy >= 12 }
-		add_diplomacy_skill = 2
-		add_character_modifier = {
-			modifier = murim_alliance_seeker
-			years = 5
-		}
-		add_piety = 200
-		# Mark as peacemaker
-		add_trait = murim_calamity_peacemaker
-		ai_chance = {
-			base = 30
-			modifier = {
 				add = 30
-				has_trait = just
-			}
-		}
-	}
-	
-	# Option C: This is my opportunity — accelerate the chaos
-	option = {
-		name = murim_calamity.1000.c
-		trigger = {
-			OR = {
-				has_trait = ambitious
-				has_trait = sadistic
-				has_trait = arbitrary
-				intrigue >= 15
-			}
-		}
-		add_intrigue_skill = 3
-		add_character_modifier = {
-			modifier = murim_chaos_opportunist
-			years = 5
-		}
-		add_prestige = 500
-		add_tyranny = 20
-		add_character_flag = murim_accelerated_calamity
-		add_trait = murim_calamity_accelerator
-		ai_chance = {
-			base = 15
-			modifier = {
-				add = 25
-				has_trait = ambitious
-			}
-		}
-	}
-	
-	# Option D: Flee to the mountains — seek seclusion
-	option = {
-		name = murim_calamity.1000.d
-		add_character_modifier = {
-			modifier = murim_in_seclusion
-			years = 10
-		}
-		add_stress = 40
-		add_piety = 100
-		# Seclusion improves survival chance
-		add_character_flag = murim_calamity_hiding
-		ai_chance = {
-			base = 15
-			modifier = {
-				add = 25
-				has_trait = craven
-			}
-		}
-	}
-}
-
-# Storm Phase: Orthodox vs Unorthodox tensions explode
-murim_calamity.1010 = {
-	type = character_event
-	title = murim_calamity.1010.t
-	desc = murim_calamity.1010.desc
-	theme = war
-	
-	trigger = {
-		murim_calamity_in_gathering_storm_trigger = yes
-		murim_is_martial_artist_trigger = yes
-		NOT = { has_character_flag = murim_calamity_faction_choice }
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = murim_calamity_faction_choice
-		}
-	}
-	
-	# Option A: Stand with the Orthodox Alliance
-	option = {
-		name = murim_calamity.1010.a
-		trigger = {
-			NOT = {
 				OR = {
-					has_trait = heavenly_demon_disciple
-					has_trait = poison_flower_member
-					has_trait = phantom_blade_member
-				}
-			}
-		}
-		add_character_flag = murim_calamity_orthodox_side
-		add_prestige = 100
-		add_piety = 100
-		# Orthodox allies gain opinion
-		every_courtier = {
-			limit = {
-				OR = {
-					has_trait = shaolin_disciple
-					has_trait = wudang_disciple
-					has_trait = mount_hua_disciple
+					has_trait = shaolin_member
+					has_trait = wudang_member
 					has_trait = beggar_sect_member
-					has_trait = iron_fist_member
 				}
 			}
-			add_opinion = {
-				target = root
-				modifier = murim_stood_with_orthodox
-				opinion = 30
-			}
 		}
-		ai_chance = { base = 50 }
 	}
 	
-	# Option B: Join the Unorthodox Coalition
+	# Option C: Prepare to survive - hide and wait
 	option = {
-		name = murim_calamity.1010.b
-		trigger = {
-			NOT = {
-				OR = {
-					has_trait = shaolin_disciple
-					has_trait = wudang_disciple
-				}
+		name = murim_calamity.0010.c
+		add_character_modifier = {
+			modifier = murim_survival_preparation
+			years = 5
+		}
+		# Slight increase to survival odds
+		if = {
+			limit = { NOT = { has_trait = murim_fate_blessed } }
+			random = {
+				chance = 15
+				add_trait = murim_fate_blessed
 			}
 		}
-		add_character_flag = murim_calamity_unorthodox_side
-		add_prestige = 200
-		add_tyranny = 10
 		ai_chance = {
 			base = 30
 			modifier = {
 				add = 30
 				OR = {
-					has_trait = heavenly_demon_disciple
-					has_trait = poison_flower_member
 					has_trait = phantom_blade_member
+					has_trait = poison_flower_member
+					has_trait = tang_clan_member
 				}
 			}
 		}
 	}
 	
-	# Option C: Refuse to pick a side
+	# Option D: Non-martial - pray for deliverance
 	option = {
-		name = murim_calamity.1010.c
-		add_character_flag = murim_calamity_neutral
-		add_stress = 30
-		add_diplomacy_skill = 1
-		# Both sides distrust you
-		add_character_modifier = {
-			modifier = murim_calamity_neutral_stance
-			years = 10
-		}
-		ai_chance = { base = 20 }
-	}
-}
-
-# Storm Phase: Attempt to prevent the calamity (diplomacy event)
-murim_calamity.1020 = {
-	type = character_event
-	title = murim_calamity.1020.t
-	desc = murim_calamity.1020.desc
-	theme = diplomacy
-	
-	trigger = {
-		murim_calamity_prevention_possible_trigger = yes
-		NOT = { has_character_flag = murim_tried_prevention }
-	}
-	
-	immediate = {
-		add_character_flag = murim_tried_prevention
-	}
-	
-	# Option A: Call a Grand Summit of all 9 clans
-	option = {
-		name = murim_calamity.1020.a
-		add_gold = -500
-		add_prestige = -300
-		duel = {
-			skill = diplomacy
-			target = root
-			value = 25  # Very high threshold
-			# Success: delay the calamity by 10 years
-			success = {
-				add_prestige = 2000
-				add_piety = 1000
-				set_global_variable = {
-					name = murim_calamity_delayed
-					value = yes
-				}
-				add_character_modifier = {
-					modifier = murim_savior_of_the_realm
-					years = 20
-				}
-				create_character_memory = {
-					type = murim_delayed_calamity
-				}
-			}
-			failure = {
-				add_prestige = -500
-				add_stress = 50
-				add_character_modifier = {
-					modifier = murim_failed_peacemaker
-					years = 10
-				}
-				create_character_memory = {
-					type = murim_failed_to_prevent_calamity
-				}
-			}
-		}
-		ai_chance = { base = 60 }
-	}
-	
-	# Option B: It's too late — focus on survival
-	option = {
-		name = murim_calamity.1020.b
+		name = murim_calamity.0010.d
+		trigger = { NOT = { has_trait = martial_artist } }
+		add_piety = 100
 		add_stress = 20
-		add_martial_skill = 1
-		ai_chance = { base = 40 }
+		ai_chance = { base = 100 }
 	}
 }
 
-# ========================================
-# PHASE 2: THE GREAT WAR (2-3 years of devastation)
-# ========================================
-
-# Phase 2 kickoff — war erupts everywhere
-murim_calamity.2000 = {
+# 0011 - AI Aggressive Clan Action (Heavenly Demon, Iron Fist)
+murim_calamity.0011 = {
 	type = character_event
-	title = murim_calamity.2000.t
-	desc = murim_calamity.2000.desc
+	title = murim_calamity.0011.t
+	desc = murim_calamity.0011.desc
 	theme = war
+	hidden = yes  # AI-only event
 	
 	trigger = {
-		is_ruler = yes
-	}
-	
-	immediate = {
-		set_global_variable = {
-			name = murim_calamity_phase_war
-			value = yes
-		}
-	}
-	
-	# Option A: Lead the charge — fight for your clan
-	option = {
-		name = murim_calamity.2000.a
-		add_martial_skill = 3
-		add_prowess_skill = 3
-		# Combat risk — this is war
-		random_list = {
-			60 = {
-				# Survive the opening battles
-				add_prestige = 500
-				add_character_modifier = {
-					modifier = murim_war_veteran
-					years = 20
-				}
-			}
-			25 = {
-				# Wounded
-				add_trait = wounded
-				add_prestige = 300
-			}
-			10 = {
-				# Severely wounded
-				add_trait = severely_injured
-				add_prestige = 200
-			}
-			5 = {
-				# Maimed or scarred
-				random_list = {
-					50 = { add_trait = scarred }
-					30 = { add_trait = one_eyed }
-					20 = { add_trait = maimed }
-				}
-			}
-		}
-		create_character_memory = {
-			type = murim_great_war_began
-		}
-		ai_chance = { base = 60 }
-	}
-	
-	# Option B: Coordinate from behind — strategy over bravery
-	option = {
-		name = murim_calamity.2000.b
-		trigger = { martial >= 15 }
-		add_martial_skill = 2
-		add_prestige = 300
-		add_character_modifier = {
-			modifier = murim_war_strategist
-			years = 10
-		}
-		ai_chance = { base = 25 }
-	}
-	
-	# Option C: Protect the civilians — evacuate the innocent
-	option = {
-		name = murim_calamity.2000.c
-		add_piety = 500
-		add_prestige = -100
-		add_diplomacy_skill = 2
-		add_character_modifier = {
-			modifier = murim_civilian_protector
-			years = 20
-		}
-		ai_chance = {
-			base = 15
-			modifier = {
-				add = 25
-				has_trait = compassionate
-			}
-		}
-	}
-}
-
-# Great War: Named character death events (fires multiple times)
-murim_calamity.2010 = {
-	type = character_event
-	title = murim_calamity.2010.t
-	desc = murim_calamity.2010.desc
-	theme = skull
-	
-	trigger = {
-		murim_calamity_in_great_war_trigger = yes
-		murim_is_martial_artist_trigger = yes
-		NOT = { has_character_flag = murim_calamity_survivor }
-		NOT = { has_trait = murim_fate_blessed }
-		# Don't kill player character directly
+		has_trait = martial_artist
 		is_ai = yes
 	}
 	
-	weight_multiplier = {
-		base = 1
-		modifier = {
-			add = 2
-			has_trait = murim_fate_doomed
-		}
-		modifier = {
-			add = -0.5
-			has_character_modifier = murim_in_seclusion
-		}
-		modifier = {
-			add = 1
-			has_character_flag = murim_calamity_orthodox_side
-		}
-		modifier = {
-			add = 1
-			has_character_flag = murim_calamity_unorthodox_side
-		}
-	}
-	
 	immediate = {
-		# This character dies in the war
-		# Nearby characters learn of it
-		every_close_family_member = {
-			add_stress = 40
-			create_character_memory = {
-				type = murim_lost_family_in_calamity
-			}
-		}
-		every_courtier = {
+		# AI declares hostility toward a rival
+		random_living_character = {
 			limit = {
-				murim_is_martial_artist_trigger = yes
+				has_trait = martial_artist
+				NOT = { this = prev }
+				NOT = { has_relation_ally = prev }
 			}
-			add_stress = 15
+			save_scope_as = storm_target
 		}
 	}
 	
-	# The death event — no real choice, just how they die
 	option = {
-		name = murim_calamity.2010.a
-		# Died fighting
-		death = {
-			death_reason = death_battle
+		name = murim_calamity.0011.a
+		trigger = { exists = scope:storm_target }
+		add_opinion = {
+			target = scope:storm_target
+			modifier = murim_calamity_hostility_opinion
 		}
-	}
-}
-
-# Great War: The Heavenly Demon makes his move
-murim_calamity.2020 = {
-	type = character_event
-	title = murim_calamity.2020.t
-	desc = murim_calamity.2020.desc
-	theme = war
-	
-	trigger = {
-		murim_calamity_in_great_war_trigger = yes
-		is_ruler = yes
-		NOT = { has_character_flag = murim_heavenly_demon_move }
-	}
-	
-	immediate = {
-		add_character_flag = murim_heavenly_demon_move
-	}
-	
-	# Option A: Stand against the Demon Lord
-	option = {
-		name = murim_calamity.2020.a
-		trigger = { murim_is_martial_artist_trigger = yes }
-		add_prowess_skill = 2
-		random_list = {
-			30 = {
-				# Survive the clash
-				add_prestige = 1000
-				add_character_modifier = {
-					modifier = murim_faced_demon_lord
-					years = 50
-				}
-			}
-			40 = {
-				# Wounded but alive
-				add_trait = wounded
-				add_prestige = 500
-			}
-			20 = {
-				# Severely hurt
-				add_trait = severely_injured
-				add_prestige = 300
-			}
-			10 = {
-				# Crippled
-				add_trait = maimed
-				add_prestige = 200
+		scope:storm_target = {
+			add_opinion = {
+				target = prev
+				modifier = murim_calamity_threatened_opinion
 			}
 		}
-		create_character_memory = {
-			type = murim_stood_against_demon_lord
-		}
-		ai_chance = { base = 40 }
-	}
-	
-	# Option B: Evacuate — save who you can
-	option = {
-		name = murim_calamity.2020.b
-		add_piety = 300
-		add_stress = 30
-		# Fleeing reduces death risk in next phase
-		add_character_flag = murim_calamity_hiding
-		ai_chance = { base = 35 }
-	}
-	
-	# Option C: Ally with the Demon Lord
-	option = {
-		name = murim_calamity.2020.c
-		trigger = {
-			OR = {
-				has_trait = heavenly_demon_disciple
-				has_trait = ambitious
-				intrigue >= 18
-			}
-		}
-		add_prestige = 500
-		add_tyranny = 30
-		add_character_flag = murim_allied_with_demon
-		add_character_modifier = {
-			modifier = murim_demon_lord_ally
-			years = 20
-		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				add = 30
-				has_trait = heavenly_demon_disciple
-			}
-		}
-	}
-}
-
-# ========================================
-# PHASE 3: THE SILENCE (aftermath — mass death)
-# ========================================
-
-# Phase 3 kickoff — the world falls silent
-murim_calamity.3000 = {
-	type = character_event
-	title = murim_calamity.3000.t
-	desc = murim_calamity.3000.desc
-	theme = skull
-	
-	trigger = {
-		is_ruler = yes
-	}
-	
-	immediate = {
-		set_global_variable = {
-			name = murim_calamity_phase_silence
-			value = yes
-		}
-		# Mark survivors BEFORE the mass death
-		# Player dynasty always survives
-		if = {
-			limit = { is_ai = no }
-			add_character_flag = murim_calamity_survivor
-		}
-		# Select 1-3 survivors per clan via on_action processing
-	}
-	
-	# Option A: Survey the devastation
-	option = {
-		name = murim_calamity.3000.a
-		add_stress = 50
-		add_piety = 200
-		add_character_modifier = {
-			modifier = murim_witnessed_the_silence
-			years = 50
-		}
-		add_trait = murim_calamity_survivor
-		create_character_memory = {
-			type = murim_survived_the_silence
-		}
-		# Check if you're the last of your clan
-		hidden_effect = {
-			if = {
-				limit = {
-					murim_is_martial_artist_trigger = yes
-					murim_calamity_is_clan_last_member_trigger = yes
-				}
-				trigger_event = { id = murim_calamity.3010 days = 30 }
+		# Chance of immediate skirmish
+		random = {
+			chance = 30
+			trigger_event = {
+				id = murim_calamity.0014  # Border skirmish
+				days = { 7 30 }
 			}
 		}
 		ai_chance = { base = 100 }
 	}
 }
 
-# Silence: You are the last of your clan
-murim_calamity.3010 = {
+# 0012 - AI Cunning Clan Action (Phantom Blade, Poison Flower, Tang)
+murim_calamity.0012 = {
 	type = character_event
-	title = murim_calamity.3010.t
-	desc = murim_calamity.3010.desc
-	theme = skull
-	
-	# Option A: Carry the legacy forward
-	option = {
-		name = murim_calamity.3010.a
-		add_trait = murim_bearer_of_ashes
-		# Assign appropriate Last-of trait based on clan
-		hidden_effect = {
-			if = {
-				limit = { has_trait = shaolin_disciple }
-				add_trait = murim_last_of_shaolin
-			}
-			if = {
-				limit = { has_trait = wudang_disciple }
-				add_trait = murim_last_of_wudang
-			}
-			if = {
-				limit = { has_trait = mount_hua_disciple }
-				add_trait = murim_last_of_mount_hua
-			}
-			if = {
-				limit = { has_trait = beggar_sect_member }
-				add_trait = murim_last_of_beggar_sect
-			}
-			if = {
-				limit = { has_trait = iron_fist_member }
-				add_trait = murim_last_of_iron_fist
-			}
-			if = {
-				limit = {
-					OR = {
-						has_trait = tang_clan_member
-						has_trait = tang_clan_disciple
-					}
-				}
-				add_trait = murim_last_of_tang_clan
-			}
-			if = {
-				limit = { has_trait = heavenly_demon_disciple }
-				add_trait = murim_last_of_heavenly_demon
-			}
-			if = {
-				limit = { has_trait = poison_flower_member }
-				add_trait = murim_last_of_poison_flower
-			}
-			if = {
-				limit = { has_trait = phantom_blade_member }
-				add_trait = murim_last_of_phantom_blade
-			}
-		}
-		add_prestige = 500
-		add_piety = 300
-		add_stress = 80
-		create_character_memory = {
-			type = murim_became_last_of_clan
-		}
-		ai_chance = { base = 80 }
-	}
-	
-	# Option B: Let it die — the clan failed and deserves to end
-	option = {
-		name = murim_calamity.3010.b
-		add_stress = -30
-		add_prestige = -200
-		# Remove clan trait — you renounce your heritage
-		hidden_effect = {
-			if = { limit = { has_trait = shaolin_disciple } remove_trait = shaolin_disciple }
-			if = { limit = { has_trait = wudang_disciple } remove_trait = wudang_disciple }
-			if = { limit = { has_trait = mount_hua_disciple } remove_trait = mount_hua_disciple }
-			if = { limit = { has_trait = beggar_sect_member } remove_trait = beggar_sect_member }
-			if = { limit = { has_trait = iron_fist_member } remove_trait = iron_fist_member }
-			if = { limit = { has_trait = tang_clan_member } remove_trait = tang_clan_member }
-			if = { limit = { has_trait = tang_clan_disciple } remove_trait = tang_clan_disciple }
-			if = { limit = { has_trait = heavenly_demon_disciple } remove_trait = heavenly_demon_disciple }
-			if = { limit = { has_trait = poison_flower_member } remove_trait = poison_flower_member }
-			if = { limit = { has_trait = phantom_blade_member } remove_trait = phantom_blade_member }
-		}
-		create_character_memory = {
-			type = murim_abandoned_clan_legacy
-		}
-		ai_chance = { base = 20 }
-	}
-}
-
-# Silence: Wandering through the ruins
-murim_calamity.3020 = {
-	type = character_event
-	title = murim_calamity.3020.t
-	desc = murim_calamity.3020.desc
-	theme = death
+	title = murim_calamity.0012.t
+	desc = murim_calamity.0012.desc
+	theme = intrigue
+	hidden = yes
 	
 	trigger = {
-		murim_calamity_in_silence_trigger = yes
-		has_trait = murim_calamity_survivor
-		NOT = { has_character_flag = murim_wandered_ruins }
+		has_trait = martial_artist
+		is_ai = yes
 	}
 	
 	immediate = {
-		add_character_flag = murim_wandered_ruins
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				NOT = { this = prev }
+			}
+			save_scope_as = cunning_target
+		}
 	}
 	
-	# Option A: Search for other survivors
 	option = {
-		name = murim_calamity.3020.a
+		name = murim_calamity.0012.a
+		trigger = { exists = scope:cunning_target }
+		# Secret alliance or intelligence gathering
+		random_list = {
+			50 = {
+				# Form secret alliance
+				add_opinion = {
+					target = scope:cunning_target
+					modifier = murim_secret_alliance_opinion
+				}
+			}
+			30 = {
+				# Gather intelligence (spy)
+				add_character_modifier = {
+					modifier = murim_intelligence_gathered
+					years = 2
+				}
+			}
+			20 = {
+				# Prepare assassination
+				add_character_modifier = {
+					modifier = murim_assassination_prepared
+					years = 1
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+# 0013 - AI Honorable Clan Action (Shaolin, Wudang, Mount Hua, Beggar)
+murim_calamity.0013 = {
+	type = character_event
+	title = murim_calamity.0013.t
+	desc = murim_calamity.0013.desc
+	theme = diplomacy
+	hidden = yes
+	
+	trigger = {
+		has_trait = martial_artist
+		is_ai = yes
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				NOT = { this = prev }
+			}
+			save_scope_as = peace_target
+		}
+	}
+	
+	option = {
+		name = murim_calamity.0013.a
+		trigger = { exists = scope:peace_target }
 		random_list = {
 			40 = {
-				# Find another survivor
-				custom_tooltip = murim_calamity.3020.a.tt_found
-				hidden_effect = {
-					create_character = {
-						age = { 20 35 }
-						random_traits = yes
-						trait = martial_artist
-						trait = murim_calamity_survivor
-						save_scope_as = found_survivor
-					}
-					scope:found_survivor = {
-						add_courtier = root
+				# Peace proposal
+				add_opinion = {
+					target = scope:peace_target
+					modifier = murim_peace_proposal_opinion
+				}
+				scope:peace_target = {
+					add_opinion = {
+						target = prev
+						modifier = murim_peace_proposal_opinion
 					}
 				}
 			}
 			30 = {
-				# Find a child among the ruins
-				custom_tooltip = murim_calamity.3020.a.tt_child
-				hidden_effect = {
-					create_character = {
-						age = { 5 12 }
-						random_traits = yes
-						trait = murim_child_of_renewal
-						save_scope_as = found_child
-					}
-					scope:found_child = {
-						add_courtier = root
-					}
+				# Orthodox coalition building
+				add_character_modifier = {
+					modifier = murim_orthodox_coalition_builder
+					years = 3
 				}
 			}
 			30 = {
-				# Nothing but bones and ash
-				add_stress = 30
-				custom_tooltip = murim_calamity.3020.a.tt_nothing
+				# Diplomacy fails - prepare for war reluctantly
+				add_stress = 20
+				add_character_modifier = {
+					modifier = murim_reluctant_warrior
+					years = 2
+				}
 			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+# 0014 - Border Skirmish (escalation event)
+murim_calamity.0014 = {
+	type = character_event
+	title = murim_calamity.0014.t
+	desc = murim_calamity.0014.desc
+	theme = war
+	
+	trigger = {
+		has_trait = martial_artist
+		has_global_variable = murim_calamity_storm_started
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_border_skirmish_memory }
+	}
+	
+	# Fight
+	option = {
+		name = murim_calamity.0014.a
+		duel = {
+			skill = prowess
+			target = scope:storm_target
+			50 = {
+				desc = murim_calamity.0014.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				send_interface_toast = {
+					title = murim_calamity.0014.a.success.toast
+					left_icon = root
+				}
+				add_prestige = 100
+				scope:storm_target = {
+					add_character_modifier = {
+						modifier = murim_skirmish_wounded
+						years = 1
+					}
+				}
+			}
+			50 = {
+				desc = murim_calamity.0014.a.failure
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				add_character_modifier = {
+					modifier = murim_skirmish_wounded
+					years = 1
+				}
+				# Chance of serious injury
+				random = {
+					chance = 25
+					add_trait = wounded_1
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				OR = {
+					has_trait = heavenly_demon_member
+					has_trait = iron_fist_member
+					has_trait = mount_hua_member
+				}
+			}
+		}
+	}
+	
+	# Retreat
+	option = {
+		name = murim_calamity.0014.b
+		add_prestige = -50
+		add_stress = 10
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				OR = {
+					has_trait = phantom_blade_member
+					has_trait = tang_clan_member
+				}
+			}
+		}
+	}
+	
+	# Negotiate
+	option = {
+		name = murim_calamity.0014.c
+		trigger = { diplomacy >= 12 }
+		add_character_modifier = {
+			modifier = murim_negotiated_truce
+			years = 1
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 40
+				OR = {
+					has_trait = shaolin_member
+					has_trait = wudang_member
+					has_trait = beggar_sect_member
+				}
+			}
+		}
+	}
+}
+
+# ========================================
+# PHASE 2: THE GREAT WAR (2-3 years)
+# ========================================
+
+# 0019 - The Great War Begins
+murim_calamity.0019 = {
+	type = character_event
+	title = murim_calamity.0019.t
+	desc = murim_calamity.0019.desc
+	theme = war
+	
+	trigger = {
+		OR = {
+			is_ruler = yes
+			has_trait = martial_artist
+		}
+		NOT = { has_character_flag = great_war_acknowledged }
+	}
+	
+	immediate = {
+		set_character_flag = great_war_acknowledged
+		create_character_memory = { type = murim_great_war_begins_memory }
+		# Add global war modifier
+		add_character_modifier = {
+			modifier = murim_great_war_raging
+			years = 5
+		}
+	}
+	
+	# Fight for your clan
+	option = {
+		name = murim_calamity.0019.a
+		trigger = { has_trait = martial_artist }
+		add_character_modifier = {
+			modifier = murim_frontline_warrior
+			years = 3
 		}
 		ai_chance = { base = 60 }
 	}
 	
-	# Option B: Bury the dead and mourn
+	# Protect the weak
 	option = {
-		name = murim_calamity.3020.b
-		add_piety = 300
-		add_stress = 20
+		name = murim_calamity.0019.b
 		add_character_modifier = {
-			modifier = murim_mourner_of_the_fallen
+			modifier = murim_protector_of_the_weak
+			years = 3
+		}
+		add_piety = 100
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				OR = {
+					has_trait = shaolin_member
+					has_trait = beggar_sect_member
+				}
+			}
+		}
+	}
+	
+	# Flee to the mountains
+	option = {
+		name = murim_calamity.0019.c
+		add_prestige = -200
+		add_character_modifier = {
+			modifier = murim_mountain_fugitive
+			years = 3
+		}
+		# Better survival odds
+		if = {
+			limit = { NOT = { has_trait = murim_fate_blessed } }
+			random = {
+				chance = 25
+				add_trait = murim_fate_blessed
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				OR = {
+					has_trait = phantom_blade_member
+					has_trait = poison_flower_member
+				}
+			}
+		}
+	}
+}
+
+# 0020 - AI Combat Resolution (fires monthly during war)
+murim_calamity.0020 = {
+	type = character_event
+	title = murim_calamity.0020.t
+	desc = murim_calamity.0020.desc
+	theme = war
+	
+	trigger = {
+		has_trait = martial_artist
+		has_global_variable = murim_calamity_war_started
+		exists = scope:calamity_opponent
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_calamity_combat_memory }
+	}
+	
+	# Duel the opponent
+	option = {
+		name = murim_calamity.0020.a
+		duel = {
+			skill = prowess
+			target = scope:calamity_opponent
+			50 = {
+				desc = murim_calamity.0020.victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+					min = -49
+				}
+				add_prestige = 50
+				# Opponent may die
+				scope:calamity_opponent = {
+					random = {
+						chance = 40
+						death = {
+							death_reason = death_duel
+							killer = prev
+						}
+					}
+					if = {
+						limit = { is_alive = yes }
+						random_list = {
+							40 = { add_trait = wounded_1 }
+							30 = { add_trait = wounded_2 }
+							20 = { add_trait = maimed }
+							10 = { add_trait = one_eyed }
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_calamity.0020.defeat
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+					min = -49
+				}
+				# You may die
+				random = {
+					chance = 30
+					if = {
+						limit = { has_trait = murim_fate_blessed }
+						# Fate-blessed survive but barely
+						add_trait = wounded_2
+					}
+					else = {
+						death = {
+							death_reason = death_duel
+							killer = scope:calamity_opponent
+						}
+					}
+				}
+				if = {
+					limit = { is_alive = yes }
+					random_list = {
+						40 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = maimed }
+						10 = { add_trait = scarred }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+# 0021 - War Death Event (attrition - fires from on_action monthly chance)
+murim_calamity.0021 = {
+	type = character_event
+	title = murim_calamity.0021.t
+	desc = murim_calamity.0021.desc
+	theme = death
+	
+	trigger = {
+		is_alive = yes
+		NOT = { has_trait = murim_fate_blessed }
+		NOT = { has_trait = murim_calamity_survivor }
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_war_death_memory }
+	}
+	
+	# Player gets a choice. AI auto-resolves.
+	option = {
+		name = murim_calamity.0021.a  # Fight to the death
+		trigger = { has_trait = martial_artist }
+		random_list = {
+			30 = {
+				# Survive barely
+				add_trait = wounded_2
+				add_prestige = 100
+			}
+			70 = {
+				# Die in battle
+				death = {
+					death_reason = death_battle
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_calamity.0021.b  # Try to escape
+		random_list = {
+			50 = {
+				# Escape successfully
+				add_prestige = -100
+				add_character_modifier = {
+					modifier = murim_war_refugee
+					years = 3
+				}
+			}
+			50 = {
+				# Caught and killed
+				death = {
+					death_reason = death_battle
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+# 0022 - Civilian Casualty (non-martial rulers)
+murim_calamity.0022 = {
+	type = character_event
+	title = murim_calamity.0022.t
+	desc = murim_calamity.0022.desc
+	theme = death
+	
+	trigger = {
+		NOT = { has_trait = martial_artist }
+		is_ruler = yes
+		is_alive = yes
+	}
+	
+	option = {
+		name = murim_calamity.0022.a  # Barricade the castle
+		random_list = {
+			60 = {
+				add_character_modifier = {
+					modifier = murim_siege_survivor
+					years = 2
+				}
+			}
+			40 = {
+				death = { death_reason = death_battle }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity.0022.b  # Flee the province
+		random_list = {
+			70 = {
+				add_prestige = -200
+				add_gold = -100
+			}
+			30 = {
+				death = { death_reason = death_battle }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# 0023 - Emergency Clan Succession (leader died during calamity)
+murim_calamity.0023 = {
+	type = character_event
+	title = murim_calamity.0023.t
+	desc = murim_calamity.0023.desc
+	theme = war
+	
+	trigger = {
+		has_trait = martial_artist
+		is_alive = yes
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_emergency_succession_memory }
+	}
+	
+	option = {
+		name = murim_calamity.0023.a  # Accept the burden of leadership
+		add_character_modifier = {
+			modifier = murim_emergency_clan_leader
+			years = 10
+		}
+		add_prestige = 200
+		add_stress = 30
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_calamity.0023.b  # The clan is already dead
+		add_stress = 50
+		add_character_modifier = {
+			modifier = murim_clan_despair
+			years = 5
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+# 0024 - A Clan Falls Forever (extinction event)
+murim_calamity.0024 = {
+	type = character_event
+	title = murim_calamity.0024.t
+	desc = murim_calamity.0024.desc
+	theme = death
+	
+	trigger = {
+		has_trait = murim_calamity_survivor
+		is_alive = yes
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_clan_extinction_memory }
+	}
+	
+	option = {
+		name = murim_calamity.0024.a  # Mourn the fallen clan
+		add_piety = 100
+		add_stress = 30
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_calamity.0024.b  # Their techniques must be preserved
+		add_character_modifier = {
+			modifier = murim_technique_preservationist
 			years = 20
 		}
 		ai_chance = { base = 40 }
 	}
 }
 
-# ========================================
-# PHASE 4: THE RENEWAL (new era begins)
-# ========================================
-
-# Phase 4 kickoff — the world begins again
-murim_calamity.4000 = {
+# 0025 - Emperor Under Siege
+murim_calamity.0025 = {
 	type = character_event
-	title = murim_calamity.4000.t
-	desc = murim_calamity.4000.desc
-	theme = faith
+	title = murim_calamity.0025.t
+	desc = murim_calamity.0025.desc
+	theme = war
 	
 	trigger = {
 		is_ruler = yes
+		has_global_variable = murim_calamity_war_started
+		NOT = { has_global_variable = murim_emperor_fallen }
 	}
 	
 	immediate = {
-		set_global_variable = {
-			name = murim_calamity_phase_renewal
-			value = yes
-		}
-		set_global_variable = {
-			name = murim_last_calamity_year
-			value = current_year
-		}
-		# Clean up phase flags after some time
-		hidden_effect = {
-			trigger_event = { id = murim_calamity.4099 days = 365 }
-		}
+		create_character_memory = { type = murim_emperor_siege_memory }
 	}
 	
-	# Option A: Rebuild — gather the survivors
 	option = {
-		name = murim_calamity.4000.a
-		add_prestige = 500
-		add_diplomacy_skill = 3
-		add_character_modifier = {
-			modifier = murim_era_founder
-			years = 50
-		}
-		create_character_memory = {
-			type = murim_began_the_renewal
-		}
-		ai_chance = { base = 50 }
-	}
-	
-	# Option B: Seek lost techniques — explore the ruins
-	option = {
-		name = murim_calamity.4000.b
-		add_learning_skill = 3
-		add_martial_skill = 1
-		add_character_modifier = {
-			modifier = murim_technique_seeker
-			years = 20
-		}
-		# Chance to recover lost clan techniques
-		random = {
-			chance = 40
-			hidden_effect = {
-				trigger_event = { id = murim_calamity.4010 days = 90 }
+		name = murim_calamity.0025.a  # Fight to defend the throne
+		random_list = {
+			30 = {
+				# Hold the line
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_throne_defender
+					years = 5
+				}
+			}
+			40 = {
+				# Wounded but survive
+				add_trait = wounded_2
+				add_prestige = 200
+			}
+			30 = {
+				# The emperor falls
+				set_global_variable = {
+					name = murim_emperor_fallen
+					value = yes
+				}
+				death = { death_reason = death_battle }
 			}
 		}
-		ai_chance = { base = 30 }
+		ai_chance = { base = 60 }
 	}
 	
-	# Option C: Start fresh — forget the old ways
 	option = {
-		name = murim_calamity.4000.c
-		add_prestige = 200
-		add_stress = -40
-		add_character_modifier = {
-			modifier = murim_new_path_pioneer
-			years = 30
+		name = murim_calamity.0025.b  # Abdicate and flee
+		set_global_variable = {
+			name = murim_emperor_fallen
+			value = yes
+		}
+		add_prestige = -1000
+		add_gold = 500
+		ai_chance = { base = 20 }
+	}
+	
+	option = {
+		name = murim_calamity.0025.c  # Negotiate with the attackers
+		random_list = {
+			40 = {
+				# Become a puppet
+				add_character_modifier = {
+					modifier = murim_puppet_emperor
+					years = 10
+				}
+			}
+			60 = {
+				# Killed during negotiations
+				set_global_variable = {
+					name = murim_emperor_fallen
+					value = yes
+				}
+				death = { death_reason = death_murder }
+			}
 		}
 		ai_chance = { base = 20 }
 	}
 }
 
-# Renewal: Discover lost technique in ruins
-murim_calamity.4010 = {
+# 0026 - War-Forged Breakthrough (rare - combat leads to cultivation advance)
+murim_calamity.0026 = {
 	type = character_event
-	title = murim_calamity.4010.t
-	desc = murim_calamity.4010.desc
-	theme = hunt_activity
-	
-	# Option A: Study and master it
-	option = {
-		name = murim_calamity.4010.a
-		add_martial_skill = 3
-		add_prowess_skill = 3
-		add_character_modifier = {
-			modifier = murim_recovered_ancient_technique
-			years = 50
-		}
-		create_character_memory = {
-			type = murim_recovered_lost_technique
-		}
-	}
-	
-	# Option B: Preserve it for the next generation
-	option = {
-		name = murim_calamity.4010.b
-		add_learning_skill = 3
-		add_piety = 500
-		add_character_modifier = {
-			modifier = murim_technique_preserver
-			years = 50
-		}
-	}
-}
-
-# Renewal: New generation — children of survivors
-murim_calamity.4020 = {
-	type = character_event
-	title = murim_calamity.4020.t
-	desc = murim_calamity.4020.desc
-	theme = education
+	title = murim_calamity.0026.t
+	desc = murim_calamity.0026.desc
+	theme = mystic
 	
 	trigger = {
-		murim_calamity_in_renewal_trigger = yes
-		has_trait = murim_calamity_survivor
-		any_child = {
-			age >= 10
-			age <= 16
-			NOT = { has_character_flag = murim_renewal_trained }
-		}
+		has_trait = martial_artist
+		has_global_variable = murim_calamity_war_started
 	}
 	
 	immediate = {
-		random_child = {
-			limit = {
-				age >= 10
-				age <= 16
-				NOT = { has_character_flag = murim_renewal_trained }
-			}
-			save_scope_as = renewal_child
-			add_character_flag = murim_renewal_trained
-		}
+		create_character_memory = { type = murim_war_breakthrough_memory }
 	}
 	
-	# Option A: Train them in the old ways
 	option = {
-		name = murim_calamity.4020.a
-		scope:renewal_child = {
-			add_trait = martial_artist
-			add_trait = murim_child_of_renewal
-			add_prowess_skill = 2
-			add_martial_skill = 1
-			create_character_memory = {
-				type = murim_trained_by_survivor
-			}
+		name = murim_calamity.0026.a  # Embrace the power
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_war_forged
+			years = 10
 		}
-		add_stress = 10
-		add_prestige = 100
 		ai_chance = { base = 70 }
 	}
 	
-	# Option B: Let them find their own path
 	option = {
-		name = murim_calamity.4020.b
-		scope:renewal_child = {
-			add_trait = murim_child_of_renewal
-			random_list = {
-				50 = { add_trait = martial_artist }
-				50 = {
-					# They choose a non-martial path
-					add_diplomacy_skill = 2
-					add_learning_skill = 2
-				}
-			}
-		}
+		name = murim_calamity.0026.b  # Reject it - too much blood
+		add_piety = 200
+		add_stress = -30
 		ai_chance = { base = 30 }
 	}
 }
 
-# Renewal: Legacy of the previous era (lore event)
-murim_calamity.4030 = {
+# ========================================
+# PHASE 3: THE SILENCE (1 year)
+# ========================================
+
+# 0030 - The Silence Falls (mass death for non-survivors)
+murim_calamity.0030 = {
 	type = character_event
-	title = murim_calamity.4030.t
-	desc = murim_calamity.4030.desc
-	theme = faith
+	title = murim_calamity.0030.t
+	desc = murim_calamity.0030.desc
+	theme = death
 	
 	trigger = {
-		murim_calamity_in_renewal_trigger = yes
-		NOT = { has_character_flag = murim_legacy_reflection }
+		is_alive = yes
+		NOT = { has_trait = murim_calamity_survivor }
+		NOT = { has_trait = murim_fate_blessed }
 	}
 	
 	immediate = {
-		add_character_flag = murim_legacy_reflection
+		create_character_memory = { type = murim_silence_falls_memory }
 	}
 	
-	# Option A: Record the history for future generations
 	option = {
-		name = murim_calamity.4030.a
-		add_learning_skill = 3
-		add_piety = 300
+		name = murim_calamity.0030.a  # Accept death
+		death = {
+			death_reason = death_battle
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_calamity.0030.b  # One last desperate fight
+		random_list = {
+			15 = {
+				# Miracle survival
+				add_trait = murim_calamity_survivor
+				add_trait = murim_bearer_of_ashes
+				add_prestige = 500
+			}
+			85 = {
+				death = { death_reason = death_battle }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+# 0031 - Survivor Awakens (the world is ash)
+murim_calamity.0031 = {
+	type = character_event
+	title = murim_calamity.0031.t
+	desc = murim_calamity.0031.desc
+	theme = death
+	
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = murim_calamity_survivor
+			has_trait = murim_fate_blessed
+		}
+	}
+	
+	immediate = {
+		if = {
+			limit = { NOT = { has_trait = murim_calamity_survivor } }
+			add_trait = murim_calamity_survivor
+		}
+		create_character_memory = { type = murim_survivor_awakens_memory }
+		# Grant Last-of-Clan trait if applicable
+		if = {
+			limit = {
+				has_trait = shaolin_member
+				has_global_variable = murim_shaolin_extinct
+			}
+			add_trait = murim_last_of_shaolin
+		}
+		if = {
+			limit = {
+				has_trait = wudang_member
+				has_global_variable = murim_wudang_extinct
+			}
+			add_trait = murim_last_of_wudang
+		}
+		if = {
+			limit = {
+				has_trait = mount_hua_member
+				has_global_variable = murim_mount_hua_extinct
+			}
+			add_trait = murim_last_of_mount_hua
+		}
+		if = {
+			limit = {
+				has_trait = beggar_sect_member
+				has_global_variable = murim_beggar_sect_extinct
+			}
+			add_trait = murim_last_of_beggar_sect
+		}
+		if = {
+			limit = {
+				has_trait = iron_fist_member
+				has_global_variable = murim_iron_fist_extinct
+			}
+			add_trait = murim_last_of_iron_fist
+		}
+		if = {
+			limit = {
+				has_trait = tang_clan_member
+				has_global_variable = murim_tang_extinct
+			}
+			add_trait = murim_last_of_tang
+		}
+		if = {
+			limit = {
+				has_trait = heavenly_demon_member
+				has_global_variable = murim_heavenly_demon_extinct
+			}
+			add_trait = murim_last_of_heavenly_demon
+		}
+		if = {
+			limit = {
+				has_trait = poison_flower_member
+				has_global_variable = murim_poison_flower_extinct
+			}
+			add_trait = murim_last_of_poison_flower
+		}
+		if = {
+			limit = {
+				has_trait = phantom_blade_member
+				has_global_variable = murim_phantom_blade_extinct
+			}
+			add_trait = murim_last_of_phantom_blade
+		}
+	}
+	
+	option = {
+		name = murim_calamity.0031.a  # Carry the legacy forward
+		add_trait = murim_bearer_of_ashes
+		add_prestige = 300
+		add_piety = 200
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_calamity.0031.b  # The old world deserved to die
+		add_prestige = 100
+		add_stress = -50
+		ai_chance = { base = 30 }
+	}
+}
+
+# ========================================
+# PHASE 4: THE RENEWAL
+# ========================================
+
+# 0040 - The Renewal Begins
+murim_calamity.0040 = {
+	type = character_event
+	title = murim_calamity.0040.t
+	desc = murim_calamity.0040.desc
+	theme = faith
+	
+	trigger = {
+		is_alive = yes
+		has_trait = murim_calamity_survivor
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_renewal_begins_memory }
+	}
+	
+	# Rebuild your clan
+	option = {
+		name = murim_calamity.0040.a
+		trigger = { has_trait = martial_artist }
 		add_character_modifier = {
-			modifier = murim_historian_of_the_fallen
-			years = 50
+			modifier = murim_clan_rebuilder
+			years = 20
 		}
-		create_character_memory = {
-			type = murim_recorded_fallen_era
-		}
+		add_prestige = 500
 		ai_chance = { base = 50 }
 	}
 	
-	# Option B: The past is dead — focus on the future
+	# Found a new sect from the ashes
 	option = {
-		name = murim_calamity.4030.b
-		add_prestige = 200
-		add_stress = -20
+		name = murim_calamity.0040.b
+		trigger = { has_trait = martial_artist }
+		add_character_modifier = {
+			modifier = murim_new_sect_founder
+			years = 20
+		}
+		add_prestige = 300
+		add_piety = 200
 		ai_chance = { base = 30 }
 	}
 	
-	# Option C: Use the legends to inspire the new generation
+	# Become a wandering hermit - teach the next generation
 	option = {
-		name = murim_calamity.4030.c
-		add_diplomacy_skill = 2
-		add_prestige = 300
+		name = murim_calamity.0040.c
 		add_character_modifier = {
-			modifier = murim_legend_teller
-			years = 30
+			modifier = murim_wandering_sage
+			years = 20
 		}
+		add_piety = 500
 		ai_chance = { base = 20 }
 	}
 }
 
-# Cleanup event — remove calamity flags after Renewal stabilizes
-murim_calamity.4099 = {
+# 0041 - AI Rebuild Behavior (autonomous sect founding)
+murim_calamity.0041 = {
 	type = character_event
-	title = murim_calamity.4099.t
-	desc = murim_calamity.4099.desc
+	title = murim_calamity.0041.t
+	desc = murim_calamity.0041.desc
 	theme = faith
 	hidden = yes
 	
-	immediate = {
-		# Clean up global flags — the calamity cycle is complete
-		remove_global_variable = murim_great_calamity_active
-		remove_global_variable = murim_calamity_phase_storm
-		remove_global_variable = murim_calamity_phase_war
-		remove_global_variable = murim_calamity_phase_silence
-		remove_global_variable = murim_calamity_phase_renewal
-		remove_global_variable = murim_calamity_omens_active
-		remove_global_variable = murim_calamity_warning_given
-		remove_global_variable = murim_calamity_delayed
+	trigger = {
+		is_ai = yes
+		has_trait = murim_calamity_survivor
+		has_trait = martial_artist
 	}
 	
 	option = {
-		name = murim_calamity.4099.a
-		custom_tooltip = murim_calamity.4099.a.tt
+		name = murim_calamity.0041.a
+		# AI picks a rebuild path
+		random_list = {
+			40 = {
+				# Rebuild old clan
+				add_character_modifier = {
+					modifier = murim_clan_rebuilder
+					years = 20
+				}
+			}
+			30 = {
+				# Found new sect
+				add_character_modifier = {
+					modifier = murim_new_sect_founder
+					years = 20
+				}
+			}
+			20 = {
+				# Become wandering teacher
+				add_character_modifier = {
+					modifier = murim_wandering_sage
+					years = 20
+				}
+			}
+			10 = {
+				# Become a recluse - guard ruins
+				add_character_modifier = {
+					modifier = murim_ruin_guardian
+					years = 20
+				}
+			}
+		}
+		# Generate new rivalries among survivors
+		random_living_character = {
+			limit = {
+				has_trait = murim_calamity_survivor
+				NOT = { this = prev }
+				has_trait = martial_artist
+			}
+			# 30% chance new rivalry forms
+			random = {
+				chance = 30
+				set_relation_rival = prev
+			}
+			# 40% chance friendship forms
+			random = {
+				chance = 40
+				set_relation_friend = prev
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+# 0042 - New Generation Spawns (children of survivors)
+murim_calamity.0042 = {
+	type = character_event
+	title = murim_calamity.0042.t
+	desc = murim_calamity.0042.desc
+	theme = faith
+	
+	trigger = {
+		has_trait = murim_calamity_survivor
+		is_alive = yes
+	}
+	
+	immediate = {
+		create_character_memory = { type = murim_new_generation_memory }
+	}
+	
+	# Train them in the old ways
+	option = {
+		name = murim_calamity.0042.a
+		# Spawn a child with martial potential
+		create_character = {
+			age = 0
+			trait = murim_child_of_renewal
+			mother = root
+			culture = root.culture
+			faith = root.faith
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Let them find their own path
+	option = {
+		name = murim_calamity.0042.b
+		create_character = {
+			age = 0
+			murim_child_of_renewal = yes
+			culture = root.culture
+			faith = root.faith
+		}
+		# This child may or may not become a martial artist
+		ai_chance = { base = 30 }
+	}
+	
+	# The old ways died with the old world
+	option = {
+		name = murim_calamity.0042.c
+		add_stress = 30
+		add_piety = 100
+		# No child spawned - the line may end
+		ai_chance = { base = 20 }
 	}
 }
