@@ -1,0 +1,1408 @@
+# Murim Chronicles - Orthodox vs Unorthodox Faction Events
+# THE GREAT DIVIDE: Righteous Path vs Demonic Path
+# ORTHODOX (6 clans): Mount Hua, Shaolin, Wudang, Tang, Beggar Sect, Iron Fist Gate
+#   Led by elected MURIM ALLIANCE LEADER. Values honor, code of conduct.
+# UNORTHODOX (3 clans): Heavenly Demon, Poison Flower Palace, Phantom Blade Sect
+#   Led by HEAVENLY DEMON SECT LEADER automatically. Values power, no rules.
+# INTEGRATION: Uses murim_clan_triggers.txt (all 9 clan + faction triggers)
+# INTEGRATION: Uses murim_opinion_modifiers.txt (martial-layer opinion only)
+# INTEGRATION: Feeds murim_shadow_politics_events.txt (HD infiltration)
+# VANILLA SEPARATION: Faction wars are MARTIAL conflicts, NOT political wars.
+#   No titles change. No realm boundaries shift. No armies march (unless
+#   Heavenly Demon has infiltrated a government — see shadow_politics).
+# CHINA-CENTRIC: All major faction events occur in China. Regional echoes abroad.
+# GENDER: Fully neutral. Women lead factions, fight in wars, defect, romance.
+
+namespace = murim_faction
+
+# ═══════════════════════════════════════════
+# 0001 - FACTION WAR ERUPTS (every 20-30 years)
+# Orthodox Alliance vs Unorthodox Coalition
+# ═══════════════════════════════════════════
+murim_faction.0001 = {
+	type = character_event
+	title = murim_faction.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { murim_is_in_orthodox_sect_trigger = yes }
+				desc = murim_faction.0001.desc_orthodox
+				# "The Demonic Path has gone too far. Raids on orthodox schools,
+				#  poisonings of our elders, assassinations of promising disciples.
+				#  The Murim Alliance Leader has called a GREAT CONVERGENCE —
+				#  all righteous sects must unite against the darkness.
+				#  The war will be fought in the shadows, in dueling grounds,
+				#  and in the hidden valleys of China. Not with armies — with fists."
+			}
+			triggered_desc = {
+				trigger = { murim_is_in_unorthodox_sect_trigger = yes }
+				desc = murim_faction.0001.desc_unorthodox
+				# "The Heavenly Demon has spoken: the righteous hypocrites have
+				#  suppressed us long enough. They call us 'demonic' for refusing
+				#  their hollow code. Now we strike back. The Poison Flower Palace
+				#  will cripple their supply lines. The Phantom Blade will remove
+				#  their leaders. And the Heavenly Demon Sect will crush what remains.
+				#  This is not war — this is liberation."
+			}
+			desc = murim_faction.0001.desc_neutral
+			# "The martial world trembles. Orthodox and Unorthodox have declared
+			#  open conflict. Every martial artist must choose a side — or hide."
+		}
+	}
+	theme = martial
+	
+	trigger = {
+		murim_is_clan_member_of_any_trigger = yes
+		NOT = { has_character_flag = murim_faction_war_active }
+		# Only fires every 20-30 years
+		NOT = { has_global_variable = murim_faction_war_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		# More likely when tensions are high
+		modifier = {
+			factor = 2
+			has_global_variable = murim_faction_tension_high
+		}
+	}
+	
+	# Option A: Rally your clan to the cause
+	option = {
+		name = murim_faction.0001.a
+		# "Sound the war drums. [Clan name] stands ready."
+		trigger = { murim_is_in_orthodox_sect_trigger = yes }
+		add_character_modifier = {
+			modifier = murim_faction_war_veteran
+			years = 20
+		}
+		set_character_flag = {
+			flag = murim_faction_war_active
+			years = 5
+		}
+		set_global_variable = {
+			name = murim_faction_war_cooldown
+			value = yes
+			years = 25
+		}
+		# Series of war events over 1-5 years
+		trigger_event = {
+			id = murim_faction.0010
+			days = { 30 180 }
+		}
+		stress_impact = {
+			brave = minor_stress_loss
+			craven = major_stress_gain
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Advocate for peace / negotiation
+	option = {
+		name = murim_faction.0001.b
+		# "Enough blood. I will seek a truce before more die."
+		add_character_modifier = {
+			modifier = murim_peacemaker
+			years = 10
+		}
+		trigger_event = {
+			id = murim_faction.0005
+			days = { 14 60 }
+		}
+		stress_impact = {
+			compassionate = minor_stress_loss
+			wrathful = major_stress_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+	
+	# Option C: Stay neutral / protect only your own
+	option = {
+		name = murim_faction.0001.c
+		# "This is not our fight. Guard our gates and wait for the storm to pass."
+		trigger = {
+			OR = {
+				murim_is_in_neutral_sect_trigger = yes
+				murim_is_sect_leader_trigger = yes
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_faction_neutral_stance
+			years = 5
+		}
+		# Both sides lose some respect for you
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0005 - PEACE NEGOTIATION ATTEMPT
+# ═══════════════════════════════════════════
+murim_faction.0005 = {
+	type = character_event
+	title = murim_faction.0005.t
+	desc = murim_faction.0005.desc
+	# "You arrange a meeting at the neutral ground of the Forgotten Valley.
+	#  Representatives from both factions arrive, armed but willing to talk.
+	#  The Murim Alliance Leader and the Heavenly Demon's envoy sit across
+	#  from each other. Decades of hatred fill the air."
+	theme = diplomacy
+	
+	# Option A: Propose a formal ceasefire (10 years)
+	option = {
+		name = murim_faction.0005.a
+		# "Ten years of peace. No raids, no assassinations, no border violations."
+		random_list = {
+			60 = {
+				# Ceasefire accepted
+				set_global_variable = {
+					name = murim_faction_ceasefire
+					value = yes
+					years = 10
+				}
+				add_character_modifier = {
+					modifier = murim_great_peacemaker
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_brokered_peace
+				}
+			}
+			40 = {
+				# Ceasefire rejected — war continues
+				trigger_event = {
+					id = murim_faction.0010
+					days = { 7 30 }
+				}
+				add_character_modifier = {
+					modifier = murim_failed_diplomat
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Propose a champions duel (one fight decides the war)
+	option = {
+		name = murim_faction.0005.b
+		# "Let the strongest of each side fight. The loser's faction retreats for a generation."
+		trigger_event = {
+			id = murim_faction.0006
+			days = { 7 14 }
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Assassination attempt during negotiation
+	option = {
+		name = murim_faction.0005.c
+		# "While they talk, my agents will strike at the enemy leader."
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				murim_is_in_unorthodox_sect_trigger = yes
+			}
+		}
+		random_list = {
+			30 = {
+				# Assassination succeeds
+				add_character_modifier = {
+					modifier = murim_treacherous_negotiator
+					years = -1 # permanent
+				}
+				add_dread = 30
+			}
+			70 = {
+				# Caught! War intensifies
+				add_character_modifier = {
+					modifier = murim_oath_breaker
+					years = -1
+				}
+				trigger_event = {
+					id = murim_faction.0010
+					days = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0006 - CHAMPIONS DUEL (faction war decider)
+# ═══════════════════════════════════════════
+murim_faction.0006 = {
+	type = character_event
+	title = murim_faction.0006.t
+	desc = murim_faction.0006.desc
+	# "The champions meet at the Summit of Ten Thousand Swords, the ancient
+	#  dueling ground in central China. The Orthodox champion: [NAME], chosen
+	#  by the Alliance Leader. The Unorthodox champion: [NAME], chosen by
+	#  the Heavenly Demon. The entire martial world watches."
+	theme = martial
+	
+	# Option A: Volunteer as your faction's champion
+	option = {
+		name = murim_faction.0006.a
+		# "I will fight for the righteous/demonic path."
+		trigger = {
+			prowess >= 20
+			OR = {
+				murim_is_sect_leader_trigger = yes
+				murim_is_sect_elder_trigger = yes
+			}
+		}
+		# Duel mechanics — high stakes
+		duel = {
+			skill = prowess
+			target = scope:faction_champion_opponent
+			50 = {
+				# Victory — your faction wins the war
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_faction.0006.a.victory
+				add_character_modifier = {
+					modifier = murim_faction_champion_victor
+					years = -1
+				}
+				set_global_variable = {
+					name = murim_faction_ceasefire
+					value = yes
+					years = 20
+				}
+				create_character_memory = {
+					type = murim_decided_faction_war
+				}
+			}
+			50 = {
+				# Defeat — your faction loses, you're wounded
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				desc = murim_faction.0006.a.defeat
+				add_character_modifier = {
+					modifier = murim_faction_champion_defeated
+					years = 10
+				}
+				random_list = {
+					60 = { add_trait = wounded }
+					25 = { add_trait = severely_wounded }
+					15 = { add_trait = incapable }
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option B: Watch from the crowd
+	option = {
+		name = murim_faction.0006.b
+		# "I will witness this historic moment."
+		create_character_memory = {
+			type = murim_witnessed_faction_duel
+		}
+		ai_chance = { base = 60 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0010 - FACTION WAR BATTLE EVENT
+# Individual combat during faction war
+# ═══════════════════════════════════════════
+murim_faction.0010 = {
+	type = character_event
+	title = murim_faction.0010.t
+	desc = murim_faction.0010.desc
+	# "The faction war rages across the martial world. In the bamboo forests
+	#  outside [Chinese province], you encounter enemy faction fighters.
+	#  This is not a battlefield — it is a series of duels, ambushes, and
+	#  running battles through the wilderness. VANILLA SEPARATION: No armies.
+	#  No political consequences. This is martial artist vs martial artist."
+	theme = martial
+	
+	# Option A: Engage the enemy head-on
+	option = {
+		name = murim_faction.0010.a
+		# "For the righteous/demonic path!"
+		duel = {
+			skill = prowess
+			target = scope:faction_enemy
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.5
+				}
+				desc = murim_faction.0010.victory
+				add_prestige = 100
+				add_character_modifier = {
+					modifier = murim_faction_war_hero
+					years = 10
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.5
+				}
+				desc = murim_faction.0010.defeat
+				random_list = {
+					50 = { add_trait = wounded }
+					30 = { add_trait = severely_wounded }
+					10 = { add_trait = incapable }
+					10 = {
+						# Captured by enemy faction
+						trigger_event = {
+							id = murim_faction.0015
+							days = { 3 7 }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Use guerrilla tactics
+	option = {
+		name = murim_faction.0010.b
+		# "Ambush them. Strike from the shadows and vanish."
+		trigger = {
+			OR = {
+				intrigue >= 12
+				murim_is_phantom_blade_member_trigger = yes
+			}
+		}
+		random_list = {
+			70 = {
+				add_prestige = 75
+				add_character_modifier = {
+					modifier = murim_guerrilla_tactician
+					years = 5
+				}
+			}
+			30 = {
+				# Ambush fails, you're caught
+				add_trait = wounded
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				murim_is_phantom_blade_member_trigger = yes
+			}
+		}
+	}
+	
+	# Option C: Retreat and regroup
+	option = {
+		name = murim_faction.0010.c
+		# "We're outnumbered. Fall back to the mountain pass."
+		stress_impact = {
+			brave = major_stress_gain
+			craven = minor_stress_loss
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0015 - CAPTURED BY ENEMY FACTION
+# ═══════════════════════════════════════════
+murim_faction.0015 = {
+	type = character_event
+	title = murim_faction.0015.t
+	desc = murim_faction.0015.desc
+	# "You are bound and brought before the enemy faction's war council.
+	#  They debate your fate. Some want you dead. Others see value in a
+	#  prisoner exchange. And one voice suggests... conversion."
+	theme = intrigue
+	
+	# Option A: Resist — demand honorable treatment
+	option = {
+		name = murim_faction.0015.a
+		# "I am a martial artist, not a criminal. Treat me with the respect my rank demands."
+		trigger = { murim_is_sect_elder_trigger = yes }
+		random_list = {
+			50 = {
+				# Released on honor — must not fight for 1 year
+				set_character_flag = {
+					flag = murim_honor_parole
+					years = 1
+				}
+			}
+			50 = {
+				# Kept prisoner — ransom demanded
+				add_character_modifier = {
+					modifier = murim_faction_prisoner
+					years = 2
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Attempt escape
+	option = {
+		name = murim_faction.0015.b
+		# "I will not rot in their dungeon."
+		random_list = {
+			40 = {
+				# Escape succeeds
+				add_character_modifier = {
+					modifier = murim_daring_escape
+					years = 5
+				}
+				add_prowess_skill = 1
+			}
+			40 = {
+				# Caught — beaten, injured
+				add_trait = wounded
+				add_character_modifier = {
+					modifier = murim_failed_escape
+					years = 3
+				}
+			}
+			20 = {
+				# Escape but severely hurt
+				add_trait = severely_wounded
+				# Still free
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Defect to the enemy faction
+	option = {
+		name = murim_faction.0015.c
+		# "Perhaps... I have been fighting for the wrong side."
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				has_trait = ambitious
+				has_trait = cynical
+			}
+		}
+		trigger_event = {
+			id = murim_faction.0020
+			days = { 7 14 }
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0020 - DEFECTION EVENT
+# Switching from Orthodox to Unorthodox or vice versa
+# ═══════════════════════════════════════════
+murim_faction.0020 = {
+	type = character_event
+	title = murim_faction.0020.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { murim_is_in_orthodox_sect_trigger = yes }
+				desc = murim_faction.0020.desc_to_unorthodox
+				# "You renounce the Righteous Path. The hollow codes, the sanctimonious
+				#  elders, the endless rules about honor. The Demonic Path offers power
+				#  without pretense. Your old clan will brand you a traitor. Your old
+				#  friends will hunt you. But power... power has no faction."
+			}
+			desc = murim_faction.0020.desc_to_orthodox
+			# "You turn your back on the Demonic Path. The violence, the cruelty,
+			#  the casual destruction — you can stomach it no longer. The Righteous
+			#  Path may be rigid and self-righteous, but at least they have a code.
+			#  Your former allies will see this as betrayal. They may try to silence you."
+		}
+	}
+	theme = intrigue
+	
+	# Option A: Complete the defection
+	option = {
+		name = murim_faction.0020.a
+		# "There is no going back."
+		# Remove old clan membership
+		# Add new faction membership
+		add_character_modifier = {
+			modifier = murim_faction_defector
+			years = -1 # permanent
+		}
+		add_character_modifier = {
+			modifier = murim_betrayal_mark
+			years = 20
+		}
+		# Old faction hunts you
+		set_character_flag = {
+			flag = murim_hunted_by_old_faction
+			years = 10
+		}
+		# New faction distrusts you (for now)
+		add_character_modifier = {
+			modifier = murim_new_faction_distrust
+			years = 5
+		}
+		create_character_memory = {
+			type = murim_defected_factions
+		}
+		# Follow-up: assassination attempt from old faction
+		trigger_event = {
+			id = murim_faction.0025
+			days = { 60 365 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: It was a ruse — spy for your real faction
+	option = {
+		name = murim_faction.0020.b
+		# "Pretend to defect. Feed intelligence back to my true allies."
+		trigger = {
+			intrigue >= 12
+		}
+		set_character_flag = {
+			flag = murim_double_agent
+			years = 10
+		}
+		add_character_modifier = {
+			modifier = murim_deep_cover_spy
+			years = 10
+		}
+		# Risk of being discovered
+		trigger_event = {
+			id = murim_faction.0026
+			days = { 365 1095 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				intrigue >= 15
+			}
+		}
+	}
+	
+	# Option C: Change your mind — flee instead
+	option = {
+		name = murim_faction.0020.c
+		# "I can't do this. I need to disappear."
+		# Become clanless, hunted by both sides
+		set_character_flag = {
+			flag = murim_ronin_hunted
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_wandering_exile
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0025 - OLD FACTION ASSASSINATION ATTEMPT
+# ═══════════════════════════════════════════
+murim_faction.0025 = {
+	type = character_event
+	title = murim_faction.0025.t
+	desc = murim_faction.0025.desc
+	# "A shadow moves in the night. Your old faction hasn't forgotten your
+	#  betrayal. An assassin — likely Phantom Blade if you left the unorthodox,
+	#  or a righteous avenger if you left the orthodox — has found you."
+	theme = intrigue
+	
+	# Option A: Fight the assassin
+	option = {
+		name = murim_faction.0025.a
+		duel = {
+			skill = prowess
+			target = scope:faction_assassin
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				desc = murim_faction.0025.survive
+				add_character_modifier = {
+					modifier = murim_survived_assassination
+					years = 10
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				desc = murim_faction.0025.wounded
+				random_list = {
+					50 = { add_trait = wounded }
+					30 = { add_trait = severely_wounded }
+					20 = { death = { death_reason = death_murder_unknown } }
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option B: Use your new faction's protection
+	option = {
+		name = murim_faction.0025.b
+		# "My new allies will protect me."
+		random_list = {
+			70 = {
+				# Protected successfully
+				add_character_modifier = {
+					modifier = murim_faction_protected
+					years = 5
+				}
+			}
+			30 = {
+				# Protection fails — assassin gets through
+				add_trait = wounded
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0026 - DOUBLE AGENT DISCOVERED
+# ═══════════════════════════════════════════
+murim_faction.0026 = {
+	type = character_event
+	title = murim_faction.0026.t
+	desc = murim_faction.0026.desc
+	# "Your cover is blown. Someone noticed your midnight messages, your
+	#  too-convenient absences, your questions that cut too close to secrets."
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_double_agent
+	}
+	
+	# 50% chance discovered, 50% chance still safe
+	immediate = {
+		random_list = {
+			50 = { set_local_variable = { name = spy_discovered value = yes } }
+			50 = { set_local_variable = { name = spy_safe value = yes } }
+		}
+	}
+	
+	# Option A: Discovered — fight your way out
+	option = {
+		name = murim_faction.0026.a
+		trigger = { exists = local_var:spy_discovered }
+		remove_character_flag = murim_double_agent
+		add_character_modifier = {
+			modifier = murim_exposed_spy
+			years = -1
+		}
+		# Duel to escape
+		random_list = {
+			50 = { add_trait = wounded }
+			30 = { add_trait = severely_wounded }
+			20 = { death = { death_reason = death_execution } }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Still safe — continue the mission
+	option = {
+		name = murim_faction.0026.b
+		trigger = { exists = local_var:spy_safe }
+		# Intel gathered — massive advantage
+		add_character_modifier = {
+			modifier = murim_deep_intelligence
+			years = 5
+		}
+		# Will be tested again later
+		trigger_event = {
+			id = murim_faction.0026
+			days = { 365 730 }
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0030 - CROSS-FACTION ROMANCE
+# Forbidden love between orthodox and unorthodox members
+# ═══════════════════════════════════════════
+murim_faction.0030 = {
+	type = character_event
+	title = murim_faction.0030.t
+	desc = murim_faction.0030.desc
+	# "Of all the people in the martial world, it had to be them. A member
+	#  of the [enemy faction]. You met during a ceasefire, or perhaps during
+	#  a chance encounter at a neutral inn. Now your heart wars with your
+	#  faction loyalty. Your clan would never approve. Their clan would
+	#  kill them for this. But the heart wants what the heart wants."
+	theme = romance
+	
+	trigger = {
+		murim_is_clan_member_of_any_trigger = yes
+		is_attracted_to_gender_of = scope:faction_lover
+		NOT = { has_character_flag = murim_cross_faction_romance }
+	}
+	
+	# Option A: Pursue the forbidden romance secretly
+	option = {
+		name = murim_faction.0030.a
+		# "We will find a way. Meet me at the Thousand Plum Bridge at midnight."
+		set_character_flag = {
+			flag = murim_cross_faction_romance
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_forbidden_love
+			years = -1
+		}
+		# Risk of discovery
+		trigger_event = {
+			id = murim_faction.0031
+			days = { 180 730 }
+		}
+		stress_impact = {
+			honest = major_stress_gain
+			lustful = minor_stress_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = lustful
+			}
+		}
+	}
+	
+	# Option B: Reject the feelings — duty first
+	option = {
+		name = murim_faction.0030.b
+		# "This can never be. My clan, my faction, my honor — all forbid it."
+		add_stress = 30
+		add_character_modifier = {
+			modifier = murim_duty_over_love
+			years = 10
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_trait = zealous
+			}
+		}
+	}
+	
+	# Option C: Use the romance as intelligence opportunity
+	option = {
+		name = murim_faction.0030.c
+		# "A lover in the enemy camp is a spy I never had to recruit."
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				murim_is_poison_flower_member_trigger = yes
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_honey_trap
+			years = 10
+		}
+		add_intrigue_skill = 1
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				murim_is_poison_flower_member_trigger = yes
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0031 - FORBIDDEN ROMANCE DISCOVERED
+# ═══════════════════════════════════════════
+murim_faction.0031 = {
+	type = character_event
+	title = murim_faction.0031.t
+	desc = murim_faction.0031.desc
+	# "Someone has seen you together. A clan brother, a suspicious elder,
+	#  a Phantom Blade scout passing through. The whispers have begun.
+	#  Your clan leader will know by sunrise."
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_cross_faction_romance
+	}
+	
+	# Option A: Flee together — abandon both clans
+	option = {
+		name = murim_faction.0031.a
+		# "We leave tonight. Together. Let them call us traitors."
+		# Both become clanless exiles
+		add_character_modifier = {
+			modifier = murim_love_exiles
+			years = -1
+		}
+		remove_character_flag = murim_cross_faction_romance
+		# Both factions hunt them
+		set_character_flag = {
+			flag = murim_hunted_by_both_factions
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_fled_for_love
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	# Option B: End the romance to protect them
+	option = {
+		name = murim_faction.0031.b
+		# "I will break their heart to save their life."
+		remove_character_flag = murim_cross_faction_romance
+		add_stress = 50
+		add_character_modifier = {
+			modifier = murim_heartbroken_warrior
+			years = 10
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Face your clan with the truth
+	option = {
+		name = murim_faction.0031.c
+		# "I am not ashamed. Let them judge me."
+		trigger = { has_trait = brave }
+		random_list = {
+			30 = {
+				# Clan accepts (grudgingly)
+				add_character_modifier = {
+					modifier = murim_clan_tolerance
+					years = 5
+				}
+			}
+			50 = {
+				# Expelled from clan
+				add_character_modifier = {
+					modifier = murim_expelled_for_love
+					years = -1
+				}
+			}
+			20 = {
+				# Lover is assassinated by your clan
+				remove_character_flag = murim_cross_faction_romance
+				add_stress = 80
+				add_character_modifier = {
+					modifier = murim_lover_murdered
+					years = -1
+				}
+				create_character_memory = {
+					type = murim_lover_killed_by_clan
+				}
+				# Revenge arc
+				trigger_event = {
+					id = murim_faction.0035
+					days = { 30 90 }
+				}
+			}
+		}
+		ai_chance = { base = 15 }
+	}
+	
+	# Option D: Deny everything
+	option = {
+		name = murim_faction.0031.d
+		# "Lies. All lies. I would never consort with the enemy."
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				intrigue >= 12
+			}
+		}
+		random_list = {
+			60 = {
+				# Believed — romance continues in deeper secrecy
+				trigger_event = {
+					id = murim_faction.0031
+					days = { 365 1095 }
+				}
+			}
+			40 = {
+				# Not believed — forced to choose
+				trigger_event = {
+					id = murim_faction.0031
+					days = { 7 14 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0035 - REVENGE FOR MURDERED LOVER
+# ═══════════════════════════════════════════
+murim_faction.0035 = {
+	type = character_event
+	title = murim_faction.0035.t
+	desc = murim_faction.0035.desc
+	# "They killed the only person who saw past your faction. Your clan,
+	#  your so-called family, murdered your beloved to preserve their honor.
+	#  Grief burns into rage. What do you do with it?"
+	theme = martial
+	
+	# Option A: Declare blood vendetta against your own clan
+	option = {
+		name = murim_faction.0035.a
+		# "I will destroy every last one of them."
+		add_character_modifier = {
+			modifier = murim_blood_vendetta
+			years = -1
+		}
+		add_prowess_skill = 2
+		add_dread = 20
+		# Becomes a legendary ronin
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Channel grief into becoming stronger
+	option = {
+		name = murim_faction.0035.b
+		# "I will become so strong that no one can take anyone from me again."
+		add_character_modifier = {
+			modifier = murim_grief_fueled_power
+			years = -1
+		}
+		add_prowess_skill = 3
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Seek peace — honor their memory by ending the cycle
+	option = {
+		name = murim_faction.0035.c
+		# "They would not want me to become a monster."
+		add_character_modifier = {
+			modifier = murim_peaceful_grief
+			years = -1
+		}
+		add_learning_skill = 2
+		add_diplomacy_skill = 1
+		stress_impact = {
+			compassionate = minor_stress_loss
+			wrathful = major_stress_gain
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0040 - TEMPORARY ALLIANCE (external threat)
+# Orthodox + Unorthodox unite against common enemy
+# ═══════════════════════════════════════════
+murim_faction.0040 = {
+	type = character_event
+	title = murim_faction.0040.t
+	desc = murim_faction.0040.desc
+	# "An external force threatens the entire martial world. Mongol invasion
+	#  force with their own martial tradition, or a foreign power destroying
+	#  martial schools indiscriminately. The Murim Alliance Leader and the
+	#  Heavenly Demon must put aside their hatred to survive."
+	theme = diplomacy
+	
+	trigger = {
+		murim_is_clan_member_of_any_trigger = yes
+		OR = {
+			has_global_variable = murim_external_threat
+			# Mongol invasion touching Chinese territory
+			any_living_character = {
+				has_culture_group = culture_group:mongolic_group
+				is_at_war = yes
+				any_war_enemy = {
+					murim_is_in_china_trigger = yes
+				}
+			}
+		}
+	}
+	
+	# Option A: Support the alliance
+	option = {
+		name = murim_faction.0040.a
+		# "The martial world must stand together or fall separately."
+		add_character_modifier = {
+			modifier = murim_unity_supporter
+			years = 5
+		}
+		set_global_variable = {
+			name = murim_temporary_alliance
+			value = yes
+			years = 5
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option B: Exploit the chaos
+	option = {
+		name = murim_faction.0040.b
+		# "While they fight the invaders, we seize power."
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				murim_is_in_unorthodox_sect_trigger = yes
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_opportunist
+			years = 10
+		}
+		add_dread = 15
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Lead the combined force
+	option = {
+		name = murim_faction.0040.c
+		# "I will lead ALL martial artists against this threat."
+		trigger = {
+			OR = {
+				murim_is_alliance_leader_trigger = yes
+				murim_is_sect_leader_trigger = yes
+				prowess >= 25
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_wartime_commander
+			years = 10
+		}
+		# Great prestige if successful
+		random_list = {
+			60 = {
+				add_character_modifier = {
+					modifier = murim_savior_of_martial_world
+					years = -1
+				}
+				create_character_memory = {
+					type = murim_saved_martial_world
+				}
+			}
+			40 = {
+				# Heavy losses but survived
+				add_trait = wounded
+				add_character_modifier = {
+					modifier = murim_war_scarred_leader
+					years = -1
+				}
+			}
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0050 - UNORTHODOX TEMPTATION (recruiting orthodox members)
+# Heavenly Demon tempts orthodox members to defect
+# ═══════════════════════════════════════════
+murim_faction.0050 = {
+	type = character_event
+	title = murim_faction.0050.t
+	desc = murim_faction.0050.desc
+	# "A stranger approaches you in the marketplace. No — not a stranger.
+	#  You recognize the qi signature of the Heavenly Demon Sect. They
+	#  whisper an offer: power beyond what your righteous masters will
+	#  ever teach you. Techniques that the orthodox call 'forbidden' —
+	#  not because they are dangerous, but because they are TOO effective.
+	#  All you must do is walk away from everything you know."
+	theme = intrigue
+	
+	trigger = {
+		murim_is_in_orthodox_sect_trigger = yes
+		NOT = { has_character_flag = murim_temptation_rejected }
+		# More likely for ambitious, young, or frustrated members
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 3 has_trait = ambitious }
+		modifier = { factor = 2 murim_is_outer_disciple_trigger = yes }
+		modifier = { factor = 2 has_trait = impatient }
+		modifier = { factor = 0.1 has_trait = zealous }
+		modifier = { factor = 0.2 murim_is_sect_elder_trigger = yes }
+	}
+	
+	# Option A: Accept — defect to unorthodox
+	option = {
+		name = murim_faction.0050.a
+		# "Show me the power the righteous path fears."
+		trigger_event = {
+			id = murim_faction.0020
+			days = { 7 30 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Reject and report to your elders
+	option = {
+		name = murim_faction.0050.b
+		# "I would rather die righteous than live as a demon."
+		set_character_flag = {
+			flag = murim_temptation_rejected
+			years = 10
+		}
+		add_character_modifier = {
+			modifier = murim_incorruptible
+			years = 10
+		}
+		# Your clan rewards your loyalty
+		ai_chance = { base = 60 }
+	}
+	
+	# Option C: Pretend to accept — become a spy
+	option = {
+		name = murim_faction.0050.c
+		# "Yes... teach me everything. (And I will report it all back.)"
+		trigger = { intrigue >= 10 }
+		set_character_flag = {
+			flag = murim_double_agent
+			years = 10
+		}
+		trigger_event = {
+			id = murim_faction.0026
+			days = { 365 1095 }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				intrigue >= 15
+			}
+		}
+	}
+	
+	# Option D: Listen but don't commit
+	option = {
+		name = murim_faction.0050.d
+		# "Interesting. I'll... think about it."
+		# Keeps the door open — may be tempted again
+		add_stress = 10
+		ai_chance = { base = 15 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0060 - HEAVENLY DEMON PROPOSES SPLITTING ORTHODOX
+# HD leader approaches ONE orthodox clan to ally
+# ═══════════════════════════════════════════
+murim_faction.0060 = {
+	type = character_event
+	title = murim_faction.0060.t
+	desc = murim_faction.0060.desc
+	# "The Heavenly Demon Sect Leader sends a personal envoy to your clan
+	#  — not to fight, but to TALK. The message: 'Your so-called allies
+	#  in the Murim Alliance take you for granted. They give Mount Hua the
+	#  leadership, Shaolin the prestige, and you? Scraps. What if we offered
+	#  you a better deal? An alliance — just your clan and ours. Together,
+	#  we reshape the martial world.'"
+	theme = diplomacy
+	
+	trigger = {
+		murim_is_sect_leader_trigger = yes
+		murim_is_in_orthodox_sect_trigger = yes
+		NOR = {
+			murim_is_mount_hua_member_trigger = yes # HD wouldn't approach their arch-rival
+			has_character_flag = hd_alliance_rejected
+		}
+	}
+	
+	# Option A: Accept the secret alliance
+	option = {
+		name = murim_faction.0060.a
+		# "The Alliance has neglected us long enough. We accept."
+		add_character_modifier = {
+			modifier = murim_secret_dark_ally
+			years = -1
+		}
+		set_character_flag = murim_orthodox_traitor_clan
+		# Massive consequences if discovered
+		trigger_event = {
+			id = murim_faction.0061
+			days = { 365 1825 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option B: Reject and expose the plot
+	option = {
+		name = murim_faction.0060.b
+		# "The Alliance will hear of this treachery."
+		set_character_flag = {
+			flag = hd_alliance_rejected
+			years = 20
+		}
+		add_character_modifier = {
+			modifier = murim_loyal_to_alliance
+			years = 10
+		}
+		# Alert all orthodox clans
+		ai_chance = { base = 60 }
+	}
+	
+	# Option C: Reject but keep it secret (leverage)
+	option = {
+		name = murim_faction.0060.c
+		# "No. But I won't tell anyone either. You owe me for my silence."
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				has_trait = ambitious
+			}
+		}
+		set_character_flag = {
+			flag = hd_alliance_rejected
+			years = 20
+		}
+		add_character_modifier = {
+			modifier = murim_political_leverage
+			years = 10
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0061 - ORTHODOX-UNORTHODOX SECRET ALLIANCE EXPOSED
+# ═══════════════════════════════════════════
+murim_faction.0061 = {
+	type = character_event
+	title = murim_faction.0061.t
+	desc = murim_faction.0061.desc
+	# "The secret is out. Someone found the correspondence, or a spy
+	#  reported your midnight meetings with the Heavenly Demon's envoy.
+	#  The Murim Alliance is in uproar. Your clan faces expulsion from
+	#  the orthodox faction — or worse."
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_orthodox_traitor_clan
+	}
+	
+	# 50/50 chance of exposure per trigger
+	immediate = {
+		random_list = {
+			50 = { set_local_variable = { name = exposed value = yes } }
+			50 = { set_local_variable = { name = still_secret value = yes } }
+		}
+	}
+	
+	# Option A: Exposed — face the Alliance's judgment
+	option = {
+		name = murim_faction.0061.a
+		trigger = { exists = local_var:exposed }
+		remove_character_flag = murim_orthodox_traitor_clan
+		add_character_modifier = {
+			modifier = murim_alliance_pariah
+			years = -1
+		}
+		# Clan is expelled from orthodox faction
+		# Massive reputation damage
+		create_character_memory = {
+			type = murim_exposed_as_traitor
+		}
+		ai_chance = { base = 100 }
+	}
+	
+	# Option B: Still secret — continue
+	option = {
+		name = murim_faction.0061.b
+		trigger = { exists = local_var:still_secret }
+		# Will be tested again
+		trigger_event = {
+			id = murim_faction.0061
+			days = { 365 1095 }
+		}
+		ai_chance = { base = 100 }
+	}
+}
