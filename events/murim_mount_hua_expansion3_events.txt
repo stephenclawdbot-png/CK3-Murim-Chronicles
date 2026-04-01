@@ -1,0 +1,972 @@
+namespace = murim_mount_hua_expansion3
+
+# ============================================
+# MOUNT HUA SECT EXPANSION 3 — SWORD PHILOSOPHY & INNER POLITICS
+# Deep sword cultivation, Plum Blossom formations, internal power struggle,
+# legendary sword manual discovery, cross-sect rivalry events
+# 10 events with 3-4 options each
+# ============================================
+
+murim_mount_hua_expansion3.0001 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0001.t
+	desc = murim_mount_hua_expansion3.0001.desc
+	theme = martial
+	
+	# PLUM BLOSSOM FORMATION MASTERY — Group sword formation training
+	# Mount Hua's signature formation requires 5 swordsmen in sync
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		has_trait = expert_rank
+		NOT = { has_character_flag = plum_formation_trained }
+		any_courtier = {
+			count >= 4
+			has_trait = mount_hua_sect
+			prowess >= 12
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = plum_formation_trained
+			days = 3650
+		}
+		every_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				prowess >= 12
+			}
+			add_to_list = formation_members
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0001.a
+		# Train the full 5-man Plum Blossom Formation
+		custom_tooltip = murim_plum_formation_full_tt
+		every_in_list = {
+			list = formation_members
+			limit = { count <= 4 }
+			add_character_modifier = {
+				modifier = murim_plum_formation_member
+				years = 10
+			}
+			change_prowess = 3
+		}
+		add_character_modifier = {
+			modifier = murim_plum_formation_leader
+			years = 10
+		}
+		change_prowess = 5
+		add_prestige = 200
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0001.b
+		# Develop a new variation — 3-man swift formation
+		trigger = {
+			martial >= 16
+		}
+		custom_tooltip = murim_swift_formation_tt
+		add_trait = formation_innovator
+		add_character_modifier = {
+			modifier = murim_swift_plum_formation
+			years = 15
+		}
+		change_prowess = 4
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0001.c
+		# Solo sword dance — transcend the formation entirely
+		trigger = {
+			has_trait = grandmaster_rank
+		}
+		custom_tooltip = murim_solo_sword_dance_tt
+		add_character_modifier = {
+			modifier = murim_transcendent_swordsman
+			years = 20
+		}
+		change_prowess = 8
+		add_prestige = 500
+	}
+}
+
+murim_mount_hua_expansion3.0002 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0002.t
+	desc = murim_mount_hua_expansion3.0002.desc
+	theme = intrigue
+	
+	# SWORD VS QI FACTION — Internal Mount Hua power struggle deepens
+	# The Sword faction (pure sword technique) vs Qi faction (internal energy focus)
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		has_trait = clan_leader
+		NOT = { has_character_flag = mount_hua_faction_war_3 }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = mount_hua_faction_war_3
+			days = 7300
+		}
+		# Find sword faction leader
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				prowess >= 18
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 prowess >= 22 }
+			}
+			save_scope_as = sword_faction_leader
+		}
+		# Find qi faction leader
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				learning >= 16
+				NOT = { this = scope:sword_faction_leader }
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 learning >= 20 }
+			}
+			save_scope_as = qi_faction_leader
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0002.a
+		# Support the Sword Faction — pure technique is Mount Hua's identity
+		custom_tooltip = murim_support_sword_faction_tt
+		if = {
+			limit = { exists = scope:sword_faction_leader }
+			scope:sword_faction_leader = {
+				add_opinion = {
+					modifier = murim_faction_support_opinion
+					target = root
+					opinion = 40
+				}
+				add_prestige = 200
+			}
+		}
+		if = {
+			limit = { exists = scope:qi_faction_leader }
+			scope:qi_faction_leader = {
+				add_opinion = {
+					modifier = murim_faction_opposed_opinion
+					target = root
+					opinion = -30
+				}
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_sword_faction_supporter
+			years = 10
+		}
+		# All sword-focused disciples gain power
+		every_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				prowess >= 15
+			}
+			change_prowess = 2
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0002.b
+		# Support the Qi Faction — internal energy is the true foundation
+		custom_tooltip = murim_support_qi_faction_tt
+		if = {
+			limit = { exists = scope:qi_faction_leader }
+			scope:qi_faction_leader = {
+				add_opinion = {
+					modifier = murim_faction_support_opinion
+					target = root
+					opinion = 40
+				}
+				add_prestige = 200
+			}
+		}
+		if = {
+			limit = { exists = scope:sword_faction_leader }
+			scope:sword_faction_leader = {
+				add_opinion = {
+					modifier = murim_faction_opposed_opinion
+					target = root
+					opinion = -30
+				}
+				# Sword faction leader may rebel
+				random = {
+					chance = 30
+					trigger_event = {
+						id = murim_mount_hua_expansion3.0003
+						days = { 30 90 }
+					}
+				}
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_qi_faction_supporter
+			years = 10
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0002.c
+		# Unify both factions — sword and qi are one
+		trigger = {
+			diplomacy >= 18
+			martial >= 14
+		}
+		custom_tooltip = murim_unify_factions_tt
+		add_prestige = 400
+		add_character_modifier = {
+			modifier = murim_unified_mount_hua
+			years = 20
+		}
+		if = {
+			limit = { exists = scope:sword_faction_leader }
+			scope:sword_faction_leader = {
+				add_opinion = {
+					modifier = murim_faction_unified_opinion
+					target = root
+					opinion = 20
+				}
+			}
+		}
+		if = {
+			limit = { exists = scope:qi_faction_leader }
+			scope:qi_faction_leader = {
+				add_opinion = {
+					modifier = murim_faction_unified_opinion
+					target = root
+					opinion = 20
+				}
+			}
+		}
+	}
+}
+
+murim_mount_hua_expansion3.0003 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0003.t
+	desc = murim_mount_hua_expansion3.0003.desc
+	theme = war
+	
+	# SWORD FACTION REBELLION — The sword purists refuse to yield
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		exists = scope:sword_faction_leader
+	}
+	
+	immediate = {
+		# Sword faction leader gathers followers
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0003.a
+		# Duel the rebel leader to restore order
+		duel = {
+			skill = prowess
+			target = scope:sword_faction_leader
+			55 = {
+				desc = murim_rebellion_crushed
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				scope:sword_faction_leader = {
+					add_trait = disgraced
+					add_character_modifier = {
+						modifier = murim_rebellion_failed
+						years = 5
+					}
+				}
+				add_prestige = 300
+			}
+			45 = {
+				desc = murim_rebellion_succeeds
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2
+				}
+				# Sword faction takes partial control
+				add_character_modifier = {
+					modifier = murim_authority_challenged
+					years = 5
+				}
+				scope:sword_faction_leader = {
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = murim_sword_faction_champion
+						years = 10
+					}
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0003.b
+		# Exile the rebel faction
+		custom_tooltip = murim_exile_sword_faction_tt
+		scope:sword_faction_leader = {
+			add_trait = exiled_martial_artist
+			add_opinion = {
+				modifier = murim_exiled_hatred_opinion
+				target = root
+				opinion = -80
+			}
+		}
+		# Lose some disciples
+		random_courtier = {
+			limit = { has_trait = mount_hua_sect }
+			random = {
+				chance = 40
+				leave_court_of = root
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_sect_purge
+			years = 5
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0003.c
+		# Compromise — give them autonomy within the sect
+		trigger = {
+			diplomacy >= 16
+		}
+		custom_tooltip = murim_faction_autonomy_tt
+		scope:sword_faction_leader = {
+			add_opinion = {
+				modifier = murim_grudging_respect_opinion
+				target = root
+				opinion = 10
+			}
+			add_character_modifier = {
+				modifier = murim_autonomous_faction_leader
+				years = 10
+			}
+		}
+		add_stress = 20
+	}
+}
+
+murim_mount_hua_expansion3.0004 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0004.t
+	desc = murim_mount_hua_expansion3.0004.desc
+	theme = learning
+	
+	# ANCIENT SWORD CAVE DISCOVERY — Hidden training ground beneath Mount Hua
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		NOT = { has_character_flag = sword_cave_found }
+		OR = {
+			learning >= 14
+			has_trait = curious
+		}
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = sword_cave_found
+			days = 36500
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0004.a
+		# Enter the cave alone — test of courage
+		custom_tooltip = murim_sword_cave_solo_tt
+		random = {
+			chance = 60
+			# Discover ancient sword techniques carved in walls
+			add_trait = ancient_sword_inheritor
+			add_character_modifier = {
+				modifier = murim_cave_sword_enlightenment
+				years = 20
+			}
+			change_prowess = 8
+			add_prestige = 600
+		}
+		random = {
+			chance = 40
+			# Cave traps wound you
+			add_trait = battle_scarred
+			add_character_modifier = {
+				modifier = murim_cave_trap_wounds
+				years = 3
+			}
+			change_prowess = -2
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0004.b
+		# Send disciples to explore first
+		custom_tooltip = murim_sword_cave_disciples_tt
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				prowess >= 10
+			}
+			random = {
+				chance = 70
+				add_character_modifier = {
+					modifier = murim_cave_explorer_reward
+					years = 10
+				}
+				change_prowess = 4
+			}
+			random = {
+				chance = 30
+				add_trait = battle_scarred
+			}
+		}
+		add_prestige = 100
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0004.c
+		# Seal the cave — some secrets should stay buried
+		custom_tooltip = murim_seal_sword_cave_tt
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_prudent_sect_leader
+			years = 10
+		}
+	}
+}
+
+murim_mount_hua_expansion3.0005 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0005.t
+	desc = murim_mount_hua_expansion3.0005.desc
+	theme = martial
+	
+	# WUDANG-MOUNT HUA SWORD EXCHANGE — Cross-sect technique sharing
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		has_trait = clan_leader
+		any_living_character = {
+			has_trait = wudang_sect
+			has_trait = clan_leader
+			opinion = { target = root value >= 20 }
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = wudang_sect
+				has_trait = clan_leader
+			}
+			save_scope_as = wudang_leader
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0005.a
+		# Full technique exchange — share everything
+		custom_tooltip = murim_full_technique_exchange_tt
+		add_character_modifier = {
+			modifier = murim_wudang_sword_insight
+			years = 10
+		}
+		change_prowess = 3
+		change_martial = 2
+		scope:wudang_leader = {
+			add_character_modifier = {
+				modifier = murim_mount_hua_sword_insight
+				years = 10
+			}
+			change_prowess = 3
+			add_opinion = {
+				modifier = murim_technique_exchange_opinion
+				target = root
+				opinion = 30
+			}
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0005.b
+		# Partial exchange — hold back secret techniques
+		custom_tooltip = murim_partial_exchange_tt
+		add_character_modifier = {
+			modifier = murim_limited_wudang_insight
+			years = 5
+		}
+		change_prowess = 1
+		scope:wudang_leader = {
+			add_opinion = {
+				modifier = murim_cautious_exchange_opinion
+				target = root
+				opinion = 10
+			}
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0005.c
+		# Spy on their techniques while pretending to share
+		trigger = {
+			intrigue >= 14
+		}
+		custom_tooltip = murim_spy_technique_exchange_tt
+		add_character_modifier = {
+			modifier = murim_stolen_wudang_secrets
+			years = 15
+		}
+		change_prowess = 5
+		change_intrigue = 2
+		# Risk of discovery
+		random = {
+			chance = 35
+			scope:wudang_leader = {
+				add_opinion = {
+					modifier = murim_betrayed_exchange_opinion
+					target = root
+					opinion = -60
+				}
+			}
+		}
+	}
+}
+
+murim_mount_hua_expansion3.0006 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0006.t
+	desc = murim_mount_hua_expansion3.0006.desc
+	theme = faith
+	
+	# PLUM BLOSSOM MEDITATION — Enlightenment through nature
+	# Mount Hua's unique cultivation method through plum blossom observation
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		learning >= 12
+		NOT = { has_character_flag = plum_meditation_done }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = plum_meditation_done
+			days = 7300
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0006.a
+		# Meditate for 49 days among the plum blossoms
+		custom_tooltip = murim_49_day_meditation_tt
+		add_character_modifier = {
+			modifier = murim_plum_blossom_enlightenment
+			years = 15
+		}
+		change_learning = 4
+		change_prowess = 3
+		add_piety = 300
+		# Chance of breakthrough
+		random = {
+			chance = 25
+			add_trait = murim_enlightened
+			add_prestige = 500
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0006.b
+		# Quick meditation — 7 days only
+		custom_tooltip = murim_7_day_meditation_tt
+		add_character_modifier = {
+			modifier = murim_brief_plum_insight
+			years = 5
+		}
+		change_learning = 2
+		change_prowess = 1
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0006.c
+		# Invite other sect members to group meditation
+		custom_tooltip = murim_group_plum_meditation_tt
+		every_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+			}
+			add_character_modifier = {
+				modifier = murim_group_meditation_bonus
+				years = 5
+			}
+			change_learning = 1
+		}
+		add_prestige = 200
+	}
+}
+
+murim_mount_hua_expansion3.0007 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0007.t
+	desc = murim_mount_hua_expansion3.0007.desc
+	theme = war
+	
+	# DEMONIC CULT ATTACK ON MOUNT HUA — Unorthodox invasion
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		has_trait = clan_leader
+		any_living_character = {
+			has_trait = unorthodox_faction
+			has_trait = clan_leader
+			opinion = { target = root value <= -20 }
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = unorthodox_faction
+				has_trait = clan_leader
+				opinion = { target = root value <= -20 }
+			}
+			save_scope_as = attacking_demon_leader
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0007.a
+		# Defend the mountain with Plum Blossom Formation
+		custom_tooltip = murim_defend_mount_hua_tt
+		duel = {
+			skill = martial
+			target = scope:attacking_demon_leader
+			55 = {
+				desc = murim_mount_hua_defense_victory
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_mountain_defender
+					years = 10
+				}
+				scope:attacking_demon_leader = {
+					add_character_modifier = {
+						modifier = murim_repelled_attacker
+						years = 5
+					}
+				}
+			}
+			45 = {
+				desc = murim_mount_hua_defense_fail
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2
+				}
+				# Mountain partially falls
+				every_courtier = {
+					limit = { has_trait = mount_hua_sect }
+					random = {
+						chance = 30
+						death = {
+							death_reason = death_battle
+							killer = scope:attacking_demon_leader
+						}
+					}
+				}
+				add_character_modifier = {
+					modifier = murim_mountain_breached
+					years = 10
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0007.b
+		# Call for orthodox alliance support
+		custom_tooltip = murim_call_orthodox_support_tt
+		every_living_character = {
+			limit = {
+				has_trait = orthodox_faction
+				has_trait = clan_leader
+				NOT = { this = root }
+			}
+			trigger_event = {
+				id = murim_mount_hua_expansion3.0008
+				days = { 5 15 }
+			}
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0007.c
+		# Negotiate — offer territory for peace
+		trigger = {
+			diplomacy >= 16
+		}
+		custom_tooltip = murim_negotiate_demon_peace_tt
+		add_prestige = -200
+		scope:attacking_demon_leader = {
+			add_opinion = {
+				modifier = murim_territory_concession_opinion
+				target = root
+				opinion = 30
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_territory_lost
+			years = 10
+		}
+	}
+}
+
+murim_mount_hua_expansion3.0008 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0008.t
+	desc = murim_mount_hua_expansion3.0008.desc
+	theme = diplomacy
+	
+	# ORTHODOX ALLIANCE RESPONSE — Will allies come to Mount Hua's aid?
+	
+	trigger = {
+		has_trait = orthodox_faction
+		has_trait = clan_leader
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0008.a
+		# Send full support — march to Mount Hua
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = just }
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = -20 has_trait = craven }
+		}
+		custom_tooltip = murim_send_full_support_tt
+		add_character_modifier = {
+			modifier = murim_orthodox_alliance_participant
+			years = 5
+		}
+		# Send elite disciples
+		random_courtier = {
+			limit = { prowess >= 15 }
+			add_character_modifier = {
+				modifier = murim_alliance_warrior
+				years = 5
+			}
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0008.b
+		# Send token support — a few disciples only
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = cynical }
+		}
+		custom_tooltip = murim_token_support_tt
+		add_prestige = -50
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0008.c
+		# Refuse — Mount Hua must handle their own problems
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = 20 has_trait = callous }
+		}
+		custom_tooltip = murim_refuse_support_tt
+		add_prestige = -100
+		every_living_character = {
+			limit = {
+				has_trait = mount_hua_sect
+			}
+			add_opinion = {
+				modifier = murim_abandoned_ally_opinion
+				target = root
+				opinion = -40
+			}
+		}
+	}
+}
+
+murim_mount_hua_expansion3.0009 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0009.t
+	desc = murim_mount_hua_expansion3.0009.desc
+	theme = martial
+	
+	# TWENTY-FOUR PLUM BLOSSOM SWORD ARTS — Ultimate technique creation
+	# Master-level event for creating Mount Hua's greatest technique
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		has_trait = grandmaster_rank
+		prowess >= 28
+		NOT = { has_character_flag = twenty_four_arts_created }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = twenty_four_arts_created
+			days = 36500
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0009.a
+		# Create the Twenty-Four Plum Blossom Sword Arts
+		custom_tooltip = murim_24_plum_sword_tt
+		add_trait = legendary_sword_creator
+		add_character_modifier = {
+			modifier = murim_twenty_four_plum_arts
+			years = 50
+		}
+		change_prowess = 10
+		add_prestige = 2000
+		# This becomes Mount Hua's defining legacy
+		set_global_variable = {
+			name = murim_twenty_four_arts_creator
+			value = root
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0009.b
+		# Develop 12 arts now, leave 12 for your successor
+		custom_tooltip = murim_12_arts_successor_tt
+		add_character_modifier = {
+			modifier = murim_twelve_plum_arts
+			years = 30
+		}
+		change_prowess = 6
+		add_prestige = 1000
+		# Set up successor quest
+		set_character_flag = {
+			flag = twelve_arts_incomplete
+			days = 36500
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0009.c
+		# Destroy the research — too powerful for mortal hands
+		trigger = {
+			has_trait = humble
+		}
+		custom_tooltip = murim_destroy_art_research_tt
+		add_piety = 500
+		add_stress = -30
+		add_character_modifier = {
+			modifier = murim_wisdom_of_restraint
+			years = 20
+		}
+	}
+}
+
+murim_mount_hua_expansion3.0010 = {
+	type = character_event
+	title = murim_mount_hua_expansion3.0010.t
+	desc = murim_mount_hua_expansion3.0010.desc
+	theme = death
+	
+	# FALLEN PLUM BLOSSOM — Mount Hua elder's final sword lesson
+	# Death event for legendary Mount Hua masters
+	
+	trigger = {
+		has_trait = mount_hua_sect
+		has_trait = grandmaster_rank
+		age >= 70
+		health <= 2
+	}
+	
+	immediate = {
+		# Find successor
+		random_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				has_trait = master_rank
+			}
+			weight = {
+				base = 10
+				modifier = { add = 20 prowess >= 20 }
+				modifier = { add = 10 has_trait = diligent }
+			}
+			save_scope_as = mount_hua_successor
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0010.a
+		# Final sword lesson — pass everything to successor
+		custom_tooltip = murim_final_sword_lesson_tt
+		if = {
+			limit = { exists = scope:mount_hua_successor }
+			scope:mount_hua_successor = {
+				add_trait = grandmaster_rank
+				remove_trait = master_rank
+				change_prowess = 8
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_inherited_masters_will
+					years = 20
+				}
+			}
+		}
+		death = {
+			death_reason = death_old_age
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0010.b
+		# Scatter sword techniques to multiple disciples
+		custom_tooltip = murim_scatter_techniques_tt
+		every_courtier = {
+			limit = {
+				has_trait = mount_hua_sect
+				prowess >= 12
+			}
+			change_prowess = 3
+			add_character_modifier = {
+				modifier = murim_fragment_of_masters_art
+				years = 15
+			}
+		}
+		death = {
+			death_reason = death_old_age
+		}
+	}
+	
+	option = {
+		name = murim_mount_hua_expansion3.0010.c
+		# Take your secrets to the grave
+		custom_tooltip = murim_secrets_to_grave_tt
+		add_prestige = 200
+		# Arts are lost forever unless someone finds the cave
+		set_global_variable = {
+			name = murim_mount_hua_lost_arts
+			value = yes
+		}
+		death = {
+			death_reason = death_old_age
+		}
+	}
+}
