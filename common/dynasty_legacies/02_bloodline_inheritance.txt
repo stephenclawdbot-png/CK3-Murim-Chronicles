@@ -1,6 +1,11 @@
 # Bloodline Inheritance - Martial Prowess Carries On
-# Difficult first-time progression, but bloodlines inherit traits
+# Dynasty bloodlines that pass cultivation potential to descendants
+# Each bloodline has 3 stages: Child awakening, Young Adult manifestation, Adult mastery
+# All effects use exists = yes checks for interrupt safety
 
+# ==========================================
+# BLOODLINE 1: FIRST SWORDSMAN LEGACY
+# ==========================================
 bloodline_legacy = {
 	name = "Blood of the First Swordsman"
 	desc = "The [dynasty] carries the legacy of the first martial cultivator."
@@ -10,7 +15,7 @@ bloodline_legacy = {
 	
 	bloodline_sword_seed = {
 		name = "Inheriting the Sword Seed"
-		desc = "The bloodline's martial potential awakens."
+		desc = "The bloodline's martial potential awakens early. The child grasps wooden swords with uncanny precision."
 		
 		inherit_chance = {
 			base = 15
@@ -22,10 +27,19 @@ bloodline_legacy = {
 				add = 30
 				has_trait = sword_aptitude_4
 			}
+			modifier = {
+				add = 10
+				any_parent = {
+					has_trait = sword_aptitude_3
+				}
+			}
 		}
 		
 		effect = {
-			add_trait = sword_aptitude_1
+			if = {
+				limit = { NOT = { has_trait = sword_aptitude_1 } }
+				add_trait = sword_aptitude_1
+			}
 			add_prestige = 50
 		}
 	}
@@ -34,7 +48,7 @@ bloodline_legacy = {
 	
 	bloodline_sword_awakening = {
 		name = "Bloodline Awakening"
-		desc = "The ancestral sword dao resonates within."
+		desc = "The ancestral sword dao resonates within. Each swing carries the weight of generations."
 		
 		inherit_chance = {
 			base = 10
@@ -47,11 +61,23 @@ bloodline_legacy = {
 				add = 15
 				dynasty_prestige >= 500
 			}
+			modifier = {
+				add = 10
+				any_parent = {
+					has_trait = sword_aptitude_4
+				}
+			}
 		}
 		
 		effect = {
-			remove_trait = sword_aptitude_1
-			add_trait = sword_aptitude_2
+			if = {
+				limit = { has_trait = sword_aptitude_1 }
+				remove_trait = sword_aptitude_1
+			}
+			if = {
+				limit = { NOT = { has_trait = sword_aptitude_2 } }
+				add_trait = sword_aptitude_2
+			}
 			add_martial = 2
 			add_prowess = 3
 		}
@@ -61,7 +87,7 @@ bloodline_legacy = {
 	
 	bloodline_inheritor = {
 		name = "True Bloodline Inheritor"
-		desc = "The full potential manifests."
+		desc = "The full potential of the First Swordsman manifests. Sword intent radiates from every movement."
 		
 		inherit_chance = {
 			base = 5
@@ -77,10 +103,38 @@ bloodline_legacy = {
 				add = 10
 				dynasty_prestige >= 1000
 			}
+			modifier = {
+				add = 15
+				any_parent = {
+					OR = {
+						has_trait = sword_aptitude_4
+						has_trait = sword_aptitude_5
+					}
+				}
+			}
 		}
 		
 		effect = {
-			add_trait = sword_aptitude_3
+			if = {
+				limit = {
+					OR = {
+						has_trait = sword_aptitude_1
+						has_trait = sword_aptitude_2
+					}
+				}
+				if = {
+					limit = { has_trait = sword_aptitude_1 }
+					remove_trait = sword_aptitude_1
+				}
+				if = {
+					limit = { has_trait = sword_aptitude_2 }
+					remove_trait = sword_aptitude_2
+				}
+			}
+			if = {
+				limit = { NOT = { has_trait = sword_aptitude_3 } }
+				add_trait = sword_aptitude_3
+			}
 			add_martial = 5
 			add_prowess = 5
 			add_dynasty_prestige = 200
@@ -88,29 +142,41 @@ bloodline_legacy = {
 	}
 }
 
+# ==========================================
+# BLOODLINE 2: DEMON BLOOD DESCENT
+# ==========================================
 bloodline_legacy = {
 	name = "Demon Blood Descent"
-	desc = "The [dynasty] bears demonic ancestry. Dark power flows through veins."
+	desc = "The [dynasty] bears demonic ancestry. Dark power flows through their veins, granting terrible strength at a cost."
 	family = martial
 	
 	stage_age = child
 	
 	bloodline_demonic_seed = {
 		name = "Demonic Seed Awakens"
-		desc = "The inherited taint manifests."
+		desc = "The inherited taint manifests. The child's eyes flash red in moments of anger."
 		
 		inherit_chance = {
 			base = 20
 			modifier = {
 				add = 25
-				has_trait = demonic_aptitude_2
+				any_parent = {
+					has_trait = demonic_aptitude_2
+				}
+			}
+			modifier = {
+				add = 15
+				any_parent = {
+					has_trait = demonic_aptitude_3
+				}
 			}
 		}
 		
-		requires_trait = demonic_aptitude_1
-		
 		effect = {
-			add_trait = demonic_aptitude_1
+			if = {
+				limit = { NOT = { has_trait = demonic_aptitude_1 } }
+				add_trait = demonic_aptitude_1
+			}
 			add_piety = -50
 			add_stress = 10
 		}
@@ -120,54 +186,118 @@ bloodline_legacy = {
 	
 	bloodline_demonic_heritage = {
 		name = "Demonic Heritage"
-		desc = "The ancestral darkness strengthens."
+		desc = "The ancestral darkness strengthens. Demonic qi courses through the meridians."
 		
 		inherit_chance = {
 			base = 15
 			modifier = {
 				add = 20
-				has_trait = demonic_aptitude_3
+				any_parent = {
+					has_trait = demonic_aptitude_3
+				}
+			}
+			modifier = {
+				add = 10
+				stress >= 30
+			}
+			modifier = {
+				add = 10
+				has_trait = vengeful
 			}
 		}
 		
-		requires_trait = demonic_aptitude_1
-		or = {
-			and = { age >= 16 stress >= 30 }
-			and = { age >= 16 has_trait = vengeful }
+		effect = {
+			if = {
+				limit = { has_trait = demonic_aptitude_1 }
+				remove_trait = demonic_aptitude_1
+			}
+			if = {
+				limit = { NOT = { has_trait = demonic_aptitude_2 } }
+				add_trait = demonic_aptitude_2
+			}
+			add_martial = 3
+			add_intrigue = 3
+			add_stress = 20
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_demonic_lord = {
+		name = "Demonic Lord Awakening"
+		desc = "The full demonic heritage manifests. The bearer walks between human and demon."
+		
+		inherit_chance = {
+			base = 8
+			modifier = {
+				add = 25
+				any_parent = {
+					has_trait = demonic_aptitude_3
+				}
+			}
+			modifier = {
+				add = 15
+				prowess >= 20
+			}
+			modifier = {
+				add = 10
+				has_trait = sadistic
+			}
 		}
 		
 		effect = {
-			remove_trait = demonic_aptitude_1
-			add_trait = demonic_aptitude_2
-			add_martial = 3
-			add_intrigue = 3
+			if = {
+				limit = { has_trait = demonic_aptitude_2 }
+				remove_trait = demonic_aptitude_2
+			}
+			if = {
+				limit = { NOT = { has_trait = demonic_aptitude_3 } }
+				add_trait = demonic_aptitude_3
+			}
+			add_martial = 5
+			add_intrigue = 5
+			add_prowess = 8
+			add_dread = 30
+			add_dynasty_prestige = 150
 		}
 	}
 }
 
+# ==========================================
+# BLOODLINE 3: BODY CULTIVATOR BLOODLINE
+# ==========================================
 bloodline_legacy = {
 	name = "Body Cultivator Bloodline"
-	desc = "The [dynasty]'s flesh carries ancestral tempering."
+	desc = "The [dynasty]'s flesh carries ancestral tempering. Their bones are denser, their muscles harder than iron."
 	family = martial
 	
 	stage_age = child
 	
 	bloodline_iron_blood = {
 		name = "Iron-Blooded Inheritance"
-		desc = "The body naturally resists harm."
+		desc = "The body naturally resists harm. Even as a child, bruises heal quickly."
 		
 		inherit_chance = {
 			base = 18
 			modifier = {
 				add = 22
-				has_trait = body_cultivator_3
+				any_parent = {
+					has_trait = body_cultivator_3
+				}
+			}
+			modifier = {
+				add = 10
+				any_parent = {
+					has_trait = body_cultivator_4
+				}
 			}
 		}
 		
-		requires_trait = body_cultivator_1
-		
 		effect = {
-			add_trait = body_cultivator_1
+			if = {
+				limit = { NOT = { has_trait = body_cultivator_1 } }
+				add_trait = body_cultivator_1
+			}
 			add_health = 0.5
 		}
 	}
@@ -176,119 +306,1035 @@ bloodline_legacy = {
 	
 	bloodline_ancestral_body = {
 		name = "Ancestral Body Awakening"
-		desc = "The bloodline's physical potential manifests."
+		desc = "The bloodline's physical potential manifests fully. Skin turns bronze, bones ring like metal."
 		
 		inherit_chance = {
 			base = 12
 			modifier = {
 				add = 18
-				has_trait = body_cultivator_4
+				any_parent = {
+					has_trait = body_cultivator_4
+				}
 			}
 			modifier = {
 				add = 10
 				prowess >= 10
 			}
+			modifier = {
+				add = 8
+				has_trait = brave
+			}
 		}
 		
 		effect = {
-			add_trait = body_cultivator_2
+			if = {
+				limit = { has_trait = body_cultivator_1 }
+				remove_trait = body_cultivator_1
+			}
+			if = {
+				limit = { NOT = { has_trait = body_cultivator_2 } }
+				add_trait = body_cultivator_2
+			}
 			add_prowess = 3
 			add_health = 1
 		}
 	}
+	
+	stage_age = adult
+	
+	bloodline_diamond_body = {
+		name = "Diamond Body Inheritance"
+		desc = "The ultimate body cultivation awakens. Flesh becomes as strong as divine metal."
+		
+		inherit_chance = {
+			base = 6
+			modifier = {
+				add = 25
+				any_parent = {
+					has_trait = body_cultivator_4
+				}
+			}
+			modifier = {
+				add = 15
+				prowess >= 20
+			}
+		}
+		
+		effect = {
+			if = {
+				limit = { has_trait = body_cultivator_2 }
+				remove_trait = body_cultivator_2
+			}
+			if = {
+				limit = { NOT = { has_trait = body_cultivator_3 } }
+				add_trait = body_cultivator_3
+			}
+			add_prowess = 8
+			add_health = 2
+			add_martial = 3
+			add_dynasty_prestige = 200
+		}
+	}
 }
 
-# Alchemy Bloodline
+# ==========================================
+# BLOODLINE 4: LINE OF THE ALCHEMIC SAGE
+# ==========================================
 bloodline_legacy = {
 	name = "Line of the Alchemic Sage"
-	desc = "The [dynasty] remembers the secrets of the elixir."
+	desc = "The [dynasty] remembers the secrets of the elixir. Pill refinement comes naturally."
 	family = scholarly
 	
 	stage_age = child
 	
 	bloodline_alchemical_sensitivity = {
 		name = "Alchemical Sensitivity"
-		desc = "Natural talent for pill refinement awakens."
+		desc = "Natural talent for pill refinement awakens. The child can identify herbs by scent alone."
 		
 		inherit_chance = {
 			base = 15
 			modifier = {
 				add = 25
-				has_trait = alchemist_3
+				any_parent = {
+					has_trait = alchemist_3
+				}
+			}
+			modifier = {
+				add = 10
+				any_parent = {
+					learning >= 15
+				}
 			}
 		}
 		
-		or = {
-			has_trait = alchemist_1
-			has_trait = curious
-		}
-		
 		effect = {
-			add_trait = alchemist_1
+			if = {
+				limit = {
+					NOT = { has_trait = alchemist_1 }
+					NOT = { has_trait = alchemist_2 }
+					NOT = { has_trait = alchemist_3 }
+				}
+				add_trait = alchemist_1
+			}
 			add_learning = 1
 		}
 	}
 	
-	stage_age = adult
+	stage_age = young_adult
 	
-	bloodline_inherited_recipes = {
-		name = "Inherited Recipes"
-		desc = "Ancient family knowledge resurfaces."
+	bloodline_pill_sense = {
+		name = "Inherited Pill Sense"
+		desc = "The alchemical bloodline deepens. Cauldron refinement becomes instinctive."
 		
 		inherit_chance = {
-			base = 10
+			base = 12
+			modifier = {
+				add = 20
+				any_parent = {
+					has_trait = alchemist_3
+				}
+			}
 			modifier = {
 				add = 15
 				learning >= 12
 			}
 		}
 		
-		requires_trait = alchemist_1
+		effect = {
+			if = {
+				limit = { has_trait = alchemist_1 }
+				remove_trait = alchemist_1
+			}
+			if = {
+				limit = { NOT = { has_trait = alchemist_2 } }
+				add_trait = alchemist_2
+			}
+			add_learning = 3
+			add_stewardship = 2
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_sage_mastery = {
+		name = "Sage Alchemy Mastery"
+		desc = "The full alchemical inheritance awakens. Even failed pills produce miraculous results."
+		
+		inherit_chance = {
+			base = 5
+			modifier = {
+				add = 25
+				any_parent = {
+					has_trait = alchemist_3
+				}
+			}
+			modifier = {
+				add = 15
+				learning >= 20
+			}
+			modifier = {
+				add = 10
+				dynasty_prestige >= 1500
+			}
+		}
 		
 		effect = {
-			add_gold = 100
-			add_trait = alchemist_2
+			if = {
+				limit = { has_trait = alchemist_2 }
+				remove_trait = alchemist_2
+			}
+			if = {
+				limit = { NOT = { has_trait = alchemist_3 } }
+				add_trait = alchemist_3
+			}
+			add_learning = 5
+			add_stewardship = 3
+			add_health = 1
+			add_dynasty_prestige = 250
 		}
 	}
 }
 
-# Bloodline Purity Mechanics
-bloodline_purity = {
-	pure_bloodline = {
-		name = "Pure Bloodline"
-		desc = "Unbroken lineage of martial cultivators."
+# ==========================================
+# BLOODLINE 5: HEAVENLY DAO BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Heavenly Dao Bloodline"
+	desc = "The [dynasty] descends from one who touched the Heavenly Dao. Cultivation speed and breakthrough chances are enhanced."
+	family = scholarly
+	
+	stage_age = child
+	
+	bloodline_dao_whisper = {
+		name = "Whispers of the Dao"
+		desc = "The child hears the Heavenly Dao in dreams. Comprehension comes easily."
 		
-		modifier = {
-			inherit_chance_for_martial_traits = 0.3
-			martial_skill_inheritance = 0.2
-			prowess_inheritance = 0.2
+		inherit_chance = {
+			base = 12
+			modifier = {
+				add = 20
+				any_parent = {
+					OR = {
+						has_trait = nascent_soul
+						has_trait = great_vehicle
+					}
+				}
+			}
+			modifier = {
+				add = 15
+				any_parent = {
+					learning >= 20
+				}
+			}
 		}
 		
-		trigger = {
-			dynasty_prestige >= 1000
-			every_dynasty_member = {
-				OR = {
-					has_trait = qi_refinement
-					has_trait = foundation
-					has_trait = core_formation
+		effect = {
+			add_learning = 2
+			add_piety = 50
+			if = {
+				limit = {
+					NOT = { has_character_flag = dao_bloodline_awakened }
 				}
+				set_character_flag = dao_bloodline_awakened
 			}
 		}
 	}
 	
-	bloodline_diluted = {
-		name = "Diluted Bloodline"
-		desc = "Mixed with mortal blood. Potential decreased."
+	stage_age = young_adult
+	
+	bloodline_dao_resonance = {
+		name = "Dao Resonance"
+		desc = "The Heavenly Dao flows naturally through the meridians. Breakthroughs require less effort."
 		
-		modifier = {
-			inherit_chance_for_martial_traits = -0.2
-			time_to_cultivate = 0.5
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				has_character_flag = dao_bloodline_awakened
+			}
+			modifier = {
+				add = 15
+				any_parent = {
+					has_trait = great_vehicle
+				}
+			}
 		}
 		
-		trigger = {
-			OR = {
-				has_trait = lowborn
-				has_marriage_with = { NOT = { has_trait = qi_refinement } }
+		effect = {
+			add_learning = 3
+			add_martial = 2
+			add_piety = 100
+			if = {
+				limit = {
+					NOT = { has_trait = qi_refinement }
+					NOT = { has_trait = foundation }
+					NOT = { has_trait = core_formation }
+					NOT = { has_trait = nascent_soul }
+				}
+				add_trait = qi_refinement
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_dao_embodiment = {
+		name = "Dao Embodiment"
+		desc = "The bearer becomes a living conduit for Heavenly Dao. Their very presence accelerates others' cultivation."
+		
+		inherit_chance = {
+			base = 5
+			modifier = {
+				add = 30
+				any_parent = {
+					has_trait = great_vehicle
+				}
+			}
+			modifier = {
+				add = 15
+				learning >= 25
+			}
+			modifier = {
+				add = 10
+				dynasty_prestige >= 2000
+			}
+		}
+		
+		effect = {
+			add_learning = 5
+			add_martial = 3
+			add_piety = 300
+			add_dynasty_prestige = 500
+			if = {
+				limit = { has_trait = qi_refinement }
+				remove_trait = qi_refinement
+				add_trait = foundation
+			}
+			if = {
+				limit = { has_trait = foundation }
+				remove_trait = foundation
+				add_trait = core_formation
+			}
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 6: PHOENIX REBIRTH BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Phoenix Rebirth Bloodline"
+	desc = "The [dynasty] carries the essence of the Vermillion Bird. Fire qi and regeneration flow through their blood."
+	family = martial
+	
+	stage_age = child
+	
+	bloodline_phoenix_spark = {
+		name = "Phoenix Spark"
+		desc = "The child runs a slight fever but never falls ill. Warmth radiates from within."
+		
+		inherit_chance = {
+			base = 14
+			modifier = {
+				add = 20
+				any_parent = {
+					has_character_flag = phoenix_blood_awakened
+				}
+			}
+			modifier = {
+				add = 15
+				any_parent = {
+					health >= 7
+				}
+			}
+		}
+		
+		effect = {
+			add_health = 1
+			add_prowess = 1
+			if = {
+				limit = { NOT = { has_character_flag = phoenix_blood_active } }
+				set_character_flag = phoenix_blood_active
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_phoenix_flame = {
+		name = "Phoenix Flame Awakening"
+		desc = "Fire qi surges through the meridians. Wounds close with unnatural speed. Hair takes on a faint crimson sheen."
+		
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 22
+				has_character_flag = phoenix_blood_active
+			}
+			modifier = {
+				add = 12
+				prowess >= 12
+			}
+		}
+		
+		effect = {
+			add_health = 2
+			add_prowess = 4
+			add_martial = 2
+			if = {
+				limit = { NOT = { has_character_flag = phoenix_blood_awakened } }
+				set_character_flag = phoenix_blood_awakened
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_phoenix_rebirth = {
+		name = "True Phoenix Rebirth"
+		desc = "The full phoenix bloodline manifests. The bearer can survive mortal wounds through phoenix fire regeneration."
+		
+		inherit_chance = {
+			base = 4
+			modifier = {
+				add = 30
+				has_character_flag = phoenix_blood_awakened
+			}
+			modifier = {
+				add = 15
+				prowess >= 20
+			}
+		}
+		
+		effect = {
+			add_health = 3
+			add_prowess = 8
+			add_martial = 5
+			add_dynasty_prestige = 400
+			if = {
+				limit = { has_trait = wounded }
+				remove_trait = wounded
+			}
+			if = {
+				limit = { has_trait = severely_injured }
+				remove_trait = severely_injured
+				add_trait = wounded
+			}
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 7: DRAGON VEIN BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Dragon Vein Bloodline"
+	desc = "The [dynasty] descended from the Dragon Emperor. Imperial qi and immense pressure radiate from their very being."
+	family = martial
+	
+	stage_age = child
+	
+	bloodline_dragon_pulse = {
+		name = "Dragon Pulse Stirring"
+		desc = "The child's cry carries strange authority. Animals instinctively submit."
+		
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				any_parent = {
+					has_character_flag = dragon_vein_awakened
+				}
+			}
+			modifier = {
+				add = 15
+				any_parent = {
+					prestige_level >= 4
+				}
+			}
+		}
+		
+		effect = {
+			add_diplomacy = 2
+			add_martial = 1
+			add_dread = 5
+			if = {
+				limit = { NOT = { has_character_flag = dragon_vein_stirring } }
+				set_character_flag = dragon_vein_stirring
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_dragon_pressure = {
+		name = "Dragon Pressure Manifestation"
+		desc = "Imperial pressure radiates outward. Lesser cultivators instinctively kneel."
+		
+		inherit_chance = {
+			base = 8
+			modifier = {
+				add = 25
+				has_character_flag = dragon_vein_stirring
+			}
+			modifier = {
+				add = 15
+				diplomacy >= 15
+			}
+			modifier = {
+				add = 10
+				prestige_level >= 3
+			}
+		}
+		
+		effect = {
+			add_diplomacy = 3
+			add_martial = 3
+			add_prowess = 5
+			add_dread = 15
+			if = {
+				limit = { NOT = { has_character_flag = dragon_vein_awakened } }
+				set_character_flag = dragon_vein_awakened
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_dragon_emperor = {
+		name = "Dragon Emperor Ascension"
+		desc = "The full Dragon Vein awakens. The bearer commands the respect of heaven and earth. Armies fight harder under their banner."
+		
+		inherit_chance = {
+			base = 3
+			modifier = {
+				add = 30
+				has_character_flag = dragon_vein_awakened
+			}
+			modifier = {
+				add = 15
+				prestige_level >= 5
+			}
+			modifier = {
+				add = 10
+				dynasty_prestige >= 3000
+			}
+		}
+		
+		effect = {
+			add_diplomacy = 5
+			add_martial = 5
+			add_prowess = 10
+			add_dread = 30
+			add_prestige = 1000
+			add_dynasty_prestige = 500
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 8: SHADOW ASSASSIN BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Shadow Assassin Bloodline"
+	desc = "The [dynasty] descends from the Phantom Blade. Stealth, poison resistance, and assassination arts are inherited."
+	family = intrigue
+	
+	stage_age = child
+	
+	bloodline_shadow_sense = {
+		name = "Shadow Sense"
+		desc = "The child naturally moves silently and avoids detection. Shadows seem to bend toward them."
+		
+		inherit_chance = {
+			base = 16
+			modifier = {
+				add = 20
+				any_parent = {
+					intrigue >= 15
+				}
+			}
+			modifier = {
+				add = 15
+				any_parent = {
+					has_character_flag = shadow_blood_awakened
+				}
+			}
+		}
+		
+		effect = {
+			add_intrigue = 2
+			add_prowess = 1
+			if = {
+				limit = { NOT = { has_character_flag = shadow_blood_active } }
+				set_character_flag = shadow_blood_active
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_phantom_step = {
+		name = "Phantom Step Awakening"
+		desc = "The shadow bloodline deepens. Movement becomes near-invisible, and poisons lose their sting."
+		
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 22
+				has_character_flag = shadow_blood_active
+			}
+			modifier = {
+				add = 15
+				intrigue >= 12
+			}
+		}
+		
+		effect = {
+			add_intrigue = 4
+			add_prowess = 3
+			add_martial = 1
+			if = {
+				limit = { NOT = { has_character_flag = shadow_blood_awakened } }
+				set_character_flag = shadow_blood_awakened
+			}
+			if = {
+				limit = { has_trait = poisoned }
+				remove_trait = poisoned
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_phantom_blade_master = {
+		name = "Phantom Blade Mastery"
+		desc = "The full Shadow Assassin bloodline manifests. Assassination becomes an art form. The bearer moves between shadows."
+		
+		inherit_chance = {
+			base = 5
+			modifier = {
+				add = 28
+				has_character_flag = shadow_blood_awakened
+			}
+			modifier = {
+				add = 15
+				intrigue >= 20
+			}
+		}
+		
+		effect = {
+			add_intrigue = 6
+			add_prowess = 8
+			add_martial = 3
+			add_dynasty_prestige = 300
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 9: SPIRIT BEAST BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Spirit Beast Bloodline"
+	desc = "The [dynasty] carries the blood of ancient spirit beasts. Enhanced senses, beastly strength, and communion with nature."
+	family = martial
+	
+	stage_age = child
+	
+	bloodline_beast_instinct = {
+		name = "Beast Instinct"
+		desc = "The child possesses unnaturally sharp senses. They can smell danger and hear whispers across rooms."
+		
+		inherit_chance = {
+			base = 18
+			modifier = {
+				add = 18
+				any_parent = {
+					has_character_flag = spirit_beast_awakened
+				}
+			}
+			modifier = {
+				add = 12
+				any_parent = {
+					prowess >= 15
+				}
+			}
+		}
+		
+		effect = {
+			add_prowess = 2
+			add_martial = 1
+			if = {
+				limit = { NOT = { has_character_flag = spirit_beast_stirring } }
+				set_character_flag = spirit_beast_stirring
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_beast_transformation = {
+		name = "Partial Beast Transformation"
+		desc = "The spirit beast blood surges. In combat, the body partially transforms -- claws extend, eyes become slitted, strength multiplies."
+		
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 22
+				has_character_flag = spirit_beast_stirring
+			}
+			modifier = {
+				add = 12
+				prowess >= 12
+			}
+			modifier = {
+				add = 8
+				has_trait = brave
+			}
+		}
+		
+		effect = {
+			add_prowess = 5
+			add_martial = 3
+			add_health = 1
+			if = {
+				limit = { NOT = { has_character_flag = spirit_beast_awakened } }
+				set_character_flag = spirit_beast_awakened
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_true_beast_lord = {
+		name = "True Beast Lord"
+		desc = "The complete spirit beast bloodline awakens. Full transformation is possible. Spirit beasts answer their call."
+		
+		inherit_chance = {
+			base = 4
+			modifier = {
+				add = 28
+				has_character_flag = spirit_beast_awakened
+			}
+			modifier = {
+				add = 15
+				prowess >= 22
+			}
+		}
+		
+		effect = {
+			add_prowess = 12
+			add_martial = 5
+			add_health = 2
+			add_dynasty_prestige = 350
+			add_dread = 20
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 10: THUNDER GOD BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Thunder God Bloodline"
+	desc = "The [dynasty] descends from an ancient Thunder Deity. Lightning qi courses through their veins, granting devastating combat power."
+	family = martial
+	
+	stage_age = child
+	
+	bloodline_static_charge = {
+		name = "Static Charge"
+		desc = "The child's touch sparks. Small arcs of lightning dance across their skin during storms."
+		
+		inherit_chance = {
+			base = 14
+			modifier = {
+				add = 22
+				any_parent = {
+					has_character_flag = thunder_blood_awakened
+				}
+			}
+			modifier = {
+				add = 12
+				any_parent = {
+					martial >= 18
+				}
+			}
+		}
+		
+		effect = {
+			add_martial = 1
+			add_prowess = 2
+			if = {
+				limit = { NOT = { has_character_flag = thunder_blood_active } }
+				set_character_flag = thunder_blood_active
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_lightning_reflex = {
+		name = "Lightning Reflex"
+		desc = "The thunder bloodline accelerates nerve responses. Reactions become impossibly fast. Opponents cannot track movement."
+		
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 22
+				has_character_flag = thunder_blood_active
+			}
+			modifier = {
+				add = 15
+				martial >= 14
+			}
+		}
+		
+		effect = {
+			add_martial = 4
+			add_prowess = 6
+			if = {
+				limit = { NOT = { has_character_flag = thunder_blood_awakened } }
+				set_character_flag = thunder_blood_awakened
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_thunder_god_descent = {
+		name = "Thunder God Descent"
+		desc = "The full Thunder God bloodline manifests. Lightning answers their call. Armies flee before the storm."
+		
+		inherit_chance = {
+			base = 4
+			modifier = {
+				add = 30
+				has_character_flag = thunder_blood_awakened
+			}
+			modifier = {
+				add = 15
+				martial >= 22
+			}
+		}
+		
+		effect = {
+			add_martial = 8
+			add_prowess = 12
+			add_diplomacy = 3
+			add_dread = 25
+			add_dynasty_prestige = 450
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 11: POISON SOVEREIGN BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Poison Sovereign Bloodline"
+	desc = "The [dynasty] descends from the Myriad Poison Ancestor. Their bodies are immune to toxins and can produce natural venom."
+	family = intrigue
+	
+	stage_age = child
+	
+	bloodline_toxin_resistance = {
+		name = "Natural Toxin Resistance"
+		desc = "The child is immune to common poisons. Venomous insects avoid them instinctively."
+		
+		inherit_chance = {
+			base = 18
+			modifier = {
+				add = 18
+				any_parent = {
+					has_character_flag = poison_blood_awakened
+				}
+			}
+			modifier = {
+				add = 12
+				any_parent = {
+					intrigue >= 15
+				}
+			}
+		}
+		
+		effect = {
+			add_intrigue = 1
+			add_health = 0.5
+			if = {
+				limit = { NOT = { has_character_flag = poison_blood_active } }
+				set_character_flag = poison_blood_active
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_venom_body = {
+		name = "Venom Body Awakening"
+		desc = "The poison bloodline deepens. Blood becomes toxic. Touch can paralyze the unwary."
+		
+		inherit_chance = {
+			base = 12
+			modifier = {
+				add = 20
+				has_character_flag = poison_blood_active
+			}
+			modifier = {
+				add = 15
+				intrigue >= 14
+			}
+		}
+		
+		effect = {
+			add_intrigue = 4
+			add_prowess = 3
+			add_health = 1
+			if = {
+				limit = { NOT = { has_character_flag = poison_blood_awakened } }
+				set_character_flag = poison_blood_awakened
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_myriad_poison_body = {
+		name = "Myriad Poison Body"
+		desc = "The complete Poison Sovereign bloodline manifests. The bearer's body is a living weapon. All poisons become nourishment."
+		
+		inherit_chance = {
+			base = 5
+			modifier = {
+				add = 28
+				has_character_flag = poison_blood_awakened
+			}
+			modifier = {
+				add = 15
+				intrigue >= 22
+			}
+		}
+		
+		effect = {
+			add_intrigue = 6
+			add_prowess = 6
+			add_health = 2
+			add_dynasty_prestige = 300
+			if = {
+				limit = { has_trait = poisoned }
+				remove_trait = poisoned
+			}
+		}
+	}
+}
+
+# ==========================================
+# BLOODLINE 12: ICE EMPRESS BLOODLINE
+# ==========================================
+bloodline_legacy = {
+	name = "Ice Empress Bloodline"
+	desc = "The [dynasty] descends from the Frozen Palace Empress. Ice qi grants emotional control, frost arts, and chilling beauty."
+	family = diplomacy
+	
+	stage_age = child
+	
+	bloodline_frost_touch = {
+		name = "Frost Touch"
+		desc = "The child's skin is cool to the touch. Water freezes in their cup during moments of emotion."
+		
+		inherit_chance = {
+			base = 16
+			modifier = {
+				add = 20
+				any_parent = {
+					has_character_flag = ice_blood_awakened
+				}
+			}
+			modifier = {
+				add = 12
+				any_parent = {
+					diplomacy >= 15
+				}
+			}
+		}
+		
+		effect = {
+			add_diplomacy = 1
+			add_learning = 1
+			stress_impact = {
+				base = -10
+			}
+			if = {
+				limit = { NOT = { has_character_flag = ice_blood_active } }
+				set_character_flag = ice_blood_active
+			}
+		}
+	}
+	
+	stage_age = young_adult
+	
+	bloodline_frozen_heart = {
+		name = "Frozen Heart Awakening"
+		desc = "The ice bloodline deepens. Emotions become perfectly controlled. Frost qi enhances both beauty and lethality."
+		
+		inherit_chance = {
+			base = 10
+			modifier = {
+				add = 22
+				has_character_flag = ice_blood_active
+			}
+			modifier = {
+				add = 15
+				diplomacy >= 14
+			}
+		}
+		
+		effect = {
+			add_diplomacy = 4
+			add_martial = 2
+			add_prowess = 3
+			if = {
+				limit = { NOT = { has_character_flag = ice_blood_awakened } }
+				set_character_flag = ice_blood_awakened
+			}
+			if = {
+				limit = { NOT = { has_trait = calm } }
+				add_trait = calm
+			}
+		}
+	}
+	
+	stage_age = adult
+	
+	bloodline_ice_empress_manifestation = {
+		name = "Ice Empress Manifestation"
+		desc = "The full Ice Empress bloodline manifests. The bearer commands frost, radiates regal authority, and cannot be mentally shaken."
+		
+		inherit_chance = {
+			base = 4
+			modifier = {
+				add = 28
+				has_character_flag = ice_blood_awakened
+			}
+			modifier = {
+				add = 15
+				diplomacy >= 22
+			}
+			modifier = {
+				add = 10
+				dynasty_prestige >= 2000
+			}
+		}
+		
+		effect = {
+			add_diplomacy = 6
+			add_martial = 4
+			add_prowess = 6
+			add_prestige = 500
+			add_dynasty_prestige = 400
+			stress_impact = {
+				base = -30
 			}
 		}
 	}
