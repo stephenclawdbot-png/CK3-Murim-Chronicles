@@ -1,1325 +1,1345 @@
-# Murim Chronicles - Youth Sparring Tournament Events (Young Dragons Tournament)
-# SPARRING ONLY: No killing, no serious injury. Training, fun, scouting talent.
-# Age gate: 8-15 ONLY. Uses shared trigger: is_youth_eligible (from murim_triggers.txt)
-# On_action: yearly pulse (murim_on_actions.txt)
-# Rewards are TEMPORARY and MODEST: head start, not permanent dominance
-# Cross-refs: murim_mentor_events (master scouts youth), murim_training_events (training chain),
-#             murim_ranking_events (future rank tracking), murim_romance_events (childhood sweethearts),
-#             murim_duel_events (adult rematch from youth rivalry), murim_cultivation_events (prodigy cultivation)
-# Integration: uses shared triggers (is_youth_eligible), shared effects (create_fight_memory_effect)
-# Balance: young_dragon_champion = +3 prowess/+1 martial for 5 YEARS ONLY, then expires
+# Murim Chronicles - Youth Sparring Tournament Events
+# The Young Dragons Tournament: YEARLY, ages 8-15 ONLY, sparring only, NO death
+# INTEGRATION: Uses shared triggers from murim_triggers.txt:
+#   is_youth_eligible (age >= 8, age < 16, has any martial trait)
+#   is_martial_artist (has any martial trait)
+# INTEGRATION: Uses shared effects from murim_effects.txt:
+#   create_fight_memory_effect (every sparring match creates memory)
+# INTEGRATION: Calls on_yearly_pulse via murim_on_actions.txt
+# Cross-refs: murim_mentor_events.txt (murim_mentor.0001 - master scouts youth champion)
+#             murim_training_events.txt (training bonuses from tournament experience)
+#             murim_ranking_events.txt (prodigy enters ranking system at 16)
+#             murim_grand_tournament_events.txt (youth champions fast-track to adult qualifiers)
+#             murim_seeding_values.txt (power score for youth tracking)
+#
+# BALANCE: All youth rewards are TEMPORARY. They give a head start, not permanent dominance.
+# - Champion: +3 prowess, +1 martial for 5 years (expires)
+# - Finalist: +1 prowess, +1 martial for 3 years (expires)
+# - Participant: +5 opinion with masters for 1 year
+# - No stacking with adult tournament traits
+# AGE GATE: Characters turn 16 -> youth modifiers continue their duration but character
+#           becomes eligible for adult tournaments (murim_triggers.txt: is_eligible_for_tournament)
 
 namespace = murim_youth
 
-# ============================================================================
-# EVENT 0001: THE YOUNG DRAGONS TOURNAMENT ANNOUNCED
-# Yearly pulse. All martial youths aged 8-15 invited.
-# Player's children/wards eligible. AI children auto-enter.
-# Cross-refs: fires from murim_on_actions.txt yearly pulse
-# ============================================================================
+##############################
+# murim_youth.0001 - THE YOUNG DRAGONS TOURNAMENT ANNOUNCED
+# Fires yearly via on_yearly_pulse for characters with martial youth in court
+# Trigger: Any ruler/head of family with martial children aged 8-15
+##############################
+
 murim_youth.0001 = {
 	type = character_event
 	title = murim_youth.0001.t
 	desc = murim_youth.0001.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		is_ruler = yes
+		is_alive = yes
+		is_landed = yes
 		any_child = {
 			is_alive = yes
 			age >= 8
 			age < 16
-			OR = {
-				has_trait = martial_student
-				has_trait = martial_apprentice
-				has_trait = inner_disciple
-				has_trait = taekkyeon_master
-				has_trait = hwarang_warrior
-				has_trait = kenjutsu_master
-				has_trait = vajramushti_master
-				has_trait = muay_boran_master
-				any_held_artifact = {
-					has_artifact_feature = martial_weapon
-				}
-				prowess >= 5
-			}
+			has_trait = martial_artist
 		}
-		NOT = { has_character_flag = youth_tournament_this_year }
 	}
-
+	
+	# Cooldown: once per year (on_yearly_pulse fires this)
+	cooldown = { years = 1 }
+	
 	immediate = {
-		set_character_flag = {
-			flag = youth_tournament_this_year
-			days = 350
-		}
-	}
-
-	# Option A: Encourage your child to enter
-	option = {
-		name = murim_youth.0001.a
-		custom_tooltip = murim_youth_encourage_tt
-		random_child = {
+		# Find eligible children
+		every_child = {
 			limit = {
 				is_alive = yes
 				age >= 8
 				age < 16
-				OR = {
-					has_trait = martial_student
-					has_trait = martial_apprentice
-					prowess >= 5
-				}
+				has_trait = martial_artist
 			}
-			save_scope_as = tournament_child
-			add_character_modifier = {
-				modifier = youth_tournament_participant
+			save_scope_as = eligible_youth
+			add_character_flag = {
+				flag = youth_tournament_eligible_this_year
 				years = 1
 			}
 		}
+		# Pick the most talented child as focus
+		ordered_child = {
+			limit = {
+				is_alive = yes
+				age >= 8
+				age < 16
+				has_trait = martial_artist
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = best_youth
+		}
+	}
+	
+	# Option A: Encourage your child to enter
+	option = {
+		name = murim_youth.0001.a
+		# "Go forth, young dragon. Show them what our family can do."
+		scope:best_youth = {
+			add_character_flag = {
+				flag = entering_youth_tournament
+				years = 1
+			}
+		}
+		add_prestige = 25
 		trigger_event = {
-			id = murim_youth.0003
-			days = { 14 30 }
+			id = murim_youth.0002
+			days = { 7 14 }
 		}
 		ai_chance = {
 			base = 60
 			modifier = {
-				add = 20
+				factor = 1.5
 				has_trait = ambitious
 			}
 		}
 	}
-
-	# Option B: Coach them personally (+bonus to rolls)
+	
+	# Option B: Coach them personally (+prowess bonus in tournament)
 	option = {
 		name = murim_youth.0001.b
-		custom_tooltip = murim_youth_coach_tt
+		# "I will train you myself. No child of mine enters unprepared."
 		trigger = {
-			murim_is_martial_artist_trigger = yes
+			has_trait = martial_artist
+			prowess >= 12
 		}
-		random_child = {
-			limit = {
-				is_alive = yes
-				age >= 8
-				age < 16
-				OR = {
-					has_trait = martial_student
-					has_trait = martial_apprentice
-					prowess >= 5
-				}
+		scope:best_youth = {
+			add_character_flag = {
+				flag = entering_youth_tournament
+				years = 1
 			}
-			save_scope_as = tournament_child
+			add_character_flag = {
+				flag = parent_coached_for_tournament
+				years = 1
+			}
+			# Temporary training bonus
 			add_character_modifier = {
-				modifier = youth_tournament_coached
+				modifier = parent_coached_modifier
 				years = 1
 			}
 		}
-		stress_impact = {
-			base = 5
-		}
+		add_stress = 15 # Personal investment
 		trigger_event = {
-			id = murim_youth.0003
-			days = { 14 30 }
+			id = murim_youth.0002
+			days = { 7 14 }
 		}
 		ai_chance = {
 			base = 30
 			modifier = {
-				add = 30
+				factor = 2.0
 				has_trait = diligent
 			}
 		}
 	}
-
+	
 	# Option C: Hire a trainer for them
 	option = {
 		name = murim_youth.0001.c
-		custom_tooltip = murim_youth_hire_trainer_tt
-		add_gold = -50
-		random_child = {
-			limit = {
-				is_alive = yes
-				age >= 8
-				age < 16
-				OR = {
-					has_trait = martial_student
-					has_trait = martial_apprentice
-					prowess >= 5
-				}
-			}
-			save_scope_as = tournament_child
-			add_character_modifier = {
-				modifier = youth_tournament_trained
-				years = 1
-			}
-		}
-		trigger_event = {
-			id = murim_youth.0003
-			days = { 14 30 }
-		}
-		ai_chance = {
-			base = 40
-			modifier = {
-				add = 20
-				gold >= 100
-			}
-		}
-	}
-
-	# Option D: Forbid them from entering (protective parent)
-	option = {
-		name = murim_youth.0001.d
-		custom_tooltip = murim_youth_forbid_tt
-		random_child = {
-			limit = {
-				is_alive = yes
-				age >= 8
-				age < 16
-			}
-			add_opinion = {
-				target = root
-				modifier = disappointed_by_parent
-				opinion = -15
-			}
-		}
-		stress_impact = {
-			compassionate = -10
-			paranoid = -15
-		}
-		ai_chance = {
-			base = 10
-			modifier = {
-				add = 30
-				has_trait = craven
-			}
-			modifier = {
-				add = 20
-				has_trait = overprotective
-			}
-		}
-	}
-}
-
-# ============================================================================
-# EVENT 0002: PLAYER'S CHILD PREPARES FOR TOURNAMENT
-# Fires after 0001 if player chose to enter child
-# Cross-refs: murim_training_events (training montage link)
-# ============================================================================
-murim_youth.0002 = {
-	type = character_event
-	title = murim_youth.0002.t
-	desc = murim_youth.0002.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = personality_bold
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-	}
-
-	# Option A: Focus on strength training
-	option = {
-		name = murim_youth.0002.a
-		scope:tournament_child = {
-			add_prowess_skill = 1
-			set_character_flag = youth_trained_strength
-		}
-		ai_chance = { base = 30 }
-	}
-
-	# Option B: Focus on technique refinement
-	option = {
-		name = murim_youth.0002.b
-		scope:tournament_child = {
-			add_martial_skill = 1
-			set_character_flag = youth_trained_technique
-		}
-		ai_chance = { base = 40 }
-	}
-
-	# Option C: Focus on mental preparation
-	option = {
-		name = murim_youth.0002.c
-		scope:tournament_child = {
-			add_learning_skill = 1
-			set_character_flag = youth_trained_mental
-		}
-		ai_chance = { base = 30 }
-	}
-}
-
-# ============================================================================
-# EVENT 0003: YOUTH SPARRING ROUND 1
-# Light prowess check with age weighting. NO injury rolls. Win/lose only.
-# Older kids have advantage but younger prodigies can upset.
-# Uses shared trigger: is_youth_eligible
-# ============================================================================
-murim_youth.0003 = {
-	type = character_event
-	title = murim_youth.0003.t
-	desc = murim_youth.0003.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = war_attacker
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-		scope:tournament_child = {
-			is_alive = yes
-			age >= 8
-			age < 16
-		}
-	}
-
-	immediate = {
-		# Create a random opponent
-		create_character = {
-			age = { 10 15 }
-			gender_male_chance = 60
-			trait = martial_student
-			save_scope_as = youth_opponent_r1
-		}
-	}
-
-	# Option A: Fight with full effort
-	option = {
-		name = murim_youth.0003.a
-		custom_tooltip = murim_youth_round1_fight_tt
-		duel = {
-			skill = prowess
-			target = scope:youth_opponent_r1
-			# Age weighting: older kids slightly favored
-			50 = {
-				compare_modifier = {
-					value = scope:tournament_child.prowess
-					multiplier = 3
-				}
-				modifier = {
-					add = 5
-					scope:tournament_child = { age >= 13 }
-				}
-				modifier = {
-					add = 10
-					scope:tournament_child = {
-						has_character_modifier = youth_tournament_coached
-					}
-				}
-				modifier = {
-					add = 5
-					scope:tournament_child = {
-						has_character_modifier = youth_tournament_trained
-					}
-				}
-				desc = murim_youth_round1_win
-				# WIN - advance to round 2
-				scope:tournament_child = {
-					create_character_memory = {
-						type = youth_tournament_win_memory
-						participants = { opponent = scope:youth_opponent_r1 }
-					}
-				}
-				trigger_event = {
-					id = murim_youth.0004
-					days = { 3 7 }
-				}
-			}
-			50 = {
-				compare_modifier = {
-					value = scope:youth_opponent_r1.prowess
-					multiplier = 3
-				}
-				desc = murim_youth_round1_lose
-				# LOSE - eliminated, but learn from it
-				scope:tournament_child = {
-					create_character_memory = {
-						type = youth_tournament_loss_memory
-						participants = { opponent = scope:youth_opponent_r1 }
-					}
-					add_character_modifier = {
-						modifier = youth_tournament_participant
-						years = 1
-					}
-				}
-				trigger_event = {
-					id = murim_youth.0008
-					days = { 1 3 }
-				}
-			}
-		}
-		ai_chance = { base = 80 }
-	}
-
-	# Option B: Tell them to hold back and observe
-	option = {
-		name = murim_youth.0003.b
-		custom_tooltip = murim_youth_round1_observe_tt
-		scope:tournament_child = {
-			add_learning_skill = 1
-			create_character_memory = {
-				type = youth_tournament_observation_memory
-			}
-		}
-		# Still fight but with learning focus (lower win chance, gain XP either way)
-		trigger_event = {
-			id = murim_youth.0008
-			days = { 3 7 }
-		}
-		ai_chance = { base = 20 }
-	}
-}
-
-# ============================================================================
-# EVENT 0004: YOUTH SPARRING ROUND 2
-# Tougher opponent. Master-trained children get bonus.
-# Cross-refs: murim_mentor_events (if child has named master)
-# ============================================================================
-murim_youth.0004 = {
-	type = character_event
-	title = murim_youth.0004.t
-	desc = murim_youth.0004.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = war_attacker
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-		scope:tournament_child = { is_alive = yes }
-	}
-
-	immediate = {
-		create_character = {
-			age = { 12 15 }
-			gender_male_chance = 50
-			trait = martial_apprentice
-			save_scope_as = youth_opponent_r2
-		}
-	}
-
-	# Option A: Aggressive approach
-	option = {
-		name = murim_youth.0004.a
-		duel = {
-			skill = prowess
-			target = scope:youth_opponent_r2
-			40 = {
-				compare_modifier = {
-					value = scope:tournament_child.prowess
-					multiplier = 4
-				}
-				modifier = {
-					add = 15
-					scope:tournament_child = {
-						has_character_modifier = youth_tournament_coached
-					}
-				}
-				modifier = {
-					add = 10
-					scope:tournament_child = {
-						has_character_flag = youth_trained_strength
-					}
-				}
-				desc = murim_youth_round2_win
-				scope:tournament_child = {
-					create_character_memory = {
-						type = youth_tournament_round2_win_memory
-						participants = { opponent = scope:youth_opponent_r2 }
-					}
-				}
-				trigger_event = {
-					id = murim_youth.0005
-					days = { 3 7 }
-				}
-			}
-			60 = {
-				compare_modifier = {
-					value = scope:youth_opponent_r2.prowess
-					multiplier = 4
-				}
-				desc = murim_youth_round2_lose
-				scope:tournament_child = {
-					create_character_memory = {
-						type = youth_tournament_loss_memory
-						participants = { opponent = scope:youth_opponent_r2 }
-					}
-				}
-				trigger_event = {
-					id = murim_youth.0008
-					days = { 1 3 }
-				}
-			}
-		}
-		ai_chance = { base = 50 }
-	}
-
-	# Option B: Technical approach
-	option = {
-		name = murim_youth.0004.b
-		duel = {
-			skill = martial
-			target = scope:youth_opponent_r2
-			45 = {
-				compare_modifier = {
-					value = scope:tournament_child.martial
-					multiplier = 3
-				}
-				modifier = {
-					add = 15
-					scope:tournament_child = {
-						has_character_flag = youth_trained_technique
-					}
-				}
-				desc = murim_youth_round2_win
-				scope:tournament_child = {
-					create_character_memory = {
-						type = youth_tournament_round2_win_memory
-						participants = { opponent = scope:youth_opponent_r2 }
-					}
-				}
-				trigger_event = {
-					id = murim_youth.0005
-					days = { 3 7 }
-				}
-			}
-			55 = {
-				compare_modifier = {
-					value = scope:youth_opponent_r2.martial
-					multiplier = 3
-				}
-				desc = murim_youth_round2_lose
-				scope:tournament_child = {
-					create_character_memory = {
-						type = youth_tournament_loss_memory
-						participants = { opponent = scope:youth_opponent_r2 }
-					}
-				}
-				trigger_event = {
-					id = murim_youth.0008
-					days = { 1 3 }
-				}
-			}
-		}
-		ai_chance = { base = 50 }
-	}
-}
-
-# ============================================================================
-# EVENT 0005: YOUTH SPARRING FINAL
-# The two best young fighters. Crowd of masters watching, scouting talent.
-# Cross-refs: murim_mentor_events.0001 (master offers to take winner as disciple)
-# ============================================================================
-murim_youth.0005 = {
-	type = character_event
-	title = murim_youth.0005.t
-	desc = murim_youth.0005.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = war_attacker
-	}
-	right_portrait = {
-		character = scope:youth_finalist
-		animation = war_defender
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-		scope:tournament_child = { is_alive = yes }
-	}
-
-	immediate = {
-		create_character = {
-			age = { 13 15 }
-			gender_male_chance = 50
-			trait = martial_apprentice
-			prowess = { 8 14 }
-			save_scope_as = youth_finalist
-		}
-	}
-
-	# Option A: Go all out for the championship
-	option = {
-		name = murim_youth.0005.a
-		custom_tooltip = murim_youth_final_allout_tt
-		duel = {
-			skill = prowess
-			target = scope:youth_finalist
-			35 = {
-				compare_modifier = {
-					value = scope:tournament_child.prowess
-					multiplier = 5
-				}
-				modifier = {
-					add = 20
-					scope:tournament_child = {
-						has_character_modifier = youth_tournament_coached
-					}
-				}
-				modifier = {
-					add = 10
-					scope:tournament_child = {
-						OR = {
-							has_character_flag = youth_trained_strength
-							has_character_flag = youth_trained_technique
-						}
-					}
-				}
-				desc = murim_youth_final_win
-				# CHAMPION!
-				trigger_event = {
-					id = murim_youth.0006
-					days = { 1 3 }
-				}
-			}
-			65 = {
-				compare_modifier = {
-					value = scope:youth_finalist.prowess
-					multiplier = 5
-				}
-				desc = murim_youth_final_lose
-				# Runner-up
-				trigger_event = {
-					id = murim_youth.0007
-					days = { 1 3 }
-				}
-			}
-		}
-		ai_chance = { base = 70 }
-	}
-
-	# Option B: Fight with honor and composure
-	option = {
-		name = murim_youth.0005.b
-		custom_tooltip = murim_youth_final_composed_tt
-		duel = {
-			skill = martial
-			target = scope:youth_finalist
-			40 = {
-				compare_modifier = {
-					value = scope:tournament_child.martial
-					multiplier = 4
-				}
-				modifier = {
-					add = 15
-					scope:tournament_child = {
-						has_character_flag = youth_trained_mental
-					}
-				}
-				desc = murim_youth_final_win
-				trigger_event = {
-					id = murim_youth.0006
-					days = { 1 3 }
-				}
-			}
-			60 = {
-				compare_modifier = {
-					value = scope:youth_finalist.martial
-					multiplier = 4
-				}
-				desc = murim_youth_final_lose
-				trigger_event = {
-					id = murim_youth.0007
-					days = { 1 3 }
-				}
-			}
-		}
-		ai_chance = { base = 30 }
-	}
-}
-
-# ============================================================================
-# EVENT 0006: YOUTH CHAMPION CROWNED
-# Winner gets: young_dragon_champion modifier (5 years ONLY, then expires)
-# +3 prowess, +1 martial, +5 prestige/month. NOT permanent.
-# Ceremonial training weapon artifact (5 years, +1 prowess, then breaks)
-# Cross-refs: murim_mentor_events (scouting fires as 0009), murim_training_events (inspired training)
-# ============================================================================
-murim_youth.0006 = {
-	type = character_event
-	title = murim_youth.0006.t
-	desc = murim_youth.0006.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = personality_bold
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-	}
-
-	immediate = {
-		scope:tournament_child = {
-			# Champion modifier: TEMPORARY, 5 years only
-			add_character_modifier = {
-				modifier = young_dragon_champion
-				years = 5
-			}
-			# Ceremonial weapon: TEMPORARY artifact
-			create_artifact = {
-				name = youth_champion_weapon
-				description = youth_champion_weapon_desc
-				type = weapon
-				modifier = youth_champion_weapon_modifier
-				quality = 2
-				max_durability = 60
-				save_scope_as = youth_weapon
-			}
-			create_character_memory = {
-				type = youth_champion_crowned_memory
-			}
-			# Prestige for the family
-			add_prestige = 200
-		}
-		# Parent pride
-		root = {
-			add_prestige = 100
-			add_opinion = {
-				target = scope:tournament_child
-				modifier = proud_of_martial_child
-				opinion = 30
-			}
-		}
-	}
-
-	# Option A: Celebrate with a feast
-	option = {
-		name = murim_youth.0006.a
-		add_gold = -25
-		add_prestige = 50
-		scope:tournament_child = {
-			add_prestige = 100
-		}
-		# Scouting event fires: famous master wants them as disciple
-		trigger_event = {
-			id = murim_youth.0009
-			days = { 14 30 }
-		}
-		ai_chance = { base = 50 }
-	}
-
-	# Option B: Remind them to stay humble
-	option = {
-		name = murim_youth.0006.b
-		scope:tournament_child = {
-			add_learning_skill = 1
-			stress_impact = {
-				arrogant = 10
-			}
-		}
-		trigger_event = {
-			id = murim_youth.0009
-			days = { 14 30 }
-		}
-		ai_chance = { base = 30 }
-	}
-
-	# Option C: Push them to train even harder
-	option = {
-		name = murim_youth.0006.c
-		scope:tournament_child = {
-			add_prowess_skill = 1
-			stress_impact = {
-				lazy = 15
-			}
-		}
-		# Chain to training events
-		trigger_event = {
-			id = murim_training.0001
-			days = { 30 60 }
-		}
-		ai_chance = { base = 20 }
-	}
-}
-
-# ============================================================================
-# EVENT 0007: RUNNER-UP HONORED
-# Gets: young_dragon_finalist modifier (3 years)
-# +1 prowess, +1 martial, +3 prestige/month
-# Cross-refs: murim_youth.0011 (rivalry born with champion)
-# ============================================================================
-murim_youth.0007 = {
-	type = character_event
-	title = murim_youth.0007.t
-	desc = murim_youth.0007.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = personality_compassionate
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-	}
-
-	immediate = {
-		scope:tournament_child = {
-			add_character_modifier = {
-				modifier = young_dragon_finalist
-				years = 3
-			}
-			create_character_memory = {
-				type = youth_finalist_memory
-				participants = { rival = scope:youth_finalist }
-			}
-			add_prestige = 100
-		}
-	}
-
-	# Option A: Console them — there's always next year
-	option = {
-		name = murim_youth.0007.a
-		scope:tournament_child = {
-			stress_impact = {
-				base = -10
-			}
-			add_opinion = {
-				target = root
-				modifier = supportive_parent
-				opinion = 15
-			}
-		}
-		ai_chance = { base = 40 }
-	}
-
-	# Option B: Use this as motivation
-	option = {
-		name = murim_youth.0007.b
-		scope:tournament_child = {
-			add_martial_skill = 1
-			set_character_flag = {
-				flag = youth_tournament_revenge_motivation
-				years = 5
-			}
-		}
-		# Rivalry event fires
-		trigger_event = {
-			id = murim_youth.0011
-			days = { 30 60 }
-		}
-		ai_chance = { base = 40 }
-	}
-
-	# Option C: Seek a better master for them
-	option = {
-		name = murim_youth.0007.c
+		# "I'll find the best instructor money can buy."
 		add_gold = -30
-		trigger_event = {
-			id = murim_mentor.0001
-			days = { 14 30 }
-		}
-		ai_chance = { base = 20 }
-	}
-}
-
-# ============================================================================
-# EVENT 0008: ALL PARTICIPANTS RECOGNIZED
-# Gets: young_dragon_participant modifier (1 year)
-# +5 opinion with martial masters, small martial XP
-# ============================================================================
-murim_youth.0008 = {
-	type = character_event
-	title = murim_youth.0008.t
-	desc = murim_youth.0008.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = personality_compassionate
-	}
-
-	trigger = {
-		exists = scope:tournament_child
-	}
-
-	immediate = {
-		scope:tournament_child = {
-			add_character_modifier = {
-				modifier = youth_tournament_participant
+		scope:best_youth = {
+			add_character_flag = {
+				flag = entering_youth_tournament
 				years = 1
 			}
-			add_prestige = 25
-		}
-	}
-
-	# Option A: Proud of them for trying
-	option = {
-		name = murim_youth.0008.a
-		scope:tournament_child = {
-			add_opinion = {
-				target = root
-				modifier = supportive_parent
-				opinion = 10
+			add_character_flag = {
+				flag = hired_trainer_for_tournament
+				years = 1
 			}
 		}
-		ai_chance = { base = 60 }
-	}
-
-	# Option B: Disappointed — train harder
-	option = {
-		name = murim_youth.0008.b
-		scope:tournament_child = {
-			add_opinion = {
-				target = root
-				modifier = harsh_parent
-				opinion = -10
-			}
-			add_prowess_skill = 1
+		trigger_event = {
+			id = murim_youth.0002
+			days = { 7 14 }
 		}
 		ai_chance = {
 			base = 20
 			modifier = {
-				add = 20
-				has_trait = ambitious
+				factor = 2.0
+				gold >= 100
 			}
 		}
 	}
-
-	# Option C: They're too young, there's time
+	
+	# Option D: Forbid them from entering (protective parent)
 	option = {
-		name = murim_youth.0008.c
-		scope:tournament_child = {
-			add_learning_skill = 1
+		name = murim_youth.0001.d
+		# "You're not ready. Maybe next year."
+		scope:best_youth = {
+			add_opinion = {
+				target = root
+				modifier = disappointed_in_parent_opinion
+				opinion = -15
+			}
+		}
+		add_stress = -10 # Relief from not risking your child
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 3.0
+				has_trait = craven
+			}
+			modifier = {
+				factor = 2.0
+				has_trait = paranoid
+			}
+		}
+	}
+}
+
+##############################
+# murim_youth.0002 - PLAYER'S CHILD ENTERS THE TOURNAMENT
+# Pre-tournament preparation and scouting
+##############################
+
+murim_youth.0002 = {
+	type = character_event
+	title = murim_youth.0002.t
+	desc = murim_youth.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = entering_youth_tournament
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = entering_youth_tournament
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = tournament_youth
+		}
+		# Generate a rival youth from the realm
+		random_living_character = {
+			limit = {
+				age >= 8
+				age < 16
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { is_child_of = root }
+			}
+			weight = {
+				base = 1
+				modifier = { factor = 3 prowess >= 8 }
+				modifier = {
+					factor = 2
+					any_parent = {
+						OR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_disciple
+							has_trait = shaolin_disciple
+							has_trait = tang_clan_member
+							has_trait = heavenly_demon_sect_member
+							has_trait = beggar_sect_member
+						}
+					}
+				}
+			}
+			save_scope_as = youth_rival
+		}
+	}
+	
+	# Option A: "They'll do great. I believe in them."
+	option = {
+		name = murim_youth.0002.a
+		scope:tournament_youth = {
+			add_opinion = {
+				target = root
+				modifier = parental_support_opinion
+				opinion = 10
+			}
+		}
+		trigger_event = {
+			id = murim_youth.0003
+			days = { 3 7 }
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Spy on the competition
+	option = {
+		name = murim_youth.0002.b
+		trigger = {
+			OR = {
+				has_trait = schemer
+				intrigue >= 10
+			}
+		}
+		# Learn about the rival's fighting style
+		scope:tournament_youth = {
+			add_character_flag = {
+				flag = scouted_youth_rival
+				years = 1
+			}
+		}
+		add_prestige = -10 # Slightly dishonorable
+		trigger_event = {
+			id = murim_youth.0003
+			days = { 3 7 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_trait = deceitful }
+		}
+	}
+	
+	# Option C: Pray for their safety
+	option = {
+		name = murim_youth.0002.c
+		add_piety = 25
+		trigger_event = {
+			id = murim_youth.0003
+			days = { 3 7 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { factor = 2 has_trait = zealous }
+		}
+	}
+}
+
+##############################
+# murim_youth.0003 - YOUTH SPARRING ROUND 1
+# Light prowess check with age weighting. NO injury. Win/lose only.
+##############################
+
+murim_youth.0003 = {
+	type = character_event
+	title = murim_youth.0003.t
+	desc = murim_youth.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = entering_youth_tournament
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = entering_youth_tournament
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = tournament_youth
+		}
+		# Generate round 1 opponent (easier)
+		random_living_character = {
+			limit = {
+				age >= 8
+				age < 16
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { is_child_of = root }
+			}
+			weight = {
+				base = 10
+				modifier = { factor = 0.5 prowess >= 10 } # Easier opponent for round 1
+			}
+			save_scope_as = round1_opponent
+		}
+	}
+	
+	# The fight happens automatically. Outcome based on prowess + bonuses.
+	option = {
+		name = murim_youth.0003.a
+		# "Watch closely..."
+		
+		# Prowess duel calculation (youth version -- no injuries)
+		duel = {
+			skill = prowess
+			target = scope:round1_opponent
+			
+			# Bonuses from preparation
+			modifier = {
+				factor = 1.2
+				scope:tournament_youth = { has_character_flag = parent_coached_for_tournament }
+			}
+			modifier = {
+				factor = 1.1
+				scope:tournament_youth = { has_character_flag = hired_trainer_for_tournament }
+			}
+			modifier = {
+				factor = 1.1
+				scope:tournament_youth = { has_character_flag = scouted_youth_rival }
+			}
+			# Age advantage: older youth have slight edge
+			modifier = {
+				factor = 1.15
+				scope:tournament_youth = { age >= 13 }
+				scope:round1_opponent = { age < 11 }
+			}
+			
+			# WIN
+			10 = {
+				min_prestige_level_diff = -3
+				desc = murim_youth.0003.win
+				scope:tournament_youth = {
+					add_character_flag = {
+						flag = youth_tournament_round1_win
+						years = 1
+					}
+					# Create fight memory
+					create_character_memory = {
+						type = youth_tournament_victory_memory
+					}
+				}
+				trigger_event = {
+					id = murim_youth.0004
+					days = { 3 5 }
+				}
+			}
+			# LOSE
+			10 = {
+				min_prestige_level_diff = 3
+				desc = murim_youth.0003.lose
+				scope:tournament_youth = {
+					add_character_flag = {
+						flag = youth_tournament_eliminated
+						years = 1
+					}
+					create_character_memory = {
+						type = youth_tournament_loss_memory
+					}
+				}
+				trigger_event = {
+					id = murim_youth.0008
+					days = { 1 3 }
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+##############################
+# murim_youth.0004 - YOUTH SPARRING ROUND 2
+# Tougher opponent. Master's training bonus applies.
+##############################
+
+murim_youth.0004 = {
+	type = character_event
+	title = murim_youth.0004.t
+	desc = murim_youth.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = youth_tournament_round1_win
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = youth_tournament_round1_win
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = tournament_youth
+		}
+		# Tougher opponent for round 2
+		random_living_character = {
+			limit = {
+				age >= 10
+				age < 16
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { is_child_of = root }
+				prowess >= 6
+			}
+			weight = {
+				base = 10
+				modifier = { factor = 2 prowess >= 8 }
+				modifier = {
+					factor = 3
+					any_parent = { has_trait = martial_artist }
+				}
+			}
+			save_scope_as = round2_opponent
+		}
+	}
+	
+	option = {
+		name = murim_youth.0004.a
+		# "The second round. Tougher now."
+		
+		duel = {
+			skill = prowess
+			target = scope:round2_opponent
+			
+			modifier = {
+				factor = 1.2
+				scope:tournament_youth = { has_character_flag = parent_coached_for_tournament }
+			}
+			modifier = {
+				factor = 1.15
+				scope:tournament_youth = {
+					any_parent = {
+						OR = {
+							has_trait = mount_hua_disciple
+							has_trait = wudang_disciple
+							has_trait = shaolin_disciple
+							has_trait = tang_clan_member
+							has_trait = heavenly_demon_sect_member
+							has_trait = beggar_sect_member
+						}
+					}
+				}
+			}
+			
+			# WIN -> finals
+			10 = {
+				min_prestige_level_diff = -3
+				desc = murim_youth.0004.win
+				scope:tournament_youth = {
+					add_character_flag = {
+						flag = youth_tournament_finalist
+						years = 1
+					}
+					create_character_memory = {
+						type = youth_tournament_semifinal_victory_memory
+					}
+				}
+				trigger_event = {
+					id = murim_youth.0005
+					days = { 3 5 }
+				}
+			}
+			# LOSE -> eliminated but with honor
+			10 = {
+				min_prestige_level_diff = 3
+				desc = murim_youth.0004.lose
+				scope:tournament_youth = {
+					add_character_flag = {
+						flag = youth_tournament_eliminated
+						years = 1
+					}
+					create_character_memory = {
+						type = youth_tournament_semifinal_loss_memory
+					}
+				}
+				trigger_event = {
+					id = murim_youth.0008
+					days = { 1 3 }
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+##############################
+# murim_youth.0005 - YOUTH SPARRING FINAL
+# The two best young fighters. Masters watching, scouting talent.
+##############################
+
+murim_youth.0005 = {
+	type = character_event
+	title = murim_youth.0005.t
+	desc = murim_youth.0005.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = youth_tournament_finalist
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = youth_tournament_finalist
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = tournament_youth
+		}
+		# The other finalist -- strongest available youth
+		random_living_character = {
+			limit = {
+				age >= 8
+				age < 16
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { is_child_of = root }
+				prowess >= 8
+			}
+			weight = {
+				base = 1
+				modifier = { factor = 5 prowess >= 12 }
+				modifier = { factor = 3 prowess >= 10 }
+				modifier = {
+					factor = 2
+					OR = {
+						has_trait = basic_sword_technique
+						has_trait = basic_fist_technique
+						has_trait = intermediate_sword_technique
+					}
+				}
+			}
+			save_scope_as = final_opponent
+		}
+		# A famous master is watching
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				age >= 35
+				is_alive = yes
+				OR = {
+					has_trait = mount_hua_elder
+					has_trait = wudang_elder
+					has_trait = shaolin_elder
+					has_trait = wandering_martial_master
+					prowess >= 20
+				}
+			}
+			save_scope_as = scouting_master
+		}
+	}
+	
+	option = {
+		name = murim_youth.0005.a
+		# "The final. Everything rides on this."
+		
+		duel = {
+			skill = prowess
+			target = scope:final_opponent
+			
+			modifier = {
+				factor = 1.2
+				scope:tournament_youth = { has_character_flag = parent_coached_for_tournament }
+			}
+			
+			# WIN -> CHAMPION
+			10 = {
+				min_prestige_level_diff = -3
+				desc = murim_youth.0005.win
+				scope:tournament_youth = {
+					add_character_flag = {
+						flag = youth_tournament_champion
+						years = 5
+					}
+					create_character_memory = {
+						type = youth_tournament_championship_memory
+					}
+				}
+				trigger_event = {
+					id = murim_youth.0006
+					days = { 1 3 }
+				}
+			}
+			# LOSE -> runner-up
+			10 = {
+				min_prestige_level_diff = 3
+				desc = murim_youth.0005.lose
+				scope:tournament_youth = {
+					create_character_memory = {
+						type = youth_tournament_final_loss_memory
+					}
+				}
+				trigger_event = {
+					id = murim_youth.0007
+					days = { 1 3 }
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+##############################
+# murim_youth.0006 - YOUTH CHAMPION CROWNED
+# TEMPORARY rewards: +3 prowess, +1 martial for 5 years (expires)
+# Ceremonial weapon artifact (+1 prowess, 5 years, then breaks)
+##############################
+
+murim_youth.0006 = {
+	type = character_event
+	title = murim_youth.0006.t
+	desc = murim_youth.0006.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = youth_tournament_champion
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = youth_tournament_champion
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = youth_champion
+		}
+	}
+	
+	# Option A: Celebrate proudly
+	option = {
+		name = murim_youth.0006.a
+		# "My child, the Young Dragon Champion!"
+		scope:youth_champion = {
+			# TEMPORARY modifier: +3 prowess, +1 martial, +5 prestige/month for 5 YEARS
+			add_character_modifier = {
+				modifier = young_dragon_champion_modifier
+				years = 5
+			}
+			# Ceremonial training weapon (temporary artifact, 5 years)
+			add_character_modifier = {
+				modifier = ceremonial_training_weapon_modifier
+				years = 5
+			}
+			create_character_memory = {
+				type = youth_champion_crowning_memory
+			}
+		}
+		add_prestige = 100
+		# Scouting master notices -> triggers mentor chain
+		# Cross-ref: murim_mentor_events.txt murim_mentor.0001
+		trigger_event = {
+			id = murim_youth.0009
+			days = { 14 30 }
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	# Option B: Stay humble
+	option = {
+		name = murim_youth.0006.b
+		# "Don't let it go to your head. This is just the beginning."
+		scope:youth_champion = {
+			add_character_modifier = {
+				modifier = young_dragon_champion_modifier
+				years = 5
+			}
+			add_character_modifier = {
+				modifier = ceremonial_training_weapon_modifier
+				years = 5
+			}
+			# Humble bonus: less arrogance, better learning
+			add_character_modifier = {
+				modifier = humble_champion_bonus
+				years = 3
+			}
+		}
+		add_prestige = 50
+		trigger_event = {
+			id = murim_youth.0009
+			days = { 14 30 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { factor = 2 has_trait = humble }
+		}
+	}
+}
+
+##############################
+# murim_youth.0007 - RUNNER-UP HONORED
+# +1 prowess, +1 martial for 3 years (expires)
+##############################
+
+murim_youth.0007 = {
+	type = character_event
+	title = murim_youth.0007.t
+	desc = murim_youth.0007.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = youth_tournament_finalist
+			NOT = { has_character_flag = youth_tournament_champion }
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = youth_tournament_finalist
+				NOT = { has_character_flag = youth_tournament_champion }
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = youth_finalist
+		}
+	}
+	
+	# Option A: Console and encourage
+	option = {
+		name = murim_youth.0007.a
+		# "Second place is still incredible. You'll get them next year."
+		scope:youth_finalist = {
+			add_character_modifier = {
+				modifier = young_dragon_finalist_modifier
+				years = 3
+			}
+			create_character_memory = {
+				type = youth_tournament_finalist_memory
+			}
+			add_opinion = {
+				target = root
+				modifier = parental_support_opinion
+				opinion = 15
+			}
+		}
+		add_prestige = 50
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Push them harder
+	option = {
+		name = murim_youth.0007.b
+		# "Second is first loser. Train harder."
+		scope:youth_finalist = {
+			add_character_modifier = {
+				modifier = young_dragon_finalist_modifier
+				years = 3
+			}
+			add_opinion = {
+				target = root
+				modifier = harsh_parent_opinion
+				opinion = -10
+			}
+			add_character_flag = {
+				flag = driven_by_tournament_loss
+				years = 3
+			}
+		}
+		# Cross-ref: murim_training_events.txt -- driven child trains harder
+		trigger_event = {
+			id = murim_youth.0011
+			days = { 30 60 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { factor = 2 has_trait = ambitious }
+		}
+	}
+}
+
+##############################
+# murim_youth.0008 - ALL PARTICIPANTS HONORED
+# +5 opinion with martial masters for 1 year
+##############################
+
+murim_youth.0008 = {
+	type = character_event
+	title = murim_youth.0008.t
+	desc = murim_youth.0008.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			has_character_flag = youth_tournament_eliminated
+			is_alive = yes
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				has_character_flag = youth_tournament_eliminated
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = youth_participant
+		}
+	}
+	
+	option = {
+		name = murim_youth.0008.a
+		# "You competed. That takes courage. Be proud."
+		scope:youth_participant = {
+			add_character_modifier = {
+				modifier = young_dragon_participant_modifier
+				years = 1
+			}
+			create_character_memory = {
+				type = youth_tournament_participation_memory
+			}
+		}
+		add_prestige = 15
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_youth.0008.b
+		# "Use this as fuel. Come back stronger."
+		scope:youth_participant = {
+			add_character_modifier = {
+				modifier = young_dragon_participant_modifier
+				years = 1
+			}
+			add_character_flag = {
+				flag = driven_by_tournament_loss
+				years = 2
+			}
 		}
 		ai_chance = { base = 20 }
 	}
 }
 
-# ============================================================================
-# EVENT 0009: SCOUTING — FAMOUS MASTER OFFERS DISCIPLESHIP
-# A renowned martial master watched the tournament and offers to take the winner
-# Cross-refs: murim_mentor_events.0001 (finding a master chain), murim_training_events (training begins)
-# ============================================================================
+##############################
+# murim_youth.0009 - SCOUTING EVENT
+# A famous master watches and offers to take the champion as disciple
+# Cross-ref: murim_mentor_events.txt (murim_mentor.0001)
+##############################
+
 murim_youth.0009 = {
 	type = character_event
 	title = murim_youth.0009.t
 	desc = murim_youth.0009.desc
-	theme = martial
-	left_portrait = {
-		character = root
-		animation = personality_rational
-	}
-	right_portrait = {
-		character = scope:scouting_master
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		exists = scope:tournament_child
-		scope:tournament_child = {
-			has_character_modifier = young_dragon_champion
+		is_alive = yes
+		any_child = {
+			has_character_flag = youth_tournament_champion
+			is_alive = yes
 		}
 	}
-
+	
 	immediate = {
-		create_character = {
-			age = { 45 65 }
-			gender_male_chance = 70
-			trait = martial_master
-			prowess = { 20 30 }
-			martial = { 15 25 }
+		ordered_child = {
+			limit = {
+				has_character_flag = youth_tournament_champion
+				is_alive = yes
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = youth_champion
+		}
+		# Find a scouting master
+		random_living_character = {
+			limit = {
+				has_trait = martial_artist
+				age >= 35
+				is_alive = yes
+				prowess >= 16
+				NOT = { is_child_of = root }
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					factor = 5
+					OR = {
+						has_trait = mount_hua_elder
+						has_trait = wudang_elder
+						has_trait = shaolin_elder
+						has_trait = tang_clan_elder
+						has_trait = beggar_sect_elder
+					}
+				}
+				modifier = { factor = 3 has_trait = wandering_martial_master }
+				modifier = { factor = 2 prowess >= 20 }
+			}
 			save_scope_as = scouting_master
 		}
 	}
-
-	# Option A: Accept — your child trains under a legendary master
+	
+	# Option A: Accept the master's offer (triggers mentor event chain)
 	option = {
 		name = murim_youth.0009.a
-		custom_tooltip = murim_youth_accept_master_tt
-		scope:tournament_child = {
+		# "This is an incredible opportunity. Go with the master."
+		trigger = {
+			exists = scope:scouting_master
+		}
+		scope:youth_champion = {
 			set_relation_mentor = scope:scouting_master
-			add_character_modifier = {
-				modifier = training_under_master
-				years = 3
-			}
-			create_character_memory = {
-				type = accepted_by_master_memory
-				participants = { master = scope:scouting_master }
+			add_opinion = {
+				target = scope:scouting_master
+				modifier = grateful_to_master_opinion
+				opinion = 30
 			}
 		}
-		# Chain to mentor training events
-		trigger_event = {
-			id = murim_mentor.0003
-			days = { 30 60 }
+		scope:scouting_master = {
+			add_opinion = {
+				target = scope:youth_champion
+				modifier = promising_disciple_opinion
+				opinion = 25
+			}
+		}
+		# Chain to mentor events
+		# Cross-ref: murim_mentor_events.txt murim_mentor.0001
+		scope:youth_champion = {
+			trigger_event = {
+				id = murim_mentor.0001
+				days = { 30 60 }
+			}
 		}
 		ai_chance = { base = 60 }
 	}
-
-	# Option B: Decline — you want to train them yourself
+	
+	# Option B: Decline -- keep training at home
 	option = {
 		name = murim_youth.0009.b
-		trigger = {
-			murim_is_martial_artist_trigger = yes
-		}
-		scope:tournament_child = {
-			set_relation_mentor = root
+		# "They're not ready to leave home yet."
+		scope:youth_champion = {
 			add_opinion = {
 				target = root
-				modifier = trained_by_parent
-				opinion = 20
+				modifier = protective_parent_opinion
+				opinion = 5
 			}
 		}
-		trigger_event = {
-			id = murim_training.0001
-			days = { 14 30 }
+		if = {
+			limit = { exists = scope:scouting_master }
+			scope:scouting_master = {
+				add_opinion = {
+					target = root
+					modifier = rejected_offer_opinion
+					opinion = -10
+				}
+			}
 		}
-		ai_chance = { base = 25 }
+		ai_chance = {
+			base = 30
+			modifier = { factor = 2 has_trait = paranoid }
+		}
 	}
-
-	# Option C: Ask for time to consider
+	
+	# Option C: Ask for more time to decide
 	option = {
 		name = murim_youth.0009.c
-		scope:scouting_master = {
-			add_opinion = {
-				target = root
-				modifier = cautious_parent
-				opinion = -5
-			}
-		}
-		# Re-fires in 30 days with urgency
-		trigger_event = {
-			id = murim_youth.0009
-			days = { 25 35 }
-		}
-		ai_chance = { base = 15 }
-	}
-}
-
-# ============================================================================
-# EVENT 0010: PRODIGY REVEALED
-# A child under 10 defeats teenagers. "This one is special."
-# Gains prodigy_martial_talent trait (PERMANENT, +2 prowess, +2 martial)
-# Sects compete to recruit them.
-# Cross-refs: murim_sect_events (sect recruitment), murim_cultivation_events (early awakening)
-# ============================================================================
-murim_youth.0010 = {
-	type = character_event
-	title = murim_youth.0010.t
-	desc = murim_youth.0010.desc
-	theme = martial
-	left_portrait = {
-		character = scope:prodigy_child
-		animation = personality_bold
-	}
-
-	trigger = {
-		any_child = {
-			is_alive = yes
-			age >= 8
-			age < 11
-			prowess >= 8
-			NOT = { has_trait = prodigy_martial_talent }
-		}
-	}
-
-	weight_multiplier = {
-		base = 1
-		# Very rare — only exceptional children
-		modifier = {
-			factor = 0.1
-		}
-	}
-
-	immediate = {
-		random_child = {
-			limit = {
-				is_alive = yes
-				age >= 8
-				age < 11
-				prowess >= 8
-			}
-			save_scope_as = prodigy_child
-			add_trait = prodigy_martial_talent
-			create_character_memory = {
-				type = prodigy_revealed_memory
-			}
-		}
-	}
-
-	# Option A: Nurture their talent carefully
-	option = {
-		name = murim_youth.0010.a
-		scope:prodigy_child = {
-			add_prowess_skill = 2
-			add_martial_skill = 1
-		}
-		trigger_event = {
-			id = murim_mentor.0001
-			days = { 14 30 }
-		}
-		ai_chance = { base = 40 }
-	}
-
-	# Option B: Let sects compete for them
-	option = {
-		name = murim_youth.0010.b
-		custom_tooltip = murim_youth_sect_bidding_tt
-		scope:prodigy_child = {
-			add_prestige = 300
-		}
-		add_gold = 100
-		trigger_event = {
-			id = murim_sect.0001
-			days = { 7 14 }
-		}
-		ai_chance = { base = 30 }
-	}
-
-	# Option C: Hide their talent (protect from exploitation)
-	option = {
-		name = murim_youth.0010.c
-		custom_tooltip = murim_youth_hide_prodigy_tt
-		scope:prodigy_child = {
-			set_character_flag = hidden_prodigy
-			add_intrigue_skill = 2
-		}
-		stress_impact = {
-			paranoid = -10
-		}
-		ai_chance = { base = 20 }
-	}
-
-	# Option D: Begin cultivation training immediately
-	option = {
-		name = murim_youth.0010.d
-		trigger = {
-			murim_is_martial_artist_trigger = yes
-		}
-		scope:prodigy_child = {
-			add_prowess_skill = 1
-		}
-		trigger_event = {
-			id = murim_cultivation.0001
-			days = { 7 14 }
+		# "Let me think about it. Give us a year."
+		add_character_flag = {
+			flag = considering_master_offer
+			years = 1
 		}
 		ai_chance = { base = 10 }
 	}
 }
 
-# ============================================================================
-# EVENT 0011: RIVALRY BORN
-# Two young fighters develop a rivalry. Persists into adulthood.
-# When they turn 16, rematch event fires. Lifelong rivals.
-# Cross-refs: murim_duel_events (adult rematch), murim_ranking_events (rivalry fuels ranking climb)
-# ============================================================================
+##############################
+# murim_youth.0010 - PRODIGY REVEALED
+# A child UNDER 10 defeats teenagers. PERMANENT prodigy trait.
+# Rare: only fires when a very young child wins against older opponents
+##############################
+
+murim_youth.0010 = {
+	type = character_event
+	title = murim_youth.0010.t
+	desc = murim_youth.0010.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		any_child = {
+			is_alive = yes
+			age >= 8
+			age < 10
+			has_character_flag = youth_tournament_round1_win
+			# This child beat someone 3+ years older
+		}
+	}
+	
+	immediate = {
+		ordered_child = {
+			limit = {
+				is_alive = yes
+				age >= 8
+				age < 10
+				has_character_flag = youth_tournament_round1_win
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = prodigy_child
+		}
+	}
+	
+	# Option A: "This one is special."
+	option = {
+		name = murim_youth.0010.a
+		# The martial world takes notice. Sects compete to recruit.
+		scope:prodigy_child = {
+			# PERMANENT prodigy trait: +2 prowess, +2 martial
+			add_trait = prodigy_martial_talent
+			create_character_memory = {
+				type = prodigy_revelation_memory
+			}
+		}
+		add_prestige = 200
+		# Every major sect wants to recruit this child
+		# Cross-ref: murim_sect_events.txt (recruitment competition)
+		trigger_event = {
+			id = murim_youth.0009 # Master scouting fires
+			days = { 7 14 }
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	# Option B: Hide their talent (protect from exploitation)
+	option = {
+		name = murim_youth.0010.b
+		# "Keep this quiet. They'll be safer if no one knows."
+		scope:prodigy_child = {
+			add_trait = prodigy_martial_talent
+			add_character_flag = {
+				flag = hidden_prodigy
+				years = 5
+			}
+		}
+		add_stress = 20 # Burden of keeping the secret
+		ai_chance = {
+			base = 20
+			modifier = { factor = 3 has_trait = paranoid }
+		}
+	}
+}
+
+##############################
+# murim_youth.0011 - RIVALRY BORN
+# Two young fighters develop a lifelong rivalry
+# Persists into adulthood. Rematch event at 16.
+# Cross-ref: murim_duel_events.txt (adult rematch)
+##############################
+
 murim_youth.0011 = {
 	type = character_event
 	title = murim_youth.0011.t
 	desc = murim_youth.0011.desc
-	theme = martial
-	left_portrait = {
-		character = scope:tournament_child
-		animation = personality_vengeful
-	}
-	right_portrait = {
-		character = scope:youth_rival
-		animation = personality_bold
-	}
-
+	theme = martial_arts
+	
 	trigger = {
-		exists = scope:tournament_child
+		is_alive = yes
+		any_child = {
+			is_alive = yes
+			has_character_flag = driven_by_tournament_loss
+		}
 	}
-
+	
 	immediate = {
-		# The rival is the fighter who beat them (or who they beat narrowly)
-		if = {
-			limit = { exists = scope:youth_finalist }
-			scope:youth_finalist = { save_scope_as = youth_rival }
-		}
-		else_if = {
-			limit = { exists = scope:youth_opponent_r2 }
-			scope:youth_opponent_r2 = { save_scope_as = youth_rival }
-		}
-		else = {
-			create_character = {
-				age = { 10 15 }
-				trait = martial_apprentice
-				prowess = { 8 14 }
-				save_scope_as = youth_rival
+		ordered_child = {
+			limit = {
+				has_character_flag = driven_by_tournament_loss
+				is_alive = yes
 			}
+			order_by = prowess
+			max = 1
+			save_scope_as = rivalry_youth
 		}
-		scope:tournament_child = {
-			set_relation_rival = scope:youth_rival
-			create_character_memory = {
-				type = youth_rivalry_born_memory
-				participants = { rival = scope:youth_rival }
+		# Find the youth who beat them (or closest proxy)
+		random_living_character = {
+			limit = {
+				age >= 8
+				age < 16
+				has_trait = martial_artist
+				is_alive = yes
+				NOT = { is_child_of = root }
+				OR = {
+					has_character_flag = youth_tournament_champion
+					has_character_flag = youth_tournament_finalist
+				}
 			}
-			set_character_flag = {
-				flag = has_youth_rival
-			}
+			save_scope_as = youth_rival_target
 		}
 	}
-
-	# Option A: Embrace the rivalry — it will make them stronger
+	
+	# Option A: Encourage the rivalry (fuel for growth)
 	option = {
 		name = murim_youth.0011.a
-		scope:tournament_child = {
-			add_prowess_skill = 1
-			add_opinion = {
-				target = scope:youth_rival
-				modifier = respected_rival
-				opinion = -10
+		# "Use that anger. Someday you'll face them again."
+		trigger = { exists = scope:youth_rival_target }
+		scope:rivalry_youth = {
+			set_relation_rival = scope:youth_rival_target
+			add_character_flag = {
+				flag = youth_rivalry_active
+				years = 20 # Persists well into adulthood
+			}
+			create_character_memory = {
+				type = youth_rivalry_born_memory
 			}
 		}
+		scope:youth_rival_target = {
+			add_character_flag = {
+				flag = youth_rivalry_active
+				years = 20
+			}
+		}
+		# When either turns 16, rematch event fires
+		# Cross-ref: murim_duel_events.txt (rivalry rematch trigger at age 16)
 		ai_chance = { base = 50 }
 	}
-
-	# Option B: Try to befriend the rival instead
+	
+	# Option B: Teach them to let go
 	option = {
 		name = murim_youth.0011.b
-		scope:tournament_child = {
-			add_diplomacy_skill = 1
-			# 50% chance it works
-			random = {
-				chance = 50
-				set_relation_friend = scope:youth_rival
-				remove_relation_rival = scope:youth_rival
-			}
+		# "A true martial artist doesn't hold grudges."
+		scope:rivalry_youth = {
+			remove_character_flag = driven_by_tournament_loss
+			add_piety = 15
 		}
-		ai_chance = { base = 30 }
+		ai_chance = {
+			base = 30
+			modifier = { factor = 2 has_trait = compassionate }
+		}
 	}
-
-	# Option C: Warn them this rivalry will only bring pain
+	
+	# Option C: Channel it into training
 	option = {
 		name = murim_youth.0011.c
-		scope:tournament_child = {
-			add_learning_skill = 1
-			stress_impact = {
-				base = -5
+		# "If you want revenge, train. Every day. No excuses."
+		scope:rivalry_youth = {
+			add_character_modifier = {
+				modifier = rivalry_training_drive_modifier
+				years = 3
 			}
 		}
+		# Cross-ref: murim_training_events.txt (intensified training)
 		ai_chance = { base = 20 }
 	}
 }
 
-# ============================================================================
-# EVENT 0012: YOUTH SPARRING ACCIDENT
-# Very rare (5% chance). Minor wound during sparring. Parents furious.
-# Tournament safety questioned. NO death possible — worst case is a minor wound.
-# Cross-refs: murim_politics_events (safety regulations), murim_daily_life_events (recovery)
-# ============================================================================
+##############################
+# murim_youth.0012 - YOUTH INJURY ACCIDENT
+# Very rare (5% chance). Minor wound only. Parents furious.
+##############################
+
 murim_youth.0012 = {
 	type = character_event
 	title = murim_youth.0012.t
 	desc = murim_youth.0012.desc
-	theme = martial
-	left_portrait = {
-		character = scope:injured_youth
-		animation = pain
-	}
-
+	theme = martial_arts
+	
 	trigger = {
+		is_alive = yes
 		any_child = {
+			has_character_flag = entering_youth_tournament
 			is_alive = yes
-			age >= 8
-			age < 16
-			has_character_modifier = youth_tournament_participant
 		}
 	}
-
-	weight_multiplier = {
-		base = 1
-		# 5% chance — very rare
-		modifier = {
-			factor = 0.05
-		}
-	}
-
+	
+	# This event is triggered with a 5% random chance from the fight events
+	# It represents a sparring accident -- NOT intentional harm
+	
 	immediate = {
-		random_child = {
+		ordered_child = {
 			limit = {
+				has_character_flag = entering_youth_tournament
 				is_alive = yes
-				age >= 8
-				age < 16
-				has_character_modifier = youth_tournament_participant
 			}
+			order_by = prowess
+			max = 1
 			save_scope_as = injured_youth
-			# Minor wound only — this is sparring, not a death match
-			add_trait = wounded_1
-			create_character_memory = {
-				type = youth_sparring_accident_memory
-			}
 		}
 	}
-
-	# Option A: Forgive — accidents happen in martial training
+	
+	# Option A: Forgive -- accidents happen
 	option = {
 		name = murim_youth.0012.a
-		add_piety = 25
+		# "It was an accident. These things happen in sparring."
 		scope:injured_youth = {
+			add_trait = wounded
+			# Wound heals faster for youth (game mechanic: wounded trait has natural duration)
+		}
+		add_stress = 15
+		ai_chance = {
+			base = 40
+			modifier = { factor = 2 has_trait = compassionate }
+		}
+	}
+	
+	# Option B: Demand compensation from the other family
+	option = {
+		name = murim_youth.0012.b
+		# "Your child hurt mine. There will be consequences."
+		scope:injured_youth = {
+			add_trait = wounded
+		}
+		add_gold = 25 # Compensation
+		add_prestige = -15 # Seen as overreacting
+		# Creates tension with the other family
+		random_living_character = {
+			limit = {
+				any_child = {
+					age >= 8
+					age < 16
+					has_trait = martial_artist
+					NOT = { is_child_of = root }
+				}
+			}
 			add_opinion = {
 				target = root
-				modifier = understanding_parent
-				opinion = 10
+				modifier = tournament_dispute_opinion
+				opinion = -25
 			}
 		}
 		ai_chance = {
-			base = 40
-			modifier = {
-				add = 20
-				has_trait = compassionate
-			}
+			base = 30
+			modifier = { factor = 2 has_trait = wrathful }
 		}
 	}
-
-	# Option B: Demand compensation from the other child's family
-	option = {
-		name = murim_youth.0012.b
-		add_gold = 30
-		add_prestige = -25
-		stress_impact = {
-			generous = 10
-		}
-		ai_chance = { base = 20 }
-	}
-
-	# Option C: Pull your child from all future tournaments
+	
+	# Option C: Pull your child out of future tournaments
 	option = {
 		name = murim_youth.0012.c
+		# "No more tournaments. I won't risk this again."
 		scope:injured_youth = {
-			set_character_flag = {
+			add_trait = wounded
+			add_character_flag = {
 				flag = banned_from_youth_tournament
 				years = 3
 			}
 			add_opinion = {
 				target = root
-				modifier = overprotective_parent
-				opinion = -15
+				modifier = disappointed_in_parent_opinion
+				opinion = -20
 			}
 		}
-		stress_impact = {
-			brave = 15
+		add_stress = -20 # Relief
+		ai_chance = {
+			base = 15
+			modifier = { factor = 3 has_trait = craven }
+		}
+	}
+	
+	# Option D: Use this as a teaching moment
+	option = {
+		name = murim_youth.0012.d
+		# "Pain is the best teacher. Learn from this."
+		scope:injured_youth = {
+			add_trait = wounded
+			# The injury teaches them to be careful -- defensive bonus
+			add_character_modifier = {
+				modifier = learned_from_injury_modifier
+				years = 3
+			}
 		}
 		ai_chance = {
 			base = 15
-			modifier = {
-				add = 25
-				has_trait = craven
-			}
-		}
-	}
-
-	# Option D: Use this to teach resilience
-	option = {
-		name = murim_youth.0012.d
-		scope:injured_youth = {
-			add_prowess_skill = 1
-			add_martial_skill = 1
-			stress_impact = {
-				base = 10
-			}
-		}
-		ai_chance = {
-			base = 25
-			modifier = {
-				add = 15
-				has_trait = brave
-			}
+			modifier = { factor = 2 has_trait = brave }
 		}
 	}
 }
