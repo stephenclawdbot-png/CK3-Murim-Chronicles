@@ -1,300 +1,1902 @@
 # Martial Cultivation Decisions
-# Major choices that define one's path
+# Major choices that define one's path in the Murim world
+# All decisions use exists=yes safety checks and graceful degradation
+# v0.7.0 - Expanded from 9 to 21 decisions with proper CK3 PDX syntax
 
-decision = {
-	name = abandon_mortal_coil
-	title = decision_abandon_mortal
+##############################
+# CULTIVATION PATH DECISIONS
+##############################
+
+# Abandon Mortal Coil - Ascend to Void Realm
+abandon_mortal_coil = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
 	desc = decision_abandon_mortal_desc
-	
+	selection_tooltip = decision_abandon_mortal_tooltip
+	major = yes
+
 	is_shown = {
 		is_ruler = yes
 		age >= 40
 		has_trait = nascent_soul
-		NOT = { has_trait = void }
+		NOT = { has_trait = void_realm }
 	}
-	
+
 	is_valid = {
 		prestige >= 1000
 		piety >= 500
 		stress < 50
+		custom_description = {
+			text = "decision_abandon_mortal_valid_tt"
+			NOT = { has_character_modifier = qi_deviation_recovery }
+		}
 	}
-	
+
+	cost = {
+		prestige = 500
+		piety = 250
+	}
+
 	effect = {
-		remove_trait = nascent_soul
-		add_trait = void
-		add_prestige = -500
+		if = {
+			limit = { has_trait = nascent_soul }
+			remove_trait = nascent_soul
+		}
+		add_trait = void_realm
+		add_prestige = 200
 		add_piety = 500
-		add_lifespan = 100
+		if = {
+			limit = {
+				has_variable = cultivation_rank
+			}
+			change_variable = { name = cultivation_rank add = 1 }
+		}
+		else = {
+			set_variable = { name = cultivation_rank value = 7 }
+		}
+		# Lifespan extension
+		add_character_modifier = {
+			modifier = void_realm_longevity
+			years = 200
+		}
 		custom_tooltip = tt_ascending_void
+		# Notify sect members
+		every_vassal = {
+			limit = { is_alive = yes }
+			custom_tooltip = tt_master_ascended_void
+		}
 	}
-	
+
 	cooldown = { years = 20 }
+
+	ai_check_interval = 60
+	ai_potential = {
+		age >= 45
+		has_trait = nascent_soul
+	}
+	ai_will_do = {
+		base = 80
+		modifier = {
+			add = 20
+			age >= 60
+		}
+		modifier = {
+			add = -30
+			is_at_war = yes
+		}
+	}
 }
 
-decision = {
-	name = challenge_sect_master
-	title = decision_challenge_master
-	desc = decision_challenge_master_desc
-	
+# Seclude for Deep Cultivation
+seclude_for_cultivation = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_seclude_desc
+	selection_tooltip = decision_seclude_tooltip
+
 	is_shown = {
 		is_ruler = yes
-		martial >= 25
-		opinion = {
-			target = realm_owner
-			value < -50
+		OR = {
+			has_trait = core_formation
+			has_trait = nascent_soul
+			AND = {
+				has_variable = cultivation_rank
+				var:cultivation_rank >= 3
+			}
 		}
+		NOT = { has_character_modifier = secluded_cultivation }
 	}
-	
+
 	is_valid = {
-		prowess >= 20
-		army_size >= realm_owner.army_size * 0.5
-	}
-		effect = {
-		start_war = {
-			target = realm_owner
-			casus_belli = sect_challenge
+		is_at_war = no
+		stress < 75
+		custom_description = {
+			text = "decision_seclude_no_recent_seclusion"
+			NOT = { has_character_modifier = recently_secluded }
 		}
-		add_prestige = 100
 	}
-	
-	cooldown = { years = 10 }
+
+	cost = {
+		gold = 50
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = secluded_cultivation
+			years = 1
+		}
+		add_character_modifier = {
+			modifier = recently_secluded
+			years = 3
+		}
+		stress_impact = {
+			base = 15
+			shy = -10
+			gregarious = 15
+		}
+		# Cultivation progress boost
+		if = {
+			limit = { has_variable = cultivation_progress }
+			change_variable = { name = cultivation_progress add = 20 }
+		}
+		else = {
+			set_variable = { name = cultivation_progress value = 20 }
+		}
+		# Trigger breakthrough check after seclusion
+		hidden_effect = {
+			trigger_event = {
+				id = murim_cultivation.1001
+				days = { 180 365 }
+			}
+		}
+		custom_tooltip = tt_seclusion_cultivation_boost
+	}
+
+	cooldown = { years = 3 }
+
+	ai_check_interval = 36
+	ai_potential = {
+		is_at_war = no
+	}
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = 20
+			has_trait = diligent
+		}
+		modifier = {
+			add = -20
+			has_trait = lazy
+		}
+		modifier = {
+			add = 15
+			stress >= 50
+			has_trait = shy
+		}
+	}
 }
 
-decision = {
-	name = close_sect_disciple
-	title = decision_close_disciple
+# Challenge Sect Master for Leadership
+challenge_sect_master = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_challenge_master_desc
+	selection_tooltip = decision_challenge_master_tooltip
+	major = yes
+
+	is_shown = {
+		is_ruler = yes
+		is_independent_ruler = no
+		martial >= 20
+		prowess >= 15
+		NOT = {
+			has_character_modifier = recently_challenged_master
+		}
+	}
+
+	is_valid = {
+		prowess >= 20
+		martial >= 25
+		custom_description = {
+			text = "decision_challenge_master_strong_enough"
+			prowess >= liege.prowess
+		}
+		is_imprisoned = no
+		is_incapable = no
+	}
+
+	cost = {
+		prestige = 200
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_challenged_master
+			years = 10
+		}
+		# Duel the liege
+		hidden_effect = {
+			save_scope_as = challenger
+			liege = {
+				save_scope_as = sect_master
+			}
+		}
+		# Trigger the challenge duel event chain
+		trigger_event = {
+			id = murim_duel.5001
+			days = 3
+		}
+		custom_tooltip = tt_challenge_sect_master
+		add_prestige = 100
+		# Track duel count
+		if = {
+			limit = { has_variable = murim_duels_initiated }
+			change_variable = { name = murim_duels_initiated add = 1 }
+		}
+		else = {
+			set_variable = { name = murim_duels_initiated value = 1 }
+		}
+	}
+
+	cooldown = { years = 10 }
+
+	ai_check_interval = 48
+	ai_potential = {
+		prowess >= 25
+		NOT = { has_trait = craven }
+	}
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 30
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = -40
+			has_trait = content
+		}
+		modifier = {
+			add = 20
+			prowess >= 30
+		}
+	}
+}
+
+# Recruit Close Disciple
+close_sect_disciple = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
 	desc = decision_close_disciple_desc
-	
+	selection_tooltip = decision_close_disciple_tooltip
+
 	is_shown = {
 		is_ruler = yes
 		age >= 30
 		martial >= 15
-		num_of_vassals >= 2
 	}
-	
+
 	is_valid = {
 		gold >= 100
 		prestige >= 100
-	}
-		effect = {
-		add_gold = -100
-		add_prestige = 50
-		create_character = {
-			age = 16-20
-			martial = 10-15
-			faith = root.faith
-			culture = root.culture
-			has_trait = qi_refinement
-			dynasty = root.dynasty
-			opinion_modifier = {
-				target = root
-				modifier = master_disciple_bond
-			}
+		custom_description = {
+			text = "decision_close_disciple_limit"
+			NOT = { has_character_modifier = recently_recruited_disciple }
 		}
-		add_trait = respected_master
 	}
-	
-	cooldown = { years = 5 }
-}
 
-decision = {
-	name = seclude_for_cultivation
-	title = decision_seclude
-	desc = decision_seclude_desc
-	
-	is_shown = {
-		is_ruler = yes
-		has_trait = core_formation
-		age < 60
+	cost = {
+		gold = 100
+		prestige = 50
 	}
-	
+
 	effect = {
 		add_character_modifier = {
-			modifier = secluded_cultivation
-			duration = 365
+			modifier = recently_recruited_disciple
+			years = 5
 		}
-		add_stress = 20
-		add_character_modifier = {
-			modifier = cultivation_speed_bonus
-			duration = 365
+		create_character = {
+			age = { 16 20 }
+			trait = qi_refinement
+			faith = root.faith
+			culture = root.culture
+			dynasty = root.dynasty
+			employer = root
+			save_scope_as = new_disciple
 		}
 		hidden_effect = {
-			trigger_event = {
-				id = cultivation.0002
-				days = 365
+			scope:new_disciple = {
+				set_variable = { name = murim_master value = root }
+				add_opinion = {
+					target = root
+					modifier = master_disciple_bond
+				}
+				# Initialize cultivation
+				set_variable = { name = cultivation_rank value = 1 }
+				set_variable = { name = cultivation_progress value = 0 }
 			}
 		}
+		# Track disciple count
+		if = {
+			limit = { has_variable = murim_disciple_count }
+			change_variable = { name = murim_disciple_count add = 1 }
+		}
+		else = {
+			set_variable = { name = murim_disciple_count value = 1 }
+		}
+		if = {
+			limit = { NOT = { has_trait = respected_master } }
+			add_trait = respected_master
+		}
+		custom_tooltip = tt_new_disciple_recruited
 	}
-	
-	cooldown = { years = 3 }
+
+	cooldown = { years = 5 }
+
+	ai_check_interval = 60
+	ai_potential = {
+		age >= 35
+		martial >= 18
+	}
+	ai_will_do = {
+		base = 40
+		modifier = {
+			add = 20
+			has_trait = generous
+		}
+		modifier = {
+			add = -20
+			gold < 200
+		}
+	}
 }
 
-decision = {
-	name = found_martial_sect
-	title = decision_found_sect
+# Found Martial Sect
+found_martial_sect = {
+	picture = "gfx/interface/illustrations/decisions/decision_found_kingdom.dds"
 	desc = decision_found_sect_desc
-	
+	selection_tooltip = decision_found_sect_tooltip
+	major = yes
+
 	is_shown = {
-		is_lowborn = no
-		prestige_level >= 3
+		is_ruler = yes
+		is_independent_ruler = yes
 		martial >= 20
+		NOT = { has_trait = sect_founder }
 	}
-	
+
 	is_valid = {
 		prestige >= 2000
 		gold >= 500
-		independent = yes
-	}
-		effect = {
-		add_prestige = -500
-		add_gold = -500
-		set_primary_title = {
-			title = new_sect
-		}
-		add_realm_law = sect_government
-		add_trait = sect_founder
-	}
-	
-	cooldown = { years = 50 }
-}
-
-decision = {
-	name = refine_pill
-	title = decision_refine_pill
-	desc = decision_refine_pill_desc
-	
-	is_shown = {
-		has_trait = alchemist
-	}
-	
-	effect = {
-		custom_tooltip = tt_pill_refinement
-		add_character_modifier = {
-			modifier = recently_refined_pill
-			duration = 30
-		}
-		random_list = {
-			30 = { # Success
-				add_trait = minor_enhancement
-				add_health = 1
-			}
-			50 = { # Partial
-				add_stress = -10
-			}
-			20 = { # Failure
-				add_stress = 20
-				add_trait = stressed
-			}
-		}
-	}
-	
-	cooldown = { months = 6 }
-}
-
-decision = {
-	name = comprehend_technique
-	title = decision_comprehend
-	desc = decision_comprehend_desc
-	
-	is_shown = {
-		is_ruler = yes
-		has_trait = sword_aptitude_2
-		OR = {
-			has_trait = secret_manual_holder
-			prestige >= 500
-		}
-	}
-	
-	effect = {
-		add_trait = sword_aptitude_3
-		remove_trait = secret_manual_holder
-		add_martial = 3
-		add_prowess = 5
-		add_dynasty_prestige = 100
-	}
-	
-	cooldown = { years = 10 }
-}
-
-decision = {
-	name = challenge_heavenly_tribulation
-	title = decision_tribulation
-	desc = decision_tribulation_desc
-	
-	is_shown = {
-		has_trait = great_vehicle
-		age >= 100
-	}
-	
-	is_valid = {
-		martial >= 50
-		prowess >= 50
-		stress < 30
-	}
-		effect = {
-		trigger_event = {
-			id = cultivation.0006
-		}
-	}
-	
-	cooldown = { years = 50 }
-}
-
-decision = {
-	name = enter_demon_path
-	title = decision_demon_path
-	desc = decision_demon_path_desc
-	
-	is_shown = {
-		is_ruler = yes
-		NOT = { has_doctrine = demonic_cult }
-		OR = {
-			has_trait = greedy
-			has_trait = vengeful
-			has_trait = ambitious
-		}
-	}
-	
-	effect = {
-		add_piety = -500
-		set_faith = demonic_cultivation_sect
-		add_trait = demonic_aptitude_1
-		dynasty = {
-			every_member = {
-				add_opinion_modifier = {
-					target = root
-					modifier = fell_to_demon_path
+		is_at_war = no
+		realm_size >= 3
+		custom_description = {
+			text = "decision_found_sect_cultivation"
+			OR = {
+				has_trait = core_formation
+				has_trait = nascent_soul
+				has_trait = void_realm
+				AND = {
+					has_variable = cultivation_rank
+					var:cultivation_rank >= 3
 				}
 			}
 		}
 	}
-	
-	cooldown = { years = 100 }
+
+	cost = {
+		prestige = 1000
+		gold = 500
+	}
+
+	effect = {
+		add_trait = sect_founder
+		add_prestige = 500
+		add_dynasty_prestige = 300
+		# Set up sect variables
+		set_variable = { name = sect_founded value = yes }
+		set_variable = { name = sect_reputation value = 50 }
+		set_variable = { name = sect_disciples value = 0 }
+		# Announce to realm
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = sect_founder_respect
+				years = 20
+			}
+		}
+		# Trigger founding event chain
+		trigger_event = {
+			id = murim_sect.0001
+			days = 5
+		}
+		custom_tooltip = tt_sect_founded
+	}
+
+	cooldown = { years = 50 }
+
+	ai_check_interval = 120
+	ai_potential = {
+		martial >= 25
+		prestige >= 3000
+	}
+	ai_will_do = {
+		base = 50
+		modifier = {
+			add = 30
+			has_trait = ambitious
+		}
+	}
 }
 
-decision = {
-	name = establish_treasure_vault
-	title = decision_treasure_vault
-	desc = decision_treasure_vault_desc
-	
+##############################
+# ALCHEMY & PILL DECISIONS
+##############################
+
+# Refine Cultivation Pill
+refine_pill = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_refine_pill_desc
+	selection_tooltip = decision_refine_pill_tooltip
+
+	is_shown = {
+		OR = {
+			has_trait = alchemist
+			has_trait = pill_master
+			AND = {
+				has_variable = alchemy_skill
+				var:alchemy_skill >= 3
+			}
+		}
+	}
+
+	is_valid = {
+		gold >= 50
+		NOT = { has_character_modifier = recently_refined_pill }
+		is_incapable = no
+	}
+
+	cost = {
+		gold = 50
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_refined_pill
+			months = 6
+		}
+		# Track alchemy attempts
+		if = {
+			limit = { has_variable = alchemy_attempts }
+			change_variable = { name = alchemy_attempts add = 1 }
+		}
+		else = {
+			set_variable = { name = alchemy_attempts value = 1 }
+		}
+		custom_tooltip = tt_pill_refinement
+		random_list = {
+			25 = {
+				desc = tt_pill_success_major
+				modifier = {
+					add = 10
+					has_trait = pill_master
+				}
+				modifier = {
+					add = 5
+					has_variable = alchemy_skill
+					var:alchemy_skill >= 5
+				}
+				add_character_modifier = {
+					modifier = superior_cultivation_pill
+					years = 3
+				}
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = { name = cultivation_progress add = 15 }
+				}
+			}
+			35 = {
+				desc = tt_pill_success_minor
+				add_character_modifier = {
+					modifier = minor_cultivation_pill
+					years = 1
+				}
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = { name = cultivation_progress add = 5 }
+				}
+			}
+			25 = {
+				desc = tt_pill_partial
+				stress_impact = {
+					base = -10
+				}
+			}
+			15 = {
+				desc = tt_pill_failure
+				modifier = {
+					add = -5
+					has_trait = pill_master
+				}
+				stress_impact = {
+					base = 20
+				}
+				random_list = {
+					60 = {
+						add_character_modifier = {
+							modifier = pill_toxicity
+							months = 6
+						}
+					}
+					30 = {
+						# Qi deviation from failed refinement
+						if = {
+							limit = { NOT = { has_trait = qi_deviation } }
+							add_trait = qi_deviation
+						}
+					}
+					10 = {
+						# Explosion
+						add_character_modifier = {
+							modifier = alchemy_burns
+							years = 1
+						}
+						add_prowess = -2
+					}
+				}
+			}
+		}
+	}
+
+	cooldown = { months = 6 }
+
+	ai_check_interval = 24
+	ai_potential = {
+		has_trait = alchemist
+	}
+	ai_will_do = {
+		base = 50
+		modifier = {
+			add = -30
+			gold < 100
+		}
+	}
+}
+
+# Establish Pill Furnace - Build an alchemy workshop
+establish_pill_furnace = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_establish_furnace_desc
+	selection_tooltip = decision_establish_furnace_tooltip
+
 	is_shown = {
 		is_ruler = yes
-		gold >= 1000
+		OR = {
+			has_trait = alchemist
+			has_trait = pill_master
+		}
+		NOT = { has_variable = has_pill_furnace }
 	}
-	
+
 	is_valid = {
-		gold >= 1000
-		prestige >= 500
+		gold >= 300
+		prestige >= 200
+		is_at_war = no
 	}
-		effect = {
-		add_gold = -1000
-		add_prestige = -500
+
+	cost = {
+		gold = 300
+		prestige = 100
+	}
+
+	effect = {
+		set_variable = { name = has_pill_furnace value = yes }
+		set_variable = { name = alchemy_skill value = 3 }
 		add_character_modifier = {
-			modifier = treasure_vault_owner
+			modifier = pill_furnace_owner
 			years = 100
 		}
-		add_dynasty_prestige = 500
+		custom_tooltip = tt_pill_furnace_established
+		# Attract alchemist characters
+		hidden_effect = {
+			trigger_event = {
+				id = murim_cultivation.3001
+				days = { 30 90 }
+			}
+		}
 	}
-	
-	cooldown = { years = 20 }
+
+	ai_check_interval = 120
+	ai_will_do = {
+		base = 40
+		modifier = {
+			add = 30
+			has_trait = pill_master
+		}
+	}
+}
+
+##############################
+# TECHNIQUE DECISIONS
+##############################
+
+# Comprehend Advanced Technique
+comprehend_technique = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_comprehend_desc
+	selection_tooltip = decision_comprehend_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		OR = {
+			has_trait = sword_aptitude_2
+			has_trait = fist_aptitude_2
+			has_trait = palm_aptitude_2
+			has_trait = movement_aptitude_2
+			AND = {
+				has_variable = technique_mastery
+				var:technique_mastery >= 3
+			}
+		}
+		NOT = { has_character_modifier = recently_comprehended }
+	}
+
+	is_valid = {
+		learning >= 10
+		stress < 60
+		custom_description = {
+			text = "decision_comprehend_requires_study"
+			OR = {
+				has_trait = secret_manual_holder
+				prestige >= 500
+				AND = {
+					has_variable = technique_mastery
+					var:technique_mastery >= 5
+				}
+			}
+		}
+	}
+
+	cost = {
+		prestige = 200
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_comprehended
+			years = 10
+		}
+		# Determine which technique to advance
+		if = {
+			limit = { has_trait = sword_aptitude_2 }
+			remove_trait = sword_aptitude_2
+			add_trait = sword_aptitude_3
+			add_prowess = 5
+			custom_tooltip = tt_sword_technique_advanced
+		}
+		else_if = {
+			limit = { has_trait = fist_aptitude_2 }
+			remove_trait = fist_aptitude_2
+			add_trait = fist_aptitude_3
+			add_prowess = 5
+			custom_tooltip = tt_fist_technique_advanced
+		}
+		else_if = {
+			limit = { has_trait = palm_aptitude_2 }
+			remove_trait = palm_aptitude_2
+			add_trait = palm_aptitude_3
+			add_prowess = 4
+			custom_tooltip = tt_palm_technique_advanced
+		}
+		else_if = {
+			limit = { has_trait = movement_aptitude_2 }
+			remove_trait = movement_aptitude_2
+			add_trait = movement_aptitude_3
+			add_prowess = 3
+			custom_tooltip = tt_movement_technique_advanced
+		}
+		# Track comprehension
+		if = {
+			limit = { has_variable = technique_mastery }
+			change_variable = { name = technique_mastery add = 1 }
+		}
+		else = {
+			set_variable = { name = technique_mastery value = 1 }
+		}
+		# Remove manual if used
+		if = {
+			limit = { has_trait = secret_manual_holder }
+			remove_trait = secret_manual_holder
+		}
+		add_dynasty_prestige = 100
+	}
+
+	cooldown = { years = 10 }
+
+	ai_check_interval = 60
+	ai_will_do = {
+		base = 60
+		modifier = {
+			add = 20
+			has_trait = diligent
+		}
+	}
+}
+
+# Study Enemy Technique - Espionage path
+study_enemy_technique = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_study_enemy_desc
+	selection_tooltip = decision_study_enemy_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		intrigue >= 12
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			prowess >= 15
+			NOT = { this = root }
+		}
+	}
+
+	is_valid = {
+		intrigue >= 15
+		gold >= 100
+		NOT = { has_character_modifier = studying_enemy_technique }
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 100
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = studying_enemy_technique
+			years = 2
+		}
+		# Pick a random neighbor to spy on
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				prowess >= 15
+				NOT = { this = root }
+			}
+			save_scope_as = technique_target
+		}
+		# Trigger espionage event chain
+		trigger_event = {
+			id = murim_technique.5001
+			days = { 30 180 }
+		}
+		custom_tooltip = tt_studying_enemy_technique
+	}
+
+	cooldown = { years = 5 }
+
+	ai_check_interval = 48
+	ai_potential = {
+		intrigue >= 15
+	}
+	ai_will_do = {
+		base = 25
+		modifier = {
+			add = 25
+			has_trait = deceitful
+		}
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+	}
+}
+
+##############################
+# BODY TEMPERING DECISIONS
+##############################
+
+# Open Meridians - Fundamental body cultivation step
+open_meridians = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_open_meridians_desc
+	selection_tooltip = decision_open_meridians_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		NOT = { has_variable = meridians_opened }
+		OR = {
+			has_trait = qi_refinement
+			has_trait = core_formation
+			AND = {
+				has_variable = cultivation_rank
+				var:cultivation_rank >= 1
+			}
+		}
+	}
+
+	is_valid = {
+		prowess >= 8
+		health >= 1
+		NOT = { has_character_modifier = meridian_opening_cooldown }
+		is_incapable = no
+	}
+
+	cost = {
+		prestige = 100
+	}
+
+	effect = {
+		# Track meridian count
+		if = {
+			limit = { has_variable = meridians_opened }
+			change_variable = { name = meridians_opened add = 1 }
+		}
+		else = {
+			set_variable = { name = meridians_opened value = 1 }
+		}
+		add_character_modifier = {
+			modifier = meridian_opening_cooldown
+			months = 6
+		}
+		# Pain and risk
+		random_list = {
+			50 = {
+				desc = tt_meridian_success
+				add_prowess = 1
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = { name = cultivation_progress add = 5 }
+				}
+				custom_tooltip = tt_meridian_opened_cleanly
+			}
+			30 = {
+				desc = tt_meridian_painful
+				add_prowess = 1
+				stress_impact = {
+					base = 15
+				}
+				custom_tooltip = tt_meridian_opened_painfully
+			}
+			15 = {
+				desc = tt_meridian_qi_deviation
+				stress_impact = {
+					base = 30
+				}
+				add_character_modifier = {
+					modifier = qi_deviation_recovery
+					months = 3
+				}
+				custom_tooltip = tt_meridian_qi_deviation
+			}
+			5 = {
+				desc = tt_meridian_breakthrough
+				add_prowess = 3
+				add_martial = 1
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = { name = cultivation_progress add = 20 }
+				}
+				custom_tooltip = tt_meridian_breakthrough
+			}
+		}
+	}
+
+	cooldown = { months = 6 }
+
+	ai_check_interval = 24
+	ai_will_do = {
+		base = 50
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = -30
+			has_trait = craven
+		}
+	}
+}
+
+# Body Tempering Ritual - Extreme physical cultivation
+body_tempering_ritual = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_body_tempering_desc
+	selection_tooltip = decision_body_tempering_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		prowess >= 12
+		OR = {
+			has_trait = body_cultivator_1
+			has_trait = body_cultivator_2
+			has_trait = iron_skin
+			AND = {
+				has_variable = body_tempering_level
+				var:body_tempering_level >= 1
+			}
+		}
+	}
+
+	is_valid = {
+		prowess >= 15
+		health >= 2
+		NOT = { has_character_modifier = recently_tempered_body }
+		is_incapable = no
+		is_imprisoned = no
+	}
+
+	cost = {
+		gold = 75
+		prestige = 50
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_tempered_body
+			years = 2
+		}
+		# Track tempering level
+		if = {
+			limit = { has_variable = body_tempering_level }
+			change_variable = { name = body_tempering_level add = 1 }
+		}
+		else = {
+			set_variable = { name = body_tempering_level value = 1 }
+		}
+		# Painful but rewarding
+		stress_impact = {
+			base = 20
+			brave = -10
+			craven = 15
+		}
+		random_list = {
+			40 = {
+				desc = tt_tempering_success
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = tempered_body_bonus
+					years = 5
+				}
+			}
+			30 = {
+				desc = tt_tempering_partial
+				add_prowess = 1
+			}
+			20 = {
+				desc = tt_tempering_strain
+				add_character_modifier = {
+					modifier = body_tempering_strain
+					months = 6
+				}
+			}
+			10 = {
+				desc = tt_tempering_breakthrough
+				modifier = {
+					add = 5
+					has_trait = body_cultivator_2
+				}
+				add_prowess = 4
+				add_martial = 2
+				# Advance body cultivation trait
+				if = {
+					limit = { has_trait = body_cultivator_1 }
+					remove_trait = body_cultivator_1
+					add_trait = body_cultivator_2
+				}
+				else_if = {
+					limit = { has_trait = body_cultivator_2 }
+					remove_trait = body_cultivator_2
+					add_trait = body_cultivator_3
+				}
+				custom_tooltip = tt_body_cultivation_advanced
+			}
+		}
+	}
+
+	cooldown = { years = 2 }
+
+	ai_check_interval = 36
+	ai_will_do = {
+		base = 45
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = -25
+			has_trait = craven
+		}
+	}
+}
+
+##############################
+# SOCIAL & JIANGHU DECISIONS
+##############################
+
+# Host Grand Martial Tournament
+host_martial_tournament = {
+	picture = "gfx/interface/illustrations/decisions/decision_activity.dds"
+	desc = decision_host_tournament_desc
+	selection_tooltip = decision_host_tournament_tooltip
+	major = yes
+
+	is_shown = {
+		is_ruler = yes
+		realm_size >= 5
+		prestige_level >= 2
+		NOT = { has_character_modifier = recently_hosted_tournament }
+	}
+
+	is_valid = {
+		gold >= 300
+		prestige >= 500
+		is_at_war = no
+		is_imprisoned = no
+	}
+
+	cost = {
+		gold = 300
+		prestige = 200
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_hosted_tournament
+			years = 5
+		}
+		set_variable = { name = tournament_host value = yes }
+		# Prestige for hosting
+		add_prestige = 200
+		# Attract martial artists
+		custom_tooltip = tt_tournament_announced
+		# Trigger tournament event chain
+		trigger_event = {
+			id = murim_combat.7001
+			days = { 10 30 }
+		}
+		# Reputation boost
+		if = {
+			limit = { has_variable = sect_reputation }
+			change_variable = { name = sect_reputation add = 10 }
+		}
+		# All vassals get opinion boost
+		every_vassal = {
+			limit = { is_alive = yes }
+			add_opinion = {
+				target = root
+				modifier = tournament_host_gratitude
+				years = 5
+			}
+		}
+	}
+
+	cooldown = { years = 5 }
+
+	ai_check_interval = 60
+	ai_potential = {
+		gold >= 500
+		prestige >= 800
+	}
+	ai_will_do = {
+		base = 35
+		modifier = {
+			add = 25
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 15
+			has_trait = gregarious
+		}
+		modifier = {
+			add = -20
+			has_trait = shy
+		}
+	}
+}
+
+# Declare Jianghu Bounty
+declare_jianghu_bounty = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_declare_bounty_desc
+	selection_tooltip = decision_declare_bounty_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		gold >= 200
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_relation_rival = root
+		}
+	}
+
+	is_valid = {
+		gold >= 200
+		prestige >= 100
+		NOT = { has_character_modifier = recently_declared_bounty }
+	}
+
+	cost = {
+		gold = 200
+		prestige = 50
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_declared_bounty
+			years = 3
+		}
+		# Pick the rival
+		random_relation = {
+			type = rival
+			save_scope_as = bounty_target
+		}
+		# Set bounty variable
+		set_variable = { name = bounty_active value = yes }
+		# Trigger bounty hunter events
+		trigger_event = {
+			id = murim_jianghu.8001
+			days = { 30 120 }
+		}
+		custom_tooltip = tt_bounty_declared
+		# Reputation effects
+		if = {
+			limit = { has_variable = jianghu_reputation }
+			change_variable = { name = jianghu_reputation add = -5 }
+		}
+	}
+
+	cooldown = { years = 3 }
+
+	ai_check_interval = 36
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 30
+			has_trait = vengeful
+		}
+		modifier = {
+			add = 20
+			has_trait = wrathful
+		}
+		modifier = {
+			add = -30
+			has_trait = forgiving
+		}
+	}
+}
+
+# Recruit Wandering Expert
+recruit_wandering_expert = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_recruit_expert_desc
+	selection_tooltip = decision_recruit_expert_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		prestige_level >= 2
+		NOT = { has_character_modifier = recently_recruited_expert }
+	}
+
+	is_valid = {
+		gold >= 150
+		prestige >= 200
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 150
+		prestige = 100
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_recruited_expert
+			years = 5
+		}
+		# Create a powerful wandering character
+		create_character = {
+			age = { 25 45 }
+			trait = wandering_swordsman
+			faith = root.faith
+			culture = root.culture
+			employer = root
+			save_scope_as = wandering_expert
+		}
+		hidden_effect = {
+			scope:wandering_expert = {
+				# Randomize their specialty
+				random_list = {
+					25 = { add_trait = sword_aptitude_3 }
+					25 = { add_trait = fist_aptitude_3 }
+					25 = { add_trait = palm_aptitude_2 }
+					25 = { add_trait = movement_aptitude_3 }
+				}
+				add_prowess = 10
+				add_martial = 5
+				set_variable = { name = cultivation_rank value = 4 }
+				add_opinion = {
+					target = root
+					modifier = recruited_gratitude
+					years = 10
+				}
+			}
+		}
+		custom_tooltip = tt_wandering_expert_recruited
+	}
+
+	cooldown = { years = 5 }
+
+	ai_check_interval = 60
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = 20
+			is_at_war = no
+		}
+	}
+}
+
+# Seek Ancient Ruins - Explore for techniques and treasures
+seek_ancient_ruins = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_seek_ruins_desc
+	selection_tooltip = decision_seek_ruins_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		OR = {
+			has_trait = adventurer
+			martial >= 15
+			learning >= 15
+		}
+		NOT = { has_character_modifier = exploring_ruins }
+	}
+
+	is_valid = {
+		gold >= 100
+		is_at_war = no
+		is_imprisoned = no
+		is_incapable = no
+		health >= 1
+	}
+
+	cost = {
+		gold = 100
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = exploring_ruins
+			years = 1
+		}
+		# Expedition event chain
+		trigger_event = {
+			id = murim_cultivation.4001
+			days = { 30 90 }
+		}
+		custom_tooltip = tt_expedition_launched
+		# Track exploration count
+		if = {
+			limit = { has_variable = ruins_explored }
+			change_variable = { name = ruins_explored add = 1 }
+		}
+		else = {
+			set_variable = { name = ruins_explored value = 1 }
+		}
+	}
+
+	cooldown = { years = 3 }
+
+	ai_check_interval = 48
+	ai_potential = {
+		martial >= 15
+	}
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = 25
+			has_trait = adventurer
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+		modifier = {
+			add = -15
+			age >= 60
+		}
+	}
+}
+
+# Activate Bloodline Power
+activate_bloodline_power = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_activate_bloodline_desc
+	selection_tooltip = decision_activate_bloodline_tooltip
+	major = yes
+
+	is_shown = {
+		is_ruler = yes
+		OR = {
+			has_trait = ancient_bloodline
+			has_trait = divine_bloodline
+			has_trait = demon_bloodline
+			dynasty = {
+				has_dynasty_modifier = martial_bloodline_legacy
+			}
+		}
+		NOT = { has_character_modifier = bloodline_activated }
+	}
+
+	is_valid = {
+		age >= 16
+		prowess >= 10
+		stress < 80
+		is_incapable = no
+	}
+
+	cost = {
+		prestige = 300
+		piety = 100
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = bloodline_activated
+			years = 50
+		}
+		# Determine bloodline type
+		if = {
+			limit = { has_trait = divine_bloodline }
+			add_prowess = 8
+			add_martial = 5
+			add_character_modifier = {
+				modifier = divine_blood_awakened
+				years = 20
+			}
+			custom_tooltip = tt_divine_bloodline_awakened
+		}
+		else_if = {
+			limit = { has_trait = demon_bloodline }
+			add_prowess = 10
+			add_intrigue = 5
+			add_character_modifier = {
+				modifier = demon_blood_awakened
+				years = 20
+			}
+			stress_impact = {
+				base = 25
+			}
+			custom_tooltip = tt_demon_bloodline_awakened
+		}
+		else_if = {
+			limit = { has_trait = ancient_bloodline }
+			add_prowess = 6
+			add_learning = 5
+			add_character_modifier = {
+				modifier = ancient_blood_awakened
+				years = 20
+			}
+			custom_tooltip = tt_ancient_bloodline_awakened
+		}
+		else = {
+			# Generic bloodline activation
+			add_prowess = 4
+			add_martial = 2
+			custom_tooltip = tt_bloodline_partially_awakened
+		}
+		# Dynasty prestige for awakening
+		add_dynasty_prestige = 200
+		# Trigger follow-up events
+		trigger_event = {
+			id = murim_cultivation.5001
+			days = { 30 60 }
+		}
+	}
+
+	ai_check_interval = 120
+	ai_will_do = {
+		base = 70
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+	}
+}
+
+# Awaken Dormant Potential - For late bloomers
+awaken_dormant_potential = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_awaken_potential_desc
+	selection_tooltip = decision_awaken_potential_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		age >= 25
+		prowess < 12
+		martial < 15
+		NOT = {
+			has_variable = cultivation_rank
+		}
+		NOT = { has_character_modifier = awakening_potential }
+	}
+
+	is_valid = {
+		gold >= 50
+		prestige >= 50
+		is_incapable = no
+		stress < 90
+	}
+
+	cost = {
+		gold = 50
+		prestige = 50
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = awakening_potential
+			years = 2
+		}
+		# Initialize cultivation for late starters
+		set_variable = { name = cultivation_rank value = 0 }
+		set_variable = { name = cultivation_progress value = 10 }
+		# Small boost to get started
+		add_prowess = 2
+		add_martial = 1
+		# Late bloomer event chain
+		random_list = {
+			40 = {
+				desc = tt_potential_average
+				add_trait = qi_refinement
+				custom_tooltip = tt_qi_refinement_started
+			}
+			35 = {
+				desc = tt_potential_good
+				add_trait = qi_refinement
+				add_prowess = 2
+				custom_tooltip = tt_hidden_talent_discovered
+			}
+			20 = {
+				desc = tt_potential_exceptional
+				add_trait = core_formation
+				add_prowess = 5
+				add_martial = 3
+				custom_tooltip = tt_exceptional_talent_awakened
+			}
+			5 = {
+				desc = tt_potential_prodigy
+				add_trait = nascent_soul
+				add_prowess = 8
+				add_martial = 5
+				add_prestige = 500
+				custom_tooltip = tt_once_in_generation_prodigy
+			}
+		}
+	}
+
+	ai_check_interval = 36
+	ai_will_do = {
+		base = 60
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -20
+			has_trait = content
+		}
+		modifier = {
+			add = 15
+			age >= 30
+		}
+	}
+}
+
+##############################
+# HEAVENLY TRIBULATION
+##############################
+
+# Challenge Heavenly Tribulation - Ultimate test
+challenge_heavenly_tribulation = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_tribulation_desc
+	selection_tooltip = decision_tribulation_tooltip
+	major = yes
+
+	is_shown = {
+		OR = {
+			has_trait = void_realm
+			AND = {
+				has_variable = cultivation_rank
+				var:cultivation_rank >= 7
+			}
+		}
+		NOT = { has_character_modifier = survived_tribulation }
+	}
+
+	is_valid = {
+		martial >= 40
+		prowess >= 40
+		stress < 30
+		health >= 3
+		is_incapable = no
+		custom_description = {
+			text = "decision_tribulation_no_qi_deviation"
+			NOT = { has_trait = qi_deviation }
+		}
+	}
+
+	cost = {
+		prestige = 1000
+		piety = 500
+	}
+
+	effect = {
+		custom_tooltip = tt_heavenly_tribulation_begins
+		# This is the ultimate test - high risk, high reward
+		random_list = {
+			20 = {
+				desc = tt_tribulation_transcend
+				modifier = {
+					add = 10
+					has_variable = cultivation_rank
+					var:cultivation_rank >= 8
+				}
+				modifier = {
+					add = 5
+					prowess >= 50
+				}
+				# Full transcendence
+				add_character_modifier = {
+					modifier = heavenly_transcendence
+					years = 500
+				}
+				add_prowess = 20
+				add_martial = 10
+				if = {
+					limit = { has_variable = cultivation_rank }
+					set_variable = { name = cultivation_rank value = 10 }
+				}
+				add_prestige = 5000
+				add_dynasty_prestige = 2000
+				custom_tooltip = tt_achieved_transcendence
+			}
+			30 = {
+				desc = tt_tribulation_survive
+				# Survive but not transcend
+				add_character_modifier = {
+					modifier = survived_tribulation
+					years = 100
+				}
+				add_prowess = 10
+				add_martial = 5
+				add_prestige = 1000
+				custom_tooltip = tt_survived_tribulation
+			}
+			30 = {
+				desc = tt_tribulation_wounded
+				# Severely damaged
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = tribulation_scars
+					years = 20
+				}
+				stress_impact = {
+					base = 50
+				}
+				# Cultivation regression
+				if = {
+					limit = { has_variable = cultivation_rank }
+					change_variable = { name = cultivation_rank add = -2 }
+				}
+				custom_tooltip = tt_tribulation_heavily_wounded
+			}
+			20 = {
+				desc = tt_tribulation_death
+				modifier = {
+					add = -10
+					prowess >= 50
+				}
+				modifier = {
+					add = -5
+					has_trait = brave
+				}
+				# Death by heavenly lightning
+				death = {
+					death_reason = death_tribulation
+				}
+			}
+		}
+		# Notify the world
+		hidden_effect = {
+			every_ruler = {
+				limit = {
+					is_alive = yes
+					OR = {
+						has_variable = cultivation_rank
+						martial >= 20
+					}
+				}
+				trigger_event = {
+					id = murim_celestial.9001
+					days = { 1 7 }
+				}
+			}
+		}
+	}
+
+	cooldown = { years = 50 }
+
+	ai_check_interval = 120
+	ai_potential = {
+		prowess >= 45
+	}
+	ai_will_do = {
+		base = 15
+		modifier = {
+			add = 25
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+		modifier = {
+			add = 10
+			age >= 80
+		}
+	}
+}
+
+##############################
+# DEMONIC PATH DECISIONS
+##############################
+
+# Enter Demon Path - Dark cultivation
+enter_demon_path = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_demon_path_desc
+	selection_tooltip = decision_demon_path_tooltip
+	major = yes
+
+	is_shown = {
+		is_ruler = yes
+		NOT = { has_trait = demon_cultivator }
+		NOT = { has_trait = righteous_cultivator }
+		OR = {
+			has_trait = sadistic
+			has_trait = callous
+			has_trait = vengeful
+			intrigue >= 20
+		}
+	}
+
+	is_valid = {
+		prowess >= 10
+		intrigue >= 12
+		custom_description = {
+			text = "decision_demon_path_no_righteous"
+			NOT = { has_trait = righteous_cultivator }
+		}
+	}
+
+	cost = {
+		piety = 200
+	}
+
+	effect = {
+		add_trait = demon_cultivator
+		add_prowess = 5
+		add_intrigue = 3
+		stress_impact = {
+			base = -20
+			sadistic = -10
+			compassionate = 30
+		}
+		# Set dark cultivation path
+		set_variable = { name = dark_cultivation value = yes }
+		if = {
+			limit = { NOT = { has_variable = cultivation_rank } }
+			set_variable = { name = cultivation_rank value = 1 }
+		}
+		# Relations change
+		every_relation = {
+			type = friend
+			add_opinion = {
+				target = root
+				modifier = shocked_by_demon_path
+				years = 10
+			}
+		}
+		every_relation = {
+			type = rival
+			add_opinion = {
+				target = root
+				modifier = feared_demon_cultivator
+				years = 10
+			}
+		}
+		# Trigger demonic awakening event
+		trigger_event = {
+			id = murim_cultivation.6001
+			days = { 7 30 }
+		}
+		custom_tooltip = tt_demon_path_embraced
+	}
+
+	ai_check_interval = 120
+	ai_potential = {
+		has_trait = sadistic
+	}
+	ai_will_do = {
+		base = 10
+		modifier = {
+			add = 30
+			has_trait = sadistic
+		}
+		modifier = {
+			add = 20
+			has_trait = callous
+		}
+		modifier = {
+			add = -50
+			has_trait = compassionate
+		}
+	}
+}
+
+# Establish Sect Trading Post - Economic decision
+establish_sect_trading_post = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_trading_post_desc
+	selection_tooltip = decision_trading_post_tooltip
+
+	is_shown = {
+		is_ruler = yes
+		realm_size >= 3
+		NOT = { has_variable = has_sect_trading_post }
+	}
+
+	is_valid = {
+		gold >= 400
+		stewardship >= 8
+		is_at_war = no
+	}
+
+	cost = {
+		gold = 400
+	}
+
+	effect = {
+		set_variable = { name = has_sect_trading_post value = yes }
+		add_character_modifier = {
+			modifier = sect_trading_post_income
+			years = 100
+		}
+		# Resource generation
+		if = {
+			limit = { has_variable = sect_reputation }
+			change_variable = { name = sect_reputation add = 5 }
+		}
+		# Attract merchants
+		hidden_effect = {
+			trigger_event = {
+				id = murim_jianghu.9001
+				days = { 60 180 }
+			}
+		}
+		custom_tooltip = tt_trading_post_established
+	}
+
+	ai_check_interval = 120
+	ai_will_do = {
+		base = 40
+		modifier = {
+			add = 20
+			gold >= 600
+		}
+		modifier = {
+			add = 15
+			has_trait = greedy
+		}
+	}
+}
+
+# Purge Demonic Qi - Cleansing decision for those who want redemption
+purge_demonic_qi = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_purge_demonic_desc
+	selection_tooltip = decision_purge_demonic_tooltip
+
+	is_shown = {
+		OR = {
+			has_trait = demon_cultivator
+			has_trait = qi_deviation
+			has_variable = dark_cultivation
+		}
+		NOT = { has_character_modifier = recently_purged_qi }
+	}
+
+	is_valid = {
+		piety >= 200
+		learning >= 10
+		stress < 70
+	}
+
+	cost = {
+		piety = 200
+		prestige = 100
+	}
+
+	effect = {
+		add_character_modifier = {
+			modifier = recently_purged_qi
+			years = 5
+		}
+		stress_impact = {
+			base = 30
+		}
+		random_list = {
+			40 = {
+				desc = tt_purge_success
+				if = {
+					limit = { has_trait = demon_cultivator }
+					remove_trait = demon_cultivator
+				}
+				if = {
+					limit = { has_trait = qi_deviation }
+					remove_trait = qi_deviation
+				}
+				if = {
+					limit = { has_variable = dark_cultivation }
+					remove_variable = dark_cultivation
+				}
+				add_piety = 200
+				custom_tooltip = tt_demonic_qi_purged
+			}
+			35 = {
+				desc = tt_purge_partial
+				if = {
+					limit = { has_trait = qi_deviation }
+					remove_trait = qi_deviation
+				}
+				add_piety = 50
+				custom_tooltip = tt_partial_purge
+			}
+			25 = {
+				desc = tt_purge_backlash
+				add_character_modifier = {
+					modifier = purge_backlash
+					years = 2
+				}
+				add_prowess = -3
+				custom_tooltip = tt_purge_backlash_suffered
+			}
+		}
+	}
+
+	cooldown = { years = 5 }
+
+	ai_check_interval = 48
+	ai_will_do = {
+		base = 30
+		modifier = {
+			add = 30
+			has_trait = compassionate
+		}
+		modifier = {
+			add = 20
+			has_trait = zealous
+		}
+		modifier = {
+			add = -40
+			has_trait = sadistic
+		}
+	}
 }
