@@ -7,6 +7,8 @@
 #         No political information shown. No feudal rank displayed.
 #         Pure martial world data: rankings, clans, profile, events, tournaments.
 # GENDER: No gender restrictions on access.
+# POLISH FIX HB#57: Fixed murim_ranking.0001 -> murim_rank.0001 namespace
+# POLISH FIX HB#57: Added tang_clan_disciple to all 9-clan checks
 
 # ============================================================
 # OPEN THE MURIM LEDGER
@@ -19,7 +21,7 @@ open_murim_ledger_decision = {
 	# "Consult the records of the martial world — rankings, clans, 
 	#  your own martial profile, recent events, and upcoming tournaments.
 	#  The Murim Ledger is maintained by the information networks of 
-	#  the six great clans and updated by wandering scribes who track 
+	#  the nine great clans and updated by wandering scribes who track 
 	#  the deeds of martial artists across the world."
 	
 	selection_tooltip = open_murim_ledger_decision_tooltip
@@ -108,8 +110,9 @@ murim_challenge_ranked_decision = {
 	}
 	
 	effect = {
+		# FIXED: Uses murim_rank namespace (not murim_ranking)
 		trigger_event = {
-			id = murim_ranking.0001  # Ranking challenge event
+			id = murim_rank.0001  # Ranking challenge event
 		}
 		add_character_modifier = {
 			modifier = murim_recent_challenge_cooldown
@@ -138,113 +141,131 @@ murim_challenge_ranked_decision = {
 # Quick-access: Request clan membership
 murim_request_clan_membership_decision = {
 	title = murim_request_clan_membership_decision_title
-	# "Request to Join a Martial Clan"
+	# "Seek Clan Membership"
 	
 	desc = murim_request_clan_membership_decision_desc
-	# "Approach one of the six great clans and request admission.
-	#  Each clan has different standards and preferences. Your 
-	#  chances depend on your skills, personality, and the clan's 
-	#  current needs."
+	# "Approach one of the nine great clans to request membership.
+	#  Your prowess, reputation, and alignment (orthodox or unorthodox)
+	#  will determine which clans are willing to accept you."
 	
-	ai_check_interval = 60  # AI checks every 5 years
+	ai_check_interval = 60
 	
 	is_shown = {
 		murim_is_martial_artist_trigger = yes
-		# Must not already be in a clan
-		NOT = { murim_is_any_clan_member_trigger = yes }
+		# Must not already be in a clan (check all 9)
+		NOT = {
+			OR = {
+				has_trait = mount_hua_disciple
+				has_trait = wudang_disciple
+				has_trait = shaolin_monk
+				has_trait = heavenly_demon_disciple
+				has_trait = beggar_sect_member
+				has_trait = iron_fist_disciple
+				has_trait = poison_flower_disciple
+				has_trait = phantom_blade_disciple
+				has_trait = tang_clan_disciple
+			}
+		}
 	}
 	
 	is_valid = {
 		is_alive = yes
 		is_imprisoned = no
-		age >= 12  # Minimum age to request membership
+		prowess >= 8
 	}
 	
 	cost = {
-		# No cost — requesting is free. Getting accepted is another matter.
+		prestige = 100
+	}
+	
+	cooldown = {
+		years = 3
 	}
 	
 	effect = {
+		# Fires recruitment event chain from murim_clan_recruitment_events.txt
 		trigger_event = {
-			id = murim_recruit.0020  # Normal mode recruitment — self-initiated
+			id = murim_clan_recruit.0001
+			days = { 5 15 }
 		}
 	}
 	
 	ai_potential = {
-		prowess >= 8
-		NOT = { has_trait = content }
+		prowess >= 10
+		OR = {
+			has_trait = ambitious
+			has_trait = gregarious
+		}
 	}
 	
 	ai_will_do = {
-		base = 10
-		modifier = {
-			add = 15
-			has_trait = ambitious
-		}
+		base = 15
+		modifier = { add = 15 has_trait = ambitious }
+		modifier = { add = 10 prowess >= 15 }
+		modifier = { add = -10 has_trait = shy }
+		modifier = { add = -20 has_trait = content }
+		# Orthodox clans more popular in China/Goryeo
 		modifier = {
 			add = 10
-			has_trait = gregarious
-		}
-		modifier = {
-			add = -15
-			has_trait = shy
+			OR = {
+				culture = { has_cultural_pillar = heritage_chinese }
+				culture = { has_cultural_pillar = heritage_korean }
+			}
 		}
 	}
 }
 
-# Quick-access: Begin martial training
-murim_begin_training_decision = {
-	title = murim_begin_training_decision_title
-	# "Train Your Martial Arts"
-	
-	desc = murim_begin_training_decision_desc
-	# "Dedicate time to improving your martial skills through 
-	#  rigorous training. Your progress depends on your current 
-	#  tier, available resources, and whether you have a master."
-	
-	ai_check_interval = 12  # AI checks yearly
-	
+# Quick-access: Enter martial seclusion for cultivation
+murim_enter_seclusion_decision = {
+	title = murim_enter_seclusion_decision_title
+	desc = murim_enter_seclusion_decision_desc
+
+	ai_check_interval = 60
+
 	is_shown = {
 		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_modifier = cultivation_seclusion }
 	}
-	
+
 	is_valid = {
 		is_alive = yes
 		is_imprisoned = no
-		NOT = { has_character_modifier = murim_currently_training }
+		is_at_war = no
+		NOT = { has_character_modifier = cultivation_seclusion }
 	}
-	
+
 	cost = {
-		# Training costs nothing directly — the time investment is the cost
+		piety = 50
 	}
-	
+
 	cooldown = {
-		days = 180  # Can initiate training every 6 months
+		years = 3
 	}
-	
+
 	effect = {
-		trigger_event = {
-			id = murim_training.0001  # Training event chain
-		}
 		add_character_modifier = {
-			modifier = murim_currently_training
-			months = 6
+			modifier = cultivation_seclusion
+			years = 1
+		}
+		trigger_event = {
+			id = murim_cultivation.0010
+			days = { 30 90 }
+		}
+		create_character_memory = {
+			type = murim_seclusion_memory
 		}
 	}
-	
+
 	ai_potential = {
-		prowess >= 4
+		learning >= 10
+		has_trait = diligent
 	}
-	
+
 	ai_will_do = {
-		base = 20
-		modifier = {
-			add = 15
-			has_trait = diligent
-		}
-		modifier = {
-			add = -20
-			has_trait = lazy
-		}
+		base = 10
+		modifier = { add = 15 learning >= 15 }
+		modifier = { add = 10 has_trait = patient }
+		modifier = { add = -20 has_trait = impatient }
+		modifier = { add = -15 has_trait = gregarious }
 	}
 }
