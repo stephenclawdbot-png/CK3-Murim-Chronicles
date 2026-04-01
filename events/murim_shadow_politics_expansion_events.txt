@@ -1,0 +1,589 @@
+namespace = murim_shadow_exp
+
+# Shadow Politics Expansion Events
+# Heavenly Demon puppet emperor system, court infiltration
+# Intelligence networks, blackmail, hidden alliances
+
+###################################
+# Install Puppet Emperor
+# Heavenly Demon places figurehead on throne
+###################################
+murim_shadow_exp.0001 = {
+	type = character_event
+	title = murim_shadow_exp.0001.t
+	desc = murim_shadow_exp.0001.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = trait_heavenly_demon_sect
+		has_variable = murim_clan_leader
+		intrigue >= 16
+		NOT = { has_global_variable = murim_puppet_emperor_installed }
+		NOT = { has_character_flag = puppet_emperor_attempt }
+		any_living_character = {
+			has_title = e_china_emperor
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = puppet_emperor_attempt
+			days = 3650
+		}
+		random_living_character = {
+			limit = { has_title = e_china_emperor }
+			save_scope_as = current_emperor
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0001.a
+		# Assassinate emperor and install puppet
+		duel = {
+			skill = intrigue
+			target = scope:current_emperor
+			55 = {
+				comparator = scope:duel_value
+				desc = murim_shadow_exp.0001.success
+				scope:current_emperor = {
+					death = { death_reason = death_murim_shadow_assassination }
+				}
+				set_global_variable = murim_puppet_emperor_installed
+				set_variable = murim_shadow_puppeteer
+				# Create puppet emperor
+				create_character = {
+					location = root.capital_province
+					template = murim_puppet_emperor_template
+					save_scope_as = puppet_emperor
+				}
+				scope:puppet_emperor = {
+					add_trait = murim_puppet_ruler
+					add_character_modifier = {
+						modifier = murim_controlled_by_demon_sect
+						years = 50
+					}
+				}
+				add_prestige = 1000
+				add_character_modifier = {
+					modifier = murim_shadow_emperor_maker
+					years = 20
+				}
+			}
+			45 = {
+				comparator = scope:duel_value
+				desc = murim_shadow_exp.0001.failure
+				# Plot discovered
+				scope:current_emperor = {
+					add_opinion = {
+						target = root
+						modifier = murim_assassination_plot_discovered
+						opinion = -100
+					}
+				}
+				add_prestige = -500
+				imprison = { target = root type = dungeon }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0001.b
+		# Corrupt emperor through bribery instead
+		add_gold = -500
+		scope:current_emperor = {
+			add_character_modifier = {
+				modifier = murim_demon_sect_corrupted
+				years = 10
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_bribed_by_demons
+				opinion = 30
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Court Spy Network Expansion
+###################################
+murim_shadow_exp.0002 = {
+	type = character_event
+	title = murim_shadow_exp.0002.t
+	desc = murim_shadow_exp.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		has_variable = murim_shadow_puppeteer
+		NOT = { has_character_flag = spy_network_expanded }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = spy_network_expanded
+			days = 730
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0002.a
+		# Plant spies in every major clan
+		add_gold = -300
+		add_character_modifier = {
+			modifier = murim_shadow_spy_network
+			years = 10
+		}
+		every_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { has_trait = trait_heavenly_demon_sect }
+			}
+			add_character_flag = {
+				flag = murim_demon_spy_planted
+				days = 3650
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0002.b
+		# Focus on controlling trade routes
+		add_gold = 200
+		add_character_modifier = {
+			modifier = murim_shadow_trade_control
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+###################################
+# Blackmail Orthodox Leader
+###################################
+murim_shadow_exp.0003 = {
+	type = character_event
+	title = murim_shadow_exp.0003.t
+	desc = murim_shadow_exp.0003.desc
+	theme = intrigue
+	
+	trigger = {
+		has_variable = murim_shadow_puppeteer
+		any_living_character = {
+			has_variable = murim_clan_leader
+			OR = {
+				has_trait = trait_mount_hua_sect
+				has_trait = trait_shaolin_temple
+				has_trait = trait_wudang_sect
+			}
+			has_secret = yes
+		}
+		NOT = { has_character_flag = blackmail_attempt_cooldown }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = blackmail_attempt_cooldown
+			days = 1095
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				OR = {
+					has_trait = trait_mount_hua_sect
+					has_trait = trait_shaolin_temple
+					has_trait = trait_wudang_sect
+				}
+			}
+			save_scope_as = blackmail_target
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0003.a
+		# Use the secret to force compliance
+		scope:blackmail_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_blackmailed_opinion
+				opinion = -80
+			}
+			add_character_modifier = {
+				modifier = murim_under_demon_blackmail
+				years = 5
+			}
+		}
+		add_intrigue = 2
+		add_prestige = 200
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0003.b
+		# Offer alliance instead of blackmail
+		scope:blackmail_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_secret_alliance_opinion
+				opinion = 15
+			}
+		}
+		add_diplomacy = 2
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Imperial Decree Manipulation
+# Use puppet emperor to issue decrees against enemies
+###################################
+murim_shadow_exp.0004 = {
+	type = character_event
+	title = murim_shadow_exp.0004.t
+	desc = murim_shadow_exp.0004.desc
+	theme = intrigue
+	
+	trigger = {
+		has_global_variable = murim_puppet_emperor_installed
+		has_variable = murim_shadow_puppeteer
+		NOT = { has_character_flag = decree_manipulation_cooldown }
+		any_living_character = {
+			has_variable = murim_clan_leader
+			NOT = { has_trait = trait_heavenly_demon_sect }
+			opinion = {
+				target = root
+				value < -20
+			}
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = decree_manipulation_cooldown
+			days = 730
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { has_trait = trait_heavenly_demon_sect }
+				opinion = {
+					target = root
+					value < -20
+				}
+			}
+			save_scope_as = decree_target
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0004.a
+		# Issue imperial ban on target clan
+		scope:decree_target = {
+			add_character_modifier = {
+				modifier = murim_imperially_banned_clan
+				years = 5
+			}
+			add_prestige = -500
+		}
+		add_prestige = 300
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0004.b
+		# Issue tax levy on all clans
+		every_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { has_trait = trait_heavenly_demon_sect }
+			}
+			add_gold = -50
+		}
+		add_gold = 300
+		ai_chance = { base = 30 }
+	}
+}
+
+###################################
+# Orthodox Alliance Discovers Shadow Control
+###################################
+murim_shadow_exp.0005 = {
+	type = character_event
+	title = murim_shadow_exp.0005.t
+	desc = murim_shadow_exp.0005.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_puppet_emperor_installed
+		OR = {
+			has_trait = trait_mount_hua_sect
+			has_trait = trait_shaolin_temple
+			has_trait = trait_wudang_sect
+		}
+		has_variable = murim_clan_leader
+		intrigue >= 14
+		NOT = { has_character_flag = discovered_shadow_control }
+	}
+	
+	immediate = {
+		add_character_flag = discovered_shadow_control
+		random_living_character = {
+			limit = {
+				has_variable = murim_shadow_puppeteer
+			}
+			save_scope_as = demon_puppeteer
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0005.a
+		# Rally the orthodox clans to war
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_shadow_truth_revealed
+			years = 5
+		}
+		scope:demon_puppeteer = {
+			add_prestige = -300
+			add_character_modifier = {
+				modifier = murim_shadow_exposed
+				years = 5
+			}
+		}
+		# All orthodox clans join against demon sect
+		every_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				OR = {
+					has_trait = trait_mount_hua_sect
+					has_trait = trait_shaolin_temple
+					has_trait = trait_wudang_sect
+					has_trait = trait_iron_fist_gate
+				}
+			}
+			add_opinion = {
+				target = scope:demon_puppeteer
+				modifier = murim_demon_puppet_master_revealed
+				opinion = -100
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0005.b
+		# Keep it secret - use it for your own advantage
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = murim_shadow_knowledge_leverage
+			years = 10
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Demon Sect Internal Power Struggle
+# Shadow elders challenge the puppeteer
+###################################
+murim_shadow_exp.0006 = {
+	type = character_event
+	title = murim_shadow_exp.0006.t
+	desc = murim_shadow_exp.0006.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = trait_heavenly_demon_sect
+		has_variable = murim_shadow_puppeteer
+		any_living_character = {
+			has_trait = trait_heavenly_demon_sect
+			NOT = { this = root }
+			intrigue >= 14
+		}
+		NOT = { has_character_flag = demon_internal_struggle }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = demon_internal_struggle
+			days = 1825
+		}
+		random_living_character = {
+			limit = {
+				has_trait = trait_heavenly_demon_sect
+				NOT = { this = root }
+				intrigue >= 14
+			}
+			save_scope_as = rival_elder
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0006.a
+		# Eliminate the rival before they strike
+		duel = {
+			skill = intrigue
+			target = scope:rival_elder
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_shadow_exp.0006.purge_success
+				scope:rival_elder = {
+					death = { death_reason = death_murim_internal_purge }
+				}
+				add_dread = 30
+				add_tyranny = 10
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_shadow_exp.0006.purge_failed
+				# Rival escapes and exposes you
+				scope:rival_elder = {
+					add_character_modifier = {
+						modifier = murim_demon_sect_defector
+						years = 10
+					}
+				}
+				add_prestige = -200
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0006.b
+		# Offer them a share of power
+		scope:rival_elder = {
+			add_opinion = {
+				target = root
+				modifier = murim_shared_power_opinion
+				opinion = 30
+			}
+			add_character_modifier = {
+				modifier = murim_demon_co_ruler
+				years = 10
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Shadow Intelligence Report
+# Periodic intelligence gathering on all clans
+###################################
+murim_shadow_exp.0007 = {
+	type = character_event
+	title = murim_shadow_exp.0007.t
+	desc = murim_shadow_exp.0007.desc
+	theme = intrigue
+	
+	trigger = {
+		has_variable = murim_shadow_puppeteer
+		has_character_modifier = murim_shadow_spy_network
+		NOT = { has_character_flag = intelligence_report_cooldown }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = intelligence_report_cooldown
+			days = 365
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0007.a
+		# Review intelligence on orthodox clans
+		add_intrigue = 1
+		random_list = {
+			40 = {
+				# Discover a secret weakness
+				add_character_modifier = {
+					modifier = murim_intelligence_advantage
+					years = 2
+				}
+				add_prestige = 100
+			}
+			35 = {
+				# Routine report - nothing major
+				add_prestige = 30
+			}
+			25 = {
+				# Spy was caught - network compromised
+				remove_character_modifier = murim_shadow_spy_network
+				add_prestige = -100
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0007.b
+		# Focus intelligence on the emperor's court
+		add_gold = 100
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Puppet Emperor Rebellion
+# The puppet tries to break free
+###################################
+murim_shadow_exp.0008 = {
+	type = character_event
+	title = murim_shadow_exp.0008.t
+	desc = murim_shadow_exp.0008.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_puppet_emperor_installed
+		has_variable = murim_shadow_puppeteer
+		NOT = { has_character_flag = puppet_rebellion_handled }
+		# Triggers after some time
+		has_character_modifier = murim_shadow_emperor_maker
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = puppet_rebellion_handled
+			days = 3650
+		}
+	}
+	
+	option = {
+		name = murim_shadow_exp.0008.a
+		# Crush the rebellion - remind the puppet who holds the strings
+		duel = {
+			skill = intrigue
+			70 = {
+				desc = murim_shadow_exp.0008.crushed
+				add_dread = 20
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_shadow_iron_grip
+					years = 10
+				}
+			}
+			30 = {
+				desc = murim_shadow_exp.0008.escaped
+				# Puppet escapes with loyalists
+				remove_global_variable = murim_puppet_emperor_installed
+				add_prestige = -300
+				add_character_modifier = {
+					modifier = murim_shadow_puppet_lost
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_shadow_exp.0008.b
+		# Replace the puppet with a new one
+		add_gold = -200
+		add_intrigue = 2
+		ai_chance = { base = 30 }
+	}
+}

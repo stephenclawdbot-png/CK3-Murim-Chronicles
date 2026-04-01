@@ -1,0 +1,576 @@
+namespace = murim_iron_fist_exp2
+
+# Iron Fist Gate Expansion 2 Events
+# Deep dive into body cultivation, iron body techniques, gate hierarchy
+# Mountain fortress defense, smithing arts, endurance trials
+
+###################################
+# Iron Body Perfection Trial
+###################################
+murim_iron_fist_exp2.0001 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0001.t
+	desc = murim_iron_fist_exp2.0001.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		prowess >= 14
+		age >= 20
+		NOT = { has_trait = murim_iron_body_perfected }
+		NOT = { has_character_flag = iron_body_trial_attempted }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = iron_body_trial_attempted
+			days = 1095
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0001.a
+		# Endure the Thousand Hammer Tempering
+		random_list = {
+			25 = {
+				# Perfect iron body achieved
+				add_trait = murim_iron_body_perfected
+				add_prowess = 6
+				add_character_modifier = {
+					modifier = murim_iron_body_perfection
+					years = 20
+				}
+				add_prestige = 400
+			}
+			40 = {
+				# Partial tempering - stronger but incomplete
+				add_prowess = 3
+				add_character_modifier = {
+					modifier = murim_iron_body_partial
+					years = 10
+				}
+				add_trait = scarred
+			}
+			35 = {
+				# Body rejected the tempering - severe injury
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_iron_body_rejection
+					years = 5
+				}
+				add_stress = 50
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0001.b
+		# Train conventionally instead
+		add_prowess = 1
+		ai_chance = { base = 30 }
+	}
+}
+
+###################################
+# Mountain Fortress Defense
+# Gate defends against invaders
+###################################
+murim_iron_fist_exp2.0002 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0002.t
+	desc = murim_iron_fist_exp2.0002.desc
+	theme = war
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		has_variable = murim_clan_leader
+		any_living_character = {
+			has_variable = murim_clan_leader
+			NOT = { has_trait = trait_iron_fist_gate }
+			opinion = {
+				target = root
+				value < -30
+			}
+		}
+		NOT = { has_character_flag = fortress_defense_cooldown }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = fortress_defense_cooldown
+			days = 1825
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { has_trait = trait_iron_fist_gate }
+				opinion = {
+					target = root
+					value < -30
+				}
+			}
+			save_scope_as = attacking_clan
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0002.a
+		# Hold the mountain pass with iron discipline
+		duel = {
+			skill = prowess
+			target = scope:attacking_clan
+			60 = {
+				comparator = scope:duel_value
+				desc = murim_iron_fist_exp2.0002.success
+				# Fortress holds - attackers repelled
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_iron_fortress_victory
+					years = 5
+				}
+				scope:attacking_clan = {
+					add_prestige = -300
+					add_opinion = {
+						target = root
+						modifier = murim_defeated_at_gate
+						opinion = -20
+					}
+				}
+			}
+			40 = {
+				comparator = scope:duel_value
+				desc = murim_iron_fist_exp2.0002.failure
+				# Fortress breached
+				add_prestige = -200
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_iron_fortress_breached
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0002.b
+		# Negotiate rather than fight
+		scope:attacking_clan = {
+			add_opinion = {
+				target = root
+				modifier = murim_iron_fist_negotiated
+				opinion = 15
+			}
+		}
+		add_gold = -100
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Iron Fist Smithing Arts
+# Forging weapons as meditation
+###################################
+murim_iron_fist_exp2.0003 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0003.t
+	desc = murim_iron_fist_exp2.0003.desc
+	theme = education
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		age >= 16
+		NOT = { has_character_flag = smithing_arts_training }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = smithing_arts_training
+			days = 730
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0003.a
+		# Forge a personal weapon
+		random_list = {
+			30 = {
+				# Masterwork created
+				add_character_modifier = {
+					modifier = murim_iron_fist_mastersmith
+					years = 10
+				}
+				add_prowess = 3
+				add_prestige = 200
+			}
+			50 = {
+				# Decent weapon forged
+				add_character_modifier = {
+					modifier = murim_iron_fist_smith
+					years = 5
+				}
+				add_prowess = 1
+			}
+			20 = {
+				# Burned during forging
+				add_trait = scarred
+				add_stress = 20
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0003.b
+		# Focus on body cultivation instead
+		add_prowess = 2
+		ai_chance = { base = 30 }
+	}
+}
+
+###################################
+# Iron Fist Gate Hierarchy Challenge
+# Disciple challenges for rank within gate
+###################################
+murim_iron_fist_exp2.0004 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0004.t
+	desc = murim_iron_fist_exp2.0004.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		prowess >= 12
+		NOT = { has_variable = murim_clan_leader }
+		NOT = { has_character_flag = gate_rank_challenge }
+		any_living_character = {
+			has_trait = trait_iron_fist_gate
+			has_variable = murim_clan_elder
+			prowess < root.prowess
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = gate_rank_challenge
+			days = 730
+		}
+		random_living_character = {
+			limit = {
+				has_trait = trait_iron_fist_gate
+				has_variable = murim_clan_elder
+				prowess < root.prowess
+			}
+			save_scope_as = gate_elder_target
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0004.a
+		# Challenge the elder for position
+		duel = {
+			skill = prowess
+			target = scope:gate_elder_target
+			55 = {
+				comparator = scope:duel_value
+				desc = murim_iron_fist_exp2.0004.success
+				add_prestige = 300
+				set_variable = murim_clan_elder
+				scope:gate_elder_target = {
+					remove_variable = murim_clan_elder
+					add_stress = 30
+				}
+			}
+			45 = {
+				comparator = scope:duel_value
+				desc = murim_iron_fist_exp2.0004.failure
+				add_trait = wounded_1
+				add_prestige = -100
+				scope:gate_elder_target = {
+					add_prestige = 150
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0004.b
+		# Wait for the right moment
+		add_character_modifier = {
+			modifier = murim_iron_fist_patient_wait
+			years = 2
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Endurance March Training
+# Cross-mountain training march
+###################################
+murim_iron_fist_exp2.0005 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0005.t
+	desc = murim_iron_fist_exp2.0005.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		age >= 14
+		age < 30
+		NOT = { has_character_flag = endurance_march_done }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = endurance_march_done
+			days = 1095
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0005.a
+		# Complete the Three Peaks March carrying iron weights
+		random_list = {
+			35 = {
+				add_prowess = 4
+				add_character_modifier = {
+					modifier = murim_three_peaks_conqueror
+					years = 10
+				}
+				add_prestige = 150
+			}
+			40 = {
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = murim_endurance_trained
+					years = 5
+				}
+			}
+			25 = {
+				# Collapsed during march
+				add_trait = wounded_1
+				add_stress = 20
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0005.b
+		add_prowess = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Iron Fist Gate vs Heavenly Demon Confrontation
+###################################
+murim_iron_fist_exp2.0006 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0006.t
+	desc = murim_iron_fist_exp2.0006.desc
+	theme = war
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		has_variable = murim_clan_leader
+		any_living_character = {
+			has_trait = trait_heavenly_demon_sect
+			has_variable = murim_clan_leader
+		}
+		NOT = { has_character_flag = iron_demon_confrontation }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = iron_demon_confrontation
+			days = 3650
+		}
+		random_living_character = {
+			limit = {
+				has_trait = trait_heavenly_demon_sect
+				has_variable = murim_clan_leader
+			}
+			save_scope_as = demon_lord
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0006.a
+		# Challenge the Demon Lord directly - iron vs dark qi
+		duel = {
+			skill = prowess
+			target = scope:demon_lord
+			40 = {
+				comparator = scope:duel_value
+				desc = murim_iron_fist_exp2.0006.iron_wins
+				add_prestige = 800
+				add_prowess = 3
+				add_character_modifier = {
+					modifier = murim_iron_defeats_demon
+					years = 10
+				}
+				scope:demon_lord = {
+					add_prestige = -500
+					add_trait = wounded_2
+				}
+			}
+			60 = {
+				comparator = scope:duel_value
+				desc = murim_iron_fist_exp2.0006.demon_wins
+				add_trait = wounded_3
+				add_prestige = -200
+				scope:demon_lord = {
+					add_prestige = 500
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0006.b
+		# Rally orthodox alliance first
+		add_character_modifier = {
+			modifier = murim_iron_fist_rallying_orthodox
+			years = 3
+		}
+		every_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				OR = {
+					has_trait = trait_mount_hua_sect
+					has_trait = trait_shaolin_temple
+					has_trait = trait_wudang_sect
+				}
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_iron_fist_rally_call
+				opinion = 20
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+###################################
+# Iron Fist Gate Initiation Rite
+# New disciples prove their worth
+###################################
+murim_iron_fist_exp2.0007 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0007.t
+	desc = murim_iron_fist_exp2.0007.desc
+	theme = martial
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		age >= 12
+		age < 18
+		NOT = { has_character_flag = iron_fist_initiation_done }
+	}
+	
+	immediate = {
+		add_character_flag = iron_fist_initiation_done
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0007.a
+		# Break 10 stone slabs with bare fists
+		random_list = {
+			40 = {
+				add_prestige = 100
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = murim_iron_fist_initiated
+					years = 5
+				}
+			}
+			35 = {
+				add_prowess = 1
+				add_trait = scarred
+			}
+			25 = {
+				add_trait = wounded_2
+				add_stress = 30
+			}
+		}
+		ai_chance = { base = 90 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0007.b
+		# Ask for an alternative trial
+		add_character_modifier = {
+			modifier = murim_iron_fist_alternative_path
+			years = 3
+		}
+		ai_chance = { base = 10 }
+	}
+}
+
+###################################
+# Iron Fist Gate Master's Retirement
+# Gate Master passes the mantle
+###################################
+murim_iron_fist_exp2.0008 = {
+	type = character_event
+	title = murim_iron_fist_exp2.0008.t
+	desc = murim_iron_fist_exp2.0008.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_trait = trait_iron_fist_gate
+		has_variable = murim_clan_leader
+		age >= 55
+		NOT = { has_character_flag = gate_master_retirement }
+	}
+	
+	immediate = {
+		add_character_flag = gate_master_retirement
+		ordered_living_character = {
+			limit = {
+				has_trait = trait_iron_fist_gate
+				NOT = { this = root }
+				age >= 20
+			}
+			order_by = prowess
+			max = 1
+			save_scope_as = strongest_disciple
+		}
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0008.a
+		# Pass the Iron Seal to the strongest
+		scope:strongest_disciple = {
+			set_variable = murim_clan_leader
+			add_prestige = 500
+			add_character_modifier = {
+				modifier = murim_new_gate_master
+				years = 10
+			}
+		}
+		remove_variable = murim_clan_leader
+		add_character_modifier = {
+			modifier = murim_retired_gate_master
+			years = 30
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_iron_fist_exp2.0008.b
+		# Rule until death - iron will
+		add_stress = 20
+		add_character_modifier = {
+			modifier = murim_iron_will_eternal_master
+			years = 10
+		}
+		ai_chance = { base = 40 }
+	}
+}
