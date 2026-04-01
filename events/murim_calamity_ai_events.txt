@@ -1,0 +1,667 @@
+namespace = murim_calamity_ai
+
+# Great Calamity AI Autonomous Events
+# These events fire autonomously for AI characters during the Great Calamity
+# All clans wage war, betray each other, and die without player input
+# 70-90% kill rate. 1-3 survivors per clan. Player dynasty always survives.
+
+###################################
+# AI Clan War Declaration
+# Fired monthly during calamity for AI clan leaders
+###################################
+murim_calamity_ai.0001 = {
+	type = character_event
+	title = murim_calamity_ai.0001.t
+	desc = murim_calamity_ai.0001.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_variable = murim_clan_leader
+		NOT = { has_trait = murim_calamity_survivor }
+		NOT = { has_character_flag = calamity_war_declared_this_year }
+		any_living_character = {
+			has_variable = murim_clan_leader
+			NOT = { this = root }
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = calamity_war_declared_this_year
+			days = 365
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { this = root }
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			save_scope_as = calamity_war_target
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0001.a
+		# Declare total war on rival clan
+		start_war = {
+			casus_belli = murim_clan_annihilation_cb
+			target = scope:calamity_war_target
+		}
+		add_prestige = -500
+		stress_impact = {
+			ambitious = medium_stress_impact_loss
+			craven = massive_stress_impact_gain
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = -30
+				has_trait = craven
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0001.b
+		# Attempt to fortify and defend
+		add_character_modifier = {
+			modifier = murim_calamity_defensive_stance
+			years = 2
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+###################################
+# AI Clan Betrayal During Calamity
+# Allied clans backstab each other
+###################################
+murim_calamity_ai.0002 = {
+	type = character_event
+	title = murim_calamity_ai.0002.t
+	desc = murim_calamity_ai.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_variable = murim_clan_leader
+		any_ally = {
+			has_variable = murim_clan_leader
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		NOT = { has_character_flag = calamity_betrayal_cooldown }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = calamity_betrayal_cooldown
+			days = 730
+		}
+		random_ally = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			save_scope_as = betrayal_target
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0002.a
+		# Betray the alliance — poison their supplies
+		scope:betrayal_target = {
+			add_character_modifier = {
+				modifier = murim_calamity_poisoned_supplies
+				years = 1
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_calamity_betrayed_opinion
+				opinion = -100
+			}
+		}
+		remove_relation_ally = scope:betrayal_target
+		add_trait = murim_betrayer
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+			modifier = {
+				add = -40
+				has_trait = honest
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0002.b
+		# Hold the alliance — for now
+		add_prestige = 100
+		scope:betrayal_target = {
+			add_opinion = {
+				target = root
+				modifier = murim_calamity_honored_alliance
+				opinion = 20
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 40
+				has_trait = honest
+			}
+		}
+	}
+}
+
+###################################
+# AI Mass Casualty Event
+# Random martial artists die during calamity chaos
+###################################
+murim_calamity_ai.0003 = {
+	type = character_event
+	title = murim_calamity_ai.0003.t
+	desc = murim_calamity_ai.0003.desc
+	theme = death
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		OR = {
+			has_trait = murim_martial_artist
+			has_variable = murim_clan_member
+		}
+		NOT = { has_trait = murim_calamity_survivor }
+		NOT = { is_ai = no } # Player protected
+		NOT = { has_character_flag = calamity_death_check_done }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = calamity_death_check_done
+			days = 180
+		}
+	}
+	
+	# 70-90% chance of death based on cultivation level
+	option = {
+		name = murim_calamity_ai.0003.a
+		# Die in the chaos
+		random_list = {
+			70 = {
+				modifier = {
+					add = 10
+					has_trait = murim_rank_unranked
+				}
+				modifier = {
+					add = -20
+					has_trait = murim_rank_peak_master
+				}
+				modifier = {
+					add = -30
+					has_trait = murim_rank_transcendent
+				}
+				death = {
+					death_reason = death_murim_calamity
+				}
+			}
+			20 = {
+				# Severely wounded but alive
+				add_trait = wounded_3
+				add_trait = murim_calamity_survivor
+				add_character_modifier = {
+					modifier = murim_calamity_broken_meridians
+					years = 10
+				}
+			}
+			10 = {
+				# Emerged stronger
+				add_trait = murim_calamity_survivor
+				add_trait = murim_calamity_witness
+				add_prowess = 4
+				add_prestige = 500
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+###################################
+# Emperor Falls During Calamity
+# The puppet emperor is overthrown/killed
+###################################
+murim_calamity_ai.0004 = {
+	type = character_event
+	title = murim_calamity_ai.0004.t
+	desc = murim_calamity_ai.0004.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_title = e_china_emperor
+		NOT = { has_character_flag = calamity_emperor_fallen }
+	}
+	
+	immediate = {
+		add_character_flag = calamity_emperor_fallen
+		every_vassal = {
+			limit = { has_variable = murim_clan_leader }
+			save_scope_as = rebellious_clan
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0004.a
+		# The throne crumbles — emperor killed by rebels
+		random_list = {
+			60 = {
+				death = {
+					death_reason = death_murim_calamity_regicide
+				}
+			}
+			40 = {
+				# Flees into exile
+				add_trait = murim_calamity_exiled_emperor
+				add_character_modifier = {
+					modifier = murim_calamity_fallen_throne
+					years = 20
+				}
+				lose_title = e_china_emperor
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+###################################
+# Civilian Massacre Event
+# Non-martial civilians die in crossfire
+###################################
+murim_calamity_ai.0005 = {
+	type = character_event
+	title = murim_calamity_ai.0005.t
+	desc = murim_calamity_ai.0005.desc
+	theme = death
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		is_ai = yes
+		NOT = { has_trait = murim_martial_artist }
+		NOT = { has_variable = murim_clan_member }
+		NOT = { has_character_flag = calamity_civilian_check }
+		capital_province = {
+			OR = {
+				geographical_region = world_china
+				geographical_region = world_korea
+			}
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = calamity_civilian_check
+			days = 365
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0005.a
+		random_list = {
+			40 = {
+				# Killed in crossfire
+				death = {
+					death_reason = death_murim_calamity_civilian
+				}
+			}
+			30 = {
+				# Wounded and displaced
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_calamity_displaced_refugee
+					years = 5
+				}
+			}
+			30 = {
+				# Survives — gains murim awareness
+				add_trait = murim_awareness
+				add_character_modifier = {
+					modifier = murim_calamity_awakened_civilian
+					years = 10
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+###################################
+# Survivor Selection — Clan Remnants
+# 1-3 survivors per clan after calamity winds down
+###################################
+murim_calamity_ai.0006 = {
+	type = character_event
+	title = murim_calamity_ai.0006.t
+	desc = murim_calamity_ai.0006.desc
+	theme = skull
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		has_global_variable = murim_calamity_winding_down
+		has_variable = murim_clan_member
+		NOT = { has_trait = murim_calamity_survivor }
+		is_alive = yes
+	}
+	
+	immediate = {
+		# Count living clan members
+		every_living_character = {
+			limit = {
+				var:murim_clan_id = root.var:murim_clan_id
+				has_trait = murim_calamity_survivor
+			}
+			root = {
+				if = {
+					limit = { NOT = { has_variable = calamity_survivors_count } }
+					set_variable = { name = calamity_survivors_count value = 0 }
+				}
+				change_variable = { name = calamity_survivors_count add = 1 }
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0006.a
+		# If fewer than 3 survivors, this character lives
+		trigger = {
+			OR = {
+				NOT = { has_variable = calamity_survivors_count }
+				var:calamity_survivors_count < 3
+			}
+		}
+		add_trait = murim_calamity_survivor
+		add_character_modifier = {
+			modifier = murim_calamity_last_of_clan
+			years = 50
+		}
+		add_prestige = 1000
+		ai_chance = { base = 100 }
+	}
+	
+	option = {
+		name = murim_calamity_ai.0006.b
+		# Too many survivors already — this one dies
+		trigger = {
+			has_variable = calamity_survivors_count
+			var:calamity_survivors_count >= 3
+		}
+		death = {
+			death_reason = death_murim_calamity_final_battle
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+###################################
+# Player Dynasty Protection
+# Player's clan always has at least 1 survivor
+###################################
+murim_calamity_ai.0007 = {
+	type = character_event
+	title = murim_calamity_ai.0007.t
+	desc = murim_calamity_ai.0007.desc
+	theme = faith
+	
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		is_ai = no
+		NOT = { has_trait = murim_calamity_survivor }
+	}
+	
+	option = {
+		name = murim_calamity_ai.0007.a
+		# Miraculous survival — heaven's mandate
+		add_trait = murim_calamity_survivor
+		add_trait = murim_calamity_witness
+		add_character_modifier = {
+			modifier = murim_calamity_heavens_chosen
+			years = 30
+		}
+		add_prestige = 2000
+		add_piety = 500
+		if = {
+			limit = { has_trait = murim_rank_peak_master }
+			add_trait = murim_rank_transcendent
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0007.b
+		# Survive but at great cost — meridians shattered
+		add_trait = murim_calamity_survivor
+		add_trait = wounded_3
+		add_character_modifier = {
+			modifier = murim_calamity_shattered_cultivation
+			years = 15
+		}
+		add_stress = 100
+	}
+}
+
+###################################
+# Mythology Formation
+# Previous era becomes legend after calamity ends
+###################################
+murim_calamity_ai.0008 = {
+	type = character_event
+	title = murim_calamity_ai.0008.t
+	desc = murim_calamity_ai.0008.desc
+	theme = education
+	
+	trigger = {
+		has_global_variable = murim_calamity_ended
+		has_trait = murim_calamity_survivor
+		NOT = { has_character_flag = calamity_mythology_formed }
+	}
+	
+	immediate = {
+		add_character_flag = calamity_mythology_formed
+	}
+	
+	option = {
+		name = murim_calamity_ai.0008.a
+		# Write the chronicles of the fallen era
+		add_trait = murim_chronicler
+		add_learning = 5
+		add_prestige = 300
+		# Dead legends become mythology
+		every_known_character = {
+			limit = {
+				is_alive = no
+				OR = {
+					has_trait = murim_rank_peak_master
+					has_trait = murim_rank_transcendent
+				}
+			}
+			add_character_flag = murim_legendary_figure
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = diligent
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0008.b
+		# Suppress the memories — too painful
+		add_stress = 50
+		add_character_modifier = {
+			modifier = murim_calamity_suppressed_memories
+			years = 20
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = shy
+			}
+		}
+	}
+}
+
+###################################
+# Rebuilding Phase — New Clan Formation
+# Survivors begin rebuilding martial world
+###################################
+murim_calamity_ai.0009 = {
+	type = character_event
+	title = murim_calamity_ai.0009.t
+	desc = murim_calamity_ai.0009.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_global_variable = murim_calamity_ended
+		has_trait = murim_calamity_survivor
+		has_variable = murim_clan_leader
+		NOT = { has_character_flag = calamity_rebuilding_started }
+	}
+	
+	immediate = {
+		add_character_flag = calamity_rebuilding_started
+	}
+	
+	option = {
+		name = murim_calamity_ai.0009.a
+		# Rebuild the clan with new blood
+		add_character_modifier = {
+			modifier = murim_calamity_rebuilder
+			years = 20
+		}
+		# Recruit orphans and refugees
+		spawn_new_character_martial_recruit_effect = yes
+		spawn_new_character_martial_recruit_effect = yes
+		spawn_new_character_martial_recruit_effect = yes
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0009.b
+		# Merge with another surviving clan
+		random_living_character = {
+			limit = {
+				has_trait = murim_calamity_survivor
+				has_variable = murim_clan_leader
+				NOT = { this = root }
+			}
+			save_scope_as = merge_target
+			add_opinion = {
+				target = root
+				modifier = murim_calamity_merged_clans
+				opinion = 50
+			}
+		}
+		add_prestige = 500
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = gregarious
+			}
+		}
+	}
+}
+
+###################################
+# Calamity Cycle Reset
+# The great cycle begins anew — new era dawns
+###################################
+murim_calamity_ai.0010 = {
+	type = character_event
+	title = murim_calamity_ai.0010.t
+	desc = murim_calamity_ai.0010.desc
+	theme = faith
+	
+	trigger = {
+		has_global_variable = murim_calamity_ended
+		has_trait = murim_calamity_survivor
+		NOT = { has_character_flag = calamity_new_era_witnessed }
+		current_date >= global_var:murim_calamity_end_date
+	}
+	
+	immediate = {
+		add_character_flag = calamity_new_era_witnessed
+		# Reset global calamity variables for next cycle
+		if = {
+			limit = { has_variable = murim_clan_leader }
+			set_global_variable = {
+				name = murim_next_calamity_year
+				value = 150
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0010.a
+		# Embrace the new era — swear the cycle will not repeat
+		add_trait = murim_calamity_era_founder
+		add_prestige = 3000
+		add_piety = 1000
+		add_character_modifier = {
+			modifier = murim_new_era_founder
+			years = 50
+		}
+		# Remove calamity active flag
+		remove_global_variable = murim_great_calamity_active
+		remove_global_variable = murim_calamity_winding_down
+		remove_global_variable = murim_calamity_ended
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	option = {
+		name = murim_calamity_ai.0010.b
+		# The cycle is eternal — accept fate
+		add_trait = murim_fatalist
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_calamity_fatalist_wisdom
+			years = 30
+		}
+		remove_global_variable = murim_great_calamity_active
+		remove_global_variable = murim_calamity_winding_down
+		remove_global_variable = murim_calamity_ended
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+}
