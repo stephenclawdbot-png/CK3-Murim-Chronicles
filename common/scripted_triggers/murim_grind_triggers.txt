@@ -1,4 +1,10 @@
-# Murim Chronicles Phase 2 - Grind Loop Scripted Triggers
+# Murim Chronicles - Comprehensive Grind Loop Scripted Triggers
+# All "can character do X?" checks for decisions, events, and interactions
+# Every trigger uses exists=yes safety checks and graceful degradation
+
+###################################
+# SECTION 1: CULTIVATION ELIGIBILITY
+###################################
 
 murim_can_attempt_body_tempering_trigger = {
 	is_alive = yes
@@ -19,23 +25,17 @@ murim_can_attempt_breakthrough_trigger = {
 			var:murim_cultivation_rank >= 6
 		}
 	}
-	NOT = {
-		OR = {
-			has_trait = murim_qi_deviation_minor
-			has_trait = murim_qi_deviation_major
-			has_trait = murim_qi_deviation_crippling
-		}
-	}
+	murim_has_qi_deviation_trigger = no
 	NOT = { has_trait = murim_breakthrough_failure }
 	NOT = { has_character_flag = murim_breakthrough_cooldown }
 }
 
-murim_can_study_forbidden_trigger = {
+murim_can_attempt_tribulation_trigger = {
 	is_alive = yes
 	age >= 16
-	NOT = { has_trait = murim_forbidden_mark_3 }
-	intrigue >= 10
-	NOT = { has_character_flag = murim_forbidden_study_cooldown }
+	exists = var:murim_cultivation_rank
+	prowess >= 20
+	murim_has_qi_deviation_trigger = no
 }
 
 murim_can_enter_closed_door_trigger = {
@@ -50,6 +50,152 @@ murim_can_enter_closed_door_trigger = {
 	learning >= 8
 }
 
+murim_can_qi_exchange_trigger = {
+	is_alive = yes
+	exists = var:murim_qi_reserves
+	prowess >= 10
+	murim_has_qi_deviation_trigger = no
+}
+
+murim_can_circulate_qi_trigger = {
+	is_alive = yes
+	age >= 16
+	murim_has_qi_deviation_trigger = no
+	NOT = { has_character_flag = murim_qi_circulation_cooldown }
+	OR = {
+		exists = var:murim_cultivation_rank
+		murim_has_any_technique_trait_trigger = yes
+	}
+}
+
+murim_can_open_meridians_trigger = {
+	is_alive = yes
+	age >= 16
+	exists = var:murim_cultivation_rank
+	NOT = { has_character_flag = murim_meridian_opening_active }
+	murim_has_qi_deviation_trigger = no
+	prowess >= 12
+	learning >= 8
+}
+
+murim_can_purify_qi_trigger = {
+	is_alive = yes
+	OR = {
+		has_character_modifier = murim_corrupted_qi_poisoning
+		has_character_flag = murim_corrupted_qi
+	}
+	NOT = { has_character_flag = murim_purification_cooldown }
+	learning >= 10
+}
+
+murim_is_cultivator_trigger = {
+	OR = {
+		exists = var:murim_cultivation_rank
+		murim_has_any_technique_trait_trigger = yes
+		murim_has_body_tempering_trigger = yes
+		has_character_flag = murim_is_cultivator
+	}
+}
+
+murim_is_high_realm_cultivator_trigger = {
+	exists = var:murim_cultivation_rank
+	trigger_if = {
+		limit = { exists = var:murim_cultivation_rank }
+		var:murim_cultivation_rank >= 4
+	}
+}
+
+murim_is_peak_realm_cultivator_trigger = {
+	exists = var:murim_cultivation_rank
+	trigger_if = {
+		limit = { exists = var:murim_cultivation_rank }
+		var:murim_cultivation_rank >= 6
+	}
+}
+
+###################################
+# SECTION 2: DUEL & COMBAT READINESS
+###################################
+
+murim_can_spar_trigger = {
+	is_alive = yes
+	age >= 16
+	prowess >= 5
+	NOT = { has_trait = murim_qi_deviation_crippling }
+	NOT = { has_character_flag = murim_sparring_cooldown }
+	NOT = { has_character_modifier = murim_crippling_injury_recovery }
+	NOT = { has_trait = incapable }
+}
+
+murim_can_duel_to_death_trigger = {
+	is_alive = yes
+	age >= 16
+	prowess >= 10
+	NOT = { has_trait = murim_qi_deviation_crippling }
+	NOT = { has_trait = incapable }
+	NOT = { has_character_flag = murim_death_match_cooldown }
+	NOT = { has_character_modifier = murim_crippling_injury_recovery }
+}
+
+murim_can_issue_challenge_trigger = {
+	is_alive = yes
+	age >= 16
+	prowess >= 8
+	NOT = { has_trait = incapable }
+	NOT = { has_trait = craven }
+	NOT = { has_character_flag = murim_challenge_cooldown }
+	NOT = { has_character_modifier = murim_post_duel_exhaustion }
+}
+
+murim_is_combat_ready_trigger = {
+	is_alive = yes
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = murim_crippling_injury_recovery }
+	NOT = { has_character_modifier = murim_internal_bleeding }
+	NOT = { has_character_modifier = murim_qi_deviation_suffering }
+	NOT = { has_character_modifier = murim_tribulation_aftermath }
+}
+
+murim_is_dangerous_fighter_trigger = {
+	prowess >= 20
+	murim_is_combat_ready_trigger = yes
+	OR = {
+		murim_has_any_technique_trait_trigger = yes
+		murim_has_body_tempering_trigger = yes
+		has_character_modifier = murim_killing_intent_active
+	}
+}
+
+murim_has_killing_intent_trigger = {
+	OR = {
+		has_character_modifier = murim_killing_intent_active
+		has_character_modifier = murim_berserker_rage_unlocked
+		has_trait = wrathful
+	}
+	prowess >= 15
+}
+
+murim_can_enter_tournament_trigger = {
+	is_alive = yes
+	age >= 16
+	prowess >= 8
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = murim_crippling_injury_recovery }
+	NOT = { has_character_flag = murim_tournament_cooldown }
+}
+
+###################################
+# SECTION 3: TECHNIQUE & STUDY
+###################################
+
+murim_can_study_forbidden_trigger = {
+	is_alive = yes
+	age >= 16
+	NOT = { has_trait = murim_forbidden_mark_3 }
+	intrigue >= 10
+	NOT = { has_character_flag = murim_forbidden_study_cooldown }
+}
+
 murim_can_accept_disciple_trigger = {
 	is_alive = yes
 	age >= 25
@@ -58,46 +204,162 @@ murim_can_accept_disciple_trigger = {
 	prowess >= 15
 }
 
-murim_can_spar_trigger = {
-	is_alive = yes
-	age >= 16
-	prowess >= 5
-	NOT = { has_trait = murim_qi_deviation_crippling }
-	NOT = { has_character_flag = murim_sparring_cooldown }
-}
-
-murim_can_attempt_tribulation_trigger = {
-	is_alive = yes
-	age >= 16
-	exists = var:murim_cultivation_rank
-	prowess >= 20
-	NOT = {
-		OR = {
-			has_trait = murim_qi_deviation_minor
-			has_trait = murim_qi_deviation_major
-			has_trait = murim_qi_deviation_crippling
-		}
-	}
-}
-
-murim_can_qi_exchange_trigger = {
-	is_alive = yes
-	exists = var:murim_qi_reserves
-	prowess >= 10
-	NOT = {
-		OR = {
-			has_trait = murim_qi_deviation_minor
-			has_trait = murim_qi_deviation_major
-			has_trait = murim_qi_deviation_crippling
-		}
-	}
-}
-
 murim_can_steal_technique_trigger = {
 	is_alive = yes
 	intrigue >= 12
 	NOT = { has_character_flag = murim_theft_cooldown }
 }
+
+murim_can_learn_technique_trigger = {
+	is_alive = yes
+	age >= 16
+	NOT = { has_trait = incapable }
+	NOT = { has_character_modifier = murim_qi_deviation_suffering }
+	NOT = { has_character_flag = murim_technique_study_cooldown }
+	learning >= 6
+}
+
+murim_can_teach_technique_trigger = {
+	is_alive = yes
+	murim_has_any_technique_trait_trigger = yes
+	prowess >= 12
+	NOT = { has_trait = incapable }
+}
+
+murim_can_create_new_technique_trigger = {
+	is_alive = yes
+	murim_has_any_technique_trait_trigger = yes
+	prowess >= 25
+	learning >= 15
+	NOT = { has_character_flag = murim_technique_creation_cooldown }
+	murim_is_high_realm_cultivator_trigger = yes
+}
+
+murim_has_mastered_technique_trigger = {
+	OR = {
+		has_character_modifier = murim_sword_intent_awakened
+		has_character_modifier = murim_fist_dao_perfected
+		has_character_modifier = murim_movement_technique_mastered
+		has_character_modifier = murim_defensive_technique_mastered
+		has_character_modifier = murim_technique_breakthrough_momentum
+	}
+}
+
+###################################
+# SECTION 4: SECT MEMBERSHIP
+###################################
+
+murim_is_sect_member_trigger = {
+	OR = {
+		has_character_flag = murim_sect_member
+		has_character_modifier = murim_sect_inner_disciple
+		has_character_modifier = murim_sect_outer_disciple
+		has_character_modifier = murim_sect_elder_authority
+	}
+}
+
+murim_is_sect_leader_trigger = {
+	OR = {
+		has_character_flag = murim_sect_master
+		has_character_modifier = murim_sect_elder_authority
+		has_character_modifier = murim_sect_alliance_leader_burden
+	}
+}
+
+murim_can_found_sect_trigger = {
+	is_alive = yes
+	is_ruler = yes
+	age >= 25
+	prowess >= 20
+	diplomacy >= 10
+	murim_is_cultivator_trigger = yes
+	NOT = { murim_is_sect_leader_trigger = yes }
+	NOT = { has_character_flag = murim_sect_founding_cooldown }
+}
+
+murim_can_challenge_sect_leader_trigger = {
+	is_alive = yes
+	murim_is_sect_member_trigger = yes
+	NOT = { murim_is_sect_leader_trigger = yes }
+	prowess >= 18
+	NOT = { has_character_flag = murim_sect_challenge_cooldown }
+	murim_is_combat_ready_trigger = yes
+}
+
+murim_can_recruit_to_sect_trigger = {
+	is_alive = yes
+	murim_is_sect_leader_trigger = yes
+	diplomacy >= 8
+	NOT = { has_character_flag = murim_recruitment_cooldown }
+}
+
+###################################
+# SECTION 5: RANKING ELIGIBILITY
+###################################
+
+murim_qualifies_for_ranking_trigger = {
+	is_alive = yes
+	murim_is_cultivator_trigger = yes
+	prowess >= 12
+	murim_is_combat_ready_trigger = yes
+}
+
+murim_can_challenge_for_rank_trigger = {
+	is_alive = yes
+	prowess >= 15
+	murim_is_combat_ready_trigger = yes
+	NOT = { has_character_flag = murim_ranking_challenge_cooldown }
+}
+
+###################################
+# SECTION 6: JIANGHU UNDERGROUND
+###################################
+
+murim_can_operate_shadow_network_trigger = {
+	is_alive = yes
+	intrigue >= 15
+	OR = {
+		has_character_modifier = murim_shadow_broker_network
+		has_character_flag = murim_shadow_broker
+	}
+}
+
+murim_can_hire_assassin_trigger = {
+	is_alive = yes
+	intrigue >= 10
+	NOT = { has_character_flag = murim_assassination_cooldown }
+	OR = {
+		has_character_modifier = murim_shadow_broker_network
+		has_character_modifier = murim_spy_network_active
+		intrigue >= 18
+	}
+}
+
+murim_can_run_underground_arena_trigger = {
+	is_alive = yes
+	is_ruler = yes
+	intrigue >= 12
+	martial >= 8
+	NOT = { has_character_flag = murim_arena_cooldown }
+}
+
+murim_can_establish_trade_route_trigger = {
+	is_alive = yes
+	is_ruler = yes
+	stewardship >= 10
+	diplomacy >= 8
+	NOT = { has_character_flag = murim_trade_route_cooldown }
+}
+
+murim_can_place_bounty_trigger = {
+	is_alive = yes
+	intrigue >= 8
+	NOT = { has_character_flag = murim_bounty_cooldown }
+}
+
+###################################
+# SECTION 7: TRAIT EXISTENCE CHECKS (SAFETY)
+###################################
 
 murim_has_body_tempering_trigger = {
 	OR = {
@@ -126,5 +388,111 @@ murim_has_forbidden_mark_trigger = {
 		has_trait = murim_forbidden_mark_1
 		has_trait = murim_forbidden_mark_2
 		has_trait = murim_forbidden_mark_3
+	}
+}
+
+murim_has_any_technique_trait_trigger = {
+	OR = {
+		has_trait = murim_technique_iron_palm
+		has_trait = murim_technique_shadow_step
+		has_trait = murim_technique_dragon_fist
+		has_trait = murim_technique_heaven_sword
+		has_trait = murim_technique_phoenix_strike
+		has_trait = murim_technique_turtle_shell
+		has_trait = murim_technique_viper_fang
+		has_trait = murim_technique_crane_wing
+		has_trait = murim_technique_tiger_claw
+		has_trait = murim_technique_mantis_stance
+	}
+}
+
+murim_has_offensive_technique_trigger = {
+	OR = {
+		has_trait = murim_technique_iron_palm
+		has_trait = murim_technique_dragon_fist
+		has_trait = murim_technique_heaven_sword
+		has_trait = murim_technique_phoenix_strike
+		has_trait = murim_technique_tiger_claw
+		has_trait = murim_technique_viper_fang
+	}
+}
+
+murim_has_defensive_technique_trigger = {
+	OR = {
+		has_trait = murim_technique_turtle_shell
+		has_trait = murim_technique_crane_wing
+		has_trait = murim_technique_mantis_stance
+	}
+}
+
+murim_has_movement_technique_trigger = {
+	OR = {
+		has_trait = murim_technique_shadow_step
+		has_trait = murim_technique_crane_wing
+	}
+}
+
+###################################
+# SECTION 8: CROSS-SYSTEM INTEGRATION
+###################################
+
+murim_is_imperial_cultivator_trigger = {
+	murim_is_cultivator_trigger = yes
+	OR = {
+		has_character_modifier = murim_imperial_cultivator_duty
+		has_character_flag = murim_imperial_cultivator
+	}
+}
+
+murim_is_wandering_cultivator_trigger = {
+	murim_is_cultivator_trigger = yes
+	OR = {
+		has_character_modifier = murim_wandering_cultivator_freedom
+		has_character_flag = murim_wandering_cultivator
+	}
+	NOT = { murim_is_sect_member_trigger = yes }
+}
+
+murim_is_demonic_cultivator_trigger = {
+	murim_is_cultivator_trigger = yes
+	OR = {
+		has_character_modifier = murim_demonic_cultivation_power
+		has_character_flag = murim_demonic_path
+		has_trait = murim_forbidden_mark_3
+	}
+}
+
+murim_is_righteous_cultivator_trigger = {
+	murim_is_cultivator_trigger = yes
+	OR = {
+		has_character_modifier = murim_righteous_path_clarity
+		has_character_flag = murim_righteous_path
+	}
+	murim_is_demonic_cultivator_trigger = no
+}
+
+murim_can_become_recluse_trigger = {
+	is_alive = yes
+	age >= 40
+	murim_is_cultivator_trigger = yes
+	murim_is_high_realm_cultivator_trigger = yes
+	NOT = { murim_is_sect_leader_trigger = yes }
+	NOT = { has_character_flag = murim_recluse }
+}
+
+murim_is_eligible_for_blood_oath_trigger = {
+	is_alive = yes
+	murim_is_cultivator_trigger = yes
+	NOT = { has_character_modifier = murim_blood_oath_bound }
+	NOT = { has_character_flag = murim_blood_oath_cooldown }
+}
+
+murim_is_strong_enough_to_protect_trigger = {
+	is_alive = yes
+	prowess >= 18
+	murim_is_combat_ready_trigger = yes
+	OR = {
+		murim_is_high_realm_cultivator_trigger = yes
+		murim_has_body_tempering_trigger = yes
 	}
 }
