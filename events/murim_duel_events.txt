@@ -1,0 +1,951 @@
+# Murim Chronicles Phase 3 - Duel Events
+# Formal challenges, technique showcases, death matches, tournaments, honor/shame
+
+namespace = murim_duel
+
+######################################
+# FORMAL DUEL CHALLENGE
+######################################
+
+murim_duel.0001 = {
+	type = character_event
+	title = murim_duel.0001.t
+	desc = murim_duel.0001.desc
+	theme = martial
+	left_portrait = {
+		character = scope:duel_challenger
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		prowess >= 10
+		has_character_flag = murim_initiated
+		NOT = { has_character_flag = murim_duel_cooldown }
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_character_flag = murim_initiated
+				prowess >= 10
+				NOT = { this = root }
+				is_alive = yes
+				NOT = { has_opinion_modifier = { modifier = murim_duel_respect target = root } }
+			}
+			save_scope_as = duel_challenger
+		}
+	}
+
+	# Accept with honor
+	option = {
+		name = murim_duel.0001.a
+		custom_tooltip = murim_duel_accept_honor_tt
+		set_character_flag = {
+			flag = murim_duel_cooldown
+			years = 1
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_duel.0010 days = 7 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = honorable }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	# Accept but set conditions
+	option = {
+		name = murim_duel.0001.b
+		trigger = { diplomacy >= 12 }
+		custom_tooltip = murim_duel_conditions_tt
+		set_character_flag = {
+			flag = murim_duel_cooldown
+			years = 1
+		}
+		set_character_flag = murim_duel_conditions_set
+		hidden_effect = {
+			trigger_event = { id = murim_duel.0010 days = 14 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 15 has_trait = calm }
+		}
+	}
+
+	# Refuse the challenge (shame)
+	option = {
+		name = murim_duel.0001.c
+		add_prestige = -200
+		add_character_modifier = {
+			modifier = murim_duel_coward_brand
+			years = 3
+		}
+		scope:duel_challenger = {
+			add_prestige = 100
+			add_opinion = {
+				target = root
+				modifier = murim_duel_refused_contempt
+			}
+		}
+		stress_impact = {
+			brave = 20
+			honorable = 30
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = -20 prowess >= 15 }
+		}
+	}
+}
+
+######################################
+# DUEL EXECUTION
+######################################
+
+murim_duel.0010 = {
+	type = character_event
+	title = murim_duel.0010.t
+	desc = murim_duel.0010.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:duel_challenger
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		exists = scope:duel_challenger
+		scope:duel_challenger = { is_alive = yes }
+	}
+
+	# Fight with orthodox technique
+	option = {
+		name = murim_duel.0010.a
+		custom_tooltip = murim_duel_orthodox_tt
+		duel = {
+			skill = prowess
+			target = scope:duel_challenger
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_duel_decisive_victory
+				trigger_event = { id = murim_duel.0020 days = 1 }
+			}
+			15 = {
+				desc = murim_duel_draw
+				trigger_event = { id = murim_duel.0030 days = 1 }
+			}
+			35 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				desc = murim_duel_defeat
+				trigger_event = { id = murim_duel.0040 days = 1 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Use forbidden technique (risky but powerful)
+	option = {
+		name = murim_duel.0010.b
+		trigger = {
+			OR = {
+				has_trait = murim_forbidden_art_initiate
+				has_trait = murim_forbidden_art_practitioner
+				has_trait = murim_forbidden_art_master
+			}
+		}
+		custom_tooltip = murim_duel_forbidden_tt
+		duel = {
+			skill = prowess
+			target = scope:duel_challenger
+			65 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				desc = murim_duel_forbidden_victory
+				trigger_event = { id = murim_duel.0020 days = 1 }
+				set_character_flag = murim_duel_used_forbidden
+			}
+			5 = {
+				desc = murim_duel_forbidden_draw
+				trigger_event = { id = murim_duel.0030 days = 1 }
+			}
+			30 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				desc = murim_duel_forbidden_backfire
+				trigger_event = { id = murim_duel.0050 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = ambitious }
+		}
+	}
+
+	# Use defensive stance (safer but less reward)
+	option = {
+		name = murim_duel.0010.c
+		trigger = {
+			OR = {
+				has_trait = patient
+				has_trait = calm
+				learning >= 14
+			}
+		}
+		custom_tooltip = murim_duel_defensive_tt
+		duel = {
+			skill = prowess
+			target = scope:duel_challenger
+			35 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				desc = murim_duel_counter_victory
+				set_character_flag = murim_duel_counter_win
+				trigger_event = { id = murim_duel.0020 days = 1 }
+			}
+			35 = {
+				desc = murim_duel_stalemate
+				trigger_event = { id = murim_duel.0030 days = 1 }
+			}
+			30 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				desc = murim_duel_defensive_loss
+				trigger_event = { id = murim_duel.0040 days = 1 }
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+######################################
+# DUEL VICTORY
+######################################
+
+murim_duel.0020 = {
+	type = character_event
+	title = murim_duel.0020.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { has_character_flag = murim_duel_used_forbidden }
+				desc = murim_duel.0020.desc_forbidden
+			}
+			triggered_desc = {
+				trigger = { has_character_flag = murim_duel_counter_win }
+				desc = murim_duel.0020.desc_counter
+			}
+			desc = murim_duel.0020.desc_standard
+		}
+	}
+	theme = martial
+	left_portrait = { character = root animation = personality_honorable }
+	right_portrait = { character = scope:duel_challenger animation = shame }
+
+	immediate = {
+		remove_character_flag = murim_duel_used_forbidden
+		remove_character_flag = murim_duel_counter_win
+	}
+
+	# Show mercy
+	option = {
+		name = murim_duel.0020.a
+		add_prestige = 400
+		add_piety = 100
+		scope:duel_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_duel_respect
+			}
+			add_trait = wounded_1
+		}
+		add_character_modifier = {
+			modifier = murim_duel_champion_aura
+			years = 3
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+
+	# Demand technique scroll as prize
+	option = {
+		name = murim_duel.0020.b
+		add_prestige = 300
+		change_variable = {
+			name = murim_cultivation_xp
+			add = 100
+		}
+		scope:duel_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_duel_humiliation
+			}
+			add_prestige = -200
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = greedy }
+		}
+	}
+
+	# Cripple their cultivation (cruel)
+	option = {
+		name = murim_duel.0020.c
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				has_trait = callous
+				has_trait = cruel
+			}
+		}
+		add_prestige = 200
+		add_tyranny = 15
+		scope:duel_challenger = {
+			add_trait = wounded_3
+			add_character_modifier = {
+				modifier = murim_cultivation_crippled
+				years = -1
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_crippled_by_enemy
+			}
+		}
+		every_vassal = {
+			limit = { has_character_flag = murim_initiated }
+			add_opinion = {
+				target = root
+				modifier = murim_witnessed_cruelty
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 25 has_trait = sadistic }
+		}
+	}
+}
+
+######################################
+# DUEL DRAW
+######################################
+
+murim_duel.0030 = {
+	type = character_event
+	title = murim_duel.0030.t
+	desc = murim_duel.0030.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+	right_portrait = { character = scope:duel_challenger animation = personality_bold }
+
+	# Mutual respect
+	option = {
+		name = murim_duel.0030.a
+		add_prestige = 150
+		add_opinion = {
+			target = scope:duel_challenger
+			modifier = murim_duel_respect
+		}
+		scope:duel_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_duel_respect
+			}
+		}
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		ai_chance = { base = 60 }
+	}
+
+	# Demand a rematch
+	option = {
+		name = murim_duel.0030.b
+		trigger = { has_trait = stubborn }
+		hidden_effect = {
+			trigger_event = {
+				id = murim_duel.0010
+				days = 30
+			}
+		}
+		stress_impact = { base = 10 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = wrathful }
+		}
+	}
+
+	# Propose an alliance
+	option = {
+		name = murim_duel.0030.c
+		trigger = { diplomacy >= 12 }
+		add_opinion = {
+			target = scope:duel_challenger
+			modifier = murim_martial_brotherhood
+		}
+		scope:duel_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_martial_brotherhood
+			}
+		}
+		add_prestige = 200
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+}
+
+######################################
+# DUEL DEFEAT
+######################################
+
+murim_duel.0040 = {
+	type = character_event
+	title = murim_duel.0040.t
+	desc = murim_duel.0040.desc
+	theme = martial
+	left_portrait = { character = root animation = shame }
+	right_portrait = { character = scope:duel_challenger animation = personality_honorable }
+
+	# Accept defeat gracefully
+	option = {
+		name = murim_duel.0040.a
+		add_prestige = -200
+		add_trait = wounded_1
+		stress_impact = { base = 20 }
+		scope:duel_challenger = {
+			add_prestige = 400
+		}
+		add_character_modifier = {
+			modifier = murim_duel_defeat_shame
+			years = 2
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Swear vengeance
+	option = {
+		name = murim_duel.0040.b
+		add_prestige = -100
+		add_trait = wounded_1
+		set_relation_rival = scope:duel_challenger
+		add_character_modifier = {
+			modifier = murim_vengeance_sworn
+			years = 5
+		}
+		stress_impact = { base = -10 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = vengeful }
+			modifier = { add = 15 has_trait = wrathful }
+		}
+	}
+
+	# Use defeat as motivation to train harder
+	option = {
+		name = murim_duel.0040.c
+		add_trait = wounded_1
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = murim_defeat_fueled_determination
+			years = 3
+		}
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_prowess_skill = 1
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+}
+
+######################################
+# FORBIDDEN TECHNIQUE BACKFIRE
+######################################
+
+murim_duel.0050 = {
+	type = character_event
+	title = murim_duel.0050.t
+	desc = murim_duel.0050.desc
+	theme = death
+	left_portrait = { character = root animation = pain }
+
+	trigger = { is_alive = yes }
+
+	option = {
+		name = murim_duel.0050.a
+		add_trait = wounded_2
+		change_variable = { name = murim_qi_deviation_count add = 1 }
+		add_character_modifier = {
+			modifier = murim_forbidden_backlash
+			years = 3
+		}
+		scope:duel_challenger = {
+			add_prestige = 500
+			add_opinion = {
+				target = root
+				modifier = murim_witnessed_forbidden_use
+			}
+		}
+		add_prestige = -500
+		hidden_effect = {
+			random = {
+				chance = 20
+				add_trait = lunatic
+			}
+		}
+	}
+}
+
+######################################
+# TOURNAMENT ARC
+######################################
+
+murim_duel.1000 = {
+	type = character_event
+	title = murim_duel.1000.t
+	desc = murim_duel.1000.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_ruler = yes
+		has_character_flag = murim_initiated
+		prestige >= 500
+		gold >= 100
+		NOT = { has_character_flag = murim_tournament_cooldown }
+	}
+
+	# Grand tournament - open to all
+	option = {
+		name = murim_duel.1000.a
+		custom_tooltip = murim_tournament_grand_tt
+		add_gold = -100
+		set_character_flag = {
+			flag = murim_tournament_cooldown
+			years = 5
+		}
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_tournament_host_prestige
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_duel.1010 days = 30 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = gregarious }
+		}
+	}
+
+	# Invite-only elite tournament
+	option = {
+		name = murim_duel.1000.b
+		trigger = { prestige >= 1000 }
+		custom_tooltip = murim_tournament_elite_tt
+		add_gold = -200
+		set_character_flag = {
+			flag = murim_tournament_cooldown
+			years = 5
+		}
+		add_prestige = 800
+		hidden_effect = {
+			trigger_event = { id = murim_duel.1010 days = 30 }
+			set_character_flag = murim_tournament_elite
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Death match tournament (dark)
+	option = {
+		name = murim_duel.1000.c
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				has_trait = callous
+				has_character_flag = murim_sect_leader
+			}
+		}
+		custom_tooltip = murim_tournament_death_tt
+		add_gold = -150
+		set_character_flag = {
+			flag = murim_tournament_cooldown
+			years = 5
+		}
+		add_tyranny = 10
+		hidden_effect = {
+			trigger_event = { id = murim_duel.1020 days = 30 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = sadistic }
+		}
+	}
+
+	# Not now
+	option = {
+		name = murim_duel.1000.d
+		ai_chance = { base = 30 }
+	}
+}
+
+# Tournament rounds
+murim_duel.1010 = {
+	type = character_event
+	title = murim_duel.1010.t
+	desc = murim_duel.1010.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = { is_alive = yes }
+
+	# Compete personally
+	option = {
+		name = murim_duel.1010.a
+		trigger = { prowess >= 14 }
+		custom_tooltip = murim_tournament_compete_tt
+		hidden_effect = {
+			random_list = {
+				35 = {
+					modifier = { add = 25 prowess >= 20 }
+					trigger_event = { id = murim_duel.1011 days = 7 }
+				}
+				30 = {
+					trigger_event = { id = murim_duel.1012 days = 7 }
+				}
+				35 = {
+					modifier = { add = -15 prowess >= 20 }
+					trigger_event = { id = murim_duel.1013 days = 7 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 prowess >= 18 }
+		}
+	}
+
+	# Observe and judge
+	option = {
+		name = murim_duel.1010.b
+		add_prestige = 200
+		add_learning_skill = 1
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		ai_chance = { base = 30 }
+	}
+
+	# Use the tournament to scout talent
+	option = {
+		name = murim_duel.1010.c
+		trigger = { intrigue >= 10 }
+		add_intrigue_skill = 1
+		add_character_modifier = {
+			modifier = murim_talent_scout_network
+			years = 3
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+}
+
+# Tournament champion
+murim_duel.1011 = {
+	type = character_event
+	title = murim_duel.1011.t
+	desc = murim_duel.1011.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_honorable }
+
+	option = {
+		name = murim_duel.1011.a
+		add_prestige = 1000
+		add_prowess_skill = 2
+		add_character_modifier = {
+			modifier = murim_tournament_champion_aura
+			years = 5
+		}
+		change_variable = { name = murim_cultivation_xp add = 75 }
+		every_vassal = {
+			limit = { has_character_flag = murim_initiated }
+			add_opinion = {
+				target = root
+				modifier = murim_tournament_champion_awe
+			}
+		}
+	}
+}
+
+# Tournament runner-up
+murim_duel.1012 = {
+	type = character_event
+	title = murim_duel.1012.t
+	desc = murim_duel.1012.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	option = {
+		name = murim_duel.1012.a
+		add_prestige = 400
+		add_prowess_skill = 1
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_trait = wounded_1
+	}
+}
+
+# Tournament early elimination
+murim_duel.1013 = {
+	type = character_event
+	title = murim_duel.1013.t
+	desc = murim_duel.1013.desc
+	theme = martial
+	left_portrait = { character = root animation = shame }
+
+	# Accept with grace
+	option = {
+		name = murim_duel.1013.a
+		add_prestige = -100
+		add_trait = wounded_1
+		stress_impact = { base = 15 }
+		ai_chance = { base = 60 }
+	}
+
+	# Claim foul play
+	option = {
+		name = murim_duel.1013.b
+		trigger = { has_trait = paranoid }
+		add_prestige = -200
+		add_character_modifier = {
+			modifier = murim_sore_loser_reputation
+			years = 2
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+# Death match tournament
+murim_duel.1020 = {
+	type = character_event
+	title = murim_duel.1020.t
+	desc = murim_duel.1020.desc
+	theme = death
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = { is_alive = yes }
+
+	# Enter the ring yourself
+	option = {
+		name = murim_duel.1020.a
+		trigger = { prowess >= 16 }
+		custom_tooltip = murim_death_match_enter_tt
+		hidden_effect = {
+			random_list = {
+				30 = {
+					modifier = { add = 30 prowess >= 22 }
+					add_prestige = 2000
+					add_prowess_skill = 3
+					add_character_modifier = {
+						modifier = murim_death_match_survivor
+						years = -1
+					}
+				}
+				30 = {
+					add_trait = wounded_2
+					add_prestige = 500
+					add_prowess_skill = 1
+				}
+				25 = {
+					add_trait = wounded_3
+					add_character_modifier = {
+						modifier = murim_cultivation_crippled
+						years = -1
+					}
+				}
+				15 = {
+					death = { death_reason = death_duel }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 prowess >= 22 }
+		}
+	}
+
+	# Watch from the stands
+	option = {
+		name = murim_duel.1020.b
+		add_prestige = 300
+		add_tyranny = 5
+		hidden_effect = {
+			random_courtier = {
+				limit = {
+					has_character_flag = murim_initiated
+					prowess >= 12
+				}
+				random = {
+					chance = 30
+					death = { death_reason = death_duel }
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Cancel - this was a mistake
+	option = {
+		name = murim_duel.1020.c
+		add_prestige = -300
+		add_gold = 50
+		stress_impact = { base = -20 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+}
+
+######################################
+# TECHNIQUE SHOWCASE DUEL
+######################################
+
+murim_duel.2000 = {
+	type = character_event
+	title = murim_duel.2000.t
+	desc = murim_duel.2000.desc
+	theme = martial
+	left_portrait = { character = root animation = thinking }
+	right_portrait = { character = scope:technique_rival animation = thinking }
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = murim_initiated
+		prowess >= 14
+		any_known_character = {
+			has_character_flag = murim_initiated
+			prowess >= 14
+			NOT = { this = root }
+		}
+	}
+
+	immediate = {
+		random_known_character = {
+			limit = {
+				has_character_flag = murim_initiated
+				prowess >= 14
+				NOT = { this = root }
+			}
+			save_scope_as = technique_rival
+		}
+	}
+
+	# Showcase your strongest technique
+	option = {
+		name = murim_duel.2000.a
+		custom_tooltip = murim_technique_showcase_tt
+		duel = {
+			skill = prowess
+			target = scope:technique_rival
+			45 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.0 }
+				desc = murim_technique_superior
+				add_prestige = 300
+				change_variable = { name = murim_cultivation_xp add = 60 }
+				scope:technique_rival = {
+					change_variable = { name = murim_cultivation_xp add = 30 }
+					add_opinion = { target = root modifier = murim_technique_admiration }
+				}
+			}
+			20 = {
+				desc = murim_technique_equal
+				change_variable = { name = murim_cultivation_xp add = 40 }
+				scope:technique_rival = {
+					change_variable = { name = murim_cultivation_xp add = 40 }
+				}
+				add_opinion = { target = scope:technique_rival modifier = murim_technique_admiration }
+				scope:technique_rival = {
+					add_opinion = { target = root modifier = murim_technique_admiration }
+				}
+			}
+			35 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.0 }
+				desc = murim_technique_inferior
+				change_variable = { name = murim_cultivation_xp add = 50 }
+				add_prestige = -100
+				scope:technique_rival = {
+					add_prestige = 300
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Hold back and study their technique
+	option = {
+		name = murim_duel.2000.b
+		trigger = { intrigue >= 12 }
+		custom_tooltip = murim_technique_study_tt
+		change_variable = { name = murim_cultivation_xp add = 80 }
+		add_intrigue_skill = 1
+		scope:technique_rival = {
+			add_opinion = {
+				target = root
+				modifier = murim_suspicious_observer
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+
+	# Decline - techniques are secret
+	option = {
+		name = murim_duel.2000.c
+		add_prestige = -50
+		stress_impact = { base = -5 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+}
