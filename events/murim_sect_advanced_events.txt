@@ -1,0 +1,1273 @@
+###############################################################################
+# MURIM SECT ADVANCED EVENTS
+# 5 additional sect events to push past 20+ total across sect files
+# Events cover deeper sect intrigue and power dynamics
+# 1. Elder Council Assassination Plot
+# 2. Sect Treasury Heist
+# 3. Sect Reform Movement
+# 4. Inner Disciple Grand Tournament
+# 5. Sect Alliance Betrayal at Wulin Congress
+# Cross-references: murim_sect_events, murim_sect_expansion_events,
+#   murim_sect_politics_events, murim_duel_events, murim_jianghu_events,
+#   murim_ranking_events, murim_politics_events, murim_artifact_events,
+#   murim_cultivation_events, murim_fate_events, murim_ranker_death_events
+###############################################################################
+
+namespace = murim_sect_adv
+
+###############################################################################
+# 1. ELDER COUNCIL ASSASSINATION PLOT
+# You discover a conspiracy to assassinate senior elders of your sect.
+# Your choice determines the fate of the sect's leadership.
+###############################################################################
+murim_sect_adv.0001 = {
+	type = character_event
+	title = murim_sect_adv.0001.t
+	desc = murim_sect_adv.0001.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		age >= 18
+		intrigue >= 8
+		NOT = { has_character_flag = murim_elder_assassination_cooldown }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.4
+		modifier = { add = 0.5 intrigue >= 16 }
+		modifier = { add = 0.3 has_trait = deceitful }
+		modifier = { add = 0.3 has_trait = ambitious }
+		modifier = { add = -0.3 has_trait = trusting }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_elder_assassination_cooldown
+			years = 8
+		}
+		create_character_memory = {
+			type = murim_discovered_elder_assassination_plot_memory
+		}
+	}
+
+	# Option A: Warn the elders and help defend them
+	option = {
+		name = murim_sect_adv.0001.a
+		add_prestige = 300
+		add_piety = 100
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Successfully foiled the plot - hero of the sect
+					add_diplomacy_skill = 2
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = sect_hero_protector
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_foiled_assassination_plot_memory
+					}
+					# Gratitude from elders - potential promotion
+					trigger_event = {
+						id = murim_sect.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Foiled but assassins escaped - you are now a target
+					add_prestige = 100
+					add_stress = 30
+					add_character_modifier = {
+						modifier = assassination_target_marked
+						years = 5
+					}
+					create_character_memory = {
+						type = murim_assassination_target_memory
+					}
+					# Assassins come for you
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 14 30 }
+					}
+				}
+				20 = {
+					# Warning came too late - an elder falls
+					add_stress = 40
+					add_prestige = 50
+					create_character_memory = {
+						type = murim_elder_fell_too_late_warning_memory
+					}
+					# Elder death triggers power vacuum
+					trigger_event = {
+						id = murim_ranker_death.0001
+						days = { 7 14 }
+					}
+				}
+				10 = {
+					# You are caught in the crossfire defending elders
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+					}
+					add_prestige = 200
+					create_character_memory = {
+						type = murim_wounded_defending_elders_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = honest }
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = -15 has_trait = deceitful }
+		}
+	}
+
+	# Option B: Join the conspiracy to seize power
+	option = {
+		name = murim_sect_adv.0001.b
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = deceitful
+				intrigue >= 14
+			}
+		}
+		add_stress = 30
+		add_piety = -200
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Coup succeeds - you rise to power
+					add_intrigue_skill = 3
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = sect_coup_leader
+						years = 15
+					}
+					create_character_memory = {
+						type = murim_led_successful_coup_memory
+					}
+					# New leadership triggers politics chain
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 30 60 }
+					}
+				}
+				25 = {
+					# Coup partially succeeds - factional war begins
+					add_intrigue_skill = 1
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = sect_civil_war_instigator
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_sect_civil_war_started_memory
+					}
+					trigger_event = {
+						id = murim_sect_exp.0001
+						days = { 14 30 }
+					}
+				}
+				25 = {
+					# Conspiracy discovered - you are exposed
+					add_prestige = -500
+					add_character_modifier = {
+						modifier = sect_traitor_branded
+						years = 20
+					}
+					create_character_memory = {
+						type = murim_exposed_as_traitor_memory
+					}
+					# Expelled from sect
+					trigger_event = {
+						id = murim_jianghu.0001
+						days = { 7 14 }
+					}
+				}
+				20 = {
+					# Confronted during the coup - must fight
+					random_list = {
+						40 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+						10 = { add_trait = incapable }
+					}
+					create_character_memory = {
+						type = murim_coup_combat_wounds_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = -30 has_trait = honest }
+		}
+	}
+
+	# Option C: Use the information for personal leverage
+	option = {
+		name = murim_sect_adv.0001.c
+		add_intrigue_skill = 2
+		add_gold = 200
+		add_stress = 15
+		add_character_modifier = {
+			modifier = holding_dangerous_secrets
+			years = 8
+		}
+		create_character_memory = {
+			type = murim_leveraged_assassination_intel_memory
+		}
+		# Playing both sides is dangerous
+		hidden_effect = {
+			random = {
+				chance = 35
+				trigger_event = {
+					id = murim_jianghu.0001
+					days = { 60 120 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 15 intrigue >= 18 }
+		}
+	}
+
+	# Option D: Flee the sect before everything erupts
+	option = {
+		name = murim_sect_adv.0001.d
+		add_prestige = -100
+		add_stress = -20
+		create_character_memory = {
+			type = murim_fled_sect_before_coup_memory
+		}
+		# Wandering alone triggers daily life chain
+		hidden_effect = {
+			trigger_event = {
+				id = murim_daily_life.0001
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
+
+###############################################################################
+# 2. SECT TREASURY HEIST
+# The sect's sacred treasury - containing legendary techniques, rare
+# pills, and ancestral weapons - has been breached. You must respond.
+###############################################################################
+murim_sect_adv.0002 = {
+	type = character_event
+	title = murim_sect_adv.0002.t
+	desc = murim_sect_adv.0002.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		age >= 16
+		NOT = { has_character_flag = murim_treasury_heist_cooldown }
+		NOT = { has_trait = incapable }
+		OR = {
+			prowess >= 12
+			martial >= 12
+			intrigue >= 12
+		}
+	}
+
+	weight_multiplier = {
+		base = 0.4
+		modifier = { add = 0.4 prowess >= 18 }
+		modifier = { add = 0.3 martial >= 16 }
+		modifier = { add = 0.3 has_trait = brave }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_treasury_heist_cooldown
+			years = 6
+		}
+		create_character_memory = {
+			type = murim_sect_treasury_breached_memory
+		}
+	}
+
+	# Option A: Lead the pursuit of the thieves
+	option = {
+		name = murim_sect_adv.0002.a
+		trigger = {
+			prowess >= 14
+		}
+		add_stress = 25
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Catch the thieves - recover everything
+					add_prowess_skill = 2
+					add_martial_skill = 1
+					add_prestige = 400
+					add_character_modifier = {
+						modifier = treasury_guardian_hero
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_caught_treasury_thieves_memory
+					}
+					# Recovered artifacts include something special
+					trigger_event = {
+						id = murim_artifact.0001
+						days = { 7 14 }
+					}
+				}
+				25 = {
+					# Catch some thieves but mastermind escapes
+					add_prowess_skill = 1
+					add_prestige = 200
+					create_character_memory = {
+						type = murim_partial_treasury_recovery_memory
+					}
+					# Mastermind is a jianghu figure
+					trigger_event = {
+						id = murim_jianghu.0001
+						days = { 30 60 }
+					}
+				}
+				25 = {
+					# Ambushed during pursuit - thieves are powerful
+					random_list = {
+						40 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+						10 = { add_trait = incapable }
+					}
+					add_prestige = 50
+					create_character_memory = {
+						type = murim_ambushed_pursuing_thieves_memory
+					}
+				}
+				15 = {
+					# Thieves were from a rival sect - war begins
+					add_prestige = 100
+					add_character_modifier = {
+						modifier = sect_war_catalyst
+						years = 5
+					}
+					create_character_memory = {
+						type = murim_rival_sect_theft_discovered_memory
+					}
+					trigger_event = {
+						id = murim_sect_exp.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 prowess >= 20 }
+		}
+	}
+
+	# Option B: Investigate the inside job
+	option = {
+		name = murim_sect_adv.0002.b
+		trigger = {
+			intrigue >= 12
+		}
+		add_stress = 15
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Uncover the traitor - an elder is behind it
+					add_intrigue_skill = 3
+					add_prestige = 350
+					add_character_modifier = {
+						modifier = sect_detective_fame
+						years = 8
+					}
+					create_character_memory = {
+						type = murim_uncovered_elder_traitor_memory
+					}
+					# Elder traitor revelation triggers sect politics
+					trigger_event = {
+						id = murim_sect_adv.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Find clues but can't prove anything
+					add_intrigue_skill = 1
+					add_learning_skill = 1
+					add_stress = 20
+					create_character_memory = {
+						type = murim_inconclusive_investigation_memory
+					}
+				}
+				30 = {
+					# Investigation makes you a target
+					add_stress = 30
+					add_character_modifier = {
+						modifier = investigation_target
+						years = 5
+					}
+					create_character_memory = {
+						type = murim_investigation_made_target_memory
+					}
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 intrigue >= 18 }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	# Option C: Use the chaos to grab treasures for yourself
+	option = {
+		name = murim_sect_adv.0002.c
+		add_piety = -200
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Successfully pocket rare items
+					add_gold = 400
+					add_prowess_skill = 1
+					add_character_modifier = {
+						modifier = stolen_sect_treasures
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_stole_sect_treasures_memory
+					}
+				}
+				30 = {
+					# Caught stealing - branded a thief
+					add_prestige = -400
+					add_character_modifier = {
+						modifier = sect_thief_branded
+						years = 15
+					}
+					create_character_memory = {
+						type = murim_caught_stealing_treasury_memory
+					}
+					# Expelled and hunted
+					trigger_event = {
+						id = murim_jianghu.0001
+						days = { 7 14 }
+					}
+				}
+				30 = {
+					# Find a cursed artifact among the treasures
+					add_gold = 100
+					add_trait = wounded_1
+					create_character_memory = {
+						type = murim_cursed_treasury_artifact_memory
+					}
+					trigger_event = {
+						id = murim_artifact.0002
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = greedy }
+			modifier = { add = 15 has_trait = deceitful }
+			modifier = { add = -25 has_trait = honest }
+		}
+	}
+
+	# Option D: Strengthen sect defenses to prevent future breaches
+	option = {
+		name = murim_sect_adv.0002.d
+		add_gold = -150
+		add_prestige = 200
+		add_martial_skill = 2
+		add_character_modifier = {
+			modifier = sect_defense_architect
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_strengthened_sect_defenses_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = diligent }
+			modifier = { add = 15 martial >= 16 }
+		}
+	}
+}
+
+###############################################################################
+# 3. SECT REFORM MOVEMENT
+# A faction within the sect demands radical changes: opening secret
+# techniques to all disciples, abolishing the elder hierarchy, or
+# merging with another sect. You must pick a side.
+###############################################################################
+murim_sect_adv.0003 = {
+	type = character_event
+	title = murim_sect_adv.0003.t
+	desc = murim_sect_adv.0003.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		age >= 20
+		diplomacy >= 8
+		NOT = { has_character_flag = murim_sect_reform_cooldown }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.4
+		modifier = { add = 0.4 diplomacy >= 16 }
+		modifier = { add = 0.3 has_trait = just }
+		modifier = { add = 0.3 has_trait = ambitious }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_sect_reform_cooldown
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_sect_reform_movement_memory
+		}
+	}
+
+	# Option A: Support the reformers - open techniques to all
+	option = {
+		name = murim_sect_adv.0003.a
+		add_prestige = 200
+		add_piety = -100
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Reform succeeds - sect becomes stronger and more united
+					add_diplomacy_skill = 3
+					add_prestige = 300
+					add_character_modifier = {
+						modifier = sect_reform_champion
+						years = 15
+					}
+					create_character_memory = {
+						type = murim_reform_champion_success_memory
+					}
+					# Stronger sect draws political attention
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 60 120 }
+					}
+				}
+				25 = {
+					# Reform partially succeeds - some elders leave
+					add_diplomacy_skill = 1
+					add_prestige = 100
+					add_stress = 15
+					create_character_memory = {
+						type = murim_partial_reform_memory
+					}
+				}
+				25 = {
+					# Conservatives retaliate - sect splits
+					add_stress = 40
+					add_character_modifier = {
+						modifier = sect_schism_catalyst
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_sect_schism_memory
+					}
+					trigger_event = {
+						id = murim_sect_exp.0001
+						days = { 14 30 }
+					}
+				}
+				15 = {
+					# Conservative elders challenge you to a duel
+					create_character_memory = {
+						type = murim_reform_duel_challenge_memory
+					}
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = just }
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = -15 has_trait = cynical }
+		}
+	}
+
+	# Option B: Defend the traditional hierarchy
+	option = {
+		name = murim_sect_adv.0003.b
+		add_prestige = 150
+		add_piety = 100
+		add_character_modifier = {
+			modifier = sect_traditionalist_defender
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_defended_tradition_memory
+		}
+		# Traditionalists reward loyalty
+		hidden_effect = {
+			random_list = {
+				50 = {
+					add_gold = 200
+					add_prestige = 100
+				}
+				30 = {
+					# Reformers target you
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 30 60 }
+					}
+				}
+				20 = {
+					# Access to restricted elder techniques
+					add_prowess_skill = 2
+					add_learning_skill = 1
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 60 120 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	# Option C: Propose a compromise - limited reforms
+	option = {
+		name = murim_sect_adv.0003.c
+		add_diplomacy_skill = 2
+		add_prestige = 250
+		add_stress = 10
+		add_character_modifier = {
+			modifier = sect_mediator
+			years = 8
+		}
+		create_character_memory = {
+			type = murim_mediated_sect_reform_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 diplomacy >= 18 }
+			modifier = { add = 15 has_trait = temperate }
+		}
+	}
+
+	# Option D: Exploit the chaos - form your own breakaway faction
+	option = {
+		name = murim_sect_adv.0003.d
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = deceitful
+			}
+		}
+		add_stress = 35
+		add_piety = -200
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Breakaway succeeds - you lead a new sect
+					add_prestige = 600
+					add_character_modifier = {
+						modifier = new_sect_founder
+						years = 20
+					}
+					create_character_memory = {
+						type = murim_founded_breakaway_sect_memory
+					}
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Some followers but not enough - struggling sect
+					add_prestige = 200
+					add_gold = -200
+					add_character_modifier = {
+						modifier = struggling_sect_leader
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_struggling_new_sect_memory
+					}
+				}
+				40 = {
+					# Both sides turn on you - hunted
+					add_prestige = -300
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+					}
+					create_character_memory = {
+						type = murim_hunted_by_both_factions_memory
+					}
+					trigger_event = {
+						id = murim_jianghu.0001
+						days = { 7 14 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+}
+
+###############################################################################
+# 4. INNER DISCIPLE GRAND TOURNAMENT
+# The sect holds its once-a-decade grand tournament to determine the
+# strongest inner disciple. The champion earns the right to learn the
+# sect's supreme technique.
+###############################################################################
+murim_sect_adv.0004 = {
+	type = character_event
+	title = murim_sect_adv.0004.t
+	desc = murim_sect_adv.0004.desc
+	theme = martial_arts
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		age >= 16
+		prowess >= 10
+		NOT = { has_character_flag = murim_grand_tournament_cooldown }
+		NOT = { has_trait = incapable }
+	}
+
+	weight_multiplier = {
+		base = 0.5
+		modifier = { add = 0.5 prowess >= 18 }
+		modifier = { add = 0.3 has_trait = brave }
+		modifier = { add = 0.3 has_trait = ambitious }
+		modifier = { add = -0.3 has_trait = craven }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_grand_tournament_cooldown
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_grand_tournament_announced_memory
+		}
+	}
+
+	# Option A: Enter the tournament as a fighter
+	option = {
+		name = murim_sect_adv.0004.a
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				20 = {
+					# Win the entire tournament - become champion
+					add_prowess_skill = 4
+					add_prestige = 600
+					add_character_modifier = {
+						modifier = grand_tournament_champion
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_grand_tournament_champion_memory
+					}
+					# Champion enters rankings
+					trigger_event = {
+						id = murim_ranking.0001
+						days = { 7 14 }
+					}
+					# Learn supreme technique
+					trigger_event = {
+						id = murim_cultivation.0001
+						days = { 30 60 }
+					}
+				}
+				25 = {
+					# Reach finals but lose - honorable defeat
+					add_prowess_skill = 2
+					add_prestige = 300
+					random_list = {
+						70 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+					}
+					create_character_memory = {
+						type = murim_tournament_finalist_memory
+					}
+				}
+				25 = {
+					# Eliminated in middle rounds - decent showing
+					add_prowess_skill = 1
+					add_prestige = 100
+					random_list = {
+						60 = { add_trait = wounded_1 }
+						40 = { }
+					}
+					create_character_memory = {
+						type = murim_tournament_middle_elimination_memory
+					}
+				}
+				15 = {
+					# Severely injured in brutal match
+					random_list = {
+						30 = { add_trait = wounded_2 }
+						40 = { add_trait = wounded_3 }
+						30 = { add_trait = incapable }
+					}
+					add_prestige = 50
+					create_character_memory = {
+						type = murim_tournament_severe_injury_memory
+					}
+					trigger_event = {
+						id = murim_training.0001
+						days = { 60 120 }
+					}
+				}
+				15 = {
+					# Discover opponent cheating with forbidden technique
+					add_prestige = 200
+					add_intrigue_skill = 1
+					create_character_memory = {
+						type = murim_tournament_cheating_discovered_memory
+					}
+					trigger_event = {
+						id = murim_sect_exp.0001
+						days = { 14 30 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 45
+			modifier = { add = 25 prowess >= 20 }
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -25 has_trait = craven }
+		}
+	}
+
+	# Option B: Serve as a judge/referee
+	option = {
+		name = murim_sect_adv.0004.b
+		trigger = {
+			age >= 30
+			OR = {
+				prowess >= 16
+				learning >= 14
+			}
+		}
+		add_prestige = 250
+		add_diplomacy_skill = 1
+		add_learning_skill = 1
+		add_character_modifier = {
+			modifier = tournament_honored_judge
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_tournament_judge_memory
+		}
+		# Observe all fighters - learn their techniques
+		hidden_effect = {
+			random = {
+				chance = 40
+				trigger_event = {
+					id = murim_cultivation.0001
+					days = { 30 60 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 age >= 40 }
+			modifier = { add = 15 has_trait = just }
+		}
+	}
+
+	# Option C: Bet heavily on the tournament outcomes
+	option = {
+		name = murim_sect_adv.0004.c
+		add_gold = -100
+		hidden_effect = {
+			random_list = {
+				35 = {
+					# Your picks were right - huge winnings
+					add_gold = 500
+					add_intrigue_skill = 1
+					create_character_memory = {
+						type = murim_tournament_betting_won_memory
+					}
+				}
+				35 = {
+					# Lost your bets - money gone
+					add_stress = 20
+					create_character_memory = {
+						type = murim_tournament_betting_lost_memory
+					}
+				}
+				30 = {
+					# Caught betting by sect elders - punished
+					add_prestige = -200
+					add_gold = -100
+					create_character_memory = {
+						type = murim_tournament_betting_caught_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = greedy }
+			modifier = { add = -15 has_trait = just }
+		}
+	}
+
+	# Option D: Skip the tournament - train alone instead
+	option = {
+		name = murim_sect_adv.0004.d
+		add_prowess_skill = 1
+		add_learning_skill = 1
+		add_stress = -15
+		create_character_memory = {
+			type = murim_skipped_tournament_solo_training_memory
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_training.0001
+				days = { 7 14 }
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = shy }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
+
+###############################################################################
+# 5. SECT ALLIANCE BETRAYAL AT WULIN CONGRESS
+# During a Wulin Congress gathering, a supposedly allied sect reveals
+# they have been colluding with the enemy. The betrayal throws the
+# martial world into chaos.
+###############################################################################
+murim_sect_adv.0005 = {
+	type = character_event
+	title = murim_sect_adv.0005.t
+	desc = murim_sect_adv.0005.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		is_alive = yes
+		is_landed = yes
+		age >= 18
+		NOT = { has_character_flag = murim_alliance_betrayal_cooldown }
+		NOT = { has_trait = incapable }
+		OR = {
+			diplomacy >= 10
+			martial >= 12
+			intrigue >= 10
+		}
+	}
+
+	weight_multiplier = {
+		base = 0.3
+		modifier = { add = 0.4 diplomacy >= 16 }
+		modifier = { add = 0.3 martial >= 16 }
+		modifier = { add = 0.3 has_trait = brave }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_alliance_betrayal_cooldown
+			years = 10
+		}
+		create_character_memory = {
+			type = murim_alliance_betrayal_at_congress_memory
+		}
+	}
+
+	# Option A: Rally the remaining allies and counterattack
+	option = {
+		name = murim_sect_adv.0005.a
+		add_stress = 35
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Successful rally - betrayers are defeated
+					add_martial_skill = 2
+					add_diplomacy_skill = 2
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = wulin_congress_savior
+						years = 15
+					}
+					create_character_memory = {
+						type = murim_rallied_wulin_congress_memory
+					}
+					# New martial alliance forms
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 30 60 }
+					}
+				}
+				25 = {
+					# Bloody battle - pyrrhic victory
+					add_prowess_skill = 1
+					add_prestige = 300
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+					}
+					create_character_memory = {
+						type = murim_pyrrhic_congress_battle_memory
+					}
+					# Many deaths - ranker casualties
+					trigger_event = {
+						id = murim_ranker_death.0001
+						days = { 7 14 }
+					}
+				}
+				25 = {
+					# Rally fails - forced to retreat
+					add_prestige = -100
+					add_stress = 30
+					create_character_memory = {
+						type = murim_congress_retreat_memory
+					}
+					trigger_event = {
+						id = murim_sect_exp.0001
+						days = { 14 30 }
+					}
+				}
+				20 = {
+					# Caught in massive battle - near death
+					random_list = {
+						30 = { add_trait = wounded_3 }
+						40 = { add_trait = incapable }
+						30 = {
+							add_trait = wounded_2
+							add_trait = craven
+						}
+					}
+					create_character_memory = {
+						type = murim_congress_battle_near_death_memory
+					}
+					trigger_event = {
+						id = murim_fate.0001
+						days = { 3 7 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 martial >= 18 }
+			modifier = { add = -25 has_trait = craven }
+		}
+	}
+
+	# Option B: Negotiate with the betrayers - seek understanding
+	option = {
+		name = murim_sect_adv.0005.b
+		trigger = {
+			diplomacy >= 14
+		}
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Discover they were coerced - help free them
+					add_diplomacy_skill = 3
+					add_prestige = 400
+					add_character_modifier = {
+						modifier = wulin_peacemaker
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_uncovered_coercion_memory
+					}
+					trigger_event = {
+						id = murim_politics.0001
+						days = { 30 60 }
+					}
+				}
+				35 = {
+					# Negotiations fail - they attack during talks
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+					}
+					add_prestige = -100
+					create_character_memory = {
+						type = murim_attacked_during_negotiation_memory
+					}
+					trigger_event = {
+						id = murim_duel.0001
+						days = { 3 7 }
+					}
+				}
+				35 = {
+					# Reach an uneasy truce - no one is happy
+					add_diplomacy_skill = 1
+					add_stress = 20
+					add_character_modifier = {
+						modifier = brokered_uneasy_truce
+						years = 5
+					}
+					create_character_memory = {
+						type = murim_uneasy_truce_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 diplomacy >= 20 }
+			modifier = { add = 15 has_trait = compassionate }
+		}
+	}
+
+	# Option C: Use the chaos to eliminate personal rivals
+	option = {
+		name = murim_sect_adv.0005.c
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				has_trait = ambitious
+				intrigue >= 14
+			}
+		}
+		add_piety = -200
+		add_stress = 20
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Successfully eliminated rivals in the chaos
+					add_intrigue_skill = 2
+					add_prowess_skill = 1
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = congress_chaos_beneficiary
+						years = 10
+					}
+					create_character_memory = {
+						type = murim_eliminated_rivals_in_chaos_memory
+					}
+				}
+				30 = {
+					# Someone saw what you did - blackmail potential
+					add_stress = 30
+					add_character_modifier = {
+						modifier = witnessed_dark_deed
+						years = 8
+					}
+					create_character_memory = {
+						type = murim_witnessed_eliminating_rival_memory
+					}
+				}
+				30 = {
+					# Target fights back - duel erupts
+					random_list = {
+						50 = { add_trait = wounded_1 }
+						30 = { add_trait = wounded_2 }
+						20 = { add_trait = wounded_3 }
+					}
+					create_character_memory = {
+						type = murim_rival_fought_back_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -30 has_trait = honest }
+		}
+	}
+
+	# Option D: Escape the congress before the violence escalates
+	option = {
+		name = murim_sect_adv.0005.d
+		add_prestige = -50
+		add_stress = -20
+		create_character_memory = {
+			type = murim_escaped_congress_betrayal_memory
+		}
+		# Wandering after escape triggers daily life
+		hidden_effect = {
+			trigger_event = {
+				id = murim_daily_life.0001
+				days = { 14 30 }
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = craven }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+}
