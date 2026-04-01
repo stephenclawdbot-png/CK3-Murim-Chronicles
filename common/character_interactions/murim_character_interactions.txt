@@ -229,80 +229,77 @@ murim_request_teaching_interaction = {
 		scope:actor = {
 			is_alive = yes
 			age >= 16
-		}
-		scope:recipient = {
-			is_alive = yes
-			age >= 16
 			OR = {
 				has_trait = murim_outer_qi
 				has_trait = murim_qi_gathering
 				has_trait = murim_foundation
+			}
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			prowess >= 20
+			OR = {
 				has_trait = murim_golden_core
 				has_trait = murim_nascent_soul
 				has_trait = murim_spirit_severing
 			}
-			prowess > scope:actor.prowess
 		}
 		NOT = { scope:actor = scope:recipient }
 	}
 
 	is_valid_showing_failures_only = {
 		scope:actor = {
-			NOT = { has_character_flag = murim_has_master }
+			NOT = { has_character_flag = murim_studying_cooldown }
 		}
 		scope:recipient = {
-			NOT = { has_character_flag = murim_training_disciple }
+			NOT = { has_trait = murim_qi_deviation_crippling }
 		}
 	}
 
 	on_accept = {
 		scope:actor = {
-			save_scope_as = disciple
-		}
-		scope:recipient = {
-			trigger_event = { id = murim_interact.0010 }
+			trigger_event = { id = murim_interact.0020 }
 		}
 	}
 
 	ai_accept = {
-		base = -10
+		base = 10
 		modifier = {
 			add = 30
 			opinion = {
 				target = scope:actor
-				value >= 20
+				value >= 30
+			}
+		}
+		modifier = {
+			add = -30
+			opinion = {
+				target = scope:actor
+				value < -20
 			}
 		}
 		modifier = {
 			add = 15
-			opinion = {
-				target = scope:actor
-				value >= 0
-			}
-		}
-		modifier = {
-			add = 10
 			has_trait = compassionate
 		}
 		modifier = {
-			add = -20
-			has_trait = arrogant
-		}
-		modifier = {
 			add = -15
-			has_trait = lazy
+			has_trait = callous
 		}
 		modifier = {
 			add = 10
-			has_trait = murim_master_teacher
+			scope:actor = {
+				is_courtier_of = scope:recipient
+			}
 		}
 	}
 
 	ai_targets = {
-		ai_recipients = courtiers
+		ai_recipients = liege
 	}
 	ai_targets = {
-		ai_recipients = liege
+		ai_recipients = courtiers
 	}
 
 	ai_frequency = 36
@@ -310,13 +307,10 @@ murim_request_teaching_interaction = {
 	ai_potential = {
 		is_alive = yes
 		age >= 16
-		NOR = {
+		OR = {
 			has_trait = murim_outer_qi
 			has_trait = murim_qi_gathering
 			has_trait = murim_foundation
-			has_trait = murim_golden_core
-			has_trait = murim_nascent_soul
-			has_trait = murim_spirit_severing
 		}
 	}
 
@@ -326,69 +320,180 @@ murim_request_teaching_interaction = {
 }
 
 ######################################
-# DECLARE RIVALRY INTERACTION
+# CHALLENGE TO DEATH MATCH
+# Lethal duel with real consequences
+# Loser may die, be incapacitated, or
+# permanently lose cultivation rank
 ######################################
 
-murim_declare_rivalry_interaction = {
+murim_death_match_interaction = {
 	category = interaction_category_hostile
 	icon = icon_combat
+	desc = murim_death_match_interaction_desc
 
-	cooldown = { days = 365 }
+	cooldown = { days = 730 }
+	use_diplomatic_range = no
 
 	is_shown = {
 		scope:actor = {
 			is_alive = yes
 			age >= 16
-			prowess >= 10
+			prowess >= 12
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
 		}
 		scope:recipient = {
 			is_alive = yes
 			age >= 16
-			prowess >= 10
+			prowess >= 12
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
 		}
 		NOT = { scope:actor = scope:recipient }
-		NOT = { scope:actor = { has_relation_friend = scope:recipient } }
 	}
 
 	is_valid_showing_failures_only = {
 		scope:actor = {
-			NOT = { has_relation_rival = scope:recipient }
+			NOR = {
+				has_trait = murim_qi_deviation_crippling
+				has_trait = incapable
+			}
+			custom_description = {
+				text = murim_no_recent_death_match
+				NOT = { has_character_flag = murim_death_match_cooldown }
+			}
+		}
+		scope:recipient = {
+			NOR = {
+				has_trait = murim_qi_deviation_crippling
+				has_trait = incapable
+			}
 		}
 	}
 
 	on_accept = {
+		scope:actor = {
+			add_character_flag = {
+				flag = murim_death_match_cooldown
+				years = 2
+			}
+			# Save both fighters
+			save_scope_as = challenger
+		}
 		scope:recipient = {
-			save_scope_as = target
+			save_scope_as = defender
+			add_character_flag = {
+				flag = murim_death_match_cooldown
+				years = 2
+			}
+		}
+		# Trigger the death match event chain
+		scope:actor = {
+			trigger_event = { id = murim_interact.1001 days = 3 }
+		}
+	}
+
+	on_decline = {
+		# Declining a death match brings shame
+		scope:recipient = {
+			add_prestige = -200
+			if = {
+				limit = {
+					NOT = { has_trait = craven }
+				}
+				random = {
+					chance = 30
+					add_trait = craven
+				}
+			}
 		}
 		scope:actor = {
-			trigger_event = { id = murim_interact.0030 }
+			add_prestige = 100
+			# Trigger gossip about the cowardly refusal
+			trigger_event = { id = murim_interact.1005 days = 7 }
 		}
 	}
 
 	ai_accept = {
-		base = -20
+		base = -10
+		# Brave fighters accept
 		modifier = {
 			add = 40
-			opinion = {
-				target = scope:actor
-				value < -20
-			}
+			has_trait = brave
 		}
 		modifier = {
 			add = 30
 			has_trait = wrathful
 		}
+		# Rivalry makes it personal
 		modifier = {
-			add = 20
-			has_trait = brave
+			add = 50
+			opinion = {
+				target = scope:actor
+				value < -50
+			}
 		}
+		# Confident if much stronger
 		modifier = {
-			add = -30
+			add = 30
+			prowess >= 25
+			scope:actor = {
+				prowess < 20
+			}
+		}
+		# Afraid if much weaker
+		modifier = {
+			add = -40
+			scope:actor = {
+				prowess >= 25
+			}
+			prowess < 20
+		}
+		# Craven avoids death
+		modifier = {
+			add = -60
 			has_trait = craven
 		}
+		# Content avoids conflict
 		modifier = {
 			add = -20
 			has_trait = content
+		}
+		# Ambitious warriors accept for glory
+		modifier = {
+			add = 20
+			has_trait = ambitious
+		}
+		# Honor demands acceptance if challenged publicly
+		modifier = {
+			add = 25
+			has_trait = just
+		}
+		# Has combat trauma -- reluctant
+		modifier = {
+			add = -30
+			OR = {
+				has_trait = murim_combat_trauma_shell_shock
+				has_trait = murim_combat_trauma_phantom_pain
+			}
+		}
+		# Ranking fighters protect their position
+		modifier = {
+			add = -15
+			has_variable = murim_martial_rank_score
+			var:murim_martial_rank_score >= 50
 		}
 	}
 
@@ -398,17 +503,26 @@ murim_declare_rivalry_interaction = {
 	ai_targets = {
 		ai_recipients = vassals
 	}
+	ai_targets = {
+		ai_recipients = neighboring_rulers
+	}
 
-	ai_frequency = 48
+	ai_frequency = 60
 
 	ai_potential = {
 		is_alive = yes
 		age >= 16
-		prowess >= 10
+		prowess >= 15
+		NOR = {
+			has_trait = craven
+			has_trait = murim_qi_deviation_crippling
+			has_trait = incapable
+		}
 		OR = {
+			has_trait = brave
 			has_trait = wrathful
 			has_trait = ambitious
-			has_trait = brave
+			prowess >= 25
 		}
 	}
 
@@ -419,105 +533,132 @@ murim_declare_rivalry_interaction = {
 
 ######################################
 # STEAL TECHNIQUE INTERACTION
+# Hostile espionage to learn enemy arts
+# Requires intrigue, risks severe penalty
 ######################################
 
 murim_steal_technique_interaction = {
 	category = interaction_category_hostile
 	icon = icon_intrigue
-	send_name = murim_steal_technique_interaction
+	desc = murim_steal_technique_interaction_desc
 
-	cooldown = { days = 365 }
+	cooldown = { days = 1095 }
 
 	is_shown = {
 		scope:actor = {
 			is_alive = yes
 			age >= 16
 			intrigue >= 10
-			prowess >= 8
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
 		}
 		scope:recipient = {
 			is_alive = yes
+			age >= 16
+			# Target must know techniques worth stealing
 			OR = {
-				has_trait = murim_harmonious_palm
-				has_trait = murim_iron_hegemon
-				has_trait = murim_venom_needle
-				has_trait = murim_void_sight
-				has_trait = murim_jade_treasury
-				has_trait = murim_shadow_executioner
+				has_trait = murim_iron_body
+				has_trait = murim_shadow_step
+				has_trait = murim_celestial_palm
+				has_trait = murim_dragon_breath
+				has_trait = murim_thousand_blades
+				has_trait = murim_void_strike
+				has_trait = murim_heavenly_sword
+				has_trait = murim_divine_fist
+				has_trait = murim_phantom_blade
+				has_trait = murim_thunder_palm
 			}
 		}
 		NOT = { scope:actor = scope:recipient }
-		# Target must have a technique the actor doesn't
-		OR = {
-			AND = {
-				scope:recipient = { has_trait = murim_harmonious_palm }
-				scope:actor = { NOT = { has_trait = murim_harmonious_palm } }
-			}
-			AND = {
-				scope:recipient = { has_trait = murim_iron_hegemon }
-				scope:actor = { NOT = { has_trait = murim_iron_hegemon } }
-			}
-			AND = {
-				scope:recipient = { has_trait = murim_venom_needle }
-				scope:actor = { NOT = { has_trait = murim_venom_needle } }
-			}
-			AND = {
-				scope:recipient = { has_trait = murim_void_sight }
-				scope:actor = { NOT = { has_trait = murim_void_sight } }
-			}
-			AND = {
-				scope:recipient = { has_trait = murim_jade_treasury }
-				scope:actor = { NOT = { has_trait = murim_jade_treasury } }
-			}
-			AND = {
-				scope:recipient = { has_trait = murim_shadow_executioner }
-				scope:actor = { NOT = { has_trait = murim_shadow_executioner } }
-			}
-		}
 	}
 
 	is_valid_showing_failures_only = {
 		scope:actor = {
-			NOT = { has_character_flag = murim_theft_cooldown }
+			NOR = {
+				has_trait = honest
+				has_character_flag = murim_steal_technique_cooldown
+			}
 		}
 	}
 
-	on_accept = {
-		scope:recipient = {
-			save_scope_as = target
+	# This is a SEND interaction - no accept/decline
+	send_option = {
+		is_valid = {
+			scope:actor = {
+				intrigue >= 10
+			}
 		}
+		flag = murim_steal_subtle
+		localization = murim_steal_subtle_option
+	}
+
+	send_option = {
+		is_valid = {
+			scope:actor = {
+				prowess >= 15
+			}
+		}
+		flag = murim_steal_force
+		localization = murim_steal_by_force_option
+	}
+
+	on_send = {
 		scope:actor = {
-			trigger_event = { id = murim_interact.0040 }
+			add_character_flag = {
+				flag = murim_steal_technique_cooldown
+				years = 3
+			}
+			save_scope_as = thief
+		}
+		scope:recipient = {
+			save_scope_as = victim
+		}
+		# Branch based on method chosen
+		if = {
+			limit = {
+				always = scope:murim_steal_subtle
+			}
+			scope:actor = {
+				trigger_event = { id = murim_interact.2001 days = 14 }
+			}
+		}
+		else = {
+			scope:actor = {
+				trigger_event = { id = murim_interact.2010 days = 3 }
+			}
 		}
 	}
-
-	# Always hostile - target never consents
-	ai_accept = {
-		base = -1000
-	}
-
-	auto_accept = yes
 
 	ai_targets = {
 		ai_recipients = courtiers
 	}
 	ai_targets = {
-		ai_recipients = vassals
+		ai_recipients = neighboring_rulers
 	}
 
-	ai_frequency = 60
+	ai_frequency = 96
 
 	ai_potential = {
 		is_alive = yes
 		age >= 16
-		intrigue >= 10
-		prowess >= 8
+		intrigue >= 12
 		OR = {
 			has_trait = deceitful
 			has_trait = ambitious
+			has_trait = callous
 			has_trait = sadistic
 		}
-		NOT = { has_character_flag = murim_theft_cooldown }
+		NOR = {
+			has_trait = honest
+			has_trait = just
+			has_trait = compassionate
+		}
 	}
 
 	ai_target_quick_trigger = {
@@ -526,12 +667,15 @@ murim_steal_technique_interaction = {
 }
 
 ######################################
-# QI EXCHANGE INTERACTION
+# QI TRANSFER HEALING INTERACTION
+# Sacrifice own qi energy to heal ally
+# Risk: may cause qi deviation in healer
 ######################################
 
-murim_qi_exchange_interaction = {
+murim_qi_transfer_interaction = {
 	category = interaction_category_friendly
-	icon = icon_diplomacy
+	icon = icon_personal
+	desc = murim_qi_transfer_interaction_desc
 
 	cooldown = { days = 365 }
 
@@ -539,9 +683,8 @@ murim_qi_exchange_interaction = {
 		scope:actor = {
 			is_alive = yes
 			age >= 16
+			# Must have at least Foundation to channel qi
 			OR = {
-				has_trait = murim_outer_qi
-				has_trait = murim_qi_gathering
 				has_trait = murim_foundation
 				has_trait = murim_golden_core
 				has_trait = murim_nascent_soul
@@ -550,14 +693,16 @@ murim_qi_exchange_interaction = {
 		}
 		scope:recipient = {
 			is_alive = yes
-			age >= 16
+			# Recipient must be wounded or ill
 			OR = {
-				has_trait = murim_outer_qi
-				has_trait = murim_qi_gathering
-				has_trait = murim_foundation
-				has_trait = murim_golden_core
-				has_trait = murim_nascent_soul
-				has_trait = murim_spirit_severing
+				has_trait = wounded_1
+				has_trait = wounded_2
+				has_trait = wounded_3
+				has_trait = ill
+				has_trait = pneumonia
+				has_trait = murim_qi_deviation_minor
+				has_trait = murim_qi_deviation_severe
+				has_trait = murim_combat_trauma_shattered_meridians
 			}
 		}
 		NOT = { scope:actor = scope:recipient }
@@ -565,48 +710,79 @@ murim_qi_exchange_interaction = {
 
 	is_valid_showing_failures_only = {
 		scope:actor = {
-			murim_can_qi_exchange_trigger = yes
+			NOR = {
+				has_trait = murim_qi_deviation_crippling
+				has_trait = murim_qi_deviation_severe
+				has_character_flag = murim_qi_transfer_exhaustion
+			}
+			custom_description = {
+				text = murim_must_have_stable_qi
+				NOT = { has_trait = murim_qi_deviation_minor }
+			}
 		}
 	}
 
 	on_accept = {
-		scope:recipient = {
-			save_scope_as = target
-		}
 		scope:actor = {
-			trigger_event = { id = murim_interact.0050 }
+			save_scope_as = healer
+			add_character_flag = {
+				flag = murim_qi_transfer_exhaustion
+				days = 180
+			}
+		}
+		scope:recipient = {
+			save_scope_as = patient
+		}
+		# Trigger healing event chain
+		scope:actor = {
+			trigger_event = { id = murim_interact.3001 }
+		}
+	}
+
+	on_decline = {
+		# Recipient stubbornly refuses help
+		scope:actor = {
+			add_opinion = {
+				modifier = murim_refused_help_opinion
+				target = scope:recipient
+				opinion = -10
+			}
 		}
 	}
 
 	ai_accept = {
-		base = -10
+		base = 50
+		# Most wounded people accept healing
 		modifier = {
 			add = 30
-			opinion = {
-				target = scope:actor
-				value >= 30
+			OR = {
+				has_trait = wounded_2
+				has_trait = wounded_3
 			}
 		}
 		modifier = {
 			add = 20
 			opinion = {
 				target = scope:actor
-				value >= 10
+				value >= 20
 			}
 		}
+		# Paranoid suspects poisoning
 		modifier = {
-			add = 30
-			scope:actor = { has_relation_friend = scope:recipient }
+			add = -40
+			has_trait = paranoid
 		}
-		modifier = {
-			add = 10
-			has_trait = compassionate
-		}
+		# Proud refuse charity
 		modifier = {
 			add = -30
+			has_trait = arrogant
+		}
+		# From an enemy? Suspicious
+		modifier = {
+			add = -50
 			opinion = {
 				target = scope:actor
-				value < -10
+				value < -30
 			}
 		}
 	}
@@ -615,7 +791,326 @@ murim_qi_exchange_interaction = {
 		ai_recipients = courtiers
 	}
 	ai_targets = {
+		ai_recipients = vassals
+	}
+	ai_targets = {
 		ai_recipients = liege
+	}
+
+	ai_frequency = 24
+
+	ai_potential = {
+		is_alive = yes
+		age >= 16
+		OR = {
+			has_trait = compassionate
+			has_trait = generous
+			has_trait = zealous
+		}
+		OR = {
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+		}
+		NOR = {
+			has_trait = murim_qi_deviation_crippling
+			has_trait = murim_qi_deviation_severe
+			has_trait = murim_qi_deviation_minor
+		}
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# DECLARE SECT RIVALRY INTERACTION
+# Formalize hostile relations between sects
+# Triggers ongoing conflict events
+######################################
+
+murim_declare_sect_rivalry_interaction = {
+	category = interaction_category_hostile
+	icon = icon_diplomacy
+	desc = murim_declare_sect_rivalry_interaction_desc
+
+	cooldown = { days = 1825 }
+	use_diplomatic_range = no
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			is_ruler = yes
+			# Must be a sect leader or elder
+			OR = {
+				has_trait = murim_sect_leader
+				has_trait = murim_sect_elder
+				has_trait = murim_sect_patriarch
+			}
+		}
+		scope:recipient = {
+			is_alive = yes
+			is_ruler = yes
+			OR = {
+				has_trait = murim_sect_leader
+				has_trait = murim_sect_elder
+				has_trait = murim_sect_patriarch
+			}
+		}
+		NOT = { scope:actor = scope:recipient }
+		# Cannot already be rivals
+		scope:actor = {
+			NOT = {
+				has_relation_rival = scope:recipient
+			}
+		}
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOT = { has_character_flag = murim_recent_rivalry_declared }
+		}
+	}
+
+	on_send = {
+		scope:actor = {
+			add_character_flag = {
+				flag = murim_recent_rivalry_declared
+				years = 5
+			}
+			save_scope_as = aggressor_sect_leader
+		}
+		scope:recipient = {
+			save_scope_as = rival_sect_leader
+		}
+		# Immediate effects -- everyone knows
+		scope:actor = {
+			set_relation_rival = {
+				target = scope:recipient
+				reason = murim_sect_rivalry_reason
+			}
+			add_prestige = 100
+			# All courtiers gain opinion malus toward rival sect
+			every_courtier = {
+				limit = {
+					is_alive = yes
+					OR = {
+						has_trait = murim_outer_qi
+						has_trait = murim_qi_gathering
+						has_trait = murim_foundation
+						has_trait = murim_golden_core
+						has_trait = murim_nascent_soul
+						has_trait = murim_spirit_severing
+					}
+				}
+				add_opinion = {
+					modifier = murim_sect_rivalry_courtier_opinion
+					target = scope:recipient
+					opinion = -30
+				}
+			}
+		}
+		scope:recipient = {
+			add_opinion = {
+				modifier = murim_sect_rivalry_opinion
+				target = scope:actor
+				opinion = -50
+			}
+			# Trigger retaliation event
+			trigger_event = { id = murim_interact.4001 days = 7 }
+		}
+		# Start ongoing rivalry event chain
+		scope:actor = {
+			trigger_event = { id = murim_interact.4010 days = 30 }
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = neighboring_rulers
+	}
+
+	ai_frequency = 120
+
+	ai_potential = {
+		is_alive = yes
+		is_ruler = yes
+		OR = {
+			has_trait = murim_sect_leader
+			has_trait = murim_sect_patriarch
+		}
+		OR = {
+			has_trait = ambitious
+			has_trait = wrathful
+			has_trait = arrogant
+		}
+		NOR = {
+			has_trait = content
+			has_trait = compassionate
+			has_trait = forgiving
+		}
+	}
+
+	ai_target_quick_trigger = {
+		adult = yes
+	}
+}
+
+######################################
+# OFFER PROTECTION INTERACTION
+# Bodyguard contract - protect weaker cultivator
+# Gain gold, prestige, and loyalty
+######################################
+
+murim_offer_protection_interaction = {
+	category = interaction_category_friendly
+	icon = icon_personal
+	desc = murim_offer_protection_interaction_desc
+
+	cooldown = { days = 365 }
+
+	is_shown = {
+		scope:actor = {
+			is_alive = yes
+			age >= 16
+			prowess >= 18
+			# Must be a capable fighter
+			OR = {
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+				has_trait = murim_nascent_soul
+				has_trait = murim_spirit_severing
+			}
+		}
+		scope:recipient = {
+			is_alive = yes
+			age >= 16
+			# Recipient should be weaker or non-martial
+			OR = {
+				prowess < 12
+				AND = {
+					is_ruler = yes
+					NOR = {
+						has_trait = murim_foundation
+						has_trait = murim_golden_core
+						has_trait = murim_nascent_soul
+						has_trait = murim_spirit_severing
+					}
+				}
+			}
+		}
+		NOT = { scope:actor = scope:recipient }
+	}
+
+	is_valid_showing_failures_only = {
+		scope:actor = {
+			NOR = {
+				has_trait = murim_qi_deviation_crippling
+				has_trait = incapable
+				has_character_flag = murim_currently_protecting
+			}
+		}
+		scope:recipient = {
+			NOT = { has_character_flag = murim_has_protector }
+		}
+	}
+
+	on_accept = {
+		scope:actor = {
+			add_character_flag = {
+				flag = murim_currently_protecting
+				years = 3
+			}
+			save_scope_as = protector
+			# Gain gold for services
+			add_gold = 50
+			add_prestige = 50
+		}
+		scope:recipient = {
+			add_character_flag = {
+				flag = murim_has_protector
+				years = 3
+			}
+			save_scope_as = protected_one
+			# Remember who protects them
+			set_variable = {
+				name = murim_protector_id
+				value = scope:actor
+			}
+			add_opinion = {
+				modifier = murim_protector_gratitude
+				target = scope:actor
+				opinion = 30
+			}
+			# Pay the protector
+			add_gold = -50
+		}
+		# Start protection event chain -- monthly checks
+		scope:actor = {
+			trigger_event = { id = murim_interact.5001 days = 30 }
+		}
+	}
+
+	on_decline = {
+		scope:actor = {
+			# Minor reputation hit for refused offer
+			add_prestige = -25
+		}
+	}
+
+	ai_accept = {
+		base = 20
+		# Rich recipients accept more readily
+		modifier = {
+			add = 30
+			gold >= 100
+		}
+		# Rulers want protection
+		modifier = {
+			add = 20
+			is_ruler = yes
+		}
+		# Already been attacked recently
+		modifier = {
+			add = 40
+			has_character_flag = murim_recently_attacked
+		}
+		# Don't trust enemies
+		modifier = {
+			add = -50
+			opinion = {
+				target = scope:actor
+				value < -20
+			}
+		}
+		# Proud rulers refuse
+		modifier = {
+			add = -30
+			has_trait = brave
+			prowess >= 15
+		}
+		# Paranoid suspects ulterior motives
+		modifier = {
+			add = -25
+			has_trait = paranoid
+		}
+		# Trusting accepts more easily
+		modifier = {
+			add = 20
+			has_trait = trusting
+		}
+	}
+
+	ai_targets = {
+		ai_recipients = courtiers
+	}
+	ai_targets = {
+		ai_recipients = vassals
+	}
+	ai_targets = {
+		ai_recipients = neighboring_rulers
 	}
 
 	ai_frequency = 48
@@ -623,17 +1118,23 @@ murim_qi_exchange_interaction = {
 	ai_potential = {
 		is_alive = yes
 		age >= 16
+		prowess >= 18
 		OR = {
-			has_trait = murim_outer_qi
-			has_trait = murim_qi_gathering
 			has_trait = murim_foundation
 			has_trait = murim_golden_core
 			has_trait = murim_nascent_soul
 			has_trait = murim_spirit_severing
 		}
+		NOR = {
+			has_trait = murim_qi_deviation_crippling
+			has_trait = incapable
+			has_trait = lazy
+		}
 		OR = {
-			has_trait = compassionate
 			has_trait = generous
+			has_trait = compassionate
+			has_trait = just
+			gold < 50
 		}
 	}
 
