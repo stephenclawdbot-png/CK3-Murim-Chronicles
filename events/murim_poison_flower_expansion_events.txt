@@ -1,0 +1,591 @@
+namespace = murim_poison_flower_exp
+
+# Poison Flower Palace Expansion Events
+# Full event chain for Poison Flower Palace (9th clan)
+# Beauty, poison, seduction, assassination, garden cultivation
+
+###################################
+# Poison Garden Cultivation
+###################################
+murim_poison_flower_exp.0001 = {
+	type = character_event
+	title = murim_poison_flower_exp.0001.t
+	desc = murim_poison_flower_exp.0001.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		NOT = { has_character_flag = poison_garden_tended }
+		age >= 16
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = poison_garden_tended
+			days = 365
+		}
+	}
+	
+	# Cultivate rare poison flowers
+	option = {
+		name = murim_poison_flower_exp.0001.a
+		# Focus on the Seven-Petal Death Orchid
+		add_character_modifier = {
+			modifier = murim_death_orchid_cultivator
+			years = 3
+		}
+		random_list = {
+			40 = {
+				# Successful cultivation
+				add_intrigue = 2
+				add_prestige = 100
+				add_character_flag = has_death_orchid
+			}
+			35 = {
+				# Partial success - mild poisoning
+				add_intrigue = 1
+				add_trait = wounded_1
+			}
+			25 = {
+				# Catastrophic pollen release
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_poison_scarred_lungs
+					years = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+	
+	# Cultivate healing antidotes
+	option = {
+		name = murim_poison_flower_exp.0001.b
+		add_learning = 2
+		add_character_modifier = {
+			modifier = murim_antidote_specialist
+			years = 3
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+}
+
+###################################
+# Seduction Assassination Mission
+###################################
+murim_poison_flower_exp.0002 = {
+	type = character_event
+	title = murim_poison_flower_exp.0002.t
+	desc = murim_poison_flower_exp.0002.desc
+	theme = seduction
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		age >= 18
+		intrigue >= 12
+		NOT = { has_character_flag = poison_seduction_mission }
+		any_living_character = {
+			has_variable = murim_clan_leader
+			NOT = { has_trait = trait_poison_flower_palace }
+			is_attracted_to_gender_of = root
+		}
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = poison_seduction_mission
+			days = 730
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				NOT = { has_trait = trait_poison_flower_palace }
+				is_attracted_to_gender_of = root
+			}
+			save_scope_as = seduction_target
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0002.a
+		# Accept the assassination contract
+		duel = {
+			skill = intrigue
+			target = scope:seduction_target
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_poison_flower_exp.0002.a.success
+				# Seduction succeeds - poison the target
+				scope:seduction_target = {
+					add_character_modifier = {
+						modifier = murim_slow_acting_poison
+						years = 1
+					}
+				}
+				add_prestige = 300
+				add_intrigue = 3
+				add_gold = 200
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_poison_flower_exp.0002.a.failure
+				# Cover blown - target discovers plot
+				scope:seduction_target = {
+					add_opinion = {
+						target = root
+						modifier = murim_assassination_attempt_opinion
+						opinion = -100
+					}
+				}
+				add_trait = wounded_2
+				imprison = { target = root type = house_arrest }
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0002.b
+		# Refuse the mission
+		add_stress = 20
+		add_opinion = {
+			target = scope:seduction_target
+			modifier = murim_spared_target_opinion
+			opinion = 10
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = compassionate }
+		}
+	}
+}
+
+###################################
+# Poison Immunity Training
+# Build resistance by ingesting small doses
+###################################
+murim_poison_flower_exp.0003 = {
+	type = character_event
+	title = murim_poison_flower_exp.0003.t
+	desc = murim_poison_flower_exp.0003.desc
+	theme = education
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		age >= 14
+		NOT = { has_trait = murim_poison_immune }
+		NOT = { has_character_flag = poison_immunity_training }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = poison_immunity_training
+			days = 365
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0003.a
+		# Begin the Seven Poisons Trial
+		random_list = {
+			30 = {
+				# Full immunity achieved
+				add_trait = murim_poison_immune
+				add_prowess = 2
+				add_prestige = 200
+			}
+			40 = {
+				# Partial immunity
+				add_character_modifier = {
+					modifier = murim_partial_poison_resistance
+					years = 5
+				}
+				add_prowess = 1
+			}
+			30 = {
+				# Nearly died
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_poison_trial_scarred
+					years = 3
+				}
+				add_stress = 40
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0003.b
+		# Too dangerous, train conventionally
+		add_intrigue = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+###################################
+# Beauty as Weapon Training
+###################################
+murim_poison_flower_exp.0004 = {
+	type = character_event
+	title = murim_poison_flower_exp.0004.t
+	desc = murim_poison_flower_exp.0004.desc
+	theme = seduction
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		age >= 16
+		NOT = { has_character_flag = beauty_weapon_training }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = beauty_weapon_training
+			days = 730
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0004.a
+		# Master the Flower Enchantment technique
+		add_trait = beautiful
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = murim_flower_enchantment_master
+			years = 10
+		}
+		ai_chance = { base = 70 }
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0004.b
+		# Focus on combat poison arts instead
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = murim_combat_poison_specialist
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+###################################
+# Palace Succession - Matriarch Election
+###################################
+murim_poison_flower_exp.0005 = {
+	type = character_event
+	title = murim_poison_flower_exp.0005.t
+	desc = murim_poison_flower_exp.0005.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		has_variable = murim_clan_leader
+		age >= 50
+		NOT = { has_character_flag = palace_succession_started }
+	}
+	
+	immediate = {
+		add_character_flag = palace_succession_started
+		random_living_character = {
+			limit = {
+				has_trait = trait_poison_flower_palace
+				age >= 18
+				age < 35
+				intrigue >= 15
+				NOT = { this = root }
+			}
+			save_scope_as = successor_candidate
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0005.a
+		# Anoint successor through the Flower Petal Ceremony
+		scope:successor_candidate = {
+			add_character_modifier = {
+				modifier = murim_anointed_palace_matriarch
+				years = 20
+			}
+			add_prestige = 500
+			set_variable = murim_clan_leader
+		}
+		remove_variable = murim_clan_leader
+		add_character_modifier = {
+			modifier = murim_retired_matriarch
+			years = 30
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0005.b
+		# Refuse to step down - reign until death
+		add_stress = 30
+		add_tyranny = 20
+		ai_chance = { base = 40 }
+	}
+}
+
+###################################
+# Poison Flower vs Orthodox Clans - Diplomatic Incident
+###################################
+murim_poison_flower_exp.0006 = {
+	type = character_event
+	title = murim_poison_flower_exp.0006.t
+	desc = murim_poison_flower_exp.0006.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		has_variable = murim_clan_leader
+		any_living_character = {
+			has_variable = murim_clan_leader
+			OR = {
+				has_trait = trait_mount_hua_sect
+				has_trait = trait_shaolin_temple
+				has_trait = trait_wudang_sect
+			}
+		}
+		NOT = { has_character_flag = orthodox_incident_cooldown }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = orthodox_incident_cooldown
+			days = 1095
+		}
+		random_living_character = {
+			limit = {
+				has_variable = murim_clan_leader
+				OR = {
+					has_trait = trait_mount_hua_sect
+					has_trait = trait_shaolin_temple
+					has_trait = trait_wudang_sect
+				}
+			}
+			save_scope_as = orthodox_leader
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0006.a
+		# Send a poisoned gift as provocation
+		scope:orthodox_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_poisoned_gift_opinion
+				opinion = -50
+			}
+			trigger_event = {
+				id = murim_poison_flower_exp.0006
+				days = 30
+			}
+		}
+		add_intrigue = 2
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0006.b
+		# Propose a non-aggression pact
+		scope:orthodox_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_peace_proposal_opinion
+				opinion = 20
+			}
+		}
+		add_diplomacy = 2
+		ai_chance = { base = 50 }
+	}
+}
+
+###################################
+# Forbidden Poison Art - Soul Devouring Petal
+###################################
+murim_poison_flower_exp.0007 = {
+	type = character_event
+	title = murim_poison_flower_exp.0007.t
+	desc = murim_poison_flower_exp.0007.desc
+	theme = skull
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		age >= 25
+		intrigue >= 18
+		NOT = { has_trait = murim_soul_devouring_petal }
+		NOT = { has_character_flag = soul_petal_attempt }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = soul_petal_attempt
+			days = 1825
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0007.a
+		# Attempt the forbidden art
+		random_list = {
+			25 = {
+				# Master the Soul Devouring Petal
+				add_trait = murim_soul_devouring_petal
+				add_prowess = 8
+				add_intrigue = 5
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_soul_petal_master
+					years = 20
+				}
+			}
+			35 = {
+				# Partial mastery - power at a cost
+				add_prowess = 4
+				add_intrigue = 2
+				add_character_modifier = {
+					modifier = murim_soul_petal_incomplete
+					years = 10
+				}
+				add_trait = scarred
+			}
+			40 = {
+				# Backlash - poisoned from within
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_soul_petal_backlash
+					years = 5
+				}
+				random = {
+					chance = 20
+					death = { death_reason = death_murim_forbidden_art }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0007.b
+		# The forbidden art is too dangerous
+		add_piety = 50
+		ai_chance = { base = 60 }
+	}
+}
+
+###################################
+# Palace Internal Rivalry
+# Two disciples compete for favor
+###################################
+murim_poison_flower_exp.0008 = {
+	type = character_event
+	title = murim_poison_flower_exp.0008.t
+	desc = murim_poison_flower_exp.0008.desc
+	theme = intrigue
+	
+	trigger = {
+		has_trait = trait_poison_flower_palace
+		has_variable = murim_clan_leader
+		any_living_character = {
+			count >= 2
+			has_trait = trait_poison_flower_palace
+			NOT = { this = root }
+			age >= 16
+		}
+		NOT = { has_character_flag = palace_rivalry_cooldown }
+	}
+	
+	immediate = {
+		add_character_flag = {
+			flag = palace_rivalry_cooldown
+			days = 730
+		}
+		ordered_living_character = {
+			limit = {
+				has_trait = trait_poison_flower_palace
+				NOT = { this = root }
+				age >= 16
+			}
+			order_by = intrigue
+			max = 1
+			save_scope_as = top_rival
+		}
+		ordered_living_character = {
+			limit = {
+				has_trait = trait_poison_flower_palace
+				NOT = { this = root }
+				NOT = { this = scope:top_rival }
+				age >= 16
+			}
+			order_by = intrigue
+			max = 1
+			save_scope_as = second_rival
+		}
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0008.a
+		# Let them compete - trial by poison
+		duel = {
+			skill = intrigue
+			target = scope:top_rival
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_poison_flower_exp.0008.a.top_wins
+				scope:top_rival = {
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = murim_palace_favored_disciple
+						years = 5
+					}
+				}
+				scope:second_rival = {
+					add_stress = 30
+				}
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_poison_flower_exp.0008.a.second_wins
+				scope:second_rival = {
+					add_prestige = 200
+					add_character_modifier = {
+						modifier = murim_palace_favored_disciple
+						years = 5
+					}
+				}
+				scope:top_rival = {
+					add_stress = 30
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_poison_flower_exp.0008.b
+		# Intervene - assign them different roles
+		scope:top_rival = {
+			add_character_modifier = {
+				modifier = murim_palace_assassin_role
+				years = 5
+			}
+		}
+		scope:second_rival = {
+			add_character_modifier = {
+				modifier = murim_palace_herbalist_role
+				years = 5
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}

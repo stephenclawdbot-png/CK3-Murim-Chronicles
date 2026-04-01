@@ -1,0 +1,391 @@
+# Murim Great Calamity Scripted Effects
+# Mass kill, survivor selection, rebuilding effects
+# Used by murim_calamity_ai_events and murim_great_calamity_events
+
+###################################
+# TRIGGER THE GREAT CALAMITY
+# Sets all global variables, begins the cycle
+###################################
+murim_trigger_great_calamity_effect = {
+	set_global_variable = murim_great_calamity_active
+	set_global_variable = {
+		name = murim_calamity_start_year
+		value = current_year
+	}
+	set_global_variable = {
+		name = murim_calamity_phase
+		value = 1
+	}
+	# Phase 1: Tensions (year 0-2)
+	# Phase 2: Open warfare (year 2-5)
+	# Phase 3: Apocalypse (year 5-8)
+	# Phase 4: Aftermath (year 8-10)
+	# Phase 5: Rebuilding (year 10+)
+	
+	# Notify all martial artists
+	every_living_character = {
+		limit = {
+			OR = {
+				has_trait = murim_martial_artist
+				has_variable = murim_clan_member
+			}
+		}
+		trigger_event = {
+			id = murim_great_calamity.0001
+			days = { 1 30 }
+		}
+	}
+	
+	# Mark all clan leaders for war AI
+	every_living_character = {
+		limit = { has_variable = murim_clan_leader }
+		add_character_flag = calamity_clan_leader_active
+		add_character_modifier = {
+			modifier = murim_calamity_wartime_leader
+			years = 10
+		}
+	}
+}
+
+###################################
+# ADVANCE CALAMITY PHASE
+###################################
+murim_advance_calamity_phase_effect = {
+	if = {
+		limit = { global_var:murim_calamity_phase = 1 }
+		set_global_variable = { name = murim_calamity_phase value = 2 }
+		# Phase 2: Open Warfare begins
+		every_living_character = {
+			limit = { has_variable = murim_clan_leader }
+			trigger_event = {
+				id = murim_calamity_ai.0001
+				days = { 1 60 }
+			}
+		}
+	}
+	else_if = {
+		limit = { global_var:murim_calamity_phase = 2 }
+		set_global_variable = { name = murim_calamity_phase value = 3 }
+		# Phase 3: Apocalypse - mass death
+		murim_calamity_mass_kill_effect = yes
+	}
+	else_if = {
+		limit = { global_var:murim_calamity_phase = 3 }
+		set_global_variable = { name = murim_calamity_phase value = 4 }
+		set_global_variable = murim_calamity_winding_down
+		# Phase 4: Aftermath - survivor selection
+		murim_calamity_select_survivors_effect = yes
+	}
+	else_if = {
+		limit = { global_var:murim_calamity_phase = 4 }
+		set_global_variable = { name = murim_calamity_phase value = 5 }
+		remove_global_variable = murim_great_calamity_active
+		set_global_variable = murim_calamity_ended
+		# Phase 5: Rebuilding
+		every_living_character = {
+			limit = { has_trait = murim_calamity_survivor }
+			trigger_event = {
+				id = murim_calamity_ai.0009
+				days = { 30 180 }
+			}
+		}
+	}
+}
+
+###################################
+# MASS KILL EFFECT
+# Kills 70-90% of martial artists
+###################################
+murim_calamity_mass_kill_effect = {
+	# Kill unranked martial artists (90% death rate)
+	every_living_character = {
+		limit = {
+			has_trait = murim_martial_artist
+			has_trait = murim_rank_unranked
+			is_ai = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		random = {
+			chance = 90
+			death = { death_reason = death_murim_calamity }
+		}
+	}
+	
+	# Kill low-ranked (80% death rate)
+	every_living_character = {
+		limit = {
+			has_trait = murim_martial_artist
+			OR = {
+				has_trait = murim_rank_third_rate
+				has_trait = murim_rank_second_rate
+			}
+			is_ai = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		random = {
+			chance = 80
+			death = { death_reason = death_murim_calamity }
+		}
+	}
+	
+	# Kill first-rate (60% death rate)
+	every_living_character = {
+		limit = {
+			has_trait = murim_martial_artist
+			has_trait = murim_rank_first_rate
+			is_ai = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		random = {
+			chance = 60
+			death = { death_reason = death_murim_calamity }
+		}
+	}
+	
+	# Kill peak masters (40% death rate)
+	every_living_character = {
+		limit = {
+			has_trait = murim_martial_artist
+			has_trait = murim_rank_peak_master
+			is_ai = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		random = {
+			chance = 40
+			death = { death_reason = death_murim_calamity }
+		}
+	}
+	
+	# Transcendents survive (20% death rate)
+	every_living_character = {
+		limit = {
+			has_trait = murim_martial_artist
+			has_trait = murim_rank_transcendent
+			is_ai = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		random = {
+			chance = 20
+			death = { death_reason = death_murim_calamity }
+		}
+	}
+	
+	# Kill civilians in murim regions (40%)
+	every_living_character = {
+		limit = {
+			is_ai = yes
+			NOT = { has_trait = murim_martial_artist }
+			NOT = { has_variable = murim_clan_member }
+			capital_province = {
+				OR = {
+					geographical_region = world_china
+					geographical_region = world_korea
+				}
+			}
+		}
+		random = {
+			chance = 40
+			death = { death_reason = death_murim_calamity_civilian }
+		}
+	}
+}
+
+###################################
+# SURVIVOR SELECTION EFFECT
+# Ensures 1-3 survivors per clan
+###################################
+murim_calamity_select_survivors_effect = {
+	# For each clan, find living members and mark up to 3 as survivors
+	# Mount Hua survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_mount_hua_sect
+	}
+	# Shaolin survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_shaolin_temple
+	}
+	# Wudang survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_wudang_sect
+	}
+	# Tang Clan survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_tang_clan
+	}
+	# Beggar Sect survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_beggar_sect
+	}
+	# Heavenly Demon survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_heavenly_demon_sect
+	}
+	# Iron Fist Gate survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_iron_fist_gate
+	}
+	# Poison Flower Palace survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_poison_flower_palace
+	}
+	# Phantom Blade Sect survivors
+	murim_calamity_select_clan_survivors_effect = {
+		CLAN_TRAIT = trait_phantom_blade_sect
+	}
+}
+
+###################################
+# PER-CLAN SURVIVOR SELECTION
+###################################
+murim_calamity_select_clan_survivors_effect = {
+	# Find strongest living member
+	random_living_character = {
+		limit = {
+			has_trait = $CLAN_TRAIT$
+			is_alive = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		weight = {
+			base = 1
+			modifier = {
+				add = 10
+				prowess >= 20
+			}
+			modifier = {
+				add = 5
+				has_trait = murim_rank_peak_master
+			}
+			modifier = {
+				add = 15
+				has_trait = murim_rank_transcendent
+			}
+		}
+		add_trait = murim_calamity_survivor
+		add_character_modifier = {
+			modifier = murim_calamity_last_of_clan
+			years = 50
+		}
+	}
+	
+	# Find second survivor (50% chance)
+	random = {
+		chance = 50
+		random_living_character = {
+			limit = {
+				has_trait = $CLAN_TRAIT$
+				is_alive = yes
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			add_trait = murim_calamity_survivor
+		}
+	}
+	
+	# Find third survivor (25% chance)
+	random = {
+		chance = 25
+		random_living_character = {
+			limit = {
+				has_trait = $CLAN_TRAIT$
+				is_alive = yes
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			add_trait = murim_calamity_survivor
+		}
+	}
+	
+	# Kill remaining clan members
+	every_living_character = {
+		limit = {
+			has_trait = $CLAN_TRAIT$
+			is_alive = yes
+			is_ai = yes
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		death = { death_reason = death_murim_calamity_final_battle }
+	}
+}
+
+###################################
+# PLAYER DYNASTY PROTECTION
+###################################
+murim_calamity_protect_player_dynasty_effect = {
+	every_player = {
+		if = {
+			limit = {
+				OR = {
+					has_trait = murim_martial_artist
+					has_variable = murim_clan_member
+				}
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			trigger_event = {
+				id = murim_calamity_ai.0007
+				days = 1
+			}
+		}
+	}
+}
+
+###################################
+# SPAWN NEW RECRUIT EFFECT
+# Used during rebuilding phase
+###################################
+spawn_new_character_martial_recruit_effect = {
+	create_character = {
+		location = root.capital_province
+		template = murim_calamity_orphan_template
+		save_scope_as = new_recruit
+	}
+	scope:new_recruit = {
+		add_trait = murim_martial_artist
+		add_trait = murim_rank_unranked
+		add_character_modifier = {
+			modifier = murim_calamity_orphan_recruit
+			years = 5
+		}
+		set_variable = {
+			name = murim_clan_member
+			value = root
+		}
+	}
+}
+
+###################################
+# CALAMITY PROVINCE DEVASTATION
+###################################
+murim_calamity_devastate_provinces_effect = {
+	every_county_in_region = {
+		region = world_china
+		random = {
+			chance = 60
+			add_county_modifier = {
+				modifier = murim_calamity_devastated
+				years = 20
+			}
+		}
+	}
+	every_county_in_region = {
+		region = world_korea
+		random = {
+			chance = 40
+			add_county_modifier = {
+				modifier = murim_calamity_devastated
+				years = 15
+			}
+		}
+	}
+}
+
+###################################
+# RESET CALAMITY TIMER
+# Sets up next cycle 150-200 years later
+###################################
+murim_reset_calamity_timer_effect = {
+	set_global_variable = {
+		name = murim_next_calamity_countdown
+		value = 150
+	}
+	remove_global_variable = murim_calamity_ended
+	remove_global_variable = murim_calamity_phase
+	remove_global_variable = murim_calamity_start_year
+}
