@@ -1,0 +1,655 @@
+namespace = murim_calamity_cycle_expansion3
+
+# Great Calamity Cycle Expansion 3 - AI Autonomous Deep War & Betrayal
+# Heartbeat 69 - Sprint Build
+# 10 complete events: AI-driven clan wars, mass death, betrayal, emperor fall, mythology formation
+
+####################################
+# Calamity Harbinger - Blood Moon Omen
+####################################
+murim_calamity_cycle_expansion3.0001 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0001.t
+	desc = murim_calamity_cycle_expansion3.0001.desc
+	theme = apocalypse
+	left_portrait = { character = root animation = fear }
+	
+	trigger = {
+		has_global_variable = great_calamity_approaching
+		NOT = { has_character_flag = blood_moon_omen_seen }
+		is_ruler = yes
+		has_trait = qi_cultivator
+	}
+	weight_multiplier = { base = 1 modifier = { add = 5 has_trait = mystic } }
+	
+	immediate = {
+		set_character_flag = blood_moon_omen_seen
+		every_ruler = {
+			limit = { has_trait = qi_cultivator }
+			add_character_flag = calamity_awareness
+		}
+	}
+	
+	# Option A: Warn the orthodox alliance
+	option = {
+		name = murim_calamity_cycle_expansion3.0001.a
+		add_prestige = 300
+		add_character_modifier = { modifier = calamity_prophet years = 10 }
+		every_courtier = {
+			limit = { has_trait = orthodox_martial_artist }
+			add_opinion = { target = root modifier = grateful_opinion opinion = 15 }
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_calamity_cycle_expansion3.0002 days = { 90 180 } }
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Prepare your clan in secret
+	option = {
+		name = murim_calamity_cycle_expansion3.0001.b
+		add_character_modifier = { modifier = secret_calamity_preparation years = 10 }
+		add_intrigue = 1
+		add_gold = -100
+		set_character_flag = prepared_for_calamity
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Dismiss it as superstition
+	option = {
+		name = murim_calamity_cycle_expansion3.0001.c
+		add_stress = -10
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# AI Autonomous: First Clan Declares War on Another
+####################################
+murim_calamity_cycle_expansion3.0002 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0002.t
+	desc = murim_calamity_cycle_expansion3.0002.desc
+	theme = war
+	left_portrait = { character = root animation = personality_vengeful }
+	
+	trigger = {
+		has_global_variable = great_calamity_active
+		is_ruler = yes
+		OR = {
+			has_trait = mount_hua_sect_leader
+			has_trait = shaolin_abbot
+			has_trait = wudang_sect_leader
+			has_trait = tang_clan_head
+			has_trait = beggar_sect_chief
+			has_trait = iron_fist_gate_master
+			has_trait = poison_flower_palace_mistress
+			has_trait = phantom_blade_master
+			has_trait = heavenly_demon_leader
+		}
+		NOT = { has_character_flag = calamity_war_declared }
+	}
+	weight_multiplier = { base = 5 }
+	
+	immediate = {
+		set_character_flag = calamity_war_declared
+		random_ruler = {
+			limit = {
+				NOT = { this = root }
+				OR = {
+					has_trait = mount_hua_sect_leader
+					has_trait = shaolin_abbot
+					has_trait = wudang_sect_leader
+					has_trait = tang_clan_head
+					has_trait = beggar_sect_chief
+					has_trait = heavenly_demon_leader
+				}
+			}
+			save_scope_as = war_target_leader
+		}
+	}
+	
+	# Option A: All-out war - destroy the rival clan
+	option = {
+		name = murim_calamity_cycle_expansion3.0002.a
+		if = {
+			limit = { exists = scope:war_target_leader }
+			start_war = {
+				cb = murim_calamity_war_cb
+				target = scope:war_target_leader
+			}
+		}
+		add_dread = 30
+		add_character_modifier = { modifier = calamity_war_aggressor years = 10 }
+		ai_chance = { base = 60 }
+	}
+	
+	# Option B: Defensive posture - fortify and wait
+	option = {
+		name = murim_calamity_cycle_expansion3.0002.b
+		add_character_modifier = { modifier = calamity_fortress_stance years = 10 }
+		change_martial = 2
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Seek alliance against the aggressor
+	option = {
+		name = murim_calamity_cycle_expansion3.0002.c
+		trigger = { diplomacy >= 12 }
+		add_character_modifier = { modifier = calamity_alliance_seeker years = 5 }
+		add_prestige = 200
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# AI Autonomous: Clan Betrayal During Calamity
+####################################
+murim_calamity_cycle_expansion3.0003 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0003.t
+	desc = murim_calamity_cycle_expansion3.0003.desc
+	theme = intrigue
+	left_portrait = { character = root animation = shock }
+	right_portrait = { character = scope:betrayer animation = personality_vengeful }
+	
+	trigger = {
+		has_global_variable = great_calamity_active
+		is_ruler = yes
+		NOT = { has_character_flag = calamity_betrayal_event }
+	}
+	weight_multiplier = { base = 3 }
+	
+	immediate = {
+		set_character_flag = calamity_betrayal_event
+		random_courtier = {
+			limit = {
+				has_trait = deceitful
+				opinion = { target = root value < 0 }
+			}
+			save_scope_as = betrayer
+		}
+		if = {
+			limit = { NOT = { exists = scope:betrayer } }
+			random_courtier = {
+				limit = { NOT = { this = root } prowess >= 10 }
+				save_scope_as = betrayer
+			}
+		}
+	}
+	
+	# Option A: Execute the betrayer publicly
+	option = {
+		name = murim_calamity_cycle_expansion3.0003.a
+		if = {
+			limit = { exists = scope:betrayer }
+			scope:betrayer = { death = { death_reason = death_execution killer = root } }
+		}
+		add_dread = 25
+		add_character_modifier = { modifier = ruthless_calamity_leader years = 10 }
+		add_stress = 15
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Imprison and interrogate
+	option = {
+		name = murim_calamity_cycle_expansion3.0003.b
+		if = {
+			limit = { exists = scope:betrayer }
+			imprison = { target = scope:betrayer type = dungeon }
+		}
+		add_character_modifier = { modifier = calamity_interrogator years = 5 }
+		add_intrigue = 1
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Show mercy - the calamity turns everyone desperate
+	option = {
+		name = murim_calamity_cycle_expansion3.0003.c
+		add_piety = 100
+		add_prestige = 100
+		add_character_modifier = { modifier = merciful_during_calamity years = 10 }
+		add_stress = -15
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# AI Autonomous: Mass Casualty Event - 70% Kill Rate
+####################################
+murim_calamity_cycle_expansion3.0004 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0004.t
+	desc = murim_calamity_cycle_expansion3.0004.desc
+	theme = apocalypse
+	left_portrait = { character = root animation = grief }
+	
+	trigger = {
+		has_global_variable = great_calamity_active
+		is_ruler = yes
+		NOT = { has_character_flag = mass_casualty_processed }
+	}
+	weight_multiplier = { base = 10 }
+	
+	immediate = {
+		set_character_flag = mass_casualty_processed
+		# AI autonomous mass kill effect
+		every_courtier = {
+			limit = {
+				NOT = { has_character_flag = calamity_survivor_protected }
+				NOT = { is_player_heir_of = root }
+			}
+			random = {
+				chance = 70
+				death = { death_reason = death_battle }
+			}
+		}
+		# Protect 1-3 per clan
+		random_courtier = {
+			limit = { is_alive = yes NOT = { this = root } }
+			save_scope_as = clan_survivor_1
+			set_character_flag = calamity_survivor_protected
+			add_trait = calamity_survivor
+		}
+		random_courtier = {
+			limit = { is_alive = yes NOT = { this = root } NOT = { this = scope:clan_survivor_1 } }
+			save_scope_as = clan_survivor_2
+			set_character_flag = calamity_survivor_protected
+			add_trait = calamity_survivor
+		}
+	}
+	
+	# Option A: Rally the survivors
+	option = {
+		name = murim_calamity_cycle_expansion3.0004.a
+		add_character_modifier = { modifier = calamity_rally_leader years = 20 }
+		add_prestige = 500
+		change_martial = 2
+		add_stress = 40
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Mourn the dead
+	option = {
+		name = murim_calamity_cycle_expansion3.0004.b
+		add_piety = 300
+		add_stress = 50
+		add_character_modifier = { modifier = grief_stricken_leader years = 10 }
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Harden yourself - survival is all that matters
+	option = {
+		name = murim_calamity_cycle_expansion3.0004.c
+		add_trait = callous
+		add_character_modifier = { modifier = hardened_survivor years = 20 }
+		change_prowess = 2
+		add_stress = -10
+		add_dread = 20
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# AI Autonomous: Emperor Falls - Imperial Power Collapses
+####################################
+murim_calamity_cycle_expansion3.0005 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0005.t
+	desc = murim_calamity_cycle_expansion3.0005.desc
+	theme = apocalypse
+	left_portrait = { character = root animation = shock }
+	
+	trigger = {
+		has_global_variable = great_calamity_active
+		is_ruler = yes
+		NOT = { has_global_variable = emperor_fallen }
+	}
+	weight_multiplier = { base = 8 }
+	
+	immediate = {
+		set_global_variable = { name = emperor_fallen value = yes }
+		# Kill the emperor if one exists
+		random_ruler = {
+			limit = { has_trait = murim_emperor }
+			save_scope_as = fallen_emperor
+			death = { death_reason = death_battle }
+		}
+	}
+	
+	# Option A: Seize imperial power in the chaos
+	option = {
+		name = murim_calamity_cycle_expansion3.0005.a
+		trigger = { prowess >= 20 }
+		random = {
+			chance = 30
+			modifier = { add = 20 prowess >= 28 }
+			add_trait = murim_emperor
+			add_prestige = 2000
+			add_character_modifier = { modifier = calamity_emperor years = 30 }
+		}
+		random = {
+			chance = 70
+			modifier = { add = -20 prowess >= 28 }
+			add_stress = 30
+			add_prestige = -200
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	# Option B: Let the empire fall - focus on your clan
+	option = {
+		name = murim_calamity_cycle_expansion3.0005.b
+		add_character_modifier = { modifier = pragmatic_survivor years = 15 }
+		add_prestige = 200
+		ai_chance = { base = 50 }
+	}
+	
+	# Option C: Try to restore order
+	option = {
+		name = murim_calamity_cycle_expansion3.0005.c
+		trigger = { diplomacy >= 18 }
+		add_character_modifier = { modifier = order_restorer years = 15 }
+		add_prestige = 500
+		add_piety = 200
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# AI Autonomous: Civilian Massacre - Collateral Damage
+####################################
+murim_calamity_cycle_expansion3.0006 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0006.t
+	desc = murim_calamity_cycle_expansion3.0006.desc
+	theme = apocalypse
+	left_portrait = { character = root animation = grief }
+	
+	trigger = {
+		has_global_variable = great_calamity_active
+		is_ruler = yes
+		NOT = { has_character_flag = civilian_massacre_witnessed }
+	}
+	weight_multiplier = { base = 5 }
+	
+	immediate = {
+		set_character_flag = civilian_massacre_witnessed
+		# Devastate provinces
+		every_held_title = {
+			limit = { tier = tier_county }
+			random = {
+				chance = 60
+				change_development_level = -3
+			}
+		}
+	}
+	
+	# Option A: Protect the civilians at cost to yourself
+	option = {
+		name = murim_calamity_cycle_expansion3.0006.a
+		add_character_modifier = { modifier = civilian_protector years = 20 }
+		add_piety = 500
+		add_prestige = 300
+		change_prowess = -1
+		add_stress = 25
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Focus military resources on clan survival
+	option = {
+		name = murim_calamity_cycle_expansion3.0006.b
+		add_character_modifier = { modifier = pragmatic_war_leader years = 10 }
+		add_dread = 15
+		add_prestige = -100
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Evacuate as many as possible
+	option = {
+		name = murim_calamity_cycle_expansion3.0006.c
+		trigger = { stewardship >= 12 }
+		add_character_modifier = { modifier = great_evacuator years = 15 }
+		add_prestige = 400
+		add_gold = -200
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# Player Dynasty Protection - You Always Survive
+####################################
+murim_calamity_cycle_expansion3.0007 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0007.t
+	desc = murim_calamity_cycle_expansion3.0007.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		is_ai = no
+		has_global_variable = great_calamity_active
+		NOT = { has_character_flag = player_dynasty_protected }
+	}
+	weight_multiplier = { base = 100 }
+	
+	immediate = {
+		set_character_flag = player_dynasty_protected
+		set_character_flag = calamity_survivor_protected
+		add_trait = calamity_survivor
+		# Ensure player heir survives too
+		player_heir = {
+			set_character_flag = calamity_survivor_protected
+			add_trait = calamity_survivor
+		}
+	}
+	
+	# Option A: Fight through the apocalypse
+	option = {
+		name = murim_calamity_cycle_expansion3.0007.a
+		add_character_modifier = { modifier = fought_through_calamity years = 50 }
+		change_prowess = 3
+		add_prestige = 1000
+		add_stress = 30
+		ai_chance = { base = 50 }
+	}
+	
+	# Option B: Hide and survive with cunning
+	option = {
+		name = murim_calamity_cycle_expansion3.0007.b
+		add_character_modifier = { modifier = calamity_cunning_survivor years = 50 }
+		add_intrigue = 3
+		add_prestige = 500
+		ai_chance = { base = 30 }
+	}
+	
+	# Option C: Protect others - become a beacon of hope
+	option = {
+		name = murim_calamity_cycle_expansion3.0007.c
+		add_character_modifier = { modifier = beacon_of_hope years = 50 }
+		add_diplomacy = 3
+		add_piety = 500
+		add_prestige = 800
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# Mythology Formation - Previous Era Becomes Legend
+####################################
+murim_calamity_cycle_expansion3.0008 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0008.t
+	desc = murim_calamity_cycle_expansion3.0008.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_global_variable = great_calamity_ended
+		NOT = { has_character_flag = mythology_formation_event }
+	}
+	weight_multiplier = { base = 5 }
+	
+	immediate = {
+		set_character_flag = mythology_formation_event
+		change_global_variable = { name = calamity_cycle_count add = 1 }
+	}
+	
+	# Option A: Record the true history
+	option = {
+		name = murim_calamity_cycle_expansion3.0008.a
+		add_character_modifier = { modifier = true_historian years = 30 }
+		add_learning = 3
+		add_prestige = 500
+		ai_chance = { base = 35 }
+	}
+	
+	# Option B: Let the legends grow - the old masters become gods
+	option = {
+		name = murim_calamity_cycle_expansion3.0008.b
+		add_character_modifier = { modifier = mythology_keeper years = 30 }
+		add_piety = 500
+		add_prestige = 300
+		ai_chance = { base = 40 }
+	}
+	
+	# Option C: Use the mythology to consolidate power
+	option = {
+		name = murim_calamity_cycle_expansion3.0008.c
+		trigger = { intrigue >= 14 }
+		add_character_modifier = { modifier = mythology_manipulator years = 20 }
+		add_prestige = 700
+		add_dread = 15
+		ai_chance = { base = 25 }
+	}
+}
+
+####################################
+# Survivor Rebuilding - New Sect Foundation
+####################################
+murim_calamity_cycle_expansion3.0009 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0009.t
+	desc = murim_calamity_cycle_expansion3.0009.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_bold }
+	
+	trigger = {
+		has_global_variable = great_calamity_ended
+		has_trait = calamity_survivor
+		NOT = { has_character_flag = post_calamity_rebuild }
+	}
+	weight_multiplier = { base = 5 }
+	
+	immediate = { set_character_flag = post_calamity_rebuild }
+	
+	# Option A: Rebuild the old sect from ashes
+	option = {
+		name = murim_calamity_cycle_expansion3.0009.a
+		add_character_modifier = { modifier = sect_rebuilder years = 30 }
+		add_prestige = 800
+		add_piety = 200
+		# Spawn new recruits
+		hidden_effect = {
+			create_character = {
+				location = root.capital_province
+				template = murim_disciple_template
+				save_scope_as = new_recruit_1
+			}
+			create_character = {
+				location = root.capital_province
+				template = murim_disciple_template
+				save_scope_as = new_recruit_2
+			}
+			create_character = {
+				location = root.capital_province
+				template = murim_disciple_template
+				save_scope_as = new_recruit_3
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+	
+	# Option B: Found an entirely new sect
+	option = {
+		name = murim_calamity_cycle_expansion3.0009.b
+		add_character_modifier = { modifier = new_sect_founder years = 30 }
+		add_prestige = 1000
+		add_character_flag = founded_new_sect
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Wander alone - the age of sects is over
+	option = {
+		name = murim_calamity_cycle_expansion3.0009.c
+		add_trait = jianghu_wanderer
+		add_character_modifier = { modifier = lone_survivor_wanderer years = 30 }
+		change_prowess = 2
+		add_prestige = 300
+		ai_chance = { base = 20 }
+	}
+}
+
+####################################
+# Calamity Cycle Reset - The Wheel Turns Again
+####################################
+murim_calamity_cycle_expansion3.0010 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion3.0010.t
+	desc = murim_calamity_cycle_expansion3.0010.desc
+	theme = martial_arts
+	left_portrait = { character = root animation = personality_rational }
+	
+	trigger = {
+		has_global_variable = great_calamity_ended
+		has_trait = calamity_survivor
+		NOT = { has_character_flag = cycle_reset_acknowledged }
+	}
+	weight_multiplier = { base = 3 }
+	
+	immediate = {
+		set_character_flag = cycle_reset_acknowledged
+		# Reset calamity variables for next cycle
+		hidden_effect = {
+			remove_global_variable = great_calamity_active
+			remove_global_variable = great_calamity_ended
+			remove_global_variable = emperor_fallen
+			set_global_variable = {
+				name = years_since_calamity
+				value = 0
+			}
+		}
+	}
+	
+	# Option A: Vow to prevent the next calamity
+	option = {
+		name = murim_calamity_cycle_expansion3.0010.a
+		add_character_modifier = { modifier = calamity_prevention_oath years = 50 }
+		add_piety = 500
+		add_prestige = 500
+		set_character_flag = sworn_to_prevent_calamity
+		ai_chance = { base = 40 }
+	}
+	
+	# Option B: Accept the cycle as inevitable
+	option = {
+		name = murim_calamity_cycle_expansion3.0010.b
+		add_character_modifier = { modifier = fatalist_wisdom years = 30 }
+		add_learning = 3
+		add_piety = 300
+		add_stress = -30
+		ai_chance = { base = 35 }
+	}
+	
+	# Option C: Prepare your descendants for the next one
+	option = {
+		name = murim_calamity_cycle_expansion3.0010.c
+		add_character_modifier = { modifier = preparing_next_generation years = 30 }
+		add_prestige = 400
+		player_heir = {
+			add_character_modifier = { modifier = calamity_prepared_heir years = 20 }
+			change_prowess = 2
+		}
+		ai_chance = { base = 25 }
+	}
+}
