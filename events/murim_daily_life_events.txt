@@ -1,0 +1,1731 @@
+namespace = murim_daily_life
+
+# ============================================================
+# MURIM DAILY LIFE EVENTS
+# Tea house rumors, traveling merchants, wandering masters,
+# street performances, hidden beggars, festivals, and more.
+# All interconnected with cultivation, duels, ranking, artifacts.
+# ============================================================
+
+# ============================================================
+# EVENT 1: Tea House Rumors
+# A patron at a tea house shares whispers of the jianghu.
+# Can lead to artifact hunts, sect events, or duel chains.
+# ============================================================
+murim_daily_life.0001 = {
+	type = character_event
+	title = murim_daily_life.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = paranoid
+				}
+				desc = murim_daily_life.0001.desc.paranoid
+			}
+			desc = murim_daily_life.0001.desc
+		}
+	}
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = heard_tea_house_rumor }
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = gregarious
+		}
+		modifier = {
+			add = 0.3
+			has_trait = curious
+		}
+		modifier = {
+			add = -0.5
+			has_trait = shy
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = heard_tea_house_rumor
+			years = 1
+		}
+	}
+
+	# Option A: Rumor about a hidden artifact location
+	option = {
+		name = murim_daily_life.0001.a
+		trigger = {
+			NOT = { has_character_flag = seeking_artifact }
+		}
+		add_character_flag = {
+			flag = seeking_artifact
+			years = 2
+		}
+		add_prestige = 50
+		hidden_effect = {
+			random_list = {
+				70 = {
+					trigger_event = {
+						id = murim_artifact_events.0001
+						days = { 30 60 }
+					}
+				}
+				30 = {
+					# Rumor was false
+					trigger_event = {
+						id = murim_daily_life.0002
+						days = { 15 30 }
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = tea_house_artifact_rumor_memory
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Option B: Rumor about a powerful wandering master
+	option = {
+		name = murim_daily_life.0001.b
+		add_prestige = 25
+		hidden_effect = {
+			trigger_event = {
+				id = murim_daily_life.0006
+				days = { 10 30 }
+			}
+		}
+		create_character_memory = {
+			type = tea_house_master_rumor_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option C: Rumor about an upcoming sect conflict
+	option = {
+		name = murim_daily_life.0001.c
+		add_intrigue = 1
+		hidden_effect = {
+			trigger_event = {
+				id = murim_sect_events.0001
+				days = { 20 60 }
+			}
+		}
+		create_character_memory = {
+			type = tea_house_sect_rumor_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Option D: Ignore the rumors and enjoy the tea
+	option = {
+		name = murim_daily_life.0001.d
+		add_stress = -15
+		add_prestige = 10
+		create_character_memory = {
+			type = peaceful_tea_house_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 2: Traveling Merchant Arrives
+# An exotic merchant offers rare martial arts items.
+# Can trigger artifact creation, poison trade, alchemy.
+# ============================================================
+murim_daily_life.0002 = {
+	type = character_event
+	title = murim_daily_life.0002.t
+	desc = murim_daily_life.0002.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = personality_greedy
+	}
+
+	trigger = {
+		is_available_adult = yes
+		gold >= 50
+		NOT = { has_character_flag = met_traveling_merchant }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = greedy
+		}
+		modifier = {
+			add = 0.3
+			stewardship >= 12
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = met_traveling_merchant
+			years = 2
+		}
+	}
+
+	# Option A: Buy a mysterious cultivation manual
+	option = {
+		name = murim_daily_life.0002.a
+		remove_short_term_gold = 100
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Genuine manual - triggers cultivation event
+					trigger_event = {
+						id = murim_cultivation_events.0001
+						days = { 5 15 }
+					}
+				}
+				35 = {
+					# Partial manual - some benefit
+					add_martial = 1
+				}
+				25 = {
+					# Fake manual - wasted gold
+					add_stress = 20
+					create_character_memory = {
+						type = swindled_by_merchant_memory
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = bought_cultivation_manual_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option B: Purchase rare medicinal herbs for alchemy
+	option = {
+		name = murim_daily_life.0002.b
+		remove_short_term_gold = 75
+		add_character_modifier = {
+			modifier = rare_herb_collection
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_artifact_events.0003
+				days = { 10 30 }
+			}
+		}
+		create_character_memory = {
+			type = purchased_rare_herbs_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option C: Buy poison supplies from the black market section
+	option = {
+		name = murim_daily_life.0002.c
+		trigger = {
+			OR = {
+				has_trait = deceitful
+				has_trait = sadistic
+				has_trait = callous
+				intrigue >= 14
+			}
+		}
+		remove_short_term_gold = 150
+		add_character_modifier = {
+			modifier = poison_supplies_acquired
+			years = 5
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_jianghu_events.0005
+				days = { 15 45 }
+			}
+		}
+		create_character_memory = {
+			type = bought_poison_supplies_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+
+	# Option D: Decline and move on
+	option = {
+		name = murim_daily_life.0002.d
+		add_prestige = 10
+		create_character_memory = {
+			type = ignored_merchant_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = temperate
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 3: Street Performance - Martial Arts Display
+# A street performer demonstrates extraordinary martial arts.
+# Could be a disguised master or a talented youth.
+# ============================================================
+murim_daily_life.0003 = {
+	type = character_event
+	title = murim_daily_life.0003.t
+	desc = murim_daily_life.0003.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = watched_street_performance }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			prowess >= 15
+		}
+		modifier = {
+			add = 0.3
+			has_trait = curious
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = watched_street_performance
+			years = 1
+		}
+	}
+
+	# Option A: Challenge the performer to a friendly spar
+	option = {
+		name = murim_daily_life.0003.a
+		duel = {
+			skill = prowess
+			target = root
+			50 = {
+				compare_modifier = {
+					value = prowess
+					multiplier = 2
+				}
+				desc = murim_daily_life.0003.a.success
+				add_prowess = 1
+				add_prestige = 100
+				create_character_memory = {
+					type = won_street_spar_memory
+				}
+			}
+			30 = {
+				desc = murim_daily_life.0003.a.draw
+				add_prestige = 50
+				create_character_memory = {
+					type = drew_street_spar_memory
+				}
+			}
+			20 = {
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				desc = murim_daily_life.0003.a.loss
+				add_prestige = -25
+				random_list = {
+					80 = {
+						add_character_modifier = {
+							modifier = minor_bruises
+							years = 1
+						}
+					}
+					15 = {
+						add_trait = wounded_1
+					}
+					5 = {
+						add_trait = craven
+					}
+				}
+				create_character_memory = {
+					type = lost_street_spar_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option B: Offer to become the performer's patron
+	option = {
+		name = murim_daily_life.0003.b
+		remove_short_term_gold = 50
+		add_prestige = 75
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# The performer is actually a hidden master
+					trigger_event = {
+						id = murim_daily_life.0006
+						days = { 3 10 }
+					}
+				}
+				70 = {
+					# Grateful performer becomes a contact
+					add_character_modifier = {
+						modifier = jianghu_street_contact
+						years = 5
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = patronized_street_performer_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = generous
+			}
+		}
+	}
+
+	# Option C: Study their technique from afar
+	option = {
+		name = murim_daily_life.0003.c
+		add_martial = 1
+		hidden_effect = {
+			random_list = {
+				50 = {
+					add_character_modifier = {
+						modifier = observed_new_technique_insight
+						years = 2
+					}
+				}
+				50 = {
+					# Nothing special learned
+					add_prestige = 15
+				}
+			}
+		}
+		create_character_memory = {
+			type = studied_street_technique_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option D: Walk away
+	option = {
+		name = murim_daily_life.0003.d
+		add_prestige = 5
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+# ============================================================
+# EVENT 4: Hidden Beggar Master
+# A seemingly pitiful beggar reveals extraordinary martial skill.
+# Classic wuxia trope - the hidden dragon among mortals.
+# ============================================================
+murim_daily_life.0004 = {
+	type = character_event
+	title = murim_daily_life.0004.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = compassionate
+				}
+				desc = murim_daily_life.0004.desc.compassionate
+			}
+			triggered_desc = {
+				trigger = {
+					has_trait = arrogant
+				}
+				desc = murim_daily_life.0004.desc.arrogant
+			}
+			desc = murim_daily_life.0004.desc
+		}
+	}
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = encountered_beggar_master }
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.8
+			has_trait = compassionate
+		}
+		modifier = {
+			add = -0.5
+			has_trait = arrogant
+		}
+		modifier = {
+			add = 0.3
+			has_trait = humble
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = encountered_beggar_master
+			years = 3
+		}
+	}
+
+	# Option A: Show kindness - share your meal
+	option = {
+		name = murim_daily_life.0004.a
+		add_piety = 50
+		hidden_effect = {
+			random_list = {
+				60 = {
+					# The beggar reveals themselves and teaches you
+					trigger_event = {
+						id = murim_daily_life.0009
+						days = { 1 3 }
+					}
+				}
+				40 = {
+					# Grateful beggar gives a cryptic hint
+					add_character_modifier = {
+						modifier = cryptic_martial_insight
+						years = 3
+					}
+					trigger_event = {
+						id = murim_cultivation_events.0005
+						days = { 30 90 }
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = showed_kindness_to_beggar_memory
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option B: Test the beggar - flick a coin with qi force
+	option = {
+		name = murim_daily_life.0004.b
+		trigger = {
+			prowess >= 10
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Beggar catches it effortlessly - reveals power
+					trigger_event = {
+						id = murim_daily_life.0009
+						days = { 1 3 }
+					}
+				}
+				30 = {
+					# Beggar dodges - flees before you can react
+					add_prestige = 25
+					add_character_modifier = {
+						modifier = sensed_hidden_power
+						years = 1
+					}
+				}
+				20 = {
+					# Just a normal beggar - you feel guilty
+					add_stress = 15
+					add_piety = -25
+				}
+			}
+		}
+		create_character_memory = {
+			type = tested_beggar_with_qi_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option C: Kick the beggar away (evil path)
+	option = {
+		name = murim_daily_life.0004.c
+		trigger = {
+			OR = {
+				has_trait = arrogant
+				has_trait = callous
+				has_trait = sadistic
+			}
+		}
+		add_piety = -50
+		add_stress = -10
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# The beggar retaliates with devastating force
+					add_trait = wounded_1
+					add_prestige = -100
+					create_character_memory = {
+						type = humiliated_by_beggar_master_memory
+					}
+				}
+				30 = {
+					# The beggar curses you before vanishing
+					add_character_modifier = {
+						modifier = beggars_curse
+						years = 5
+					}
+				}
+				30 = {
+					# Just a beggar - nothing happens
+					add_tyranny = 5
+				}
+			}
+		}
+		create_character_memory = {
+			type = kicked_beggar_memory
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = sadistic
+			}
+		}
+	}
+
+	# Option D: Ignore and walk past
+	option = {
+		name = murim_daily_life.0004.d
+		add_prestige = 5
+		create_character_memory = {
+			type = ignored_beggar_memory
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+# ============================================================
+# EVENT 5: Martial Festival / Tournament Announcement
+# A grand martial festival is announced in the region.
+# Leads to tournament chains, ranking events, social connections.
+# ============================================================
+murim_daily_life.0005 = {
+	type = character_event
+	title = murim_daily_life.0005.t
+	desc = murim_daily_life.0005.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	trigger = {
+		is_available_adult = yes
+		is_ruler = yes
+		NOT = { has_character_flag = attending_martial_festival }
+		prowess >= 8
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = brave
+		}
+		modifier = {
+			add = 0.3
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = attending_martial_festival
+			years = 2
+		}
+	}
+
+	# Option A: Enter the open tournament
+	option = {
+		name = murim_daily_life.0005.a
+		add_prestige = 50
+		hidden_effect = {
+			trigger_event = {
+				id = murim_duel_events.0004
+				days = { 5 15 }
+			}
+		}
+		create_character_memory = {
+			type = entered_martial_festival_tournament_memory
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				prowess >= 15
+			}
+			modifier = {
+				add = 15
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option B: Attend as a spectator and scout talent
+	option = {
+		name = murim_daily_life.0005.b
+		add_prestige = 25
+		add_intrigue = 1
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Spot a hidden talent - triggers ranking event
+					trigger_event = {
+						id = murim_ranking_events.0005
+						days = { 10 20 }
+					}
+				}
+				50 = {
+					# Good networking - build connections
+					add_character_modifier = {
+						modifier = festival_connections
+						years = 3
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = scouted_martial_festival_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option C: Set up a merchant stall at the festival
+	option = {
+		name = murim_daily_life.0005.c
+		trigger = {
+			stewardship >= 10
+		}
+		remove_short_term_gold = 50
+		hidden_effect = {
+			random_list = {
+				60 = {
+					add_gold = 200
+					add_prestige = 50
+				}
+				40 = {
+					add_gold = 75
+					add_prestige = 25
+				}
+			}
+		}
+		create_character_memory = {
+			type = merchant_at_martial_festival_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = greedy
+			}
+		}
+	}
+
+	# Option D: Host a private gathering during the festival
+	option = {
+		name = murim_daily_life.0005.d
+		trigger = {
+			prestige >= 500
+		}
+		remove_short_term_gold = 100
+		add_prestige = 150
+		hidden_effect = {
+			trigger_event = {
+				id = murim_politics_events.0003
+				days = { 5 10 }
+			}
+		}
+		create_character_memory = {
+			type = hosted_festival_gathering_memory
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				diplomacy >= 15
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 6: Wandering Master Encounter
+# A mysterious wandering cultivator passes through your lands.
+# Classic wuxia: the eccentric master who tests the worthy.
+# ============================================================
+murim_daily_life.0006 = {
+	type = character_event
+	title = murim_daily_life.0006.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_trait = humble
+				}
+				desc = murim_daily_life.0006.desc.humble
+			}
+			triggered_desc = {
+				trigger = {
+					has_trait = arrogant
+				}
+				desc = murim_daily_life.0006.desc.arrogant
+			}
+			desc = murim_daily_life.0006.desc
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = met_wandering_master }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = humble
+		}
+		modifier = {
+			add = 0.3
+			has_trait = diligent
+		}
+		modifier = {
+			add = -0.5
+			has_trait = arrogant
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = met_wandering_master
+			years = 3
+		}
+	}
+
+	# Option A: Bow respectfully and request teaching
+	option = {
+		name = murim_daily_life.0006.a
+		add_piety = 25
+		hidden_effect = {
+			random_list = {
+				40 = {
+					# Master agrees to teach - triggers mentor chain
+					trigger_event = {
+						id = murim_mentor_events.0001
+						days = { 3 7 }
+					}
+				}
+				35 = {
+					# Master gives one lesson then departs
+					add_prowess = 2
+					add_martial = 1
+					add_character_modifier = {
+						modifier = wandering_master_insight
+						years = 3
+					}
+				}
+				25 = {
+					# Master tests you with a riddle/task
+					trigger_event = {
+						id = murim_daily_life.0010
+						days = { 1 3 }
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = met_wandering_master_memory
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 25
+				has_trait = humble
+			}
+		}
+	}
+
+	# Option B: Challenge the master to prove your worth
+	option = {
+		name = murim_daily_life.0006.b
+		trigger = {
+			prowess >= 12
+		}
+		duel = {
+			skill = prowess
+			target = root
+			20 = {
+				desc = murim_daily_life.0006.b.impress
+				add_prowess = 3
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = impressed_wandering_master
+					years = 5
+				}
+				hidden_effect = {
+					trigger_event = {
+						id = murim_mentor_events.0001
+						days = { 5 15 }
+					}
+				}
+				create_character_memory = {
+					type = impressed_wandering_master_memory
+				}
+			}
+			40 = {
+				desc = murim_daily_life.0006.b.decent
+				add_prestige = 50
+				add_prowess = 1
+				create_character_memory = {
+					type = decent_showing_wandering_master_memory
+				}
+			}
+			40 = {
+				desc = murim_daily_life.0006.b.humbled
+				add_prestige = -50
+				random_list = {
+					70 = {
+						add_trait = wounded_1
+					}
+					20 = {
+						add_trait = incapable
+					}
+					10 = {
+						# Master teaches you through defeat
+						add_prowess = 1
+						add_character_modifier = {
+							modifier = learned_through_defeat
+							years = 3
+						}
+					}
+				}
+				create_character_memory = {
+					type = humbled_by_wandering_master_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option C: Offer hospitality - food and shelter
+	option = {
+		name = murim_daily_life.0006.c
+		remove_short_term_gold = 25
+		add_piety = 50
+		add_prestige = 50
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Grateful master leaves behind a cultivation manual
+					trigger_event = {
+						id = murim_cultivation_events.0001
+						days = { 7 14 }
+					}
+				}
+				30 = {
+					# Master shares jianghu intelligence
+					add_intrigue = 1
+					add_character_modifier = {
+						modifier = jianghu_intelligence_boost
+						years = 2
+					}
+				}
+				20 = {
+					# Master departs with only thanks
+					add_prestige = 25
+				}
+			}
+		}
+		create_character_memory = {
+			type = hosted_wandering_master_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = generous
+			}
+		}
+	}
+
+	# Option D: Ignore the stranger
+	option = {
+		name = murim_daily_life.0006.d
+		add_prestige = 5
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 15
+				has_trait = shy
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 7: Night Market Encounter
+# Strange encounters at a night market on the outskirts of town.
+# Links to black market, poison trade, assassination.
+# ============================================================
+murim_daily_life.0007 = {
+	type = character_event
+	title = murim_daily_life.0007.t
+	desc = murim_daily_life.0007.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = visited_night_market }
+		age >= 18
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = deceitful
+		}
+		modifier = {
+			add = 0.3
+			intrigue >= 12
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = visited_night_market
+			years = 1
+		}
+	}
+
+	# Option A: Browse the illegal martial arts scrolls
+	option = {
+		name = murim_daily_life.0007.a
+		remove_short_term_gold = 200
+		hidden_effect = {
+			random_list = {
+				30 = {
+					# Found a genuine forbidden technique scroll
+					add_trait = forbidden_knowledge
+					add_prowess = 2
+					trigger_event = {
+						id = murim_technique_events.0001
+						days = { 10 30 }
+					}
+				}
+				40 = {
+					# Partial scroll with some insights
+					add_martial = 1
+					add_character_modifier = {
+						modifier = partial_forbidden_scroll
+						years = 3
+					}
+				}
+				30 = {
+					# Fake - lost money
+					add_stress = 25
+				}
+			}
+		}
+		create_character_memory = {
+			type = bought_forbidden_scroll_night_market_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option B: Visit the information broker
+	option = {
+		name = murim_daily_life.0007.b
+		remove_short_term_gold = 100
+		add_intrigue = 1
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Learn about a rival's weakness
+					add_character_modifier = {
+						modifier = rival_weakness_intelligence
+						years = 2
+					}
+				}
+				30 = {
+					# Information about bounty targets
+					trigger_event = {
+						id = murim_jianghu_events.0002
+						days = { 5 15 }
+					}
+				}
+				20 = {
+					# Double-crossed - your visit is reported
+					add_prestige = -50
+					add_character_modifier = {
+						modifier = exposed_night_market_visitor
+						years = 1
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = visited_info_broker_night_market_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = deceitful
+			}
+		}
+	}
+
+	# Option C: Challenge someone in the underground pit fights
+	option = {
+		name = murim_daily_life.0007.c
+		trigger = {
+			prowess >= 12
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_jianghu_events.0001
+				days = { 1 3 }
+			}
+		}
+		create_character_memory = {
+			type = entered_night_market_pit_fight_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option D: Leave before trouble finds you
+	option = {
+		name = murim_daily_life.0007.d
+		add_prestige = 10
+		create_character_memory = {
+			type = left_night_market_safely_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 8: Fortune Teller's Prophecy
+# A blind fortune teller delivers a cryptic prophecy.
+# Links to fate events, cultivation breakthroughs, destiny.
+# ============================================================
+murim_daily_life.0008 = {
+	type = character_event
+	title = murim_daily_life.0008.t
+	desc = murim_daily_life.0008.desc
+	theme = mystic
+	left_portrait = {
+		character = root
+		animation = fear
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = received_fortune_prophecy }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = mystic
+		}
+		modifier = {
+			add = 0.3
+			learning >= 12
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = received_fortune_prophecy
+			years = 5
+		}
+	}
+
+	# Option A: "A great tribulation approaches" - Accept the warning
+	option = {
+		name = murim_daily_life.0008.a
+		add_stress = 15
+		add_piety = 50
+		hidden_effect = {
+			trigger_event = {
+				id = murim_fate_events.0001
+				days = { 60 180 }
+			}
+		}
+		add_character_modifier = {
+			modifier = forewarned_of_tribulation
+			years = 5
+		}
+		create_character_memory = {
+			type = fortune_teller_tribulation_prophecy_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = zealous
+			}
+		}
+	}
+
+	# Option B: "Your destiny lies with the one you least expect" - Romance path
+	option = {
+		name = murim_daily_life.0008.b
+		add_prestige = 25
+		hidden_effect = {
+			trigger_event = {
+				id = murim_romance_events.0001
+				days = { 30 90 }
+			}
+		}
+		add_character_modifier = {
+			modifier = fated_romantic_encounter
+			years = 3
+		}
+		create_character_memory = {
+			type = fortune_teller_romance_prophecy_memory
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = lustful
+			}
+		}
+	}
+
+	# Option C: "Your hands will shape the fate of the martial world"
+	option = {
+		name = murim_daily_life.0008.c
+		add_prestige = 100
+		add_stress = 25
+		hidden_effect = {
+			trigger_event = {
+				id = murim_fate_events.0005
+				days = { 90 365 }
+			}
+		}
+		add_character_modifier = {
+			modifier = destiny_of_martial_world
+			years = 10
+		}
+		create_character_memory = {
+			type = fortune_teller_destiny_prophecy_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option D: Dismiss the fortune teller as a charlatan
+	option = {
+		name = murim_daily_life.0008.d
+		add_stress = -10
+		add_prestige = 10
+		create_character_memory = {
+			type = dismissed_fortune_teller_memory
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = cynical
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 9: Beggar Master Reveals True Power (follow-up to 0004)
+# The beggar you helped reveals themselves as a legendary master.
+# Triggers mentor chain or grants powerful cultivation insight.
+# ============================================================
+murim_daily_life.0009 = {
+	type = character_event
+	title = murim_daily_life.0009.t
+	desc = murim_daily_life.0009.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		is_available_adult = yes
+	}
+
+	immediate = {
+		# No cooldown - triggered directly
+	}
+
+	# Option A: Kneel and beg for teaching
+	option = {
+		name = murim_daily_life.0009.a
+		add_piety = 50
+		add_prowess = 2
+		add_martial = 1
+		add_character_modifier = {
+			modifier = beggar_masters_secret_technique
+			years = 10
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_mentor_events.0001
+				days = { 7 14 }
+			}
+		}
+		create_character_memory = {
+			type = beggar_master_accepted_as_disciple_memory
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
+		}
+	}
+
+	# Option B: Ask for just one pointer
+	option = {
+		name = murim_daily_life.0009.b
+		add_prowess = 1
+		add_character_modifier = {
+			modifier = beggar_masters_single_pointer
+			years = 5
+		}
+		hidden_effect = {
+			random_list = {
+				50 = {
+					trigger_event = {
+						id = murim_cultivation_events.0005
+						days = { 30 60 }
+					}
+				}
+				50 = {
+					add_prestige = 100
+				}
+			}
+		}
+		create_character_memory = {
+			type = received_beggar_master_pointer_memory
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Option C: Challenge the master out of pride
+	option = {
+		name = murim_daily_life.0009.c
+		trigger = {
+			OR = {
+				has_trait = arrogant
+				has_trait = brave
+			}
+		}
+		duel = {
+			skill = prowess
+			target = root
+			10 = {
+				desc = murim_daily_life.0009.c.survive
+				add_prestige = 200
+				add_prowess = 2
+				create_character_memory = {
+					type = survived_beggar_master_duel_memory
+				}
+			}
+			90 = {
+				desc = murim_daily_life.0009.c.crushed
+				add_prestige = -100
+				random_list = {
+					50 = {
+						add_trait = wounded_2
+					}
+					30 = {
+						add_trait = wounded_1
+						add_trait = craven
+					}
+					20 = {
+						add_trait = incapable
+					}
+				}
+				create_character_memory = {
+					type = crushed_by_beggar_master_memory
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 15
+				has_trait = arrogant
+			}
+		}
+	}
+}
+
+# ============================================================
+# EVENT 10: Herb Gathering Expedition in Spirit Mountains
+# Journey into the mountains to gather rare cultivation herbs.
+# Links to artifact events, cultivation, and random encounters.
+# ============================================================
+murim_daily_life.0010 = {
+	type = character_event
+	title = murim_daily_life.0010.t
+	desc = murim_daily_life.0010.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_available_adult = yes
+		NOT = { has_character_flag = on_herb_expedition }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 0.5
+			has_trait = diligent
+		}
+		modifier = {
+			add = 0.3
+			learning >= 10
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = on_herb_expedition
+			years = 1
+		}
+	}
+
+	# Option A: Venture deep into the mountains alone
+	option = {
+		name = murim_daily_life.0010.a
+		hidden_effect = {
+			random_list = {
+				25 = {
+					# Find a spirit herb - major cultivation boost
+					add_character_modifier = {
+						modifier = spirit_herb_consumed
+						years = 5
+					}
+					add_prowess = 2
+					trigger_event = {
+						id = murim_cultivation_events.0003
+						days = { 3 10 }
+					}
+				}
+				25 = {
+					# Encounter a spirit beast guardian
+					trigger_event = {
+						id = murim_artifact_events.0008
+						days = { 1 3 }
+					}
+				}
+				25 = {
+					# Find a hidden cave with ancient carvings
+					add_martial = 1
+					add_learning = 1
+					add_character_modifier = {
+						modifier = ancient_cave_insights
+						years = 3
+					}
+					create_character_memory = {
+						type = found_ancient_cave_memory
+					}
+				}
+				15 = {
+					# Ambushed by bandits
+					random_list = {
+						60 = {
+							add_trait = wounded_1
+						}
+						30 = {
+							add_prestige = 50
+							# Fought them off
+						}
+						10 = {
+							add_trait = wounded_2
+							add_gold = -50
+						}
+					}
+					create_character_memory = {
+						type = ambushed_in_mountains_memory
+					}
+				}
+				10 = {
+					# Lost in a qi-dense fog
+					add_stress = 30
+					add_character_modifier = {
+						modifier = mountain_fog_disorientation
+						years = 1
+					}
+					create_character_memory = {
+						type = lost_in_mountain_fog_memory
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = solo_herb_expedition_memory
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Option B: Hire local guides and go as a group
+	option = {
+		name = murim_daily_life.0010.b
+		remove_short_term_gold = 50
+		hidden_effect = {
+			random_list = {
+				50 = {
+					# Successful - find good herbs
+					add_character_modifier = {
+						modifier = common_medicinal_herbs
+						years = 2
+					}
+					add_gold = 25
+				}
+				30 = {
+					# Guide leads to a hidden village of herbalists
+					add_learning = 1
+					add_character_modifier = {
+						modifier = herbalist_village_knowledge
+						years = 5
+					}
+				}
+				20 = {
+					# Guide was a bandit scout - ambush!
+					trigger_event = {
+						id = murim_jianghu_events.0001
+						days = { 1 3 }
+					}
+				}
+			}
+		}
+		create_character_memory = {
+			type = group_herb_expedition_memory
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 15
+				has_trait = patient
+			}
+		}
+	}
+
+	# Option C: Focus on searching for a specific legendary herb
+	option = {
+		name = murim_daily_life.0010.c
+		trigger = {
+			learning >= 12
+		}
+		remove_short_term_gold = 100
+		hidden_effect = {
+			random_list = {
+				20 = {
+					# Found the legendary herb!
+					add_character_modifier = {
+						modifier = legendary_spirit_herb
+						years = 10
+					}
+					add_prowess = 3
+					add_prestige = 200
+					trigger_event = {
+						id = murim_cultivation_events.0001
+						days = { 5 10 }
+					}
+					create_character_memory = {
+						type = found_legendary_herb_memory
+					}
+				}
+				80 = {
+					# Failed to find it but gained experience
+					add_learning = 1
+					add_prestige = 25
+					create_character_memory = {
+						type = searched_for_legendary_herb_memory
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Option D: Stay home - too dangerous
+	option = {
+		name = murim_daily_life.0010.d
+		add_stress = -10
+		add_prestige = 5
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				has_trait = craven
+			}
+		}
+	}
+}
