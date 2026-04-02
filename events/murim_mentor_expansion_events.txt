@@ -690,3 +690,192 @@ murim_mentor_exp.0005 = {
 		}
 	}
 }
+
+###############################################################################
+# 6. DISCIPLE SURPASSES MASTER
+# Your cultivation has grown beyond your master's. The roles have shifted.
+###############################################################################
+murim_mentor_exp.0006 = {
+	type = character_event
+	title = murim_mentor_exp.0006.t
+	desc = murim_mentor_exp.0006.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = has_martial_master
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 5
+		NOT = { has_character_flag = surpassed_master }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 has_trait = ambitious }
+		modifier = { add = 1 prowess >= 16 }
+	}
+
+	immediate = {
+		set_character_flag = surpassed_master
+	}
+
+	# Accept with grace — become an equal
+	option = {
+		name = murim_mentor_exp.0006.a
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_tribulation_transcended
+			months = 24
+		}
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		# Master may pass their final secret in gratitude
+		random_list = {
+			60 = {
+				desc = murim_mentor_exp.0006.a.secret
+				add_prowess_skill = 2
+				add_learning_skill = 1
+			}
+			40 = {
+				desc = murim_mentor_exp.0006.a.blessing
+				add_prestige = 100
+			}
+		}
+		stress_impact = {
+			humble = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = 15 has_trait = humble }
+		}
+	}
+
+	# Push yourself harder — surpassing one master means finding another
+	option = {
+		name = murim_mentor_exp.0006.b
+		remove_character_flag = has_martial_master
+		add_stress = 10
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_closed_door_cultivation
+			months = 6
+		}
+		stress_impact = {
+			ambitious = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = arrogant }
+		}
+	}
+
+	# Conceal it — maintain deference to preserve the relationship
+	option = {
+		name = murim_mentor_exp.0006.c
+		add_intrigue_skill = 1
+		add_character_modifier = {
+			modifier = murim_meditation_focus
+			months = 12
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = schemer }
+			modifier = { add = 10 has_trait = cautious_leader }
+		}
+	}
+}
+
+###############################################################################
+# 7. ULTIMATE TECHNIQUE INHERITANCE
+# Your master, sensing their end approaching, offers their most sacred technique.
+###############################################################################
+murim_mentor_exp.0007 = {
+	type = character_event
+	title = murim_mentor_exp.0007.t
+	desc = murim_mentor_exp.0007.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_alive = yes
+		has_character_flag = has_martial_master
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+		age >= 25
+		NOT = { has_character_flag = received_ultimate_technique }
+		NOT = { has_character_flag = refused_ultimate_technique }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_character_flag = surpassed_master }
+		modifier = { add = 1 prowess >= 14 }
+	}
+
+	immediate = {}
+
+	# Accept the full inheritance — take on master's legacy
+	option = {
+		name = murim_mentor_exp.0007.a
+		set_character_flag = received_ultimate_technique
+		add_prowess_skill = 4
+		add_prestige = 500
+		change_variable = { name = murim_cultivation_xp add = 60 }
+		add_character_modifier = {
+			modifier = murim_heavenly_insight
+			months = 36
+		}
+		create_character_memory = {
+			type = received_ultimate_technique_memory
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Ask for more time to train together first
+	option = {
+		name = murim_mentor_exp.0007.b
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		add_character_modifier = {
+			modifier = murim_closed_door_cultivation
+			months = 12
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = diligent }
+			modifier = { add = 10 has_trait = patient }
+		}
+	}
+
+	# Refuse — forge your own path entirely
+	option = {
+		name = murim_mentor_exp.0007.c
+		set_character_flag = refused_ultimate_technique
+		remove_character_flag = has_martial_master
+		add_prestige = 200
+		add_prowess_skill = 2
+		# The path is harder but entirely your own
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		stress_impact = {
+			independent = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 30 has_trait = arrogant }
+			modifier = { add = 15 has_trait = ambitious }
+		}
+	}
+}

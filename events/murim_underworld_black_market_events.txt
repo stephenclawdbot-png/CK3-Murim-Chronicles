@@ -1892,3 +1892,120 @@ murim_black_market.0012 = {
         }
     }
 }
+########################################
+# murim_black_market.0013 — RARE SPIRIT HERB AUCTION
+# An underground trader surfaces with a cache of
+# high-grade spirit herbs — the kind that only grow
+# near spiritual wellsprings. The market is brief.
+########################################
+murim_black_market.0013 = {
+	type = character_event
+	title = murim_black_market.0013.t
+	desc = murim_black_market.0013.desc
+	theme = intrigue
+
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			murim_is_alchemist_trigger = yes
+			has_trait = alchemist
+			has_trait = pill_master
+			AND = {
+				has_variable = murim_herb_stockpile
+				var:murim_herb_stockpile < 5
+			}
+		}
+		NOT = { has_character_flag = black_market_herb_auction_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = pill_master }
+		modifier = { add = 2 murim_is_alchemist_trigger = yes }
+		modifier = { add = 1 has_trait = greedy }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = black_market_herb_auction_cooldown
+			years = 4
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_herb_stockpile } }
+			set_variable = { name = murim_herb_stockpile value = 0 }
+		}
+	}
+
+	# Option A: Bid aggressively — acquire as much as possible
+	option = {
+		name = murim_black_market.0013.a
+		trigger = { gold >= 100 }
+		add_gold = -100
+		change_variable = { name = murim_herb_stockpile add = 15 }
+		change_variable = { name = murim_alchemy_xp add = 5 }
+		add_prestige = 50
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = greedy }
+			modifier = { add = -20 gold < 200 }
+		}
+	}
+
+	# Option B: Bid modestly — take what you need
+	option = {
+		name = murim_black_market.0013.b
+		trigger = { gold >= 50 }
+		add_gold = -50
+		change_variable = { name = murim_herb_stockpile add = 8 }
+		ai_chance = {
+			base = 45
+			modifier = { add = 15 has_trait = temperate }
+			modifier = { add = 10 gold < 200 }
+		}
+	}
+
+	# Option C: Observe — gather intelligence on who is buying
+	option = {
+		name = murim_black_market.0013.c
+		add_intrigue_skill = 1
+		add_prestige = 30
+		custom_tooltip = murim_black_market_herb_observe_tt
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = schemer }
+		}
+	}
+
+	# Option D: Steal from the auction (high risk, high reward)
+	option = {
+		name = murim_black_market.0013.d
+		random_list = {
+			50 = {
+				desc = murim_black_market.0013.d.success
+				change_variable = { name = murim_herb_stockpile add = 18 }
+				add_dread = 10
+			}
+			30 = {
+				desc = murim_black_market.0013.d.caught
+				add_dread = 30
+				add_tyranny = 15
+				add_prestige = -200
+			}
+			20 = {
+				desc = murim_black_market.0013.d.partial
+				change_variable = { name = murim_herb_stockpile add = 7 }
+				add_dread = 15
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = bold }
+			modifier = { add = -20 has_trait = just }
+		}
+	}
+}

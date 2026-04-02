@@ -1869,3 +1869,197 @@ create_cultivation_technique = {
 		}
 	}
 }
+
+################################################################
+# SEEK SACRED SITE MEDITATION
+# Pilgrimage to a place of concentrated heaven and earth qi.
+# A rare opportunity — powerful breakthrough potential,
+# but only for those willing to make the journey.
+# Connects to seasonal attunement system for bonus outcomes.
+################################################################
+seek_sacred_site_meditation = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = seek_sacred_site_meditation_desc
+	selection_tooltip = seek_sacred_site_meditation_tooltip
+
+	is_shown = {
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		murim_is_martial_artist_trigger = yes
+	}
+
+	is_valid = {
+		is_imprisoned = no
+		is_incapable = no
+		NOT = { is_at_war = yes }
+		NOT = { has_character_flag = sacred_site_meditation_cooldown }
+		gold >= 50
+	}
+
+	cost = { gold = 50 }
+
+	effect = {
+		add_character_flag = {
+			flag = sacred_site_meditation_cooldown
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_closed_door_cultivation
+			months = 3
+		}
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		# Seasonal attunement bonus
+		if = {
+			limit = {
+				has_variable = murim_seasonal_attunement
+				var:murim_seasonal_attunement >= 3
+			}
+			change_variable = { name = murim_cultivation_xp add = 30 }
+			add_character_modifier = {
+				modifier = murim_heavenly_insight
+				months = 12
+			}
+		}
+		random_list = {
+			40 = {
+				desc = seek_sacred_site_meditation_breakthrough
+				trigger_event = {
+					id = murim_cultivation.0008
+					days = { 14 30 }
+				}
+			}
+			30 = {
+				desc = seek_sacred_site_meditation_clarity
+				add_character_modifier = {
+					modifier = murim_purified_qi_clarity
+					months = 12
+				}
+				change_variable = { name = murim_cultivation_xp add = 20 }
+			}
+			20 = {
+				desc = seek_sacred_site_meditation_vision
+				add_learning_skill = 1
+				change_variable = { name = murim_cultivation_xp add = 15 }
+			}
+			10 = {
+				desc = seek_sacred_site_meditation_tribulation
+				trigger_event = {
+					id = murim_cultivation.0002
+					days = { 7 14 }
+				}
+			}
+		}
+		custom_tooltip = seek_sacred_site_meditation_effect_tt
+	}
+
+	cooldown = { years = 5 }
+
+	ai_check_interval = 24
+	ai_potential = {
+		has_variable = murim_cultivation_rank
+	}
+	ai_will_do = {
+		base = 20
+		modifier = {
+			add = 20
+			has_trait = diligent
+		}
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+		modifier = {
+			add = -15
+			gold < 100
+		}
+	}
+}
+
+################################################################
+# CHALLENGE THE REALM RANKER
+# Formally issue a ranking challenge to a cultivator
+# above you in the jianghu hierarchy.
+# Prestige-heavy, cultivation-rewarding, honour-defining.
+################################################################
+challenge_realm_ranker = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_martial.dds"
+	desc = challenge_realm_ranker_desc
+	selection_tooltip = challenge_realm_ranker_tooltip
+
+	is_shown = {
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+		murim_is_ranked_martial_artist_trigger = yes
+	}
+
+	is_valid = {
+		is_imprisoned = no
+		is_incapable = no
+		NOT = { has_character_flag = realm_ranker_challenge_cooldown }
+		prestige >= 300
+	}
+
+	effect = {
+		add_character_flag = {
+			flag = realm_ranker_challenge_cooldown
+			years = 2
+		}
+		add_prestige = -100
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		# The mere act of issuing the challenge sharpens your cultivation
+		add_character_modifier = {
+			modifier = murim_combat_instinct_sharpened
+			months = 6
+		}
+		# Fire ranking challenge event chain
+		random_list = {
+			50 = {
+				desc = challenge_realm_ranker_accepted
+				trigger_event = {
+					id = murim_ranking.0003
+					days = { 7 21 }
+				}
+				add_prestige = 200
+			}
+			30 = {
+				desc = challenge_realm_ranker_delayed
+				# Challenge is noted but ranker delays — more cultivation time
+				change_variable = { name = murim_cultivation_xp add = 30 }
+				add_prestige = 50
+			}
+			20 = {
+				desc = challenge_realm_ranker_refused
+				# Ranker refuses — you gain sympathy prestige from witnesses
+				add_prestige = 150
+			}
+		}
+		custom_tooltip = challenge_realm_ranker_effect_tt
+	}
+
+	cooldown = { years = 2 }
+
+	ai_check_interval = 12
+	ai_potential = {
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+	}
+	ai_will_do = {
+		base = 10
+		modifier = {
+			add = 30
+			has_trait = ambitious
+		}
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = -20
+			has_trait = craven
+		}
+		modifier = {
+			add = 15
+			prestige >= 800
+		}
+	}
+}

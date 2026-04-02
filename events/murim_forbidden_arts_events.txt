@@ -995,3 +995,248 @@ murim_forbidden_arts.0005 = {
 		}
 	}
 }
+
+###############################################
+# murim_forbidden_arts.0006 - The Qi Hunger
+# Demonic cultivators feel the dark power demanding to be fed.
+# The longer it goes unsatisfied, the more the cultivator suffers.
+###############################################
+murim_forbidden_arts.0006 = {
+	type = character_event
+	title = murim_forbidden_arts.0006.t
+	desc = murim_forbidden_arts.0006.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_alive = yes
+		OR = {
+			has_trait = demonic_cultivator
+			has_variable = murim_forbidden_knowledge
+		}
+		NOT = { has_character_flag = qi_hunger_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_character_modifier = murim_demonic_qi_hunger
+		}
+		modifier = {
+			add = 2
+			has_trait = sadistic
+		}
+		modifier = {
+			add = -2
+			has_trait = temperate
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = qi_hunger_cooldown
+			years = 2
+		}
+	}
+
+	# Option A: Devour a weakened cultivator's qi
+	option = {
+		name = murim_forbidden_arts.0006.a
+		add_prowess_skill = 2
+		add_dread = 20
+		add_tyranny = 10
+		if = {
+			limit = { has_character_modifier = murim_demonic_qi_hunger }
+			remove_character_modifier = murim_demonic_qi_hunger
+		}
+		add_character_modifier = {
+			modifier = murim_demonic_qi_satiated
+			months = 12
+		}
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			just = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = sadistic }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -30 has_trait = compassionate }
+		}
+	}
+
+	# Option B: Suppress through intense meditation
+	option = {
+		name = murim_forbidden_arts.0006.b
+		add_stress = 25
+		if = {
+			limit = { NOT = { has_character_modifier = murim_demonic_qi_hunger } }
+			add_character_modifier = {
+				modifier = murim_demonic_qi_hunger
+				months = 6
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_closed_door_cultivation
+			months = 3
+		}
+		change_variable = { name = murim_cultivation_xp add = 10 }
+		stress_impact = {
+			diligent = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = diligent }
+			modifier = { add = 20 has_trait = temperate }
+		}
+	}
+
+	# Option C: Offer your own life force — painful but keeps your hands clean
+	option = {
+		name = murim_forbidden_arts.0006.c
+		add_health = -0.5
+		if = {
+			limit = { has_character_modifier = murim_demonic_qi_hunger }
+			remove_character_modifier = murim_demonic_qi_hunger
+		}
+		add_piety = 100
+		stress_impact = {
+			compassionate = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = -20 health < 2 }
+		}
+	}
+}
+
+###############################################
+# murim_forbidden_arts.0007 - Ancient Demonic Manual
+# A lost text from a destroyed demonic sect surfaces.
+# The knowledge within could shatter cultivation limits — or the cultivator.
+###############################################
+murim_forbidden_arts.0007 = {
+	type = character_event
+	title = murim_forbidden_arts.0007.t
+	desc = murim_forbidden_arts.0007.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = reading
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		NOT = { has_character_flag = ancient_manual_discovered }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			learning >= 14
+		}
+		modifier = {
+			add = 2
+			has_trait = curious
+		}
+		modifier = {
+			add = 2
+			has_trait = demonic_cultivator
+		}
+	}
+
+	immediate = {
+		add_character_flag = ancient_manual_discovered
+	}
+
+	# Option A: Study it immediately — power now, risk later
+	option = {
+		name = murim_forbidden_arts.0007.a
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_character_modifier = {
+			modifier = murim_ancient_demonic_wisdom
+			months = 24
+		}
+		random_list = {
+			50 = {
+				desc = murim_forbidden_arts.0007.a.safe
+				add_prowess_skill = 2
+			}
+			30 = {
+				desc = murim_forbidden_arts.0007.a.qidev
+				add_trait_xp = {
+					trait = qi_deviation
+					value = 20
+				}
+				add_character_modifier = {
+					modifier = murim_qi_deviation_suffering
+					months = 6
+				}
+			}
+			20 = {
+				desc = murim_forbidden_arts.0007.a.demonic
+				add_trait = demonic_cultivator
+				add_prowess_skill = 4
+			}
+		}
+		stress_impact = {
+			temperate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 20 has_trait = curious }
+			modifier = { add = -20 has_trait = temperate }
+		}
+	}
+
+	# Option B: Seal it and report to the orthodox jianghu
+	option = {
+		name = murim_forbidden_arts.0007.b
+		add_piety = 300
+		add_prestige = 150
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = just }
+			modifier = { add = 20 has_trait = zealous }
+			modifier = { add = -30 has_trait = ambitious }
+		}
+	}
+
+	# Option C: Hide it away for deeper study
+	option = {
+		name = murim_forbidden_arts.0007.c
+		if = {
+			limit = { NOT = { has_variable = murim_forbidden_knowledge } }
+			set_variable = { name = murim_forbidden_knowledge value = 1 }
+		}
+		else = {
+			change_variable = { name = murim_forbidden_knowledge add = 1 }
+		}
+		add_intrigue_skill = 1
+		add_character_modifier = {
+			modifier = murim_ancient_demonic_wisdom
+			months = 6
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = schemer }
+			modifier = { add = 20 has_trait = paranoid }
+		}
+	}
+}

@@ -653,3 +653,218 @@ murim_alchemy.0008 = {
 		ai_chance = { base = 25 }
 	}
 }
+
+#############################################
+# murim_alchemy.0009 — PILL TOXICITY CRISIS
+# Years of refining and consuming cultivation
+# pills have left a toxic buildup in your meridians.
+#############################################
+murim_alchemy.0009 = {
+	type = character_event
+	title = murim_alchemy.0009.t
+	desc = murim_alchemy.0009.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_pain
+	}
+
+	trigger = {
+		is_alive = yes
+		murim_body_has_pill_toxicity_trigger = yes
+		OR = {
+			has_variable = murim_alchemy_xp
+			has_variable = alchemy_attempts
+		}
+		NOT = { has_character_flag = pill_toxicity_crisis_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_variable = murim_pill_toxicity
+			var:murim_pill_toxicity >= 10
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = pill_toxicity_crisis_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: Endure a cleansing ritual — painful but purifying
+	option = {
+		name = murim_alchemy.0009.a
+		add_health = -0.5
+		add_stress = 20
+		if = {
+			limit = { has_variable = murim_pill_toxicity }
+			set_variable = { name = murim_pill_toxicity value = 0 }
+		}
+		add_character_modifier = {
+			modifier = murim_purified_qi_clarity
+			months = 12
+		}
+		stress_impact = {
+			diligent = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = diligent }
+			modifier = { add = 15 has_trait = temperate }
+		}
+	}
+
+	# Option B: Channel the toxic qi into a risky breakthrough attempt
+	option = {
+		name = murim_alchemy.0009.b
+		change_variable = { name = murim_cultivation_xp add = 60 }
+		random_list = {
+			40 = {
+				desc = murim_alchemy.0009.b.success
+				if = {
+					limit = { has_variable = murim_pill_toxicity }
+					set_variable = { name = murim_pill_toxicity value = 0 }
+				}
+				add_prowess_skill = 2
+			}
+			40 = {
+				desc = murim_alchemy.0009.b.partial
+				if = {
+					limit = { has_variable = murim_pill_toxicity }
+					change_variable = { name = murim_pill_toxicity add = -3 }
+				}
+			}
+			20 = {
+				desc = murim_alchemy.0009.b.backlash
+				add_health = -1.0
+				add_character_modifier = {
+					modifier = murim_qi_deviation_suffering
+					months = 6
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -15 health < 2 }
+		}
+	}
+
+	# Option C: Seek a master herbalist to treat you properly
+	option = {
+		name = murim_alchemy.0009.c
+		trigger = {
+			has_variable = murim_herb_stockpile
+			var:murim_herb_stockpile >= 5
+		}
+		change_variable = { name = murim_herb_stockpile add = -5 }
+		if = {
+			limit = { has_variable = murim_pill_toxicity }
+			set_variable = { name = murim_pill_toxicity value = 0 }
+		}
+		add_character_modifier = {
+			modifier = murim_purified_qi_clarity
+			months = 18
+		}
+		change_variable = { name = murim_alchemy_xp add = 10 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 murim_is_alchemist_trigger = yes }
+		}
+	}
+}
+
+#############################################
+# murim_alchemy.0010 — MASTER ALCHEMIST RECOGNITION
+# Your alchemy reputation has spread. A renowned
+# pill master seeks to exchange knowledge.
+#############################################
+murim_alchemy.0010 = {
+	type = character_event
+	title = murim_alchemy.0010.t
+	desc = murim_alchemy.0010.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = reading
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_alchemy_skill
+		var:murim_alchemy_skill >= 5
+		NOT = { has_character_flag = master_alchemist_recognition_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 has_trait = pill_master }
+		modifier = { add = 2 var:murim_alchemy_skill >= 7 }
+	}
+
+	immediate = {
+		set_character_flag = master_alchemist_recognition_done
+	}
+
+	# Option A: Exchange freely — mutual advancement
+	option = {
+		name = murim_alchemy.0010.a
+		change_variable = { name = murim_alchemy_skill add = 1 }
+		change_variable = { name = murim_alchemy_xp add = 25 }
+		add_prestige = 200
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = generous }
+			modifier = { add = 15 has_trait = gregarious }
+		}
+	}
+
+	# Option B: Trade a formula for their rare herb cache
+	option = {
+		name = murim_alchemy.0010.b
+		if = {
+			limit = { NOT = { has_variable = murim_herb_stockpile } }
+			set_variable = { name = murim_herb_stockpile value = 0 }
+		}
+		change_variable = { name = murim_herb_stockpile add = 12 }
+		change_variable = { name = murim_alchemy_xp add = 15 }
+		add_prestige = 100
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = greedy }
+			modifier = {
+				add = 15
+				has_variable = murim_herb_stockpile
+				var:murim_herb_stockpile < 5
+			}
+		}
+	}
+
+	# Option C: Challenge them to a refinement contest
+	option = {
+		name = murim_alchemy.0010.c
+		random_list = {
+			60 = {
+				desc = murim_alchemy.0010.c.win
+				change_variable = { name = murim_alchemy_skill add = 1 }
+				add_prestige = 400
+			}
+			40 = {
+				desc = murim_alchemy.0010.c.lose
+				change_variable = { name = murim_alchemy_xp add = 20 }
+				add_prestige = 50
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = arrogant }
+		}
+	}
+}

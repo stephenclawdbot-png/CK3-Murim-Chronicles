@@ -643,3 +643,221 @@ murim_rival.0006 = {
 		}
 	}
 }
+
+###########################################################
+# murim_rival.0007 — THE PUBLIC CHALLENGE
+# Your rival formally challenges you before the jianghu.
+# This is a matter of honour — the whole world is watching.
+###########################################################
+murim_rival.0007 = {
+	type = character_event
+	title = murim_rival.0007.t
+	desc = murim_rival.0007.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_has_rival
+		var:murim_has_rival >= 1
+		has_variable = murim_rival_intensity
+		var:murim_rival_intensity >= 2
+		NOT = { has_character_flag = rival_public_challenge_done }
+		NOT = { has_character_flag = murim_rival_event_fired_this_year }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 prestige >= 500 }
+		modifier = { add = 2 var:murim_rival_intensity >= 4 }
+	}
+
+	immediate = {
+		set_character_flag = rival_public_challenge_done
+		add_character_flag = {
+			flag = murim_rival_event_fired_this_year
+			years = 1
+		}
+	}
+
+	# Option A: Accept the public duel — meet them head-on
+	option = {
+		name = murim_rival.0007.a
+		add_prestige = 200
+		# Win or lose, your cultivation advances from the clash
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		if = {
+			limit = { prowess >= 14 }
+			# Strong enough to win — high prestige gain
+			add_prestige = 300
+			clamp_variable = {
+				name = murim_rival_intensity
+				min = 1
+				max = 5
+			}
+			change_variable = { name = murim_rival_intensity add = 1 }
+		}
+		else = {
+			# Outmatched — gain from the defeat
+			add_prestige = -100
+			change_variable = { name = murim_cultivation_xp add = 20 }
+			add_character_modifier = {
+				modifier = murim_post_duel_exhaustion
+				months = 3
+			}
+		}
+		trigger_event = {
+			id = murim_duel.0001
+			days = { 14 30 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -30 has_trait = craven }
+		}
+	}
+
+	# Option B: Decline but propose a private match
+	option = {
+		name = murim_rival.0007.b
+		add_prestige = -150
+		change_variable = { name = murim_rival_intensity add = 1 }
+		clamp_variable = {
+			name = murim_rival_intensity
+			min = 1
+			max = 5
+		}
+		add_stress = 15
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = -10 has_trait = brave }
+		}
+	}
+
+	# Option C: Challenge them to a different arena (alchemy, if qualified)
+	option = {
+		name = murim_rival.0007.c
+		trigger = {
+			OR = {
+				murim_is_alchemist_trigger = yes
+				has_trait = alchemist
+			}
+		}
+		add_prestige = 100
+		change_variable = { name = murim_alchemy_xp add = 15 }
+		custom_tooltip = murim_rival_alchemy_challenge_tt
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = schemer }
+		}
+	}
+}
+
+###########################################################
+# murim_rival.0008 — THE OLIVE BRANCH
+# After years of rivalry, your rival extends a gesture of peace.
+# Rivalries that burn hot enough sometimes become something else.
+###########################################################
+murim_rival.0008 = {
+	type = character_event
+	title = murim_rival.0008.t
+	desc = murim_rival.0008.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_has_rival
+		var:murim_has_rival >= 1
+		has_variable = murim_rival_intensity
+		# High intensity — they've tested each other thoroughly
+		var:murim_rival_intensity >= 3
+		NOT = { has_character_flag = rival_reconciliation_offered }
+		NOT = { has_character_flag = murim_rival_event_fired_this_year }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = compassionate }
+		modifier = { add = 2 has_trait = forgiving }
+		modifier = { add = -2 has_trait = vengeful }
+		modifier = { add = 1 var:murim_rival_intensity >= 4 }
+	}
+
+	immediate = {
+		set_character_flag = rival_reconciliation_offered
+		add_character_flag = {
+			flag = murim_rival_event_fired_this_year
+			years = 1
+		}
+	}
+
+	# Option A: Accept — rivals become friends
+	option = {
+		name = murim_rival.0008.a
+		set_variable = { name = murim_has_rival value = 0 }
+		set_relation_friend = scope:rival_candidate
+		add_prestige = 200
+		add_piety = 100
+		# The shared path of rivals forged a deeper bond than most friendships
+		add_character_modifier = {
+			modifier = murim_rival_respect_opinion
+			years = 10
+		}
+		stress_impact = {
+			vengeful = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 20 has_trait = forgiving }
+			modifier = { add = -30 has_trait = vengeful }
+		}
+	}
+
+	# Option B: Respect without friendship — the rivalry becomes civil
+	option = {
+		name = murim_rival.0008.b
+		set_variable = { name = murim_rival_intensity value = 1 }
+		add_prestige = 100
+		stress_impact = {
+			vengeful = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = proud }
+			modifier = { add = 10 has_trait = patient }
+		}
+	}
+
+	# Option C: Reject — true rivals never reconcile
+	option = {
+		name = murim_rival.0008.c
+		change_variable = { name = murim_rival_intensity add = 1 }
+		clamp_variable = {
+			name = murim_rival_intensity
+			min = 1
+			max = 5
+		}
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		add_prestige = 50
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = vengeful }
+			modifier = { add = 20 has_trait = proud }
+			modifier = { add = -20 has_trait = forgiving }
+		}
+	}
+}
