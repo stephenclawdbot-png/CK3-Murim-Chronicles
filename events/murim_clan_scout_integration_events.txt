@@ -1,0 +1,643 @@
+########################################
+# MURIM CLAN SCOUT INTEGRATION EVENTS
+# Extended scouting system — scouts interact with
+# clan politics, ranking, and cross-system events
+# AI handles all scouting autonomously
+########################################
+
+namespace = murim_clan_scout_integration
+namespace = murim_clan_scout
+namespace = murim_clan_recruit
+namespace = murim_scout
+
+# ===========================
+# SCOUT MISSING CORE EVENTS
+# ===========================
+
+# Scout discovers a hidden prodigy
+murim_clan_scout.0001 = {
+	type = character_event
+	title = murim_clan_scout.0001.t
+	desc = murim_clan_scout.0001.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_active_scout
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				age >= 10
+				age <= 25
+				NOT = { has_variable = murim_martial_artist }
+			}
+			save_scope_as = scout_candidate
+		}
+	}
+
+	# Recruit the prodigy immediately
+	option = {
+		name = murim_clan_scout.0001.a
+		trigger = { exists = scope:scout_candidate }
+		hidden_effect = {
+			scope:scout_candidate = {
+				set_variable = { name = murim_martial_artist value = 1 }
+				set_variable = { name = murim_cultivation_rank value = 1 }
+			}
+		}
+		add_prestige = 100
+		ai_chance = { base = 60 }
+	}
+
+	# Test them further before committing
+	option = {
+		name = murim_clan_scout.0001.b
+		trigger = { exists = scope:scout_candidate }
+		hidden_effect = {
+			trigger_event = { id = murim_clan_scout.0010 days = 30 }
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Pass — not worthy of our clan
+	option = {
+		name = murim_clan_scout.0001.c
+		add_stress = -10
+		ai_chance = { base = 10 }
+	}
+}
+
+# Scout trials — testing the candidate
+murim_clan_scout.0010 = {
+	type = character_event
+	title = murim_clan_scout.0010.t
+	desc = murim_clan_scout.0010.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_rational }
+
+	trigger = {
+		has_variable = murim_martial_artist
+	}
+
+	# The candidate passes with flying colors
+	option = {
+		name = murim_clan_scout.0010.a
+		add_prestige = 150
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		ai_chance = { base = 50 }
+	}
+
+	# Adequate but needs more training
+	option = {
+		name = murim_clan_scout.0010.b
+		add_prestige = 50
+		ai_chance = { base = 35 }
+	}
+
+	# The candidate fails — send them away
+	option = {
+		name = murim_clan_scout.0010.c
+		add_stress = 10
+		ai_chance = { base = 15 }
+	}
+}
+
+# Scout returns with foreign martial knowledge
+murim_clan_scout.0020 = {
+	type = character_event
+	title = murim_clan_scout.0020.t
+	desc = murim_clan_scout.0020.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_compassionate }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_active_scout
+	}
+
+	# Integrate foreign techniques into clan training
+	option = {
+		name = murim_clan_scout.0020.a
+		add_martial = 1
+		add_learning = 1
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		ai_chance = { base = 50 }
+	}
+
+	# Reject foreign influence — purity of tradition
+	option = {
+		name = murim_clan_scout.0020.b
+		add_prestige = 100
+		ai_chance = { base = 30 }
+	}
+
+	# Study privately before sharing
+	option = {
+		name = murim_clan_scout.0020.c
+		add_intrigue = 1
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		ai_chance = { base = 20 }
+	}
+}
+
+# Recruitment notification event
+murim_clan_recruit.0001 = {
+	type = character_event
+	title = murim_clan_recruit.0001.t
+	desc = murim_clan_recruit.0001.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+	}
+
+	option = {
+		name = murim_clan_recruit.0001.a
+		add_prestige = 50
+		ai_chance = { base = 100 }
+	}
+}
+
+# Scout advance to new region
+murim_scout.0020 = {
+	type = character_event
+	title = murim_scout.0020.t
+	desc = murim_scout.0020.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_character_flag = murim_active_scout
+	}
+
+	# Continue scouting the frontier
+	option = {
+		name = murim_scout.0020.a
+		change_variable = { name = scout_route_stage add = 1 }
+		add_prestige = 50
+		ai_chance = { base = 70 }
+	}
+
+	# Return home with findings
+	option = {
+		name = murim_scout.0020.b
+		remove_character_flag = murim_active_scout
+		add_prestige = 100
+		ai_chance = { base = 30 }
+	}
+}
+
+# ===========================
+# SCOUT INTEGRATION EVENTS (0001-0020)
+# Fine-grained integration between scouting and other systems
+# ===========================
+
+# Scout reports to clan leadership
+murim_clan_scout_integration.0001 = {
+	type = character_event
+	title = murim_clan_scout_integration.0001.t
+	desc = murim_clan_scout_integration.0001.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0001.a
+		add_prestige = 75
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0001.b
+		add_martial = 1
+		ai_chance = { base = 50 }
+	}
+}
+
+# Scout discovers rival clan activity
+murim_clan_scout_integration.0002 = {
+	type = character_event
+	title = murim_clan_scout_integration.0002.t
+	desc = murim_clan_scout_integration.0002.desc
+	theme = intrigue
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0002.a
+		add_intrigue = 1
+		add_dread = 10
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0002.b
+		add_prestige = 50
+		ai_chance = { base = 50 }
+	}
+}
+
+# Scout finds abandoned training ground
+murim_clan_scout_integration.0003 = {
+	type = character_event
+	title = murim_clan_scout_integration.0003.t
+	desc = murim_clan_scout_integration.0003.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0003.a
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0003.b
+		add_gold = 50
+		ai_chance = { base = 40 }
+	}
+}
+
+# Scout encounters wandering master
+murim_clan_scout_integration.0004 = {
+	type = character_event
+	title = murim_clan_scout_integration.0004.t
+	desc = murim_clan_scout_integration.0004.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0004.a
+		add_martial = 1
+		change_variable = { name = murim_cultivation_xp add = 45 }
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0004.b
+		add_prestige = 100
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout ambushed by bandits
+murim_clan_scout_integration.0005 = {
+	type = character_event
+	title = murim_clan_scout_integration.0005.t
+	desc = murim_clan_scout_integration.0005.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0005.a
+		add_prowess = 1
+		add_stress = 15
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0005.b
+		add_intrigue = 1
+		ai_chance = { base = 40 }
+	}
+}
+
+# Scout discovers secret technique scroll
+murim_clan_scout_integration.0006 = {
+	type = character_event
+	title = murim_clan_scout_integration.0006.t
+	desc = murim_clan_scout_integration.0006.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0006.a
+		change_variable = { name = murim_cultivation_xp add = 60 }
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0006.b
+		add_prestige = 150
+		add_gold = 100
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout witnesses tournament in foreign land
+murim_clan_scout_integration.0007 = {
+	type = character_event
+	title = murim_clan_scout_integration.0007.t
+	desc = murim_clan_scout_integration.0007.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0007.a
+		add_martial = 1
+		add_prestige = 75
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0007.b
+		change_variable = { name = murim_cultivation_xp add = 35 }
+		ai_chance = { base = 50 }
+	}
+}
+
+# Scout recruited by foreign power — loyalty test
+murim_clan_scout_integration.0008 = {
+	type = character_event
+	title = murim_clan_scout_integration.0008.t
+	desc = murim_clan_scout_integration.0008.desc
+	theme = intrigue
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0008.a
+		add_prestige = 100
+		add_stress = -10
+		ai_chance = { base = 70 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0008.b
+		add_gold = 200
+		add_stress = 25
+		ai_chance = { base = 30 }
+	}
+}
+
+# Scout finds medicinal herbs for cultivation
+murim_clan_scout_integration.0009 = {
+	type = character_event
+	title = murim_clan_scout_integration.0009.t
+	desc = murim_clan_scout_integration.0009.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0009.a
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_learning = 1
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0009.b
+		add_gold = 75
+		ai_chance = { base = 40 }
+	}
+}
+
+# Scout maps new trade routes for the sect
+murim_clan_scout_integration.0010 = {
+	type = character_event
+	title = murim_clan_scout_integration.0010.t
+	desc = murim_clan_scout_integration.0010.desc
+	theme = stewardship
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0010.a
+		add_gold = 100
+		add_stewardship = 1
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0010.b
+		add_prestige = 75
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout encounters demonic cultivator in the wilds
+murim_clan_scout_integration.0011 = {
+	type = character_event
+	title = murim_clan_scout_integration.0011.t
+	desc = murim_clan_scout_integration.0011.desc
+	theme = skull
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0011.a
+		add_prowess = 1
+		add_dread = 15
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0011.b
+		add_stress = 20
+		ai_chance = { base = 30 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0011.c
+		add_intrigue = 1
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		ai_chance = { base = 20 }
+	}
+}
+
+# Scout brings news of rising clan in distant province
+murim_clan_scout_integration.0012 = {
+	type = character_event
+	title = murim_clan_scout_integration.0012.t
+	desc = murim_clan_scout_integration.0012.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0012.a
+		add_prestige = 50
+		add_martial = 1
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0012.b
+		add_intrigue = 1
+		ai_chance = { base = 50 }
+	}
+}
+
+# Scout witnesses celestial phenomenon
+murim_clan_scout_integration.0013 = {
+	type = character_event
+	title = murim_clan_scout_integration.0013.t
+	desc = murim_clan_scout_integration.0013.desc
+	theme = faith
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0013.a
+		add_piety = 100
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0013.b
+		add_learning = 1
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout discovers underground martial arena
+murim_clan_scout_integration.0014 = {
+	type = character_event
+	title = murim_clan_scout_integration.0014.t
+	desc = murim_clan_scout_integration.0014.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0014.a
+		add_prowess = 1
+		add_gold = 50
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0014.b
+		add_intrigue = 1
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout rescues injured martial artist
+murim_clan_scout_integration.0015 = {
+	type = character_event
+	title = murim_clan_scout_integration.0015.t
+	desc = murim_clan_scout_integration.0015.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0015.a
+		add_prestige = 100
+		add_piety = 50
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0015.b
+		add_stress = -15
+		ai_chance = { base = 40 }
+	}
+}
+
+# Scout intercepts coded message between rival clans
+murim_clan_scout_integration.0016 = {
+	type = character_event
+	title = murim_clan_scout_integration.0016.t
+	desc = murim_clan_scout_integration.0016.desc
+	theme = intrigue
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0016.a
+		add_intrigue = 2
+		add_dread = 10
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0016.b
+		add_prestige = 75
+		ai_chance = { base = 50 }
+	}
+}
+
+# Scout establishes safe house in foreign territory
+murim_clan_scout_integration.0017 = {
+	type = character_event
+	title = murim_clan_scout_integration.0017.t
+	desc = murim_clan_scout_integration.0017.desc
+	theme = intrigue
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0017.a
+		add_gold = -50
+		add_intrigue = 1
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0017.b
+		add_prestige = 50
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout's cover blown — emergency extraction
+murim_clan_scout_integration.0018 = {
+	type = character_event
+	title = murim_clan_scout_integration.0018.t
+	desc = murim_clan_scout_integration.0018.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0018.a
+		add_prowess = 1
+		add_stress = 25
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0018.b
+		add_intrigue = 1
+		add_stress = 10
+		ai_chance = { base = 45 }
+	}
+}
+
+# Scout returns with comprehensive regional martial census
+murim_clan_scout_integration.0019 = {
+	type = character_event
+	title = murim_clan_scout_integration.0019.t
+	desc = murim_clan_scout_integration.0019.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0019.a
+		add_prestige = 150
+		add_martial = 1
+		add_learning = 1
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0019.b
+		add_gold = 100
+		ai_chance = { base = 40 }
+	}
+}
+
+# Grand scout report — clan leadership briefing
+murim_clan_scout_integration.0020 = {
+	type = character_event
+	title = murim_clan_scout_integration.0020.t
+	desc = murim_clan_scout_integration.0020.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_clan_scout_integration.0020.a
+		add_prestige = 200
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_clan_scout_integration.0020.b
+		add_martial = 2
+		ai_chance = { base = 45 }
+	}
+}
