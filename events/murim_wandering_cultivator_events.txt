@@ -1,0 +1,1756 @@
+########################################
+# MURIM WANDERING CULTIVATOR STORYLINE EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Lone wolf martial artists,
+# masterless swordsmen, hidden masters, tavern
+# encounters, mysterious strangers, wandering
+# healer paths, hermit cultivation, road duels
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_wanderer
+
+# EVENT 0001 - The Road Calls: Becoming a Wanderer
+# Triggered: on_action yearly pulse, martial artists without strong ties
+# AI: Full wandering lifestyle initiation
+murim_wanderer.0001 = {
+    type = character_event
+    title = murim_wanderer.0001.t
+    desc = murim_wanderer.0001.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        age >= 18
+        NOT = { has_trait = murim_wandering_cultivator }
+        NOT = { has_character_flag = considered_wandering }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_shadow_operative
+        }
+        OR = {
+            is_landed = no
+            has_character_modifier = murim_expelled_from_sect
+            has_character_modifier = murim_heartbreak
+            has_character_modifier = murim_devastating_heartbreak
+            stress >= 60
+            has_trait = adventurer
+            AND = {
+                has_trait = content
+                NOT = { has_trait = ambitious }
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            has_character_modifier = murim_expelled_from_sect
+        }
+        modifier = {
+            factor = 2.0
+            has_character_modifier = murim_heartbreak
+        }
+        modifier = {
+            factor = 2.0
+            stress >= 70
+        }
+        modifier = {
+            factor = 1.5
+            has_trait = adventurer
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = considered_wandering
+            days = 730
+        }
+    }
+    
+    # Option A: Embrace the wandering path
+    option = {
+        name = murim_wanderer.0001.a
+        add_trait = murim_wandering_cultivator
+        add_stress = -30
+        add_character_modifier = {
+            modifier = murim_freedom_of_the_road
+            years = 10
+        }
+        add_prowess_skill = 1
+        add_martial_skill = 1
+        # Start wandering events chain
+        trigger_event = {
+            id = murim_wanderer.0002
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_character_modifier = murim_expelled_from_sect
+            }
+            modifier = {
+                factor = 2.0
+                stress >= 70
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = adventurer
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Temporary wandering - will return
+    option = {
+        name = murim_wanderer.0001.b
+        add_character_modifier = {
+            modifier = murim_temporary_wanderer
+            years = 3
+        }
+        add_stress = -15
+        trigger_event = {
+            id = murim_wanderer.0002
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Stay and face your problems
+    option = {
+        name = murim_wanderer.0001.c
+        add_stress = 15
+        add_prestige = 25
+        add_character_modifier = {
+            modifier = murim_steadfast_resolve
+            years = 3
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                is_landed = yes
+            }
+        }
+    }
+}
+
+# EVENT 0002 - Tavern Encounter: Stories and Strangers
+# Triggered: wandering cultivator on the road
+# AI: Full tavern social system
+murim_wanderer.0002 = {
+    type = character_event
+    title = murim_wanderer.0002.t
+    desc = murim_wanderer.0002.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = personality_gregarious
+    }
+    right_portrait = {
+        character = scope:tavern_stranger
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_wandering_cultivator
+            has_character_modifier = murim_temporary_wanderer
+        }
+    }
+    
+    immediate = {
+        # Who do you meet?
+        random_list = {
+            20 = { set_variable = { name = stranger_type value = 1 } } # Hidden master
+            20 = { set_variable = { name = stranger_type value = 2 } } # Fellow wanderer
+            15 = { set_variable = { name = stranger_type value = 3 } } # Bounty hunter
+            15 = { set_variable = { name = stranger_type value = 4 } } # Desperate villager
+            15 = { set_variable = { name = stranger_type value = 5 } } # Sect recruiter
+            15 = { set_variable = { name = stranger_type value = 6 } } # Merchant with secret
+        }
+        create_character = {
+            age = { 20 60 }
+            gender_female_chance = 40
+            trait = murim_martial_artist
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = tavern_stranger
+        }
+    }
+    
+    # Option A: Share stories and drink together
+    option = {
+        name = murim_wanderer.0002.a
+        trigger = {
+            exists = scope:tavern_stranger
+        }
+        add_gold = -10
+        add_stress = -10
+        reverse_add_opinion = {
+            target = scope:tavern_stranger
+            modifier = murim_drinking_companion
+            opinion = 15
+        }
+        random_list = {
+            30 = {
+                # Learn valuable information
+                add_character_modifier = {
+                    modifier = murim_tavern_intelligence
+                    years = 1
+                }
+                add_intrigue_skill = 1
+            }
+            25 = {
+                # Make a friend
+                set_relation_friend = scope:tavern_stranger
+                add_prestige = 25
+            }
+            25 = {
+                # Learn a technique hint
+                add_character_modifier = {
+                    modifier = murim_technique_hint
+                    years = 2
+                }
+                add_prowess_skill = 1
+            }
+            20 = {
+                # Just a pleasant evening
+                add_stress = -15
+            }
+        }
+        # Continue wandering
+        trigger_event = {
+            id = murim_wanderer.0003
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = gregarious
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 14
+            }
+        }
+    }
+    
+    # Option B: Challenge the stranger to a friendly spar
+    option = {
+        name = murim_wanderer.0002.b
+        trigger = {
+            exists = scope:tavern_stranger
+        }
+        duel = {
+            skill = prowess
+            target = scope:tavern_stranger
+            50 = {
+                desc = murim_wanderer.0002.b.win
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                add_prestige = 50
+                add_prowess_skill = 1
+                reverse_add_opinion = {
+                    target = scope:tavern_stranger
+                    modifier = murim_worthy_opponent
+                    opinion = 10
+                }
+            }
+            50 = {
+                desc = murim_wanderer.0002.b.lose
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                add_prowess_skill = 1
+                add_prestige = -25
+                # Losing teaches more than winning
+                add_character_modifier = {
+                    modifier = murim_learned_from_defeat
+                    years = 2
+                }
+            }
+        }
+        trigger_event = {
+            id = murim_wanderer.0003
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 16
+            }
+        }
+    }
+    
+    # Option C: Keep to yourself
+    option = {
+        name = murim_wanderer.0002.c
+        add_stress = 5
+        add_character_modifier = {
+            modifier = murim_lone_wolf_path
+            years = 2
+        }
+        trigger_event = {
+            id = murim_wanderer.0003
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = shy
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0003 - Road Encounter: Bandits Attack
+# Triggered: continuation of wandering path
+# AI: Full bandit encounter system
+murim_wanderer.0003 = {
+    type = character_event
+    title = murim_wanderer.0003.t
+    desc = murim_wanderer.0003.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = rage
+    }
+    right_portrait = {
+        character = scope:bandit_leader
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_wandering_cultivator
+            has_character_modifier = murim_temporary_wanderer
+        }
+    }
+    
+    immediate = {
+        create_character = {
+            age = { 25 45 }
+            trait = murim_martial_artist
+            trait = wrathful
+            trait = greedy
+            prowess = { 10 18 }
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = bandit_leader
+        }
+    }
+    
+    # Option A: Fight the bandits
+    option = {
+        name = murim_wanderer.0003.a
+        trigger = {
+            exists = scope:bandit_leader
+        }
+        duel = {
+            skill = prowess
+            target = scope:bandit_leader
+            60 = {
+                desc = murim_wanderer.0003.a.victory
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                add_prestige = 100
+                add_gold = 50
+                add_character_modifier = {
+                    modifier = murim_bandit_slayer
+                    years = 2
+                }
+                scope:bandit_leader = {
+                    death = {
+                        death_reason = death_duel
+                        killer = root
+                    }
+                }
+            }
+            40 = {
+                desc = murim_wanderer.0003.a.wounded
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                increase_wounds_effect = { reason = fight }
+                add_gold = -25
+            }
+        }
+        trigger_event = {
+            id = murim_wanderer.0004
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Use martial arts to intimidate them away
+    option = {
+        name = murim_wanderer.0003.b
+        trigger = {
+            prowess >= 16
+        }
+        add_dread = 10
+        add_prestige = 50
+        add_character_modifier = {
+            modifier = murim_intimidating_aura
+            years = 2
+        }
+        trigger_event = {
+            id = murim_wanderer.0004
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                prowess >= 22
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = intimidating
+            }
+        }
+    }
+    
+    # Option C: Avoid the bandits entirely
+    option = {
+        name = murim_wanderer.0003.c
+        add_stress = 5
+        trigger_event = {
+            id = murim_wanderer.0004
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                prowess < 12
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Hidden Master Encounter
+# Triggered: continuation of wandering
+# AI: Full hidden master training opportunity
+murim_wanderer.0004 = {
+    type = character_event
+    title = murim_wanderer.0004.t
+    desc = murim_wanderer.0004.desc
+    theme = learning
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    right_portrait = {
+        character = scope:hidden_master
+        animation = personality_rational
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_wandering_cultivator
+            has_character_modifier = murim_temporary_wanderer
+        }
+    }
+    
+    immediate = {
+        # What kind of master?
+        random_list = {
+            20 = { set_variable = { name = master_type value = 1 } } # Sword saint
+            20 = { set_variable = { name = master_type value = 2 } } # Medicine sage
+            20 = { set_variable = { name = master_type value = 3 } } # Qi cultivation hermit
+            20 = { set_variable = { name = master_type value = 4 } } # Former sect leader in hiding
+            20 = { set_variable = { name = master_type value = 5 } } # Demonic art survivor
+        }
+        create_character = {
+            age = { 60 90 }
+            gender_female_chance = 30
+            trait = murim_qi_master
+            trait = patient
+            trait = temperate
+            prowess = { 20 30 }
+            learning = { 18 24 }
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = hidden_master
+        }
+    }
+    
+    # Option A: Beg to become their disciple
+    option = {
+        name = murim_wanderer.0004.a
+        trigger = {
+            exists = scope:hidden_master
+        }
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    has_trait = patient
+                }
+                modifier = {
+                    factor = 1.3
+                    has_trait = humble
+                }
+                desc = murim_wanderer.0004.a.accepted
+                add_prowess_skill = 3
+                add_martial_skill = 2
+                add_learning_skill = 1
+                add_character_modifier = {
+                    modifier = murim_hidden_master_disciple
+                    years = 10
+                }
+                reverse_add_opinion = {
+                    target = scope:hidden_master
+                    modifier = murim_master_disciple_bond
+                    opinion = 40
+                }
+                add_prestige = 200
+            }
+            30 = {
+                desc = murim_wanderer.0004.a.tested
+                # Master tests you first
+                add_character_modifier = {
+                    modifier = murim_master_trial_ongoing
+                    years = 1
+                }
+                trigger_event = {
+                    id = murim_wanderer.0005
+                    days = { 30 90 }
+                }
+            }
+            30 = {
+                desc = murim_wanderer.0004.a.rejected
+                add_stress = 15
+                add_prestige = -25
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option B: Challenge them to test your skills
+    option = {
+        name = murim_wanderer.0004.b
+        trigger = {
+            exists = scope:hidden_master
+            prowess >= 16
+        }
+        duel = {
+            skill = prowess
+            target = scope:hidden_master
+            20 = {
+                desc = murim_wanderer.0004.b.impressed
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 5.0
+                    min = -49
+                }
+                add_prowess_skill = 4
+                add_prestige = 300
+                add_character_modifier = {
+                    modifier = murim_earned_masters_respect
+                    years = 10
+                }
+            }
+            80 = {
+                desc = murim_wanderer.0004.b.humbled
+                add_prowess_skill = 2
+                add_character_modifier = {
+                    modifier = murim_humbled_by_master
+                    years = 3
+                }
+                add_stress = 10
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 22
+            }
+        }
+    }
+    
+    # Option C: Observe from afar and learn
+    option = {
+        name = murim_wanderer.0004.c
+        add_prowess_skill = 1
+        add_learning_skill = 1
+        add_character_modifier = {
+            modifier = murim_observed_master_technique
+            years = 5
+        }
+        trigger_event = {
+            id = murim_wanderer.0006
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = shy
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Master's Trial: Prove Your Worth
+# Triggered: from 0004 master testing you
+# AI: Full trial system
+murim_wanderer.0005 = {
+    type = character_event
+    title = murim_wanderer.0005.t
+    desc = murim_wanderer.0005.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_master_trial_ongoing
+    }
+    
+    immediate = {
+        # Trial type
+        random_list = {
+            25 = { set_variable = { name = trial_type value = 1 } } # Endurance
+            25 = { set_variable = { name = trial_type value = 2 } } # Wisdom
+            25 = { set_variable = { name = trial_type value = 3 } } # Combat
+            25 = { set_variable = { name = trial_type value = 4 } } # Compassion
+        }
+    }
+    
+    # Option A: Face the trial with all your strength
+    option = {
+        name = murim_wanderer.0005.a
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.3
+                    prowess >= 18
+                }
+                modifier = {
+                    factor = 1.3
+                    learning >= 14
+                }
+                modifier = {
+                    factor = 1.3
+                    has_trait = patient
+                }
+                desc = murim_wanderer.0005.a.passed
+                remove_character_modifier = murim_master_trial_ongoing
+                add_prowess_skill = 4
+                add_martial_skill = 2
+                add_character_modifier = {
+                    modifier = murim_hidden_master_disciple
+                    years = 10
+                }
+                add_prestige = 300
+                add_character_modifier = {
+                    modifier = murim_trial_proven_warrior
+                    years = 10
+                }
+            }
+            50 = {
+                desc = murim_wanderer.0005.a.failed
+                remove_character_modifier = murim_master_trial_ongoing
+                add_stress = 20
+                add_prowess_skill = 1
+                add_character_modifier = {
+                    modifier = murim_trial_failure_wisdom
+                    years = 3
+                }
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 1.5
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Use cunning to pass the trial
+    option = {
+        name = murim_wanderer.0005.b
+        trigger = {
+            intrigue >= 12
+        }
+        random_list = {
+            40 = {
+                desc = murim_wanderer.0005.b.clever
+                remove_character_modifier = murim_master_trial_ongoing
+                add_intrigue_skill = 2
+                add_prowess_skill = 2
+                add_character_modifier = {
+                    modifier = murim_hidden_master_disciple
+                    years = 10
+                }
+            }
+            60 = {
+                desc = murim_wanderer.0005.b.seen_through
+                remove_character_modifier = murim_master_trial_ongoing
+                add_prestige = -50
+                add_stress = 15
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option C: Abandon the trial
+    option = {
+        name = murim_wanderer.0005.c
+        remove_character_modifier = murim_master_trial_ongoing
+        add_stress = 10
+        trigger_event = {
+            id = murim_wanderer.0006
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Protecting the Weak: Village Under Threat
+# Triggered: wandering cultivator encounters
+# AI: Full village defense system
+murim_wanderer.0006 = {
+    type = character_event
+    title = murim_wanderer.0006.t
+    desc = murim_wanderer.0006.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_wandering_cultivator
+            has_character_modifier = murim_temporary_wanderer
+        }
+    }
+    
+    immediate = {
+        # Threat type
+        random_list = {
+            30 = { set_variable = { name = village_threat value = 1 } } # Bandits
+            25 = { set_variable = { name = village_threat value = 2 } } # Corrupt official
+            25 = { set_variable = { name = village_threat value = 3 } } # Rogue cultivator
+            20 = { set_variable = { name = village_threat value = 4 } } # Natural disaster
+        }
+        create_character = {
+            age = { 25 50 }
+            trait = murim_martial_artist
+            trait = cruel
+            prowess = { 12 20 }
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = village_oppressor
+        }
+    }
+    
+    # Option A: Defend the village
+    option = {
+        name = murim_wanderer.0006.a
+        trigger = {
+            exists = scope:village_oppressor
+        }
+        duel = {
+            skill = prowess
+            target = scope:village_oppressor
+            55 = {
+                desc = murim_wanderer.0006.a.hero
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                add_prestige = 200
+                add_piety = 100
+                add_character_modifier = {
+                    modifier = murim_village_hero
+                    years = 5
+                }
+                scope:village_oppressor = {
+                    death = {
+                        death_reason = death_duel
+                        killer = root
+                    }
+                }
+                # Village rewards
+                add_gold = 50
+                add_character_modifier = {
+                    modifier = murim_peoples_champion
+                    years = 5
+                }
+            }
+            45 = {
+                desc = murim_wanderer.0006.a.struggle
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                increase_wounds_effect = { reason = fight }
+                add_prestige = 50
+                add_piety = 50
+                # Still fought bravely
+                add_character_modifier = {
+                    modifier = murim_fought_bravely
+                    years = 2
+                }
+            }
+        }
+        trigger_event = {
+            id = murim_wanderer.0007
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+        }
+    }
+    
+    # Option B: Train villagers to defend themselves
+    option = {
+        name = murim_wanderer.0006.b
+        add_martial_skill = 1
+        add_diplomacy_skill = 1
+        add_character_modifier = {
+            modifier = murim_village_teacher
+            years = 3
+        }
+        add_prestige = 100
+        add_piety = 50
+        trigger_event = {
+            id = murim_wanderer.0007
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 1.5
+                martial >= 14
+            }
+        }
+    }
+    
+    # Option C: Pass through - not your problem
+    option = {
+        name = murim_wanderer.0006.c
+        add_stress = 15
+        stress_impact = {
+            compassionate = major_stress_impact_gain
+            just = medium_stress_impact_gain
+        }
+        trigger_event = {
+            id = murim_wanderer.0007
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 2.0
+                has_trait = callous
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Mountain Hermit Cultivation
+# Triggered: wanderer seeking deeper power
+# AI: Full hermit cultivation system
+murim_wanderer.0007 = {
+    type = character_event
+    title = murim_wanderer.0007.t
+    desc = murim_wanderer.0007.desc
+    theme = learning
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_wandering_cultivator
+            has_character_modifier = murim_temporary_wanderer
+        }
+    }
+    
+    immediate = {
+        # Mountain type
+        random_list = {
+            25 = { set_variable = { name = mountain_type value = 1 } } # Qi-rich sacred peak
+            25 = { set_variable = { name = mountain_type value = 2 } } # Ancient ruins
+            25 = { set_variable = { name = mountain_type value = 3 } } # Waterfall cave
+            25 = { set_variable = { name = mountain_type value = 4 } } # Dense forest hermitage
+        }
+    }
+    
+    # Option A: Meditate for an extended period
+    option = {
+        name = murim_wanderer.0007.a
+        random_list = {
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 16
+                }
+                modifier = {
+                    factor = 1.3
+                    has_trait = patient
+                }
+                desc = murim_wanderer.0007.a.breakthrough
+                add_prowess_skill = 3
+                add_learning_skill = 2
+                add_character_modifier = {
+                    modifier = murim_mountain_enlightenment
+                    years = 10
+                }
+                add_prestige = 200
+                add_stress = -40
+            }
+            35 = {
+                desc = murim_wanderer.0007.a.progress
+                add_prowess_skill = 1
+                add_learning_skill = 1
+                add_stress = -20
+                add_character_modifier = {
+                    modifier = murim_steady_cultivation_progress
+                    years = 5
+                }
+            }
+            30 = {
+                desc = murim_wanderer.0007.a.nothing
+                add_stress = 10
+                add_learning_skill = 1
+            }
+        }
+        trigger_event = {
+            id = murim_wanderer.0008
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option B: Practice combat techniques against nature
+    option = {
+        name = murim_wanderer.0007.b
+        add_prowess_skill = 2
+        add_martial_skill = 1
+        add_character_modifier = {
+            modifier = murim_nature_forged_technique
+            years = 5
+        }
+        add_stress = -15
+        trigger_event = {
+            id = murim_wanderer.0008
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                martial >= 14
+            }
+            modifier = {
+                factor = 1.5
+                prowess >= 18
+            }
+        }
+    }
+    
+    # Option C: Explore the mountain for secrets
+    option = {
+        name = murim_wanderer.0007.c
+        random_list = {
+            30 = {
+                desc = murim_wanderer.0007.c.discovery
+                add_character_modifier = {
+                    modifier = murim_mountain_secret_found
+                    years = 5
+                }
+                add_prestige = 150
+                # May find technique scroll or weapon
+                random_list = {
+                    50 = { add_prowess_skill = 2 }
+                    50 = { add_character_modifier = { modifier = murim_ancient_cultivation_method years = 10 } }
+                }
+            }
+            40 = {
+                desc = murim_wanderer.0007.c.danger
+                increase_wounds_effect = { reason = trap }
+                add_stress = 15
+            }
+            30 = {
+                desc = murim_wanderer.0007.c.nothing
+                add_prestige = 25
+            }
+        }
+        trigger_event = {
+            id = murim_wanderer.0008
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = adventurer
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 14
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Wandering Healer: Using Martial Knowledge for Medicine
+# Triggered: continuation of wandering
+# AI: Full healer path for wanderers
+murim_wanderer.0008 = {
+    type = character_event
+    title = murim_wanderer.0008.t
+    desc = murim_wanderer.0008.desc
+    theme = learning
+    
+    left_portrait = {
+        character = root
+        animation = personality_compassionate
+    }
+    right_portrait = {
+        character = scope:sick_person
+        animation = pain
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_wandering_cultivator
+            has_character_modifier = murim_temporary_wanderer
+        }
+        learning >= 10
+    }
+    
+    immediate = {
+        create_character = {
+            age = { 10 50 }
+            gender_female_chance = 50
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = sick_person
+        }
+    }
+    
+    # Option A: Use qi knowledge to heal
+    option = {
+        name = murim_wanderer.0008.a
+        trigger = {
+            exists = scope:sick_person
+            learning >= 12
+        }
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 16
+                }
+                desc = murim_wanderer.0008.a.healed
+                add_piety = 100
+                add_prestige = 50
+                add_learning_skill = 1
+                add_character_modifier = {
+                    modifier = murim_wandering_healer_reputation
+                    years = 5
+                }
+                add_stress = -15
+            }
+            30 = {
+                desc = murim_wanderer.0008.a.partial
+                add_piety = 50
+                add_learning_skill = 1
+            }
+            20 = {
+                desc = murim_wanderer.0008.a.failed
+                add_stress = 15
+                add_prestige = -25
+            }
+        }
+        trigger_event = {
+            id = murim_wanderer.0009
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+        }
+    }
+    
+    # Option B: Teach them self-healing techniques
+    option = {
+        name = murim_wanderer.0008.b
+        add_piety = 50
+        add_diplomacy_skill = 1
+        add_character_modifier = {
+            modifier = murim_teacher_of_the_people
+            years = 3
+        }
+        trigger_event = {
+            id = murim_wanderer.0009
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Move on - healing is not your path
+    option = {
+        name = murim_wanderer.0008.c
+        add_stress = 10
+        trigger_event = {
+            id = murim_wanderer.0009
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = callous
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Sect Recruitment: They Want You Back
+# Triggered: wanderer gains enough reputation
+# AI: Full recruitment decision
+murim_wanderer.0009 = {
+    type = character_event
+    title = murim_wanderer.0009.t
+    desc = murim_wanderer.0009.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    right_portrait = {
+        character = scope:recruiter
+        animation = personality_diplomacy
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_wandering_cultivator
+        prowess >= 16
+        prestige >= 200
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            prowess >= 22
+        }
+        modifier = {
+            factor = 1.5
+            prestige >= 500
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+                NOT = { this = root }
+            }
+            save_scope_as = recruiter
+            alternative = {
+                create_character = {
+                    age = { 35 55 }
+                    trait = murim_sect_leader
+                    trait = gregarious
+                    diplomacy = { 14 20 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = recruiter
+                }
+            }
+        }
+    }
+    
+    # Option A: Accept recruitment - rejoin organized martial world
+    option = {
+        name = murim_wanderer.0009.a
+        trigger = {
+            exists = scope:recruiter
+        }
+        remove_trait = murim_wandering_cultivator
+        add_prestige = 200
+        add_character_modifier = {
+            modifier = murim_returned_to_sect
+            years = 5
+        }
+        reverse_add_opinion = {
+            target = scope:recruiter
+            modifier = murim_recruited_talent
+            opinion = 30
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                age >= 40
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = content
+            }
+        }
+    }
+    
+    # Option B: Decline - the road is my sect
+    option = {
+        name = murim_wanderer.0009.b
+        add_prestige = 100
+        add_character_modifier = {
+            modifier = murim_independent_spirit
+            years = 5
+        }
+        add_stress = -10
+        trigger_event = {
+            id = murim_wanderer.0010
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = adventurer
+            }
+        }
+    }
+    
+    # Option C: Counter-offer - join but on your terms
+    option = {
+        name = murim_wanderer.0009.c
+        trigger = {
+            exists = scope:recruiter
+            diplomacy >= 14
+        }
+        add_prestige = 300
+        add_character_modifier = {
+            modifier = murim_sect_elder_with_freedom
+            years = 10
+        }
+        remove_trait = murim_wandering_cultivator
+        reverse_add_opinion = {
+            target = scope:recruiter
+            modifier = murim_hard_bargain_respect
+            opinion = 15
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Legendary Wanderer: Building Your Own Legend
+# Triggered: experienced wanderers with high stats
+# AI: Full legend building
+murim_wanderer.0010 = {
+    type = character_event
+    title = murim_wanderer.0010.t
+    desc = murim_wanderer.0010.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_wandering_cultivator
+        prowess >= 20
+        prestige >= 500
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 2.0
+            prowess >= 25
+        }
+    }
+    
+    # Option A: Become a legendary wandering swordsman
+    option = {
+        name = murim_wanderer.0010.a
+        add_trait = murim_legendary_wanderer
+        add_prestige = 500
+        add_character_modifier = {
+            modifier = murim_legend_of_the_road
+            years = 20
+        }
+        add_prowess_skill = 3
+        # Known across all nine clans
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_legendary_wanderer_respect
+                opinion = 20
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 25
+            }
+        }
+    }
+    
+    # Option B: Establish a wandering school
+    option = {
+        name = murim_wanderer.0010.b
+        add_character_modifier = {
+            modifier = murim_wandering_school_master
+            years = 10
+        }
+        add_diplomacy_skill = 2
+        add_martial_skill = 2
+        add_prestige = 300
+        # Attract disciples
+        add_character_modifier = {
+            modifier = murim_attracts_wandering_disciples
+            years = 10
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option C: Disappear into legend - become a myth
+    option = {
+        name = murim_wanderer.0010.c
+        add_prestige = 300
+        add_piety = 200
+        add_character_modifier = {
+            modifier = murim_living_myth
+            years = 20
+        }
+        add_character_flag = {
+            flag = murim_vanished_into_legend
+            days = 7300
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = recluse
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0011 - Wanderer's Great Calamity Role
+# Triggered: during Great Calamity for wandering cultivators
+# AI: Full calamity response for wanderers
+murim_wanderer.0011 = {
+    type = character_event
+    title = murim_wanderer.0011.t
+    desc = murim_wanderer.0011.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_wandering_cultivator
+        has_global_variable = murim_great_calamity_active
+    }
+    
+    weight_multiplier = {
+        base = 3
+    }
+    
+    # Option A: Rally scattered warriors
+    option = {
+        name = murim_wanderer.0011.a
+        add_character_modifier = {
+            modifier = murim_calamity_rally_leader
+            years = 5
+        }
+        add_diplomacy_skill = 3
+        add_martial_skill = 2
+        add_prestige = 500
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_wandering_cultivator
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_rallied_us
+                opinion = 30
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option B: Fight alone against the calamity
+    option = {
+        name = murim_wanderer.0011.b
+        add_prowess_skill = 3
+        add_character_modifier = {
+            modifier = murim_lone_wolf_vs_calamity
+            years = 5
+        }
+        random_list = {
+            40 = {
+                desc = murim_wanderer.0011.b.legend
+                add_prestige = 500
+                add_trait = murim_calamity_survivor_legend
+            }
+            60 = {
+                desc = murim_wanderer.0011.b.wounded
+                increase_wounds_effect = { reason = calamity }
+                add_prestige = 200
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option C: Guide civilians to safety
+    option = {
+        name = murim_wanderer.0011.c
+        add_piety = 300
+        add_prestige = 200
+        add_character_modifier = {
+            modifier = murim_shepherd_of_the_innocent
+            years = 10
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0012 - Return Home: The Wanderer's End
+# Triggered: old age or when wanderer decides to settle
+# AI: Full retirement system
+murim_wanderer.0012 = {
+    type = character_event
+    title = murim_wanderer.0012.t
+    desc = murim_wanderer.0012.desc
+    theme = dynasty
+    
+    left_portrait = {
+        character = root
+        animation = personality_compassionate
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_wandering_cultivator
+        OR = {
+            age >= 55
+            health <= 2
+            has_global_variable = murim_renewal_era
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            age >= 65
+        }
+    }
+    
+    # Option A: Settle down and pass on your knowledge
+    option = {
+        name = murim_wanderer.0012.a
+        remove_trait = murim_wandering_cultivator
+        add_character_modifier = {
+            modifier = murim_retired_wanderer_sage
+            years = 20
+        }
+        add_learning_skill = 3
+        add_piety = 200
+        add_prestige = 300
+        add_stress = -30
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                age >= 60
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+    
+    # Option B: One last journey into the unknown
+    option = {
+        name = murim_wanderer.0012.b
+        add_character_modifier = {
+            modifier = murim_final_journey
+            years = 5
+        }
+        add_prestige = 200
+        random_list = {
+            30 = {
+                desc = murim_wanderer.0012.b.transcended
+                add_trait = murim_heaven_defying_martial_god
+                add_prowess_skill = 5
+            }
+            40 = {
+                desc = murim_wanderer.0012.b.peaceful_end
+                death = {
+                    death_reason = death_peaceful_passing
+                }
+            }
+            30 = {
+                desc = murim_wanderer.0012.b.returned
+                add_character_modifier = {
+                    modifier = murim_final_wisdom
+                    years = 10
+                }
+                add_learning_skill = 5
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = adventurer
+            }
+        }
+    }
+    
+    # Option C: Die on the road - a wanderer's true end
+    option = {
+        name = murim_wanderer.0012.c
+        add_prestige = 500
+        add_piety = 300
+        add_character_modifier = {
+            modifier = murim_eternal_wanderer_legend
+            years = 1
+        }
+        death = {
+            death_reason = death_peaceful_wanderer
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                age >= 70
+            }
+            modifier = {
+                factor = 2.0
+                health <= 1
+            }
+        }
+    }
+}
