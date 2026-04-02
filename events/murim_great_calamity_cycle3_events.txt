@@ -1,0 +1,1118 @@
+namespace = murim_great_calamity_cycle3
+
+# GREAT CALAMITY CYCLE 3 — MYTHOLOGY, REBIRTH, AND THE NEW ERA
+# The previous calamity becomes legend. New clans rise from ashes.
+# Old heroes become myths. The cycle prepares to repeat.
+
+### EVENT 1: The Old World Becomes Legend ###
+murim_great_calamity_cycle3.0001 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0001.t
+	desc = murim_great_calamity_cycle3.0001.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_rebuilding_phase
+		has_trait = murim_calamity_survivor
+		years_since_calamity >= 50
+		NOT = { has_character_flag = witnessed_old_world_mythology }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = murim_elder_wisdom
+		}
+	}
+	
+	immediate = {
+		set_character_flag = witnessed_old_world_mythology
+		# The old calamity transitions from history to mythology
+		if = {
+			limit = { has_global_variable = murim_calamity_cycle_count }
+			# Track which cycle we are in
+		}
+	}
+	
+	# Option A: Preserve the truth as historical record
+	option = {
+		name = murim_great_calamity_cycle3.0001.a
+		add_trait = murim_lorekeeper
+		add_prestige = 500
+		# Create historical chronicle
+		hidden_effect = {
+			set_variable = {
+				name = murim_chronicle_keeper
+				value = 1
+			}
+			every_vassal = {
+				limit = { has_trait = murim_martial_artist }
+				add_opinion = {
+					target = root
+					modifier = respect_elder_opinion
+					opinion = 15
+				}
+			}
+		}
+		stress_impact = {
+			cynical = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option B: Let it become myth — the legends serve us better
+	option = {
+		name = murim_great_calamity_cycle3.0001.b
+		add_prestige = 300
+		add_piety = 200
+		hidden_effect = {
+			set_character_flag = murim_myth_shaper
+			# Mythologized version gives cultural power
+			add_character_modifier = {
+				modifier = murim_mythmaker_influence
+				years = 30
+			}
+		}
+		stress_impact = {
+			honest = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = deceitful
+			}
+		}
+	}
+	
+	# Option C: The old world deserved to die. We are the future.
+	option = {
+		name = murim_great_calamity_cycle3.0001.c
+		add_dread = 30
+		add_prestige = 200
+		hidden_effect = {
+			set_character_flag = murim_old_world_denier
+			add_character_modifier = {
+				modifier = murim_new_era_zealot
+				years = 20
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+### EVENT 2: Children of Ash — First Generation Born After ###
+murim_great_calamity_cycle3.0002 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0002.t
+	desc = murim_great_calamity_cycle3.0002.desc
+	theme = education
+	
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+	right_portrait = {
+		character = scope:ash_child
+		animation = personality_bold
+	}
+	
+	trigger = {
+		any_child = {
+			is_alive = yes
+			age >= 12
+			age <= 18
+			NOT = { has_trait = murim_calamity_survivor }
+		}
+		has_trait = murim_calamity_survivor
+		NOT = { has_character_flag = trained_ash_child }
+	}
+	
+	immediate = {
+		set_character_flag = trained_ash_child
+		random_child = {
+			limit = {
+				is_alive = yes
+				age >= 12
+				age <= 18
+				NOT = { has_trait = murim_calamity_survivor }
+			}
+			save_scope_as = ash_child
+		}
+	}
+	
+	# Option A: Train them in the old ways — preserve what was lost
+	option = {
+		name = murim_great_calamity_cycle3.0002.a
+		scope:ash_child = {
+			add_trait = murim_traditional_heir
+			add_character_modifier = {
+				modifier = murim_old_way_training
+				years = 10
+			}
+			# Boost martial education
+			add_prowess_skill = 3
+		}
+		add_stress = 20
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = murim_lorekeeper
+			}
+		}
+	}
+	
+	# Option B: Teach them the new path — adapted for post-calamity world
+	option = {
+		name = murim_great_calamity_cycle3.0002.b
+		scope:ash_child = {
+			add_trait = murim_new_path_disciple
+			add_character_modifier = {
+				modifier = murim_adaptive_martial_training
+				years = 10
+			}
+			add_prowess_skill = 2
+			add_martial_skill = 2
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Let them find their own way
+	option = {
+		name = murim_great_calamity_cycle3.0002.c
+		scope:ash_child = {
+			add_character_modifier = {
+				modifier = murim_self_forged_path
+				years = 15
+			}
+			# Random outcome
+			random = {
+				chance = 40
+				add_trait = brave
+			}
+			random = {
+				chance = 30
+				add_prowess_skill = 4
+			}
+			random = {
+				chance = 30
+				add_trait = murim_wanderer
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+### EVENT 3: The Forbidden Archives — Lost Techniques Rediscovered ###
+murim_great_calamity_cycle3.0003 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0003.t
+	desc = murim_great_calamity_cycle3.0003.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		has_trait = murim_martial_artist
+		has_global_variable = murim_calamity_rebuilding_phase
+		OR = {
+			has_trait = murim_scholar
+			has_trait = murim_lorekeeper
+			learning >= 15
+		}
+		NOT = { has_character_flag = found_forbidden_archives }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = murim_lorekeeper
+		}
+	}
+	
+	immediate = {
+		set_character_flag = found_forbidden_archives
+	}
+	
+	# Option A: Study the Heavenly Demon's sealed techniques
+	option = {
+		name = murim_great_calamity_cycle3.0003.a
+		add_character_modifier = {
+			modifier = murim_forbidden_knowledge
+			years = 20
+		}
+		hidden_effect = {
+			random = {
+				chance = 40
+				add_trait = murim_demonic_cultivation
+				trigger_event = {
+					id = murim_great_calamity_cycle3.0004
+					days = 30
+				}
+			}
+			random = {
+				chance = 30
+				add_prowess_skill = 5
+			}
+		}
+		stress_impact = {
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option B: Recover the Orthodox Alliance's formation manuals
+	option = {
+		name = murim_great_calamity_cycle3.0003.b
+		add_character_modifier = {
+			modifier = murim_formation_master
+			years = 20
+		}
+		add_prestige = 400
+		hidden_effect = {
+			# Share with allies
+			every_ally = {
+				limit = { has_trait = murim_martial_artist }
+				add_character_modifier = {
+					modifier = murim_recovered_formation_knowledge
+					years = 10
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option C: Seal them again — this knowledge caused the calamity
+	option = {
+		name = murim_great_calamity_cycle3.0003.c
+		add_piety = 500
+		add_prestige = 200
+		hidden_effect = {
+			set_character_flag = murim_archive_sealer
+			add_character_modifier = {
+				modifier = murim_wisdom_of_restraint
+				years = 30
+			}
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+}
+
+### EVENT 4: Demonic Corruption from Forbidden Archives ###
+murim_great_calamity_cycle3.0004 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0004.t
+	desc = murim_great_calamity_cycle3.0004.desc
+	theme = skull
+	
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	
+	trigger = {
+		has_trait = murim_demonic_cultivation
+		has_character_flag = found_forbidden_archives
+	}
+	
+	immediate = {
+		# The forbidden knowledge corrupts
+	}
+	
+	# Option A: Embrace the demonic power fully
+	option = {
+		name = murim_great_calamity_cycle3.0004.a
+		add_prowess_skill = 8
+		add_dread = 50
+		add_trait = murim_demon_lord_aspirant
+		hidden_effect = {
+			# Begin path to becoming the next calamity trigger
+			set_character_flag = murim_potential_next_calamity_trigger
+			add_character_modifier = {
+				modifier = murim_demonic_aura_overwhelming
+				years = -1
+			}
+			every_vassal = {
+				add_opinion = {
+					target = root
+					modifier = terrified_of_demon_opinion
+					opinion = -40
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_trait = sadistic
+			}
+		}
+	}
+	
+	# Option B: Fight the corruption — purify the technique
+	option = {
+		name = murim_great_calamity_cycle3.0004.b
+		add_stress = 80
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Success — purified technique
+				remove_trait = murim_demonic_cultivation
+				add_trait = murim_purified_demon_arts
+				add_prowess_skill = 5
+				add_prestige = 500
+			}
+			random = {
+				chance = 25
+				# Partial success — scarred but free
+				remove_trait = murim_demonic_cultivation
+				add_trait = scarred
+				add_prowess_skill = 2
+			}
+			random = {
+				chance = 25
+				# Failure — qi deviation
+				add_trait = murim_qi_deviation
+				add_prowess_skill = -3
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Option C: Seal your own meridians — sacrifice power for safety
+	option = {
+		name = murim_great_calamity_cycle3.0004.c
+		remove_trait = murim_demonic_cultivation
+		add_prowess_skill = -5
+		add_piety = 300
+		add_character_modifier = {
+			modifier = murim_sealed_meridians
+			years = -1
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}
+
+### EVENT 5: New Sect Founding Ceremony ###
+murim_great_calamity_cycle3.0005 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0005.t
+	desc = murim_great_calamity_cycle3.0005.desc
+	theme = diplomacy
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_rebuilding_phase
+		has_trait = murim_martial_artist
+		prestige >= 2000
+		age >= 30
+		NOT = { has_character_flag = founded_post_calamity_sect }
+	}
+	
+	immediate = {
+		set_character_flag = founded_post_calamity_sect
+	}
+	
+	# Option A: Found an Orthodox sect — continue the righteous path
+	option = {
+		name = murim_great_calamity_cycle3.0005.a
+		add_prestige = 1000
+		add_piety = 500
+		add_trait = murim_sect_founder_orthodox
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_new_orthodox_sect_leader
+				years = -1
+			}
+			# Recruit disciples
+			create_character = {
+				age = 18
+				trait = murim_martial_artist
+				trait = murim_orthodox_disciple
+			}
+			create_character = {
+				age = 20
+				trait = murim_martial_artist
+				trait = murim_orthodox_disciple
+			}
+			create_character = {
+				age = 16
+				trait = murim_martial_artist
+				trait = brave
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = just
+			}
+		}
+	}
+	
+	# Option B: Found an Unorthodox sect — power through any means
+	option = {
+		name = murim_great_calamity_cycle3.0005.b
+		add_prestige = 800
+		add_dread = 30
+		add_trait = murim_sect_founder_unorthodox
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_new_unorthodox_sect_leader
+				years = -1
+			}
+			create_character = {
+				age = 22
+				trait = murim_martial_artist
+				trait = murim_unorthodox_disciple
+				trait = ambitious
+			}
+			create_character = {
+				age = 19
+				trait = murim_martial_artist
+				trait = murim_poison_user
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Found a Neutral sect — balance between light and dark
+	option = {
+		name = murim_great_calamity_cycle3.0005.c
+		add_prestige = 600
+		add_diplomacy_skill = 3
+		add_trait = murim_sect_founder_neutral
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_balanced_sect_leader
+				years = -1
+			}
+			create_character = {
+				age = 25
+				trait = murim_martial_artist
+				trait = temperate
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+### EVENT 6: The Prophecy of the Next Calamity ###
+murim_great_calamity_cycle3.0006 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0006.t
+	desc = murim_great_calamity_cycle3.0006.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		has_global_variable = murim_calamity_rebuilding_phase
+		OR = {
+			has_trait = murim_lorekeeper
+			has_trait = mystic
+			learning >= 20
+		}
+		NOT = { has_character_flag = heard_next_calamity_prophecy }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = mystic
+		}
+	}
+	
+	immediate = {
+		set_character_flag = heard_next_calamity_prophecy
+	}
+	
+	# Option A: Warn everyone — prepare for the cycle
+	option = {
+		name = murim_great_calamity_cycle3.0006.a
+		add_prestige = 300
+		add_stress = 40
+		hidden_effect = {
+			set_character_flag = murim_calamity_prophet
+			# Some believe, some don't
+			random_vassal = {
+				limit = { has_trait = murim_martial_artist }
+				add_opinion = {
+					target = root
+					modifier = believes_prophecy_opinion
+					opinion = 20
+				}
+			}
+			random_vassal = {
+				limit = { has_trait = cynical }
+				add_opinion = {
+					target = root
+					modifier = thinks_prophet_crazy_opinion
+					opinion = -15
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = honest
+			}
+		}
+	}
+	
+	# Option B: Seek a way to break the cycle permanently
+	option = {
+		name = murim_great_calamity_cycle3.0006.b
+		add_character_modifier = {
+			modifier = murim_cycle_breaker_quest
+			years = 20
+		}
+		hidden_effect = {
+			set_character_flag = murim_seeking_cycle_break
+			trigger_event = {
+				id = murim_great_calamity_cycle3.0007
+				days = 365
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Accept the cycle — it is the natural order
+	option = {
+		name = murim_great_calamity_cycle3.0006.c
+		add_piety = 300
+		add_character_modifier = {
+			modifier = murim_fate_accepter
+			years = -1
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = content
+			}
+		}
+	}
+}
+
+### EVENT 7: Quest to Break the Calamity Cycle ###
+murim_great_calamity_cycle3.0007 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0007.t
+	desc = murim_great_calamity_cycle3.0007.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	
+	trigger = {
+		has_character_flag = murim_seeking_cycle_break
+	}
+	
+	immediate = {
+		# The quest leads to ancient truths
+	}
+	
+	# Option A: Discover the Heavenly Dao requires balance — destroy all forbidden manuals
+	option = {
+		name = murim_great_calamity_cycle3.0007.a
+		hidden_effect = {
+			random = {
+				chance = 30
+				# Great success — delay next calamity significantly
+				set_global_variable = {
+					name = murim_calamity_delayed
+					value = 1
+				}
+				add_prestige = 2000
+				add_trait = murim_cycle_breaker
+			}
+			random = {
+				chance = 40
+				# Partial success — delay by some years
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_partial_cycle_delay
+					years = 20
+				}
+			}
+			random = {
+				chance = 30
+				# Failure — the cycle cannot be broken
+				add_stress = 60
+				add_character_modifier = {
+					modifier = murim_crushed_by_fate
+					years = 10
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Create a seal at the world's qi nexus
+	option = {
+		name = murim_great_calamity_cycle3.0007.b
+		add_gold = -500
+		hidden_effect = {
+			random = {
+				chance = 20
+				# The seal holds
+				set_global_variable = {
+					name = murim_nexus_sealed
+					value = 1
+				}
+				add_trait = murim_seal_master
+				add_prestige = 3000
+			}
+			random = {
+				chance = 50
+				# The seal is imperfect
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = murim_imperfect_seal
+					years = 15
+				}
+			}
+			random = {
+				chance = 30
+				# Backlash — the qi explodes
+				add_trait = wounded
+				add_stress = 100
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: The truth — only unity of all 9 clans can prevent it
+	option = {
+		name = murim_great_calamity_cycle3.0007.c
+		add_diplomacy_skill = 3
+		hidden_effect = {
+			set_character_flag = murim_unity_path
+			add_character_modifier = {
+				modifier = murim_unifier_of_clans
+				years = -1
+			}
+			# Begin diplomatic chain to unite all clans
+			trigger_event = {
+				id = murim_great_calamity_cycle3.0008
+				days = 90
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = diplomat
+			}
+		}
+	}
+}
+
+### EVENT 8: The Grand Unity Summit ###
+murim_great_calamity_cycle3.0008 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0008.t
+	desc = murim_great_calamity_cycle3.0008.desc
+	theme = diplomacy
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_character_flag = murim_unity_path
+	}
+	
+	immediate = {
+		# Attempt to gather all 9 clan leaders
+	}
+	
+	# Option A: Diplomacy — convince them with reason
+	option = {
+		name = murim_great_calamity_cycle3.0008.a
+		add_prestige = 500
+		hidden_effect = {
+			random = {
+				chance = 40
+				# Most clans agree
+				set_global_variable = {
+					name = murim_partial_unity
+					value = 1
+				}
+				add_character_modifier = {
+					modifier = murim_respected_diplomat
+					years = 20
+				}
+			}
+			random = {
+				chance = 30
+				# Half agree, half refuse
+				add_stress = 30
+			}
+			random = {
+				chance = 30
+				# Summit collapses — old grudges resurface
+				add_stress = 60
+				trigger_event = {
+					id = murim_great_calamity_cycle3.0009
+					days = 30
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Show them the prophecy evidence
+	option = {
+		name = murim_great_calamity_cycle3.0008.b
+		add_piety = 300
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Evidence convinces most
+				set_global_variable = {
+					name = murim_unity_achieved
+					value = 1
+				}
+				add_prestige = 2000
+				add_trait = murim_great_unifier
+			}
+			random = {
+				chance = 50
+				# Skeptics remain
+				add_character_modifier = {
+					modifier = murim_partial_unity_leader
+					years = 15
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Force unity through martial supremacy
+	option = {
+		name = murim_great_calamity_cycle3.0008.c
+		add_dread = 40
+		add_tyranny = 20
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_forced_unity
+				value = 1
+			}
+			add_character_modifier = {
+				modifier = murim_tyrant_unifier
+				years = -1
+			}
+			# Some submit, some rebel
+			trigger_event = {
+				id = murim_great_calamity_cycle3.0009
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = sadistic
+			}
+		}
+	}
+}
+
+### EVENT 9: Summit Collapse — The Grudge Wars ###
+murim_great_calamity_cycle3.0009 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0009.t
+	desc = murim_great_calamity_cycle3.0009.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	
+	trigger = {
+		OR = {
+			has_character_flag = murim_unity_path
+			has_global_variable = murim_forced_unity
+		}
+	}
+	
+	immediate = {
+		# Old clan grudges explode
+	}
+	
+	# Option A: Mediate — try to salvage peace
+	option = {
+		name = murim_great_calamity_cycle3.0009.a
+		add_stress = 50
+		add_diplomacy_skill = 2
+		hidden_effect = {
+			random = {
+				chance = 40
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_peacemaker
+					years = 15
+				}
+			}
+			random = {
+				chance = 60
+				# War breaks out despite efforts
+				add_character_modifier = {
+					modifier = murim_failed_peacemaker
+					years = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Pick a side — join the strongest faction
+	option = {
+		name = murim_great_calamity_cycle3.0009.b
+		add_prowess_skill = 2
+		add_prestige = 300
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_faction_war_veteran
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: Stand alone — become the balance between factions
+	option = {
+		name = murim_great_calamity_cycle3.0009.c
+		add_dread = 20
+		add_prestige = 400
+		add_character_modifier = {
+			modifier = murim_lone_balancer
+			years = 20
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
+		}
+	}
+}
+
+### EVENT 10: The Eternal Cycle — Final Revelation ###
+murim_great_calamity_cycle3.0010 = {
+	type = character_event
+	title = murim_great_calamity_cycle3.0010.t
+	desc = murim_great_calamity_cycle3.0010.desc
+	theme = mystic
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	
+	trigger = {
+		OR = {
+			has_trait = murim_cycle_breaker
+			has_trait = murim_great_unifier
+			has_character_flag = murim_calamity_prophet
+		}
+		age >= 60
+		NOT = { has_character_flag = final_cycle_revelation }
+	}
+	
+	immediate = {
+		set_character_flag = final_cycle_revelation
+	}
+	
+	# Option A: Accept — pass the knowledge to the next generation
+	option = {
+		name = murim_great_calamity_cycle3.0010.a
+		add_prestige = 1000
+		add_piety = 500
+		hidden_effect = {
+			# Ensure primary heir inherits the knowledge
+			if = {
+				limit = { exists = primary_heir }
+				primary_heir = {
+					add_trait = murim_inheritor_of_truth
+					add_character_modifier = {
+						modifier = murim_knows_the_cycle
+						years = -1
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Transcend — attempt to ascend beyond the mortal cycle
+	option = {
+		name = murim_great_calamity_cycle3.0010.b
+		hidden_effect = {
+			random = {
+				chance = 10
+				# True transcendence — legendary status
+				add_trait = murim_transcended_mortal
+				add_prestige = 5000
+				add_character_modifier = {
+					modifier = murim_beyond_mortality
+					years = -1
+				}
+			}
+			random = {
+				chance = 40
+				# Partial transcendence
+				add_trait = murim_touched_by_dao
+				add_prestige = 1000
+			}
+			random = {
+				chance = 50
+				# Failure — mortal after all
+				add_stress = 100
+				add_trait = disillusioned
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	# Option C: Rage against the cycle — vow to fight it forever
+	option = {
+		name = murim_great_calamity_cycle3.0010.c
+		add_prestige = 500
+		add_prowess_skill = 3
+		add_character_modifier = {
+			modifier = murim_eternal_defiance
+			years = -1
+		}
+		hidden_effect = {
+			set_character_flag = murim_defiant_to_the_end
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 40
+				has_trait = brave
+			}
+		}
+	}
+}
