@@ -1,0 +1,321 @@
+# Murim Chronicles - Civilian Casualty Events
+# Martial artist fights can cause collateral damage to innocent bystanders
+# Triggers from combat/duel events when fights happen in populated areas
+
+namespace = murim_civilian
+
+######################################
+# STREET FIGHT COLLATERAL
+# When martial artists fight near civilians
+######################################
+
+murim_civilian.0001 = {
+	type = character_event
+	title = murim_civilian.0001.t
+	desc = murim_civilian.0001.desc
+	theme = intrigue
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_marketplace.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		NOT = { has_character_flag = murim_civilian_incident_cooldown }
+		prowess >= 10
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 prowess >= 18 }
+		modifier = { add = 0.3 has_trait = wrathful }
+		modifier = { add = -0.5 has_trait = compassionate }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_civilian_incident_cooldown
+			years = 2
+		}
+	}
+
+	# Option A: The fight was unavoidable - accept consequences
+	option = {
+		name = murim_civilian.0001.a
+		murim_civilian_casualty_effect = yes
+		add_character_flag = {
+			flag = murim_caused_collateral
+			years = 3
+		}
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			just = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = wrathful }
+			modifier = { add = 15 has_trait = arrogant }
+		}
+	}
+
+	# Option B: Help the injured and pay compensation
+	option = {
+		name = murim_civilian.0001.b
+		add_gold = -75
+		add_prestige = 100
+		add_piety = 50
+		add_character_modifier = {
+			modifier = murim_compassionate_warrior
+			years = 3
+		}
+		if = {
+			limit = { has_character_flag = murim_orthodox_member }
+			change_variable = { name = murim_reputation add = 5 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = -20 has_trait = greedy }
+		}
+	}
+
+	# Option C: Flee the scene - deny involvement
+	option = {
+		name = murim_civilian.0001.c
+		add_prestige = -100
+		add_intrigue_skill = 1
+		add_dread = 5
+		stress_impact = {
+			honest = major_stress_impact_gain
+			just = medium_stress_impact_gain
+		}
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = murim_civilian_killer_shame
+				years = 5
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = craven }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+}
+
+######################################
+# TECHNIQUE MISFIRE HITS BYSTANDERS
+######################################
+
+murim_civilian.0002 = {
+	type = character_event
+	title = murim_civilian.0002.t
+	desc = murim_civilian.0002.desc
+	theme = martial
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_marketplace.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		NOT = { has_character_flag = murim_civilian_incident_cooldown }
+		OR = {
+			has_character_flag = murim_forbidden_technique_user
+			has_trait = murim_heavenly_demon_clan
+			prowess >= 20
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1.0 has_character_flag = murim_forbidden_technique_user }
+		modifier = { add = 0.5 prowess >= 25 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_civilian_incident_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: The technique's power was beyond my control
+	option = {
+		name = murim_civilian.0002.a
+		add_gold = -100
+		add_prestige = -200
+		add_dread = 20
+		add_tyranny = 15
+		add_character_modifier = {
+			modifier = murim_civilian_killer_shame
+			years = 10
+		}
+		# Tribunal may come after you
+		random = {
+			chance = 40
+			trigger_event = { id = murim_cross_system.0007 days = { 30 90 } }
+		}
+		stress_impact = {
+			compassionate = massive_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = callous }
+		}
+	}
+
+	# Option B: Seal the technique - it's too dangerous
+	option = {
+		name = murim_civilian.0002.b
+		add_prowess_skill = -2
+		add_piety = 200
+		add_prestige = 100
+		remove_character_flag = murim_forbidden_technique_user
+		add_character_modifier = {
+			modifier = murim_compassionate_warrior
+			years = 5
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Option C: Cover it up - blame bandits
+	option = {
+		name = murim_civilian.0002.c
+		add_intrigue_skill = 1
+		add_gold = -50
+		add_dread = 10
+		random = {
+			chance = 50
+			# Cover-up failed - consequences worse
+			add_character_modifier = {
+				modifier = murim_civilian_killer_shame
+				years = 10
+			}
+			add_tyranny = 20
+		}
+		stress_impact = {
+			honest = massive_stress_impact_gain
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = deceitful }
+			modifier = { add = 15 intrigue >= 16 }
+		}
+	}
+}
+
+######################################
+# SECT WAR DEVASTATES A VILLAGE
+######################################
+
+murim_civilian.0003 = {
+	type = character_event
+	title = murim_civilian.0003.t
+	desc = murim_civilian.0003.desc
+	theme = war
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_burning_building.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		is_at_war = yes
+		NOT = { has_character_flag = murim_village_devastation_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 has_trait = wrathful }
+		modifier = { add = 0.3 martial >= 16 }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_village_devastation_cooldown
+			years = 5
+		}
+	}
+
+	# Option A: War demands sacrifice - press forward
+	option = {
+		name = murim_civilian.0003.a
+		add_prestige = -300
+		add_dread = 25
+		add_tyranny = 20
+		add_character_modifier = {
+			modifier = murim_civilian_killer_shame
+			years = 15
+		}
+		# Martial advantage from ruthlessness
+		add_martial_skill = 2
+		add_prowess_skill = 1
+		if = {
+			limit = { has_character_flag = murim_orthodox_member }
+			change_variable = { name = murim_reputation add = -30 }
+		}
+		stress_impact = {
+			compassionate = massive_stress_impact_gain
+			just = massive_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = callous }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -30 has_trait = compassionate }
+		}
+	}
+
+	# Option B: Cease fighting and help rebuild
+	option = {
+		name = murim_civilian.0003.b
+		add_gold = -200
+		add_prestige = 300
+		add_piety = 200
+		add_character_modifier = {
+			modifier = murim_compassionate_warrior
+			years = 5
+		}
+		# May weaken war position
+		add_martial_skill = -1
+		if = {
+			limit = { has_character_flag = murim_orthodox_member }
+			change_variable = { name = murim_reputation add = 15 }
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = compassionate }
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Option C: Blame the enemy for the destruction
+	option = {
+		name = murim_civilian.0003.c
+		add_prestige = 100
+		add_dread = 10
+		add_intrigue_skill = 1
+		random = {
+			chance = 40
+			# Witnesses come forward
+			add_character_modifier = {
+				modifier = murim_civilian_harm_guilt
+				years = 5
+			}
+			add_prestige = -200
+		}
+		stress_impact = {
+			honest = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = deceitful }
+			modifier = { add = 15 intrigue >= 14 }
+		}
+	}
+}

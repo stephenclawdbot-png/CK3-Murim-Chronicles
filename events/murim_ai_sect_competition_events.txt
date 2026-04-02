@@ -1,0 +1,608 @@
+# Murim Chronicles - AI Sect/Clan Position Competition Events
+# AI martial artists compete for clan elder, sect master, and alliance leader positions
+# AI can challenge PLAYER characters for these positions
+# Based on prowess, cultivation rank, reputation, and political maneuvering
+
+namespace = murim_sect_competition
+
+######################################
+# AI CHALLENGES FOR SECT ELDER POSITION
+######################################
+
+murim_sect_competition.0001 = {
+	type = character_event
+	title = murim_sect_competition.0001.t
+	desc = murim_sect_competition.0001.desc
+	theme = intrigue
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_throne_room.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		has_character_flag = murim_sect_elder
+		NOT = { has_character_flag = murim_position_challenge_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 is_ai = no }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_position_challenge_cooldown
+			years = 3
+		}
+		random_courtier = {
+			limit = {
+				is_available_adult = yes
+				has_variable = murim_martial_artist
+				prowess >= 14
+				NOT = { this = root }
+				NOT = { has_character_flag = murim_sect_elder }
+				OR = {
+					has_trait = ambitious
+					prowess > root.prowess
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 3
+					}
+				}
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 has_trait = ambitious }
+				modifier = { add = 3 prowess >= 18 }
+				modifier = { add = 2 intrigue >= 14 }
+			}
+			save_scope_as = elder_challenger
+		}
+	}
+
+	# Option A: Accept the formal challenge
+	option = {
+		name = murim_sect_competition.0001.a
+		trigger = { exists = scope:elder_challenger }
+		duel = {
+			skill = prowess
+			target = scope:elder_challenger
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				desc = murim_sect_competition.0001.a.victory
+				add_prestige = 500
+				add_prowess_skill = 1
+				scope:elder_challenger = {
+					add_prestige = -200
+					add_stress = 30
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				desc = murim_sect_competition.0001.a.defeat
+				# Lose elder position
+				remove_character_flag = murim_sect_elder
+				add_prestige = -300
+				scope:elder_challenger = {
+					set_character_flag = murim_sect_elder
+					add_prestige = 500
+					add_prowess_skill = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 15 prowess >= 18 }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	# Option B: Use political influence to block the challenge
+	option = {
+		name = murim_sect_competition.0001.b
+		trigger = { exists = scope:elder_challenger }
+		add_gold = -100
+		add_intrigue_skill = 1
+		add_tyranny = 5
+		scope:elder_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_blocked_my_challenge
+				opinion = -30
+			}
+			add_stress = 20
+		}
+		random = {
+			chance = 25
+			# Others see your political maneuvering
+			add_prestige = -200
+			add_character_modifier = {
+				modifier = murim_political_manipulator
+				years = 3
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 intrigue >= 16 }
+			modifier = { add = 15 has_trait = deceitful }
+		}
+	}
+
+	# Option C: Step down gracefully
+	option = {
+		name = murim_sect_competition.0001.c
+		trigger = { exists = scope:elder_challenger }
+		remove_character_flag = murim_sect_elder
+		add_prestige = 200
+		add_piety = 100
+		scope:elder_challenger = {
+			set_character_flag = murim_sect_elder
+			add_prestige = 300
+			add_opinion = {
+				target = root
+				modifier = murim_graceful_successor
+				opinion = 30
+			}
+		}
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = 15 has_trait = humble }
+			modifier = { add = -20 has_trait = ambitious }
+		}
+	}
+}
+
+######################################
+# AI CHALLENGES FOR SECT MASTER POSITION
+######################################
+
+murim_sect_competition.0002 = {
+	type = character_event
+	title = murim_sect_competition.0002.t
+	desc = murim_sect_competition.0002.desc
+	theme = martial
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_feast_duel.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		has_character_flag = murim_sect_master
+		NOT = { has_character_flag = murim_position_challenge_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1.0 is_ai = no }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_position_challenge_cooldown
+			years = 5
+		}
+		random_courtier = {
+			limit = {
+				is_available_adult = yes
+				has_variable = murim_martial_artist
+				prowess >= 16
+				NOT = { this = root }
+				NOT = { has_character_flag = murim_sect_master }
+				OR = {
+					has_trait = ambitious
+					prowess > root.prowess
+					AND = {
+						exists = var:murim_cultivation_rank
+						var:murim_cultivation_rank >= 4
+					}
+				}
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 has_trait = ambitious }
+				modifier = { add = 5 prowess >= 22 }
+				modifier = { add = 3 has_trait = brave }
+			}
+			save_scope_as = master_challenger
+		}
+	}
+
+	# Option A: Face the challenger in formal combat
+	option = {
+		name = murim_sect_competition.0002.a
+		trigger = { exists = scope:master_challenger }
+		duel = {
+			skill = prowess
+			target = scope:master_challenger
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_sect_competition.0002.a.victory
+				add_prestige = 1000
+				add_prowess_skill = 2
+				add_dread = 15
+				scope:master_challenger = {
+					increase_wounds_effect = { REASON = fight }
+					add_prestige = -300
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				desc = murim_sect_competition.0002.a.defeat
+				remove_character_flag = murim_sect_master
+				add_prestige = -500
+				increase_wounds_effect = { REASON = fight }
+				scope:master_challenger = {
+					set_character_flag = murim_sect_master
+					add_prestige = 1000
+					add_prowess_skill = 2
+					add_dread = 20
+				}
+			}
+		}
+		ai_chance = {
+			base = 70
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 15 prowess >= 20 }
+		}
+	}
+
+	# Option B: Demand a cultivation test instead of combat
+	option = {
+		name = murim_sect_competition.0002.b
+		trigger = { exists = scope:master_challenger }
+		# Resolve based on cultivation rank
+		if = {
+			limit = {
+				exists = var:murim_cultivation_rank
+				scope:master_challenger = { exists = var:murim_cultivation_rank }
+				var:murim_cultivation_rank >= scope:master_challenger.var:murim_cultivation_rank
+			}
+			add_prestige = 500
+			add_learning_skill = 1
+			scope:master_challenger = {
+				add_prestige = -100
+				add_stress = 20
+			}
+		}
+		if = {
+			limit = {
+				exists = var:murim_cultivation_rank
+				scope:master_challenger = { exists = var:murim_cultivation_rank }
+				var:murim_cultivation_rank < scope:master_challenger.var:murim_cultivation_rank
+			}
+			remove_character_flag = murim_sect_master
+			add_prestige = -300
+			scope:master_challenger = {
+				set_character_flag = murim_sect_master
+				add_prestige = 500
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 learning >= 16 }
+			modifier = { add = -15 has_trait = brave }
+		}
+	}
+
+	# Option C: Offer co-leadership - share power
+	option = {
+		name = murim_sect_competition.0002.c
+		trigger = { exists = scope:master_challenger }
+		add_gold = -50
+		add_diplomacy_skill = 1
+		scope:master_challenger = {
+			set_character_flag = murim_sect_elder
+			add_prestige = 300
+			add_opinion = {
+				target = root
+				modifier = murim_shared_power
+				opinion = 20
+			}
+		}
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = diplomat }
+			modifier = { add = 15 diplomacy >= 16 }
+		}
+	}
+}
+
+######################################
+# AI SCHEME TO USURP CLAN LEADERSHIP
+######################################
+
+murim_sect_competition.0003 = {
+	type = character_event
+	title = murim_sect_competition.0003.t
+	desc = murim_sect_competition.0003.desc
+	theme = intrigue
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_throne_room.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		OR = {
+			has_character_flag = murim_sect_master
+			has_character_flag = murim_sect_elder
+		}
+		NOT = { has_character_flag = murim_usurp_attempt_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 0.5 is_ai = no }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_usurp_attempt_cooldown
+			years = 5
+		}
+		random_courtier = {
+			limit = {
+				is_available_adult = yes
+				has_variable = murim_martial_artist
+				intrigue >= 14
+				NOT = { this = root }
+				has_trait = ambitious
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 intrigue >= 18 }
+				modifier = { add = 3 has_trait = deceitful }
+				modifier = { add = 3 has_trait = schemer }
+			}
+			save_scope_as = clan_usurper
+		}
+	}
+
+	# Option A: Expose the scheme publicly
+	option = {
+		name = murim_sect_competition.0003.a
+		trigger = { exists = scope:clan_usurper }
+		add_prestige = 300
+		add_dread = 10
+		scope:clan_usurper = {
+			add_prestige = -500
+			add_character_modifier = {
+				modifier = murim_exposed_schemer
+				years = 5
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_exposed_my_scheme
+				opinion = -40
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = honest }
+		}
+	}
+
+	# Option B: Counter-scheme - turn their allies
+	option = {
+		name = murim_sect_competition.0003.b
+		trigger = { exists = scope:clan_usurper }
+		add_intrigue_skill = 2
+		add_gold = -75
+		random = {
+			chance = 60
+			scope:clan_usurper = {
+				add_prestige = -300
+				add_stress = 30
+			}
+		}
+		random = {
+			chance = 40
+			# Counter-scheme backfired
+			add_prestige = -200
+			add_stress = 25
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 intrigue >= 16 }
+			modifier = { add = 15 has_trait = schemer }
+		}
+	}
+
+	# Option C: Negotiate - offer them a role
+	option = {
+		name = murim_sect_competition.0003.c
+		trigger = { exists = scope:clan_usurper }
+		add_diplomacy_skill = 1
+		scope:clan_usurper = {
+			set_character_flag = murim_sect_elder
+			add_prestige = 200
+			add_opinion = {
+				target = root
+				modifier = murim_given_position
+				opinion = 25
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 diplomacy >= 14 }
+			modifier = { add = 15 has_trait = diplomat }
+		}
+	}
+}
+
+######################################
+# ALLIANCE LEADER CONTESTED - GRAND CHALLENGE
+######################################
+
+murim_sect_competition.0004 = {
+	type = character_event
+	title = murim_sect_competition.0004.t
+	desc = murim_sect_competition.0004.desc
+	theme = martial
+	override_background = { reference = "gfx/interface/illustrations/event_scenes/ep2_feast_duel.dds" }
+
+	trigger = {
+		is_available_adult = yes
+		has_variable = murim_martial_artist
+		has_character_flag = murim_wulin_alliance_leader
+		NOT = { has_character_flag = murim_grand_challenge_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1.0 is_ai = no }
+	}
+
+	immediate = {
+		set_character_flag = {
+			flag = murim_grand_challenge_cooldown
+			years = 10
+		}
+		random_ruler = {
+			limit = {
+				is_available_adult = yes
+				has_variable = murim_martial_artist
+				NOT = { this = root }
+				NOT = { has_character_flag = murim_wulin_alliance_leader }
+				prowess >= 18
+				OR = {
+					has_trait = ambitious
+					has_character_flag = murim_sect_master
+				}
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 prowess >= 22 }
+				modifier = { add = 3 has_character_flag = murim_sect_master }
+				modifier = { add = 3 has_trait = ambitious }
+			}
+			save_scope_as = alliance_challenger
+		}
+	}
+
+	# Option A: Accept the Grand Challenge
+	option = {
+		name = murim_sect_competition.0004.a
+		trigger = { exists = scope:alliance_challenger }
+		duel = {
+			skill = prowess
+			target = scope:alliance_challenger
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 4.0
+				}
+				desc = murim_sect_competition.0004.a.victory
+				add_prestige = 2000
+				add_prowess_skill = 3
+				add_dread = 25
+				add_character_modifier = {
+					modifier = murim_uncontested_leader
+					years = 10
+				}
+				scope:alliance_challenger = {
+					increase_wounds_effect = { REASON = fight }
+					add_prestige = -500
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -4.0
+				}
+				desc = murim_sect_competition.0004.a.defeat
+				remove_character_flag = murim_wulin_alliance_leader
+				add_prestige = -1000
+				increase_wounds_effect = { REASON = fight }
+				scope:alliance_challenger = {
+					set_character_flag = murim_wulin_alliance_leader
+					add_prestige = 2000
+					add_prowess_skill = 3
+					add_dread = 30
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 25 has_trait = brave }
+			modifier = { add = 20 prowess >= 22 }
+		}
+	}
+
+	# Option B: Call a council vote instead
+	option = {
+		name = murim_sect_competition.0004.b
+		trigger = { exists = scope:alliance_challenger }
+		add_diplomacy_skill = 2
+		add_gold = -200
+		# Political resolution - 50/50 based on diplomacy
+		random_list = {
+			50 = {
+				modifier = { add = 20 diplomacy >= 18 }
+				modifier = { add = 10 has_trait = diplomat }
+				add_prestige = 1000
+				scope:alliance_challenger = {
+					add_prestige = -300
+					add_stress = 20
+				}
+			}
+			50 = {
+				modifier = { add = 20 scope:alliance_challenger = { diplomacy >= 18 } }
+				remove_character_flag = murim_wulin_alliance_leader
+				add_prestige = -500
+				scope:alliance_challenger = {
+					set_character_flag = murim_wulin_alliance_leader
+					add_prestige = 1000
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 diplomacy >= 16 }
+			modifier = { add = -15 has_trait = brave }
+		}
+	}
+
+	# Option C: Abdicate to prevent bloodshed
+	option = {
+		name = murim_sect_competition.0004.c
+		trigger = { exists = scope:alliance_challenger }
+		remove_character_flag = murim_wulin_alliance_leader
+		add_prestige = 500
+		add_piety = 300
+		scope:alliance_challenger = {
+			set_character_flag = murim_wulin_alliance_leader
+			add_prestige = 1000
+			add_opinion = {
+				target = root
+				modifier = murim_graceful_successor
+				opinion = 40
+			}
+		}
+		stress_impact = {
+			ambitious = massive_stress_impact_gain
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = 15 has_trait = compassionate }
+		}
+	}
+}

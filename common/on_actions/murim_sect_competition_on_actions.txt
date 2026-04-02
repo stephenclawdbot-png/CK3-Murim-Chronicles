@@ -1,0 +1,83 @@
+# Murim Sect/Clan Position Competition On Actions
+# AI competes for sect positions even against player characters
+# Fires on yearly pulse for position challenges, quarterly for schemes
+
+on_yearly_pulse = {
+	# AI challenges sect elders for their position
+	random_events = {
+		chance_to_happen = 15
+		trigger = {
+			has_variable = murim_martial_artist
+			has_character_flag = murim_sect_elder
+			NOT = { has_character_flag = murim_position_challenge_cooldown }
+			any_courtier = {
+				has_variable = murim_martial_artist
+				prowess >= 14
+				has_trait = ambitious
+			}
+		}
+		100 = murim_sect_competition.0001
+	}
+
+	# AI challenges sect masters
+	random_events = {
+		chance_to_happen = 10
+		trigger = {
+			has_variable = murim_martial_artist
+			has_character_flag = murim_sect_master
+			NOT = { has_character_flag = murim_position_challenge_cooldown }
+			any_courtier = {
+				has_variable = murim_martial_artist
+				prowess >= 16
+				OR = {
+					has_trait = ambitious
+					prowess > prev.prowess
+				}
+			}
+		}
+		100 = murim_sect_competition.0002
+	}
+
+	# AI schemes to usurp clan leadership
+	random_events = {
+		chance_to_happen = 12
+		trigger = {
+			has_variable = murim_martial_artist
+			OR = {
+				has_character_flag = murim_sect_master
+				has_character_flag = murim_sect_elder
+			}
+			NOT = { has_character_flag = murim_usurp_attempt_cooldown }
+			any_courtier = {
+				has_variable = murim_martial_artist
+				intrigue >= 14
+				has_trait = ambitious
+			}
+		}
+		100 = murim_sect_competition.0003
+	}
+
+	# Alliance leader grand challenge (rare, high stakes)
+	random_events = {
+		chance_to_happen = 8
+		trigger = {
+			has_variable = murim_martial_artist
+			has_character_flag = murim_wulin_alliance_leader
+			NOT = { has_character_flag = murim_grand_challenge_cooldown }
+		}
+		100 = murim_sect_competition.0004
+	}
+
+	# Civilian casualty events from martial fights
+	random_events = {
+		chance_to_happen = 15
+		trigger = {
+			has_variable = murim_martial_artist
+			prowess >= 10
+			NOT = { has_character_flag = murim_civilian_incident_cooldown }
+		}
+		60 = murim_civilian.0001
+		30 = murim_civilian.0002
+		10 = murim_civilian.0003
+	}
+}
