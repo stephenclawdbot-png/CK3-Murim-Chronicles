@@ -1,0 +1,1781 @@
+########################################
+# MURIM NINE-CLAN ESPIONAGE NETWORK EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Spy placement, intelligence
+# gathering, double agents, mole hunts, counter-espionage,
+# clan secret theft, information warfare
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_espionage
+
+# EVENT 0001 - Establish Spy Network in Rival Clan
+# Triggered: on_action yearly pulse, sect leaders with intrigue >= 12
+# AI: Full spy placement with weighted decisions
+murim_espionage.0001 = {
+    type = character_event
+    title = murim_espionage.0001.t
+    desc = murim_espionage.0001.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    right_portrait = {
+        character = scope:spy_candidate
+        animation = personality_rational
+    }
+    
+    trigger = {
+        is_alive = yes
+        intrigue >= 12
+        OR = {
+            has_trait = murim_sect_leader
+            has_trait = murim_shadow_operative
+            has_trait = murim_unorthodox_elder
+        }
+        NOT = { has_character_flag = placed_spy_recently }
+        any_known_character = {
+            is_alive = yes
+            NOT = { this = root }
+            NOT = { is_allied_to = root }
+            OR = {
+                has_trait = murim_sect_leader
+                has_trait = murim_martial_artist
+            }
+        }
+        gold >= 100
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = paranoid
+        }
+        modifier = {
+            factor = 1.5
+            intrigue >= 16
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_shadow_operative
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = placed_spy_recently
+            days = 365
+        }
+        # Find a spy candidate from courtiers
+        random_courtier = {
+            limit = {
+                intrigue >= 10
+                NOT = { has_trait = honest }
+                opinion = { target = root value >= 0 }
+            }
+            save_scope_as = spy_candidate
+            alternative = {
+                create_character = {
+                    age = { 22 35 }
+                    gender_female_chance = 50
+                    trait = murim_shadow_operative
+                    trait = deceitful
+                    trait = patient
+                    intrigue = { 12 20 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = spy_candidate
+                }
+            }
+        }
+        # Find target clan/character
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { is_allied_to = root }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_shaolin_elder
+                    has_trait = murim_wudang_elder
+                    has_trait = murim_mount_hua_elder
+                    has_trait = murim_tang_clan_elder
+                    has_trait = murim_heavens_sword_elder
+                    has_trait = murim_namgung_elder
+                    has_trait = murim_iron_fist_elder
+                    has_trait = murim_poison_flower_elder
+                    has_trait = murim_phantom_blade_elder
+                }
+            }
+            save_scope_as = espionage_target
+        }
+    }
+    
+    # Option A: Plant deep cover spy
+    option = {
+        name = murim_espionage.0001.a
+        trigger = {
+            exists = scope:spy_candidate
+            exists = scope:espionage_target
+        }
+        add_gold = -200
+        hidden_effect = {
+            scope:spy_candidate = {
+                add_character_flag = {
+                    flag = murim_deep_cover_spy
+                    days = 3650
+                }
+                set_variable = {
+                    name = spy_master
+                    value = root
+                }
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_spy_network_active
+            years = 10
+        }
+        # Delayed intelligence reports
+        trigger_event = {
+            id = murim_espionage.0002
+            days = { 90 365 }
+        }
+        stress_impact = {
+            honest = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = honest
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Plant saboteur instead
+    option = {
+        name = murim_espionage.0001.b
+        trigger = {
+            exists = scope:spy_candidate
+            exists = scope:espionage_target
+        }
+        add_gold = -150
+        hidden_effect = {
+            scope:spy_candidate = {
+                add_character_flag = {
+                    flag = murim_saboteur_agent
+                    days = 1825
+                }
+                set_variable = {
+                    name = spy_master
+                    value = root
+                }
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_saboteur_deployed
+            years = 5
+        }
+        trigger_event = {
+            id = murim_espionage.0004
+            days = { 60 240 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = wrathful
+            }
+        }
+    }
+    
+    # Option C: Use diplomatic channels instead
+    option = {
+        name = murim_espionage.0001.c
+        add_diplomacy_skill = 1
+        add_prestige = 50
+        stress_impact = {
+            deceitful = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0002 - Intelligence Report from Deep Cover Spy
+# Triggered: delayed from 0001 spy placement
+# AI: Full intelligence processing
+murim_espionage.0002 = {
+    type = character_event
+    title = murim_espionage.0002.t
+    desc = murim_espionage.0002.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_spy_network_active
+    }
+    
+    immediate = {
+        # What intelligence was gathered?
+        random_list = {
+            20 = { set_variable = { name = intel_report value = 1 } } # Technique secrets
+            20 = { set_variable = { name = intel_report value = 2 } } # Military strength
+            20 = { set_variable = { name = intel_report value = 3 } } # Alliance plans
+            20 = { set_variable = { name = intel_report value = 4 } } # Internal divisions
+            20 = { set_variable = { name = intel_report value = 5 } } # Assassination plot
+        }
+    }
+    
+    # Option A: Act on the intelligence immediately
+    option = {
+        name = murim_espionage.0002.a
+        # Based on intel type, grant different bonuses
+        random_list = {
+            20 = {
+                # Technique secrets stolen
+                add_character_modifier = {
+                    modifier = murim_stolen_technique_knowledge
+                    years = 5
+                }
+                add_martial_skill = 2
+                add_prowess_skill = 2
+            }
+            20 = {
+                # Military intelligence
+                add_character_modifier = {
+                    modifier = murim_military_intelligence_advantage
+                    years = 3
+                }
+                add_martial_skill = 3
+            }
+            20 = {
+                # Alliance plans exposed
+                add_character_modifier = {
+                    modifier = murim_alliance_foreknowledge
+                    years = 3
+                }
+                add_diplomacy_skill = 2
+            }
+            20 = {
+                # Internal division info
+                add_character_modifier = {
+                    modifier = murim_exploitable_division_intel
+                    years = 3
+                }
+                add_intrigue_skill = 2
+            }
+            20 = {
+                # Assassination plot discovered
+                add_character_modifier = {
+                    modifier = murim_assassination_forewarned
+                    years = 2
+                }
+                add_prestige = 200
+            }
+        }
+        # Schedule next report
+        trigger_event = {
+            id = murim_espionage.0002
+            days = { 180 545 }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Store intel for later use
+    option = {
+        name = murim_espionage.0002.b
+        add_character_modifier = {
+            modifier = murim_stored_intelligence
+            years = 5
+        }
+        add_intrigue_skill = 1
+        trigger_event = {
+            id = murim_espionage.0002
+            days = { 180 545 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Recall the spy - too risky
+    option = {
+        name = murim_espionage.0002.c
+        remove_character_modifier = murim_spy_network_active
+        add_stress = -20
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0003 - Spy Discovered! Mole Hunt Begins
+# Triggered: on_action yearly for characters with spies in their court
+# AI: Full counter-espionage response
+murim_espionage.0003 = {
+    type = character_event
+    title = murim_espionage.0003.t
+    desc = murim_espionage.0003.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:suspected_spy
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_sect_leader
+            has_trait = murim_martial_artist
+        }
+        any_courtier = {
+            has_character_flag = murim_deep_cover_spy
+        }
+        intrigue >= 10
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            has_trait = paranoid
+        }
+        modifier = {
+            factor = 2.0
+            intrigue >= 18
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                has_character_flag = murim_deep_cover_spy
+            }
+            save_scope_as = actual_spy
+        }
+        # May or may not correctly identify the spy
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 16
+                }
+                # Correctly identified
+                if = {
+                    limit = { exists = scope:actual_spy }
+                    scope:actual_spy = {
+                        save_scope_as = suspected_spy
+                    }
+                }
+                set_variable = { name = correct_identification value = 1 }
+            }
+            50 = {
+                # Wrong person suspected
+                random_courtier = {
+                    limit = {
+                        NOT = { has_character_flag = murim_deep_cover_spy }
+                        is_alive = yes
+                    }
+                    save_scope_as = suspected_spy
+                }
+                set_variable = { name = correct_identification value = 0 }
+            }
+        }
+    }
+    
+    # Option A: Interrogate the suspect
+    option = {
+        name = murim_espionage.0003.a
+        trigger = {
+            exists = scope:suspected_spy
+        }
+        # Interrogation skill check
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 16
+                }
+                modifier = {
+                    factor = 1.5
+                    has_trait = sadistic
+                }
+                desc = murim_espionage.0003.a.confession
+                if = {
+                    limit = {
+                        has_variable = correct_identification
+                    }
+                    # If correct spy, get useful info
+                    add_prestige = 200
+                    add_character_modifier = {
+                        modifier = murim_counter_spy_success
+                        years = 3
+                    }
+                    scope:suspected_spy = {
+                        remove_character_flag = murim_deep_cover_spy
+                        imprison = {
+                            target = scope:suspected_spy
+                            type = dungeon
+                        }
+                    }
+                }
+                if = {
+                    limit = {
+                        NOT = { has_variable = correct_identification }
+                    }
+                    # False confession from innocent
+                    scope:suspected_spy = {
+                        add_opinion = {
+                            target = root
+                            modifier = murim_falsely_accused
+                            opinion = -60
+                        }
+                        imprison = {
+                            target = scope:suspected_spy
+                            type = dungeon
+                        }
+                    }
+                    # Real spy still active
+                }
+            }
+            50 = {
+                desc = murim_espionage.0003.a.silence
+                add_stress = 15
+                add_dread = 10
+                # Suspect reveals nothing
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 16
+            }
+        }
+    }
+    
+    # Option B: Set a trap with false information
+    option = {
+        name = murim_espionage.0003.b
+        trigger = {
+            intrigue >= 14
+        }
+        add_character_modifier = {
+            modifier = murim_counter_intelligence_trap
+            years = 2
+        }
+        # Feed false intel through suspected channel
+        trigger_event = {
+            id = murim_espionage.0005
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Execute suspect immediately
+    option = {
+        name = murim_espionage.0003.c
+        trigger = {
+            exists = scope:suspected_spy
+        }
+        scope:suspected_spy = {
+            death = {
+                death_reason = death_execution
+                killer = root
+            }
+        }
+        add_dread = 30
+        add_tyranny = 10
+        every_courtier = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_ruthless_execution
+                opinion = -15
+            }
+        }
+        # If wrong person, real spy gets scared
+        if = {
+            limit = {
+                exists = scope:actual_spy
+                NOT = { scope:actual_spy = scope:suspected_spy }
+            }
+            scope:actual_spy = {
+                add_character_flag = {
+                    flag = murim_spy_frightened
+                    days = 365
+                }
+            }
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option D: Ignore suspicions
+    option = {
+        name = murim_espionage.0003.d
+        add_stress = 10
+        stress_impact = {
+            paranoid = major_stress_impact_gain
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 2.0
+                has_trait = trusting
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Saboteur Strikes Target Clan
+# Triggered: delayed from 0001 saboteur branch
+# AI: Full sabotage execution
+murim_espionage.0004 = {
+    type = character_event
+    title = murim_espionage.0004.t
+    desc = murim_espionage.0004.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = happiness
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_saboteur_deployed
+    }
+    
+    immediate = {
+        # Sabotage type
+        random_list = {
+            25 = { set_variable = { name = sabotage_type value = 1 } } # Poison water supply
+            25 = { set_variable = { name = sabotage_type value = 2 } } # Destroy training grounds
+            25 = { set_variable = { name = sabotage_type value = 3 } } # Steal technique scrolls
+            25 = { set_variable = { name = sabotage_type value = 4 } } # Start internal conflict
+        }
+        # Success check
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.3
+                    intrigue >= 16
+                }
+                set_variable = { name = sabotage_success value = 1 }
+            }
+            40 = {
+                set_variable = { name = sabotage_success value = 0 }
+            }
+        }
+    }
+    
+    # Option A: Press the advantage
+    option = {
+        name = murim_espionage.0004.a
+        if = {
+            limit = { has_variable = sabotage_success }
+            # Success - target clan weakened
+            add_prestige = 200
+            add_character_modifier = {
+                modifier = murim_successful_sabotage
+                years = 3
+            }
+            # Find and weaken target
+            random_known_character = {
+                limit = {
+                    is_alive = yes
+                    NOT = { this = root }
+                    OR = {
+                        has_trait = murim_sect_leader
+                        has_trait = murim_martial_artist
+                    }
+                    NOT = { is_allied_to = root }
+                }
+                add_character_modifier = {
+                    modifier = murim_sabotaged_clan
+                    years = 2
+                }
+                add_prestige = -200
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Cover tracks and withdraw
+    option = {
+        name = murim_espionage.0004.b
+        remove_character_modifier = murim_saboteur_deployed
+        add_intrigue_skill = 1
+        add_stress = -10
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Escalate to full-scale attack
+    option = {
+        name = murim_espionage.0004.c
+        trigger = {
+            martial >= 14
+        }
+        add_character_modifier = {
+            modifier = murim_war_advantage_from_sabotage
+            years = 2
+        }
+        add_martial_skill = 1
+        add_prestige = 100
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+            modifier = {
+                factor = 2.0
+                martial >= 18
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Counter-Intelligence Trap Results
+# Triggered: delayed from 0003 trap option
+# AI: Full trap resolution
+murim_espionage.0005 = {
+    type = character_event
+    title = murim_espionage.0005.t
+    desc = murim_espionage.0005.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_counter_intelligence_trap
+    }
+    
+    immediate = {
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                set_variable = { name = trap_success value = 1 }
+            }
+            50 = {
+                set_variable = { name = trap_success value = 0 }
+            }
+        }
+    }
+    
+    # Option A: Trap successful - spy network exposed
+    option = {
+        name = murim_espionage.0005.a
+        trigger = {
+            has_variable = trap_success
+        }
+        add_prestige = 300
+        add_intrigue_skill = 2
+        add_character_modifier = {
+            modifier = murim_master_counter_spy
+            years = 5
+        }
+        # Expose and neutralize all spies
+        every_courtier = {
+            limit = {
+                has_character_flag = murim_deep_cover_spy
+            }
+            remove_character_flag = murim_deep_cover_spy
+            add_character_flag = exposed_spy
+            imprison = {
+                target = prev
+                type = dungeon
+            }
+        }
+        # Trace back to spy master
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_character_modifier = murim_spy_network_active
+                NOT = { is_allied_to = root }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_spy_network_exposed
+                opinion = -50
+            }
+            remove_character_modifier = murim_spy_network_active
+            save_scope_as = exposed_spy_master
+        }
+        ai_chance = {
+            base = 80
+        }
+    }
+    
+    # Option B: Trap failed - spy still active
+    option = {
+        name = murim_espionage.0005.b
+        trigger = {
+            NOT = { has_variable = trap_success }
+        }
+        add_stress = 20
+        add_prestige = -50
+        remove_character_modifier = murim_counter_intelligence_trap
+        ai_chance = {
+            base = 100
+        }
+    }
+}
+
+# EVENT 0006 - Double Agent Opportunity
+# Triggered: when a spy is discovered but not killed
+# AI: Full double agent management
+murim_espionage.0006 = {
+    type = character_event
+    title = murim_espionage.0006.t
+    desc = murim_espionage.0006.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    right_portrait = {
+        character = scope:turned_spy
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        any_courtier = {
+            has_character_flag = exposed_spy
+            is_imprisoned = yes
+        }
+        intrigue >= 14
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            intrigue >= 18
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                has_character_flag = exposed_spy
+                is_imprisoned = yes
+            }
+            save_scope_as = turned_spy
+        }
+    }
+    
+    # Option A: Turn them into a double agent
+    option = {
+        name = murim_espionage.0006.a
+        trigger = {
+            exists = scope:turned_spy
+        }
+        scope:turned_spy = {
+            release_from_prison = yes
+            remove_character_flag = exposed_spy
+            add_character_flag = {
+                flag = murim_double_agent
+                days = 3650
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_spared_by_master
+                opinion = 20
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_runs_double_agent
+            years = 10
+        }
+        # Feed false intelligence back
+        trigger_event = {
+            id = murim_espionage.0007
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option B: Extract all information then execute
+    option = {
+        name = murim_espionage.0006.b
+        trigger = {
+            exists = scope:turned_spy
+        }
+        add_intrigue_skill = 2
+        add_prestige = 100
+        add_dread = 20
+        scope:turned_spy = {
+            death = {
+                death_reason = death_execution
+                killer = root
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+        }
+    }
+    
+    # Option C: Release and send back as warning
+    option = {
+        name = murim_espionage.0006.c
+        trigger = {
+            exists = scope:turned_spy
+        }
+        scope:turned_spy = {
+            release_from_prison = yes
+            remove_character_flag = exposed_spy
+        }
+        add_prestige = 150
+        add_dread = 15
+        # Enemy spy master gets warning
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_character_modifier = murim_spy_network_active
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_merciful_warning
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Double Agent: False Intelligence Delivered
+# Triggered: delayed from 0006 double agent option
+# AI: Full disinformation campaign
+murim_espionage.0007 = {
+    type = character_event
+    title = murim_espionage.0007.t
+    desc = murim_espionage.0007.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = happiness
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_runs_double_agent
+    }
+    
+    immediate = {
+        # Determine effect of false intel
+        random_list = {
+            30 = { set_variable = { name = false_intel_effect value = 1 } } # Enemy prepared for wrong attack
+            30 = { set_variable = { name = false_intel_effect value = 2 } } # Enemy trusts wrong ally
+            20 = { set_variable = { name = false_intel_effect value = 3 } } # Enemy wastes resources
+            20 = { set_variable = { name = false_intel_effect value = 4 } } # Enemy alienates real ally
+        }
+    }
+    
+    # Option A: Exploit the confusion
+    option = {
+        name = murim_espionage.0007.a
+        add_character_modifier = {
+            modifier = murim_disinformation_advantage
+            years = 3
+        }
+        add_prestige = 200
+        add_intrigue_skill = 1
+        # Weaken enemy
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { is_allied_to = root }
+                OR = { has_trait = murim_sect_leader }
+            }
+            add_character_modifier = {
+                modifier = murim_misled_by_false_intel
+                years = 2
+            }
+        }
+        trigger_event = {
+            id = murim_espionage.0007
+            days = { 180 545 }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 1.5
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option B: Maintain cover, don't exploit yet
+    option = {
+        name = murim_espionage.0007.b
+        add_character_modifier = {
+            modifier = murim_patient_schemer
+            years = 3
+        }
+        add_intrigue_skill = 1
+        trigger_event = {
+            id = murim_espionage.0007
+            days = { 180 545 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Burn the double agent for a big strike
+    option = {
+        name = murim_espionage.0007.c
+        remove_character_modifier = murim_runs_double_agent
+        add_character_modifier = {
+            modifier = murim_devastating_intel_strike
+            years = 2
+        }
+        add_prestige = 400
+        add_martial_skill = 2
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                martial >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Clan Secret Technique Theft
+# Triggered: from espionage network, targets specific clan techniques
+# AI: Full technique stealing system across all 9 clans
+murim_espionage.0008 = {
+    type = character_event
+    title = murim_espionage.0008.t
+    desc = murim_espionage.0008.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_spy_network_active
+        NOT = { has_character_flag = stole_technique_recently }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_sect_leader
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = ambitious
+        }
+        modifier = {
+            factor = 1.5
+            intrigue >= 16
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = stole_technique_recently
+            days = 730
+        }
+        # Which clan's technique is available?
+        random_list = {
+            12 = { set_variable = { name = stolen_technique_clan value = 1 } } # Shaolin
+            12 = { set_variable = { name = stolen_technique_clan value = 2 } } # Wudang
+            12 = { set_variable = { name = stolen_technique_clan value = 3 } } # Mount Hua
+            11 = { set_variable = { name = stolen_technique_clan value = 4 } } # Tang Clan
+            11 = { set_variable = { name = stolen_technique_clan value = 5 } } # Heaven's Sword
+            11 = { set_variable = { name = stolen_technique_clan value = 6 } } # Namgung
+            11 = { set_variable = { name = stolen_technique_clan value = 7 } } # Iron Fist Gate
+            10 = { set_variable = { name = stolen_technique_clan value = 8 } } # Poison Flower
+            10 = { set_variable = { name = stolen_technique_clan value = 9 } } # Phantom Blade
+        }
+    }
+    
+    # Option A: Study the stolen technique
+    option = {
+        name = murim_espionage.0008.a
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 16
+                }
+                desc = murim_espionage.0008.a.mastery
+                add_prowess_skill = 3
+                add_martial_skill = 1
+                add_character_modifier = {
+                    modifier = murim_cross_clan_technique_master
+                    years = 10
+                }
+                add_trait = murim_technique_thief
+            }
+            30 = {
+                desc = murim_espionage.0008.a.partial
+                add_prowess_skill = 1
+                add_character_modifier = {
+                    modifier = murim_partial_technique_knowledge
+                    years = 5
+                }
+            }
+            30 = {
+                desc = murim_espionage.0008.a.backlash
+                # Incompatible qi causes damage
+                add_character_modifier = {
+                    modifier = murim_qi_conflict_damage
+                    years = 3
+                }
+                add_stress = 30
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Sell the technique scroll
+    option = {
+        name = murim_espionage.0008.b
+        add_gold = 500
+        add_prestige = -100
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = greedy
+            }
+        }
+    }
+    
+    # Option C: Return it for diplomatic leverage
+    option = {
+        name = murim_espionage.0008.c
+        add_prestige = 300
+        add_piety = 100
+        # Gain favor with the target clan
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_martial_artist
+                }
+                NOT = { is_allied_to = root }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_returned_stolen_technique
+                opinion = 40
+            }
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option D: Destroy it to prevent anyone having it
+    option = {
+        name = murim_espionage.0008.d
+        add_piety = 150
+        stress_impact = {
+            greedy = medium_stress_impact_gain
+            ambitious = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Information Warfare: Rumors and Propaganda
+# Triggered: espionage network + diplomacy >= 12
+# AI: Full propaganda campaign system
+murim_espionage.0009 = {
+    type = character_event
+    title = murim_espionage.0009.t
+    desc = murim_espionage.0009.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_character_modifier = murim_spy_network_active
+            has_character_modifier = murim_intelligence_network
+        }
+        diplomacy >= 12
+        NOT = { has_character_flag = ran_propaganda_recently }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            diplomacy >= 16
+        }
+        modifier = {
+            factor = 1.5
+            has_trait = deceitful
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = ran_propaganda_recently
+            days = 365
+        }
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { is_allied_to = root }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_martial_artist
+                }
+            }
+            save_scope_as = propaganda_target
+        }
+    }
+    
+    # Option A: Spread rumors of weakness
+    option = {
+        name = murim_espionage.0009.a
+        trigger = {
+            exists = scope:propaganda_target
+        }
+        add_gold = -50
+        scope:propaganda_target = {
+            add_prestige = -200
+            every_vassal = {
+                limit = { is_alive = yes }
+                add_opinion = {
+                    target = scope:propaganda_target
+                    modifier = murim_weakened_by_rumors
+                    opinion = -15
+                }
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_propaganda_master
+            years = 3
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option B: Spread rumors of corruption
+    option = {
+        name = murim_espionage.0009.b
+        trigger = {
+            exists = scope:propaganda_target
+        }
+        add_gold = -75
+        scope:propaganda_target = {
+            add_piety = -200
+            add_character_modifier = {
+                modifier = murim_corruption_rumors
+                years = 3
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option C: Boost own reputation through propaganda
+    option = {
+        name = murim_espionage.0009.c
+        add_gold = -100
+        add_prestige = 300
+        add_character_modifier = {
+            modifier = murim_inflated_reputation
+            years = 3
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Spy Network Cascade Failure
+# Triggered: when multiple spies are discovered simultaneously
+# AI: Full crisis management
+murim_espionage.0010 = {
+    type = character_event
+    title = murim_espionage.0010.t
+    desc = murim_espionage.0010.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_spy_network_active
+        any_known_character = {
+            has_character_modifier = murim_master_counter_spy
+            is_alive = yes
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 3.0
+            any_known_character = {
+                has_character_modifier = murim_counter_spy_success
+            }
+        }
+    }
+    
+    immediate = {
+        # Network compromised severity
+        random_list = {
+            40 = { set_variable = { name = compromise_level value = 1 } } # Partial
+            35 = { set_variable = { name = compromise_level value = 2 } } # Major
+            25 = { set_variable = { name = compromise_level value = 3 } } # Total
+        }
+    }
+    
+    # Option A: Burn all assets and rebuild
+    option = {
+        name = murim_espionage.0010.a
+        remove_character_modifier = murim_spy_network_active
+        remove_character_modifier = murim_runs_double_agent
+        add_gold = -200
+        add_prestige = -100
+        add_character_modifier = {
+            modifier = murim_rebuilding_spy_network
+            years = 3
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option B: Double down - more spies, more resources
+    option = {
+        name = murim_espionage.0010.b
+        trigger = {
+            gold >= 500
+        }
+        add_gold = -500
+        add_character_modifier = {
+            modifier = murim_reinforced_spy_network
+            years = 5
+        }
+        add_intrigue_skill = 2
+        random_list = {
+            50 = {
+                desc = murim_espionage.0010.b.success
+                add_prestige = 200
+            }
+            50 = {
+                desc = murim_espionage.0010.b.deeper_failure
+                add_prestige = -300
+                add_stress = 30
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                gold >= 800
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option C: Abandon espionage entirely
+    option = {
+        name = murim_espionage.0010.c
+        remove_character_modifier = murim_spy_network_active
+        remove_character_modifier = murim_runs_double_agent
+        remove_character_modifier = murim_saboteur_deployed
+        add_piety = 50
+        add_stress = -20
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0011 - Nine-Clan Intelligence Summit
+# Triggered: rare event when multiple factions have active spy networks
+# AI: Full multilateral espionage event
+murim_espionage.0011 = {
+    type = character_event
+    title = murim_espionage.0011.t
+    desc = murim_espionage.0011.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = personality_rational
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_spy_network_active
+        has_trait = murim_sect_leader
+    }
+    
+    weight_multiplier = {
+        base = 0.3
+        modifier = {
+            factor = 2.0
+            has_global_variable = murim_great_calamity_approaching
+        }
+    }
+    
+    immediate = {
+        # Gather other spymasters
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_character_modifier = murim_spy_network_active
+                NOT = { this = root }
+            }
+            add_to_list = intelligence_summit_attendees
+        }
+    }
+    
+    # Option A: Propose intelligence sharing alliance
+    option = {
+        name = murim_espionage.0011.a
+        every_in_list = {
+            list = intelligence_summit_attendees
+            add_opinion = {
+                target = root
+                modifier = murim_intelligence_ally
+                opinion = 20
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_intelligence_alliance_leader
+            years = 5
+        }
+        add_prestige = 300
+        add_diplomacy_skill = 1
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_global_variable = murim_great_calamity_approaching
+            }
+        }
+    }
+    
+    # Option B: Spy on the other spymasters
+    option = {
+        name = murim_espionage.0011.b
+        add_intrigue_skill = 2
+        add_character_modifier = {
+            modifier = murim_spy_among_spies
+            years = 3
+        }
+        every_in_list = {
+            list = intelligence_summit_attendees
+            add_hook = {
+                type = murim_intelligence_hook
+                target = prev
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+            modifier = {
+                factor = 2.0
+                intrigue >= 20
+            }
+        }
+    }
+    
+    # Option C: Expose all spy networks publicly
+    option = {
+        name = murim_espionage.0011.c
+        add_piety = 200
+        add_prestige = 500
+        # Destroy ALL spy networks including your own
+        remove_character_modifier = murim_spy_network_active
+        every_in_list = {
+            list = intelligence_summit_attendees
+            remove_character_modifier = murim_spy_network_active
+            add_opinion = {
+                target = root
+                modifier = murim_exposed_spy_network
+                opinion = -40
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_great_exposer
+            years = 10
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 5.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+        }
+    }
+}
+
+# EVENT 0012 - Sleeper Agent Activation
+# Triggered: during Great Calamity or major wars
+# AI: Full sleeper agent system
+murim_espionage.0012 = {
+    type = character_event
+    title = murim_espionage.0012.t
+    desc = murim_espionage.0012.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_spy_network_active
+        OR = {
+            has_global_variable = murim_great_calamity_active
+            is_at_war = yes
+            has_global_variable = murim_faction_war_active
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            has_global_variable = murim_great_calamity_active
+        }
+        modifier = {
+            factor = 2.0
+            is_at_war = yes
+        }
+    }
+    
+    immediate = {
+        # Determine sleeper activation success
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.3
+                    intrigue >= 18
+                }
+                set_variable = { name = sleeper_success value = 1 }
+            }
+            40 = {
+                set_variable = { name = sleeper_success value = 0 }
+            }
+        }
+    }
+    
+    # Option A: Activate all sleeper agents
+    option = {
+        name = murim_espionage.0012.a
+        if = {
+            limit = { has_variable = sleeper_success }
+            # Massive advantage in current conflict
+            add_character_modifier = {
+                modifier = murim_sleeper_network_activated
+                years = 2
+            }
+            add_martial_skill = 3
+            add_intrigue_skill = 2
+            add_prestige = 500
+            # Enemy forces disrupted
+            every_known_character = {
+                limit = {
+                    is_alive = yes
+                    is_at_war_with = root
+                }
+                add_character_modifier = {
+                    modifier = murim_infiltrated_from_within
+                    years = 2
+                }
+                add_prestige = -200
+            }
+        }
+        if = {
+            limit = { NOT = { has_variable = sleeper_success } }
+            # Sleeper agents were already turned or captured
+            add_prestige = -200
+            add_stress = 30
+            remove_character_modifier = murim_spy_network_active
+        }
+        ai_chance = {
+            base = 70
+            modifier = {
+                factor = 1.5
+                has_global_variable = murim_great_calamity_active
+            }
+        }
+    }
+    
+    # Option B: Activate selectively - preserve network
+    option = {
+        name = murim_espionage.0012.b
+        add_character_modifier = {
+            modifier = murim_selective_activation
+            years = 1
+        }
+        add_martial_skill = 1
+        add_intrigue_skill = 1
+        # Keep network intact for future use
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Hold sleeper agents in reserve
+    option = {
+        name = murim_espionage.0012.c
+        add_stress = 15
+        add_character_modifier = {
+            modifier = murim_sleeper_reserve
+            years = 5
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 0.3
+                is_at_war = yes
+            }
+        }
+    }
+}
