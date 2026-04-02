@@ -1,0 +1,446 @@
+########################################
+# MURIM MASTER INTEGRATION DECISIONS
+# Unified cross-system decision hub
+# Both player AND AI can take all decisions
+########################################
+
+# Decision: Activate Murim-Wide Intelligence Network
+# Links: espionage + black market + shadow networks
+activate_murim_intelligence_network = {
+    picture = "gfx/interface/illustrations/decisions/decision_murim_espionage.dds"
+    desc = activate_murim_intelligence_network_desc
+    selection_weight = { base = 15 }
+    ai_check_interval = 60
+
+    is_shown = {
+        has_variable = murim_martial_artist
+        OR = {
+            has_trait = murim_spymaster
+            has_trait = murim_shadow_sect_leader
+            has_trait = murim_information_broker
+        }
+        NOT = { has_character_flag = murim_intel_network_active }
+    }
+
+    is_valid = {
+        intrigue >= 15
+        gold >= 200
+        any_vassal = {
+            count >= 3
+            has_variable = murim_martial_artist
+        }
+    }
+
+    cost = { gold = 200 }
+
+    effect = {
+        set_character_flag = murim_intel_network_active
+        add_character_modifier = {
+            modifier = murim_intelligence_network_modifier
+            years = 5
+        }
+        hidden_effect = {
+            every_vassal = {
+                limit = {
+                    has_variable = murim_martial_artist
+                    OR = {
+                        has_trait = murim_spy
+                        has_trait = murim_informant
+                    }
+                }
+                add_opinion = { modifier = grateful_opinion target = root modifier_value = 15 }
+            }
+            # Cross-system: alert black market contacts
+            if = {
+                limit = { has_character_flag = murim_black_market_contact }
+                trigger_event = { id = murim_cross_system.0010 days = 15 }
+            }
+            # Cross-system: shadow network synergy
+            if = {
+                limit = { has_character_flag = murim_shadow_network_member }
+                trigger_event = { id = murim_cross_system.0011 days = 30 }
+            }
+        }
+    }
+
+    ai_potential = {
+        intrigue >= 18
+        gold >= 300
+    }
+    ai_will_do = {
+        base = 30
+        modifier = {
+            add = 20
+            has_trait = murim_shadow_sect_leader
+        }
+        modifier = {
+            add = 15
+            any_rival = { count >= 2 }
+        }
+    }
+}
+
+# Decision: Convene Emergency Tribunal Session
+# Links: tribunal + calamity + clan wars
+convene_emergency_tribunal = {
+    picture = "gfx/interface/illustrations/decisions/decision_murim_tribunal.dds"
+    desc = convene_emergency_tribunal_desc
+    selection_weight = { base = 20 }
+    ai_check_interval = 90
+
+    is_shown = {
+        has_variable = murim_martial_artist
+        OR = {
+            has_trait = murim_elder
+            has_trait = murim_grandmaster
+            has_trait = murim_heavenly_judge
+        }
+    }
+
+    is_valid = {
+        prestige >= 500
+        diplomacy >= 15
+        OR = {
+            has_global_variable = murim_calamity_active
+            any_vassal = { has_character_flag = murim_clan_succession_war }
+            any_realm_county = { has_county_modifier = murim_forbidden_technique_spread }
+        }
+    }
+
+    cost = { prestige = 300 }
+
+    effect = {
+        set_character_flag = murim_tribunal_convener
+        add_character_modifier = {
+            modifier = murim_tribunal_authority_modifier
+            years = 3
+        }
+        hidden_effect = {
+            # During calamity: emergency powers
+            if = {
+                limit = { has_global_variable = murim_calamity_active }
+                trigger_event = { id = murim_tribunal.0020 days = 5 }
+            }
+            # During clan wars: mediation
+            if = {
+                limit = {
+                    any_vassal = { has_character_flag = murim_clan_succession_war }
+                }
+                trigger_event = { id = murim_tribunal.0021 days = 10 }
+            }
+            # Forbidden technique containment
+            if = {
+                limit = {
+                    any_realm_county = { has_county_modifier = murim_forbidden_technique_spread }
+                }
+                trigger_event = { id = murim_tribunal.0022 days = 7 }
+            }
+        }
+    }
+
+    ai_potential = {
+        prestige >= 800
+        diplomacy >= 18
+    }
+    ai_will_do = {
+        base = 40
+        modifier = {
+            add = 30
+            has_global_variable = murim_calamity_active
+        }
+        modifier = {
+            add = 20
+            has_trait = murim_heavenly_judge
+        }
+    }
+}
+
+# Decision: Launch Continental Martial Expedition
+# Links: war + trade routes + tournaments + scouting
+launch_continental_martial_expedition = {
+    picture = "gfx/interface/illustrations/decisions/decision_murim_expedition.dds"
+    desc = launch_continental_martial_expedition_desc
+    selection_weight = { base = 10 }
+    ai_check_interval = 120
+
+    is_shown = {
+        has_variable = murim_martial_artist
+        OR = {
+            has_trait = murim_grandmaster
+            has_trait = murim_sect_leader
+            has_trait = murim_warlord
+        }
+        NOT = { has_character_flag = murim_expedition_underway }
+    }
+
+    is_valid = {
+        martial >= 18
+        gold >= 500
+        prestige >= 300
+        any_knight = {
+            count >= 5
+            prowess >= 15
+        }
+    }
+
+    cost = {
+        gold = 500
+        prestige = 300
+    }
+
+    effect = {
+        set_character_flag = murim_expedition_underway
+        add_character_modifier = {
+            modifier = murim_continental_expedition_modifier
+            years = 3
+        }
+        hidden_effect = {
+            # Trigger expedition chain
+            trigger_event = { id = murim_continental_war.0030 days = 10 }
+            # Cross-system: scout reports from trade routes
+            if = {
+                limit = { has_character_flag = murim_trade_route_master }
+                trigger_event = { id = murim_trade_martial.0015 days = 20 }
+            }
+            # Cross-system: tournament invitations along route
+            if = {
+                limit = {
+                    any_realm_county = { has_county_modifier = murim_tournament_grounds }
+                }
+                trigger_event = { id = murim_tournament.0050 days = 30 }
+            }
+        }
+    }
+
+    ai_potential = {
+        martial >= 20
+        gold >= 700
+    }
+    ai_will_do = {
+        base = 15
+        modifier = {
+            add = 25
+            has_trait = murim_warlord
+        }
+        modifier = {
+            add = 15
+            num_of_knights >= 8
+        }
+        modifier = {
+            add = -20
+            has_global_variable = murim_calamity_active
+        }
+    }
+}
+
+# Decision: Forge Blood Oath Alliance Network
+# Links: blood oaths + alliances + betrayal
+forge_blood_oath_network = {
+    picture = "gfx/interface/illustrations/decisions/decision_murim_blood_oath.dds"
+    desc = forge_blood_oath_network_desc
+    selection_weight = { base = 12 }
+    ai_check_interval = 90
+
+    is_shown = {
+        has_variable = murim_martial_artist
+        has_character_flag = murim_blood_oath_sworn
+        NOT = { has_character_flag = murim_oath_network_established }
+    }
+
+    is_valid = {
+        diplomacy >= 12
+        any_ally = {
+            count >= 2
+            has_character_flag = murim_blood_oath_sworn
+        }
+    }
+
+    cost = { prestige = 200 }
+
+    effect = {
+        set_character_flag = murim_oath_network_established
+        add_character_modifier = {
+            modifier = murim_blood_oath_network_modifier
+            years = 10
+        }
+        hidden_effect = {
+            every_ally = {
+                limit = { has_character_flag = murim_blood_oath_sworn }
+                add_opinion = { modifier = blood_oath_bond target = root modifier_value = 30 }
+                # Shared intelligence from network
+                trigger_event = { id = murim_blood_oath.0025 days = 15 }
+            }
+            # Cross-system: oath network vs calamity
+            if = {
+                limit = { has_global_variable = murim_calamity_active }
+                trigger_event = { id = murim_blood_oath.0030 days = 5 }
+            }
+        }
+    }
+
+    ai_potential = {
+        diplomacy >= 15
+    }
+    ai_will_do = {
+        base = 35
+        modifier = {
+            add = 25
+            has_global_variable = murim_calamity_active
+        }
+        modifier = {
+            add = -30
+            has_trait = murim_lone_wolf
+        }
+    }
+}
+
+# Decision: Open Sect Forbidden Vault
+# Links: forbidden techniques + alchemy + shadow realm
+open_sect_forbidden_vault = {
+    picture = "gfx/interface/illustrations/decisions/decision_murim_vault.dds"
+    desc = open_sect_forbidden_vault_desc
+    selection_weight = { base = 8 }
+    ai_check_interval = 120
+
+    is_shown = {
+        has_variable = murim_martial_artist
+        OR = {
+            has_trait = murim_sect_leader
+            has_trait = murim_grandmaster
+            has_trait = murim_elder
+        }
+        any_held_title = {
+            has_variable = murim_sect_forbidden_vault
+        }
+    }
+
+    is_valid = {
+        learning >= 15
+        OR = {
+            martial >= 20
+            has_trait = murim_forbidden_arts_master
+        }
+        NOT = { has_character_flag = murim_vault_opened_recently }
+    }
+
+    cost = {
+        piety = 200
+        prestige = 100
+    }
+
+    effect = {
+        set_character_flag = {
+            flag = murim_vault_opened_recently
+            years = 5
+        }
+        hidden_effect = {
+            # Main vault event chain
+            trigger_event = { id = murim_forbidden_vault.0001 days = 3 }
+            # Cross-system: alchemy ingredients in vault
+            if = {
+                limit = { has_trait = murim_alchemist }
+                trigger_event = { id = murim_alchemy.0020 days = 10 }
+            }
+            # Cross-system: shadow realm connection
+            if = {
+                limit = { has_character_flag = murim_shadow_realm_touched }
+                trigger_event = { id = murim_shadow_realm.0015 days = 7 }
+            }
+            # Risk: forbidden technique spreads
+            random = {
+                chance = 25
+                random_realm_county = {
+                    add_county_modifier = {
+                        modifier = murim_forbidden_technique_spread
+                        years = 3
+                    }
+                }
+            }
+        }
+    }
+
+    ai_potential = {
+        learning >= 18
+    }
+    ai_will_do = {
+        base = 10
+        modifier = {
+            add = 30
+            has_trait = murim_forbidden_arts_master
+        }
+        modifier = {
+            add = -20
+            has_trait = murim_orthodox_purist
+        }
+        modifier = {
+            add = 20
+            has_global_variable = murim_calamity_active
+        }
+    }
+}
+
+# Decision: Declare Immortal Ascension Trial
+# Links: immortal path + tournaments + heavenly tribunal
+declare_immortal_ascension_trial = {
+    picture = "gfx/interface/illustrations/decisions/decision_murim_ascension.dds"
+    desc = declare_immortal_ascension_trial_desc
+    selection_weight = { base = 5 }
+    ai_check_interval = 180
+
+    is_shown = {
+        has_variable = murim_martial_artist
+        has_trait = murim_transcendent
+        age >= 60
+        NOT = { has_character_flag = murim_ascension_trial_declared }
+    }
+
+    is_valid = {
+        martial >= 25
+        learning >= 20
+        prowess >= 30
+        prestige >= 2000
+        piety >= 1000
+    }
+
+    cost = {
+        prestige = 1500
+        piety = 1000
+    }
+
+    effect = {
+        set_character_flag = murim_ascension_trial_declared
+        add_character_modifier = {
+            modifier = murim_ascension_candidate_modifier
+            years = 2
+        }
+        hidden_effect = {
+            # Main ascension chain
+            trigger_event = { id = murim_immortal_ascension.0001 days = 30 }
+            # Cross-system: tournament of ascension
+            trigger_event = { id = murim_tournament.0060 days = 15 }
+            # Cross-system: tribunal oversight
+            trigger_event = { id = murim_tribunal.0030 days = 10 }
+            # Everyone reacts
+            every_vassal = {
+                limit = { has_variable = murim_martial_artist }
+                trigger_event = { id = murim_immortal_ascension.0002 days = 5 }
+            }
+        }
+    }
+
+    ai_potential = {
+        martial >= 28
+        prowess >= 35
+    }
+    ai_will_do = {
+        base = 50
+        modifier = {
+            add = 30
+            age >= 70
+        }
+        modifier = {
+            add = -40
+            has_global_variable = murim_calamity_active
+        }
+    }
+}
