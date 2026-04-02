@@ -1,0 +1,350 @@
+namespace = murim_cross_system
+
+# Cross-System Death Cascade Events
+# Fired from on_death hooks in murim_cross_system_on_actions.txt
+# AI characters experience identical cascades
+
+# === SPY NETWORK LEADER DEATH - INTELLIGENCE COLLAPSE ===
+murim_cross_system.0010 = {
+	type = character_event
+	title = murim_cross_system.0010.t
+	desc = murim_cross_system.0010.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_spy_network_active
+		any_courtier = {
+			has_character_flag = murim_spy_operative
+		}
+	}
+	
+	immediate = {
+		# Network collapses - operatives scattered
+		every_courtier = {
+			limit = { has_character_flag = murim_spy_operative }
+			save_scope_as = orphaned_spy
+		}
+	}
+	
+	# Successor takes over the network
+	option = {
+		name = murim_cross_system.0010.a
+		trigger = {
+			any_courtier = {
+				intrigue >= 14
+				has_character_flag = murim_spy_operative
+			}
+		}
+		random_courtier = {
+			limit = {
+				intrigue >= 14
+				has_character_flag = murim_spy_operative
+			}
+			add_character_flag = murim_spy_network_active
+			add_intrigue_skill = 2
+			add_character_modifier = {
+				modifier = murim_inherited_spy_network
+				years = 5
+			}
+		}
+	}
+	# Network dissolves completely
+	option = {
+		name = murim_cross_system.0010.b
+		every_courtier = {
+			limit = { has_character_flag = murim_spy_operative }
+			remove_character_flag = murim_spy_operative
+			add_stress = 20
+		}
+	}
+}
+
+# === BLACK MARKET KINGPIN DEATH - POWER VACUUM ===
+murim_cross_system.0011 = {
+	type = character_event
+	title = murim_cross_system.0011.t
+	desc = murim_cross_system.0011.desc
+	theme = skulduggery
+	
+	trigger = {
+		has_character_flag = murim_black_market_kingpin
+	}
+	
+	# Lieutenants fight for control
+	option = {
+		name = murim_cross_system.0011.a
+		# Power vacuum - market destabilized
+		every_courtier = {
+			limit = { has_character_flag = murim_black_market_contact }
+			add_stress = 25
+			random_list = {
+				40 = {
+					add_character_modifier = {
+						modifier = murim_market_chaos_profiteer
+						years = 3
+					}
+				}
+				30 = {
+					add_gold = -100
+				}
+				30 = {
+					remove_character_flag = murim_black_market_contact
+				}
+			}
+		}
+	}
+}
+
+# === TOURNAMENT CHAMPION DEATH - SUCCESSION TOURNAMENT ===
+murim_cross_system.0012 = {
+	type = character_event
+	title = murim_cross_system.0012.t
+	desc = murim_cross_system.0012.desc
+	theme = martial
+	
+	trigger = {
+		has_character_flag = murim_tournament_champion
+	}
+	
+	immediate = {
+		liege = {
+			save_scope_as = champion_liege
+		}
+	}
+	
+	# A grand succession tournament is declared
+	option = {
+		name = murim_cross_system.0012.a
+		scope:champion_liege = {
+			add_character_flag = murim_succession_tournament_host
+			add_prestige = -200
+			add_character_modifier = {
+				modifier = murim_mourning_champion
+				years = 1
+			}
+			# Trigger succession tournament chain
+			trigger_event = {
+				id = murim_cross_system.0015
+				days = 30
+			}
+		}
+	}
+}
+
+# === BLOOD OATH PARTNER DEATH - VENGEANCE CHAIN ===
+murim_cross_system.0013 = {
+	type = character_event
+	title = murim_cross_system.0013.t
+	desc = murim_cross_system.0013.desc
+	theme = dread
+	
+	trigger = {
+		has_character_flag = murim_blood_oath_bound
+	}
+	
+	immediate = {
+		# Find the surviving blood oath partner
+		random_relation = {
+			type = friend
+			limit = { has_character_flag = murim_blood_oath_bound }
+			save_scope_as = surviving_oath_partner
+		}
+	}
+	
+	# Surviving partner swears vengeance
+	option = {
+		name = murim_cross_system.0013.a
+		scope:surviving_oath_partner = {
+			add_character_flag = murim_vengeance_sworn
+			add_character_modifier = {
+				modifier = murim_blood_oath_broken_rage
+				years = 5
+			}
+			add_prowess = 3
+			add_stress = 40
+			# Hunt the killer
+			if = {
+				limit = {
+					root = { exists = killer }
+				}
+				root = {
+					killer = {
+						save_scope_as = oath_killer
+					}
+				}
+				start_scheme = {
+					type = murder
+					target = scope:oath_killer
+				}
+			}
+		}
+	}
+	# Partner channels grief into meditation
+	option = {
+		name = murim_cross_system.0013.b
+		scope:surviving_oath_partner = {
+			add_piety = 300
+			add_learning_skill = 3
+			add_character_modifier = {
+				modifier = murim_grief_enlightenment
+				years = -1
+			}
+			remove_character_flag = murim_blood_oath_bound
+		}
+	}
+}
+
+# === SUCCESSION TOURNAMENT BEGINS ===
+murim_cross_system.0015 = {
+	type = character_event
+	title = murim_cross_system.0015.t
+	desc = murim_cross_system.0015.desc
+	theme = martial
+	
+	trigger = {
+		has_character_flag = murim_succession_tournament_host
+	}
+	
+	immediate = {
+		# Gather top martial artists
+		random_courtier = {
+			limit = { prowess >= 12 }
+			save_scope_as = tournament_finalist_1
+		}
+		random_courtier = {
+			limit = {
+				prowess >= 10
+				NOT = { this = scope:tournament_finalist_1 }
+			}
+			save_scope_as = tournament_finalist_2
+		}
+	}
+	
+	# Crown the new champion
+	option = {
+		name = murim_cross_system.0015.a
+		scope:tournament_finalist_1 = {
+			add_character_flag = murim_tournament_champion
+			add_prestige = 500
+			add_prowess = 2
+			add_character_modifier = {
+				modifier = murim_new_champion_rising
+				years = 5
+			}
+		}
+		remove_character_flag = murim_succession_tournament_host
+	}
+	# The tournament ends in controversy
+	option = {
+		name = murim_cross_system.0015.b
+		add_prestige = -100
+		add_character_modifier = {
+			modifier = murim_disputed_succession
+			years = 3
+		}
+		remove_character_flag = murim_succession_tournament_host
+	}
+}
+
+# === WAR ACTIVATES DORMANT SPY NETWORKS ===
+murim_cross_system.0020 = {
+	type = character_event
+	title = murim_cross_system.0020.t
+	desc = murim_cross_system.0020.desc
+	theme = intrigue
+	
+	trigger = {
+		is_at_war = yes
+		any_courtier = {
+			has_character_flag = murim_dormant_spy
+		}
+	}
+	
+	option = {
+		name = murim_cross_system.0020.a
+		# Activate all dormant spies
+		every_courtier = {
+			limit = { has_character_flag = murim_dormant_spy }
+			remove_character_flag = murim_dormant_spy
+			add_character_flag = murim_spy_operative
+			add_character_flag = murim_spy_network_active
+			add_intrigue_skill = 1
+		}
+		add_character_modifier = {
+			modifier = murim_intelligence_advantage
+			years = 3
+		}
+	}
+	option = {
+		name = murim_cross_system.0020.b
+		# Keep spies dormant as insurance
+		add_gold = 50
+	}
+}
+
+# === WAR DISRUPTS BLACK MARKET ===
+murim_cross_system.0021 = {
+	type = character_event
+	title = murim_cross_system.0021.t
+	desc = murim_cross_system.0021.desc
+	theme = stewardship
+	
+	trigger = {
+		is_at_war = yes
+		has_character_flag = murim_black_market_contact
+	}
+	
+	option = {
+		name = murim_cross_system.0021.a
+		# War profiteering through black market
+		add_gold = 200
+		add_tyranny = 15
+		add_character_modifier = {
+			modifier = murim_war_profiteer
+			years = 3
+		}
+	}
+	option = {
+		name = murim_cross_system.0021.b
+		# Supply lines cut, market collapses
+		add_gold = -100
+		remove_character_flag = murim_black_market_contact
+		add_stress = 20
+	}
+}
+
+# === CONTINENTAL WAR TRIGGERS CALAMITY CHECK ===
+murim_cross_system.0022 = {
+	type = character_event
+	title = murim_cross_system.0022.t
+	desc = murim_cross_system.0022.desc
+	theme = apocalypse
+	
+	trigger = {
+		is_at_war = yes
+		NOT = { has_character_flag = murim_calamity_phase_active }
+		any_war_enemy = {
+			realm_size >= 20
+		}
+	}
+	
+	option = {
+		name = murim_cross_system.0022.a
+		# The war spirals into calamity
+		add_character_flag = murim_calamity_phase_active
+		add_character_modifier = {
+			modifier = murim_calamity_approaching
+			years = 2
+		}
+		trigger_event = {
+			id = murim_great_calamity.0001
+			days = 60
+		}
+	}
+	option = {
+		name = murim_cross_system.0022.b
+		# Seek peace before calamity strikes
+		add_piety = 200
+		add_prestige = -100
+	}
+}
