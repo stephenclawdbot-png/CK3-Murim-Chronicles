@@ -1,0 +1,1747 @@
+########################################
+# MURIM CLAN BETRAYAL & DEFECTION EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Traitor within the sect,
+# defection to rival clans, loyalty tests, informants,
+# double defection, clan purges, redemption of traitors,
+# consequences of betrayal across all 9 clans
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_betrayal
+
+# EVENT 0001 - Seeds of Discontent: Growing Dissatisfaction
+# Triggered: on_action yearly pulse, courtiers with low opinion of liege
+# AI: Full betrayal motivation system
+murim_betrayal.0001 = {
+    type = character_event
+    title = murim_betrayal.0001.t
+    desc = murim_betrayal.0001.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    right_portrait = {
+        character = scope:rival_recruiter
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        age >= 18
+        NOT = { has_character_flag = betrayal_considered_recently }
+        NOT = { has_trait = murim_traitor }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_shadow_operative
+        }
+        OR = {
+            # Low opinion of current leader
+            any_liege_or_above = {
+                reverse_opinion = {
+                    target = root
+                    value <= -20
+                }
+            }
+            # Ambitious and passed over
+            AND = {
+                has_trait = ambitious
+                age >= 30
+                NOT = { has_trait = murim_sect_leader }
+            }
+            # Bitter about something
+            stress >= 60
+            has_character_modifier = murim_passed_over_for_weapon
+            has_character_modifier = murim_expelled_from_sect
+            has_character_modifier = murim_clan_disapproval
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            has_character_modifier = murim_expelled_from_sect
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = ambitious
+        }
+        modifier = {
+            factor = 2.0
+            stress >= 70
+        }
+        modifier = {
+            factor = 0.3
+            has_trait = content
+        }
+        modifier = {
+            factor = 0.2
+            has_trait = honest
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = betrayal_considered_recently
+            days = 730
+        }
+        # Find a rival clan recruiter
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_shadow_operative
+                }
+                NOT = { is_allied_to = root }
+            }
+            save_scope_as = rival_recruiter
+        }
+    }
+    
+    # Option A: Begin plotting defection
+    option = {
+        name = murim_betrayal.0001.a
+        trigger = {
+            exists = scope:rival_recruiter
+        }
+        add_character_flag = {
+            flag = murim_plotting_defection
+            days = 1825
+        }
+        add_character_modifier = {
+            modifier = murim_secret_defector
+            years = 3
+        }
+        reverse_add_opinion = {
+            target = scope:rival_recruiter
+            modifier = murim_potential_recruit
+            opinion = 15
+        }
+        trigger_event = {
+            id = murim_betrayal.0002
+            days = { 30 120 }
+        }
+        stress_impact = {
+            honest = major_stress_impact_gain
+            loyal = major_stress_impact_gain
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 3.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                has_character_modifier = murim_expelled_from_sect
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = honest
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = content
+            }
+        }
+    }
+    
+    # Option B: Voice complaints openly
+    option = {
+        name = murim_betrayal.0001.b
+        add_stress = -10
+        add_prestige = -25
+        if = {
+            limit = {
+                any_liege_or_above = { is_alive = yes }
+            }
+            random_liege_or_above = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_vocal_complainer
+                    opinion = -15
+                }
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option C: Suppress feelings - remain loyal
+    option = {
+        name = murim_betrayal.0001.c
+        add_stress = 20
+        add_piety = 25
+        add_character_modifier = {
+            modifier = murim_suppressed_dissent
+            years = 3
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+}
+
+# EVENT 0002 - The Offer: Rival Clan's Proposal
+# Triggered: from 0001 plotting defection
+# AI: Full negotiation with rival clan
+murim_betrayal.0002 = {
+    type = character_event
+    title = murim_betrayal.0002.t
+    desc = murim_betrayal.0002.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    right_portrait = {
+        character = scope:rival_recruiter
+        animation = personality_diplomacy
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = murim_plotting_defection
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_shadow_operative
+                }
+                NOT = { is_allied_to = root }
+            }
+            save_scope_as = rival_recruiter
+        }
+        # What do they offer?
+        random_list = {
+            25 = { set_variable = { name = defection_offer value = 1 } } # Power and position
+            25 = { set_variable = { name = defection_offer value = 2 } } # Gold and resources
+            25 = { set_variable = { name = defection_offer value = 3 } } # Secret techniques
+            25 = { set_variable = { name = defection_offer value = 4 } } # Protection from enemies
+        }
+    }
+    
+    # Option A: Accept and defect with clan secrets
+    option = {
+        name = murim_betrayal.0002.a
+        trigger = {
+            exists = scope:rival_recruiter
+        }
+        add_trait = murim_traitor
+        remove_character_flag = murim_plotting_defection
+        remove_character_modifier = murim_secret_defector
+        # Gain from defection
+        random_list = {
+            25 = {
+                add_gold = 500
+                add_prestige = 200
+            }
+            25 = {
+                add_prowess_skill = 3
+                add_character_modifier = {
+                    modifier = murim_stolen_clan_techniques
+                    years = 10
+                }
+            }
+            25 = {
+                add_character_modifier = {
+                    modifier = murim_high_position_in_new_clan
+                    years = 10
+                }
+                add_prestige = 300
+            }
+            25 = {
+                add_character_modifier = {
+                    modifier = murim_protection_from_enemies
+                    years = 5
+                }
+                add_gold = 200
+            }
+        }
+        # Former clan reacts
+        if = {
+            limit = {
+                any_liege_or_above = { is_alive = yes }
+            }
+            random_liege_or_above = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_traitor_defected
+                    opinion = -100
+                }
+                trigger_event = {
+                    id = murim_betrayal.0003
+                    days = { 5 30 }
+                }
+            }
+        }
+        # Every clan member hostile
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    is_vassal_of = root.liege
+                    is_courtier_of = root.liege
+                }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_traitor_to_clan
+                opinion = -40
+            }
+        }
+        reverse_add_opinion = {
+            target = scope:rival_recruiter
+            modifier = murim_defector_welcomed
+            opinion = 20
+        }
+        trigger_event = {
+            id = murim_betrayal.0004
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option B: Accept but plan to be a double agent
+    option = {
+        name = murim_betrayal.0002.b
+        trigger = {
+            exists = scope:rival_recruiter
+            intrigue >= 16
+        }
+        add_character_flag = {
+            flag = murim_double_agent_defector
+            days = 3650
+        }
+        add_character_modifier = {
+            modifier = murim_double_agent_infiltrator
+            years = 5
+        }
+        add_intrigue_skill = 2
+        remove_character_flag = murim_plotting_defection
+        # Pretend to defect
+        reverse_add_opinion = {
+            target = scope:rival_recruiter
+            modifier = murim_defector_welcomed
+            opinion = 20
+        }
+        trigger_event = {
+            id = murim_betrayal.0006
+            days = { 90 365 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                intrigue >= 20
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option C: Change your mind - stay loyal
+    option = {
+        name = murim_betrayal.0002.c
+        remove_character_flag = murim_plotting_defection
+        remove_character_modifier = murim_secret_defector
+        add_stress = 15
+        add_piety = 50
+        add_character_modifier = {
+            modifier = murim_loyalty_reaffirmed
+            years = 3
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 3.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0003 - Clan Leader Discovers Betrayal
+# Triggered: when a member defects (fired on the betrayed leader)
+# AI: Full response to betrayal
+murim_betrayal.0003 = {
+    type = character_event
+    title = murim_betrayal.0003.t
+    desc = murim_betrayal.0003.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:traitor
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_sect_leader
+            has_trait = murim_martial_artist
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_traitor
+                NOT = { this = root }
+            }
+            save_scope_as = traitor
+        }
+    }
+    
+    # Option A: Send assassins after the traitor
+    option = {
+        name = murim_betrayal.0003.a
+        trigger = {
+            exists = scope:traitor
+            gold >= 200
+        }
+        add_gold = -200
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 16
+                }
+                desc = murim_betrayal.0003.a.killed
+                scope:traitor = {
+                    death = {
+                        death_reason = death_murder_unknown
+                        killer = root
+                    }
+                }
+                add_dread = 30
+                add_prestige = 100
+            }
+            30 = {
+                desc = murim_betrayal.0003.a.wounded
+                scope:traitor = {
+                    increase_wounds_effect = { reason = assassination }
+                }
+                add_dread = 15
+            }
+            30 = {
+                desc = murim_betrayal.0003.a.failed
+                add_prestige = -50
+                scope:traitor = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_assassination_attempted
+                        opinion = -50
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+        }
+    }
+    
+    # Option B: Publicly denounce and exile
+    option = {
+        name = murim_betrayal.0003.b
+        trigger = {
+            exists = scope:traitor
+        }
+        add_prestige = 100
+        add_dread = 10
+        scope:traitor = {
+            add_prestige = -300
+            add_character_modifier = {
+                modifier = murim_publicly_denounced_traitor
+                years = 10
+            }
+        }
+        # Warn all allies
+        every_ally = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = scope:traitor
+                modifier = murim_known_traitor
+                opinion = -30
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 14
+            }
+        }
+    }
+    
+    # Option C: Initiate loyalty purge of all members
+    option = {
+        name = murim_betrayal.0003.c
+        add_dread = 20
+        add_tyranny = 10
+        add_character_modifier = {
+            modifier = murim_loyalty_purge_active
+            years = 2
+        }
+        # Test all courtiers
+        every_courtier = {
+            limit = { is_alive = yes }
+            random_list = {
+                80 = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_loyalty_tested
+                        opinion = -10
+                    }
+                }
+                20 = {
+                    # Discover another potential traitor
+                    add_character_flag = {
+                        flag = suspected_traitor
+                        days = 365
+                    }
+                }
+            }
+        }
+        trigger_event = {
+            id = murim_betrayal.0005
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = paranoid
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Life in the New Clan: Traitor's Dilemma
+# Triggered: after defection, life in rival clan
+# AI: Full integration/rejection in new clan
+murim_betrayal.0004 = {
+    type = character_event
+    title = murim_betrayal.0004.t
+    desc = murim_betrayal.0004.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_traitor
+    }
+    
+    immediate = {
+        # How well are you received?
+        random_list = {
+            30 = { set_variable = { name = reception_quality value = 1 } } # Welcomed
+            40 = { set_variable = { name = reception_quality value = 2 } } # Tolerated
+            30 = { set_variable = { name = reception_quality value = 3 } } # Distrusted
+        }
+    }
+    
+    # Option A: Prove loyalty by sharing all secrets
+    option = {
+        name = murim_betrayal.0004.a
+        add_character_modifier = {
+            modifier = murim_shared_all_secrets
+            years = 5
+        }
+        add_intrigue_skill = 1
+        # New clan benefits
+        random_list = {
+            50 = {
+                desc = murim_betrayal.0004.a.accepted
+                add_prestige = 100
+                add_character_modifier = {
+                    modifier = murim_accepted_in_new_clan
+                    years = 5
+                }
+            }
+            50 = {
+                desc = murim_betrayal.0004.a.still_distrusted
+                add_stress = 15
+                add_character_modifier = {
+                    modifier = murim_permanent_outsider
+                    years = 10
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Keep some secrets as insurance
+    option = {
+        name = murim_betrayal.0004.b
+        add_character_modifier = {
+            modifier = murim_kept_insurance_secrets
+            years = 10
+        }
+        add_intrigue_skill = 2
+        add_stress = 10
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option C: Regret the defection
+    option = {
+        name = murim_betrayal.0004.c
+        add_stress = 30
+        add_character_modifier = {
+            modifier = murim_defector_regret
+            years = 5
+        }
+        # May try to return
+        trigger_event = {
+            id = murim_betrayal.0008
+            days = { 180 545 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Loyalty Purge: Finding Suspects
+# Triggered: from 0003 purge option
+# AI: Full purge investigation
+murim_betrayal.0005 = {
+    type = character_event
+    title = murim_betrayal.0005.t
+    desc = murim_betrayal.0005.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:purge_suspect
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_loyalty_purge_active
+        any_courtier = {
+            has_character_flag = suspected_traitor
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                has_character_flag = suspected_traitor
+            }
+            save_scope_as = purge_suspect
+        }
+        # Is the suspect actually guilty?
+        random_list = {
+            30 = { set_variable = { name = suspect_guilty value = 1 } }
+            70 = { set_variable = { name = suspect_guilty value = 0 } }
+        }
+    }
+    
+    # Option A: Execute the suspect immediately
+    option = {
+        name = murim_betrayal.0005.a
+        trigger = {
+            exists = scope:purge_suspect
+        }
+        scope:purge_suspect = {
+            death = {
+                death_reason = death_execution
+                killer = root
+            }
+        }
+        add_dread = 20
+        add_tyranny = 15
+        every_courtier = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_executed_during_purge
+                opinion = -20
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+    
+    # Option B: Interrogate thoroughly
+    option = {
+        name = murim_betrayal.0005.b
+        trigger = {
+            exists = scope:purge_suspect
+        }
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 16
+                }
+                desc = murim_betrayal.0005.b.truth_found
+                if = {
+                    limit = { has_variable = suspect_guilty }
+                    # Correctly identified
+                    scope:purge_suspect = {
+                        imprison = {
+                            target = prev
+                            type = dungeon
+                        }
+                    }
+                    add_prestige = 100
+                }
+                if = {
+                    limit = { NOT = { has_variable = suspect_guilty } }
+                    # Innocent - cleared
+                    scope:purge_suspect = {
+                        remove_character_flag = suspected_traitor
+                        add_opinion = {
+                            target = root
+                            modifier = murim_cleared_of_suspicion
+                            opinion = 10
+                        }
+                    }
+                    add_prestige = 50
+                }
+            }
+            50 = {
+                desc = murim_betrayal.0005.b.inconclusive
+                add_stress = 10
+            }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Release suspect with warning
+    option = {
+        name = murim_betrayal.0005.c
+        trigger = {
+            exists = scope:purge_suspect
+        }
+        scope:purge_suspect = {
+            remove_character_flag = suspected_traitor
+            add_opinion = {
+                target = root
+                modifier = murim_warned_during_purge
+                opinion = -10
+            }
+        }
+        add_prestige = 25
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Double Agent: Feeding Intel Back
+# Triggered: from 0002 double agent option
+# AI: Full double agent operations
+murim_betrayal.0006 = {
+    type = character_event
+    title = murim_betrayal.0006.t
+    desc = murim_betrayal.0006.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = murim_double_agent_defector
+    }
+    
+    immediate = {
+        # Intel gathered
+        random_list = {
+            25 = { set_variable = { name = double_intel value = 1 } } # Troop movements
+            25 = { set_variable = { name = double_intel value = 2 } } # Technique secrets
+            25 = { set_variable = { name = double_intel value = 3 } } # Alliance plans
+            25 = { set_variable = { name = double_intel value = 4 } } # Weakness data
+        }
+    }
+    
+    # Option A: Send intelligence back to original clan
+    option = {
+        name = murim_betrayal.0006.a
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                desc = murim_betrayal.0006.a.success
+                add_character_modifier = {
+                    modifier = murim_successful_double_agent_report
+                    years = 2
+                }
+                add_intrigue_skill = 1
+                add_prestige = 100
+            }
+            40 = {
+                desc = murim_betrayal.0006.a.intercepted
+                remove_character_flag = murim_double_agent_defector
+                add_trait = murim_traitor
+                add_character_modifier = {
+                    modifier = murim_exposed_double_agent
+                    years = 5
+                }
+                add_stress = 30
+                # Hunted by both sides
+                every_known_character = {
+                    limit = {
+                        is_alive = yes
+                        OR = {
+                            has_trait = murim_sect_leader
+                        }
+                    }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_double_agent_exposed
+                        opinion = -40
+                    }
+                }
+            }
+        }
+        # Continue if successful
+        trigger_event = {
+            id = murim_betrayal.0006
+            days = { 180 365 }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+        }
+    }
+    
+    # Option B: Go silent - too risky right now
+    option = {
+        name = murim_betrayal.0006.b
+        add_stress = 15
+        add_character_modifier = {
+            modifier = murim_double_agent_silent
+            years = 1
+        }
+        trigger_event = {
+            id = murim_betrayal.0006
+            days = { 365 730 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Abandon double agent role - fully defect for real
+    option = {
+        name = murim_betrayal.0006.c
+        remove_character_flag = murim_double_agent_defector
+        add_trait = murim_traitor
+        add_stress = -20
+        add_prestige = -100
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                stress >= 60
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Betrayal in Battle: Switching Sides Mid-Fight
+# Triggered: during wars or major conflicts
+# AI: Full battlefield betrayal
+murim_betrayal.0007 = {
+    type = character_event
+    title = murim_betrayal.0007.t
+    desc = murim_betrayal.0007.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        is_at_war = yes
+        OR = {
+            has_character_flag = murim_plotting_defection
+            has_character_modifier = murim_secret_defector
+            has_trait = ambitious
+        }
+        NOT = { has_trait = murim_traitor }
+        NOT = { has_character_flag = battlefield_betrayal_considered }
+    }
+    
+    weight_multiplier = {
+        base = 0.3
+        modifier = {
+            factor = 3.0
+            has_character_flag = murim_plotting_defection
+        }
+        modifier = {
+            factor = 2.0
+            has_character_modifier = murim_secret_defector
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = battlefield_betrayal_considered
+            days = 730
+        }
+    }
+    
+    # Option A: Switch sides in the heat of battle
+    option = {
+        name = murim_betrayal.0007.a
+        add_trait = murim_traitor
+        add_character_modifier = {
+            modifier = murim_battlefield_turncoat
+            years = 10
+        }
+        add_dread = 20
+        add_prestige = -300
+        # Devastating blow to former side
+        if = {
+            limit = {
+                any_liege_or_above = { is_alive = yes }
+            }
+            random_liege_or_above = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_battlefield_betrayal
+                    opinion = -100
+                }
+                add_character_modifier = {
+                    modifier = murim_betrayed_in_battle
+                    years = 3
+                }
+            }
+        }
+        # New side rewards you
+        add_gold = 300
+        add_character_modifier = {
+            modifier = murim_turncoat_reward
+            years = 3
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_character_flag = murim_plotting_defection
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 0.05
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option B: Stay loyal despite temptation
+    option = {
+        name = murim_betrayal.0007.b
+        add_piety = 50
+        add_prestige = 50
+        add_stress = 15
+        add_character_modifier = {
+            modifier = murim_loyalty_under_fire
+            years = 5
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option C: Flee the battlefield entirely
+    option = {
+        name = murim_betrayal.0007.c
+        add_prestige = -200
+        add_character_modifier = {
+            modifier = murim_battlefield_deserter
+            years = 5
+        }
+        add_stress = -10
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = craven
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Traitor's Return: Seeking Forgiveness
+# Triggered: defectors who regret their choice
+# AI: Full redemption/rejection system
+murim_betrayal.0008 = {
+    type = character_event
+    title = murim_betrayal.0008.t
+    desc = murim_betrayal.0008.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = grief
+    }
+    right_portrait = {
+        character = scope:former_leader
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_traitor
+        has_character_modifier = murim_defector_regret
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+                opinion = {
+                    target = root
+                    value <= -30
+                }
+            }
+            save_scope_as = former_leader
+        }
+    }
+    
+    # Option A: Return and beg forgiveness
+    option = {
+        name = murim_betrayal.0008.a
+        trigger = {
+            exists = scope:former_leader
+        }
+        random_list = {
+            30 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 16
+                }
+                desc = murim_betrayal.0008.a.forgiven
+                remove_trait = murim_traitor
+                add_trait = murim_redeemed_cultivator
+                add_piety = 200
+                add_prestige = -200
+                scope:former_leader = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_forgave_traitor
+                        opinion = -10
+                    }
+                }
+                add_character_modifier = {
+                    modifier = murim_on_probation
+                    years = 5
+                }
+            }
+            40 = {
+                desc = murim_betrayal.0008.a.punished
+                # Severe punishment but allowed back
+                add_prowess_skill = -2
+                add_prestige = -300
+                imprison = {
+                    target = root
+                    type = dungeon
+                }
+                add_character_modifier = {
+                    modifier = murim_punished_traitor
+                    years = 3
+                }
+            }
+            30 = {
+                desc = murim_betrayal.0008.a.rejected
+                add_prestige = -200
+                add_stress = 30
+                # Permanently exiled
+                add_character_modifier = {
+                    modifier = murim_permanently_exiled
+                    years = 20
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option B: Offer valuable intelligence as a peace offering
+    option = {
+        name = murim_betrayal.0008.b
+        trigger = {
+            exists = scope:former_leader
+            has_character_modifier = murim_kept_insurance_secrets
+        }
+        remove_character_modifier = murim_kept_insurance_secrets
+        random_list = {
+            50 = {
+                desc = murim_betrayal.0008.b.accepted
+                remove_trait = murim_traitor
+                add_character_modifier = {
+                    modifier = murim_intelligence_bargain_accepted
+                    years = 5
+                }
+                scope:former_leader = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_useful_intelligence
+                        opinion = 15
+                    }
+                }
+            }
+            50 = {
+                desc = murim_betrayal.0008.b.not_enough
+                add_stress = 20
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_character_modifier = murim_kept_insurance_secrets
+            }
+        }
+    }
+    
+    # Option C: Accept exile and move on
+    option = {
+        name = murim_betrayal.0008.c
+        remove_character_modifier = murim_defector_regret
+        add_trait = murim_wandering_cultivator
+        add_character_modifier = {
+            modifier = murim_exiled_wanderer
+            years = 10
+        }
+        add_stress = -15
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Chain Defection: Mass Betrayal
+# Triggered: when multiple members follow a traitor
+# AI: Full mass defection crisis
+murim_betrayal.0009 = {
+    type = character_event
+    title = murim_betrayal.0009.t
+    desc = murim_betrayal.0009.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        any_courtier = {
+            has_trait = murim_traitor
+            count >= 2
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+    }
+    
+    # Option A: Declare martial law in the sect
+    option = {
+        name = murim_betrayal.0009.a
+        add_dread = 30
+        add_tyranny = 15
+        add_character_modifier = {
+            modifier = murim_martial_law_sect
+            years = 3
+        }
+        every_courtier = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_martial_law_imposed
+                opinion = -15
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+    
+    # Option B: Reform the sect to address grievances
+    option = {
+        name = murim_betrayal.0009.b
+        add_character_modifier = {
+            modifier = murim_sect_reform_initiative
+            years = 5
+        }
+        add_diplomacy_skill = 2
+        add_prestige = 100
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                NOT = { has_trait = murim_traitor }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_reformer_hope
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+        }
+    }
+    
+    # Option C: Accept the losses and rebuild
+    option = {
+        name = murim_betrayal.0009.c
+        add_stress = 20
+        add_character_modifier = {
+            modifier = murim_rebuilding_after_betrayal
+            years = 5
+        }
+        add_prestige = -100
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Traitor's Legacy: Children Bear the Stigma
+# Triggered: when traitor's children come of age
+# AI: Full generational consequence
+murim_betrayal.0010 = {
+    type = character_event
+    title = murim_betrayal.0010.t
+    desc = murim_betrayal.0010.desc
+    theme = dynasty
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    
+    trigger = {
+        is_alive = yes
+        any_parent = {
+            has_trait = murim_traitor
+        }
+        age >= 16
+        age <= 20
+        NOT = { has_character_flag = traitor_legacy_resolved }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = traitor_legacy_resolved
+            days = 36500
+        }
+    }
+    
+    # Option A: Prove yourself different from your parent
+    option = {
+        name = murim_betrayal.0010.a
+        add_character_modifier = {
+            modifier = murim_proving_loyalty
+            years = 10
+        }
+        add_prowess_skill = 2
+        add_stress = 15
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Embrace your parent's path
+    option = {
+        name = murim_betrayal.0010.b
+        add_trait = murim_traitor
+        add_character_modifier = {
+            modifier = murim_following_traitor_path
+            years = 10
+        }
+        add_intrigue_skill = 2
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option C: Change your name and start fresh
+    option = {
+        name = murim_betrayal.0010.c
+        add_character_modifier = {
+            modifier = murim_new_identity
+            years = 10
+        }
+        add_prestige = -50
+        add_stress = -10
+        add_trait = murim_wandering_cultivator
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+}
+
+# EVENT 0011 - Betrayal During Great Calamity
+# Triggered: during calamity when desperate choices arise
+# AI: Full crisis betrayal system
+murim_betrayal.0011 = {
+    type = character_event
+    title = murim_betrayal.0011.t
+    desc = murim_betrayal.0011.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_global_variable = murim_great_calamity_active
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_sect_leader
+        }
+        NOT = { has_trait = murim_traitor }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 3.0
+            stress >= 70
+        }
+    }
+    
+    # Option A: Betray allies to save yourself
+    option = {
+        name = murim_betrayal.0011.a
+        add_trait = murim_traitor
+        add_character_modifier = {
+            modifier = murim_calamity_betrayer
+            years = 20
+        }
+        add_prestige = -500
+        # Survive but at great cost
+        add_character_modifier = {
+            modifier = murim_cowardly_survival
+            years = 10
+        }
+        every_ally = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_betrayed_during_calamity
+                opinion = -80
+            }
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                stress >= 80
+            }
+            modifier = {
+                factor = 0.05
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Stand together no matter what
+    option = {
+        name = murim_betrayal.0011.b
+        add_character_modifier = {
+            modifier = murim_stood_together_in_calamity
+            years = 10
+        }
+        add_prestige = 200
+        add_piety = 100
+        every_ally = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_loyal_in_crisis
+                opinion = 25
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option C: Sacrifice yourself for others
+    option = {
+        name = murim_betrayal.0011.c
+        trigger = {
+            has_trait = brave
+        }
+        add_prestige = 1000
+        add_piety = 500
+        random_list = {
+            40 = {
+                death = {
+                    death_reason = death_sacrifice_heroic
+                }
+            }
+            60 = {
+                add_character_modifier = {
+                    modifier = murim_miraculous_survival
+                    years = 10
+                }
+                add_trait = murim_calamity_survivor_legend
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0012 - The Unforgivable: Betrayal of the Murim Alliance
+# Triggered: ultimate betrayal - selling out all nine clans
+# AI: Full endgame betrayal consequences
+murim_betrayal.0012 = {
+    type = character_event
+    title = murim_betrayal.0012.t
+    desc = murim_betrayal.0012.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_traitor
+        has_trait = murim_sect_leader
+        OR = {
+            has_global_variable = murim_great_calamity_active
+            has_global_variable = murim_faction_war_active
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.1
+    }
+    
+    # Option A: Sell out the entire Murim Alliance
+    option = {
+        name = murim_betrayal.0012.a
+        add_character_modifier = {
+            modifier = murim_ultimate_traitor
+            years = 50
+        }
+        add_gold = 2000
+        add_dread = 100
+        add_prestige = -2000
+        # Every martial artist is your enemy
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_martial_artist
+                    has_trait = murim_sect_leader
+                }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_betrayed_all_of_murim
+                opinion = -100
+            }
+        }
+        set_global_variable = {
+            name = murim_alliance_betrayed
+            value = yes
+        }
+        ai_chance = {
+            base = 5
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+        }
+    }
+    
+    # Option B: Refuse - even traitors have limits
+    option = {
+        name = murim_betrayal.0012.b
+        add_piety = 100
+        add_stress = -20
+        add_character_modifier = {
+            modifier = murim_traitor_with_limits
+            years = 5
+        }
+        ai_chance = {
+            base = 70
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option C: Turn it around - pretend to betray but save everyone
+    option = {
+        name = murim_betrayal.0012.c
+        trigger = {
+            intrigue >= 20
+        }
+        random_list = {
+            40 = {
+                desc = murim_betrayal.0012.c.hero
+                remove_trait = murim_traitor
+                add_trait = murim_redeemed_cultivator
+                add_prestige = 2000
+                add_piety = 1000
+                add_character_modifier = {
+                    modifier = murim_greatest_double_agent
+                    years = 20
+                }
+                every_known_character = {
+                    limit = { is_alive = yes }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_secret_hero
+                        opinion = 50
+                    }
+                }
+            }
+            60 = {
+                desc = murim_betrayal.0012.c.failed
+                death = {
+                    death_reason = death_execution
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                intrigue >= 24
+            }
+        }
+    }
+}
