@@ -1,0 +1,1216 @@
+namespace = murim_iron_fist_gate
+
+# Iron Fist Gate - Full Clan Event Chain
+# One of the 9 Great Clans - Orthodox body cultivation sect
+# Specialty: External body hardening, iron body techniques, brute force martial arts
+# Philosophy: The body is the ultimate weapon. No blade, no poison, no trick surpasses forged flesh.
+
+# ============================================
+# EVENT 0001 - Iron Body Initiation Trial
+# New disciples must survive the Iron Crucible - heated stones pressed against skin
+# ============================================
+murim_iron_fist_gate.0001 = {
+	type = character_event
+	title = murim_iron_fist_gate.0001.t
+	desc = murim_iron_fist_gate.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	right_portrait = {
+		character = scope:iron_fist_elder
+		animation = personality_bold
+	}
+	
+	trigger = {
+		is_alive = yes
+		has_trait = murim_martial_artist
+		NOT = { has_trait = iron_body_initiate }
+		NOT = { has_character_flag = iron_fist_trial_done }
+		any_liege_or_above = {
+			has_trait = iron_fist_gate_member
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = brave
+		}
+		modifier = {
+			add = -1
+			has_trait = craven
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_fist_trial_done days = 3650 }
+		random_courtier = {
+			limit = {
+				has_trait = iron_fist_gate_elder
+			}
+			save_scope_as = iron_fist_elder
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:iron_fist_elder }
+			}
+			random_courtier = {
+				limit = {
+					has_trait = iron_fist_gate_member
+					age >= 40
+				}
+				save_scope_as = iron_fist_elder
+			}
+		}
+	}
+	
+	# Endure the Iron Crucible - full trial
+	option = {
+		name = murim_iron_fist_gate.0001.a
+		
+		duel = {
+			skill = prowess
+			target = scope:iron_fist_elder
+			50 = {
+				desc = murim_iron_fist_gate.0001.a.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				send_interface_toast = {
+					title = murim_iron_fist_gate.0001.a.success.toast
+					left_icon = root
+					root = {
+						add_trait = iron_body_initiate
+						add_trait = iron_fist_gate_member
+						add_prowess_skill = 2
+						add_character_modifier = {
+							modifier = iron_crucible_survivor
+							years = 10
+						}
+					}
+				}
+			}
+			50 = {
+				desc = murim_iron_fist_gate.0001.a.fail
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				send_interface_toast = {
+					title = murim_iron_fist_gate.0001.a.fail.toast
+					left_icon = root
+					root = {
+						add_trait = wounded
+						add_character_modifier = {
+							modifier = iron_crucible_scarred
+							years = 5
+						}
+						add_stress = 30
+					}
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+	
+	# Refuse - leave Iron Fist Gate
+	option = {
+		name = murim_iron_fist_gate.0001.b
+		
+		add_trait = craven
+		add_stress = 20
+		add_opinion = {
+			target = scope:iron_fist_elder
+			modifier = disappointed_opinion
+			opinion = -30
+		}
+		
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+	
+	# Demand a different trial - challenge the elder directly
+	option = {
+		name = murim_iron_fist_gate.0001.c
+		trigger = {
+			has_trait = arrogant
+			prowess >= 12
+		}
+		
+		duel = {
+			skill = prowess
+			target = scope:iron_fist_elder
+			30 = {
+				desc = murim_iron_fist_gate.0001.c.success
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 2.0
+				}
+				send_interface_toast = {
+					title = murim_iron_fist_gate.0001.c.success.toast
+					left_icon = root
+					root = {
+						add_trait = iron_body_initiate
+						add_trait = iron_fist_gate_member
+						add_trait = iron_fist_prodigy
+						add_prowess_skill = 4
+						add_prestige = 200
+					}
+				}
+			}
+			70 = {
+				desc = murim_iron_fist_gate.0001.c.fail
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -2.0
+				}
+				send_interface_toast = {
+					title = murim_iron_fist_gate.0001.c.fail.toast
+					left_icon = root
+					root = {
+						add_trait = severely_injured
+						add_prestige = -100
+						add_stress = 50
+					}
+				}
+			}
+		}
+		
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# ============================================
+# EVENT 0002 - Iron Fist Technique Selection
+# After initiation, disciples choose their path within the Gate
+# ============================================
+murim_iron_fist_gate.0002 = {
+	type = character_event
+	title = murim_iron_fist_gate.0002.t
+	desc = murim_iron_fist_gate.0002.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		has_trait = iron_body_initiate
+		NOT = { has_character_flag = iron_fist_path_chosen }
+		NOT = { has_trait = iron_fist_vajra_path }
+		NOT = { has_trait = iron_fist_titan_path }
+		NOT = { has_trait = iron_fist_diamond_path }
+	}
+	
+	weight_multiplier = {
+		base = 2
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_fist_path_chosen }
+	}
+	
+	# Vajra Fist Path - speed and precision strikes
+	option = {
+		name = murim_iron_fist_gate.0002.a
+		
+		add_trait = iron_fist_vajra_path
+		add_prowess_skill = 2
+		add_martial_skill = 1
+		add_character_modifier = {
+			modifier = vajra_fist_training
+			years = 15
+		}
+		
+		ai_chance = {
+			base = 33
+			modifier = {
+				add = 20
+				has_trait = diligent
+			}
+		}
+	}
+	
+	# Titan Body Path - maximum defense and endurance
+	option = {
+		name = murim_iron_fist_gate.0002.b
+		
+		add_trait = iron_fist_titan_path
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = titan_body_training
+			years = 15
+		}
+		add_trait = strong
+		
+		ai_chance = {
+			base = 33
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+	
+	# Diamond Soul Path - body and spirit fusion, ultimate Iron Fist technique
+	option = {
+		name = murim_iron_fist_gate.0002.c
+		trigger = {
+			prowess >= 14
+			learning >= 8
+		}
+		
+		add_trait = iron_fist_diamond_path
+		add_prowess_skill = 3
+		add_learning_skill = 1
+		add_character_modifier = {
+			modifier = diamond_soul_training
+			years = 15
+		}
+		add_prestige = 100
+		
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+# ============================================
+# EVENT 0003 - The Iron Tempering Grounds
+# Sect training facility where disciples push their bodies to the limit
+# ============================================
+murim_iron_fist_gate.0003 = {
+	type = character_event
+	title = murim_iron_fist_gate.0003.t
+	desc = murim_iron_fist_gate.0003.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = stress
+	}
+	right_portrait = {
+		character = scope:training_partner
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		is_alive = yes
+		NOT = { has_character_flag = iron_tempering_recent }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = diligent
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_tempering_recent days = 1825 }
+		random_courtier = {
+			limit = {
+				has_trait = iron_fist_gate_member
+				NOT = { this = root }
+			}
+			save_scope_as = training_partner
+		}
+	}
+	
+	# Train at full intensity
+	option = {
+		name = murim_iron_fist_gate.0003.a
+		
+		random_list = {
+			60 = {
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = iron_tempering_success
+					years = 3
+				}
+			}
+			25 = {
+				add_prowess_skill = 1
+				add_trait = wounded
+			}
+			15 = {
+				add_trait = severely_injured
+				add_stress = 40
+			}
+		}
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Moderate training - safe but slower
+	option = {
+		name = murim_iron_fist_gate.0003.b
+		
+		add_prowess_skill = 1
+		add_character_modifier = {
+			modifier = steady_iron_training
+			years = 5
+		}
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Challenge training partner to sparring duel
+	option = {
+		name = murim_iron_fist_gate.0003.c
+		trigger = {
+			exists = scope:training_partner
+		}
+		
+		duel = {
+			skill = prowess
+			target = scope:training_partner
+			50 = {
+				desc = murim_iron_fist_gate.0003.c.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				root = {
+					add_prowess_skill = 3
+					add_prestige = 50
+				}
+			}
+			50 = {
+				desc = murim_iron_fist_gate.0003.c.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				root = {
+					add_prowess_skill = 1
+					add_stress = 15
+				}
+			}
+		}
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+# ============================================
+# EVENT 0004 - Gate Master Challenge
+# Challenge the current Gate Master for leadership
+# ============================================
+murim_iron_fist_gate.0004 = {
+	type = character_event
+	title = murim_iron_fist_gate.0004.t
+	desc = murim_iron_fist_gate.0004.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:gate_master
+		animation = anger
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		prowess >= 18
+		age >= 30
+		NOT = { has_trait = iron_fist_gate_master }
+		NOT = { has_character_flag = gate_master_challenge_done }
+		any_liege_or_above = {
+			has_trait = iron_fist_gate_master
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = ambitious
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = gate_master_challenge_done days = 7300 }
+		random_liege_or_above = {
+			limit = {
+				has_trait = iron_fist_gate_master
+			}
+			save_scope_as = gate_master
+		}
+	}
+	
+	# Formal challenge - Iron Fist Duel
+	option = {
+		name = murim_iron_fist_gate.0004.a
+		
+		duel = {
+			skill = prowess
+			target = scope:gate_master
+			40 = {
+				desc = murim_iron_fist_gate.0004.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				send_interface_toast = {
+					title = murim_iron_fist_gate.0004.a.win.toast
+					left_icon = root
+					root = {
+						add_trait = iron_fist_gate_master
+						add_prestige = 500
+						add_prowess_skill = 3
+					}
+					scope:gate_master = {
+						remove_trait = iron_fist_gate_master
+						add_trait = iron_fist_gate_elder
+						add_stress = 50
+					}
+				}
+			}
+			60 = {
+				desc = murim_iron_fist_gate.0004.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				send_interface_toast = {
+					title = murim_iron_fist_gate.0004.a.lose.toast
+					left_icon = root
+					root = {
+						add_trait = severely_injured
+						add_prestige = -200
+						add_stress = 60
+					}
+				}
+			}
+		}
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Wait for the right moment
+	option = {
+		name = murim_iron_fist_gate.0004.b
+		
+		add_stress = 10
+		add_character_modifier = {
+			modifier = biding_time_for_mastery
+			years = 5
+		}
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Seek the Gate Master's approval instead - become heir
+	option = {
+		name = murim_iron_fist_gate.0004.c
+		trigger = {
+			diplomacy >= 10
+		}
+		
+		add_opinion = {
+			target = scope:gate_master
+			modifier = respectful_heir_opinion
+			opinion = 40
+		}
+		add_character_modifier = {
+			modifier = iron_fist_heir_designate
+			years = 20
+		}
+		add_prestige = 100
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+# ============================================
+# EVENT 0005 - Iron Body Breakthrough
+# Achieving the legendary Iron Body - skin becomes impervious
+# ============================================
+murim_iron_fist_gate.0005 = {
+	type = character_event
+	title = murim_iron_fist_gate.0005.t
+	desc = murim_iron_fist_gate.0005.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		prowess >= 20
+		age >= 25
+		NOT = { has_trait = perfected_iron_body }
+		NOT = { has_character_flag = iron_body_breakthrough_attempted }
+		OR = {
+			has_trait = iron_fist_vajra_path
+			has_trait = iron_fist_titan_path
+			has_trait = iron_fist_diamond_path
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = iron_fist_diamond_path
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_body_breakthrough_attempted days = 10950 }
+	}
+	
+	# Attempt the Iron Body Perfection ritual
+	option = {
+		name = murim_iron_fist_gate.0005.a
+		
+		random_list = {
+			40 = {
+				modifier = {
+					add = 20
+					has_trait = iron_fist_diamond_path
+				}
+				modifier = {
+					add = 10
+					prowess >= 25
+				}
+				desc = murim_iron_fist_gate.0005.a.success
+				root = {
+					add_trait = perfected_iron_body
+					add_prowess_skill = 5
+					add_character_modifier = {
+						modifier = legendary_iron_body
+						years = -1
+					}
+					add_prestige = 500
+				}
+			}
+			35 = {
+				desc = murim_iron_fist_gate.0005.a.partial
+				root = {
+					add_prowess_skill = 2
+					add_character_modifier = {
+						modifier = partial_iron_body
+						years = 10
+					}
+				}
+			}
+			25 = {
+				desc = murim_iron_fist_gate.0005.a.fail
+				root = {
+					add_trait = severely_injured
+					add_stress = 60
+					add_character_modifier = {
+						modifier = iron_body_backlash
+						years = 5
+					}
+				}
+			}
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# Not ready yet
+	option = {
+		name = murim_iron_fist_gate.0005.b
+		add_stress = 10
+		ai_chance = { base = 40 }
+	}
+}
+
+# ============================================
+# EVENT 0006 - Iron Fist Gate vs Phantom Blade Conflict
+# Rival clan conflict - body vs blade philosophy clash
+# ============================================
+murim_iron_fist_gate.0006 = {
+	type = character_event
+	title = murim_iron_fist_gate.0006.t
+	desc = murim_iron_fist_gate.0006.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+	right_portrait = {
+		character = scope:phantom_blade_agent
+		animation = scheme
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		OR = {
+			has_trait = iron_fist_gate_master
+			has_trait = iron_fist_gate_elder
+		}
+		any_known_character = {
+			has_trait = phantom_blade_member
+		}
+		NOT = { has_character_flag = iron_phantom_conflict_recent }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 2
+			has_trait = wrathful
+		}
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_phantom_conflict_recent days = 3650 }
+		random_known_character = {
+			limit = {
+				has_trait = phantom_blade_member
+			}
+			save_scope_as = phantom_blade_agent
+		}
+	}
+	
+	# Confront the Phantom Blade directly - Iron Fist Way
+	option = {
+		name = murim_iron_fist_gate.0006.a
+		
+		duel = {
+			skill = prowess
+			target = scope:phantom_blade_agent
+			55 = {
+				desc = murim_iron_fist_gate.0006.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				root = {
+					add_prestige = 200
+					add_prowess_skill = 1
+				}
+				scope:phantom_blade_agent = {
+					add_trait = wounded
+					add_opinion = {
+						target = root
+						modifier = defeated_by_iron_fist
+						opinion = -50
+					}
+				}
+			}
+			45 = {
+				desc = murim_iron_fist_gate.0006.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				root = {
+					add_trait = wounded
+					add_prestige = -100
+				}
+			}
+		}
+		
+		ai_chance = { base = 60 }
+	}
+	
+	# Seek diplomatic resolution
+	option = {
+		name = murim_iron_fist_gate.0006.b
+		trigger = { diplomacy >= 12 }
+		
+		add_opinion = {
+			target = scope:phantom_blade_agent
+			modifier = attempted_peace_opinion
+			opinion = 10
+		}
+		add_prestige = 50
+		
+		ai_chance = { base = 20 }
+	}
+	
+	# Prepare for war - rally the Gate
+	option = {
+		name = murim_iron_fist_gate.0006.c
+		
+		add_character_modifier = {
+			modifier = iron_fist_war_preparation
+			years = 3
+		}
+		add_prestige = 100
+		every_courtier = {
+			limit = { has_trait = iron_fist_gate_member }
+			add_opinion = {
+				target = root
+				modifier = rally_the_gate_opinion
+				opinion = 20
+			}
+		}
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+# ============================================
+# EVENT 0007 - The Forbidden Iron Technique
+# Discovery of a technique so brutal it was banned by the Gate founders
+# ============================================
+murim_iron_fist_gate.0007 = {
+	type = character_event
+	title = murim_iron_fist_gate.0007.t
+	desc = murim_iron_fist_gate.0007.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		prowess >= 16
+		NOT = { has_character_flag = forbidden_iron_technique_found }
+		OR = {
+			has_trait = iron_fist_gate_master
+			has_trait = iron_fist_gate_elder
+			has_trait = iron_fist_diamond_path
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+	}
+	
+	immediate = {
+		set_character_flag = { flag = forbidden_iron_technique_found }
+	}
+	
+	# Study the Forbidden Iron Demolition Fist
+	option = {
+		name = murim_iron_fist_gate.0007.a
+		
+		add_trait = iron_demolition_fist
+		add_prowess_skill = 5
+		add_character_modifier = {
+			modifier = forbidden_technique_user
+			years = -1
+		}
+		add_stress = 40
+		add_trait = wrathful
+		
+		# Elders will disapprove
+		every_courtier = {
+			limit = {
+				has_trait = iron_fist_gate_elder
+			}
+			add_opinion = {
+				target = root
+				modifier = forbidden_technique_disgrace
+				opinion = -40
+			}
+		}
+		
+		ai_chance = { base = 30 }
+	}
+	
+	# Destroy the scroll - honor the founders
+	option = {
+		name = murim_iron_fist_gate.0007.b
+		
+		add_piety = 100
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = honored_the_founders
+			years = 10
+		}
+		every_courtier = {
+			limit = {
+				has_trait = iron_fist_gate_elder
+			}
+			add_opinion = {
+				target = root
+				modifier = honored_founders_opinion
+				opinion = 30
+			}
+		}
+		
+		ai_chance = { base = 40 }
+	}
+	
+	# Hide it for later
+	option = {
+		name = murim_iron_fist_gate.0007.c
+		
+		set_character_flag = { flag = hidden_forbidden_scroll }
+		add_intrigue_skill = 2
+		add_stress = 20
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+# ============================================
+# EVENT 0008 - Iron Fist Gate Succession Crisis
+# The Gate Master dies or becomes too old - who inherits?
+# ============================================
+murim_iron_fist_gate.0008 = {
+	type = character_event
+	title = murim_iron_fist_gate.0008.t
+	desc = murim_iron_fist_gate.0008.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:rival_candidate
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		OR = {
+			has_trait = iron_fist_gate_elder
+			has_character_flag = iron_fist_heir_designate
+		}
+		NOT = { has_character_flag = succession_crisis_done }
+		OR = {
+			any_liege_or_above = {
+				has_trait = iron_fist_gate_master
+				age >= 60
+			}
+			NOT = {
+				any_liege_or_above = {
+					has_trait = iron_fist_gate_master
+				}
+			}
+		}
+	}
+	
+	weight_multiplier = {
+		base = 2
+	}
+	
+	immediate = {
+		set_character_flag = { flag = succession_crisis_done days = 7300 }
+		random_courtier = {
+			limit = {
+				has_trait = iron_fist_gate_member
+				NOT = { this = root }
+				prowess >= 14
+			}
+			save_scope_as = rival_candidate
+		}
+	}
+	
+	# Claim leadership by force - the Iron Fist Way
+	option = {
+		name = murim_iron_fist_gate.0008.a
+		trigger = { exists = scope:rival_candidate }
+		
+		duel = {
+			skill = prowess
+			target = scope:rival_candidate
+			50 = {
+				desc = murim_iron_fist_gate.0008.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				root = {
+					add_trait = iron_fist_gate_master
+					add_prestige = 500
+					add_prowess_skill = 2
+				}
+			}
+			50 = {
+				desc = murim_iron_fist_gate.0008.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				root = {
+					add_trait = severely_injured
+					add_prestige = -200
+				}
+				scope:rival_candidate = {
+					add_trait = iron_fist_gate_master
+				}
+			}
+		}
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# Unite the Gate through diplomacy
+	option = {
+		name = murim_iron_fist_gate.0008.b
+		trigger = { diplomacy >= 12 }
+		
+		add_trait = iron_fist_gate_master
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = diplomatic_gate_master
+			years = 10
+		}
+		if = {
+			limit = { exists = scope:rival_candidate }
+			scope:rival_candidate = {
+				add_trait = iron_fist_gate_elder
+				add_opinion = {
+					target = root
+					modifier = accepted_as_master
+					opinion = 20
+				}
+			}
+		}
+		
+		ai_chance = { base = 30 }
+	}
+	
+	# Step aside - let the strongest lead
+	option = {
+		name = murim_iron_fist_gate.0008.c
+		
+		add_piety = 50
+		add_stress = -20
+		if = {
+			limit = { exists = scope:rival_candidate }
+			scope:rival_candidate = {
+				add_trait = iron_fist_gate_master
+			}
+		}
+		
+		ai_chance = { base = 20 }
+	}
+}
+
+# ============================================
+# EVENT 0009 - The Iron Fist Tournament
+# Annual internal tournament to determine the strongest disciple
+# ============================================
+murim_iron_fist_gate.0009 = {
+	type = character_event
+	title = murim_iron_fist_gate.0009.t
+	desc = murim_iron_fist_gate.0009.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:tournament_opponent
+		animation = anger
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_member
+		is_alive = yes
+		prowess >= 10
+		NOT = { has_character_flag = iron_tournament_recent }
+	}
+	
+	weight_multiplier = {
+		base = 2
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_tournament_recent days = 1095 }
+		random_courtier = {
+			limit = {
+				has_trait = iron_fist_gate_member
+				NOT = { this = root }
+				prowess >= 8
+			}
+			save_scope_as = tournament_opponent
+		}
+	}
+	
+	# Enter the tournament
+	option = {
+		name = murim_iron_fist_gate.0009.a
+		trigger = { exists = scope:tournament_opponent }
+		
+		duel = {
+			skill = prowess
+			target = scope:tournament_opponent
+			50 = {
+				desc = murim_iron_fist_gate.0009.a.win
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.0
+				}
+				root = {
+					add_prestige = 300
+					add_prowess_skill = 2
+					add_character_modifier = {
+						modifier = iron_tournament_champion
+						years = 3
+					}
+				}
+			}
+			50 = {
+				desc = murim_iron_fist_gate.0009.a.lose
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.0
+				}
+				root = {
+					add_prestige = 50
+					add_prowess_skill = 1
+					add_stress = 20
+				}
+			}
+		}
+		
+		ai_chance = { base = 70 }
+	}
+	
+	# Observe only - learn from others
+	option = {
+		name = murim_iron_fist_gate.0009.b
+		
+		add_martial_skill = 1
+		add_learning_skill = 1
+		add_character_modifier = {
+			modifier = tournament_observer_insight
+			years = 3
+		}
+		
+		ai_chance = { base = 30 }
+	}
+}
+
+# ============================================
+# EVENT 0010 - Iron God Ascension
+# Ultimate Iron Fist Gate achievement - becoming the Iron God
+# ============================================
+murim_iron_fist_gate.0010 = {
+	type = character_event
+	title = murim_iron_fist_gate.0010.t
+	desc = murim_iron_fist_gate.0010.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+	
+	trigger = {
+		has_trait = iron_fist_gate_master
+		has_trait = perfected_iron_body
+		prowess >= 28
+		age >= 40
+		NOT = { has_trait = iron_god }
+		NOT = { has_character_flag = iron_god_attempted }
+	}
+	
+	weight_multiplier = {
+		base = 1
+	}
+	
+	immediate = {
+		set_character_flag = { flag = iron_god_attempted }
+	}
+	
+	# Undergo the Iron God Transformation
+	option = {
+		name = murim_iron_fist_gate.0010.a
+		
+		random_list = {
+			30 = {
+				modifier = {
+					add = 20
+					has_trait = iron_fist_diamond_path
+				}
+				modifier = {
+					add = 10
+					prowess >= 32
+				}
+				desc = murim_iron_fist_gate.0010.a.success
+				root = {
+					add_trait = iron_god
+					add_prowess_skill = 8
+					add_character_modifier = {
+						modifier = iron_god_ascension
+						years = -1
+					}
+					add_prestige = 2000
+					# Become legendary
+					every_known_character = {
+						limit = { has_trait = murim_martial_artist }
+						add_opinion = {
+							target = root
+							modifier = iron_god_awe
+							opinion = 30
+						}
+					}
+				}
+			}
+			40 = {
+				desc = murim_iron_fist_gate.0010.a.partial
+				root = {
+					add_prowess_skill = 3
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = near_iron_god
+						years = 10
+					}
+				}
+			}
+			30 = {
+				desc = murim_iron_fist_gate.0010.a.fail
+				root = {
+					add_trait = severely_injured
+					add_stress = 80
+					add_character_modifier = {
+						modifier = iron_god_backlash
+						years = -1
+					}
+					random_list = {
+						30 = { death_effect = yes }
+						70 = { add_prowess_skill = -3 }
+					}
+				}
+			}
+		}
+		
+		ai_chance = { base = 50 }
+	}
+	
+	# The world is not ready
+	option = {
+		name = murim_iron_fist_gate.0010.b
+		
+		add_stress = 20
+		add_piety = 100
+		
+		ai_chance = { base = 50 }
+	}
+}
