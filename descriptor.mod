@@ -1,4 +1,4 @@
-version = "0.3.0"
+version = "1.0.0"
 name = "Murim Chronicles"
 path = "mod/murim"
 supported_version = "1.18.*"
@@ -9,4 +9,5 @@ tags = {
 	"Events"
 	"Decisions"
 	"Character Interactions"
+	"Warfare"
 }
