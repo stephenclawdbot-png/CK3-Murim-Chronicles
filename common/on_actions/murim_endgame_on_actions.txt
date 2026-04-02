@@ -1,0 +1,301 @@
+########################################
+# MURIM ENDGAME ON_ACTIONS
+# Final integration pulse hooks
+# Ties all endgame systems together
+# Both player and AI are affected equally
+########################################
+
+# Yearly Endgame Pulse — checks for endgame conditions
+on_yearly_pulse = {
+    effect = {
+        # Check for Golden Age conditions
+        every_ruler = {
+            limit = {
+                has_variable = murim_martial_artist
+                has_character_flag = murim_blood_oath_sworn
+                has_character_flag = murim_intel_network_active
+                NOT = { has_global_variable = murim_calamity_active }
+                NOT = { has_character_flag = murim_golden_age_witnessed }
+                any_realm_county = { has_county_modifier = murim_trade_route_secured_modifier }
+                prestige >= 1000
+            }
+            random = {
+                chance = 15
+                trigger_event = { id = murim_final_integration.0004 days = { 10 60 } }
+            }
+        }
+
+        # Ascension candidate reactions — world reacts
+        every_ruler = {
+            limit = {
+                has_variable = murim_martial_artist
+                NOT = { has_character_flag = murim_reacted_to_ascension }
+                any_ruler = {
+                    has_character_flag = murim_ascension_trial_declared
+                    NOT = { this = prev }
+                }
+            }
+            random = {
+                chance = 40
+                trigger_event = { id = murim_final_integration.0001 days = { 5 30 } }
+            }
+        }
+
+        # Final tournament eligibility check
+        every_ruler = {
+            limit = {
+                has_variable = murim_martial_artist
+                OR = {
+                    has_trait = murim_grandmaster
+                    has_trait = murim_sect_leader
+                }
+                NOT = { has_character_flag = murim_final_tournament_hosted }
+                any_realm_county = { has_county_modifier = murim_tournament_grounds }
+                prestige >= 2000
+            }
+            random = {
+                chance = 10
+                trigger_event = { id = murim_final_integration.0003 days = { 30 90 } }
+            }
+        }
+
+        # Post-calamity reconstruction summit
+        if = {
+            limit = { has_global_variable = murim_calamity_ended }
+            every_ruler = {
+                limit = {
+                    has_variable = murim_martial_artist
+                    NOT = { has_character_flag = murim_attended_reconstruction }
+                    OR = {
+                        has_trait = murim_grandmaster
+                        has_trait = murim_sect_leader
+                        has_trait = murim_elder
+                    }
+                }
+                random = {
+                    chance = 30
+                    trigger_event = { id = murim_final_integration.0002 days = { 10 45 } }
+                }
+            }
+        }
+
+        # Yearly intelligence network maintenance
+        every_ruler = {
+            limit = {
+                has_character_flag = murim_intel_network_active
+            }
+            # Network can be compromised each year
+            random = {
+                chance = 10
+                remove_character_flag = murim_intel_network_active
+                add_character_modifier = {
+                    modifier = murim_compromised_network_modifier
+                    years = 2
+                }
+                trigger_event = { id = murim_cross_system.0012 days = 5 }
+            }
+        }
+
+        # Blood oath network integrity check
+        every_ruler = {
+            limit = {
+                has_character_flag = murim_oath_network_established
+            }
+            # Check if allies still alive and loyal
+            if = {
+                limit = {
+                    NOT = {
+                        any_ally = {
+                            count >= 2
+                            has_character_flag = murim_blood_oath_sworn
+                        }
+                    }
+                }
+                remove_character_flag = murim_oath_network_established
+                remove_character_modifier = murim_blood_oath_network_modifier
+            }
+        }
+
+        # Expedition return check
+        every_ruler = {
+            limit = {
+                has_character_flag = murim_expedition_underway
+                has_character_modifier = murim_continental_expedition_modifier
+            }
+            # Random expedition outcome events
+            random = {
+                chance = 20
+                random_list = {
+                    50 = {
+                        # Expedition finds glory
+                        add_character_modifier = {
+                            modifier = murim_expedition_glory_modifier
+                            years = 3
+                        }
+                        remove_character_flag = murim_expedition_underway
+                    }
+                    30 = {
+                        # Expedition continues — minor gains
+                        add_prestige = 50
+                    }
+                    20 = {
+                        # Expedition disaster
+                        add_character_modifier = {
+                            modifier = murim_expedition_disaster_modifier
+                            years = 3
+                        }
+                        remove_character_flag = murim_expedition_underway
+                    }
+                }
+            }
+        }
+    }
+}
+
+# On Death — Endgame cascade effects
+on_death = {
+    effect = {
+        # Ascension candidate dies before trial
+        if = {
+            limit = {
+                has_character_flag = murim_ascension_trial_declared
+            }
+            every_ruler = {
+                limit = {
+                    has_variable = murim_martial_artist
+                    has_character_flag = murim_reacted_to_ascension
+                }
+                remove_character_flag = murim_reacted_to_ascension
+                add_prestige = -50
+            }
+        }
+
+        # Blood oath network leader dies
+        if = {
+            limit = {
+                has_character_flag = murim_oath_network_established
+            }
+            every_ally = {
+                limit = { has_character_flag = murim_blood_oath_sworn }
+                add_stress = 30
+                random = {
+                    chance = 30
+                    add_character_modifier = {
+                        modifier = murim_blood_oath_betrayed_modifier
+                        years = 3
+                    }
+                }
+            }
+        }
+
+        # Intel network leader dies — network collapses
+        if = {
+            limit = {
+                has_character_flag = murim_intel_network_active
+            }
+            # Successor may inherit or network scatters
+            if = {
+                limit = {
+                    exists = player_heir
+                    player_heir = { intrigue >= 12 }
+                }
+                player_heir = {
+                    set_character_flag = murim_intel_network_active
+                }
+            }
+        }
+
+        # Golden age ends with leader's death
+        if = {
+            limit = {
+                has_character_flag = murim_golden_age_witnessed
+                has_character_modifier = murim_all_systems_harmony_modifier
+            }
+            every_vassal = {
+                limit = { has_variable = murim_martial_artist }
+                add_stress = 15
+            }
+        }
+    }
+}
+
+# On War Started — Endgame implications
+on_war_started = {
+    effect = {
+        # War during golden age shatters harmony
+        if = {
+            limit = {
+                has_character_modifier = murim_all_systems_harmony_modifier
+            }
+            remove_character_modifier = murim_all_systems_harmony_modifier
+            add_character_modifier = {
+                modifier = murim_murim_world_in_chaos_modifier
+                years = 3
+            }
+        }
+
+        # War disrupts trade routes
+        every_realm_county = {
+            limit = {
+                has_county_modifier = murim_trade_route_secured_modifier
+            }
+            random = {
+                chance = 40
+                remove_county_modifier = murim_trade_route_secured_modifier
+                add_county_modifier = {
+                    modifier = murim_trade_route_contested_modifier
+                    years = 3
+                }
+            }
+        }
+
+        # War tests blood oath networks
+        if = {
+            limit = {
+                has_character_flag = murim_oath_network_established
+            }
+            every_ally = {
+                limit = { has_character_flag = murim_blood_oath_sworn }
+                # Allies rally or betray
+                random = {
+                    chance = 85
+                    add_opinion = { modifier = grateful_opinion target = root modifier_value = 10 }
+                }
+            }
+        }
+    }
+}
+
+# Monthly Pulse — lighter maintenance checks
+on_monthly_pulse = {
+    effect = {
+        # Forbidden technique spread check
+        every_ruler = {
+            limit = {
+                has_variable = murim_martial_artist
+                any_realm_county = { has_county_modifier = murim_forbidden_technique_spread }
+            }
+            # Spread can worsen or be contained
+            random = {
+                chance = 5
+                random_realm_county = {
+                    limit = {
+                        NOT = { has_county_modifier = murim_forbidden_technique_spread }
+                    }
+                    add_county_modifier = {
+                        modifier = murim_forbidden_technique_spread
+                        years = 2
+                    }
+                }
+            }
+        }
+
+        # Tribunal condemned characters lose prestige monthly
+        every_ruler = {
+            limit = {
+                has_character_modifier = murim_tribunal_condemned_modifier
+            }
+            add_prestige = -10
+        }
+    }
+}
