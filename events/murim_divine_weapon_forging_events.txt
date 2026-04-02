@@ -1,0 +1,1840 @@
+########################################
+# MURIM DIVINE WEAPON FORGING EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Legendary weapon creation,
+# master blacksmith quests, qi-infused weapons,
+# ancient material gathering, weapon awakening,
+# cursed weapons, weapon inheritance, nine-clan
+# signature weapon competitions
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_weapon
+
+# EVENT 0001 - Discovery of a Master Blacksmith
+# Triggered: on_action yearly pulse, martial artists seeking power
+# AI: Full weapon quest initiation
+murim_weapon.0001 = {
+    type = character_event
+    title = murim_weapon.0001.t
+    desc = murim_weapon.0001.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    right_portrait = {
+        character = scope:master_smith
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        age >= 18
+        prowess >= 14
+        gold >= 200
+        NOT = { has_character_flag = seeking_divine_weapon }
+        NOT = { has_character_modifier = murim_divine_weapon_wielder }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_sect_leader
+            has_trait = murim_wandering_cultivator
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = ambitious
+        }
+        modifier = {
+            factor = 1.5
+            prowess >= 20
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_sect_leader
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_master_blacksmith
+                    stewardship >= 16
+                }
+                NOT = { this = root }
+            }
+            save_scope_as = master_smith
+            alternative = {
+                create_character = {
+                    age = { 45 70 }
+                    gender_female_chance = 20
+                    trait = murim_master_blacksmith
+                    trait = patient
+                    trait = diligent
+                    stewardship = { 16 22 }
+                    martial = { 12 18 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = master_smith
+                }
+            }
+        }
+    }
+    
+    # Option A: Commission a divine weapon
+    option = {
+        name = murim_weapon.0001.a
+        trigger = {
+            exists = scope:master_smith
+            gold >= 500
+        }
+        add_gold = -500
+        add_character_flag = {
+            flag = seeking_divine_weapon
+            days = 1825
+        }
+        reverse_add_opinion = {
+            target = scope:master_smith
+            modifier = murim_patron_of_smithing
+            opinion = 25
+        }
+        # Begin the forging quest
+        trigger_event = {
+            id = murim_weapon.0002
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                gold >= 800
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 0.5
+                gold < 600
+            }
+        }
+    }
+    
+    # Option B: Seek an ancient weapon instead
+    option = {
+        name = murim_weapon.0001.b
+        add_character_flag = {
+            flag = seeking_divine_weapon
+            days = 1825
+        }
+        add_character_modifier = {
+            modifier = murim_ancient_weapon_seeker
+            years = 3
+        }
+        trigger_event = {
+            id = murim_weapon.0005
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                learning >= 14
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = adventurer
+            }
+        }
+    }
+    
+    # Option C: Strength comes from within, not weapons
+    option = {
+        name = murim_weapon.0001.c
+        add_piety = 50
+        add_prowess_skill = 1
+        add_character_modifier = {
+            modifier = murim_bare_fist_philosophy
+            years = 5
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = murim_shaolin_elder
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = murim_iron_fist_elder
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0002 - Gathering Materials: The Quest Begins
+# Triggered: from 0001 commission option
+# AI: Full material gathering expedition
+murim_weapon.0002 = {
+    type = character_event
+    title = murim_weapon.0002.t
+    desc = murim_weapon.0002.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = seeking_divine_weapon
+    }
+    
+    immediate = {
+        # What material is needed?
+        random_list = {
+            20 = { set_variable = { name = weapon_material value = 1 } } # Meteorite iron
+            20 = { set_variable = { name = weapon_material value = 2 } } # Dragon bone
+            20 = { set_variable = { name = weapon_material value = 3 } } # Jade crystal
+            20 = { set_variable = { name = weapon_material value = 4 } } # Phoenix feather steel
+            20 = { set_variable = { name = weapon_material value = 5 } } # Obsidian from volcano
+        }
+    }
+    
+    # Option A: Lead an expedition personally
+    option = {
+        name = murim_weapon.0002.a
+        add_gold = -100
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    martial >= 16
+                }
+                modifier = {
+                    factor = 1.3
+                    prowess >= 18
+                }
+                desc = murim_weapon.0002.a.found
+                add_prestige = 150
+                add_character_modifier = {
+                    modifier = murim_rare_material_acquired
+                    years = 3
+                }
+                trigger_event = {
+                    id = murim_weapon.0003
+                    days = { 30 60 }
+                }
+            }
+            30 = {
+                desc = murim_weapon.0002.a.partial
+                add_prestige = 50
+                add_character_modifier = {
+                    modifier = murim_common_material_substitute
+                    years = 2
+                }
+                trigger_event = {
+                    id = murim_weapon.0003
+                    days = { 60 120 }
+                }
+            }
+            20 = {
+                desc = murim_weapon.0002.a.danger
+                increase_wounds_effect = { reason = expedition }
+                add_stress = 15
+                # Try again
+                trigger_event = {
+                    id = murim_weapon.0002
+                    days = { 60 180 }
+                }
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Send agents to acquire materials
+    option = {
+        name = murim_weapon.0002.b
+        trigger = {
+            gold >= 300
+        }
+        add_gold = -300
+        random_list = {
+            60 = {
+                desc = murim_weapon.0002.b.success
+                add_character_modifier = {
+                    modifier = murim_rare_material_acquired
+                    years = 3
+                }
+                trigger_event = {
+                    id = murim_weapon.0003
+                    days = { 30 60 }
+                }
+            }
+            40 = {
+                desc = murim_weapon.0002.b.scammed
+                add_gold = -100
+                add_prestige = -50
+                trigger_event = {
+                    id = murim_weapon.0002
+                    days = { 90 180 }
+                }
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                gold >= 600
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option C: Buy from the black market
+    option = {
+        name = murim_weapon.0002.c
+        trigger = {
+            has_character_flag = knows_black_market
+            gold >= 400
+        }
+        add_gold = -400
+        add_character_modifier = {
+            modifier = murim_rare_material_acquired
+            years = 3
+        }
+        trigger_event = {
+            id = murim_weapon.0003
+            days = { 15 30 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_character_flag = knows_black_market
+            }
+        }
+    }
+}
+
+# EVENT 0003 - The Forging Process: Infusing Qi
+# Triggered: after materials gathered
+# AI: Full qi infusion ceremony
+murim_weapon.0003 = {
+    type = character_event
+    title = murim_weapon.0003.t
+    desc = murim_weapon.0003.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = seeking_divine_weapon
+        has_character_modifier = murim_rare_material_acquired
+    }
+    
+    immediate = {
+        # Forging quality depends on many factors
+        random_list = {
+            20 = { set_variable = { name = forge_quality value = 5 } } # Legendary
+            30 = { set_variable = { name = forge_quality value = 4 } } # Superior
+            30 = { set_variable = { name = forge_quality value = 3 } } # Fine
+            20 = { set_variable = { name = forge_quality value = 2 } } # Standard
+        }
+    }
+    
+    # Option A: Pour your full qi into the weapon
+    option = {
+        name = murim_weapon.0003.a
+        # Risk but highest reward
+        random_list = {
+            35 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 20
+                }
+                modifier = {
+                    factor = 1.3
+                    learning >= 14
+                }
+                desc = murim_weapon.0003.a.legendary
+                remove_character_flag = seeking_divine_weapon
+                remove_character_modifier = murim_rare_material_acquired
+                add_character_modifier = {
+                    modifier = murim_divine_weapon_wielder
+                    years = 50
+                }
+                add_character_modifier = {
+                    modifier = murim_legendary_weapon_bonus
+                    years = 50
+                }
+                add_prowess_skill = 5
+                add_prestige = 500
+                add_trait = murim_legendary_weapon_master
+            }
+            35 = {
+                desc = murim_weapon.0003.a.superior
+                remove_character_flag = seeking_divine_weapon
+                remove_character_modifier = murim_rare_material_acquired
+                add_character_modifier = {
+                    modifier = murim_divine_weapon_wielder
+                    years = 30
+                }
+                add_prowess_skill = 3
+                add_prestige = 300
+            }
+            20 = {
+                desc = murim_weapon.0003.a.standard
+                remove_character_flag = seeking_divine_weapon
+                remove_character_modifier = murim_rare_material_acquired
+                add_character_modifier = {
+                    modifier = murim_fine_weapon_wielder
+                    years = 20
+                }
+                add_prowess_skill = 2
+                add_prestige = 150
+            }
+            10 = {
+                desc = murim_weapon.0003.a.qi_backlash
+                add_character_modifier = {
+                    modifier = murim_forging_qi_backlash
+                    years = 2
+                }
+                add_stress = 30
+                increase_wounds_effect = { reason = qi_deviation }
+                remove_character_modifier = murim_rare_material_acquired
+            }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                prowess >= 22
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Careful, measured qi infusion
+    option = {
+        name = murim_weapon.0003.b
+        remove_character_flag = seeking_divine_weapon
+        remove_character_modifier = murim_rare_material_acquired
+        add_character_modifier = {
+            modifier = murim_divine_weapon_wielder
+            years = 30
+        }
+        add_prowess_skill = 3
+        add_prestige = 250
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = temperate
+            }
+        }
+    }
+    
+    # Option C: Let the master smith handle qi infusion
+    option = {
+        name = murim_weapon.0003.c
+        remove_character_flag = seeking_divine_weapon
+        remove_character_modifier = murim_rare_material_acquired
+        random_list = {
+            60 = {
+                add_character_modifier = {
+                    modifier = murim_divine_weapon_wielder
+                    years = 20
+                }
+                add_prowess_skill = 2
+                add_prestige = 200
+            }
+            40 = {
+                add_character_modifier = {
+                    modifier = murim_fine_weapon_wielder
+                    years = 15
+                }
+                add_prowess_skill = 1
+                add_prestige = 100
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = trusting
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Weapon Awakening: The Blade Gains Sentience
+# Triggered: rare event for legendary weapon wielders
+# AI: Full sentient weapon system
+murim_weapon.0004 = {
+    type = character_event
+    title = murim_weapon.0004.t
+    desc = murim_weapon.0004.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = shock
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_legendary_weapon_master
+        has_character_modifier = murim_divine_weapon_wielder
+        NOT = { has_character_flag = weapon_awakened }
+    }
+    
+    weight_multiplier = {
+        base = 0.3
+        modifier = {
+            factor = 3.0
+            prowess >= 25
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_qi_master
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = weapon_awakened
+            days = 36500
+        }
+        # Weapon personality
+        random_list = {
+            25 = { set_variable = { name = weapon_spirit value = 1 } } # Noble/Righteous
+            25 = { set_variable = { name = weapon_spirit value = 2 } } # Bloodthirsty
+            25 = { set_variable = { name = weapon_spirit value = 3 } } # Wise/Ancient
+            25 = { set_variable = { name = weapon_spirit value = 4 } } # Chaotic/Wild
+        }
+    }
+    
+    # Option A: Bond with the weapon spirit
+    option = {
+        name = murim_weapon.0004.a
+        add_prowess_skill = 3
+        add_character_modifier = {
+            modifier = murim_weapon_spirit_bonded
+            years = 20
+        }
+        # Weapon personality affects wielder
+        random_list = {
+            25 = {
+                # Noble spirit
+                add_piety = 100
+                add_character_modifier = {
+                    modifier = murim_noble_blade_spirit
+                    years = 20
+                }
+            }
+            25 = {
+                # Bloodthirsty spirit
+                add_dread = 20
+                add_character_modifier = {
+                    modifier = murim_bloodthirsty_blade
+                    years = 20
+                }
+            }
+            25 = {
+                # Wise spirit
+                add_learning_skill = 3
+                add_character_modifier = {
+                    modifier = murim_ancient_wisdom_blade
+                    years = 20
+                }
+            }
+            25 = {
+                # Chaotic spirit
+                add_prowess_skill = 2
+                add_character_modifier = {
+                    modifier = murim_chaos_blade
+                    years = 20
+                }
+                add_stress = 15
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 1.5
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Dominate the weapon spirit
+    option = {
+        name = murim_weapon.0004.b
+        trigger = {
+            prowess >= 24
+        }
+        add_prowess_skill = 4
+        add_dread = 15
+        add_character_modifier = {
+            modifier = murim_dominated_weapon_spirit
+            years = 20
+        }
+        add_stress = 20
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 28
+            }
+        }
+    }
+    
+    # Option C: Seal the weapon spirit
+    option = {
+        name = murim_weapon.0004.c
+        add_character_modifier = {
+            modifier = murim_sealed_weapon_spirit
+            years = 10
+        }
+        add_piety = 50
+        add_stress = -10
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Ancient Weapon Discovery: Tomb Raiding
+# Triggered: from 0001 ancient weapon option, or on_action for adventurers
+# AI: Full tomb exploration
+murim_weapon.0005 = {
+    type = character_event
+    title = murim_weapon.0005.t
+    desc = murim_weapon.0005.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_ancient_weapon_seeker
+    }
+    
+    immediate = {
+        # What's in the tomb?
+        random_list = {
+            25 = { set_variable = { name = tomb_contents value = 1 } } # Legendary sword
+            20 = { set_variable = { name = tomb_contents value = 2 } } # Cursed weapon
+            20 = { set_variable = { name = tomb_contents value = 3 } } # Broken divine weapon
+            20 = { set_variable = { name = tomb_contents value = 4 } } # Weapon technique scroll
+            15 = { set_variable = { name = tomb_contents value = 5 } } # Nothing - trap
+        }
+    }
+    
+    # Option A: Explore the tomb alone
+    option = {
+        name = murim_weapon.0005.a
+        random_list = {
+            30 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 20
+                }
+                desc = murim_weapon.0005.a.legendary_find
+                remove_character_modifier = murim_ancient_weapon_seeker
+                add_character_modifier = {
+                    modifier = murim_divine_weapon_wielder
+                    years = 50
+                }
+                add_trait = murim_legendary_weapon_master
+                add_prowess_skill = 4
+                add_prestige = 500
+                remove_character_flag = seeking_divine_weapon
+            }
+            20 = {
+                desc = murim_weapon.0005.a.cursed
+                remove_character_modifier = murim_ancient_weapon_seeker
+                add_character_modifier = {
+                    modifier = murim_cursed_weapon_wielder
+                    years = 10
+                }
+                add_prowess_skill = 3
+                add_stress = 30
+                # Cursed weapon chain
+                trigger_event = {
+                    id = murim_weapon.0006
+                    days = { 30 90 }
+                }
+                remove_character_flag = seeking_divine_weapon
+            }
+            25 = {
+                desc = murim_weapon.0005.a.technique
+                add_character_modifier = {
+                    modifier = murim_ancient_weapon_technique
+                    years = 10
+                }
+                add_prowess_skill = 2
+                add_martial_skill = 2
+                remove_character_modifier = murim_ancient_weapon_seeker
+                remove_character_flag = seeking_divine_weapon
+            }
+            25 = {
+                desc = murim_weapon.0005.a.trap
+                increase_wounds_effect = { reason = trap }
+                add_stress = 20
+                add_prestige = -50
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+        }
+    }
+    
+    # Option B: Explore with companions
+    option = {
+        name = murim_weapon.0005.b
+        add_gold = -50
+        random_list = {
+            50 = {
+                desc = murim_weapon.0005.b.shared_find
+                remove_character_modifier = murim_ancient_weapon_seeker
+                add_character_modifier = {
+                    modifier = murim_fine_weapon_wielder
+                    years = 20
+                }
+                add_prowess_skill = 2
+                add_prestige = 200
+                remove_character_flag = seeking_divine_weapon
+            }
+            30 = {
+                desc = murim_weapon.0005.b.betrayal
+                increase_wounds_effect = { reason = betrayal }
+                add_stress = 25
+                add_prestige = -100
+            }
+            20 = {
+                desc = murim_weapon.0005.b.empty
+                add_prestige = -50
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = gregarious
+            }
+        }
+    }
+    
+    # Option C: Hire mercenaries to clear the tomb
+    option = {
+        name = murim_weapon.0005.c
+        trigger = {
+            gold >= 300
+        }
+        add_gold = -300
+        random_list = {
+            40 = {
+                desc = murim_weapon.0005.c.success
+                remove_character_modifier = murim_ancient_weapon_seeker
+                add_character_modifier = {
+                    modifier = murim_divine_weapon_wielder
+                    years = 30
+                }
+                add_prowess_skill = 3
+                add_prestige = 300
+                remove_character_flag = seeking_divine_weapon
+            }
+            30 = {
+                desc = murim_weapon.0005.c.stolen
+                # Mercenaries stole the weapon
+                add_prestige = -200
+                add_stress = 20
+            }
+            30 = {
+                desc = murim_weapon.0005.c.empty
+                add_prestige = -50
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                gold >= 600
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Cursed Weapon: The Dark Influence
+# Triggered: from cursed weapon discovery
+# AI: Full cursed weapon management
+murim_weapon.0006 = {
+    type = character_event
+    title = murim_weapon.0006.t
+    desc = murim_weapon.0006.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_cursed_weapon_wielder
+    }
+    
+    immediate = {
+        # Curse manifestation
+        random_list = {
+            30 = { set_variable = { name = curse_type value = 1 } } # Bloodlust
+            30 = { set_variable = { name = curse_type value = 2 } } # Paranoia
+            20 = { set_variable = { name = curse_type value = 3 } } # Power drain
+            20 = { set_variable = { name = curse_type value = 4 } } # Madness
+        }
+    }
+    
+    # Option A: Embrace the curse for power
+    option = {
+        name = murim_weapon.0006.a
+        add_prowess_skill = 3
+        add_dread = 20
+        add_character_modifier = {
+            modifier = murim_curse_embraced
+            years = 10
+        }
+        random_list = {
+            50 = { add_trait = sadistic }
+            50 = { add_trait = wrathful }
+        }
+        add_stress = 20
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+        }
+    }
+    
+    # Option B: Seek a way to purify the weapon
+    option = {
+        name = murim_weapon.0006.b
+        trigger = {
+            learning >= 12
+        }
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 18
+                }
+                desc = murim_weapon.0006.b.purified
+                remove_character_modifier = murim_cursed_weapon_wielder
+                add_character_modifier = {
+                    modifier = murim_purified_divine_weapon
+                    years = 30
+                }
+                add_prowess_skill = 4
+                add_prestige = 300
+                add_piety = 200
+            }
+            60 = {
+                desc = murim_weapon.0006.b.failed
+                add_stress = 20
+                add_character_modifier = {
+                    modifier = murim_curse_deepened
+                    years = 5
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Destroy the cursed weapon
+    option = {
+        name = murim_weapon.0006.c
+        remove_character_modifier = murim_cursed_weapon_wielder
+        add_piety = 100
+        add_prestige = 50
+        add_stress = -20
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Weapon Theft: Your Divine Weapon is Stolen
+# Triggered: on_action for divine weapon wielders
+# AI: Full weapon recovery quest
+murim_weapon.0007 = {
+    type = character_event
+    title = murim_weapon.0007.t
+    desc = murim_weapon.0007.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:weapon_thief
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_divine_weapon_wielder
+        NOT = { has_character_flag = weapon_stolen_recently }
+    }
+    
+    weight_multiplier = {
+        base = 0.3
+        modifier = {
+            factor = 2.0
+            any_known_character = {
+                has_trait = murim_shadow_operative
+                NOT = { is_allied_to = root }
+            }
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_legendary_weapon_master
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = weapon_stolen_recently
+            days = 1825
+        }
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { is_allied_to = root }
+                intrigue >= 12
+            }
+            save_scope_as = weapon_thief
+            alternative = {
+                create_character = {
+                    age = { 22 40 }
+                    trait = murim_shadow_operative
+                    trait = deceitful
+                    trait = greedy
+                    intrigue = { 14 20 }
+                    prowess = { 12 18 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = weapon_thief
+                }
+            }
+        }
+    }
+    
+    # Option A: Hunt down the thief personally
+    option = {
+        name = murim_weapon.0007.a
+        trigger = {
+            exists = scope:weapon_thief
+        }
+        # Temporarily lose weapon bonus
+        remove_character_modifier = murim_divine_weapon_wielder
+        duel = {
+            skill = prowess
+            target = scope:weapon_thief
+            55 = {
+                desc = murim_weapon.0007.a.recovered
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                add_prestige = 200
+                add_character_modifier = {
+                    modifier = murim_divine_weapon_wielder
+                    years = 30
+                }
+                scope:weapon_thief = {
+                    random_list = {
+                        50 = {
+                            death = {
+                                death_reason = death_duel
+                                killer = root
+                            }
+                        }
+                        50 = {
+                            imprison = {
+                                target = prev
+                                type = dungeon
+                            }
+                        }
+                    }
+                }
+            }
+            45 = {
+                desc = murim_weapon.0007.a.lost
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                add_prestige = -200
+                add_stress = 30
+                increase_wounds_effect = { reason = duel }
+                # Weapon gone
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Hire trackers and spies
+    option = {
+        name = murim_weapon.0007.b
+        trigger = {
+            gold >= 200
+        }
+        add_gold = -200
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.3
+                    intrigue >= 14
+                }
+                desc = murim_weapon.0007.b.found
+                add_prestige = 100
+                # Weapon returned
+            }
+            40 = {
+                desc = murim_weapon.0007.b.trail_cold
+                remove_character_modifier = murim_divine_weapon_wielder
+                add_stress = 20
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+        }
+    }
+    
+    # Option C: Forge a new weapon to replace it
+    option = {
+        name = murim_weapon.0007.c
+        trigger = {
+            gold >= 500
+        }
+        add_gold = -500
+        remove_character_modifier = murim_divine_weapon_wielder
+        trigger_event = {
+            id = murim_weapon.0002
+            days = { 30 90 }
+        }
+        add_character_flag = {
+            flag = seeking_divine_weapon
+            days = 1825
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                gold >= 800
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Nine-Clan Signature Weapon Competition
+# Triggered: during major tournaments or yearly for sect leaders
+# AI: Full weapon showcase tournament
+murim_weapon.0008 = {
+    type = character_event
+    title = murim_weapon.0008.t
+    desc = murim_weapon.0008.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_divine_weapon_wielder
+        OR = {
+            has_trait = murim_sect_leader
+            has_trait = murim_legendary_weapon_master
+        }
+        NOT = { has_character_flag = weapon_competition_recently }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 2.0
+            has_trait = murim_sect_leader
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = weapon_competition_recently
+            days = 730
+        }
+        # Find competitors
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                OR = {
+                    has_character_modifier = murim_divine_weapon_wielder
+                    has_character_modifier = murim_fine_weapon_wielder
+                }
+                prowess >= 14
+            }
+            save_scope_as = weapon_rival
+        }
+    }
+    
+    # Option A: Enter the competition
+    option = {
+        name = murim_weapon.0008.a
+        trigger = {
+            exists = scope:weapon_rival
+        }
+        duel = {
+            skill = prowess
+            target = scope:weapon_rival
+            50 = {
+                desc = murim_weapon.0008.a.champion
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                add_prestige = 500
+                add_character_modifier = {
+                    modifier = murim_weapon_competition_champion
+                    years = 5
+                }
+                add_prowess_skill = 2
+                # All clans recognize your weapon
+                every_known_character = {
+                    limit = {
+                        is_alive = yes
+                        has_trait = murim_sect_leader
+                    }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_weapon_champion_respect
+                        opinion = 15
+                    }
+                }
+            }
+            50 = {
+                desc = murim_weapon.0008.a.defeated
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                add_prestige = -100
+                add_stress = 15
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 22
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Judge the competition instead
+    option = {
+        name = murim_weapon.0008.b
+        trigger = {
+            has_trait = murim_sect_leader
+        }
+        add_prestige = 200
+        add_diplomacy_skill = 1
+        add_character_modifier = {
+            modifier = murim_weapon_judge_wisdom
+            years = 3
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                age >= 50
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option C: Display your weapon but don't compete
+    option = {
+        name = murim_weapon.0008.c
+        add_prestige = 100
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Weapon Inheritance: Passing Down the Blade
+# Triggered: old age or near death for weapon wielders
+# AI: Full weapon succession system
+murim_weapon.0009 = {
+    type = character_event
+    title = murim_weapon.0009.t
+    desc = murim_weapon.0009.desc
+    theme = dynasty
+    
+    left_portrait = {
+        character = root
+        animation = personality_compassionate
+    }
+    right_portrait = {
+        character = scope:weapon_heir
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_divine_weapon_wielder
+        OR = {
+            age >= 55
+            health <= 2
+            has_trait = ill
+            has_trait = wounded_3
+        }
+        any_child = {
+            is_alive = yes
+            age >= 16
+        }
+        NOT = { has_character_flag = weapon_inheritance_planned }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            age >= 65
+        }
+        modifier = {
+            factor = 2.0
+            health <= 1
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = weapon_inheritance_planned
+            days = 3650
+        }
+        # Best child candidate
+        random_child = {
+            limit = {
+                is_alive = yes
+                age >= 16
+                prowess >= 10
+            }
+            save_scope_as = weapon_heir
+            alternative = {
+                random_child = {
+                    limit = {
+                        is_alive = yes
+                        age >= 16
+                    }
+                    save_scope_as = weapon_heir
+                }
+            }
+        }
+    }
+    
+    # Option A: Pass weapon to most worthy child
+    option = {
+        name = murim_weapon.0009.a
+        trigger = {
+            exists = scope:weapon_heir
+        }
+        scope:weapon_heir = {
+            add_character_modifier = {
+                modifier = murim_inherited_divine_weapon
+                years = 30
+            }
+            add_prowess_skill = 3
+            add_prestige = 200
+            add_opinion = {
+                target = root
+                modifier = murim_weapon_inheritance_gratitude
+                opinion = 40
+            }
+        }
+        remove_character_modifier = murim_divine_weapon_wielder
+        add_prestige = 200
+        add_piety = 100
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option B: Let children compete for the weapon
+    option = {
+        name = murim_weapon.0009.b
+        trigger = {
+            any_child = {
+                count >= 2
+                is_alive = yes
+                age >= 16
+            }
+        }
+        # Children fight for weapon - creates rivalry
+        every_child = {
+            limit = {
+                is_alive = yes
+                age >= 16
+            }
+            add_character_modifier = {
+                modifier = murim_weapon_succession_rival
+                years = 5
+            }
+        }
+        trigger_event = {
+            id = murim_weapon.0010
+            days = { 30 60 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option C: Be buried with the weapon
+    option = {
+        name = murim_weapon.0009.c
+        add_prestige = 100
+        add_character_modifier = {
+            modifier = murim_weapon_burial_planned
+            years = 10
+        }
+        # Weapon lost to history
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+    
+    # Option D: Pass to most talented disciple (not child)
+    option = {
+        name = murim_weapon.0009.d
+        random_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 16
+                prowess >= 14
+                NOT = { is_child_of = root }
+            }
+            save_scope_as = disciple_heir
+            add_character_modifier = {
+                modifier = murim_inherited_divine_weapon
+                years = 30
+            }
+            add_prowess_skill = 3
+            add_opinion = {
+                target = root
+                modifier = murim_weapon_inheritance_gratitude
+                opinion = 50
+            }
+        }
+        remove_character_modifier = murim_divine_weapon_wielder
+        add_prestige = 150
+        # Children may resent this
+        every_child = {
+            limit = { is_alive = yes age >= 16 }
+            add_opinion = {
+                target = root
+                modifier = murim_passed_over_for_weapon
+                opinion = -20
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                any_courtier = {
+                    prowess >= 20
+                    NOT = { is_child_of = root }
+                }
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Weapon Succession Tournament
+# Triggered: from 0009 competition option
+# AI: Full succession battle between children
+murim_weapon.0010 = {
+    type = character_event
+    title = murim_weapon.0010.t
+    desc = murim_weapon.0010.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        any_child = {
+            count >= 2
+            is_alive = yes
+            has_character_modifier = murim_weapon_succession_rival
+        }
+    }
+    
+    immediate = {
+        ordered_child = {
+            order_by = prowess
+            max = 1
+            save_scope_as = strongest_child
+        }
+        ordered_child = {
+            order_by = prowess
+            position = 1
+            max = 1
+            save_scope_as = second_child
+        }
+    }
+    
+    # Option A: Let them duel
+    option = {
+        name = murim_weapon.0010.a
+        trigger = {
+            exists = scope:strongest_child
+            exists = scope:second_child
+        }
+        scope:strongest_child = {
+            duel = {
+                skill = prowess
+                target = scope:second_child
+                60 = {
+                    desc = murim_weapon.0010.a.eldest_wins
+                    add_character_modifier = {
+                        modifier = murim_inherited_divine_weapon
+                        years = 30
+                    }
+                    add_prowess_skill = 2
+                    add_prestige = 200
+                }
+                40 = {
+                    desc = murim_weapon.0010.a.younger_wins
+                    scope:second_child = {
+                        add_character_modifier = {
+                            modifier = murim_inherited_divine_weapon
+                            years = 30
+                        }
+                        add_prowess_skill = 2
+                        add_prestige = 200
+                    }
+                }
+            }
+        }
+        remove_character_modifier = murim_divine_weapon_wielder
+        ai_chance = {
+            base = 60
+        }
+    }
+    
+    # Option B: Cancel and choose yourself
+    option = {
+        name = murim_weapon.0010.b
+        trigger = {
+            exists = scope:strongest_child
+        }
+        scope:strongest_child = {
+            add_character_modifier = {
+                modifier = murim_inherited_divine_weapon
+                years = 30
+            }
+            add_prowess_skill = 3
+        }
+        remove_character_modifier = murim_divine_weapon_wielder
+        if = {
+            limit = { exists = scope:second_child }
+            scope:second_child = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_unfair_succession
+                    opinion = -30
+                }
+            }
+        }
+        ai_chance = {
+            base = 30
+        }
+    }
+}
+
+# EVENT 0011 - Weapon Breaks in Battle
+# Triggered: during major battles or duels
+# AI: Full weapon loss and recovery
+murim_weapon.0011 = {
+    type = character_event
+    title = murim_weapon.0011.t
+    desc = murim_weapon.0011.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = grief
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_divine_weapon_wielder
+        OR = {
+            is_at_war = yes
+            has_character_modifier = murim_grievous_wound
+        }
+        NOT = { has_character_flag = weapon_broke_recently }
+    }
+    
+    weight_multiplier = {
+        base = 0.2
+        modifier = {
+            factor = 3.0
+            is_at_war = yes
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = weapon_broke_recently
+            days = 3650
+        }
+        remove_character_modifier = murim_divine_weapon_wielder
+    }
+    
+    # Option A: Reforge it stronger
+    option = {
+        name = murim_weapon.0011.a
+        trigger = {
+            gold >= 400
+        }
+        add_gold = -400
+        random_list = {
+            50 = {
+                desc = murim_weapon.0011.a.reforged
+                add_character_modifier = {
+                    modifier = murim_reforged_divine_weapon
+                    years = 30
+                }
+                add_prowess_skill = 2
+                add_prestige = 200
+            }
+            50 = {
+                desc = murim_weapon.0011.a.lesser
+                add_character_modifier = {
+                    modifier = murim_fine_weapon_wielder
+                    years = 15
+                }
+                add_prowess_skill = 1
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                gold >= 700
+            }
+        }
+    }
+    
+    # Option B: Fight with bare hands from now on
+    option = {
+        name = murim_weapon.0011.b
+        add_character_modifier = {
+            modifier = murim_bare_fist_master
+            years = 10
+        }
+        add_prowess_skill = 2
+        add_martial_skill = 1
+        add_prestige = 100
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = murim_iron_fist_elder
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option C: Seek a new legendary weapon
+    option = {
+        name = murim_weapon.0011.c
+        add_character_flag = {
+            flag = seeking_divine_weapon
+            days = 1825
+        }
+        add_character_modifier = {
+            modifier = murim_ancient_weapon_seeker
+            years = 3
+        }
+        trigger_event = {
+            id = murim_weapon.0005
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+}
+
+# EVENT 0012 - The Weapon of Heaven's Will
+# Triggered: endgame/Great Calamity - ultimate weapon event
+# AI: Full legendary endgame weapon
+murim_weapon.0012 = {
+    type = character_event
+    title = murim_weapon.0012.t
+    desc = murim_weapon.0012.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        prowess >= 25
+        OR = {
+            has_trait = murim_legendary_weapon_master
+            has_trait = murim_sect_leader
+        }
+        OR = {
+            has_global_variable = murim_great_calamity_active
+            has_global_variable = murim_great_calamity_approaching
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.1
+        modifier = {
+            factor = 5.0
+            has_global_variable = murim_great_calamity_active
+        }
+    }
+    
+    # Option A: Wield the Weapon of Heaven's Will
+    option = {
+        name = murim_weapon.0012.a
+        add_prowess_skill = 10
+        add_character_modifier = {
+            modifier = murim_heavens_will_weapon
+            years = 5
+        }
+        add_prestige = 2000
+        add_character_modifier = {
+            modifier = murim_champion_of_heaven
+            years = 10
+        }
+        # But at great cost
+        random_list = {
+            30 = {
+                desc = murim_weapon.0012.a.transcended
+                add_trait = murim_heaven_defying_martial_god
+            }
+            40 = {
+                desc = murim_weapon.0012.a.burden
+                add_stress = 50
+                add_character_modifier = {
+                    modifier = murim_heavens_burden
+                    years = 10
+                }
+            }
+            30 = {
+                desc = murim_weapon.0012.a.consumed
+                death = {
+                    death_reason = death_consumed_by_power
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Guard the weapon for a worthy successor
+    option = {
+        name = murim_weapon.0012.b
+        add_prestige = 500
+        add_piety = 300
+        add_character_modifier = {
+            modifier = murim_heavens_guardian
+            years = 10
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option C: Destroy it before it falls into wrong hands
+    option = {
+        name = murim_weapon.0012.c
+        add_piety = 500
+        add_prestige = 300
+        add_character_modifier = {
+            modifier = murim_destroyed_heavens_weapon
+            years = 20
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+        }
+    }
+}
