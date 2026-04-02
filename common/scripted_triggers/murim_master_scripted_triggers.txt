@@ -1,0 +1,254 @@
+########################################
+# MURIM MASTER SCRIPTED TRIGGERS
+# Shared conditions used across all
+# systems for consistency and DRY code
+# Both player and AI evaluated equally
+########################################
+
+# Is this character a Murim martial artist?
+murim_is_martial_artist_trigger = {
+    has_variable = murim_martial_artist
+}
+
+# Is this character a high-ranking martial leader?
+murim_is_martial_leader_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_grandmaster
+        has_trait = murim_sect_leader
+        has_trait = murim_elder
+        has_trait = murim_clan_patriarch
+    }
+}
+
+# Is this character orthodox faction?
+murim_is_orthodox_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_orthodox_purist
+        has_trait = murim_shaolin_disciple
+        has_trait = murim_wudang_disciple
+        has_trait = murim_namgung_warrior
+        has_trait = murim_zhuge_strategist
+        has_trait = murim_heavenly_judge
+    }
+    NOT = { has_trait = murim_unorthodox_practitioner }
+}
+
+# Is this character unorthodox faction?
+murim_is_unorthodox_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_unorthodox_practitioner
+        has_trait = murim_shadow_sect_leader
+        has_trait = murim_forbidden_arts_master
+        has_trait = murim_tang_poisoner
+        has_trait = murim_assassin
+        has_trait = murim_demon_sect_follower
+    }
+}
+
+# Is the Great Calamity currently active?
+murim_calamity_active_trigger = {
+    has_global_variable = murim_calamity_active
+}
+
+# Is the post-calamity period active?
+murim_post_calamity_trigger = {
+    has_global_variable = murim_calamity_ended
+    NOT = { has_global_variable = murim_calamity_active }
+}
+
+# Can this character participate in tournaments?
+murim_can_tournament_trigger = {
+    has_variable = murim_martial_artist
+    is_alive = yes
+    is_imprisoned = no
+    prowess >= 10
+    NOT = { has_trait = incapable }
+    NOT = { has_character_flag = murim_tournament_banned }
+}
+
+# Can this character serve as tournament champion?
+murim_is_champion_caliber_trigger = {
+    murim_can_tournament_trigger = yes
+    prowess >= 20
+    OR = {
+        has_trait = murim_grandmaster
+        has_trait = murim_blade_master
+        has_trait = murim_iron_body
+        has_trait = murim_transcendent
+    }
+}
+
+# Is this character eligible for blood oaths?
+murim_can_blood_oath_trigger = {
+    has_variable = murim_martial_artist
+    is_alive = yes
+    NOT = { has_trait = murim_oath_breaker }
+    NOT = { has_character_flag = murim_blood_oath_cooldown }
+    age >= 16
+}
+
+# Is this character eligible for espionage?
+murim_can_spy_trigger = {
+    has_variable = murim_martial_artist
+    intrigue >= 10
+    is_alive = yes
+    is_imprisoned = no
+    NOT = { has_character_modifier = murim_exposed_spy_network_modifier }
+}
+
+# Is this character eligible for black market?
+murim_can_black_market_trigger = {
+    has_variable = murim_martial_artist
+    is_alive = yes
+    gold >= 50
+    NOT = { has_character_flag = murim_black_market_banned }
+    OR = {
+        intrigue >= 8
+        has_trait = murim_information_broker
+        has_trait = murim_shadow_sect_leader
+        has_character_flag = murim_black_market_contact
+    }
+}
+
+# Is this character eligible for forbidden vault?
+murim_can_access_vault_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_sect_leader
+        has_trait = murim_grandmaster
+        has_trait = murim_elder
+    }
+    learning >= 12
+    NOT = { has_character_flag = murim_vault_opened_recently }
+    any_held_title = {
+        has_variable = murim_sect_forbidden_vault
+    }
+}
+
+# Is this character eligible for ascension?
+murim_can_attempt_ascension_trigger = {
+    has_variable = murim_martial_artist
+    has_trait = murim_transcendent
+    age >= 60
+    martial >= 25
+    learning >= 20
+    prowess >= 30
+    prestige >= 2000
+    piety >= 1000
+    NOT = { has_character_flag = murim_ascension_trial_declared }
+    NOT = { has_character_modifier = murim_ascension_failed_modifier }
+}
+
+# Is this character a capable sect manager?
+murim_is_sect_manager_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_sect_leader
+        has_trait = murim_elder
+        has_trait = murim_clan_patriarch
+    }
+    stewardship >= 10
+    diplomacy >= 8
+}
+
+# Is this character an active trader/merchant?
+murim_is_merchant_martial_trigger = {
+    has_variable = murim_martial_artist
+    stewardship >= 12
+    OR = {
+        has_character_flag = murim_trade_route_master
+        has_character_modifier = murim_merchant_martial_alliance_modifier
+        any_realm_county = { has_county_modifier = murim_trade_route_secured_modifier }
+    }
+}
+
+# Does this character have shadow realm connections?
+murim_has_shadow_connections_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_character_flag = murim_shadow_realm_touched
+        has_character_flag = murim_shadow_network_member
+        has_trait = murim_shadow_sect_leader
+        has_trait = murim_phantom_technique_user
+    }
+}
+
+# Is this character under tribunal judgment?
+murim_under_tribunal_trigger = {
+    OR = {
+        has_character_modifier = murim_tribunal_condemned_modifier
+        has_character_modifier = murim_tribunal_martial_law_modifier
+        has_character_flag = murim_tribunal_investigation
+    }
+}
+
+# Is this realm experiencing forbidden technique spread?
+murim_realm_has_forbidden_spread_trigger = {
+    any_realm_county = {
+        has_county_modifier = murim_forbidden_technique_spread
+    }
+}
+
+# Is this character's intel network active and healthy?
+murim_has_active_intel_trigger = {
+    has_character_flag = murim_intel_network_active
+    NOT = { has_character_modifier = murim_compromised_network_modifier }
+    NOT = { has_character_modifier = murim_exposed_spy_network_modifier }
+}
+
+# Is this character in a blood oath alliance network?
+murim_has_oath_network_trigger = {
+    has_character_flag = murim_oath_network_established
+    any_ally = {
+        count >= 2
+        has_character_flag = murim_blood_oath_sworn
+    }
+}
+
+# Can this character convene a tribunal?
+murim_can_convene_tribunal_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_elder
+        has_trait = murim_grandmaster
+        has_trait = murim_heavenly_judge
+    }
+    prestige >= 500
+    diplomacy >= 15
+}
+
+# Is this character eligible for continental expedition?
+murim_can_expedition_trigger = {
+    has_variable = murim_martial_artist
+    OR = {
+        has_trait = murim_grandmaster
+        has_trait = murim_sect_leader
+        has_trait = murim_warlord
+    }
+    martial >= 18
+    gold >= 500
+    NOT = { has_character_flag = murim_expedition_underway }
+    any_knight = {
+        count >= 5
+        prowess >= 15
+    }
+}
+
+# Is this a Murim golden age?
+murim_golden_age_active_trigger = {
+    has_character_modifier = murim_all_systems_harmony_modifier
+    NOT = { has_global_variable = murim_calamity_active }
+}
+
+# Weighted AI martial artist combat potential
+murim_ai_combat_potential_trigger = {
+    prowess >= 15
+    martial >= 12
+    is_alive = yes
+    is_imprisoned = no
+    NOT = { has_trait = incapable }
+    NOT = { has_trait = infirm }
+}
