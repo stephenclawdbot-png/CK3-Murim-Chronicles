@@ -1,0 +1,836 @@
+namespace = murim_calamity_cycle_expansion5
+
+# Calamity Cycle Expansion 5 — Final Apocalypse, Last Survivors, New Era Dawn
+# 10 events: the climax of the Great Calamity, AI-autonomous total war, dynasty survival
+
+murim_calamity_cycle_expansion5.0001 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0001.t
+	desc = murim_calamity_cycle_expansion5.0001.desc
+	theme = martial_arts
+	
+	# The Sky Burns Red — the final phase of the Great Calamity begins. All nine clans
+	# are at war simultaneously. The Heavenly Demon has declared himself Emperor of Murim.
+	# Orthodox Alliance headquarters is burning. Unorthodox factions tear each other apart.
+	
+	trigger = {
+		has_global_variable = great_calamity_phase_5
+		is_ruler = yes
+		NOT = { has_character_flag = witnessed_sky_burns }
+	}
+	
+	weight_multiplier = {
+		base = 10 # High priority — everyone should see this
+	}
+	
+	immediate = {
+		set_character_flag = witnessed_sky_burns
+		add_character_modifier = {
+			modifier = calamity_final_phase
+			years = 5
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0001.a
+		# Rally what remains — make a last stand
+		add_martial = 5
+		add_prowess = 5
+		add_character_modifier = {
+			modifier = last_stand_commander
+			years = -1
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_calamity_cycle_expansion5.0002
+				days = { 30 60 }
+			}
+		}
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = brave } }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0001.b
+		# Flee to the mountains — preserve what you can
+		add_stewardship = 3
+		add_character_modifier = {
+			modifier = mountain_refuge
+			years = 10
+		}
+		hidden_effect = {
+			set_character_flag = chose_refuge
+			trigger_event = {
+				id = murim_calamity_cycle_expansion5.0005
+				days = { 90 180 }
+			}
+		}
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = craven } }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0001.c
+		# Seek out the Heavenly Demon directly — end this at the source
+		add_prowess = 8
+		hidden_effect = {
+			trigger_event = {
+				id = murim_calamity_cycle_expansion5.0003
+				days = { 15 30 }
+			}
+		}
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = ambitious } }
+	}
+}
+
+murim_calamity_cycle_expansion5.0002 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0002.t
+	desc = murim_calamity_cycle_expansion5.0002.desc
+	theme = martial_arts
+	
+	# Last Stand at Broken Sword Valley — remnants of all Orthodox sects gather
+	# for a final defense. Shaolin monks, Wudang swordsmen, Mount Hua blademasters,
+	# Tang poison masters, and Beggar Sect fighters stand together for the last time.
+	
+	trigger = {
+		has_global_variable = great_calamity_phase_5
+	}
+	
+	immediate = {
+		add_character_modifier = {
+			modifier = broken_sword_valley_defender
+			years = -1
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0002.a
+		# Lead the combined formation — Orthodox United Front
+		add_martial = 6
+		add_prowess = 4
+		random_list = {
+			25 = {
+				# Miraculous victory — the Demon army is routed
+				add_trait = savior_of_orthodoxy
+				add_prestige = 3000
+				add_character_modifier = {
+					modifier = legendary_commander
+					years = -1
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = orthodox_last_stand_victory
+						value = yes
+					}
+				}
+			}
+			35 = {
+				# Pyrrhic victory — won but 80% casualties
+				add_prestige = 1000
+				add_character_modifier = {
+					modifier = pyrrhic_survivor
+					years = -1
+				}
+				hidden_effect = {
+					# Kill most courtiers
+					every_courtier = {
+						limit = {
+							OR = {
+								has_trait = shaolin_disciple
+								has_trait = mount_hua_disciple
+								has_trait = wudang_disciple
+								has_trait = tang_clan_member
+								has_trait = beggar_sect_member
+							}
+						}
+						random = {
+							chance = 80
+							death = { death_reason = death_battle }
+						}
+					}
+				}
+			}
+			40 = {
+				# Defeat — scattered and broken
+				add_health = -3
+				add_character_modifier = {
+					modifier = shattered_army_leader
+					years = 5
+				}
+				hidden_effect = {
+					every_courtier = {
+						limit = {
+							OR = {
+								has_trait = shaolin_disciple
+								has_trait = mount_hua_disciple
+								has_trait = wudang_disciple
+							}
+						}
+						random = {
+							chance = 90
+							death = { death_reason = death_battle }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0002.b
+		# Sacrifice yourself to buy time for others to escape
+		random_list = {
+			40 = {
+				# Heroic death — become a legend
+				death = { death_reason = death_heroic_sacrifice }
+				hidden_effect = {
+					every_known_character = {
+						limit = {
+							OR = {
+								has_trait = shaolin_disciple
+								has_trait = mount_hua_disciple
+								has_trait = wudang_disciple
+								has_trait = tang_clan_member
+								has_trait = beggar_sect_member
+							}
+						}
+						add_character_modifier = {
+							modifier = witnessed_heroic_sacrifice
+							years = -1
+						}
+					}
+				}
+			}
+			60 = {
+				# Survived against all odds — became a legend anyway
+				add_trait = miracle_survivor
+				add_prowess = 8
+				add_prestige = 2000
+			}
+		}
+		ai_chance = { base = 30 modifier = { add = 30 has_trait = brave } }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0002.c
+		# Propose surrender terms — preserve lives over honor
+		add_diplomacy = 5
+		add_piety = -300
+		add_prestige = -500
+		stress_impact = {
+			brave = major_stress_impact_gain
+		}
+		random_list = {
+			30 = {
+				# Demon accepts — Orthodox become vassals
+				add_character_modifier = {
+					modifier = demon_vassal
+					years = -1
+				}
+			}
+			70 = {
+				# Demon laughs — no mercy
+				trigger_event = {
+					id = murim_calamity_cycle_expansion5.0004
+					days = { 1 3 }
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_calamity_cycle_expansion5.0003 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0003.t
+	desc = murim_calamity_cycle_expansion5.0003.desc
+	theme = martial_arts
+	
+	# Confrontation with the Heavenly Demon — you've fought through his army, his
+	# generals, his elite guard. Now you stand before the Heavenly Demon himself
+	# atop the Thousand Demon Peak. The fate of Murim hangs in the balance.
+	
+	trigger = {
+		has_global_variable = great_calamity_phase_5
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0003.a
+		# Fight the Heavenly Demon — ultimate duel
+		duel = {
+			target = root
+			skill = prowess
+			30 = {
+				desc = murim_calamity_cycle_expansion5.0003.a.win
+				# Slay the Heavenly Demon
+				add_trait = demon_slayer_supreme
+				add_prowess = 12
+				add_prestige = 5000
+				add_character_modifier = {
+					modifier = heavenly_demon_slayer
+					years = -1
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = heavenly_demon_slain
+						value = yes
+					}
+					trigger_event = {
+						id = murim_calamity_cycle_expansion5.0006
+						days = { 30 60 }
+					}
+				}
+			}
+			40 = {
+				desc = murim_calamity_cycle_expansion5.0003.a.draw
+				# Mutual destruction — both mortally wounded
+				add_health = -4
+				add_prowess = 6
+				add_character_modifier = {
+					modifier = mutual_destruction_wound
+					years = 3
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = heavenly_demon_wounded
+						value = yes
+					}
+				}
+			}
+			30 = {
+				desc = murim_calamity_cycle_expansion5.0003.a.lose
+				# Defeated by the Demon
+				random_list = {
+					50 = { death = { death_reason = death_duel } }
+					50 = {
+						add_health = -3
+						add_trait = broken_by_demon
+						add_character_modifier = {
+							modifier = demon_spared_you
+							years = -1
+						}
+					}
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0003.b
+		# Challenge him to honorable single combat — appeal to his pride
+		add_diplomacy = 3
+		random_list = {
+			60 = {
+				# He accepts — he's that arrogant
+				hidden_effect = {
+					trigger_event = {
+						id = murim_calamity_cycle_expansion5.0003
+						days = { 1 3 }
+					}
+				}
+			}
+			40 = {
+				# He refuses — orders his guards to kill you
+				add_health = -2
+				add_character_modifier = {
+					modifier = demon_guards_attack
+					years = 2
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0003.c
+		# Use a forbidden technique — mutual annihilation
+		add_prowess = 15
+		random_list = {
+			50 = {
+				# Both die — Calamity ends
+				death = { death_reason = death_mutual_annihilation }
+				hidden_effect = {
+					set_global_variable = {
+						name = heavenly_demon_slain
+						value = yes
+					}
+					set_global_variable = {
+						name = calamity_ended_by_sacrifice
+						value = yes
+					}
+				}
+			}
+			50 = {
+				# You survive somehow — he doesn't
+				add_trait = calamity_ender
+				add_health = -3
+				add_prestige = 10000
+				hidden_effect = {
+					set_global_variable = {
+						name = heavenly_demon_slain
+						value = yes
+					}
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_calamity_cycle_expansion5.0004 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0004.t
+	desc = murim_calamity_cycle_expansion5.0004.desc
+	theme = martial_arts
+	
+	# No Mercy — the Heavenly Demon's army massacres the surrendered Orthodox fighters.
+	# Blood fills the valley. This becomes the darkest day in Murim history.
+	
+	trigger = {
+		has_global_variable = great_calamity_phase_5
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0004.a
+		# Fight your way out in the chaos
+		add_prowess = 4
+		random_list = {
+			40 = {
+				add_trait = massacre_survivor
+				add_character_modifier = {
+					modifier = valley_of_blood_survivor
+					years = -1
+				}
+			}
+			60 = {
+				death = { death_reason = death_massacre }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0004.b
+		# Play dead among the corpses — wait for nightfall
+		add_intrigue = 5
+		random_list = {
+			60 = {
+				add_trait = massacre_survivor
+				add_stress = 60
+				add_character_modifier = {
+					modifier = played_dead_in_blood
+					years = -1
+				}
+			}
+			40 = {
+				# Discovered by cleanup crew
+				death = { death_reason = death_massacre }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0004.c
+		# Accept death with dignity — join your fallen comrades
+		death = { death_reason = death_honorable_death }
+		ai_chance = { base = 20 modifier = { add = 30 has_trait = brave } }
+	}
+}
+
+murim_calamity_cycle_expansion5.0005 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0005.t
+	desc = murim_calamity_cycle_expansion5.0005.desc
+	theme = martial_arts
+	
+	# Mountain Refuge — you've gathered survivors in a hidden valley. Monks, swordsmen,
+	# poisoners, beggars — all mixed together. Old rivalries mean nothing when 90%
+	# of the martial world is dead. Time to rebuild.
+	
+	trigger = {
+		has_character_flag = chose_refuge
+		has_global_variable = great_calamity_phase_5
+	}
+	
+	immediate = {
+		remove_character_flag = chose_refuge
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0005.a
+		# Unite all survivors under one banner — the New Murim Alliance
+		add_diplomacy = 6
+		add_prestige = 1000
+		add_trait = new_murim_founder
+		add_character_modifier = {
+			modifier = unity_in_ashes
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = new_murim_alliance_founded
+				value = yes
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0005.b
+		# Rebuild your own clan first — strength from within
+		add_martial = 4
+		add_stewardship = 4
+		add_character_modifier = {
+			modifier = clan_rebuilder
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0005.c
+		# Abandon the martial world — become a farmer, live in peace
+		remove_trait = martial_artist
+		add_stewardship = 5
+		add_health = 2
+		add_stress = -50
+		add_character_modifier = {
+			modifier = retired_to_farming
+			years = -1
+		}
+		ai_chance = { base = 20 modifier = { add = 20 has_trait = content } }
+	}
+}
+
+murim_calamity_cycle_expansion5.0006 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0006.t
+	desc = murim_calamity_cycle_expansion5.0006.desc
+	theme = martial_arts
+	
+	# After the Storm — the Heavenly Demon is dead. The Calamity is over. But Murim
+	# is in ruins. 90% of martial artists are dead. Sects are destroyed. Knowledge
+	# is lost. The player dynasty has survived. Now comes the rebuilding.
+	
+	trigger = {
+		has_global_variable = heavenly_demon_slain
+	}
+	
+	immediate = {
+		# End the Calamity
+		remove_global_variable = great_calamity_phase_5
+		set_global_variable = {
+			name = post_calamity_era
+			value = yes
+		}
+		set_global_variable = {
+			name = calamity_cycle_count
+			value = 1
+		}
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0006.a
+		# Declare the New Era — become the first leader
+		add_trait = era_founder
+		add_prestige = 5000
+		add_diplomacy = 5
+		add_character_modifier = {
+			modifier = new_era_architect
+			years = -1
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_calamity_cycle_expansion5.0007
+				days = { 60 120 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0006.b
+		# Step back — let the next generation lead
+		add_piety = 500
+		add_learning = 5
+		add_character_modifier = {
+			modifier = wise_elder_advisor
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0006.c
+		# Wander alone — too much death, too much pain
+		add_trait = wandering_hermit
+		add_stress = 40
+		add_prowess = 5
+		add_character_modifier = {
+			modifier = grief_wanderer
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_calamity_cycle_expansion5.0007 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0007.t
+	desc = murim_calamity_cycle_expansion5.0007.desc
+	theme = martial_arts
+	
+	# Founding the New Sects — the old sects are gone. Their names live only in memory.
+	# New sects must be founded from the survivors. Each carries fragments of the old
+	# knowledge, combined in new ways.
+	
+	trigger = {
+		has_global_variable = post_calamity_era
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0007.a
+		# Found a sect combining Orthodox and Unorthodox arts
+		add_trait = unified_sect_founder
+		add_martial = 5
+		add_diplomacy = 5
+		add_character_modifier = {
+			modifier = balance_of_paths
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = unified_sect_exists
+				value = yes
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0007.b
+		# Rebuild the Orthodox Alliance — preserve tradition
+		add_trait = orthodox_restorer
+		add_piety = 500
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = tradition_keeper
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0007.c
+		# Create a school that teaches ALL martial arts — no more secrets
+		add_learning = 8
+		add_prestige = 800
+		add_trait = grand_academy_founder
+		add_character_modifier = {
+			modifier = knowledge_liberation
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = grand_martial_academy
+				value = yes
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_calamity_cycle_expansion5.0008 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0008.t
+	desc = murim_calamity_cycle_expansion5.0008.desc
+	theme = martial_arts
+	
+	# Mythology Formation — the Calamity survivors begin telling stories of the old
+	# world. Great warriors become legends. Real events become myths. The truth is
+	# lost, replaced by tales of gods and demons.
+	
+	trigger = {
+		has_global_variable = post_calamity_era
+		age >= 50
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0008.a
+		# Write the true history — preserve what really happened
+		add_learning = 6
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = historian_of_the_calamity
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = true_history_preserved
+				value = yes
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0008.b
+		# Let the myths grow — legends inspire more than facts
+		add_diplomacy = 4
+		add_piety = 300
+		add_character_modifier = {
+			modifier = myth_builder
+			years = -1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0008.c
+		# Create a secret archive — truth for the worthy, myths for the masses
+		add_intrigue = 5
+		add_learning = 4
+		add_character_modifier = {
+			modifier = secret_historian
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_calamity_cycle_expansion5.0009 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0009.t
+	desc = murim_calamity_cycle_expansion5.0009.desc
+	theme = martial_arts
+	
+	# The Cycle Warning — an ancient text discovered in the ruins warns: the Calamity
+	# is cyclical. Every 150-200 years, Murim tears itself apart. The Heavenly Demon
+	# was not the cause — only the catalyst. The cycle will repeat.
+	
+	trigger = {
+		has_global_variable = post_calamity_era
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0009.a
+		# Prepare countermeasures for the next cycle
+		add_learning = 6
+		add_martial = 4
+		add_character_modifier = {
+			modifier = cycle_breaker_aspirant
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = preparing_for_next_cycle
+				value = yes
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0009.b
+		# This is fate — accept the cycle as natural
+		add_piety = 500
+		add_learning = 3
+		add_character_modifier = {
+			modifier = cycle_acceptor
+			years = -1
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0009.c
+		# Destroy the text — let the next generation face it fresh
+		add_piety = -200
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = knowledge_destroyer
+			years = 10
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_calamity_cycle_expansion5.0010 = {
+	type = character_event
+	title = murim_calamity_cycle_expansion5.0010.t
+	desc = murim_calamity_cycle_expansion5.0010.desc
+	theme = martial_arts
+	
+	# Dawn of the New Age — children born after the Calamity know nothing of the old
+	# world. They train in the new sects, learn the new techniques, and dream of
+	# surpassing the legends of the past. The cycle begins anew.
+	# Player dynasty continues. The game goes on.
+	
+	trigger = {
+		has_global_variable = post_calamity_era
+		is_ruler = yes
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 5 has_trait = era_founder }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0010.a
+		# Train the new generation — pass on everything
+		add_learning = 5
+		add_martial = 3
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = master_teacher_of_new_era
+			years = -1
+		}
+		hidden_effect = {
+			every_child = {
+				add_prowess = 3
+				add_martial = 2
+				add_character_modifier = {
+					modifier = trained_by_calamity_survivor
+					years = -1
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0010.b
+		# Focus on your dynasty's power — become the dominant house
+		add_prestige = 1000
+		add_gold = 500
+		add_character_modifier = {
+			modifier = dynasty_builder
+			years = -1
+		}
+		hidden_effect = {
+			add_dynasty_prestige = 2000
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_calamity_cycle_expansion5.0010.c
+		# Ensure the cycle never repeats — dedicate your life to prevention
+		add_learning = 8
+		add_piety = 500
+		add_character_modifier = {
+			modifier = cycle_prevention_dedicated
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = cycle_prevention_project
+				value = yes
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
