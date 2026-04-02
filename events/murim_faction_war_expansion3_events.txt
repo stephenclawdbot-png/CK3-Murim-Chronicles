@@ -1,0 +1,374 @@
+namespace = murim_faction_war_expansion3
+
+# FACTION WAR EXPANSION 3 - TOTAL WAR ENDGAME ORTHODOX VS UNORTHODOX
+# 10 events: total war, neutral faction, war crimes, peace summit, aftermath
+
+murim_faction_war_expansion3.0001 = {
+	type = character_event
+	title = murim_faction_war_exp3.0001.t
+	desc = murim_faction_war_exp3.0001.desc
+	theme = war
+	left_portrait = { character = root animation = rage }
+
+	trigger = {
+		has_trait = murim_martial_artist
+		is_ruler = yes
+		has_global_variable = murim_faction_war_active
+		NOT = { has_character_flag = total_war_declared }
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = { add = 30 has_trait = wrathful }
+	}
+
+	immediate = {
+		set_character_flag = total_war_declared
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist is_ruler = yes NOT = { this = root } }
+			add_to_temporary_list = war_participants
+		}
+	}
+
+	option = {
+		name = murim_faction_war_exp3.0001.a
+		add_character_modifier = { modifier = murim_total_war_declared years = 10 }
+		add_prestige = 500
+		add_martial = 3
+		every_in_list = {
+			list = war_participants
+			trigger_event = { id = murim_faction_war_expansion3.0002 days = { 5 15 } }
+		}
+	}
+	option = {
+		name = murim_faction_war_exp3.0001.b
+		add_character_modifier = { modifier = murim_war_strategist years = 10 }
+		add_martial = 5
+		trigger_event = { id = murim_faction_war_expansion3.0003 days = { 30 60 } }
+	}
+	option = {
+		name = murim_faction_war_exp3.0001.c
+		add_character_modifier = { modifier = murim_neutral_faction years = 15 }
+		add_diplomacy = 3
+		trigger_event = { id = murim_faction_war_expansion3.0004 days = { 15 30 } }
+	}
+}
+
+murim_faction_war_expansion3.0002 = {
+	type = character_event
+	title = murim_faction_war_exp3.0002.t
+	desc = murim_faction_war_exp3.0002.desc
+	theme = war
+	left_portrait = { character = root animation = anger }
+
+	trigger = { has_trait = murim_martial_artist is_ruler = yes }
+
+	option = {
+		name = murim_faction_war_exp3.0002.a
+		add_character_modifier = { modifier = murim_joined_total_war years = 10 }
+		add_martial = 2
+		add_prowess = 3
+	}
+	option = {
+		name = murim_faction_war_exp3.0002.b
+		add_character_modifier = { modifier = murim_refused_total_war years = 10 }
+		add_prestige = -300
+		add_piety = 200
+	}
+	option = {
+		name = murim_faction_war_exp3.0002.c
+		add_character_modifier = { modifier = murim_war_profiteer years = 10 }
+		add_gold = 500
+		add_intrigue = 2
+	}
+}
+
+murim_faction_war_expansion3.0003 = {
+	type = character_event
+	title = murim_faction_war_exp3.0003.t
+	desc = murim_faction_war_exp3.0003.desc
+	theme = intrigue
+	left_portrait = { character = root animation = scheme }
+
+	trigger = { has_character_modifier = murim_war_strategist }
+
+	option = {
+		name = murim_faction_war_exp3.0003.a
+		add_character_modifier = { modifier = murim_ambush_specialist years = 10 }
+		add_intrigue = 3
+		add_prowess = 5
+		trigger_event = { id = murim_faction_war_expansion3.0005 days = { 30 60 } }
+	}
+	option = {
+		name = murim_faction_war_exp3.0003.b
+		add_character_modifier = { modifier = murim_siege_warfare years = 10 }
+		add_martial = 5
+		add_gold = -200
+	}
+	option = {
+		name = murim_faction_war_exp3.0003.c
+		add_character_modifier = { modifier = murim_scorched_earth years = 10 }
+		add_tyranny = 20
+		add_martial = 3
+	}
+}
+
+murim_faction_war_expansion3.0004 = {
+	type = character_event
+	title = murim_faction_war_exp3.0004.t
+	desc = murim_faction_war_exp3.0004.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = personality_honorable }
+
+	trigger = { has_character_modifier = murim_neutral_faction }
+
+	immediate = {
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist has_character_modifier = murim_joined_total_war }
+			add_to_temporary_list = warring_factions
+		}
+	}
+
+	option = {
+		name = murim_faction_war_exp3.0004.a
+		add_character_modifier = { modifier = murim_peace_mediator years = 15 }
+		add_diplomacy = 5
+		add_prestige = 1000
+		trigger_event = { id = murim_faction_war_expansion3.0006 days = { 60 120 } }
+	}
+	option = {
+		name = murim_faction_war_exp3.0004.b
+		add_character_modifier = { modifier = murim_protecting_civilians years = 15 }
+		add_piety = 1000
+		add_prestige = 500
+	}
+	option = {
+		name = murim_faction_war_exp3.0004.c
+		add_character_modifier = { modifier = murim_neutral_arms_dealer years = 15 }
+		add_gold = 1000
+		add_intrigue = 3
+	}
+}
+
+murim_faction_war_expansion3.0005 = {
+	type = character_event
+	title = murim_faction_war_exp3.0005.t
+	desc = murim_faction_war_exp3.0005.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_callous }
+
+	trigger = { has_character_modifier = murim_ambush_specialist has_global_variable = murim_faction_war_active }
+
+	immediate = {
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist has_character_modifier = murim_joined_total_war NOT = { this = root } }
+			save_scope_as = ambush_target
+		}
+	}
+
+	option = {
+		name = murim_faction_war_exp3.0005.a
+		trigger = { exists = scope:ambush_target }
+		duel = {
+			skill = intrigue
+			target = scope:ambush_target
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_faction_war_exp3.0005.a.win
+				root = { add_prestige = 1000 add_character_modifier = { modifier = murim_ambush_master years = 20 } }
+				scope:ambush_target = { add_trait = wounded_3 add_prestige = -500 }
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_faction_war_exp3.0005.a.lose
+				root = { add_trait = wounded_2 add_prestige = -300 }
+			}
+		}
+	}
+	option = {
+		name = murim_faction_war_exp3.0005.b
+		add_character_modifier = { modifier = murim_war_crime_poison years = 15 }
+		add_tyranny = 30
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_war_criminal target = root opinion = -30 }
+		}
+	}
+	option = {
+		name = murim_faction_war_exp3.0005.c
+		add_character_modifier = { modifier = murim_honorable_combat years = 15 }
+		add_piety = 500
+		add_prestige = 300
+	}
+}
+
+murim_faction_war_expansion3.0006 = {
+	type = character_event
+	title = murim_faction_war_exp3.0006.t
+	desc = murim_faction_war_exp3.0006.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = personality_honorable }
+
+	trigger = { has_character_modifier = murim_peace_mediator }
+
+	option = {
+		name = murim_faction_war_exp3.0006.a
+		add_prestige = 3000
+		add_character_modifier = { modifier = murim_great_peacemaker years = 30 }
+		remove_global_variable = murim_faction_war_active
+		set_global_variable = { name = murim_faction_peace_treaty value = yes }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_brought_peace target = root opinion = 25 }
+		}
+	}
+	option = {
+		name = murim_faction_war_exp3.0006.b
+		add_character_modifier = { modifier = murim_failed_peace_talks years = 10 }
+		add_prestige = -500
+		trigger_event = { id = murim_faction_war_expansion3.0007 days = { 30 60 } }
+	}
+	option = {
+		name = murim_faction_war_exp3.0006.c
+		add_character_modifier = { modifier = murim_conditional_ceasefire years = 10 }
+		add_prestige = 500
+	}
+}
+
+murim_faction_war_expansion3.0007 = {
+	type = character_event
+	title = murim_faction_war_exp3.0007.t
+	desc = murim_faction_war_exp3.0007.desc
+	theme = war
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = { has_character_modifier = murim_failed_peace_talks has_global_variable = murim_faction_war_active }
+
+	option = {
+		name = murim_faction_war_exp3.0007.a
+		add_character_modifier = { modifier = murim_final_battle years = 5 }
+		add_prowess = 5
+		add_prestige = 1000
+		random = { chance = 30 add_trait = wounded_3 }
+		trigger_event = { id = murim_faction_war_expansion3.0008 days = { 30 60 } }
+	}
+	option = {
+		name = murim_faction_war_exp3.0007.b
+		add_character_modifier = { modifier = murim_war_exhaustion years = 10 }
+		add_prestige = -200
+		add_gold = -300
+	}
+	option = {
+		name = murim_faction_war_exp3.0007.c
+		add_character_modifier = { modifier = murim_desperate_alliance years = 10 }
+		add_diplomacy = 3
+	}
+}
+
+murim_faction_war_expansion3.0008 = {
+	type = character_event
+	title = murim_faction_war_exp3.0008.t
+	desc = murim_faction_war_exp3.0008.desc
+	theme = war
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = { has_character_modifier = murim_final_battle }
+
+	option = {
+		name = murim_faction_war_exp3.0008.a
+		add_prestige = 5000
+		add_character_modifier = { modifier = murim_faction_war_victor years = 50 }
+		remove_global_variable = murim_faction_war_active
+		set_global_variable = { name = murim_faction_war_won_by_orthodox value = yes }
+	}
+	option = {
+		name = murim_faction_war_exp3.0008.b
+		add_prestige = 5000
+		add_character_modifier = { modifier = murim_unorthodox_triumphant years = 50 }
+		remove_global_variable = murim_faction_war_active
+		set_global_variable = { name = murim_faction_war_won_by_unorthodox value = yes }
+	}
+	option = {
+		name = murim_faction_war_exp3.0008.c
+		add_character_modifier = { modifier = murim_mutual_destruction years = 30 }
+		remove_global_variable = murim_faction_war_active
+		set_global_variable = { name = murim_faction_war_stalemate value = yes }
+	}
+}
+
+murim_faction_war_expansion3.0009 = {
+	type = character_event
+	title = murim_faction_war_exp3.0009.t
+	desc = murim_faction_war_exp3.0009.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = thinking }
+
+	trigger = {
+		has_trait = murim_martial_artist
+		OR = {
+			has_global_variable = murim_faction_war_won_by_orthodox
+			has_global_variable = murim_faction_war_won_by_unorthodox
+			has_global_variable = murim_faction_war_stalemate
+		}
+		NOT = { has_character_flag = war_aftermath_processed }
+	}
+
+	immediate = { set_character_flag = war_aftermath_processed }
+
+	option = {
+		name = murim_faction_war_exp3.0009.a
+		add_character_modifier = { modifier = murim_war_veteran years = 30 }
+		add_prowess = 3
+		add_prestige = 500
+	}
+	option = {
+		name = murim_faction_war_exp3.0009.b
+		add_character_modifier = { modifier = murim_rebuilding_after_war years = 20 }
+		add_stewardship = 3
+		add_gold = 200
+	}
+	option = {
+		name = murim_faction_war_exp3.0009.c
+		add_character_modifier = { modifier = murim_seeking_new_balance years = 20 }
+		add_diplomacy = 3
+		add_piety = 300
+	}
+}
+
+murim_faction_war_expansion3.0010 = {
+	type = character_event
+	title = murim_faction_war_exp3.0010.t
+	desc = murim_faction_war_exp3.0010.desc
+	theme = faith
+	left_portrait = { character = root animation = pray }
+
+	trigger = {
+		has_trait = murim_martial_artist
+		has_global_variable = murim_faction_peace_treaty
+		NOT = { has_character_flag = new_murim_order_considered }
+	}
+
+	immediate = { set_character_flag = new_murim_order_considered }
+
+	option = {
+		name = murim_faction_war_exp3.0010.a
+		add_character_modifier = { modifier = murim_new_murim_order years = 50 }
+		add_prestige = 2000
+		set_global_variable = { name = murim_unified_murim value = yes }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_new_order_member target = root opinion = 15 }
+		}
+	}
+	option = {
+		name = murim_faction_war_exp3.0010.b
+		add_character_modifier = { modifier = murim_old_grudges_remain years = 30 }
+		add_intrigue = 3
+	}
+	option = {
+		name = murim_faction_war_exp3.0010.c
+		add_character_modifier = { modifier = murim_peaceful_coexistence years = 30 }
+		add_diplomacy = 5
+		add_piety = 500
+	}
+}
