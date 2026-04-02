@@ -1,0 +1,535 @@
+###############################################################################
+# MURIM CULTIVATION RIVAL EVENTS
+# A deep rivalry system for cultivators who have found their equal — or their
+# better. Rivals push each other to greater heights, but can also destroy one
+# another. Tracked via the murim_rival_target variable (character scope).
+#
+# Variables: murim_has_rival (0/1), murim_rival_intensity (1-5)
+# Cross-references: murim_duel_events, murim_breakthrough_events,
+#                   murim_interaction_events, murim_ranking_events
+###############################################################################
+
+namespace = murim_rival
+
+###############################################################################
+# 1. ACQUIRING A CULTIVATION RIVAL
+# The moment two cultivators recognize each other as their equal adversary.
+###############################################################################
+murim_rival.0001 = {
+	type = character_event
+	title = murim_rival.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_cultivation_rank
+					var:murim_cultivation_rank >= 4
+				}
+				desc = murim_rival.0001.desc_advanced
+			}
+			desc = murim_rival.0001.desc
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:rival_candidate
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		NOT = { has_variable = murim_has_rival }
+		NOT = { has_character_flag = murim_rival_check_cooldown }
+		any_living_character = {
+			is_alive = yes
+			has_variable = murim_cultivation_rank
+			NOT = { this = root }
+			# Within one rank of root
+			var:murim_cultivation_rank >= root.var:murim_cultivation_rank - 1
+			var:murim_cultivation_rank <= root.var:murim_cultivation_rank + 1
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_rival_check_cooldown
+			years = 3
+		}
+		random_living_character = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_rank
+				NOT = { this = root }
+				var:murim_cultivation_rank >= root.var:murim_cultivation_rank - 1
+				var:murim_cultivation_rank <= root.var:murim_cultivation_rank + 1
+			}
+			save_scope_as = rival_candidate
+		}
+	}
+
+	# Option A: Accept the rivalry
+	option = {
+		name = murim_rival.0001.a
+		set_variable = { name = murim_has_rival value = 1 }
+		set_variable = { name = murim_rival_intensity value = 1 }
+		add_rival = scope:rival_candidate
+		change_variable = { name = murim_cultivation_xp add = 10 }
+		add_prestige = 75
+		custom_tooltip = murim_rival_accepted_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Challenge them immediately to establish dominance
+	option = {
+		name = murim_rival.0001.b
+		set_variable = { name = murim_has_rival value = 1 }
+		set_variable = { name = murim_rival_intensity value = 2 }
+		add_rival = scope:rival_candidate
+		trigger_event = {
+			id = murim_duel.0001
+			days = { 5 15 }
+		}
+		add_prestige = 50
+		custom_tooltip = murim_rival_challenge_immediately_tt
+		ai_chance = { base = 30 }
+	}
+
+	# Option C: Dismiss them - you have no equal
+	option = {
+		name = murim_rival.0001.c
+		trigger = { prestige >= 500 }
+		add_prestige = -100
+		add_stress = 5
+		custom_tooltip = murim_rival_dismissed_tt
+		ai_chance = { base = 10 }
+	}
+}
+
+###############################################################################
+# 2. RIVAL'S BREAKTHROUGH - THEY SURPASSED YOU
+# Your rival broke through to the next realm before you. Motivating or crushing?
+###############################################################################
+murim_rival.0002 = {
+	type = character_event
+	title = murim_rival.0002.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_rival_intensity
+					var:murim_rival_intensity >= 3
+				}
+				desc = murim_rival.0002.desc_bitter
+			}
+			desc = murim_rival.0002.desc
+		}
+	}
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_introspective
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_has_rival
+		var:murim_has_rival >= 1
+		NOT = { has_character_flag = murim_rival_breakthrough_heard_cooldown }
+		any_rival = {
+			is_alive = yes
+			has_variable = murim_cultivation_rank
+			var:murim_cultivation_rank > root.var:murim_cultivation_rank
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_rival_breakthrough_heard_cooldown
+			years = 2
+		}
+	}
+
+	# Option A: Let it fuel you - train twice as hard
+	option = {
+		name = murim_rival.0002.a
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_stress = 10
+		if = {
+			limit = { has_variable = murim_rival_intensity }
+			change_variable = { name = murim_rival_intensity add = 1 }
+		}
+		custom_tooltip = murim_rival_breakthrough_motivated_tt
+		ai_chance = { base = 70 }
+	}
+
+	# Option B: Seek a shortcut - risky path
+	option = {
+		name = murim_rival.0002.b
+		random_list = {
+			40 = {
+				change_variable = { name = murim_cultivation_xp add = 60 }
+				add_prestige = 50
+				custom_tooltip = murim_rival_shortcut_success_tt
+			}
+			60 = {
+				add_stress = 40
+				add_health = -0.5
+				custom_tooltip = murim_rival_shortcut_fail_tt
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+
+	# Option C: Accept their advancement and congratulate them
+	option = {
+		name = murim_rival.0002.c
+		every_rival = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank > root.var:murim_cultivation_rank
+			}
+			add_opinion = {
+				modifier = murim_rival_respect_opinion
+				target = root
+			}
+		}
+		add_prestige = 100
+		add_stress = -10
+		if = {
+			limit = { has_variable = murim_rival_intensity }
+			change_variable = { name = murim_rival_intensity add = -1 }
+		}
+		custom_tooltip = murim_rival_breakthrough_gracious_tt
+		ai_chance = { base = 20 }
+	}
+}
+
+###############################################################################
+# 3. RIVAL SABOTAGE ATTEMPT
+# Your rival schemes to disrupt your cultivation - or you discover you're
+# being targeted.
+###############################################################################
+murim_rival.0003 = {
+	type = character_event
+	title = murim_rival.0003.t
+	desc = murim_rival.0003.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_cautious
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_has_rival
+		var:murim_has_rival >= 1
+		has_variable = murim_rival_intensity
+		var:murim_rival_intensity >= 3
+		NOT = { has_character_flag = murim_rival_sabotage_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_rival_sabotage_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: Investigate - find the source and expose them
+	option = {
+		name = murim_rival.0003.a
+		trigger = { intrigue >= 10 }
+		random_list = {
+			60 = {
+				modifier = {
+					factor = 1.5
+					intrigue >= 15
+				}
+				# Expose the saboteur
+				add_prestige = 200
+				every_rival = {
+					limit = { is_alive = yes }
+					add_opinion = {
+						modifier = murim_rival_exposed_opinion
+						target = root
+					}
+					add_prestige = -100
+				}
+				custom_tooltip = murim_rival_sabotage_exposed_tt
+			}
+			40 = {
+				# Failed to prove anything
+				change_variable = { name = murim_cultivation_xp add = -15 }
+				add_stress = 15
+				custom_tooltip = murim_rival_sabotage_failed_tt
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Retaliate in kind
+	option = {
+		name = murim_rival.0003.b
+		random_list = {
+			50 = {
+				every_rival = {
+					limit = { is_alive = yes }
+					change_variable = { name = murim_cultivation_xp add = -20 }
+				}
+				add_prestige = 100
+				custom_tooltip = murim_rival_sabotage_retaliate_tt
+			}
+			50 = {
+				add_prestige = -100
+				add_stress = 20
+				custom_tooltip = murim_rival_sabotage_retaliate_fail_tt
+			}
+		}
+		if = {
+			limit = { has_variable = murim_rival_intensity }
+			change_variable = { name = murim_rival_intensity add = 1 }
+		}
+		ai_chance = { base = 25 }
+	}
+
+	# Option C: Endure it and use the adversity to strengthen your will
+	option = {
+		name = murim_rival.0003.c
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		add_stress = 20
+		add_prestige = 50
+		custom_tooltip = murim_rival_sabotage_endure_tt
+		ai_chance = { base = 30 }
+	}
+}
+
+###############################################################################
+# 4. RIVAL ASKS FOR HELP
+# Your rival faces a crisis - helping them could defuse the rivalry.
+###############################################################################
+murim_rival.0004 = {
+	type = character_event
+	title = murim_rival.0004.t
+	desc = murim_rival.0004.desc
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_content
+	}
+	right_portrait = {
+		character = scope:rival_in_need
+		animation = personality_nervous
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_has_rival
+		var:murim_has_rival >= 1
+		NOT = { has_character_flag = murim_rival_help_request_cooldown }
+		any_rival = {
+			is_alive = yes
+			OR = {
+				health < 1.5
+				stress >= 60
+			}
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_rival_help_request_cooldown
+			years = 5
+		}
+		random_rival = {
+			limit = {
+				is_alive = yes
+				OR = {
+					health < 1.5
+					stress >= 60
+				}
+			}
+			save_scope_as = rival_in_need
+		}
+	}
+
+	# Option A: Help them - perhaps rivals can become allies
+	option = {
+		name = murim_rival.0004.a
+		scope:rival_in_need = {
+			add_health = 0.75
+			add_stress = -30
+		}
+		add_prestige = 150
+		set_variable = { name = murim_rival_intensity value = 1 }
+		remove_rival = scope:rival_in_need
+		add_friend = scope:rival_in_need
+		custom_tooltip = murim_rival_helped_became_friend_tt
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				has_trait = compassionate
+			}
+		}
+	}
+
+	# Option B: Help them, but keep them as rival
+	option = {
+		name = murim_rival.0004.b
+		scope:rival_in_need = {
+			add_health = 0.5
+			add_stress = -20
+		}
+		add_prestige = 75
+		scope:rival_in_need = {
+			add_opinion = {
+				modifier = murim_rival_respect_opinion
+				target = root
+			}
+		}
+		if = {
+			limit = { has_variable = murim_rival_intensity }
+			change_variable = { name = murim_rival_intensity add = -1 }
+		}
+		custom_tooltip = murim_rival_helped_respect_tt
+		ai_chance = { base = 35 }
+	}
+
+	# Option C: Refuse - weakness has no place in the martial world
+	option = {
+		name = murim_rival.0004.c
+		trigger = { has_trait = callous }
+		add_prestige = 50
+		add_stress = 10
+		if = {
+			limit = { has_variable = murim_rival_intensity }
+			change_variable = { name = murim_rival_intensity add = 1 }
+		}
+		custom_tooltip = murim_rival_refused_help_tt
+		ai_chance = { base = 15 }
+	}
+}
+
+###############################################################################
+# 5. THE FINAL CONFRONTATION
+# After years of rivalry, one cultivator must settle things permanently.
+###############################################################################
+murim_rival.0005 = {
+	type = character_event
+	title = murim_rival.0005.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_rival_intensity
+					var:murim_rival_intensity >= 4
+				}
+				desc = murim_rival.0005.desc_intense
+			}
+			desc = murim_rival.0005.desc
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:final_rival
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_has_rival
+		var:murim_has_rival >= 1
+		has_variable = murim_rival_intensity
+		var:murim_rival_intensity >= 3
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+		NOT = { has_character_flag = murim_rival_final_confrontation_done }
+		any_rival = {
+			is_alive = yes
+			has_variable = murim_cultivation_rank
+		}
+	}
+
+	immediate = {
+		random_rival = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_rank
+			}
+			save_scope_as = final_rival
+		}
+	}
+
+	# Option A: End it in a legendary duel
+	option = {
+		name = murim_rival.0005.a
+		trigger_event = {
+			id = murim_legendary_duel.0001
+			days = { 3 10 }
+		}
+		add_character_flag = murim_rival_final_confrontation_done
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		custom_tooltip = murim_rival_final_duel_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Transcend the rivalry - rise above it
+	option = {
+		name = murim_rival.0005.b
+		trigger = {
+			OR = {
+				has_trait = patient
+				has_trait = calm
+				prestige >= 2000
+			}
+		}
+		add_prestige = 500
+		change_variable = { name = murim_cultivation_xp add = 80 }
+		remove_rival = scope:final_rival
+		set_variable = { name = murim_has_rival value = 0 }
+		add_character_flag = murim_rival_final_confrontation_done
+		custom_tooltip = murim_rival_transcended_tt
+		ai_chance = { base = 20 }
+	}
+
+	# Option C: Destroy them - not in a duel, but through schemes
+	option = {
+		name = murim_rival.0005.c
+		trigger = { intrigue >= 14 }
+		random_list = {
+			50 = {
+				scope:final_rival = {
+					add_prestige = -500
+					add_health = -1.0
+				}
+				add_prestige = 200
+				add_character_flag = murim_rival_final_confrontation_done
+				set_variable = { name = murim_has_rival value = 0 }
+				custom_tooltip = murim_rival_destroyed_schemes_tt
+			}
+			50 = {
+				add_prestige = -200
+				add_stress = 40
+				scope:final_rival = {
+					add_opinion = {
+						modifier = murim_rival_exposed_opinion
+						target = root
+					}
+				}
+				custom_tooltip = murim_rival_scheme_failed_tt
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}

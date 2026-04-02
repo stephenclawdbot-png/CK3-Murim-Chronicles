@@ -1,0 +1,633 @@
+###############################################################################
+# MURIM ALCHEMY EVENTS
+# Events for pill crafting, spiritual herb gathering, alchemy competitions,
+# and cultivation-enhancing elixirs.
+# Variables: murim_alchemy_skill (0-5), murim_herb_stock
+# Cross-references: murim_cultivation_events, murim_tang_clan_events,
+#                   murim_training_events, murim_discovery_events
+###############################################################################
+
+namespace = murim_alchemy
+
+###############################################################################
+# 1. SPIRITUAL HERB GARDEN DISCOVERED
+# Trigger: Monthly pulse, low chance, requires cultivation rank >= 1
+###############################################################################
+murim_alchemy.0001 = {
+	type = character_event
+	title = murim_alchemy.0001.t
+	desc = murim_alchemy.0001.desc
+	theme = stewardship_focus
+	left_portrait = {
+		character = root
+		animation = personality_curious
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_alchemy_herb_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_herb_cooldown
+			years = 2
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_herb_stock } }
+			set_variable = { name = murim_herb_stock value = 0 }
+		}
+	}
+
+	# Option A: Harvest carefully - slower but preserves the garden
+	option = {
+		name = murim_alchemy.0001.a
+		change_variable = { name = murim_herb_stock add = 5 }
+		add_prestige = 30
+		custom_tooltip = murim_alchemy_herb_harvest_careful_tt
+		ai_chance = { base = 50 }
+	}
+
+	# Option B: Strip the garden clean - big haul, one-time
+	option = {
+		name = murim_alchemy.0001.b
+		change_variable = { name = murim_herb_stock add = 12 }
+		add_prestige = 10
+		add_character_flag = {
+			flag = murim_alchemy_herb_cooldown
+			years = 5
+		}
+		custom_tooltip = murim_alchemy_herb_harvest_greedy_tt
+		ai_chance = { base = 20 }
+	}
+
+	# Option C: Mark the location and return with disciples (if you have any)
+	option = {
+		name = murim_alchemy.0001.c
+		trigger = {
+			any_courtier = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+			}
+		}
+		change_variable = { name = murim_herb_stock add = 8 }
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+				count <= 3
+			}
+			add_prestige = 15
+		}
+		add_prestige = 50
+		custom_tooltip = murim_alchemy_herb_harvest_disciples_tt
+		ai_chance = { base = 30 }
+	}
+}
+
+###############################################################################
+# 2. BREWING THE BREAKTHROUGH PILL
+# Player actively brews a pill - success or costly failure
+###############################################################################
+murim_alchemy.0002 = {
+	type = character_event
+	title = murim_alchemy.0002.t
+	desc = murim_alchemy.0002.desc
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_intellectual
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_herb_stock
+		var:murim_herb_stock >= 5
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		NOT = { has_character_flag = murim_alchemy_brew_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_brew_cooldown
+			years = 1
+		}
+		change_variable = { name = murim_herb_stock add = -5 }
+	}
+
+	# Option A: Standard brew - safe process
+	option = {
+		name = murim_alchemy.0002.a
+		random_list = {
+			65 = {
+				# Success - Breakthrough Pill created
+				change_variable = { name = murim_cultivation_xp add = 30 }
+				add_prestige = 100
+				custom_tooltip = murim_alchemy_brew_success_tt
+			}
+			35 = {
+				# Partial failure - weak pill
+				change_variable = { name = murim_cultivation_xp add = 8 }
+				add_stress = 10
+				custom_tooltip = murim_alchemy_brew_weak_tt
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Push the flame higher - riskier, stronger pill
+	option = {
+		name = murim_alchemy.0002.b
+		trigger = {
+			learning >= 10
+		}
+		random_list = {
+			40 = {
+				# Great success - Superior Pill
+				change_variable = { name = murim_cultivation_xp add = 60 }
+				add_prestige = 250
+				if = {
+					limit = { NOT = { has_variable = murim_alchemy_skill } }
+					set_variable = { name = murim_alchemy_skill value = 0 }
+				}
+				change_variable = { name = murim_alchemy_skill add = 1 }
+				custom_tooltip = murim_alchemy_brew_superior_tt
+			}
+			60 = {
+				# Explosion - qi backlash
+				add_stress = 30
+				add_prestige = -50
+				add_health = -0.5
+				custom_tooltip = murim_alchemy_brew_explosion_tt
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	# Option C: Refine for a disciple instead
+	option = {
+		name = murim_alchemy.0002.c
+		trigger = {
+			any_courtier = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+			}
+		}
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+			}
+			change_variable = { name = murim_cultivation_xp add = 20 }
+			add_prestige = 50
+		}
+		add_prestige = 80
+		custom_tooltip = murim_alchemy_brew_disciple_tt
+		ai_chance = { base = 25 }
+	}
+}
+
+###############################################################################
+# 3. ALCHEMY COMPETITION AT SECT GATHERING
+# Two alchemists compete publicly - reputation on the line
+###############################################################################
+murim_alchemy.0003 = {
+	type = character_event
+	title = murim_alchemy.0003.t
+	desc = murim_alchemy.0003.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		is_imprisoned = no
+		prestige >= 200
+		NOT = { has_character_flag = murim_alchemy_competition_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_competition_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: Enter the competition
+	option = {
+		name = murim_alchemy.0003.a
+		random_list = {
+			55 = {
+				modifier = {
+					factor = 1.5
+					has_variable = murim_alchemy_skill
+					var:murim_alchemy_skill >= 2
+				}
+				modifier = {
+					factor = 1.3
+					learning >= 14
+				}
+				add_prestige = 300
+				change_variable = { name = murim_cultivation_xp add = 20 }
+				if = {
+					limit = { NOT = { has_variable = murim_alchemy_skill } }
+					set_variable = { name = murim_alchemy_skill value = 0 }
+				}
+				change_variable = { name = murim_alchemy_skill add = 1 }
+				custom_tooltip = murim_alchemy_competition_win_tt
+			}
+			45 = {
+				add_prestige = -100
+				add_stress = 15
+				custom_tooltip = murim_alchemy_competition_lose_tt
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Option B: Observe and learn instead
+	option = {
+		name = murim_alchemy.0003.b
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_skill } }
+			set_variable = { name = murim_alchemy_skill value = 0 }
+		}
+		change_variable = { name = murim_alchemy_skill add = 1 }
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		custom_tooltip = murim_alchemy_competition_observe_tt
+		ai_chance = { base = 30 }
+	}
+}
+
+###############################################################################
+# 4. TRADING PILLS FOR SECRETS
+# A mysterious merchant offers a cultivation manual in exchange for pills
+###############################################################################
+murim_alchemy.0004 = {
+	type = character_event
+	title = murim_alchemy.0004.t
+	desc = murim_alchemy.0004.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = personality_cautious
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_herb_stock
+		var:murim_herb_stock >= 3
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_alchemy_trade_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_trade_cooldown
+			years = 2
+		}
+	}
+
+	# Option A: Make the trade
+	option = {
+		name = murim_alchemy.0004.a
+		change_variable = { name = murim_herb_stock add = -3 }
+		random_list = {
+			60 = {
+				change_variable = { name = murim_cultivation_xp add = 40 }
+				add_prestige = 75
+				custom_tooltip = murim_alchemy_trade_success_tt
+			}
+			25 = {
+				# Manual is incomplete
+				change_variable = { name = murim_cultivation_xp add = 10 }
+				custom_tooltip = murim_alchemy_trade_incomplete_tt
+			}
+			15 = {
+				# Scam - herbs taken, nothing given
+				add_prestige = -75
+				add_stress = 20
+				custom_tooltip = murim_alchemy_trade_scam_tt
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Option B: Investigate the merchant first (Intrigue-based)
+	option = {
+		name = murim_alchemy.0004.b
+		trigger = { intrigue >= 10 }
+		random_list = {
+			70 = {
+				# Discover it is legitimate
+				change_variable = { name = murim_herb_stock add = -3 }
+				change_variable = { name = murim_cultivation_xp add = 45 }
+				add_prestige = 100
+				custom_tooltip = murim_alchemy_trade_verified_tt
+			}
+			30 = {
+				# Unmask the scammer - keep herbs, gain rep
+				add_prestige = 150
+				custom_tooltip = murim_alchemy_trade_exposed_tt
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Option C: Decline and report to the sect
+	option = {
+		name = murim_alchemy.0004.c
+		add_prestige = 50
+		custom_tooltip = murim_alchemy_trade_decline_tt
+		ai_chance = { base = 20 }
+	}
+}
+
+###############################################################################
+# 5. QI PILL SIDE EFFECTS
+# After prolonged pill use, side effects emerge
+###############################################################################
+murim_alchemy.0005 = {
+	type = character_event
+	title = murim_alchemy.0005.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_alchemy_skill
+					var:murim_alchemy_skill >= 3
+				}
+				desc = murim_alchemy.0005.desc_master
+			}
+			desc = murim_alchemy.0005.desc
+		}
+	}
+	theme = health
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_xp
+		var:murim_cultivation_xp >= 100
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		NOT = { has_character_flag = murim_alchemy_sideeffect_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_sideeffect_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: Purge with meditation (lose XP, regain health)
+	option = {
+		name = murim_alchemy.0005.a
+		add_health = 0.5
+		change_variable = { name = murim_cultivation_xp add = -20 }
+		add_stress = -10
+		custom_tooltip = murim_alchemy_sideeffect_purge_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Push through the pain (keep XP, health risk)
+	option = {
+		name = murim_alchemy.0005.b
+		add_health = -0.75
+		add_stress = 25
+		custom_tooltip = murim_alchemy_sideeffect_push_tt
+		ai_chance = { base = 25 }
+	}
+
+	# Option C: Seek a healer's help (costs gold)
+	option = {
+		name = murim_alchemy.0005.c
+		trigger = { gold >= 50 }
+		add_gold = -50
+		add_health = 1.0
+		add_stress = -20
+		custom_tooltip = murim_alchemy_sideeffect_healer_tt
+		ai_chance = { base = 40 }
+	}
+}
+
+###############################################################################
+# 6. ANCIENT ALCHEMY RECIPE RECOVERED
+# Discover a legendary pill formula in an old ruins or library
+###############################################################################
+murim_alchemy.0006 = {
+	type = character_event
+	title = murim_alchemy.0006.t
+	desc = murim_alchemy.0006.desc
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_curious
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+		learning >= 12
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_alchemy_recipe_found }
+	}
+
+	immediate = {
+		add_character_flag = murim_alchemy_recipe_found
+	}
+
+	# Option A: Study it personally
+	option = {
+		name = murim_alchemy.0006.a
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_skill } }
+			set_variable = { name = murim_alchemy_skill value = 0 }
+		}
+		change_variable = { name = murim_alchemy_skill add = 2 }
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_prestige = 200
+		custom_tooltip = murim_alchemy_recipe_study_tt
+		ai_chance = { base = 70 }
+	}
+
+	# Option B: Share with the sect - gain loyalty
+	option = {
+		name = murim_alchemy.0006.b
+		add_prestige = 400
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+				count <= 5
+			}
+			add_opinion = {
+				modifier = murim_grateful_disciple_opinion
+				target = root
+			}
+		}
+		custom_tooltip = murim_alchemy_recipe_share_tt
+		ai_chance = { base = 30 }
+	}
+
+	# Option C: Sell it to the black market
+	option = {
+		name = murim_alchemy.0006.c
+		trigger = {
+			has_trait = greedy
+		}
+		add_gold = 300
+		add_prestige = -100
+		custom_tooltip = murim_alchemy_recipe_sell_tt
+		ai_chance = { base = 15 }
+	}
+}
+
+###############################################################################
+# 7. TEACHING ALCHEMY TO A DISCIPLE
+# Pass on alchemy knowledge; builds loyalty and skills
+###############################################################################
+murim_alchemy.0007 = {
+	type = character_event
+	title = murim_alchemy.0007.t
+	desc = murim_alchemy.0007.desc
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_content
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_alchemy_skill
+		var:murim_alchemy_skill >= 2
+		any_courtier = {
+			has_character_flag = murim_initiated
+			NOT = { this = root }
+		}
+		NOT = { has_character_flag = murim_alchemy_teach_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_teach_cooldown
+			years = 2
+		}
+	}
+
+	# Option A: Teach fully - takes time but strong bond
+	option = {
+		name = murim_alchemy.0007.a
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+			}
+			add_opinion = {
+				modifier = murim_grateful_disciple_opinion
+				target = root
+			}
+			change_variable = { name = murim_cultivation_xp add = 15 }
+		}
+		add_prestige = 75
+		add_stress = 10
+		custom_tooltip = murim_alchemy_teach_full_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Teach only the basics - preserve secret formulas
+	option = {
+		name = murim_alchemy.0007.b
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+			}
+			change_variable = { name = murim_cultivation_xp add = 5 }
+		}
+		add_prestige = 30
+		custom_tooltip = murim_alchemy_teach_basic_tt
+		ai_chance = { base = 40 }
+	}
+}
+
+###############################################################################
+# 8. PILL AUCTION AT THE MARTIAL GATHERING
+# Rare pills go to auction - bid gold for cultivation power
+###############################################################################
+murim_alchemy.0008 = {
+	type = character_event
+	title = murim_alchemy.0008.t
+	desc = murim_alchemy.0008.desc
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		gold >= 100
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_alchemy_auction_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_alchemy_auction_cooldown
+			years = 4
+		}
+	}
+
+	# Option A: Bid aggressively (200 gold)
+	option = {
+		name = murim_alchemy.0008.a
+		trigger = { gold >= 200 }
+		add_gold = -200
+		change_variable = { name = murim_cultivation_xp add = 70 }
+		add_prestige = 150
+		custom_tooltip = murim_alchemy_auction_bid_high_tt
+		ai_chance = { base = 30 }
+	}
+
+	# Option B: Modest bid (100 gold) - might lose to a rival
+	option = {
+		name = murim_alchemy.0008.b
+		random_list = {
+			55 = {
+				add_gold = -100
+				change_variable = { name = murim_cultivation_xp add = 40 }
+				add_prestige = 80
+				custom_tooltip = murim_alchemy_auction_bid_win_tt
+			}
+			45 = {
+				add_gold = 0
+				add_prestige = -30
+				custom_tooltip = murim_alchemy_auction_bid_lose_tt
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Option C: Watch and note who wins (gather intelligence)
+	option = {
+		name = murim_alchemy.0008.c
+		add_prestige = 20
+		change_variable = { name = murim_cultivation_xp add = 5 }
+		custom_tooltip = murim_alchemy_auction_observe_tt
+		ai_chance = { base = 25 }
+	}
+}

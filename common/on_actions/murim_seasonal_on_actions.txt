@@ -1,0 +1,103 @@
+############################################
+# MURIM SEASONAL ON_ACTIONS
+# Fires seasonal cultivation events once per
+# year for cultivators who are alive and free.
+# Spring, Summer, Autumn, Winter, Equinox.
+#
+# Seasonal attunement (murim_seasonal_attunement)
+# builds over consecutive years of proper
+# seasonal practice, unlocking bonus outcomes.
+############################################
+
+on_yearly_pulse = {
+
+	# ------------------------------------------
+	# SEASONAL CULTIVATION PULSE
+	# Once per year each cultivator may experience
+	# a seasonal cultivation event. Which season
+	# fires is randomized, weighted so that all
+	# four seasons get coverage across the world.
+	# ------------------------------------------
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_seasonal_fired_this_year }
+			}
+
+			# Only a portion of cultivators get a seasonal event each year
+			random = {
+				chance = 40
+				modifier = {
+					add = 20
+					has_variable = murim_seasonal_attunement
+					var:murim_seasonal_attunement >= 2
+				}
+				modifier = {
+					add = 10
+					learning >= 14
+				}
+				modifier = {
+					add = -10
+					is_ai = yes
+				}
+
+				add_character_flag = {
+					flag = murim_seasonal_fired_this_year
+					years = 1
+				}
+
+				random_list = {
+					# Spring Awakening
+					25 = {
+						trigger_event = {
+							id = murim_seasonal.0001
+							days = { 30 90 }
+						}
+					}
+					# Summer Lightning Tempering
+					25 = {
+						trigger = {
+							var:murim_cultivation_rank >= 2
+							prowess >= 10
+						}
+						trigger_event = {
+							id = murim_seasonal.0002
+							days = { 90 180 }
+						}
+					}
+					# Autumn Harvest
+					25 = {
+						trigger_event = {
+							id = murim_seasonal.0003
+							days = { 180 270 }
+						}
+					}
+					# Winter Solstice Seclusion
+					20 = {
+						trigger = {
+							var:murim_cultivation_rank >= 2
+						}
+						trigger_event = {
+							id = murim_seasonal.0004
+							days = { 270 340 }
+						}
+					}
+					# Equinox Balance - rarer but powerful
+					5 = {
+						trigger = {
+							var:murim_cultivation_rank >= 3
+						}
+						trigger_event = {
+							id = murim_seasonal.0005
+							days = { 120 240 }
+						}
+					}
+				}
+			}
+		}
+	}
+}

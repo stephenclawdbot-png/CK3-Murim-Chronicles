@@ -1,0 +1,458 @@
+###############################################################################
+# MURIM SEASONAL CULTIVATION EVENTS
+# The flow of qi follows Heaven's seasons. Cultivators who attune themselves
+# to this rhythm gain advantages unavailable to those who train blindly.
+# Triggered quarterly via on_actions seasonal hooks.
+# Variables: murim_seasonal_attunement (tracks seasonal harmony streak)
+# Cross-references: murim_cultivation_events, murim_breakthrough_events,
+#                   murim_training_events
+###############################################################################
+
+namespace = murim_seasonal
+
+###############################################################################
+# 1. SPRING AWAKENING - QI RENEWAL
+# Spring: Heaven opens its gates; dormant qi stirs in the meridians.
+# Good time for new cultivation techniques and recovering lost progress.
+###############################################################################
+murim_seasonal.0001 = {
+	type = character_event
+	title = murim_seasonal.0001.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_seasonal_attunement
+					var:murim_seasonal_attunement >= 4
+				}
+				desc = murim_seasonal.0001.desc_attuned
+			}
+			desc = murim_seasonal.0001.desc
+		}
+	}
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_content
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_seasonal_spring_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_seasonal_spring_cooldown
+			years = 1
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_seasonal_attunement } }
+			set_variable = { name = murim_seasonal_attunement value = 0 }
+		}
+	}
+
+	# Option A: Open your meridians to the spring qi surge
+	option = {
+		name = murim_seasonal.0001.a
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		change_variable = { name = murim_seasonal_attunement add = 1 }
+		add_prestige = 50
+		add_stress = -10
+		custom_tooltip = murim_seasonal_spring_meditate_tt
+		ai_chance = { base = 70 }
+	}
+
+	# Option B: Begin learning a new technique while qi flows freely
+	option = {
+		name = murim_seasonal.0001.b
+		trigger = {
+			has_variable = murim_techniques_known
+		}
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		change_variable = { name = murim_techniques_known add = 1 }
+		add_prestige = 75
+		custom_tooltip = murim_seasonal_spring_technique_tt
+		ai_chance = { base = 40 }
+	}
+
+	# Option C: Share the qi bloom with your sect
+	option = {
+		name = murim_seasonal.0001.c
+		trigger = {
+			any_courtier = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+			}
+		}
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_initiated
+				NOT = { this = root }
+				count <= 5
+			}
+			change_variable = { name = murim_cultivation_xp add = 8 }
+		}
+		change_variable = { name = murim_cultivation_xp add = 10 }
+		change_variable = { name = murim_seasonal_attunement add = 1 }
+		add_prestige = 100
+		custom_tooltip = murim_seasonal_spring_share_tt
+		ai_chance = { base = 30 }
+	}
+}
+
+###############################################################################
+# 2. SUMMER LIGHTNING TEMPERING
+# Summer: Heavenly lightning descends; the brave use it to forge their body.
+# High risk, high reward for body-tempering and qi condensation.
+###############################################################################
+murim_seasonal.0002 = {
+	type = character_event
+	title = murim_seasonal.0002.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_body_tempering
+					var:murim_body_tempering >= 5
+				}
+				desc = murim_seasonal.0002.desc_tempered
+			}
+			desc = murim_seasonal.0002.desc
+		}
+	}
+	theme = martial
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		prowess >= 10
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_seasonal_summer_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_seasonal_summer_cooldown
+			years = 1
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_seasonal_attunement } }
+			set_variable = { name = murim_seasonal_attunement value = 0 }
+		}
+	}
+
+	# Option A: Stand in the storm and absorb the lightning
+	option = {
+		name = murim_seasonal.0002.a
+		random_list = {
+			50 = {
+				modifier = {
+					factor = 1.5
+					prowess >= 18
+				}
+				modifier = {
+					factor = 1.3
+					has_variable = murim_body_tempering
+					var:murim_body_tempering >= 3
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_body_tempering } }
+					set_variable = { name = murim_body_tempering value = 0 }
+				}
+				change_variable = { name = murim_body_tempering add = 1 }
+				change_variable = { name = murim_cultivation_xp add = 35 }
+				add_prestige = 150
+				custom_tooltip = murim_seasonal_summer_lightning_success_tt
+			}
+			50 = {
+				add_health = -0.5
+				add_stress = 30
+				custom_tooltip = murim_seasonal_summer_lightning_fail_tt
+			}
+		}
+		change_variable = { name = murim_seasonal_attunement add = 1 }
+		ai_chance = {
+			base = 35
+			modifier = {
+				add = 20
+				prowess >= 16
+			}
+		}
+	}
+
+	# Option B: Meditate under the storm instead - safer
+	option = {
+		name = murim_seasonal.0002.b
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		add_stress = -5
+		change_variable = { name = murim_seasonal_attunement add = 1 }
+		custom_tooltip = murim_seasonal_summer_meditate_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option C: Spend the summer in intense spar training
+	option = {
+		name = murim_seasonal.0002.c
+		trigger = {
+			any_courtier = {
+				has_character_flag = murim_initiated
+				prowess >= 8
+				NOT = { this = root }
+			}
+		}
+		change_variable = { name = murim_cultivation_xp add = 18 }
+		add_prestige = 60
+		custom_tooltip = murim_seasonal_summer_sparring_tt
+		ai_chance = { base = 40 }
+	}
+}
+
+###############################################################################
+# 3. AUTUMN HARVEST OF QI - SPIRITUAL CONCENTRATION
+# Autumn: Qi concentrates as the world prepares for winter.
+# Perfect for accumulating resources and pill ingredients.
+###############################################################################
+murim_seasonal.0003 = {
+	type = character_event
+	title = murim_seasonal.0003.t
+	desc = murim_seasonal.0003.desc
+	theme = stewardship_focus
+	left_portrait = {
+		character = root
+		animation = personality_curious
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 1
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_seasonal_autumn_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_seasonal_autumn_cooldown
+			years = 1
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_seasonal_attunement } }
+			set_variable = { name = murim_seasonal_attunement value = 0 }
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_herb_stock } }
+			set_variable = { name = murim_herb_stock value = 0 }
+		}
+	}
+
+	# Option A: Gather spiritual herbs during the qi concentration
+	option = {
+		name = murim_seasonal.0003.a
+		change_variable = { name = murim_herb_stock add = 4 }
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		change_variable = { name = murim_seasonal_attunement add = 1 }
+		custom_tooltip = murim_seasonal_autumn_harvest_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option B: Use the dense qi to consolidate current realm
+	option = {
+		name = murim_seasonal.0003.b
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		add_health = 0.25
+		change_variable = { name = murim_seasonal_attunement add = 1 }
+		custom_tooltip = murim_seasonal_autumn_consolidate_tt
+		ai_chance = { base = 50 }
+	}
+
+	# Option C: Host a seasonal cultivation gathering for nearby sects
+	option = {
+		name = murim_seasonal.0003.c
+		trigger = { prestige >= 200 }
+		add_prestige = 200
+		add_gold = -50
+		change_variable = { name = murim_seasonal_attunement add = 2 }
+		custom_tooltip = murim_seasonal_autumn_gathering_tt
+		ai_chance = { base = 20 }
+	}
+}
+
+###############################################################################
+# 4. WINTER SOLSTICE DEEP SECLUSION
+# Winter Solstice: Yin qi peaks. The brave enter absolute seclusion for
+# breakthrough attempts. Highest risk, highest reward of the four seasons.
+###############################################################################
+murim_seasonal.0004 = {
+	type = character_event
+	title = murim_seasonal.0004.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_seasonal_attunement
+					var:murim_seasonal_attunement >= 3
+				}
+				desc = murim_seasonal.0004.desc_attuned
+			}
+			desc = murim_seasonal.0004.desc
+		}
+	}
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_introspective
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_seasonal_winter_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_seasonal_winter_cooldown
+			years = 1
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_seasonal_attunement } }
+			set_variable = { name = murim_seasonal_attunement value = 0 }
+		}
+	}
+
+	# Option A: Enter seclusion for a breakthrough attempt (attuned bonus)
+	option = {
+		name = murim_seasonal.0004.a
+		random_list = {
+			30 = {
+				modifier = {
+					factor = 2.0
+					has_variable = murim_seasonal_attunement
+					var:murim_seasonal_attunement >= 4
+				}
+				modifier = {
+					factor = 1.5
+					has_variable = murim_seasonal_attunement
+					var:murim_seasonal_attunement >= 2
+				}
+				# Breakthrough!
+				change_variable = { name = murim_cultivation_rank add = 1 }
+				change_variable = { name = murim_cultivation_xp add = 0 }
+				add_prestige = 300
+				add_stress = -20
+				custom_tooltip = murim_seasonal_winter_breakthrough_tt
+			}
+			50 = {
+				change_variable = { name = murim_cultivation_xp add = 50 }
+				add_prestige = 100
+				custom_tooltip = murim_seasonal_winter_progress_tt
+			}
+			20 = {
+				# Qi deviation - pushed too hard
+				add_health = -0.5
+				add_stress = 40
+				custom_tooltip = murim_seasonal_winter_deviation_tt
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_variable = murim_seasonal_attunement
+				var:murim_seasonal_attunement >= 3
+			}
+		}
+	}
+
+	# Option B: Simple winter meditation - preserve health
+	option = {
+		name = murim_seasonal.0004.b
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		add_health = 0.5
+		add_stress = -15
+		custom_tooltip = murim_seasonal_winter_rest_tt
+		ai_chance = { base = 60 }
+	}
+
+	# Option C: Spend solstice studying ancient texts
+	option = {
+		name = murim_seasonal.0004.c
+		trigger = { learning >= 10 }
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		add_prestige = 75
+		custom_tooltip = murim_seasonal_winter_study_tt
+		ai_chance = { base = 40 }
+	}
+}
+
+###############################################################################
+# 5. EQUINOX BALANCE - HARMONY OF YIN AND YANG
+# Twice yearly, Heaven and Earth briefly balance. A rare training window
+# for those who cultivate dual-element or balanced techniques.
+###############################################################################
+murim_seasonal.0005 = {
+	type = character_event
+	title = murim_seasonal.0005.t
+	desc = murim_seasonal.0005.desc
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_content
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 3
+		is_imprisoned = no
+		NOT = { has_character_flag = murim_seasonal_equinox_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_seasonal_equinox_cooldown
+			months = 5
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_seasonal_attunement } }
+			set_variable = { name = murim_seasonal_attunement value = 0 }
+		}
+	}
+
+	# Option A: Align with the equinox balance - meditate through the night
+	option = {
+		name = murim_seasonal.0005.a
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		change_variable = { name = murim_seasonal_attunement add = 2 }
+		add_prestige = 100
+		add_stress = -20
+		custom_tooltip = murim_seasonal_equinox_align_tt
+		ai_chance = { base = 80 }
+	}
+
+	# Option B: Challenge a rival to a duel while the qi is balanced (fair fight)
+	option = {
+		name = murim_seasonal.0005.b
+		trigger = {
+			OR = {
+				any_rival = { always = yes }
+				any_nemesis = { always = yes }
+			}
+		}
+		add_prestige = 150
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		custom_tooltip = murim_seasonal_equinox_duel_tt
+		ai_chance = { base = 30 }
+	}
+}

@@ -1,0 +1,127 @@
+############################################
+# MURIM RIVAL ON_ACTIONS
+# Fires cultivation rival events for cultivators
+# who have active rivals. Checks yearly.
+#
+# murim_has_rival variable drives rival system.
+# murim_rival_intensity (1-5) escalates events.
+############################################
+
+on_yearly_pulse = {
+
+	# ------------------------------------------
+	# RIVAL SYSTEM YEARLY PULSE
+	# Check if a rival event should fire this year.
+	# Fires for cultivators with active rivals only.
+	# ------------------------------------------
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank >= 2
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_rival_event_fired_this_year }
+			}
+
+			random = {
+				# New rival acquisition - fires if no rival yet
+				chance = 15
+				modifier = {
+					add = -100
+					has_variable = murim_has_rival
+					var:murim_has_rival >= 1
+				}
+				modifier = {
+					add = 10
+					prestige >= 300
+				}
+				modifier = {
+					add = 5
+					prowess >= 14
+				}
+
+				add_character_flag = {
+					flag = murim_rival_event_fired_this_year
+					years = 1
+				}
+
+				trigger_event = {
+					id = murim_rival.0001
+					days = { 10 60 }
+				}
+			}
+		}
+
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_has_rival
+				var:murim_has_rival >= 1
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank >= 2
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_rival_event_fired_this_year }
+			}
+
+			random = {
+				chance = 35
+				modifier = {
+					add = 15
+					has_variable = murim_rival_intensity
+					var:murim_rival_intensity >= 3
+				}
+				modifier = {
+					add = -10
+					is_ai = yes
+				}
+
+				add_character_flag = {
+					flag = murim_rival_event_fired_this_year
+					years = 1
+				}
+
+				random_list = {
+					# Rival breakthrough news
+					30 = {
+						trigger_event = {
+							id = murim_rival.0002
+							days = { 15 90 }
+						}
+					}
+					# Sabotage (only at high intensity)
+					20 = {
+						trigger = {
+							has_variable = murim_rival_intensity
+							var:murim_rival_intensity >= 3
+						}
+						trigger_event = {
+							id = murim_rival.0003
+							days = { 20 60 }
+						}
+					}
+					# Rival asks for help
+					25 = {
+						trigger_event = {
+							id = murim_rival.0004
+							days = { 10 60 }
+						}
+					}
+					# Final confrontation (high intensity, high rank)
+					25 = {
+						trigger = {
+							has_variable = murim_rival_intensity
+							var:murim_rival_intensity >= 3
+							var:murim_cultivation_rank >= 3
+							NOT = { has_character_flag = murim_rival_final_confrontation_done }
+						}
+						trigger_event = {
+							id = murim_rival.0005
+							days = { 30 90 }
+						}
+					}
+				}
+			}
+		}
+	}
+}
