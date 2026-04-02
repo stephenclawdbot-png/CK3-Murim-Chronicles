@@ -1,0 +1,409 @@
+########################################
+# MURIM FINAL INTEGRATION EVENTS
+# Endgame events tying all systems
+# Both player and AI experience these
+########################################
+
+namespace = murim_final_integration
+
+# Event 0001: The Murim World Reacts to Ascension
+# Triggered after immortal ascension trial declared
+# Links: ascension + tournament + tribunal + all clans
+murim_final_integration.0001 = {
+    type = character_event
+    title = murim_final_integration.0001.t
+    desc = murim_final_integration.0001.desc
+    theme = murim_martial_theme
+
+    trigger = {
+        has_variable = murim_martial_artist
+        NOT = { has_character_flag = murim_reacted_to_ascension }
+        any_ruler = {
+            has_character_flag = murim_ascension_trial_declared
+            NOT = { this = root }
+        }
+    }
+
+    immediate = {
+        set_character_flag = murim_reacted_to_ascension
+        random_ruler = {
+            limit = { has_character_flag = murim_ascension_trial_declared }
+            save_scope_as = ascension_candidate
+        }
+    }
+
+    # Support the ascension
+    option = {
+        name = murim_final_integration.0001.a
+        add_opinion = { modifier = supports_ascension target = scope:ascension_candidate modifier_value = 25 }
+        add_prestige = 100
+        hidden_effect = {
+            scope:ascension_candidate = {
+                add_opinion = { modifier = grateful_opinion target = root modifier_value = 15 }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                add = 20
+                opinion = { target = scope:ascension_candidate value >= 30 }
+            }
+        }
+    }
+
+    # Challenge the candidate — only the worthy should ascend
+    option = {
+        name = murim_final_integration.0001.b
+        trigger = { prowess >= 20 }
+        add_prestige = 200
+        hidden_effect = {
+            trigger_event = { id = murim_final_integration.0005 days = 15 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                add = 30
+                prowess >= 25
+            }
+            modifier = {
+                add = 20
+                has_rivalry = { target = scope:ascension_candidate }
+            }
+        }
+    }
+
+    # Observe from the shadows
+    option = {
+        name = murim_final_integration.0001.c
+        add_intrigue = 1
+        stress_impact = { paranoid = medium_stress_impact_loss }
+        ai_chance = {
+            base = 35
+            modifier = {
+                add = 20
+                has_trait = murim_shadow_sect_leader
+            }
+        }
+    }
+}
+
+# Event 0002: Post-Calamity Murim Reconstruction Summit
+# Triggered after calamity ends
+# Links: calamity + tribunal + blood oaths + trade
+murim_final_integration.0002 = {
+    type = character_event
+    title = murim_final_integration.0002.t
+    desc = murim_final_integration.0002.desc
+    theme = murim_martial_theme
+
+    trigger = {
+        has_variable = murim_martial_artist
+        has_global_variable = murim_calamity_ended
+        NOT = { has_character_flag = murim_attended_reconstruction }
+        OR = {
+            has_trait = murim_grandmaster
+            has_trait = murim_sect_leader
+            has_trait = murim_elder
+        }
+    }
+
+    immediate = {
+        set_character_flag = murim_attended_reconstruction
+    }
+
+    # Lead the reconstruction — unite all factions
+    option = {
+        name = murim_final_integration.0002.a
+        add_prestige = 500
+        add_character_modifier = {
+            modifier = murim_post_calamity_rebuilding_modifier
+            years = 10
+        }
+        hidden_effect = {
+            every_vassal = {
+                limit = { has_variable = murim_martial_artist }
+                add_opinion = { modifier = grateful_opinion target = root modifier_value = 20 }
+            }
+            # Forge new blood oath alliances from shared survival
+            trigger_event = { id = murim_final_integration.0006 days = 30 }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                add = 30
+                diplomacy >= 18
+            }
+        }
+    }
+
+    # Seize power in the chaos
+    option = {
+        name = murim_final_integration.0002.b
+        add_prestige = 300
+        add_dread = 30
+        add_character_modifier = {
+            modifier = murim_murim_world_in_chaos_modifier
+            years = 5
+        }
+        hidden_effect = {
+            # Rivals will resist
+            every_vassal = {
+                limit = {
+                    has_variable = murim_martial_artist
+                    opinion = { target = root value < 0 }
+                }
+                trigger_event = { id = murim_final_integration.0007 days = 20 }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                add = 30
+                has_trait = murim_tyrant
+            }
+            modifier = {
+                add = 20
+                has_trait = ambitious
+            }
+        }
+    }
+
+    # Focus on rebuilding our own sect first
+    option = {
+        name = murim_final_integration.0002.c
+        add_stewardship = 2
+        every_held_title = {
+            limit = { tier = tier_county }
+            add_county_modifier = {
+                modifier = murim_trade_route_secured_modifier
+                years = 5
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                add = 20
+                has_trait = content
+            }
+        }
+    }
+}
+
+# Event 0003: The Final Grand Tournament
+# Triggered as capstone when all systems active
+# Links: tournament + ranking + all clans + ascension
+murim_final_integration.0003 = {
+    type = character_event
+    title = murim_final_integration.0003.t
+    desc = murim_final_integration.0003.desc
+    theme = murim_martial_theme
+
+    trigger = {
+        has_variable = murim_martial_artist
+        OR = {
+            has_trait = murim_grandmaster
+            has_trait = murim_sect_leader
+        }
+        NOT = { has_character_flag = murim_final_tournament_hosted }
+        any_realm_county = { has_county_modifier = murim_tournament_grounds }
+    }
+
+    immediate = {
+        set_character_flag = murim_final_tournament_hosted
+    }
+
+    # Host the Tournament of the Ages
+    option = {
+        name = murim_final_integration.0003.a
+        add_prestige = 1000
+        add_gold = -300
+        hidden_effect = {
+            # Gather all martial artists
+            every_vassal = {
+                limit = {
+                    has_variable = murim_martial_artist
+                    prowess >= 15
+                }
+                trigger_event = { id = murim_final_integration.0008 days = 10 }
+            }
+            # Tournament chain
+            trigger_event = { id = murim_final_integration.0009 days = 30 }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                add = 30
+                gold >= 500
+            }
+        }
+    }
+
+    # Enter the tournament ourselves
+    option = {
+        name = murim_final_integration.0003.b
+        trigger = { prowess >= 25 }
+        add_prestige = 500
+        hidden_effect = {
+            trigger_event = { id = murim_final_integration.0010 days = 20 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                add = 40
+                prowess >= 30
+            }
+        }
+    }
+}
+
+# Event 0004: All Systems Harmony — Murim Golden Age
+# Rare event when multiple systems align positively
+murim_final_integration.0004 = {
+    type = character_event
+    title = murim_final_integration.0004.t
+    desc = murim_final_integration.0004.desc
+    theme = murim_martial_theme
+
+    trigger = {
+        has_variable = murim_martial_artist
+        has_character_flag = murim_blood_oath_sworn
+        has_character_flag = murim_intel_network_active
+        NOT = { has_global_variable = murim_calamity_active }
+        any_realm_county = { has_county_modifier = murim_trade_route_secured_modifier }
+        prestige >= 1000
+    }
+
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2
+            has_trait = murim_grandmaster
+        }
+    }
+
+    immediate = {
+        set_character_flag = murim_golden_age_witnessed
+    }
+
+    # Declare a Murim Golden Age
+    option = {
+        name = murim_final_integration.0004.a
+        add_character_modifier = {
+            modifier = murim_all_systems_harmony_modifier
+            years = 10
+        }
+        add_prestige = 500
+        every_vassal = {
+            limit = { has_variable = murim_martial_artist }
+            add_opinion = { modifier = grateful_opinion target = root modifier_value = 15 }
+        }
+        ai_chance = { base = 80 }
+    }
+
+    # Remain vigilant — golden ages attract predators
+    option = {
+        name = murim_final_integration.0004.b
+        add_intrigue = 2
+        add_martial = 1
+        stress_impact = { paranoid = medium_stress_impact_loss }
+        ai_chance = {
+            base = 20
+            modifier = {
+                add = 30
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# Event 0005: Ascension Challenge Duel
+murim_final_integration.0005 = {
+    type = character_event
+    title = murim_final_integration.0005.t
+    desc = murim_final_integration.0005.desc
+    theme = murim_martial_theme
+
+    immediate = {
+        random_ruler = {
+            limit = { has_character_flag = murim_ascension_trial_declared }
+            save_scope_as = ascension_candidate
+        }
+    }
+
+    option = {
+        name = murim_final_integration.0005.a
+        duel = {
+            target = scope:ascension_candidate
+            skill = prowess
+            50 = {
+                desc = murim_final_integration.0005.a.success
+                compare_modifier = { value = scope:duel_value }
+                add_prestige = 1000
+                add_prowess = 3
+                scope:ascension_candidate = {
+                    add_character_modifier = { modifier = murim_ascension_failed_modifier years = 5 }
+                    remove_character_flag = murim_ascension_trial_declared
+                }
+            }
+            50 = {
+                desc = murim_final_integration.0005.a.failure
+                compare_modifier = { value = scope:duel_value factor = -1 }
+                add_prestige = -200
+                add_prowess = 1
+            }
+        }
+        ai_chance = { base = 100 }
+    }
+}
+
+# Event 0006: Post-Calamity Blood Oath Forging
+murim_final_integration.0006 = {
+    type = character_event
+    title = murim_final_integration.0006.t
+    desc = murim_final_integration.0006.desc
+    theme = murim_martial_theme
+
+    option = {
+        name = murim_final_integration.0006.a
+        random_vassal = {
+            limit = {
+                has_variable = murim_martial_artist
+                NOT = { has_character_flag = murim_blood_oath_sworn }
+                opinion = { target = root value >= 20 }
+            }
+            save_scope_as = new_oath_brother
+            set_character_flag = murim_blood_oath_sworn
+            add_opinion = { modifier = blood_oath_bond target = root modifier_value = 40 }
+        }
+        add_prestige = 200
+        ai_chance = { base = 70 }
+    }
+
+    option = {
+        name = murim_final_integration.0006.b
+        add_prestige = 50
+        ai_chance = { base = 30 }
+    }
+}
+
+# Event 0007: Resistance to Power Seizure
+murim_final_integration.0007 = {
+    type = character_event
+    title = murim_final_integration.0007.t
+    desc = murim_final_integration.0007.desc
+    theme = murim_martial_theme
+
+    option = {
+        name = murim_final_integration.0007.a
+        add_dread = 20
+        add_tyranny = 10
+        ai_chance = { base = 40 }
+    }
+
+    option = {
+        name = murim_final_integration.0007.b
+        add_diplomacy = 1
+        add_prestige = 100
+        ai_chance = { base = 60 }
+    }
+}
