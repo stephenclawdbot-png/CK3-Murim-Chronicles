@@ -447,17 +447,33 @@ refine_pill = {
 				has_variable = alchemy_skill
 				var:alchemy_skill >= 3
 			}
+			murim_is_alchemist_trigger = yes
 		}
 	}
 
 	is_valid = {
-		gold >= 50
+		OR = {
+			gold >= 50
+			AND = {
+				has_variable = murim_herb_stockpile
+				var:murim_herb_stockpile >= 3
+			}
+		}
 		NOT = { has_character_modifier = recently_refined_pill }
 		is_incapable = no
 	}
 
 	cost = {
-		gold = 50
+		gold = {
+			value = 50
+			if = {
+				limit = {
+					has_variable = murim_herb_stockpile
+					var:murim_herb_stockpile >= 3
+				}
+				multiply = 0  # Herbs replace gold cost
+			}
+		}
 	}
 
 	effect = {
@@ -465,7 +481,7 @@ refine_pill = {
 			modifier = recently_refined_pill
 			months = 6
 		}
-		# Track alchemy attempts
+		# Track alchemy attempts (old system)
 		if = {
 			limit = { has_variable = alchemy_attempts }
 			change_variable = { name = alchemy_attempts add = 1 }
@@ -473,6 +489,24 @@ refine_pill = {
 		else = {
 			set_variable = { name = alchemy_attempts value = 1 }
 		}
+		# Bridge to new alchemy tracking system
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_xp } }
+			set_variable = { name = murim_alchemy_xp value = 0 }
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_skill } }
+			set_variable = { name = murim_alchemy_skill value = 0 }
+		}
+		# Consume herbs if available (preferred over gold)
+		if = {
+			limit = {
+				has_variable = murim_herb_stockpile
+				var:murim_herb_stockpile >= 3
+			}
+			change_variable = { name = murim_herb_stockpile add = -3 }
+		}
+		change_variable = { name = murim_alchemy_xp add = 3 }
 		custom_tooltip = tt_pill_refinement
 		random_list = {
 			25 = {
@@ -486,6 +520,11 @@ refine_pill = {
 					has_variable = alchemy_skill
 					var:alchemy_skill >= 5
 				}
+				modifier = {
+					add = 5
+					has_variable = murim_alchemy_skill
+					var:murim_alchemy_skill >= 5
+				}
 				add_character_modifier = {
 					modifier = superior_cultivation_pill
 					years = 3
@@ -494,6 +533,13 @@ refine_pill = {
 					limit = { has_variable = cultivation_progress }
 					change_variable = { name = cultivation_progress add = 15 }
 				}
+				# Bridge: major success also advances cultivation xp
+				if = {
+					limit = { has_variable = murim_cultivation_xp }
+					change_variable = { name = murim_cultivation_xp add = 25 }
+				}
+				change_variable = { name = murim_alchemy_skill add = 1 }
+				change_variable = { name = murim_alchemy_xp add = 5 }
 			}
 			35 = {
 				desc = tt_pill_success_minor
@@ -505,12 +551,18 @@ refine_pill = {
 					limit = { has_variable = cultivation_progress }
 					change_variable = { name = cultivation_progress add = 5 }
 				}
+				if = {
+					limit = { has_variable = murim_cultivation_xp }
+					change_variable = { name = murim_cultivation_xp add = 10 }
+				}
+				change_variable = { name = murim_alchemy_xp add = 2 }
 			}
 			25 = {
 				desc = tt_pill_partial
 				stress_impact = {
 					base = -10
 				}
+				change_variable = { name = murim_alchemy_xp add = 1 }
 			}
 			15 = {
 				desc = tt_pill_failure
@@ -592,6 +644,34 @@ establish_pill_furnace = {
 	effect = {
 		set_variable = { name = has_pill_furnace value = yes }
 		set_variable = { name = alchemy_skill value = 3 }
+		# Bridge: also initialize murim alchemy tracking
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_skill } }
+			set_variable = { name = murim_alchemy_skill value = 3 }
+		}
+		else_if = {
+			limit = {
+				has_variable = murim_alchemy_skill
+				var:murim_alchemy_skill < 3
+			}
+			set_variable = { name = murim_alchemy_skill value = 3 }
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_xp } }
+			set_variable = { name = murim_alchemy_xp value = 5 }
+		}
+		# Furnace owners start with a proper herb stockpile
+		if = {
+			limit = { NOT = { has_variable = murim_herb_stockpile } }
+			set_variable = { name = murim_herb_stockpile value = 8 }
+		}
+		else_if = {
+			limit = {
+				has_variable = murim_herb_stockpile
+				var:murim_herb_stockpile < 8
+			}
+			set_variable = { name = murim_herb_stockpile value = 8 }
+		}
 		add_character_modifier = {
 			modifier = pill_furnace_owner
 			years = 100
@@ -1897,6 +1977,92 @@ purge_demonic_qi = {
 		modifier = {
 			add = -40
 			has_trait = sadistic
+		}
+	}
+}
+
+##############################
+# HERB GATHERING DECISION
+# Calls the existing murim_apply_herb_gathering_effect
+# from murim_grind_effects.txt to fill the herb stockpile.
+# Shows for all cultivators; Tang/Poison get bonuses from legacy.
+##############################
+
+gather_spirit_herbs = {
+	picture = "gfx/interface/illustrations/decisions/decision_personal_religious.dds"
+	desc = decision_gather_spirit_herbs_desc
+	selection_tooltip = decision_gather_spirit_herbs_tooltip
+
+	is_shown = {
+		murim_is_martial_artist_trigger = yes
+		is_imprisoned = no
+		NOT = { has_character_modifier = murim_herb_gathering_exhaustion }
+	}
+
+	is_valid = {
+		is_alive = yes
+		is_imprisoned = no
+		is_incapable = no
+		age >= 14
+	}
+
+	effect = {
+		# Use existing scripted effect from murim_grind_effects.txt
+		murim_apply_herb_gathering_effect = yes
+		add_character_modifier = {
+			modifier = murim_herb_gathering_exhaustion
+			months = 3
+		}
+		# Tang Clan / Poison Flower get a bonus harvest from sect training
+		if = {
+			limit = {
+				OR = {
+					has_trait = tang_clan_member
+					has_trait = tang_clan_inner_member
+					has_trait = tang_clan_elder
+				}
+			}
+			change_variable = { name = murim_herb_stockpile add = 3 }
+		}
+		if = {
+			limit = { has_trait = poison_flower_disciple }
+			change_variable = { name = murim_herb_stockpile add = 2 }
+		}
+		# High learning chars find better herbs
+		if = {
+			limit = { learning >= 16 }
+			change_variable = { name = murim_herb_stockpile add = 2 }
+		}
+		custom_tooltip = decision_gather_spirit_herbs_effect_tt
+	}
+
+	cooldown = { months = 3 }
+
+	ai_check_interval = 12
+	ai_potential = {
+		OR = {
+			murim_is_alchemist_trigger = yes
+			has_trait = tang_clan_member
+			has_trait = poison_flower_disciple
+		}
+	}
+	ai_will_do = {
+		base = 40
+		modifier = {
+			add = 30
+			OR = {
+				NOT = { has_variable = murim_herb_stockpile }
+				var:murim_herb_stockpile <= 5
+			}
+		}
+		modifier = {
+			add = 20
+			murim_is_alchemist_trigger = yes
+		}
+		modifier = {
+			add = -20
+			has_variable = murim_herb_stockpile
+			var:murim_herb_stockpile >= 15
 		}
 	}
 }
