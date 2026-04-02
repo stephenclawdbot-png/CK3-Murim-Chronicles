@@ -1,0 +1,1336 @@
+########################################
+# MURIM COURT OF ELDERS GOVERNANCE EVENTS
+# CK3 Murim Chronicles
+# 10 complete events - Elder council politics,
+# sect law disputes, succession votes, faction
+# balancing, reform debates, emergency councils,
+# elder corruption, young vs old generation clash
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_elders
+
+# EVENT 0001 - Elder Council Convenes
+# Triggered: on_action yearly pulse, sect leaders
+# AI: Full council governance with all elders voting
+murim_elders.0001 = {
+    type = character_event
+    title = murim_elders.0001.t
+    desc = murim_elders.0001.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = personality_diplomacy
+    }
+    right_portrait = {
+        character = scope:senior_elder
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        NOT = { has_character_flag = elder_council_recently }
+        any_courtier = {
+            is_alive = yes
+            age >= 40
+            OR = {
+                has_trait = murim_martial_artist
+                has_trait = murim_righteous_elder
+                has_trait = murim_unorthodox_elder
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_global_variable = murim_great_calamity_approaching
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = elder_council_recently
+            days = 365
+        }
+        ordered_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 40
+                OR = {
+                    has_trait = murim_martial_artist
+                    has_trait = murim_righteous_elder
+                }
+            }
+            order_by = age
+            max = 1
+            save_scope_as = senior_elder
+        }
+        # Determine council topic
+        random_list = {
+            20 = { set_variable = { name = council_topic value = 1 } } # Sect policy reform
+            20 = { set_variable = { name = council_topic value = 2 } } # Alliance negotiations
+            20 = { set_variable = { name = council_topic value = 3 } } # War declaration
+            20 = { set_variable = { name = council_topic value = 4 } } # Succession planning
+            20 = { set_variable = { name = council_topic value = 5 } } # Technique teaching rights
+        }
+    }
+    
+    # Option A: Follow the elders' consensus
+    option = {
+        name = murim_elders.0001.a
+        add_prestige = 100
+        add_piety = 50
+        add_character_modifier = {
+            modifier = murim_elder_approved_leader
+            years = 3
+        }
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 40
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_respects_elder_council
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Override the elders with your authority
+    option = {
+        name = murim_elders.0001.b
+        add_prestige = 50
+        add_dread = 10
+        add_character_modifier = {
+            modifier = murim_assertive_leader
+            years = 3
+        }
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 40
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_overruled_elders
+                opinion = -15
+            }
+        }
+        # Younger members approve
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                age < 35
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_strong_leadership
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option C: Propose a compromise
+    option = {
+        name = murim_elders.0001.c
+        trigger = {
+            diplomacy >= 14
+        }
+        add_prestige = 150
+        add_diplomacy_skill = 1
+        add_character_modifier = {
+            modifier = murim_diplomatic_leader
+            years = 3
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = gregarious
+            }
+        }
+    }
+}
+
+# EVENT 0002 - Succession Crisis: Who Leads Next?
+# Triggered: when sect leader is old or dying
+# AI: Full succession vote system
+murim_elders.0002 = {
+    type = character_event
+    title = murim_elders.0002.t
+    desc = murim_elders.0002.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    right_portrait = {
+        character = scope:succession_candidate_a
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        OR = {
+            age >= 60
+            health <= 2
+            has_trait = ill
+        }
+        NOT = { has_character_flag = succession_planned }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            age >= 70
+        }
+        modifier = {
+            factor = 2.0
+            health <= 1
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = succession_planned
+            days = 3650
+        }
+        # Find top two candidates
+        ordered_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 25
+                age <= 55
+                prowess >= 12
+            }
+            order_by = prowess
+            max = 1
+            save_scope_as = succession_candidate_a
+        }
+        ordered_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 25
+                age <= 55
+                diplomacy >= 12
+                NOT = { this = scope:succession_candidate_a }
+            }
+            order_by = diplomacy
+            max = 1
+            save_scope_as = succession_candidate_b
+        }
+    }
+    
+    # Option A: Name the strongest martial artist
+    option = {
+        name = murim_elders.0002.a
+        trigger = {
+            exists = scope:succession_candidate_a
+        }
+        scope:succession_candidate_a = {
+            add_character_modifier = {
+                modifier = murim_designated_successor
+                years = 10
+            }
+            add_prestige = 300
+            add_opinion = {
+                target = root
+                modifier = murim_chose_me_as_successor
+                opinion = 40
+            }
+        }
+        if = {
+            limit = { exists = scope:succession_candidate_b }
+            scope:succession_candidate_b = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_passed_over_for_succession
+                    opinion = -30
+                }
+            }
+        }
+        add_prestige = 100
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                martial >= 14
+            }
+        }
+    }
+    
+    # Option B: Name the wisest diplomat
+    option = {
+        name = murim_elders.0002.b
+        trigger = {
+            exists = scope:succession_candidate_b
+        }
+        scope:succession_candidate_b = {
+            add_character_modifier = {
+                modifier = murim_designated_successor
+                years = 10
+            }
+            add_prestige = 300
+            add_opinion = {
+                target = root
+                modifier = murim_chose_me_as_successor
+                opinion = 40
+            }
+        }
+        if = {
+            limit = { exists = scope:succession_candidate_a }
+            scope:succession_candidate_a = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_passed_over_for_succession
+                    opinion = -30
+                }
+            }
+        }
+        add_prestige = 100
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option C: Let the elders decide through tournament
+    option = {
+        name = murim_elders.0002.c
+        add_character_modifier = {
+            modifier = murim_succession_tournament_declared
+            years = 2
+        }
+        add_prestige = 200
+        trigger_event = {
+            id = murim_elders.0003
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+        }
+    }
+    
+    # Option D: Refuse to name successor - let fate decide
+    option = {
+        name = murim_elders.0002.d
+        add_stress = 15
+        every_courtier = {
+            limit = { is_alive = yes age >= 25 }
+            add_opinion = {
+                target = root
+                modifier = murim_no_succession_plan
+                opinion = -10
+            }
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 2.0
+                has_trait = lazy
+            }
+        }
+    }
+}
+
+# EVENT 0003 - Succession Tournament
+# Triggered: from 0002 tournament option
+# AI: Full tournament succession
+murim_elders.0003 = {
+    type = character_event
+    title = murim_elders.0003.t
+    desc = murim_elders.0003.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_succession_tournament_declared
+    }
+    
+    immediate = {
+        ordered_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 20
+                prowess >= 10
+            }
+            order_by = prowess
+            max = 1
+            save_scope_as = tournament_winner
+        }
+    }
+    
+    # Option A: Accept the tournament result
+    option = {
+        name = murim_elders.0003.a
+        trigger = {
+            exists = scope:tournament_winner
+        }
+        scope:tournament_winner = {
+            add_character_modifier = {
+                modifier = murim_designated_successor
+                years = 10
+            }
+            add_prestige = 500
+            add_prowess_skill = 2
+        }
+        add_prestige = 150
+        add_piety = 50
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+        }
+    }
+    
+    # Option B: Contest the result - it was rigged
+    option = {
+        name = murim_elders.0003.b
+        add_prestige = -100
+        add_stress = 20
+        add_dread = 10
+        trigger_event = {
+            id = murim_elders.0004
+            days = { 15 45 }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+    
+    # Option C: Add additional trials beyond combat
+    option = {
+        name = murim_elders.0003.c
+        trigger = {
+            diplomacy >= 14
+        }
+        add_prestige = 100
+        add_character_modifier = {
+            modifier = murim_expanded_succession_trials
+            years = 2
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Elder Corruption Scandal
+# Triggered: when elders abuse their position
+# AI: Full corruption investigation
+murim_elders.0004 = {
+    type = character_event
+    title = murim_elders.0004.t
+    desc = murim_elders.0004.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:corrupt_elder
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        any_courtier = {
+            is_alive = yes
+            age >= 40
+            OR = {
+                has_trait = greedy
+                has_trait = deceitful
+                has_trait = arbitrary
+            }
+            OR = {
+                has_trait = murim_martial_artist
+                has_trait = murim_righteous_elder
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 2.0
+            any_courtier = {
+                has_trait = greedy
+                has_trait = murim_righteous_elder
+            }
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                is_alive = yes
+                age >= 40
+                OR = {
+                    has_trait = greedy
+                    has_trait = deceitful
+                }
+            }
+            save_scope_as = corrupt_elder
+        }
+    }
+    
+    # Option A: Publicly expose and remove the elder
+    option = {
+        name = murim_elders.0004.a
+        trigger = {
+            exists = scope:corrupt_elder
+        }
+        scope:corrupt_elder = {
+            add_prestige = -300
+            add_character_modifier = {
+                modifier = murim_disgraced_elder
+                years = 10
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_exposed_my_corruption
+                opinion = -60
+            }
+        }
+        add_prestige = 200
+        add_piety = 100
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                NOT = { this = scope:corrupt_elder }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_just_leader
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option B: Blackmail the elder for control
+    option = {
+        name = murim_elders.0004.b
+        trigger = {
+            exists = scope:corrupt_elder
+            intrigue >= 12
+        }
+        add_hook = {
+            type = murim_corruption_hook
+            target = scope:corrupt_elder
+        }
+        add_intrigue_skill = 1
+        add_character_modifier = {
+            modifier = murim_holds_elder_secret
+            years = 10
+        }
+        stress_impact = {
+            honest = medium_stress_impact_gain
+            just = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+        }
+    }
+    
+    # Option C: Turn a blind eye
+    option = {
+        name = murim_elders.0004.c
+        add_stress = 10
+        stress_impact = {
+            just = major_stress_impact_gain
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 2.0
+                has_trait = lazy
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Generational Clash: Young vs Old
+# Triggered: when young members challenge elder authority
+# AI: Full generational conflict
+murim_elders.0005 = {
+    type = character_event
+    title = murim_elders.0005.t
+    desc = murim_elders.0005.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    right_portrait = {
+        character = scope:young_rebel
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        any_courtier = {
+            is_alive = yes
+            age <= 30
+            has_trait = ambitious
+            prowess >= 14
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                is_alive = yes
+                age <= 30
+                has_trait = ambitious
+                prowess >= 14
+            }
+            save_scope_as = young_rebel
+        }
+    }
+    
+    # Option A: Hear out the young generation
+    option = {
+        name = murim_elders.0005.a
+        trigger = {
+            exists = scope:young_rebel
+        }
+        add_diplomacy_skill = 1
+        add_character_modifier = {
+            modifier = murim_open_minded_leader
+            years = 3
+        }
+        scope:young_rebel = {
+            add_opinion = {
+                target = root
+                modifier = murim_listened_to_youth
+                opinion = 20
+            }
+        }
+        every_courtier = {
+            limit = { is_alive = yes age <= 30 }
+            add_opinion = {
+                target = root
+                modifier = murim_youth_friendly_leader
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option B: Suppress the rebellion firmly
+    option = {
+        name = murim_elders.0005.b
+        trigger = {
+            exists = scope:young_rebel
+        }
+        add_dread = 15
+        scope:young_rebel = {
+            add_opinion = {
+                target = root
+                modifier = murim_suppressed_my_voice
+                opinion = -30
+            }
+            add_character_modifier = {
+                modifier = murim_silenced_rebel
+                years = 3
+            }
+        }
+        every_courtier = {
+            limit = { is_alive = yes age >= 40 }
+            add_opinion = {
+                target = root
+                modifier = murim_upholds_tradition
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+            modifier = {
+                factor = 2.0
+                age >= 50
+            }
+        }
+    }
+    
+    # Option C: Create a youth advisory council
+    option = {
+        name = murim_elders.0005.c
+        add_character_modifier = {
+            modifier = murim_youth_council_established
+            years = 10
+        }
+        add_prestige = 100
+        add_diplomacy_skill = 1
+        every_courtier = {
+            limit = { is_alive = yes age <= 30 }
+            add_opinion = {
+                target = root
+                modifier = murim_gave_youth_voice
+                opinion = 15
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Emergency Elder Council: Great Calamity Response
+# Triggered: when Great Calamity approaches or starts
+# AI: Full emergency governance
+murim_elders.0006 = {
+    type = character_event
+    title = murim_elders.0006.t
+    desc = murim_elders.0006.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        OR = {
+            has_global_variable = murim_great_calamity_approaching
+            has_global_variable = murim_great_calamity_active
+        }
+    }
+    
+    weight_multiplier = {
+        base = 3
+    }
+    
+    # Option A: Consolidate all power under one leader
+    option = {
+        name = murim_elders.0006.a
+        add_character_modifier = {
+            modifier = murim_emergency_supreme_leader
+            years = 5
+        }
+        add_martial_skill = 2
+        add_dread = 20
+        add_prestige = 300
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                martial >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Form a unified war council of all nine clans
+    option = {
+        name = murim_elders.0006.b
+        add_character_modifier = {
+            modifier = murim_nine_clan_war_council
+            years = 5
+        }
+        add_diplomacy_skill = 2
+        add_prestige = 500
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_unified_council_proposer
+                opinion = 15
+            }
+        }
+        set_global_variable = {
+            name = murim_unified_war_council
+            value = yes
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+        }
+    }
+    
+    # Option C: Evacuate and preserve the sect
+    option = {
+        name = murim_elders.0006.c
+        add_character_modifier = {
+            modifier = murim_evacuation_leader
+            years = 3
+        }
+        add_piety = 100
+        add_prestige = -100
+        add_stress = -20
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Elder Reform: Modernizing Sect Laws
+# Triggered: progressive leaders seeking change
+# AI: Full reform system
+murim_elders.0007 = {
+    type = character_event
+    title = murim_elders.0007.t
+    desc = murim_elders.0007.desc
+    theme = stewardship
+    
+    left_portrait = {
+        character = root
+        animation = personality_diplomacy
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        diplomacy >= 14
+        NOT = { has_character_flag = reform_attempted }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = reform_attempted
+            days = 1825
+        }
+    }
+    
+    # Option A: Allow cross-clan marriages officially
+    option = {
+        name = murim_elders.0007.a
+        add_character_modifier = {
+            modifier = murim_marriage_reform_leader
+            years = 10
+        }
+        add_prestige = 200
+        random_list = {
+            50 = {
+                desc = murim_elders.0007.a.accepted
+                set_global_variable = {
+                    name = murim_cross_clan_marriage_legal
+                    value = yes
+                }
+            }
+            50 = {
+                desc = murim_elders.0007.a.rejected
+                add_stress = 15
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+        }
+    }
+    
+    # Option B: Open technique sharing between clans
+    option = {
+        name = murim_elders.0007.b
+        add_character_modifier = {
+            modifier = murim_technique_sharing_reformer
+            years = 10
+        }
+        add_prestige = 300
+        add_martial_skill = 1
+        random_list = {
+            40 = {
+                desc = murim_elders.0007.b.accepted
+                set_global_variable = {
+                    name = murim_technique_sharing_era
+                    value = yes
+                }
+            }
+            60 = {
+                desc = murim_elders.0007.b.rejected
+                add_stress = 20
+                every_courtier = {
+                    limit = { is_alive = yes age >= 50 }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_reckless_reformer
+                        opinion = -15
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option C: Maintain traditions
+    option = {
+        name = murim_elders.0007.c
+        add_piety = 100
+        add_prestige = 50
+        every_courtier = {
+            limit = { is_alive = yes age >= 40 }
+            add_opinion = {
+                target = root
+                modifier = murim_tradition_keeper
+                opinion = 10
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = zealous
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Elder Vote of No Confidence
+# Triggered: when sect leader is failing
+# AI: Full no-confidence challenge
+murim_elders.0008 = {
+    type = character_event
+    title = murim_elders.0008.t
+    desc = murim_elders.0008.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        OR = {
+            prestige < -100
+            tyranny >= 20
+            any_courtier = {
+                count >= 3
+                opinion = { target = root value <= -30 }
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 3.0
+            tyranny >= 30
+        }
+    }
+    
+    # Option A: Accept the vote and step down gracefully
+    option = {
+        name = murim_elders.0008.a
+        remove_trait = murim_sect_leader
+        add_trait = murim_retired_elder
+        add_prestige = 100
+        add_stress = -20
+        add_character_modifier = {
+            modifier = murim_graceful_abdication
+            years = 10
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = humble
+            }
+        }
+    }
+    
+    # Option B: Refuse and assert authority
+    option = {
+        name = murim_elders.0008.b
+        add_dread = 25
+        add_tyranny = 10
+        add_character_modifier = {
+            modifier = murim_refused_no_confidence
+            years = 5
+        }
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                opinion = { target = root value <= -30 }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_tyrant_leader
+                opinion = -20
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option C: Propose reforms to address grievances
+    option = {
+        name = murim_elders.0008.c
+        trigger = {
+            diplomacy >= 14
+        }
+        add_character_modifier = {
+            modifier = murim_reform_promise
+            years = 3
+        }
+        add_diplomacy_skill = 1
+        add_prestige = 50
+        every_courtier = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_promised_reform
+                opinion = 5
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Nine-Clan Grand Assembly
+# Triggered: rare event when all nine clan leaders gather
+# AI: Full inter-clan governance
+murim_elders.0009 = {
+    type = character_event
+    title = murim_elders.0009.t
+    desc = murim_elders.0009.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = personality_diplomacy
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        NOT = { has_character_flag = grand_assembly_recently }
+    }
+    
+    weight_multiplier = {
+        base = 0.2
+        modifier = {
+            factor = 5.0
+            has_global_variable = murim_great_calamity_approaching
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = grand_assembly_recently
+            days = 1825
+        }
+    }
+    
+    # Option A: Propose Murim Alliance formation
+    option = {
+        name = murim_elders.0009.a
+        add_prestige = 500
+        add_diplomacy_skill = 2
+        add_character_modifier = {
+            modifier = murim_alliance_architect
+            years = 10
+        }
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_alliance_proposer
+                opinion = 15
+            }
+        }
+        set_global_variable = {
+            name = murim_grand_alliance_proposed
+            value = yes
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+            modifier = {
+                factor = 3.0
+                has_global_variable = murim_great_calamity_approaching
+            }
+        }
+    }
+    
+    # Option B: Demand territorial concessions
+    option = {
+        name = murim_elders.0009.b
+        add_prestige = 200
+        add_dread = 15
+        add_character_modifier = {
+            modifier = murim_territorial_demands
+            years = 3
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                martial >= 16
+            }
+        }
+    }
+    
+    # Option C: Call for peace and non-aggression
+    option = {
+        name = murim_elders.0009.c
+        add_piety = 200
+        add_prestige = 200
+        add_character_modifier = {
+            modifier = murim_peace_advocate
+            years = 5
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Post-Calamity Rebuilding: New Elder Order
+# Triggered: after Great Calamity ends
+# AI: Full post-calamity governance reform
+murim_elders.0010 = {
+    type = character_event
+    title = murim_elders.0010.t
+    desc = murim_elders.0010.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = personality_compassionate
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        has_global_variable = murim_renewal_era
+    }
+    
+    weight_multiplier = {
+        base = 3
+    }
+    
+    # Option A: Establish a new democratic elder council
+    option = {
+        name = murim_elders.0010.a
+        add_prestige = 500
+        add_piety = 300
+        add_diplomacy_skill = 3
+        add_character_modifier = {
+            modifier = murim_new_order_founder
+            years = 20
+        }
+        set_global_variable = {
+            name = murim_democratic_elder_council
+            value = yes
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                diplomacy >= 18
+            }
+        }
+    }
+    
+    # Option B: Restore the old traditions
+    option = {
+        name = murim_elders.0010.b
+        add_prestige = 300
+        add_piety = 200
+        add_character_modifier = {
+            modifier = murim_tradition_restorer
+            years = 20
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = zealous
+            }
+        }
+    }
+    
+    # Option C: Create something entirely new
+    option = {
+        name = murim_elders.0010.c
+        add_prestige = 400
+        add_character_modifier = {
+            modifier = murim_revolutionary_new_order
+            years = 20
+        }
+        add_learning_skill = 2
+        add_diplomacy_skill = 2
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+}
