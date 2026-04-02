@@ -281,11 +281,12 @@ murim_calamity_ai_war_pulse = {
 }
 
 ### ON_ACTION: AI Autonomous Betrayal During Calamity
+# PERFORMANCE: Quarterly instead of monthly, higher chance to compensate
 murim_calamity_ai_betrayal_pulse = {
 	on_actions = {
-		on_monthly_pulse
+		on_quarterly_pulse
 	}
-	
+
 	effect = {
 		if = {
 			limit = {
@@ -295,18 +296,21 @@ murim_calamity_ai_betrayal_pulse = {
 			every_living_character = {
 				limit = {
 					has_trait = murim_martial_artist
+					is_alive = yes
 					OR = {
 						has_trait = deceitful
 						has_trait = ambitious
 						has_trait = greedy
 					}
+					NOT = { has_character_flag = murim_calamity_betrayal_cooldown }
 				}
 				random = {
-					chance = 10
+					chance = 25
 					trigger_event = {
 						id = murim_calamity_ai.0002
 						days = { 1 30 }
 					}
+					set_character_flag = { flag = murim_calamity_betrayal_cooldown months = 6 }
 				}
 			}
 		}
@@ -314,18 +318,21 @@ murim_calamity_ai_betrayal_pulse = {
 }
 
 ### ON_ACTION: Mass Death During Phase 3
+# PERFORMANCE: Only runs during calamity phase 3 (rare).
+# Uses quarterly pulse instead of monthly to reduce iteration frequency.
+# Phase 3 typically lasts 1-3 years, so quarterly still kills 70-90%.
 murim_calamity_mass_death_pulse = {
 	on_actions = {
-		on_monthly_pulse
+		on_quarterly_pulse
 	}
-	
+
 	effect = {
 		if = {
 			limit = {
 				has_global_variable = murim_calamity_active
 				global_var:murim_calamity_phase = 3
 			}
-			# Kill 70-90% of martial artists who haven't been marked as survivors
+			# Kill martial artists who aren't survivors (higher per-tick chance to compensate quarterly)
 			every_living_character = {
 				limit = {
 					has_trait = murim_martial_artist
@@ -334,21 +341,20 @@ murim_calamity_mass_death_pulse = {
 					NOT = { has_character_flag = murim_calamity_protected }
 				}
 				random = {
-					chance = 35
+					chance = 60
 					death = {
 						death_reason = death_battle
 					}
 				}
 			}
-			# Civilian deaths
-			every_living_character = {
+			# Civilian deaths — only rulers' courts, not literally everyone
+			every_ruler = {
 				limit = {
-					NOT = { has_trait = murim_martial_artist }
 					is_alive = yes
-					NOT = { is_ruler = yes }
+					NOT = { has_character_flag = murim_calamity_protected }
 				}
 				random = {
-					chance = 15
+					chance = 25
 					death = {
 						death_reason = death_battle
 					}
