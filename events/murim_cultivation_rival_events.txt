@@ -551,3 +551,97 @@ murim_rival.0005 = {
 		ai_chance = { base = 20 }
 	}
 }
+
+###############################################################################
+# 6. RIVAL'S DEATH
+# Triggered from on_death when a rival dies. The surviving rival must process
+# the end of what defined much of their cultivation journey.
+###############################################################################
+murim_rival.0006 = {
+	type = character_event
+	title = murim_rival.0006.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = {
+					has_variable = murim_rival_intensity
+					var:murim_rival_intensity >= 4
+				}
+				desc = murim_rival.0006.desc_bitter
+			}
+			triggered_desc = {
+				trigger = {
+					has_character_flag = murim_rival_final_confrontation_done
+				}
+				desc = murim_rival.0006.desc_resolved
+			}
+			desc = murim_rival.0006.desc
+		}
+	}
+	theme = learning_theology_focus
+	left_portrait = {
+		character = root
+		animation = personality_introspective
+	}
+
+	immediate = {
+		# Clean up rival tracking variables
+		set_variable = { name = murim_has_rival value = 0 }
+		add_character_flag = murim_rival_final_confrontation_done
+	}
+
+	# Option A: Grieve them as the worthy adversary they were
+	option = {
+		name = murim_rival.0006.a
+		add_prestige = 200
+		add_stress = 20
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		add_character_modifier = {
+			modifier = murim_rival_fallen
+			days = 365
+		}
+		custom_tooltip = murim_rival_death_grieve_tt
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				has_variable = murim_rival_intensity
+				var:murim_rival_intensity >= 3
+			}
+		}
+	}
+
+	# Option B: Feel the hollow victory — their death proves nothing
+	option = {
+		name = murim_rival.0006.b
+		trigger = {
+			has_variable = murim_rival_intensity
+			var:murim_rival_intensity >= 3
+		}
+		add_prestige = 100
+		add_stress = 40
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		custom_tooltip = murim_rival_death_hollow_tt
+		ai_chance = { base = 30 }
+	}
+
+	# Option C: Use their death to break through — let their end fuel your ascent
+	option = {
+		name = murim_rival.0006.c
+		trigger = {
+			has_variable = murim_cultivation_rank
+			var:murim_cultivation_rank >= 3
+		}
+		add_stress = -10
+		add_prestige = 150
+		change_variable = { name = murim_cultivation_xp add = 80 }
+		custom_tooltip = murim_rival_death_fuel_tt
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+}

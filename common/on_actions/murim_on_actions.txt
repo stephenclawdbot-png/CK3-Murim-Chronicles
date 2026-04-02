@@ -617,6 +617,85 @@ on_yearly_pulse = {
 	}
 
 	# ------------------------------------------
+	# Alchemy Competition at Yearly Sect Gathering
+	# Sect gatherings host pill-making contests.
+	# Characters with alchemy skill compete.
+	# ------------------------------------------
+	effect = {
+		every_player = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank >= 2
+				prestige >= 200
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_alchemy_competition_cooldown }
+				OR = {
+					AND = {
+						has_variable = murim_alchemy_skill
+						var:murim_alchemy_skill >= 1
+					}
+					AND = {
+						has_variable = murim_alchemy_xp
+						var:murim_alchemy_xp >= 5
+					}
+					murim_is_alchemist_trigger = yes
+				}
+			}
+			random = {
+				chance = 45
+				modifier = {
+					add = 20
+					has_variable = murim_alchemy_skill
+					var:murim_alchemy_skill >= 3
+				}
+				trigger_event = {
+					id = murim_alchemy.0003
+					days = { 15 90 }
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Alchemy Teaching Opportunity
+	# Alchemists with disciples get a yearly
+	# chance to pass on their craft.
+	# ------------------------------------------
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				has_variable = murim_alchemy_skill
+				var:murim_alchemy_skill >= 2
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_alchemy_teach_cooldown }
+				any_courtier = {
+					has_character_flag = murim_initiated
+					NOT = { this = root }
+				}
+			}
+			random = {
+				chance = 30
+				modifier = {
+					add = 20
+					var:murim_alchemy_skill >= 5
+				}
+				modifier = {
+					add = 10
+					has_trait = gregarious
+				}
+				trigger_event = {
+					id = murim_alchemy.0007
+					days = { 10 60 }
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
 	# Emergency Clan Recruitment Check
 	# If any clan has fewer than 3 youth,
 	# trigger emergency recruitment.
@@ -688,6 +767,36 @@ on_yearly_pulse = {
 # ==========================================
 
 on_five_year_pulse = {
+
+	# ------------------------------------------
+	# Pill Auction at the Martial Gathering
+	# Every 5 years a rare pill goes to auction.
+	# Wealthy martial artists get the chance.
+	# ------------------------------------------
+	effect = {
+		every_player = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				gold >= 100
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_alchemy_auction_cooldown }
+			}
+			random = {
+				chance = 60
+				modifier = {
+					add = 20
+					gold >= 300
+				}
+				trigger_event = {
+					id = murim_alchemy.0008
+					days = { 30 180 }
+				}
+			}
+		}
+	}
 
 	# ------------------------------------------
 	# Young Dragon Tournament (Under-30)
@@ -833,6 +942,31 @@ on_death = {
 						id = murim_ranker_death.0005
 						days = { 5 15 }
 					}
+				}
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# Rival Death Notification
+	# When a cultivator dies, their rivals
+	# receive a meaningful event (murim_rival.0006).
+	# The rivalry has ended — one way or another.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				murim_is_martial_artist_trigger = yes
+				any_rival = { always = yes }
+			}
+			every_rival = {
+				limit = {
+					is_alive = yes
+					murim_is_martial_artist_trigger = yes
+				}
+				trigger_event = {
+					id = murim_rival.0006
+					days = { 1 7 }
 				}
 			}
 		}

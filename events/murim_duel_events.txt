@@ -274,6 +274,28 @@ murim_duel.0020 = {
 	immediate = {
 		remove_character_flag = murim_duel_used_forbidden
 		remove_character_flag = murim_duel_counter_win
+		# Rival system: dueling a rival escalates intensity
+		if = {
+			limit = {
+				exists = scope:duel_challenger
+				has_relation_rival = scope:duel_challenger
+				has_variable = murim_rival_intensity
+			}
+			change_variable = { name = murim_rival_intensity add = 1 }
+			clamp_variable = {
+				name = murim_rival_intensity
+				min = 1
+				max = 5
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:duel_challenger
+				has_relation_rival = scope:duel_challenger
+				NOT = { has_variable = murim_rival_intensity }
+			}
+			set_variable = { name = murim_rival_intensity value = 2 }
+		}
 	}
 
 	# Show mercy
@@ -368,6 +390,31 @@ murim_duel.0030 = {
 	left_portrait = { character = root animation = personality_bold }
 	right_portrait = { character = scope:duel_challenger animation = personality_bold }
 
+	immediate = {
+		# Rival system: a draw against a rival deepens the unresolved tension
+		if = {
+			limit = {
+				exists = scope:duel_challenger
+				has_relation_rival = scope:duel_challenger
+				has_variable = murim_rival_intensity
+			}
+			change_variable = { name = murim_rival_intensity add = 1 }
+			clamp_variable = {
+				name = murim_rival_intensity
+				min = 1
+				max = 5
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:duel_challenger
+				has_relation_rival = scope:duel_challenger
+				NOT = { has_variable = murim_rival_intensity }
+			}
+			set_variable = { name = murim_rival_intensity value = 2 }
+		}
+	}
+
 	# Mutual respect
 	option = {
 		name = murim_duel.0030.a
@@ -437,6 +484,31 @@ murim_duel.0040 = {
 	left_portrait = { character = root animation = shame }
 	right_portrait = { character = scope:duel_challenger animation = personality_honorable }
 
+	immediate = {
+		# Rival system: losing to a rival stings — intensity escalates
+		if = {
+			limit = {
+				exists = scope:duel_challenger
+				has_relation_rival = scope:duel_challenger
+				has_variable = murim_rival_intensity
+			}
+			change_variable = { name = murim_rival_intensity add = 1 }
+			clamp_variable = {
+				name = murim_rival_intensity
+				min = 1
+				max = 5
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:duel_challenger
+				has_relation_rival = scope:duel_challenger
+				NOT = { has_variable = murim_rival_intensity }
+			}
+			set_variable = { name = murim_rival_intensity value = 2 }
+		}
+	}
+
 	# Accept defeat gracefully
 	option = {
 		name = murim_duel.0040.a
@@ -459,6 +531,16 @@ murim_duel.0040 = {
 		add_prestige = -100
 		add_trait = wounded_1
 		set_relation_rival = scope:duel_challenger
+		# Initialize rival tracking for the rivalry system
+		set_variable = { name = murim_has_rival value = 1 }
+		set_variable = { name = murim_rival_intensity value = 3 }
+		scope:duel_challenger = {
+			set_variable = { name = murim_has_rival value = 1 }
+			if = {
+				limit = { NOT = { has_variable = murim_rival_intensity } }
+				set_variable = { name = murim_rival_intensity value = 1 }
+			}
+		}
 		add_character_modifier = {
 			modifier = murim_vengeance_sworn
 			years = 5
