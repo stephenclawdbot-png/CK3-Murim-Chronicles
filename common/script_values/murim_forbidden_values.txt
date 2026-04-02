@@ -1,0 +1,169 @@
+########################################
+# MURIM FORBIDDEN TECHNIQUE VALUES
+# Numerical calculations for corruption,
+# ascension, war contribution, tribunal
+########################################
+
+# === CORRUPTION VALUES ===
+
+murim_corruption_level_value = {
+	value = 0
+	if = { limit = { has_trait = murim_corruption_stage_1 } add = 1 }
+	if = { limit = { has_trait = murim_corruption_stage_2 } add = 2 }
+	if = { limit = { has_trait = murim_corruption_stage_3 } add = 3 }
+	if = { limit = { has_trait = murim_corruption_stage_4 } add = 4 }
+}
+
+murim_forbidden_technique_count_value = {
+	value = 0
+	if = { limit = { has_trait = murim_soul_devouring_palm } add = 1 }
+	if = { limit = { has_trait = murim_blood_reversal_art } add = 1 }
+	if = { limit = { has_trait = murim_void_breathing_method } add = 1 }
+	if = { limit = { has_trait = murim_heaven_defying_sutra } add = 1 }
+	if = { limit = { has_trait = murim_asura_body_technique } add = 1 }
+	if = { limit = { has_trait = murim_soul_splitting_art } add = 1 }
+	if = { limit = { has_trait = murim_death_qi_cultivation } add = 1 }
+	if = { limit = { has_trait = murim_eternal_damnation_sutra } add = 1 }
+}
+
+murim_purge_difficulty_value = {
+	# Higher corruption = harder to purge
+	value = 10
+	add = {
+		value = murim_corruption_level_value
+		multiply = 15
+	}
+	subtract = { value = learning multiply = 0.5 }
+	min = 5
+	max = 80
+}
+
+# === ASCENSION VALUES ===
+
+murim_ascension_success_chance_value = {
+	value = 20
+	add = { value = prowess multiply = 0.5 }
+	add = { value = learning multiply = 0.3 }
+	add = { value = martial multiply = 0.2 }
+	if = { limit = { has_trait = murim_half_immortal } add = 15 }
+	if = { limit = { murim_has_any_corruption_trigger = yes } subtract = 10 }
+	if = { limit = { has_trait = murim_corruption_stage_3 } subtract = 15 }
+	if = { limit = { has_trait = murim_corruption_stage_4 } subtract = 30 }
+	min = 5
+	max = 75
+}
+
+murim_tribulation_intensity_value = {
+	# How severe the heavenly tribulation is
+	value = 30
+	add = {
+		value = murim_forbidden_technique_count_value
+		multiply = 10
+	}
+	add = {
+		value = murim_corruption_level_value
+		multiply = 15
+	}
+	if = { limit = { has_trait = murim_heaven_defying_sutra } add = 20 }
+	min = 20
+	max = 100
+}
+
+murim_immortal_count_value = {
+	# Counts current immortals in the world (max 5)
+	value = 0
+	every_ruler = {
+		limit = { murim_is_immortal_trigger = yes }
+		add = 1
+	}
+}
+
+# === WAR VALUES ===
+
+murim_war_power_orthodox_value = {
+	value = 0
+	every_ruler = {
+		limit = {
+			has_variable = murim_martial_artist
+			murim_is_orthodox_faction_trigger = yes
+		}
+		add = { value = prowess multiply = 0.5 }
+		add = { value = martial multiply = 0.3 }
+	}
+}
+
+murim_war_power_unorthodox_value = {
+	value = 0
+	every_ruler = {
+		limit = {
+			has_variable = murim_martial_artist
+			murim_is_unorthodox_faction_trigger = yes
+		}
+		add = { value = prowess multiply = 0.5 }
+		add = { value = martial multiply = 0.3 }
+	}
+}
+
+murim_war_exhaustion_value = {
+	# Increases over time during continental war
+	value = 0
+	if = {
+		limit = { has_global_variable = murim_continental_war_active }
+		add = 10
+		# Would increase with war duration tracking
+	}
+}
+
+murim_war_contribution_value = {
+	value = 0
+	if = { limit = { has_variable = murim_war_contribution } add = var:murim_war_contribution }
+}
+
+# === TRIBUNAL VALUES ===
+
+murim_tribunal_seat_count_value = {
+	value = 0
+	every_ruler = {
+		limit = { has_trait = murim_tribunal_judge }
+		add = 1
+	}
+}
+
+murim_tribunal_seats_available_value = {
+	value = 7
+	subtract = murim_tribunal_seat_count_value
+	min = 0
+}
+
+murim_tribunal_nomination_score_value = {
+	value = 0
+	add = { value = prowess multiply = 0.3 }
+	add = { value = martial multiply = 0.3 }
+	add = { value = diplomacy multiply = 0.2 }
+	add = { value = learning multiply = 0.2 }
+	if = { limit = { var:murim_cultivation_rank >= 5 } add = 20 }
+	if = { limit = { var:murim_cultivation_rank >= 6 } add = 30 }
+	if = { limit = { murim_has_any_corruption_trigger = yes } subtract = 20 }
+	if = { limit = { has_trait = murim_war_hero } add = 10 }
+}
+
+# === RIVALRY VALUES ===
+
+murim_rivalry_intensity_value = {
+	value = 0
+	if = { limit = { has_trait = murim_sworn_nemesis } add = 30 }
+	if = { limit = { has_trait = murim_legacy_grudge } add = 20 }
+	add = { value = stress multiply = 0.2 }
+	if = { limit = { has_trait = wrathful } add = 15 }
+	if = { limit = { has_trait = vengeful } add = 15 }
+}
+
+murim_succession_claim_strength_value = {
+	value = 0
+	add = { value = prowess multiply = 0.4 }
+	add = { value = martial multiply = 0.3 }
+	add = { value = diplomacy multiply = 0.2 }
+	add = { value = intrigue multiply = 0.1 }
+	if = { limit = { var:murim_cultivation_rank >= 4 } add = 15 }
+	if = { limit = { var:murim_cultivation_rank >= 5 } add = 25 }
+}
