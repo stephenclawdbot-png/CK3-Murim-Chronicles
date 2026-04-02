@@ -1,0 +1,477 @@
+namespace = murim_shadow_politics_expansion6
+
+# SHADOW POLITICS EXPANSION 6 - PUPPET EMPEROR ENDGAME
+# 10 events: Heavenly Demon's final gambit, emperor replacement, orthodox purge
+
+murim_shadow_politics_expansion6.0001 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0001.t
+	desc = murim_shadow_pol_exp6.0001.desc
+	theme = intrigue
+	left_portrait = { character = root animation = scheme }
+
+	trigger = {
+		has_trait = murim_heavenly_demon_sect
+		has_global_variable = murim_puppet_emperor_installed
+		NOT = { has_character_flag = shadow_endgame_begun }
+	}
+
+	weight_multiplier = {
+		base = 30
+		modifier = { add = 20 intrigue >= 20 }
+	}
+
+	immediate = {
+		set_character_flag = shadow_endgame_begun
+		random_living_character = {
+			limit = { has_character_modifier = murim_puppet_emperor }
+			save_scope_as = puppet_emperor
+		}
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist is_ruler = yes NOT = { has_trait = murim_heavenly_demon_sect } prestige >= 3000 }
+			save_scope_as = orthodox_leader
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0001.a
+		add_character_modifier = { modifier = murim_shadow_emperor_endgame years = 10 }
+		add_intrigue = 5
+		trigger_event = { id = murim_shadow_politics_expansion6.0002 days = { 30 60 } }
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0001.b
+		add_character_modifier = { modifier = murim_shadow_consolidation years = 15 }
+		add_prestige = 500
+		if = { limit = { exists = scope:puppet_emperor }
+			scope:puppet_emperor = { add_character_modifier = { modifier = murim_tightened_control years = 10 } }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0001.c
+		add_character_modifier = { modifier = murim_shadow_withdrawal years = 10 }
+		add_gold = 500
+		remove_global_variable = murim_puppet_emperor_installed
+	}
+}
+
+murim_shadow_politics_expansion6.0002 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0002.t
+	desc = murim_shadow_pol_exp6.0002.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_callous }
+
+	trigger = { has_character_modifier = murim_shadow_emperor_endgame }
+
+	immediate = {
+		random_living_character = {
+			limit = { has_character_modifier = murim_puppet_emperor }
+			save_scope_as = puppet_emperor
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0002.a
+		add_tyranny = 30
+		add_prestige = 2000
+		if = { limit = { exists = scope:puppet_emperor }
+			scope:puppet_emperor = { death = { death_reason = death_murder_known killer = root } }
+		}
+		add_character_modifier = { modifier = murim_shadow_emperor_himself years = 50 }
+		set_global_variable = { name = murim_heavenly_demon_is_emperor value = root }
+		trigger_event = { id = murim_shadow_politics_expansion6.0003 days = { 15 30 } }
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0002.b
+		add_intrigue = 3
+		add_character_modifier = { modifier = murim_replaced_puppet years = 10 }
+		if = { limit = { exists = scope:puppet_emperor }
+			scope:puppet_emperor = {
+				add_character_modifier = { modifier = murim_retired_puppet years = 20 }
+				remove_character_modifier = murim_puppet_emperor
+			}
+		}
+		random_living_character = {
+			limit = { age >= 20 age <= 40 NOT = { has_trait = murim_martial_artist } is_ruler = no }
+			save_scope_as = new_puppet
+			add_character_modifier = { modifier = murim_puppet_emperor years = 30 }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0002.c
+		add_character_modifier = { modifier = murim_puppet_master_supreme years = 30 }
+		add_intrigue = 5
+		add_prestige = 1000
+	}
+}
+
+murim_shadow_politics_expansion6.0003 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0003.t
+	desc = murim_shadow_pol_exp6.0003.desc
+	theme = war
+	left_portrait = { character = root animation = rage }
+
+	trigger = { has_global_variable = murim_heavenly_demon_is_emperor }
+
+	immediate = {
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				OR = {
+					has_trait = murim_clan_shaolin
+					has_trait = murim_clan_wudang
+					has_trait = murim_clan_mount_hua
+				}
+			}
+			add_to_temporary_list = orthodox_outraged
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0003.a
+		add_character_modifier = { modifier = murim_orthodox_crusade years = 10 }
+		every_in_list = {
+			list = orthodox_outraged
+			add_opinion = { modifier = murim_demonic_emperor_rage target = root opinion = -80 }
+		}
+		trigger_event = { id = murim_shadow_politics_expansion6.0004 days = { 30 60 } }
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0003.b
+		add_prestige = 1000
+		add_character_modifier = { modifier = murim_demon_emperor_diplomacy years = 10 }
+		every_in_list = {
+			list = orthodox_outraged
+			random = {
+				chance = 30
+				add_opinion = { modifier = murim_grudging_acceptance target = root opinion = -20 }
+			}
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0003.c
+		add_tyranny = 50
+		add_character_modifier = { modifier = murim_demon_emperor_purge years = 10 }
+		every_in_list = {
+			list = orthodox_outraged
+			random = {
+				chance = 20
+				death = { death_reason = death_execution killer = root }
+			}
+		}
+		trigger_event = { id = murim_shadow_politics_expansion6.0005 days = { 60 120 } }
+	}
+}
+
+murim_shadow_politics_expansion6.0004 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0004.t
+	desc = murim_shadow_pol_exp6.0004.desc
+	theme = war
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = { has_character_modifier = murim_orthodox_crusade }
+
+	immediate = {
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				OR = { has_trait = murim_clan_shaolin has_trait = murim_clan_wudang }
+				prowess >= 20
+			}
+			save_scope_as = crusade_leader
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0004.a
+		trigger = { exists = scope:crusade_leader prowess >= 25 }
+		duel = {
+			skill = prowess
+			target = scope:crusade_leader
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_shadow_pol_exp6.0004.a.win
+				root = {
+					add_prestige = 5000
+					add_character_modifier = { modifier = murim_demon_emperor_victorious years = 30 }
+					set_global_variable = { name = murim_orthodox_crushed value = yes }
+				}
+				scope:crusade_leader = { add_trait = wounded_3 add_prestige = -2000 }
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_shadow_pol_exp6.0004.a.lose
+				root = {
+					add_trait = wounded_3
+					remove_global_variable = murim_heavenly_demon_is_emperor
+					add_character_modifier = { modifier = murim_demon_emperor_defeated years = 20 }
+				}
+			}
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0004.b
+		add_character_modifier = { modifier = murim_demon_emperor_negotiates years = 10 }
+		add_prestige = -500
+		if = { limit = { exists = scope:crusade_leader }
+			scope:crusade_leader = { add_opinion = { modifier = murim_peace_offering target = root opinion = 20 } }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0004.c
+		add_character_modifier = { modifier = murim_demon_emperor_flees years = 5 }
+		remove_global_variable = murim_heavenly_demon_is_emperor
+		add_prestige = -2000
+		add_gold = 1000
+	}
+}
+
+murim_shadow_politics_expansion6.0005 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0005.t
+	desc = murim_shadow_pol_exp6.0005.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_callous }
+
+	trigger = { has_character_modifier = murim_demon_emperor_purge }
+
+	option = {
+		name = murim_shadow_pol_exp6.0005.a
+		add_tyranny = 30
+		add_character_modifier = { modifier = murim_great_purge_complete years = 20 }
+		set_global_variable = { name = murim_orthodox_purged value = yes }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_feared_demon_emperor target = root opinion = -40 }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0005.b
+		add_character_modifier = { modifier = murim_selective_purge years = 15 }
+		add_tyranny = 15
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0005.c
+		remove_character_modifier = murim_demon_emperor_purge
+		add_character_modifier = { modifier = murim_mercy_of_demon_emperor years = 20 }
+		add_piety = 500
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_demon_showed_mercy target = root opinion = 15 }
+		}
+	}
+}
+
+murim_shadow_politics_expansion6.0006 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0006.t
+	desc = murim_shadow_pol_exp6.0006.desc
+	theme = intrigue
+	left_portrait = { character = root animation = worry }
+
+	trigger = {
+		has_global_variable = murim_heavenly_demon_is_emperor
+		any_living_character = {
+			has_trait = murim_martial_artist
+			NOT = { has_trait = murim_heavenly_demon_sect }
+			has_character_modifier = murim_old_era_loyalist
+		}
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist NOT = { has_trait = murim_heavenly_demon_sect } prowess >= 20 }
+			save_scope_as = underground_leader
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0006.a
+		add_intrigue = 3
+		add_character_modifier = { modifier = murim_hunting_resistance years = 10 }
+		if = { limit = { exists = scope:underground_leader }
+			scope:underground_leader = { add_opinion = { modifier = murim_hunted_by_demon target = root opinion = -50 } }
+		}
+		trigger_event = { id = murim_shadow_politics_expansion6.0007 days = { 60 120 } }
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0006.b
+		add_character_modifier = { modifier = murim_ignoring_resistance years = 10 }
+		add_prestige = -200
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0006.c
+		add_character_modifier = { modifier = murim_infiltrating_resistance years = 10 }
+		add_intrigue = 5
+	}
+}
+
+murim_shadow_politics_expansion6.0007 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0007.t
+	desc = murim_shadow_pol_exp6.0007.desc
+	theme = war
+	left_portrait = { character = root animation = anger }
+
+	trigger = { has_character_modifier = murim_hunting_resistance }
+
+	immediate = {
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist NOT = { has_trait = murim_heavenly_demon_sect } prowess >= 25 }
+			save_scope_as = resistance_champion
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0007.a
+		trigger = { exists = scope:resistance_champion }
+		duel = {
+			skill = prowess
+			target = scope:resistance_champion
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_shadow_pol_exp6.0007.a.win
+				root = { add_prestige = 2000 add_character_modifier = { modifier = murim_resistance_crushed years = 20 } }
+				scope:resistance_champion = { death = { death_reason = death_duel killer = root } }
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_shadow_pol_exp6.0007.a.lose
+				root = { add_trait = wounded_3 add_prestige = -1000 }
+			}
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0007.b
+		add_character_modifier = { modifier = murim_truce_with_resistance years = 15 }
+		add_prestige = -300
+		add_piety = 200
+	}
+}
+
+murim_shadow_politics_expansion6.0008 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0008.t
+	desc = murim_shadow_pol_exp6.0008.desc
+	theme = intrigue
+	left_portrait = { character = root animation = scheme }
+
+	trigger = {
+		has_trait = murim_heavenly_demon_sect
+		has_global_variable = murim_heavenly_demon_is_emperor
+		any_vassal = { has_trait = murim_heavenly_demon_sect NOT = { has_relation_friend = root } }
+	}
+
+	immediate = {
+		random_vassal = {
+			limit = { has_trait = murim_heavenly_demon_sect NOT = { has_relation_friend = root } intrigue >= 15 }
+			save_scope_as = internal_conspirator
+		}
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0008.a
+		trigger = { exists = scope:internal_conspirator }
+		scope:internal_conspirator = { death = { death_reason = death_murder_known killer = root } }
+		add_tyranny = 15
+		add_character_modifier = { modifier = murim_purged_internal_threat years = 10 }
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0008.b
+		trigger = { exists = scope:internal_conspirator }
+		scope:internal_conspirator = { add_opinion = { modifier = murim_offered_amnesty target = root opinion = 30 } }
+		add_character_modifier = { modifier = murim_demon_emperor_merciful years = 10 }
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0008.c
+		add_character_modifier = { modifier = murim_demon_emperor_paranoid years = 10 }
+		add_stress = 30
+		add_intrigue = 3
+	}
+}
+
+murim_shadow_politics_expansion6.0009 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0009.t
+	desc = murim_shadow_pol_exp6.0009.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = personality_honorable }
+
+	trigger = {
+		has_global_variable = murim_heavenly_demon_is_emperor
+		has_trait = murim_heavenly_demon_sect
+		age >= 60
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0009.a
+		add_character_modifier = { modifier = murim_demon_dynasty_founded years = 100 }
+		add_prestige = 5000
+		set_global_variable = { name = murim_demon_dynasty value = root }
+		every_child = {
+			limit = { has_trait = murim_heavenly_demon_sect }
+			add_prestige = 2000
+			add_character_modifier = { modifier = murim_demon_prince years = 50 }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0009.b
+		remove_global_variable = murim_heavenly_demon_is_emperor
+		add_piety = 2000
+		add_character_modifier = { modifier = murim_demon_emperor_abdicated years = 30 }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_demon_stepped_down target = root opinion = 30 }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0009.c
+		add_character_modifier = { modifier = murim_demon_emperor_eternal years = 50 }
+		add_health = 3
+		add_prestige = 3000
+	}
+}
+
+murim_shadow_politics_expansion6.0010 = {
+	type = character_event
+	title = murim_shadow_pol_exp6.0010.t
+	desc = murim_shadow_pol_exp6.0010.desc
+	theme = skull
+	left_portrait = { character = root animation = rage }
+
+	trigger = {
+		has_global_variable = murim_heavenly_demon_is_emperor
+		has_global_variable = murim_orthodox_purged
+	}
+
+	option = {
+		name = murim_shadow_pol_exp6.0010.a
+		add_prestige = 10000
+		add_character_modifier = { modifier = murim_absolute_demon_emperor years = 100 }
+		set_global_variable = { name = murim_dark_age_of_murim value = yes }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist NOT = { has_trait = murim_heavenly_demon_sect } }
+			add_character_modifier = { modifier = murim_living_under_demon_rule years = 50 }
+			add_opinion = { modifier = murim_oppressed target = root opinion = -60 }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0010.b
+		add_prestige = 5000
+		add_character_modifier = { modifier = murim_benevolent_demon_emperor years = 50 }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_demon_brings_peace target = root opinion = 10 }
+		}
+	}
+	option = {
+		name = murim_shadow_pol_exp6.0010.c
+		add_character_modifier = { modifier = murim_demon_emperor_reforms years = 30 }
+		add_diplomacy = 5
+		add_learning = 3
+		set_global_variable = { name = murim_new_orthodox_unorthodox_balance value = yes }
+	}
+}
