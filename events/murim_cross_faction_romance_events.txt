@@ -1963,3 +1963,196 @@ murim_romance.0012 = {
         }
     }
 }
+########################################
+# murim_romance.0013 — CULTIVATION RESONANCE
+# Two cultivators discover their qi circuits resonate
+# in perfect harmony — a phenomenon that deepens
+# both love and cultivation simultaneously.
+########################################
+murim_romance.0013 = {
+    type = character_event
+    title = murim_romance.0013.t
+    desc = murim_romance.0013.desc
+    theme = seduction
+
+    left_portrait = {
+        character = root
+        animation = personality_compassionate
+    }
+
+    trigger = {
+        is_alive = yes
+        age >= 18
+        is_imprisoned = no
+        murim_is_martial_artist_trigger = yes
+        has_variable = murim_cultivation_rank
+        var:murim_cultivation_rank >= 2
+        any_relation = {
+            type = lover
+            is_alive = yes
+            murim_is_martial_artist_trigger = yes
+        }
+        NOT = { has_character_flag = cultivation_resonance_discovered }
+    }
+
+    weight_multiplier = {
+        base = 1
+        modifier = { add = 2 has_trait = compassionate }
+        modifier = { add = 2 has_trait = romantic }
+        modifier = { add = 1 var:murim_cultivation_rank >= 4 }
+    }
+
+    immediate = {
+        set_character_flag = cultivation_resonance_discovered
+        random_relation = {
+            type = lover
+            limit = {
+                is_alive = yes
+                murim_is_martial_artist_trigger = yes
+            }
+            save_scope_as = resonance_partner
+        }
+    }
+
+    # Option A: Pursue dual cultivation — the resonance strengthens both
+    option = {
+        name = murim_romance.0013.a
+        change_variable = { name = murim_cultivation_xp add = 40 }
+        add_character_modifier = {
+            modifier = murim_qi_exchange_received
+            months = 12
+        }
+        scope:resonance_partner = {
+            change_variable = { name = murim_cultivation_xp add = 40 }
+            add_character_modifier = {
+                modifier = murim_qi_exchange_received
+                months = 12
+            }
+        }
+        add_prestige = 100
+        ai_chance = {
+            base = 60
+            modifier = { add = 20 has_trait = compassionate }
+        }
+    }
+
+    # Option B: Keep cultivation separate — do not let love cloud your path
+    option = {
+        name = murim_romance.0013.b
+        change_variable = { name = murim_cultivation_xp add = 20 }
+        add_character_modifier = {
+            modifier = murim_meditation_focus
+            months = 6
+        }
+        ai_chance = {
+            base = 25
+            modifier = { add = 20 has_trait = ambitious }
+            modifier = { add = 15 has_trait = diligent }
+        }
+    }
+
+    # Option C: Report it to your sect master as a sign of fate
+    option = {
+        name = murim_romance.0013.c
+        add_prestige = 80
+        add_piety = 50
+        change_variable = { name = murim_cultivation_xp add = 15 }
+        if = {
+            limit = { has_variable = murim_clan_harmony_score }
+            change_variable = { name = murim_clan_harmony_score add = 5 }
+        }
+        ai_chance = {
+            base = 15
+            modifier = { add = 20 has_trait = humble }
+        }
+    }
+}
+
+########################################
+# murim_romance.0014 — RIVAL'S LOVER
+# Your rival's lover has been spending time with you.
+# Whether accidental or deliberate, the complication grows.
+########################################
+murim_romance.0014 = {
+    type = character_event
+    title = murim_romance.0014.t
+    desc = murim_romance.0014.desc
+    theme = intrigue
+
+    left_portrait = {
+        character = root
+        animation = personality_curious
+    }
+
+    trigger = {
+        is_alive = yes
+        age >= 18
+        is_imprisoned = no
+        murim_is_martial_artist_trigger = yes
+        has_variable = murim_has_rival
+        var:murim_has_rival >= 1
+        NOT = { has_character_flag = rivals_lover_complication }
+    }
+
+    weight_multiplier = {
+        base = 1
+        modifier = { add = 2 has_trait = schemer }
+        modifier = { add = 1 has_trait = romantic }
+        modifier = { add = -2 has_trait = just }
+    }
+
+    immediate = {
+        set_character_flag = rivals_lover_complication
+    }
+
+    # Option A: Pull away — honour over desire
+    option = {
+        name = murim_romance.0014.a
+        add_prestige = 100
+        add_piety = 50
+        stress_impact = {
+            romantic = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 45
+            modifier = { add = 25 has_trait = just }
+            modifier = { add = 20 has_trait = humble }
+        }
+    }
+
+    # Option B: Pursue — use it to destabilise your rival
+    option = {
+        name = murim_romance.0014.b
+        add_intrigue_skill = 1
+        change_variable = { name = murim_rival_intensity add = 1 }
+        clamp_variable = {
+            name = murim_rival_intensity
+            min = 1
+            max = 5
+        }
+        add_dread = 10
+        ai_chance = {
+            base = 25
+            modifier = { add = 25 has_trait = schemer }
+            modifier = { add = 20 has_trait = sadistic }
+            modifier = { add = -20 has_trait = just }
+        }
+    }
+
+    # Option C: Confide in them about the rivalry — unexpected depth
+    option = {
+        name = murim_romance.0014.c
+        change_variable = { name = murim_rival_intensity add = -1 }
+        clamp_variable = {
+            name = murim_rival_intensity
+            min = 1
+            max = 5
+        }
+        add_prestige = 50
+        ai_chance = {
+            base = 30
+            modifier = { add = 20 has_trait = compassionate }
+            modifier = { add = 15 has_trait = forgiving }
+        }
+    }
+}

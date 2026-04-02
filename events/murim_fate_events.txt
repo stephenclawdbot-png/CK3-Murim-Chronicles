@@ -1321,3 +1321,230 @@ murim_fate.0010 = {
 		}
 	}
 }
+
+##############################
+# 11. Destiny Bond
+# Two cultivators discover their fates are woven together by heaven —
+# shared tribulations, mirrored breakthroughs, linked cultivation paths.
+##############################
+murim_fate.0011 = {
+	type = character_event
+	title = murim_fate.0011.t
+	desc = murim_fate.0011.desc
+	theme = mystic
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:fate_bound_other
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 5
+		any_relation = {
+			type = friend
+			is_alive = yes
+			murim_is_martial_artist_trigger = yes
+		}
+		NOT = { has_character_flag = murim_destiny_bond_formed }
+		NOT = { has_character_flag = murim_fate_destiny_bond_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_fate_destiny_bond_cooldown
+			years = 10
+		}
+		random_relation = {
+			type = friend
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+			}
+			save_scope_as = fate_bound_other
+		}
+	}
+
+	# Accept the bond — walk the shared path
+	option = {
+		name = murim_fate.0011.a
+
+		add_character_flag = murim_destiny_bond_formed
+		add_character_modifier = {
+			modifier = murim_destiny_bond_active
+			years = 15
+		}
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_prestige = 200
+		scope:fate_bound_other = {
+			add_character_flag = murim_destiny_bond_formed
+			add_character_modifier = {
+				modifier = murim_destiny_bond_active
+				years = 15
+			}
+			change_variable = { name = murim_cultivation_xp add = 50 }
+		}
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 25
+				has_trait = diligent
+			}
+		}
+	}
+
+	# Resist the bond — forge your own path alone
+	option = {
+		name = murim_fate.0011.b
+
+		add_prestige = 100
+		add_stress = 15
+		add_character_modifier = {
+			modifier = murim_fate_defiant
+			years = 5
+		}
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Seek guidance from a fate-reader to understand the bond's full meaning
+	option = {
+		name = murim_fate.0011.c
+
+		add_piety = 200
+		change_variable = { name = murim_cultivation_xp add = 30 }
+
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+}
+
+##############################
+# 12. Fate Divergence
+# A moment of absolute clarity — the character stands at a crossroads written in the heavens.
+# Two cultivation paths branch before them. One leads to power. One leads to peace.
+# The heavens will remember this choice.
+##############################
+murim_fate.0012 = {
+	type = character_event
+	title = murim_fate.0012.t
+	desc = murim_fate.0012.desc
+	theme = mystic
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 7
+		NOT = { has_character_flag = murim_fate_divergence_chosen }
+		NOT = { has_character_flag = murim_fate_divergence_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_fate_divergence_cooldown
+			years = 20
+		}
+	}
+
+	# The Path of Dominance — raw power, conquest of heaven itself
+	option = {
+		name = murim_fate.0012.a
+
+		add_character_flag = murim_fate_divergence_chosen
+		add_character_modifier = {
+			modifier = murim_heaven_defying_will
+			years = 20
+		}
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_prestige = 500
+		add_stress = 25
+
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# The Path of Harmony — walk with the heavens, not against them
+	option = {
+		name = murim_fate.0012.b
+
+		add_character_flag = murim_fate_divergence_chosen
+		add_character_modifier = {
+			modifier = murim_heavenly_accord
+			years = 20
+		}
+		add_piety = 500
+		change_variable = { name = murim_cultivation_xp add = 100 }
+		add_stress = -20
+
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = patient
+			}
+			modifier = {
+				add = 20
+				has_trait = humble
+			}
+		}
+	}
+
+	# Reject the binary — refuse both paths and chart a third way
+	option = {
+		name = murim_fate.0012.c
+		trigger = {
+			var:murim_cultivation_level >= 9
+		}
+
+		add_character_flag = murim_fate_divergence_chosen
+		add_character_modifier = {
+			modifier = murim_fate_transcendent
+			years = 25
+		}
+		add_prestige = 800
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_stress = 30
+
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+}

@@ -1597,3 +1597,203 @@ murim_artifact.0008 = {
 		}
 	}
 }
+
+######################################
+# 0009 - THE RESONANT CORE
+# A crystalline stone pulses with concentrated qi — not an artifact of craft,
+# but a natural formation. Whoever absorbs it will feel the energy of the land itself.
+######################################
+murim_artifact.0009 = {
+	type = character_event
+	title = murim_artifact.0009.t
+	desc = murim_artifact.0009.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = investigate
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		age >= 16
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_flag = murim_artifact_discovery_cooldown }
+		NOT = { has_character_flag = murim_resonant_core_found }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_artifact_discovery_cooldown
+			years = 3
+		}
+		add_character_flag = murim_resonant_core_found
+	}
+
+	# Absorb the core — draw its qi into your own
+	option = {
+		name = murim_artifact.0009.a
+
+		random_list = {
+			50 = {
+				change_variable = { name = murim_cultivation_level add = 1 }
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_land_qi_resonance
+					years = 8
+				}
+			}
+			30 = {
+				change_variable = { name = murim_cultivation_xp add = 80 }
+				add_health = 0.3
+			}
+			20 = {
+				# The qi is too wild — qi deviation
+				add_stress = 25
+				add_health = -0.3
+				change_variable = { name = murim_cultivation_xp add = 30 }
+			}
+		}
+
+		ai_chance = {
+			base = 55
+			modifier = {
+				add = 25
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Offer it to your sect — a gift to the lineage
+	option = {
+		name = murim_artifact.0009.b
+
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_sect_benefactor
+			years = 5
+		}
+
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				has_trait = generous
+			}
+		}
+	}
+
+	# Sell it on the black market — pure profit
+	option = {
+		name = murim_artifact.0009.c
+
+		add_gold = 80
+
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 25
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+######################################
+# 0010 - THE ORIGINAL MANUAL
+# Not a copy. Not a fragment. The original manuscript in the hand
+# of the technique's creator — sealed, unread, waiting.
+# This artifact can reshape a cultivation path entirely.
+######################################
+murim_artifact.0010 = {
+	type = character_event
+	title = murim_artifact.0010.t
+	desc = murim_artifact.0010.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		age >= 16
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 5
+		NOT = { has_character_flag = murim_original_manual_found }
+		NOT = { has_character_flag = murim_artifact_discovery_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_original_manual_found
+		}
+		add_character_flag = {
+			flag = murim_artifact_discovery_cooldown
+			years = 5
+		}
+	}
+
+	# Study it in isolation — let the knowledge transform you
+	option = {
+		name = murim_artifact.0010.a
+
+		change_variable = { name = murim_cultivation_level add = 1 }
+		add_character_modifier = {
+			modifier = murim_original_manual_insight
+			years = 10
+		}
+		add_prestige = 500
+		add_stress = 10
+
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = diligent
+			}
+		}
+	}
+
+	# Share it with the sect archive — preserve it for future generations
+	option = {
+		name = murim_artifact.0010.b
+
+		add_prestige = 400
+		change_variable = { name = murim_cultivation_xp add = 60 }
+		add_character_modifier = {
+			modifier = murim_legacy_preserver
+			years = 8
+		}
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = generous
+			}
+		}
+	}
+
+	# Keep it secret — tell no one this exists
+	option = {
+		name = murim_artifact.0010.c
+
+		add_character_flag = murim_original_manual_hidden
+		change_variable = { name = murim_cultivation_xp add = 100 }
+		add_stress = 15
+
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 20
+				has_trait = paranoid
+			}
+		}
+	}
+}
+}

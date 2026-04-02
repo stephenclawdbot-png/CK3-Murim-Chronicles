@@ -2051,3 +2051,199 @@ murim_breakthrough.0910 = {
 		}
 	}
 }
+
+######################################################################
+# BATCH 24 NEW EVENTS
+######################################################################
+
+##############################
+# murim_breakthrough.0920 - SYNCHRONISED BREAKTHROUGH
+# Two cultivators who have trained together for years attempt to break
+# through simultaneously — their qi resonating, amplifying each other.
+# Success for both, or catastrophic failure for both.
+##############################
+murim_breakthrough.0920 = {
+	type = character_event
+	title = murim_breakthrough.0920.t
+	desc = murim_breakthrough.0920.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:breakthrough_partner
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		is_imprisoned = no
+		has_variable = murim_cultivation_stage
+		any_relation = {
+			type = friend
+			is_alive = yes
+			has_variable = murim_cultivation_stage
+		}
+		NOT = { has_character_flag = murim_synchronised_breakthrough_tried }
+		NOT = { has_character_flag = attempting_breakthrough }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_synchronised_breakthrough_tried
+			years = 5
+		}
+		random_relation = {
+			type = friend
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_stage
+			}
+			save_scope_as = breakthrough_partner
+		}
+	}
+
+	# Attempt the synchronised breakthrough together
+	option = {
+		name = murim_breakthrough.0920.a
+
+		random_list = {
+			50 = {
+				# Both succeed — amplified breakthrough
+				change_variable = { name = murim_qi_reserve add = 80 }
+				add_character_modifier = {
+					modifier = murim_synchronised_breakthrough_boost
+					years = 5
+				}
+				add_prestige = 300
+				scope:breakthrough_partner = {
+					change_variable = { name = murim_qi_reserve add = 80 }
+					add_character_modifier = {
+						modifier = murim_synchronised_breakthrough_boost
+						years = 5
+					}
+					add_prestige = 300
+				}
+			}
+			30 = {
+				# Partial — one succeeds, one is pushed back
+				change_variable = { name = murim_qi_reserve add = 40 }
+				add_prestige = 100
+				scope:breakthrough_partner = {
+					add_stress = 20
+					add_health = -0.2
+				}
+			}
+			20 = {
+				# Both fail — qi backlash injures both
+				add_stress = 25
+				add_health = -0.3
+				scope:breakthrough_partner = {
+					add_stress = 25
+					add_health = -0.3
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Attempt alone — keep your breakthrough independent
+	option = {
+		name = murim_breakthrough.0920.b
+
+		change_variable = { name = murim_qi_reserve add = 20 }
+		add_stress = -5
+
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = patient
+			}
+		}
+	}
+}
+
+##############################
+# murim_breakthrough.0930 - CRISIS-FORGED BREAKTHROUGH
+# Near death — a wound, a poison, or a disaster — has pushed the
+# character's qi to its absolute limit. The boundary shattered not by
+# training but by desperation. The breakthrough happened. But so did damage.
+##############################
+murim_breakthrough.0930 = {
+	type = character_event
+	title = murim_breakthrough.0930.t
+	desc = murim_breakthrough.0930.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_alive = yes
+		health < 2.0
+		has_variable = murim_cultivation_stage
+		NOT = { has_character_flag = murim_crisis_breakthrough_fired }
+		NOT = { has_character_flag = attempting_breakthrough }
+	}
+
+	immediate = {
+		add_character_flag = murim_crisis_breakthrough_fired
+	}
+
+	# Accept the breakthrough — carry the cost and the gain together
+	option = {
+		name = murim_breakthrough.0930.a
+
+		change_variable = { name = murim_qi_reserve add = 100 }
+		add_character_modifier = {
+			modifier = murim_crisis_breakthrough_scar
+			years = 8
+		}
+		add_prestige = 400
+		add_health = -0.2
+
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				has_trait = brave
+			}
+		}
+	}
+
+	# Suppress it — force the qi back down and stabilise instead
+	option = {
+		name = murim_breakthrough.0930.b
+
+		add_health = 0.3
+		add_character_modifier = {
+			modifier = murim_suppressed_qi_pressure
+			years = 3
+		}
+		change_variable = { name = murim_qi_reserve add = 30 }
+
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 25
+				has_trait = patient
+			}
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+	}
+}

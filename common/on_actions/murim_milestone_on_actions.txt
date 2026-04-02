@@ -1,0 +1,74 @@
+############################################
+# MURIM CULTIVATION MILESTONE ON_ACTIONS
+# Fires milestone events when characters cross
+# significant cultivation rank thresholds.
+#
+# Rank 3: Body refinement complete
+# Rank 5: Qi mirrors the soul
+# Rank 7: Recognised power in the jianghu
+# Rank 9: The boundary of mortal cultivation
+#
+# Uses monthly pulse to catch the crossing quickly
+# after it happens. Self-gated via character flags.
+############################################
+
+on_monthly_pulse = {
+
+    effect = {
+        every_living_character = {
+            limit = {
+                is_alive = yes
+                is_imprisoned = no
+                has_variable = murim_cultivation_level
+                OR = {
+                    AND = {
+                        var:murim_cultivation_level >= 3
+                        NOT = { has_character_flag = murim_milestone_rank3_fired }
+                    }
+                    AND = {
+                        var:murim_cultivation_level >= 5
+                        NOT = { has_character_flag = murim_milestone_rank5_fired }
+                    }
+                    AND = {
+                        var:murim_cultivation_level >= 7
+                        NOT = { has_character_flag = murim_milestone_rank7_fired }
+                    }
+                    AND = {
+                        var:murim_cultivation_level >= 9
+                        NOT = { has_character_flag = murim_milestone_rank9_fired }
+                    }
+                }
+            }
+
+            # Fire the appropriate milestone — check highest unfire threshold first
+            if = {
+                limit = {
+                    var:murim_cultivation_level >= 9
+                    NOT = { has_character_flag = murim_milestone_rank9_fired }
+                }
+                trigger_event = { id = murim_milestone.0004 days = { 5 20 } }
+            }
+            else_if = {
+                limit = {
+                    var:murim_cultivation_level >= 7
+                    NOT = { has_character_flag = murim_milestone_rank7_fired }
+                }
+                trigger_event = { id = murim_milestone.0003 days = { 5 20 } }
+            }
+            else_if = {
+                limit = {
+                    var:murim_cultivation_level >= 5
+                    NOT = { has_character_flag = murim_milestone_rank5_fired }
+                }
+                trigger_event = { id = murim_milestone.0002 days = { 5 20 } }
+            }
+            else_if = {
+                limit = {
+                    var:murim_cultivation_level >= 3
+                    NOT = { has_character_flag = murim_milestone_rank3_fired }
+                }
+                trigger_event = { id = murim_milestone.0001 days = { 5 20 } }
+            }
+        }
+    }
+}

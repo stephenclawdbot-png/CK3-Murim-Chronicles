@@ -1,0 +1,107 @@
+############################################
+# MURIM POISON ARTS & FATE ON_ACTIONS
+# Fires poison arts events (0001-0007) and
+# fate events (0001-0012) via yearly pulse.
+#
+# POISON: Targets characters with poison qi
+# affinity, intrigue-focused, or Poison Flower
+# sect members. Low base chance — poison arts
+# are rare and specialised.
+#
+# FATE: Targets high-level cultivators (level 7+).
+# Fate events are rare and world-altering — the
+# heavens intervening in cultivation paths.
+############################################
+
+on_yearly_pulse = {
+
+    # ============================
+    # POISON ARTS SYSTEM
+    # ============================
+
+    effect = {
+        every_living_character = {
+            limit = {
+                is_alive = yes
+                is_imprisoned = no
+                OR = {
+                    has_trait = poison_flower_disciple
+                    intrigue >= 14
+                    AND = {
+                        murim_is_martial_artist_trigger = yes
+                        has_character_flag = poison_qi_awakened
+                    }
+                }
+                NOT = { has_character_flag = murim_poison_pulse_cooldown }
+            }
+
+            random = {
+                chance = 18
+                modifier = { add = 15 has_trait = poison_flower_disciple }
+                modifier = { add = 10 intrigue >= 18 }
+                modifier = { add = -5 is_ai = yes }
+
+                add_character_flag = {
+                    flag = murim_poison_pulse_cooldown
+                    months = 8
+                }
+
+                random_list = {
+                    20 = { trigger_event = { id = murim_poison.0001 days = { 10 40 } } }
+                    18 = { trigger_event = { id = murim_poison.0002 days = { 10 40 } } }
+                    16 = { trigger_event = { id = murim_poison.0003 days = { 10 40 } } }
+                    14 = { trigger_event = { id = murim_poison.0004 days = { 15 50 } } }
+                    12 = { trigger_event = { id = murim_poison.0005 days = { 15 50 } } }
+                    # New events
+                    10 = { trigger_event = { id = murim_poison.0006 days = { 15 50 } } }
+                    10 = { trigger_event = { id = murim_poison.0007 days = { 20 60 } } }
+                }
+            }
+        }
+    }
+
+    # ============================
+    # FATE EVENTS SYSTEM
+    # ============================
+
+    effect = {
+        every_living_character = {
+            limit = {
+                is_alive = yes
+                is_imprisoned = no
+                murim_is_martial_artist_trigger = yes
+                has_variable = murim_cultivation_level
+                var:murim_cultivation_level >= 5
+                NOT = { has_character_flag = murim_fate_pulse_cooldown }
+            }
+
+            random = {
+                chance = 12
+                modifier = { add = 10 var:murim_cultivation_level >= 8 }
+                modifier = { add = 8 has_trait = diligent }
+                modifier = { add = -5 is_ai = yes }
+
+                add_character_flag = {
+                    flag = murim_fate_pulse_cooldown
+                    years = 2
+                }
+
+                random_list = {
+                    15 = { trigger_event = { id = murim_fate.0001 days = { 10 40 } } }
+                    12 = { trigger_event = { id = murim_fate.0002 days = { 10 40 } } }
+                    12 = { trigger_event = { id = murim_fate.0003 days = { 10 40 } } }
+                    10 = { trigger_event = { id = murim_fate.0004 days = { 15 50 } } }
+                    10 = { trigger_event = { id = murim_fate.0005 days = { 15 50 } } }
+                    8 = { trigger_event = { id = murim_fate.0006 days = { 15 50 } } }
+                    8 = { trigger_event = { id = murim_fate.0007 days = { 20 60 } } }
+                    7 = { trigger_event = { id = murim_fate.0008 days = { 20 60 } } }
+                    7 = { trigger_event = { id = murim_fate.0009 days = { 20 60 } } }
+                    5 = { trigger_event = { id = murim_fate.0010 days = { 25 70 } } }
+                    # New events
+                    4 = { trigger_event = { id = murim_fate.0011 days = { 20 60 } } }
+                    2 = { trigger_event = { id = murim_fate.0012 days = { 30 90 } } }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,67 @@
+############################################
+# MURIM BREAKTHROUGH ON_ACTIONS
+# Wires special breakthrough scenarios to the
+# yearly pulse — group breakthroughs and
+# crisis-triggered breakthroughs.
+#
+# Standard stage breakthroughs (0001, 0010, 0050)
+# are already handled by murim_ai_autonomy and
+# murim_ai_decision on_actions.
+#
+# This file covers the exceptional cases:
+# - Synchronised breakthrough with a friend
+# - Crisis breakthrough triggered by near-death
+############################################
+
+on_yearly_pulse = {
+
+    effect = {
+        every_living_character = {
+            limit = {
+                is_alive = yes
+                is_imprisoned = no
+                has_variable = murim_cultivation_stage
+                any_relation = {
+                    type = friend
+                    is_alive = yes
+                    has_variable = murim_cultivation_stage
+                }
+                NOT = { has_character_flag = murim_synchronised_breakthrough_tried }
+                NOT = { has_character_flag = attempting_breakthrough }
+            }
+
+            random = {
+                chance = 8
+                modifier = { add = 5 has_trait = gregarious }
+                modifier = { add = 5 has_trait = diligent }
+                modifier = { add = -3 is_ai = yes }
+
+                trigger_event = { id = murim_breakthrough.0920 days = { 10 40 } }
+            }
+        }
+    }
+}
+
+on_monthly_pulse = {
+
+    # Crisis breakthrough — fires quickly when health drops
+    effect = {
+        every_living_character = {
+            limit = {
+                is_alive = yes
+                health < 2.0
+                has_variable = murim_cultivation_stage
+                NOT = { has_character_flag = murim_crisis_breakthrough_fired }
+                NOT = { has_character_flag = attempting_breakthrough }
+            }
+
+            random = {
+                chance = 15
+                modifier = { add = 10 health < 1.5 }
+                modifier = { add = 10 has_trait = brave }
+
+                trigger_event = { id = murim_breakthrough.0930 days = { 5 20 } }
+            }
+        }
+    }
+}
