@@ -1,0 +1,1442 @@
+namespace = murim_integration_bridge
+
+# INTEGRATION BRIDGE EVENTS
+# These events connect all major systems together:
+# Calamity <-> Clans, Rankings <-> Tournaments, Shadow Politics <-> Faction Wars
+# Entry Paths <-> Clan Recruitment, Custom Clans <-> Orthodox/Unorthodox alignment
+
+###############################################
+# CALAMITY -> CLAN INTEGRATION
+###############################################
+
+murim_integration_bridge.0001 = {
+	type = character_event
+	title = murim_integration_bridge.0001.t
+	desc = murim_integration_bridge.0001.desc
+	theme = martial_arts
+	
+	# Fires when calamity phase reaches critical - forces clan response
+	trigger = {
+		has_global_variable = murim_great_calamity_active
+		is_clan_leader = yes
+		NOT = { has_character_flag = clan_calamity_response_chosen }
+	}
+	
+	immediate = {
+		set_character_flag = clan_calamity_response_chosen
+		# Determine clan survival odds based on clan type
+		if = {
+			limit = { has_trait = orthodox_clan_member }
+			set_variable = { name = clan_survival_base value = 40 }
+		}
+		else_if = {
+			limit = { has_trait = unorthodox_clan_member }
+			set_variable = { name = clan_survival_base value = 30 }
+		}
+		else = {
+			set_variable = { name = clan_survival_base value = 50 }
+		}
+	}
+	
+	# Option A: Fortify clan compound - defensive survival
+	option = {
+		name = murim_integration_bridge.0001.a
+		add_character_modifier = {
+			modifier = clan_fortification_active
+			years = 10
+		}
+		change_variable = { name = clan_survival_base add = 20 }
+		every_vassal = {
+			limit = { has_trait_group = murim_clan }
+			add_opinion = { modifier = respected_clan_defense target = root }
+		}
+		trigger_event = { id = murim_integration_bridge.0010 days = 30 }
+	}
+	
+	# Option B: Evacuate clan members - flee and rebuild
+	option = {
+		name = murim_integration_bridge.0001.b
+		add_character_modifier = {
+			modifier = clan_evacuation_underway
+			years = 5
+		}
+		change_variable = { name = clan_survival_base add = 10 }
+		add_prestige = -500
+		every_vassal = {
+			limit = { has_trait_group = murim_clan }
+			random = {
+				chance = 70
+				add_trait = calamity_refugee
+			}
+		}
+		trigger_event = { id = murim_integration_bridge.0011 days = 60 }
+	}
+	
+	# Option C: Alliance with rival clan - desperate pact
+	option = {
+		name = murim_integration_bridge.0001.c
+		# Find strongest rival clan leader
+		random_ruler = {
+			limit = {
+				is_clan_leader = yes
+				NOT = { this = root }
+				NOT = { alliance_with = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					add = 10
+					martial >= 20
+				}
+			}
+			save_scope_as = desperate_ally
+		}
+		if = {
+			limit = { exists = scope:desperate_ally }
+			add_alliance = { target = scope:desperate_ally }
+			reverse_add_opinion = { modifier = calamity_desperate_alliance target = scope:desperate_ally }
+			change_variable = { name = clan_survival_base add = 15 }
+		}
+		trigger_event = { id = murim_integration_bridge.0012 days = 45 }
+	}
+	
+	# Option D: Sacrifice clan elders - blood ritual protection
+	option = {
+		name = murim_integration_bridge.0001.d
+		trigger = { has_trait = unorthodox_clan_member }
+		add_piety = -1000
+		add_dread = 50
+		change_variable = { name = clan_survival_base add = 35 }
+		# Kill oldest 3 vassals
+		ordered_vassal = {
+			limit = { age >= 50 }
+			order_by = age
+			max = 3
+			death = { death_reason = death_execution }
+		}
+		trigger_event = { id = murim_integration_bridge.0013 days = 15 }
+	}
+}
+
+murim_integration_bridge.0002 = {
+	type = character_event
+	title = murim_integration_bridge.0002.t
+	desc = murim_integration_bridge.0002.desc
+	theme = martial_arts
+	
+	# Post-calamity clan rebuilding - connects to custom clan creation
+	trigger = {
+		has_global_variable = murim_post_calamity_era
+		is_clan_leader = yes
+		has_trait = calamity_survivor
+	}
+	
+	immediate = {
+		# Calculate rebuild potential
+		set_variable = {
+			name = rebuild_potential
+			value = {
+				value = martial
+				add = diplomacy
+				multiply = 2
+			}
+		}
+	}
+	
+	# Option A: Rebuild original clan from ashes
+	option = {
+		name = murim_integration_bridge.0002.a
+		add_character_modifier = {
+			modifier = rebuilding_ancestral_clan
+			years = 20
+		}
+		add_prestige = 200
+		# Spawn new disciples
+		create_character = {
+			age = 16
+			trait = martial_prodigy
+			culture = root.culture
+			faith = root.faith
+			employer = root
+		}
+		create_character = {
+			age = 18
+			trait = qi_sensing
+			culture = root.culture
+			faith = root.faith
+			employer = root
+		}
+		trigger_event = { id = murim_integration_bridge.0020 days = 180 }
+	}
+	
+	# Option B: Found entirely new clan - links to custom clan creation
+	option = {
+		name = murim_integration_bridge.0002.b
+		trigger_event = { id = murim_custom_clan.0001 days = 30 }
+		add_character_modifier = {
+			modifier = new_clan_founder_post_calamity
+			years = 30
+		}
+		add_prestige = 500
+	}
+	
+	# Option C: Merge with another survivor clan
+	option = {
+		name = murim_integration_bridge.0002.c
+		random_ruler = {
+			limit = {
+				is_clan_leader = yes
+				has_trait = calamity_survivor
+				NOT = { this = root }
+			}
+			save_scope_as = merge_target
+		}
+		if = {
+			limit = { exists = scope:merge_target }
+			# Determine who leads merged clan
+			if = {
+				limit = { martial >= scope:merge_target.martial }
+				scope:merge_target = { set_employer = root }
+				add_trait = merged_clan_patriarch
+			}
+			else = {
+				set_employer = scope:merge_target
+				scope:merge_target = { add_trait = merged_clan_patriarch }
+			}
+		}
+		trigger_event = { id = murim_integration_bridge.0021 days = 90 }
+	}
+}
+
+###############################################
+# RANKING -> TOURNAMENT INTEGRATION
+###############################################
+
+murim_integration_bridge.0003 = {
+	type = character_event
+	title = murim_integration_bridge.0003.t
+	desc = murim_integration_bridge.0003.desc
+	theme = martial_arts
+	
+	# Top rankers automatically qualify for Grand Tournament
+	trigger = {
+		OR = {
+			has_character_modifier = murim_rank_1
+			has_character_modifier = murim_rank_2
+			has_character_modifier = murim_rank_3
+			has_character_modifier = murim_top_10
+		}
+		has_global_variable = grand_tournament_announced
+		NOT = { has_character_flag = tournament_qualification_processed }
+	}
+	
+	immediate = {
+		set_character_flag = tournament_qualification_processed
+		set_variable = {
+			name = tournament_seed
+			value = {
+				value = 0
+				if = {
+					limit = { has_character_modifier = murim_rank_1 }
+					add = 100
+				}
+				else_if = {
+					limit = { has_character_modifier = murim_rank_2 }
+					add = 90
+				}
+				else_if = {
+					limit = { has_character_modifier = murim_rank_3 }
+					add = 80
+				}
+				else = {
+					add = 60
+				}
+				add = martial
+				add = prowess
+			}
+		}
+	}
+	
+	# Option A: Accept seeded position - enter as favorite
+	option = {
+		name = murim_integration_bridge.0003.a
+		add_character_flag = tournament_seeded_entry
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = tournament_pressure_of_rank
+			years = 1
+		}
+		trigger_event = { id = murim_tournament.0001 days = 14 }
+	}
+	
+	# Option B: Decline and send disciple instead
+	option = {
+		name = murim_integration_bridge.0003.b
+		random_vassal = {
+			limit = {
+				has_trait_group = murim_cultivation
+				age >= 16
+				age <= 30
+			}
+			weight = {
+				base = 1
+				modifier = { add = 5 prowess >= 15 }
+			}
+			save_scope_as = tournament_proxy
+			add_character_flag = tournament_proxy_entry
+		}
+		if = {
+			limit = { exists = scope:tournament_proxy }
+			scope:tournament_proxy = {
+				trigger_event = { id = murim_tournament.0001 days = 14 }
+			}
+			add_opinion = { modifier = entrusted_with_honor target = scope:tournament_proxy }
+		}
+	}
+	
+	# Option C: Challenge the tournament system itself
+	option = {
+		name = murim_integration_bridge.0003.c
+		trigger = { has_trait = unorthodox_clan_member }
+		add_character_flag = tournament_challenger
+		add_dread = 20
+		add_prestige = -200
+		trigger_event = { id = murim_integration_bridge.0030 days = 7 }
+	}
+}
+
+murim_integration_bridge.0004 = {
+	type = character_event
+	title = murim_integration_bridge.0004.t
+	desc = murim_integration_bridge.0004.desc
+	theme = martial_arts
+	
+	# Tournament results affect rankings - post-tournament ranking update
+	trigger = {
+		has_character_flag = tournament_champion
+		NOT = { has_character_flag = post_tournament_ranking_processed }
+	}
+	
+	immediate = {
+		set_character_flag = post_tournament_ranking_processed
+		# Champion gets massive ranking boost
+		if = {
+			limit = { has_variable = murim_ranking_score }
+			change_variable = { name = murim_ranking_score add = 500 }
+		}
+		else = {
+			set_variable = { name = murim_ranking_score value = 500 }
+		}
+	}
+	
+	# Option A: Claim rank publicly
+	option = {
+		name = murim_integration_bridge.0004.a
+		add_character_modifier = {
+			modifier = tournament_champion_rank_boost
+			years = 5
+		}
+		add_prestige = 1000
+		every_ruler = {
+			limit = { is_ai = yes }
+			add_opinion = { modifier = impressed_by_tournament_victory target = root }
+		}
+		trigger_event = { id = murim_ranking.0001 days = 30 }
+	}
+	
+	# Option B: Stay humble - hidden dragon approach
+	option = {
+		name = murim_integration_bridge.0004.b
+		add_trait = hidden_dragon
+		add_character_modifier = {
+			modifier = humble_champion
+			years = 10
+		}
+		add_piety = 500
+	}
+	
+	# Option C: Use victory to challenge current #1
+	option = {
+		name = murim_integration_bridge.0004.c
+		trigger = {
+			NOT = { has_character_modifier = murim_rank_1 }
+		}
+		# Find current #1
+		random_ruler = {
+			limit = { has_character_modifier = murim_rank_1 }
+			save_scope_as = current_rank_one
+		}
+		if = {
+			limit = { exists = scope:current_rank_one }
+			trigger_event = { id = murim_duel.0001 days = 30 }
+		}
+		add_character_flag = challenging_rank_one
+	}
+}
+
+###############################################
+# SHADOW POLITICS -> FACTION WAR INTEGRATION
+###############################################
+
+murim_integration_bridge.0005 = {
+	type = character_event
+	title = murim_integration_bridge.0005.t
+	desc = murim_integration_bridge.0005.desc
+	theme = martial_arts
+	
+	# Heavenly Demon's shadow network triggers faction war escalation
+	trigger = {
+		has_global_variable = heavenly_demon_puppet_emperor
+		has_trait = orthodox_clan_member
+		is_clan_leader = yes
+		NOT = { has_character_flag = shadow_war_awareness }
+	}
+	
+	immediate = {
+		set_character_flag = shadow_war_awareness
+		# Calculate discovery chance based on intrigue
+		set_variable = {
+			name = shadow_discovery_chance
+			value = {
+				value = intrigue
+				add = learning
+				divide = 2
+			}
+		}
+	}
+	
+	# Option A: Investigate the puppet emperor
+	option = {
+		name = murim_integration_bridge.0005.a
+		add_character_modifier = {
+			modifier = investigating_shadow_network
+			years = 3
+		}
+		random = {
+			chance = scope:shadow_discovery_chance
+			trigger_event = { id = murim_integration_bridge.0050 days = 90 }
+		}
+		random = {
+			chance = {
+				value = 100
+				subtract = scope:shadow_discovery_chance
+			}
+			trigger_event = { id = murim_integration_bridge.0051 days = 90 }
+		}
+	}
+	
+	# Option B: Rally orthodox clans for open war
+	option = {
+		name = murim_integration_bridge.0005.b
+		add_character_flag = orthodox_war_rally
+		add_prestige = 200
+		every_ruler = {
+			limit = {
+				has_trait = orthodox_clan_member
+				is_clan_leader = yes
+				NOT = { this = root }
+			}
+			trigger_event = { id = murim_faction_war.0001 days = 14 }
+		}
+		trigger_event = { id = murim_integration_bridge.0052 days = 30 }
+	}
+	
+	# Option C: Secretly approach Heavenly Demon for deal
+	option = {
+		name = murim_integration_bridge.0005.c
+		trigger = { intrigue >= 15 }
+		add_character_flag = secret_demon_negotiations
+		add_secret = {
+			type = secret_dark_alliance
+			target = root
+		}
+		trigger_event = { id = murim_shadow_politics.0010 days = 30 }
+	}
+	
+	# Option D: Ignore and focus on own clan's survival
+	option = {
+		name = murim_integration_bridge.0005.d
+		add_stress = 30
+		add_character_modifier = {
+			modifier = willful_ignorance_of_shadow
+			years = 5
+		}
+	}
+}
+
+murim_integration_bridge.0006 = {
+	type = character_event
+	title = murim_integration_bridge.0006.t
+	desc = murim_integration_bridge.0006.desc
+	theme = martial_arts
+	
+	# Faction war outcome determines shadow politics power balance
+	trigger = {
+		has_global_variable = faction_war_concluded
+		OR = {
+			has_character_flag = orthodox_faction_leader
+			has_character_flag = unorthodox_faction_leader
+		}
+	}
+	
+	immediate = {
+		if = {
+			limit = { has_global_variable = orthodox_faction_won }
+			set_global_variable = shadow_politics_orthodox_dominant
+		}
+		else = {
+			set_global_variable = shadow_politics_unorthodox_dominant
+		}
+	}
+	
+	# Option A: Establish new Murim order
+	option = {
+		name = murim_integration_bridge.0006.a
+		trigger = { has_character_flag = winning_faction_leader }
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = new_murim_order_founder
+			years = 50
+		}
+		# Dismantle enemy shadow networks
+		if = {
+			limit = { has_global_variable = orthodox_faction_won }
+			remove_global_variable = heavenly_demon_puppet_emperor
+			set_global_variable = orthodox_murim_order
+		}
+		else = {
+			set_global_variable = unorthodox_murim_order
+			set_global_variable = heavenly_demon_open_rule
+		}
+		trigger_event = { id = murim_integration_bridge.0060 days = 60 }
+	}
+	
+	# Option B: Mercy - integrate defeated faction
+	option = {
+		name = murim_integration_bridge.0006.b
+		trigger = { has_character_flag = winning_faction_leader }
+		add_piety = 500
+		add_prestige = 500
+		every_ruler = {
+			limit = {
+				OR = {
+					AND = {
+						has_global_variable = orthodox_faction_won
+						has_trait = unorthodox_clan_member
+					}
+					AND = {
+						has_global_variable = unorthodox_faction_won
+						has_trait = orthodox_clan_member
+					}
+				}
+			}
+			add_opinion = { modifier = shown_mercy_after_war target = root }
+			remove_character_flag = faction_war_enemy
+		}
+	}
+	
+	# Option C: Purge defeated faction completely
+	option = {
+		name = murim_integration_bridge.0006.c
+		trigger = {
+			has_character_flag = winning_faction_leader
+			has_trait = unorthodox_clan_member
+		}
+		add_dread = 100
+		add_tyranny = 50
+		every_ruler = {
+			limit = { has_trait = orthodox_clan_member }
+			random = {
+				chance = 50
+				death = { death_reason = death_execution }
+			}
+		}
+		trigger_event = { id = murim_integration_bridge.0061 days = 30 }
+	}
+}
+
+###############################################
+# ENTRY PATH -> CLAN RECRUITMENT INTEGRATION
+###############################################
+
+murim_integration_bridge.0007 = {
+	type = character_event
+	title = murim_integration_bridge.0007.t
+	desc = murim_integration_bridge.0007.desc
+	theme = martial_arts
+	
+	# New entrants to murim world get clan recruitment offers
+	trigger = {
+		has_character_flag = entered_murim_world
+		NOT = { has_trait_group = murim_clan }
+		NOT = { has_character_flag = clan_recruitment_offers_sent }
+		age >= 16
+	}
+	
+	immediate = {
+		set_character_flag = clan_recruitment_offers_sent
+		# Determine which clans are interested based on entry path
+		if = {
+			limit = { has_character_flag = entry_path_warrior }
+			set_variable = { name = warrior_clan_interest value = 80 }
+			set_variable = { name = scholar_clan_interest value = 20 }
+		}
+		else_if = {
+			limit = { has_character_flag = entry_path_scholar }
+			set_variable = { name = warrior_clan_interest value = 20 }
+			set_variable = { name = scholar_clan_interest value = 80 }
+		}
+		else_if = {
+			limit = { has_character_flag = entry_path_orphan }
+			set_variable = { name = warrior_clan_interest value = 50 }
+			set_variable = { name = scholar_clan_interest value = 50 }
+		}
+		else = {
+			set_variable = { name = warrior_clan_interest value = 40 }
+			set_variable = { name = scholar_clan_interest value = 40 }
+		}
+	}
+	
+	# Option A: Join orthodox clan (Shaolin/Wudang/Mount Hua path)
+	option = {
+		name = murim_integration_bridge.0007.a
+		trigger_event = { id = murim_clan_scout.0001 days = 7 }
+		add_character_flag = seeking_orthodox_clan
+		add_character_modifier = {
+			modifier = orthodox_path_seeker
+			years = 2
+		}
+	}
+	
+	# Option B: Join unorthodox clan (Heavenly Demon/Phantom Blade path)
+	option = {
+		name = murim_integration_bridge.0007.b
+		trigger_event = { id = murim_clan_scout.0010 days = 7 }
+		add_character_flag = seeking_unorthodox_clan
+		add_character_modifier = {
+			modifier = unorthodox_path_seeker
+			years = 2
+		}
+	}
+	
+	# Option C: Remain clanless - lone wolf path
+	option = {
+		name = murim_integration_bridge.0007.c
+		add_trait = lone_wolf_martial_artist
+		add_character_modifier = {
+			modifier = clanless_wanderer
+			years = 50
+		}
+		add_prowess = 3
+		trigger_event = { id = murim_jianghu.0001 days = 30 }
+	}
+	
+	# Option D: Found own clan immediately (requires high martial)
+	option = {
+		name = murim_integration_bridge.0007.d
+		trigger = {
+			martial >= 20
+			prestige >= 1000
+		}
+		trigger_event = { id = murim_custom_clan.0001 days = 14 }
+		add_character_flag = ambitious_clan_founder
+	}
+}
+
+murim_integration_bridge.0008 = {
+	type = character_event
+	title = murim_integration_bridge.0008.t
+	desc = murim_integration_bridge.0008.desc
+	theme = martial_arts
+	
+	# Clan scouts find promising entrants - AI-driven recruitment
+	trigger = {
+		is_clan_leader = yes
+		is_ai = yes
+		any_ruler = {
+			has_character_flag = entered_murim_world
+			NOT = { has_trait_group = murim_clan }
+			age >= 14
+			age <= 25
+		}
+	}
+	
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_character_flag = entered_murim_world
+				NOT = { has_trait_group = murim_clan }
+				age >= 14
+				age <= 25
+			}
+			weight = {
+				base = 1
+				modifier = { add = 10 prowess >= 12 }
+				modifier = { add = 5 martial >= 10 }
+				modifier = { add = 3 has_trait = martial_prodigy }
+			}
+			save_scope_as = recruitment_target
+		}
+	}
+	
+	# AI automatically recruits promising talent
+	option = {
+		name = murim_integration_bridge.0008.a
+		trigger = { exists = scope:recruitment_target }
+		scope:recruitment_target = {
+			trigger_event = { id = murim_clan_scout.0020 days = 7 }
+		}
+	}
+	
+	# AI ignores - not good enough
+	option = {
+		name = murim_integration_bridge.0008.b
+		# Do nothing
+	}
+}
+
+###############################################
+# CULTIVATION -> RANKING AUTO-UPDATE
+###############################################
+
+murim_integration_bridge.0009 = {
+	type = character_event
+	title = murim_integration_bridge.0009.t
+	desc = murim_integration_bridge.0009.desc
+	theme = martial_arts
+	
+	# Major cultivation breakthrough triggers ranking reassessment
+	trigger = {
+		has_character_flag = cultivation_breakthrough_recent
+		NOT = { has_character_flag = ranking_reassessment_pending }
+	}
+	
+	immediate = {
+		set_character_flag = ranking_reassessment_pending
+		remove_character_flag = cultivation_breakthrough_recent
+		# Calculate new power level
+		set_variable = {
+			name = power_assessment
+			value = {
+				value = martial
+				add = prowess
+				if = {
+					limit = { has_trait = qi_master }
+					add = 30
+				}
+				if = {
+					limit = { has_trait = transcendent_cultivator }
+					add = 50
+				}
+				if = {
+					limit = { has_trait = peak_realm }
+					add = 20
+				}
+			}
+		}
+	}
+	
+	# Option A: Demonstrate power publicly - ranking challenge
+	option = {
+		name = murim_integration_bridge.0009.a
+		add_prestige = 100
+		trigger_event = { id = murim_ranking.0010 days = 14 }
+		remove_character_flag = ranking_reassessment_pending
+	}
+	
+	# Option B: Keep breakthrough secret
+	option = {
+		name = murim_integration_bridge.0009.b
+		add_trait = hidden_power
+		add_character_modifier = {
+			modifier = concealed_cultivation_level
+			years = 10
+		}
+		remove_character_flag = ranking_reassessment_pending
+	}
+	
+	# Option C: Challenge all top 10 simultaneously
+	option = {
+		name = murim_integration_bridge.0009.c
+		trigger = {
+			var:power_assessment >= 80
+			has_trait = transcendent_cultivator
+		}
+		add_character_flag = challenging_all_top_10
+		add_prestige = -500
+		add_dread = 30
+		trigger_event = { id = murim_integration_bridge.0090 days = 7 }
+	}
+}
+
+###############################################
+# CROSS-SYSTEM CONSEQUENCE EVENTS
+###############################################
+
+murim_integration_bridge.0010 = {
+	type = character_event
+	title = murim_integration_bridge.0010.t
+	desc = murim_integration_bridge.0010.desc
+	theme = martial_arts
+	
+	# Fortification outcome during calamity
+	trigger = {
+		has_character_modifier = clan_fortification_active
+		has_global_variable = murim_great_calamity_active
+	}
+	
+	immediate = {
+		random_list = {
+			60 = {
+				set_character_flag = fortification_held
+				modifier = {
+					add = 20
+					martial >= 20
+				}
+			}
+			40 = {
+				set_character_flag = fortification_breached
+			}
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0010.a
+		trigger = { has_character_flag = fortification_held }
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = impregnable_fortress_reputation
+			years = 20
+		}
+		every_vassal = {
+			add_opinion = { modifier = survived_calamity_together target = root }
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0010.b
+		trigger = { has_character_flag = fortification_breached }
+		add_stress = 50
+		random_vassal = {
+			limit = { is_alive = yes }
+			death = { death_reason = death_battle }
+		}
+		trigger_event = { id = murim_integration_bridge.0001 days = 7 }
+	}
+}
+
+murim_integration_bridge.0011 = {
+	type = character_event
+	title = murim_integration_bridge.0011.t
+	desc = murim_integration_bridge.0011.desc
+	theme = martial_arts
+	
+	# Evacuation outcome during calamity
+	trigger = {
+		has_character_modifier = clan_evacuation_underway
+	}
+	
+	immediate = {
+		# Count surviving members
+		set_variable = {
+			name = evacuation_survivors
+			value = 0
+		}
+		every_vassal = {
+			limit = { is_alive = yes }
+			change_variable = { name = evacuation_survivors add = 1 }
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0011.a
+		add_trait = calamity_refugee
+		add_character_modifier = {
+			modifier = exile_in_distant_lands
+			years = 15
+		}
+		# Random chance to lose martial arts knowledge during flight
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = cultivation_damaged_by_flight
+				years = 10
+			}
+		}
+		trigger_event = { id = murim_integration_bridge.0002 days = 365 }
+	}
+}
+
+murim_integration_bridge.0012 = {
+	type = character_event
+	title = murim_integration_bridge.0012.t
+	desc = murim_integration_bridge.0012.desc
+	theme = martial_arts
+	
+	# Desperate alliance outcome during calamity
+	trigger = {
+		any_ally = { has_character_flag = calamity_desperate_ally }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0012.a
+		# Alliance holds - mutual survival
+		add_character_modifier = {
+			modifier = forged_in_calamity_bond
+			years = 30
+		}
+		random_ally = {
+			limit = { has_character_flag = calamity_desperate_ally }
+			add_opinion = { modifier = calamity_brothers target = root value = 50 }
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0012.b
+		# Betray ally during calamity for resources
+		random_ally = {
+			limit = { has_character_flag = calamity_desperate_ally }
+			save_scope_as = betrayed_ally
+		}
+		if = {
+			limit = { exists = scope:betrayed_ally }
+			remove_alliance = { target = scope:betrayed_ally }
+			scope:betrayed_ally = {
+				add_opinion = { modifier = betrayed_during_calamity target = root value = -100 }
+			}
+			add_dread = 40
+			add_gold = 500
+		}
+	}
+}
+
+murim_integration_bridge.0013 = {
+	type = character_event
+	title = murim_integration_bridge.0013.t
+	desc = murim_integration_bridge.0013.desc
+	theme = martial_arts
+	
+	# Blood ritual outcome - elder sacrifice during calamity
+	trigger = {
+		has_character_flag = clan_calamity_response_chosen
+		has_trait = unorthodox_clan_member
+	}
+	
+	option = {
+		name = murim_integration_bridge.0013.a
+		# Ritual succeeds - dark protection
+		add_character_modifier = {
+			modifier = blood_barrier_active
+			years = 10
+		}
+		add_trait = blood_ritual_practitioner
+		add_piety = -500
+		# Clan compound becomes haunted
+		add_character_modifier = {
+			modifier = haunted_clan_grounds
+			years = 50
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0013.b
+		# Ritual backfires
+		add_trait = qi_deviation
+		add_stress = 80
+		random = {
+			chance = 20
+			death = { death_reason = death_mystery }
+		}
+	}
+}
+
+###############################################
+# MURIM LEDGER -> ALL SYSTEMS DATA BRIDGE
+###############################################
+
+murim_integration_bridge.0014 = {
+	type = character_event
+	title = murim_integration_bridge.0014.t
+	desc = murim_integration_bridge.0014.desc
+	theme = martial_arts
+	
+	# Murim Ledger receives intelligence about all connected systems
+	trigger = {
+		is_ruler = yes
+		has_character_flag = murim_ledger_active
+		NOT = { has_character_flag = ledger_intel_this_year }
+		any_held_title = { tier >= tier_county }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = ledger_intel_this_year
+			years = 1
+		}
+		# Compile intel from all systems
+		set_variable = {
+			name = ledger_total_intel
+			value = {
+				value = 0
+				# Ranking system data
+				if = {
+					limit = { has_variable = murim_ranking_score }
+					add = 10
+				}
+				# Clan network data
+				if = {
+					limit = { has_trait_group = murim_clan }
+					add = 15
+				}
+				# Shadow politics awareness
+				if = {
+					limit = { has_character_flag = shadow_war_awareness }
+					add = 20
+				}
+				# Tournament records
+				if = {
+					limit = { has_character_flag = tournament_champion }
+					add = 10
+				}
+				# Calamity preparation
+				if = {
+					limit = { has_global_variable = murim_great_calamity_active }
+					add = 25
+				}
+			}
+		}
+	}
+	
+	# Option A: Review full Murim Ledger
+	option = {
+		name = murim_integration_bridge.0014.a
+		# Opens comprehensive decision window
+		trigger_event = { id = murim_integration_bridge.0140 days = 1 }
+	}
+	
+	# Option B: Focus on threats
+	option = {
+		name = murim_integration_bridge.0014.b
+		add_character_modifier = {
+			modifier = threat_focused_intelligence
+			years = 1
+		}
+	}
+	
+	# Option C: Share intel with allies
+	option = {
+		name = murim_integration_bridge.0014.c
+		every_ally = {
+			add_opinion = { modifier = shared_murim_intelligence target = root }
+			trigger_event = { id = murim_integration_bridge.0141 days = 7 }
+		}
+	}
+}
+
+murim_integration_bridge.0015 = {
+	type = character_event
+	title = murim_integration_bridge.0015.t
+	desc = murim_integration_bridge.0015.desc
+	theme = martial_arts
+	
+	# Integration: Romance affects clan politics
+	trigger = {
+		has_character_flag = cross_clan_romance
+		is_clan_leader = yes
+	}
+	
+	option = {
+		name = murim_integration_bridge.0015.a
+		# Accept forbidden love - clan alliance through marriage
+		add_character_modifier = {
+			modifier = love_across_clan_lines
+			years = 20
+		}
+		random_ruler = {
+			limit = {
+				is_clan_leader = yes
+				any_vassal = { has_relation_lover = root }
+			}
+			save_scope_as = lover_clan_leader
+		}
+		if = {
+			limit = { exists = scope:lover_clan_leader }
+			add_alliance = { target = scope:lover_clan_leader }
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0015.b
+		# Duty over love - break relationship for clan
+		add_stress = 60
+		add_prestige = 200
+		random_relation = {
+			type = lover
+			remove_relation_lover = root
+			add_opinion = { modifier = abandoned_for_duty target = root value = -60 }
+		}
+	}
+}
+
+murim_integration_bridge.0020 = {
+	type = character_event
+	title = murim_integration_bridge.0020.t
+	desc = murim_integration_bridge.0020.desc
+	theme = martial_arts
+	
+	# Post-calamity rebuilding progress check
+	trigger = {
+		has_character_modifier = rebuilding_ancestral_clan
+		has_global_variable = murim_post_calamity_era
+	}
+	
+	immediate = {
+		set_variable = {
+			name = rebuild_progress
+			value = {
+				value = stewardship
+				add = diplomacy
+				multiply = 3
+			}
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0020.a
+		# Rebuilding succeeds
+		trigger = { var:rebuild_progress >= 40 }
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = clan_reborn_from_ashes
+			years = 50
+		}
+		create_character = {
+			age = 14
+			trait = martial_prodigy
+			employer = root
+		}
+		create_character = {
+			age = 16
+			trait = qi_sensing
+			employer = root
+		}
+		create_character = {
+			age = 15
+			trait = inner_strength
+			employer = root
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0020.b
+		# Rebuilding struggles
+		trigger = { var:rebuild_progress < 40 }
+		add_stress = 30
+		add_character_modifier = {
+			modifier = struggling_clan_rebuilding
+			years = 10
+		}
+		trigger_event = { id = murim_integration_bridge.0020 days = 365 }
+	}
+}
+
+murim_integration_bridge.0021 = {
+	type = character_event
+	title = murim_integration_bridge.0021.t
+	desc = murim_integration_bridge.0021.desc
+	theme = martial_arts
+	
+	# Merged clan aftermath
+	trigger = {
+		has_trait = merged_clan_patriarch
+	}
+	
+	option = {
+		name = murim_integration_bridge.0021.a
+		# Merged clan thrives
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = merged_clan_strength
+			years = 20
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0021.b
+		# Internal faction conflict within merged clan
+		add_stress = 40
+		random_vassal = {
+			add_opinion = { modifier = resents_merger target = root value = -40 }
+			add_character_flag = merger_dissident
+		}
+		trigger_event = { id = murim_sect.0001 days = 90 }
+	}
+}
+
+murim_integration_bridge.0030 = {
+	type = character_event
+	title = murim_integration_bridge.0030.t
+	desc = murim_integration_bridge.0030.desc
+	theme = martial_arts
+	
+	# Challenging the tournament system - unorthodox disruption
+	trigger = {
+		has_character_flag = tournament_challenger
+	}
+	
+	option = {
+		name = murim_integration_bridge.0030.a
+		# Crash the tournament
+		add_dread = 30
+		add_character_modifier = {
+			modifier = tournament_crasher
+			years = 5
+		}
+		every_ruler = {
+			limit = { has_trait = orthodox_clan_member }
+			add_opinion = { modifier = tournament_disrespect target = root value = -30 }
+		}
+		trigger_event = { id = murim_duel.0001 days = 3 }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0030.b
+		# Set up shadow tournament instead
+		set_global_variable = shadow_tournament_active
+		add_prestige = 300
+		trigger_event = { id = murim_tournament.0020 days = 30 }
+	}
+}
+
+murim_integration_bridge.0050 = {
+	type = character_event
+	title = murim_integration_bridge.0050.t
+	desc = murim_integration_bridge.0050.desc
+	theme = martial_arts
+	
+	# Successfully discovered puppet emperor plot
+	option = {
+		name = murim_integration_bridge.0050.a
+		add_trait = shadow_network_aware
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = knows_the_truth
+			years = 20
+		}
+		# Expose to all orthodox leaders
+		every_ruler = {
+			limit = {
+				has_trait = orthodox_clan_member
+				is_clan_leader = yes
+			}
+			trigger_event = { id = murim_shadow_politics.0020 days = 14 }
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0050.b
+		# Keep the knowledge secret - use it as leverage
+		add_intrigue = 5
+		add_character_modifier = {
+			modifier = shadow_knowledge_leverage
+			years = 30
+		}
+	}
+}
+
+murim_integration_bridge.0051 = {
+	type = character_event
+	title = murim_integration_bridge.0051.t
+	desc = murim_integration_bridge.0051.desc
+	theme = martial_arts
+	
+	# Failed to discover plot - Heavenly Demon retaliates
+	option = {
+		name = murim_integration_bridge.0051.a
+		add_stress = 40
+		# Assassination attempt
+		random = {
+			chance = 30
+			death = { death_reason = death_murder }
+		}
+		random = {
+			chance = 70
+			add_trait = wounded
+			add_character_modifier = {
+				modifier = assassination_survivor
+				years = 5
+			}
+		}
+	}
+}
+
+murim_integration_bridge.0052 = {
+	type = character_event
+	title = murim_integration_bridge.0052.t
+	desc = murim_integration_bridge.0052.desc
+	theme = martial_arts
+	
+	# Orthodox war rally response
+	trigger = {
+		has_character_flag = orthodox_war_rally
+	}
+	
+	immediate = {
+		set_variable = {
+			name = rally_support
+			value = 0
+		}
+		every_ruler = {
+			limit = {
+				has_trait = orthodox_clan_member
+				is_clan_leader = yes
+				opinion = { target = root value >= 20 }
+			}
+			root = { change_variable = { name = rally_support add = 1 } }
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0052.a
+		trigger = { var:rally_support >= 3 }
+		# Enough support - war begins
+		set_global_variable = orthodox_crusade_declared
+		add_prestige = 1000
+		trigger_event = { id = murim_faction_war.0010 days = 30 }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0052.b
+		trigger = { var:rally_support < 3 }
+		# Not enough support - alone
+		add_stress = 50
+		add_character_modifier = {
+			modifier = lone_crusader
+			years = 10
+		}
+	}
+}
+
+murim_integration_bridge.0060 = {
+	type = character_event
+	title = murim_integration_bridge.0060.t
+	desc = murim_integration_bridge.0060.desc
+	theme = martial_arts
+	
+	# New Murim Order established - era begins
+	option = {
+		name = murim_integration_bridge.0060.a
+		add_prestige = 3000
+		add_character_modifier = {
+			modifier = architect_of_new_era
+			years = 100
+		}
+		# Reset all faction war flags
+		every_ruler = {
+			remove_character_flag = faction_war_enemy
+			remove_character_flag = orthodox_faction_leader
+			remove_character_flag = unorthodox_faction_leader
+		}
+	}
+}
+
+murim_integration_bridge.0061 = {
+	type = character_event
+	title = murim_integration_bridge.0061.t
+	desc = murim_integration_bridge.0061.desc
+	theme = martial_arts
+	
+	# Purge aftermath - resistance forms
+	option = {
+		name = murim_integration_bridge.0061.a
+		# Resistance is inevitable
+		set_global_variable = murim_resistance_movement
+		add_dread = 20
+		trigger_event = { id = murim_faction_war.0030 days = 365 }
+	}
+}
+
+murim_integration_bridge.0090 = {
+	type = character_event
+	title = murim_integration_bridge.0090.t
+	desc = murim_integration_bridge.0090.desc
+	theme = martial_arts
+	
+	# Challenging all top 10 - gauntlet begins
+	trigger = {
+		has_character_flag = challenging_all_top_10
+	}
+	
+	immediate = {
+		set_variable = { name = gauntlet_wins value = 0 }
+		set_variable = { name = gauntlet_round value = 1 }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0090.a
+		# Begin the gauntlet
+		trigger_event = { id = murim_duel.0001 days = 1 }
+		add_character_modifier = {
+			modifier = ten_battle_gauntlet
+			years = 1
+		}
+	}
+	
+	option = {
+		name = murim_integration_bridge.0090.b
+		# Back down
+		remove_character_flag = challenging_all_top_10
+		add_stress = 30
+		add_prestige = -300
+	}
+}
+
+murim_integration_bridge.0140 = {
+	type = character_event
+	title = murim_integration_bridge.0140.t
+	desc = murim_integration_bridge.0140.desc
+	theme = martial_arts
+	
+	# Full Murim Ledger review - comprehensive intelligence
+	option = {
+		name = murim_integration_bridge.0140.a
+		# Focus on rankings
+		trigger_event = { id = murim_ranking.0001 days = 1 }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0140.b
+		# Focus on clan politics
+		trigger_event = { id = murim_politics.0001 days = 1 }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0140.c
+		# Focus on shadow threats
+		trigger_event = { id = murim_shadow_politics.0001 days = 1 }
+	}
+	
+	option = {
+		name = murim_integration_bridge.0140.d
+		# Focus on calamity preparation
+		trigger = { has_global_variable = calamity_warning_signs }
+		trigger_event = { id = murim_great_calamity.0001 days = 1 }
+	}
+}
+
+murim_integration_bridge.0141 = {
+	type = character_event
+	title = murim_integration_bridge.0141.t
+	desc = murim_integration_bridge.0141.desc
+	theme = martial_arts
+	
+	# Received shared intelligence from ally
+	option = {
+		name = murim_integration_bridge.0141.a
+		add_opinion = { modifier = grateful_for_intelligence target = scope:actor }
+		add_character_modifier = {
+			modifier = informed_by_ally
+			years = 2
+		}
+	}
+}
