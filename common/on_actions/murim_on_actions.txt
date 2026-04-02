@@ -376,6 +376,104 @@ on_monthly_character_pulse = {
 			}
 		}
 	}
+
+
+	# ------------------------------------------
+	# Alchemy Monthly Pulse
+	# Occasional alchemy events for characters
+	# with herb stockpiles or alchemy skill.
+	# Links into murim_grind_effects alchemy_xp.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				murim_is_martial_artist_trigger = yes
+				is_imprisoned = no
+				NOT = { has_character_flag = murim_alchemy_pulse_cooldown }
+				OR = {
+					AND = {
+						has_variable = murim_herb_stockpile
+						var:murim_herb_stockpile >= 3
+					}
+					AND = {
+						has_variable = murim_alchemy_skill
+						var:murim_alchemy_skill >= 1
+					}
+				}
+			}
+			random_list = {
+				70 = { }
+				10 = {
+					# Herb garden discovery
+					trigger_event = {
+						id = murim_alchemy.0001
+						days = { 3 25 }
+					}
+					modifier = {
+						factor = 0.3
+						has_variable = murim_herb_stockpile
+						var:murim_herb_stockpile >= 10
+					}
+				}
+				8 = {
+					# Brewing session
+					trigger = {
+						has_variable = murim_herb_stockpile
+						var:murim_herb_stockpile >= 5
+					}
+					trigger_event = {
+						id = murim_alchemy.0002
+						days = { 5 20 }
+					}
+				}
+				5 = {
+					# Trading pills for secrets
+					trigger = {
+						has_variable = murim_herb_stockpile
+						var:murim_herb_stockpile >= 3
+					}
+					trigger_event = {
+						id = murim_alchemy.0004
+						days = { 5 20 }
+					}
+				}
+				4 = {
+					# Pill side effects
+					trigger = {
+						has_variable = murim_cultivation_xp
+						var:murim_cultivation_xp >= 100
+					}
+					trigger_event = {
+						id = murim_alchemy.0005
+						days = { 10 28 }
+					}
+					modifier = {
+						factor = 2.0
+						has_variable = murim_alchemy_skill
+						var:murim_alchemy_skill >= 3
+					}
+				}
+				3 = {
+					# Ancient recipe
+					trigger = {
+						learning >= 12
+						has_variable = murim_cultivation_rank
+						var:murim_cultivation_rank >= 3
+						NOT = { has_character_flag = murim_alchemy_recipe_found }
+					}
+					trigger_event = {
+						id = murim_alchemy.0006
+						days = { 10 28 }
+					}
+				}
+			}
+			add_character_flag = {
+				flag = murim_alchemy_pulse_cooldown
+				days = 60
+			}
+		}
+	}
 }
 
 # ==========================================

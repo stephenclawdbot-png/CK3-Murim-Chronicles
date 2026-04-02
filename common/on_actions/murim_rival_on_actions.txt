@@ -3,16 +3,45 @@
 # Fires cultivation rival events for cultivators
 # who have active rivals. Checks yearly.
 #
-# murim_has_rival variable drives rival system.
-# murim_rival_intensity (1-5) escalates events.
+# Detects rivals two ways:
+#   1. murim_has_rival variable (set by our rival events)
+#   2. any_rival = { always = yes } (catches rivals set by
+#      other existing systems: duels, schemes, youth tournament)
+#
+# murim_rival_intensity (1-5) escalates event severity.
+# If a rival exists via vanilla but murim_has_rival is unset,
+# the system bootstraps the variable automatically.
 ############################################
 
 on_yearly_pulse = {
 
 	# ------------------------------------------
-	# RIVAL SYSTEM YEARLY PULSE
-	# Check if a rival event should fire this year.
-	# Fires for cultivators with active rivals only.
+	# RIVAL BOOTSTRAP
+	# If a character has a vanilla rival (set by
+	# duel events, schemes, etc.) but not the
+	# murim_has_rival variable, initialize it.
+	# ------------------------------------------
+	effect = {
+		every_living_character = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_cultivation_rank
+				var:murim_cultivation_rank >= 1
+				NOT = { has_variable = murim_has_rival }
+				any_rival = { always = yes }
+			}
+			set_variable = { name = murim_has_rival value = 1 }
+			if = {
+				limit = { NOT = { has_variable = murim_rival_intensity } }
+				set_variable = { name = murim_rival_intensity value = 1 }
+			}
+		}
+	}
+
+	# ------------------------------------------
+	# NEW RIVAL ACQUISITION PULSE
+	# Fires murim_rival.0001 for cultivators
+	# who have no current rival yet.
 	# ------------------------------------------
 	effect = {
 		every_living_character = {
@@ -22,16 +51,12 @@ on_yearly_pulse = {
 				var:murim_cultivation_rank >= 2
 				is_imprisoned = no
 				NOT = { has_character_flag = murim_rival_event_fired_this_year }
+				NOT = { has_variable = murim_has_rival }
+				NOT = { any_rival = { always = yes } }
 			}
 
 			random = {
-				# New rival acquisition - fires if no rival yet
 				chance = 15
-				modifier = {
-					add = -100
-					has_variable = murim_has_rival
-					var:murim_has_rival >= 1
-				}
 				modifier = {
 					add = 10
 					prestige >= 300
@@ -39,6 +64,10 @@ on_yearly_pulse = {
 				modifier = {
 					add = 5
 					prowess >= 14
+				}
+				modifier = {
+					add = -10
+					is_ai = yes
 				}
 
 				add_character_flag = {
@@ -52,16 +81,29 @@ on_yearly_pulse = {
 				}
 			}
 		}
+	}
 
+	# ------------------------------------------
+	# ACTIVE RIVAL EVENTS PULSE
+	# Fires rivalry escalation events for
+	# cultivators who already have a rival
+	# (detected via both variable and vanilla).
+	# ------------------------------------------
+	effect = {
 		every_living_character = {
 			limit = {
 				is_alive = yes
-				has_variable = murim_has_rival
-				var:murim_has_rival >= 1
 				has_variable = murim_cultivation_rank
 				var:murim_cultivation_rank >= 2
 				is_imprisoned = no
 				NOT = { has_character_flag = murim_rival_event_fired_this_year }
+				OR = {
+					AND = {
+						has_variable = murim_has_rival
+						var:murim_has_rival >= 1
+					}
+					any_rival = { always = yes }
+				}
 			}
 
 			random = {

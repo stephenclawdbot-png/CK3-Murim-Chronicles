@@ -37,15 +37,15 @@ murim_alchemy.0001 = {
 			years = 2
 		}
 		if = {
-			limit = { NOT = { has_variable = murim_herb_stock } }
-			set_variable = { name = murim_herb_stock value = 0 }
+			limit = { NOT = { has_variable = murim_herb_stockpile } }
+			set_variable = { name = murim_herb_stockpile value = 0 }
 		}
 	}
 
 	# Option A: Harvest carefully - slower but preserves the garden
 	option = {
 		name = murim_alchemy.0001.a
-		change_variable = { name = murim_herb_stock add = 5 }
+		change_variable = { name = murim_herb_stockpile add = 5 }
 		add_prestige = 30
 		custom_tooltip = murim_alchemy_herb_harvest_careful_tt
 		ai_chance = { base = 50 }
@@ -54,7 +54,7 @@ murim_alchemy.0001 = {
 	# Option B: Strip the garden clean - big haul, one-time
 	option = {
 		name = murim_alchemy.0001.b
-		change_variable = { name = murim_herb_stock add = 12 }
+		change_variable = { name = murim_herb_stockpile add = 12 }
 		add_prestige = 10
 		add_character_flag = {
 			flag = murim_alchemy_herb_cooldown
@@ -73,7 +73,7 @@ murim_alchemy.0001 = {
 				NOT = { this = root }
 			}
 		}
-		change_variable = { name = murim_herb_stock add = 8 }
+		change_variable = { name = murim_herb_stockpile add = 8 }
 		every_courtier = {
 			limit = {
 				has_character_flag = murim_initiated
@@ -104,8 +104,8 @@ murim_alchemy.0002 = {
 
 	trigger = {
 		is_alive = yes
-		has_variable = murim_herb_stock
-		var:murim_herb_stock >= 5
+		has_variable = murim_herb_stockpile
+		var:murim_herb_stockpile >= 5
 		has_variable = murim_cultivation_rank
 		var:murim_cultivation_rank >= 1
 		NOT = { has_character_flag = murim_alchemy_brew_cooldown }
@@ -116,7 +116,16 @@ murim_alchemy.0002 = {
 			flag = murim_alchemy_brew_cooldown
 			years = 1
 		}
-		change_variable = { name = murim_herb_stock add = -5 }
+		change_variable = { name = murim_herb_stockpile add = -5 }
+		# Initialize alchemy tracking variables if needed
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_xp } }
+			set_variable = { name = murim_alchemy_xp value = 0 }
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_skill } }
+			set_variable = { name = murim_alchemy_skill value = 0 }
+		}
 	}
 
 	# Option A: Standard brew - safe process
@@ -126,12 +135,14 @@ murim_alchemy.0002 = {
 			65 = {
 				# Success - Breakthrough Pill created
 				change_variable = { name = murim_cultivation_xp add = 30 }
+				change_variable = { name = murim_alchemy_xp add = 3 }
 				add_prestige = 100
 				custom_tooltip = murim_alchemy_brew_success_tt
 			}
 			35 = {
 				# Partial failure - weak pill
 				change_variable = { name = murim_cultivation_xp add = 8 }
+				change_variable = { name = murim_alchemy_xp add = 1 }
 				add_stress = 10
 				custom_tooltip = murim_alchemy_brew_weak_tt
 			}
@@ -149,12 +160,9 @@ murim_alchemy.0002 = {
 			40 = {
 				# Great success - Superior Pill
 				change_variable = { name = murim_cultivation_xp add = 60 }
-				add_prestige = 250
-				if = {
-					limit = { NOT = { has_variable = murim_alchemy_skill } }
-					set_variable = { name = murim_alchemy_skill value = 0 }
-				}
+				change_variable = { name = murim_alchemy_xp add = 8 }
 				change_variable = { name = murim_alchemy_skill add = 1 }
+				add_prestige = 250
 				custom_tooltip = murim_alchemy_brew_superior_tt
 			}
 			60 = {
@@ -185,6 +193,7 @@ murim_alchemy.0002 = {
 			change_variable = { name = murim_cultivation_xp add = 20 }
 			add_prestige = 50
 		}
+		change_variable = { name = murim_alchemy_xp add = 2 }
 		add_prestige = 80
 		custom_tooltip = murim_alchemy_brew_disciple_tt
 		ai_chance = { base = 25 }
@@ -221,6 +230,17 @@ murim_alchemy.0003 = {
 		}
 	}
 
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_xp } }
+			set_variable = { name = murim_alchemy_xp value = 0 }
+		}
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_skill } }
+			set_variable = { name = murim_alchemy_skill value = 0 }
+		}
+	}
+
 	# Option A: Enter the competition
 	option = {
 		name = murim_alchemy.0003.a
@@ -229,7 +249,7 @@ murim_alchemy.0003 = {
 				modifier = {
 					factor = 1.5
 					has_variable = murim_alchemy_skill
-					var:murim_alchemy_skill >= 2
+					var:murim_alchemy_skill >= 3
 				}
 				modifier = {
 					factor = 1.3
@@ -237,10 +257,7 @@ murim_alchemy.0003 = {
 				}
 				add_prestige = 300
 				change_variable = { name = murim_cultivation_xp add = 20 }
-				if = {
-					limit = { NOT = { has_variable = murim_alchemy_skill } }
-					set_variable = { name = murim_alchemy_skill value = 0 }
-				}
+				change_variable = { name = murim_alchemy_xp add = 8 }
 				change_variable = { name = murim_alchemy_skill add = 1 }
 				custom_tooltip = murim_alchemy_competition_win_tt
 			}
@@ -256,11 +273,8 @@ murim_alchemy.0003 = {
 	# Option B: Observe and learn instead
 	option = {
 		name = murim_alchemy.0003.b
-		if = {
-			limit = { NOT = { has_variable = murim_alchemy_skill } }
-			set_variable = { name = murim_alchemy_skill value = 0 }
-		}
 		change_variable = { name = murim_alchemy_skill add = 1 }
+		change_variable = { name = murim_alchemy_xp add = 5 }
 		change_variable = { name = murim_cultivation_xp add = 15 }
 		custom_tooltip = murim_alchemy_competition_observe_tt
 		ai_chance = { base = 30 }
@@ -283,8 +297,8 @@ murim_alchemy.0004 = {
 
 	trigger = {
 		is_alive = yes
-		has_variable = murim_herb_stock
-		var:murim_herb_stock >= 3
+		has_variable = murim_herb_stockpile
+		var:murim_herb_stockpile >= 3
 		has_variable = murim_cultivation_rank
 		var:murim_cultivation_rank >= 1
 		is_imprisoned = no
@@ -301,7 +315,7 @@ murim_alchemy.0004 = {
 	# Option A: Make the trade
 	option = {
 		name = murim_alchemy.0004.a
-		change_variable = { name = murim_herb_stock add = -3 }
+		change_variable = { name = murim_herb_stockpile add = -3 }
 		random_list = {
 			60 = {
 				change_variable = { name = murim_cultivation_xp add = 40 }
@@ -330,7 +344,7 @@ murim_alchemy.0004 = {
 		random_list = {
 			70 = {
 				# Discover it is legitimate
-				change_variable = { name = murim_herb_stock add = -3 }
+				change_variable = { name = murim_herb_stockpile add = -3 }
 				change_variable = { name = murim_cultivation_xp add = 45 }
 				add_prestige = 100
 				custom_tooltip = murim_alchemy_trade_verified_tt
@@ -448,14 +462,22 @@ murim_alchemy.0006 = {
 		add_character_flag = murim_alchemy_recipe_found
 	}
 
-	# Option A: Study it personally
-	option = {
-		name = murim_alchemy.0006.a
+	immediate = {
+		if = {
+			limit = { NOT = { has_variable = murim_alchemy_xp } }
+			set_variable = { name = murim_alchemy_xp value = 0 }
+		}
 		if = {
 			limit = { NOT = { has_variable = murim_alchemy_skill } }
 			set_variable = { name = murim_alchemy_skill value = 0 }
 		}
+	}
+
+	# Option A: Study it personally
+	option = {
+		name = murim_alchemy.0006.a
 		change_variable = { name = murim_alchemy_skill add = 2 }
+		change_variable = { name = murim_alchemy_xp add = 15 }
 		change_variable = { name = murim_cultivation_xp add = 50 }
 		add_prestige = 200
 		custom_tooltip = murim_alchemy_recipe_study_tt
