@@ -1,0 +1,348 @@
+namespace = murim_cross_system
+
+# Cross-System Alliance & Title Events
+# Fired from on_alliance_added, on_alliance_broken, on_title_gained hooks
+# AI characters trigger these identically to players
+
+# === NEW ALLIANCE: INTELLIGENCE SHARING ===
+murim_cross_system.0030 = {
+	type = character_event
+	title = murim_cross_system.0030.t
+	desc = murim_cross_system.0030.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = murim_spy_network_active
+		any_ally = {
+			NOT = { has_character_flag = murim_spy_network_active }
+		}
+	}
+	
+	# Share intelligence with new ally
+	option = {
+		name = murim_cross_system.0030.a
+		random_ally = {
+			limit = {
+				NOT = { has_character_flag = murim_spy_network_active }
+			}
+			add_character_modifier = {
+				modifier = murim_shared_intelligence
+				years = 3
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_intelligence_gratitude
+				opinion = 20
+			}
+		}
+		add_gold = -30
+	}
+	# Keep intelligence separate
+	option = {
+		name = murim_cross_system.0030.b
+		add_stress = 5
+	}
+}
+
+# === NEW ALLIANCE: JOINT BLACK MARKET ACCESS ===
+murim_cross_system.0031 = {
+	type = character_event
+	title = murim_cross_system.0031.t
+	desc = murim_cross_system.0031.desc
+	theme = stewardship
+	
+	trigger = {
+		has_character_flag = murim_black_market_contact
+		any_ally = {
+			NOT = { has_character_flag = murim_black_market_contact }
+		}
+	}
+	
+	# Open joint market access
+	option = {
+		name = murim_cross_system.0031.a
+		random_ally = {
+			limit = {
+				NOT = { has_character_flag = murim_black_market_contact }
+			}
+			add_character_flag = murim_black_market_contact
+			add_gold = 50
+			add_opinion = {
+				target = root
+				modifier = murim_market_partnership
+				opinion = 15
+			}
+		}
+		add_gold = 75
+		add_character_modifier = {
+			modifier = murim_expanded_trade_network
+			years = 5
+		}
+	}
+	# Keep market contacts exclusive
+	option = {
+		name = murim_cross_system.0031.b
+		add_gold = 30
+	}
+}
+
+# === ALLIANCE BROKEN: SPY NETWORK BETRAYAL ===
+murim_cross_system.0040 = {
+	type = character_event
+	title = murim_cross_system.0040.t
+	desc = murim_cross_system.0040.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_spy_network_active
+	}
+	
+	immediate = {
+		# Former ally may have compromised agents
+		random_list = {
+			60 = {
+				set_variable = {
+					name = spy_compromise_level
+					value = 1
+				}
+			}
+			30 = {
+				set_variable = {
+					name = spy_compromise_level
+					value = 2
+				}
+			}
+			10 = {
+				set_variable = {
+					name = spy_compromise_level
+					value = 3
+				}
+			}
+		}
+	}
+	
+	# Purge compromised agents
+	option = {
+		name = murim_cross_system.0040.a
+		add_gold = -75
+		add_intrigue_skill = 1
+		add_character_modifier = {
+			modifier = murim_network_purged
+			years = 2
+		}
+	}
+	# Ignore the risk
+	option = {
+		name = murim_cross_system.0040.b
+		random_list = {
+			50 = {
+				# Nothing happens
+				add_prestige = 50
+			}
+			50 = {
+				# Spy network exposed!
+				remove_character_flag = murim_spy_network_active
+				add_prestige = -300
+				add_character_modifier = {
+					modifier = murim_intelligence_compromised
+					years = 3
+				}
+			}
+		}
+	}
+}
+
+# === ALLIANCE BROKEN: FORBIDDEN TECHNIQUE LEAK ===
+murim_cross_system.0041 = {
+	type = character_event
+	title = murim_cross_system.0041.t
+	desc = murim_cross_system.0041.desc
+	theme = dread
+	
+	trigger = {
+		has_character_flag = murim_forbidden_technique_user
+	}
+	
+	# Former ally exposes our forbidden arts
+	option = {
+		name = murim_cross_system.0041.a
+		# Deny everything
+		add_diplomacy_skill = 1
+		random_list = {
+			40 = { add_prestige = 50 }
+			60 = {
+				add_character_flag = murim_techniques_exposed
+				add_character_modifier = {
+					modifier = murim_tribunal_accused
+					years = 3
+				}
+			}
+		}
+	}
+	# Strike first - silence the former ally
+	option = {
+		name = murim_cross_system.0041.b
+		trigger = { intrigue >= 14 }
+		add_tyranny = 20
+		add_dread = 25
+		add_character_modifier = {
+			modifier = murim_silenced_witness
+			years = 5
+		}
+	}
+	# Flee before exposure
+	option = {
+		name = murim_cross_system.0041.c
+		add_character_flag = murim_in_hiding
+		add_prestige = -200
+		add_intrigue_skill = 2
+	}
+}
+
+# === ALLIANCE BROKEN: BLOOD OATH VIOLATION ===
+murim_cross_system.0042 = {
+	type = character_event
+	title = murim_cross_system.0042.t
+	desc = murim_cross_system.0042.desc
+	theme = dread
+	
+	trigger = {
+		has_character_flag = murim_blood_oath_bound
+	}
+	
+	# The oath burns - heavenly punishment
+	option = {
+		name = murim_cross_system.0042.a
+		# Accept the spiritual backlash
+		add_health = -2
+		add_stress = 50
+		add_piety = -500
+		add_character_modifier = {
+			modifier = murim_oath_breaker_curse
+			years = 10
+		}
+	}
+	# Perform atonement ritual
+	option = {
+		name = murim_cross_system.0042.b
+		add_gold = -200
+		add_piety = -200
+		add_character_modifier = {
+			modifier = murim_atonement_scarred
+			years = 5
+		}
+		remove_character_flag = murim_blood_oath_bound
+	}
+}
+
+# === TITLE GAINED: INHERIT SPY NETWORK ===
+murim_cross_system.0050 = {
+	type = character_event
+	title = murim_cross_system.0050.t
+	desc = murim_cross_system.0050.desc
+	theme = intrigue
+	
+	trigger = {
+		NOT = { has_character_flag = murim_spy_network_active }
+		any_courtier = {
+			has_character_flag = murim_spy_operative
+		}
+	}
+	
+	# Take control of the network
+	option = {
+		name = murim_cross_system.0050.a
+		add_character_flag = murim_spy_network_active
+		add_intrigue_skill = 2
+		add_character_modifier = {
+			modifier = murim_inherited_spy_network
+			years = 5
+		}
+	}
+	# Disband the spy network
+	option = {
+		name = murim_cross_system.0050.b
+		add_piety = 100
+		every_courtier = {
+			limit = { has_character_flag = murim_spy_operative }
+			remove_character_flag = murim_spy_operative
+		}
+	}
+}
+
+# === TITLE GAINED: HIDDEN BLACK MARKET LEDGERS ===
+murim_cross_system.0051 = {
+	type = character_event
+	title = murim_cross_system.0051.t
+	desc = murim_cross_system.0051.desc
+	theme = stewardship
+	
+	trigger = {
+		NOT = { has_character_flag = murim_black_market_contact }
+	}
+	
+	# Use the ledgers
+	option = {
+		name = murim_cross_system.0051.a
+		add_character_flag = murim_black_market_contact
+		add_gold = 150
+		add_tyranny = 5
+	}
+	# Destroy the ledgers
+	option = {
+		name = murim_cross_system.0051.b
+		add_piety = 150
+		add_prestige = 100
+	}
+	# Blackmail those listed
+	option = {
+		name = murim_cross_system.0051.c
+		trigger = { intrigue >= 12 }
+		add_gold = 300
+		add_tyranny = 25
+		add_dread = 20
+	}
+}
+
+# === TITLE GAINED: TRIBUNAL REVIEW ===
+murim_cross_system.0052 = {
+	type = character_event
+	title = murim_cross_system.0052.t
+	desc = murim_cross_system.0052.desc
+	theme = learning
+	
+	trigger = {
+		any_vassal = {
+			has_character_flag = murim_forbidden_technique_user
+		}
+	}
+	
+	# Purge forbidden practitioners
+	option = {
+		name = murim_cross_system.0052.a
+		every_vassal = {
+			limit = { has_character_flag = murim_forbidden_technique_user }
+			add_opinion = {
+				target = root
+				modifier = murim_purge_resentment
+				opinion = -40
+			}
+		}
+		add_piety = 300
+		add_prestige = 200
+	}
+	# Tolerate them for now
+	option = {
+		name = murim_cross_system.0052.b
+		add_tyranny = -10
+		add_piety = -100
+	}
+	# Learn from them in secret
+	option = {
+		name = murim_cross_system.0052.c
+		trigger = { learning >= 14 }
+		add_character_flag = murim_forbidden_technique_user
+		add_prowess = 3
+		add_stress = 20
+	}
+}
