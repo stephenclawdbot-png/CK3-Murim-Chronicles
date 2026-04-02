@@ -1,0 +1,490 @@
+namespace = murim_wudang_expansion4
+
+# WUDANG EXPANSION 4 - SWORD IMMORTAL TRANSCENDENCE AND TAOIST POLITICS
+# 10 complete events: immortal path, internal schism, sword god ascension
+
+murim_wudang_expansion4.0001 = {
+	type = character_event
+	title = murim_wudang_exp4.0001.t
+	desc = murim_wudang_exp4.0001.desc
+	theme = faith
+	left_portrait = { character = root animation = thinking }
+
+	trigger = {
+		has_trait = murim_clan_wudang
+		has_trait = murim_cultivation_realm_5
+		age >= 60
+		NOT = { has_character_flag = wudang_immortal_path_offered }
+	}
+
+	weight_multiplier = {
+		base = 10
+		modifier = { add = 20 has_trait = patient }
+		modifier = { add = 15 learning >= 20 }
+	}
+
+	immediate = {
+		set_character_flag = wudang_immortal_path_offered
+		random_vassal = {
+			limit = { has_trait = murim_clan_wudang age >= 70 learning >= 15 }
+			save_scope_as = wudang_immortal_elder
+		}
+	}
+
+	option = {
+		name = murim_wudang_exp4.0001.a
+		add_character_modifier = { modifier = murim_seeking_immortality years = 30 }
+		add_piety = 1000
+		add_health = 2
+		trigger_event = { id = murim_wudang_expansion4.0002 days = { 180 365 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0001.b
+		add_character_modifier = { modifier = murim_sword_god_path years = 50 }
+		add_prowess = 10
+		add_martial = 5
+		trigger_event = { id = murim_wudang_expansion4.0003 days = { 90 180 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0001.c
+		add_character_modifier = { modifier = murim_wudang_worldly_sage years = 20 }
+		add_diplomacy = 5
+		add_prestige = 500
+	}
+}
+
+murim_wudang_expansion4.0002 = {
+	type = character_event
+	title = murim_wudang_exp4.0002.t
+	desc = murim_wudang_exp4.0002.desc
+	theme = faith
+	left_portrait = { character = root animation = pray }
+
+	trigger = {
+		has_character_modifier = murim_seeking_immortality
+		has_trait = murim_clan_wudang
+	}
+
+	immediate = { set_character_flag = immortality_trial_begun }
+
+	option = {
+		name = murim_wudang_exp4.0002.a
+		add_piety = 2000
+		add_health = 3
+		add_character_modifier = { modifier = murim_taoist_immortal_body years = 100 }
+		add_trait = murim_immortal_aspirant
+		random = {
+			chance = 15
+			add_trait = murim_true_immortal
+			add_character_modifier = { modifier = murim_transcended_mortality years = 200 }
+			add_health = 5
+		}
+		trigger_event = { id = murim_wudang_expansion4.0004 days = { 365 730 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0002.b
+		add_piety = 500
+		add_character_modifier = { modifier = murim_failed_immortality years = 20 }
+		add_health = -1
+		stress_impact = { ambitious = major_stress_impact_gain }
+	}
+	option = {
+		name = murim_wudang_exp4.0002.c
+		add_character_modifier = { modifier = murim_partial_immortality years = 50 }
+		add_health = 2
+		add_learning = 3
+	}
+}
+
+murim_wudang_expansion4.0003 = {
+	type = character_event
+	title = murim_wudang_exp4.0003.t
+	desc = murim_wudang_exp4.0003.desc
+	theme = martial
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = {
+		has_character_modifier = murim_sword_god_path
+		has_trait = murim_clan_wudang
+	}
+
+	immediate = {
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist prowess >= 30 NOT = { this = root } }
+			save_scope_as = sword_rival
+		}
+	}
+
+	option = {
+		name = murim_wudang_exp4.0003.a
+		trigger = { exists = scope:sword_rival }
+		duel = {
+			skill = prowess
+			target = scope:sword_rival
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_wudang_exp4.0003.a.win
+				root = {
+					add_trait = murim_sword_god
+					add_prowess = 15
+					add_prestige = 3000
+					add_character_modifier = { modifier = murim_sword_god_aura years = 100 }
+				}
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_wudang_exp4.0003.a.lose
+				root = { add_trait = wounded_3 add_prestige = -500 }
+			}
+		}
+	}
+	option = {
+		name = murim_wudang_exp4.0003.b
+		add_prowess = 8
+		add_character_modifier = { modifier = murim_sword_hermit years = 30 }
+		trigger_event = { id = murim_wudang_expansion4.0005 days = { 180 365 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0003.c
+		add_prowess = 5
+		add_martial = 3
+		add_character_modifier = { modifier = murim_teaching_sword_master years = 20 }
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang }
+			add_prowess = 3
+			add_opinion = { modifier = murim_grateful_student target = root opinion = 25 }
+		}
+	}
+}
+
+murim_wudang_expansion4.0004 = {
+	type = character_event
+	title = murim_wudang_exp4.0004.t
+	desc = murim_wudang_exp4.0004.desc
+	theme = faith
+	left_portrait = { character = root animation = ecstasy }
+
+	trigger = {
+		has_trait = murim_immortal_aspirant
+		has_trait = murim_clan_wudang
+	}
+
+	immediate = {
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist is_alive = yes }
+			add_to_temporary_list = witnesses_of_transcendence
+		}
+	}
+
+	option = {
+		name = murim_wudang_exp4.0004.a
+		add_piety = 5000
+		add_character_modifier = { modifier = murim_heavenly_dao_communion years = 200 }
+		add_health = 5
+		every_in_list = {
+			list = witnesses_of_transcendence
+			add_opinion = { modifier = murim_witnessed_transcendence target = root opinion = 50 }
+		}
+		set_global_variable = { name = murim_wudang_transcendence_witnessed value = yes }
+	}
+	option = {
+		name = murim_wudang_exp4.0004.b
+		add_piety = 2000
+		add_character_modifier = { modifier = murim_humble_immortal years = 100 }
+		add_learning = 10
+	}
+	option = {
+		name = murim_wudang_exp4.0004.c
+		add_character_modifier = { modifier = murim_false_transcendence years = 10 }
+		add_health = -3
+		add_stress = 50
+	}
+}
+
+murim_wudang_expansion4.0005 = {
+	type = character_event
+	title = murim_wudang_exp4.0005.t
+	desc = murim_wudang_exp4.0005.desc
+	theme = intrigue
+	left_portrait = { character = root animation = worry }
+	right_portrait = { character = scope:wudang_schismatic animation = anger }
+
+	trigger = {
+		has_trait = murim_clan_wudang
+		is_ruler = yes
+		any_vassal = { has_trait = murim_clan_wudang NOT = { has_relation_friend = root } opinion = { target = root value <= -20 } }
+	}
+
+	immediate = {
+		random_vassal = {
+			limit = { has_trait = murim_clan_wudang NOT = { has_relation_friend = root } opinion = { target = root value <= -20 } }
+			save_scope_as = wudang_schismatic
+		}
+	}
+
+	option = {
+		name = murim_wudang_exp4.0005.a
+		trigger = { exists = scope:wudang_schismatic }
+		scope:wudang_schismatic = {
+			add_opinion = { modifier = murim_confronted_schismatic target = root opinion = -30 }
+		}
+		add_character_modifier = { modifier = murim_wudang_purge years = 5 }
+		trigger_event = { id = murim_wudang_expansion4.0006 days = { 30 60 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0005.b
+		add_diplomacy = 2
+		if = { limit = { exists = scope:wudang_schismatic }
+			scope:wudang_schismatic = { add_opinion = { modifier = murim_offered_compromise target = root opinion = 15 } }
+		}
+		add_character_modifier = { modifier = murim_wudang_peacemaker years = 10 }
+	}
+	option = {
+		name = murim_wudang_exp4.0005.c
+		add_piety = 300
+		add_character_modifier = { modifier = murim_wudang_meditation_retreat years = 5 }
+	}
+}
+
+murim_wudang_expansion4.0006 = {
+	type = character_event
+	title = murim_wudang_exp4.0006.t
+	desc = murim_wudang_exp4.0006.desc
+	theme = war
+	left_portrait = { character = root animation = anger }
+
+	trigger = {
+		has_character_modifier = murim_wudang_purge
+		has_trait = murim_clan_wudang
+	}
+
+	immediate = {
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang opinion = { target = root value <= -10 } }
+			add_to_temporary_list = wudang_rebels
+		}
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang opinion = { target = root value >= 10 } }
+			add_to_temporary_list = wudang_loyalists
+		}
+	}
+
+	option = {
+		name = murim_wudang_exp4.0006.a
+		add_character_modifier = { modifier = murim_wudang_civil_war years = 5 }
+		every_in_list = { list = wudang_rebels add_opinion = { modifier = murim_sect_enemy target = root opinion = -50 } }
+		every_in_list = { list = wudang_loyalists add_opinion = { modifier = murim_sect_ally target = root opinion = 30 } }
+		trigger_event = { id = murim_wudang_expansion4.0008 days = { 60 120 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0006.b
+		add_prestige = -200
+		add_piety = 500
+		remove_character_modifier = murim_wudang_purge
+		add_character_modifier = { modifier = murim_wudang_forgiveness years = 15 }
+		every_in_list = { list = wudang_rebels add_opinion = { modifier = murim_forgiven target = root opinion = 20 } }
+	}
+	option = {
+		name = murim_wudang_exp4.0006.c
+		add_tyranny = 20
+		every_in_list = {
+			list = wudang_rebels
+			add_character_modifier = { modifier = murim_exiled_from_wudang years = 30 }
+			add_opinion = { modifier = murim_exiled target = root opinion = -60 }
+		}
+		add_character_modifier = { modifier = murim_wudang_iron_leader years = 20 }
+	}
+}
+
+murim_wudang_expansion4.0007 = {
+	type = character_event
+	title = murim_wudang_exp4.0007.t
+	desc = murim_wudang_exp4.0007.desc
+	theme = learning
+	left_portrait = { character = root animation = ecstasy }
+
+	trigger = {
+		has_trait = murim_clan_wudang
+		learning >= 20
+		NOT = { has_character_flag = wudang_lost_scripture_found }
+	}
+
+	weight_multiplier = {
+		base = 5
+		modifier = { add = 15 has_trait = murim_cultivation_realm_5 }
+	}
+
+	immediate = { set_character_flag = wudang_lost_scripture_found }
+
+	option = {
+		name = murim_wudang_exp4.0007.a
+		add_character_modifier = { modifier = murim_wudang_primordial_scripture years = 100 }
+		add_learning = 8
+		add_prowess = 5
+		add_piety = 2000
+	}
+	option = {
+		name = murim_wudang_exp4.0007.b
+		add_gold = 500
+		add_prestige = 300
+		add_character_modifier = { modifier = murim_sold_ancient_knowledge years = 10 }
+		stress_impact = { zealous = major_stress_impact_gain }
+	}
+	option = {
+		name = murim_wudang_exp4.0007.c
+		add_piety = 1000
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang }
+			add_learning = 3
+			add_opinion = { modifier = murim_shared_scripture target = root opinion = 20 }
+		}
+		add_character_modifier = { modifier = murim_wudang_knowledge_sharer years = 30 }
+	}
+}
+
+murim_wudang_expansion4.0008 = {
+	type = character_event
+	title = murim_wudang_exp4.0008.t
+	desc = murim_wudang_exp4.0008.desc
+	theme = war
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = {
+		has_character_modifier = murim_wudang_civil_war
+		has_trait = murim_clan_wudang
+	}
+
+	immediate = { remove_character_modifier = murim_wudang_civil_war }
+
+	option = {
+		name = murim_wudang_exp4.0008.a
+		trigger = { prowess >= 20 }
+		add_prestige = 2000
+		add_character_modifier = { modifier = murim_wudang_reunified years = 30 }
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang }
+			add_opinion = { modifier = murim_respected_victor target = root opinion = 15 }
+		}
+	}
+	option = {
+		name = murim_wudang_exp4.0008.b
+		set_global_variable = { name = murim_wudang_split value = yes }
+		add_character_modifier = { modifier = murim_wudang_orthodox_branch years = 50 }
+	}
+	option = {
+		name = murim_wudang_exp4.0008.c
+		add_prestige = -500
+		add_piety = 1000
+		add_character_modifier = { modifier = murim_wudang_abdicated years = 30 }
+		every_vassal = {
+			limit = { has_trait = murim_clan_wudang }
+			add_opinion = { modifier = murim_respected_humility target = root opinion = 25 }
+		}
+	}
+}
+
+murim_wudang_expansion4.0009 = {
+	type = character_event
+	title = murim_wudang_exp4.0009.t
+	desc = murim_wudang_exp4.0009.desc
+	theme = skull
+	left_portrait = { character = root animation = rage }
+
+	trigger = {
+		has_trait = murim_clan_wudang
+		has_trait = murim_sword_god
+		prowess >= 35
+		NOT = { has_character_flag = wudang_void_sword_offered }
+	}
+
+	immediate = { set_character_flag = wudang_void_sword_offered }
+
+	option = {
+		name = murim_wudang_exp4.0009.a
+		add_trait = murim_void_sword_master
+		add_prowess = 20
+		add_character_modifier = { modifier = murim_void_sword_aura years = 100 }
+		add_health = -1
+		add_stress = 30
+		every_relation = {
+			type = friend
+			add_opinion = { modifier = murim_feared_void_power target = root opinion = -20 }
+		}
+	}
+	option = {
+		name = murim_wudang_exp4.0009.b
+		add_piety = 2000
+		add_prowess = 5
+		add_character_modifier = { modifier = murim_rejected_void years = 30 }
+	}
+	option = {
+		name = murim_wudang_exp4.0009.c
+		trigger = { learning >= 25 }
+		add_trait = murim_balance_sword_master
+		add_prowess = 12
+		add_piety = 1000
+		add_character_modifier = { modifier = murim_yin_yang_sword_perfection years = 100 }
+	}
+}
+
+murim_wudang_expansion4.0010 = {
+	type = character_event
+	title = murim_wudang_exp4.0010.t
+	desc = murim_wudang_exp4.0010.desc
+	theme = faith
+	left_portrait = { character = root animation = pray }
+
+	trigger = {
+		has_trait = murim_clan_wudang
+		OR = {
+			has_trait = murim_true_immortal
+			has_trait = murim_sword_god
+			has_trait = murim_void_sword_master
+		}
+		age >= 80
+	}
+
+	immediate = {
+		every_living_character = {
+			limit = { has_trait = murim_clan_wudang NOT = { this = root } }
+			add_to_temporary_list = wudang_disciples
+		}
+	}
+
+	option = {
+		name = murim_wudang_exp4.0010.a
+		add_piety = 5000
+		add_prestige = 3000
+		add_character_modifier = { modifier = murim_wudang_eternal_patriarch years = 200 }
+		every_in_list = {
+			list = wudang_disciples
+			add_character_modifier = { modifier = murim_blessed_by_patriarch years = 50 }
+			add_opinion = { modifier = murim_eternal_devotion target = root opinion = 50 }
+		}
+		set_global_variable = { name = murim_wudang_has_patriarch value = root }
+	}
+	option = {
+		name = murim_wudang_exp4.0010.b
+		add_piety = 3000
+		add_character_modifier = { modifier = murim_wudang_wandering_immortal years = 100 }
+		add_martial = 5
+		add_prowess = 8
+	}
+	option = {
+		name = murim_wudang_exp4.0010.c
+		ordered_in_list = {
+			list = wudang_disciples
+			order_by = prowess
+			max = 1
+			save_scope_as = chosen_heir
+		}
+		if = { limit = { exists = scope:chosen_heir }
+			scope:chosen_heir = {
+				add_prestige = 2000
+				add_character_modifier = { modifier = murim_wudang_chosen_heir years = 50 }
+			}
+		}
+		add_character_modifier = { modifier = murim_wudang_graceful_retirement years = 30 }
+		add_piety = 2000
+	}
+}
