@@ -1,0 +1,1894 @@
+########################################
+# MURIM UNDERWORLD BLACK MARKET EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Black market dealings,
+# forbidden goods trade, underground auctions,
+# smuggling networks, informant systems
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_black_market
+
+# EVENT 0001 - Discovery of the Underground Market
+# Triggered: on_action yearly pulse, any martial artist with intrigue >= 8
+# AI: Full weight scripting for all options
+murim_black_market.0001 = {
+    type = character_event
+    title = murim_black_market.0001.t
+    desc = murim_black_market.0001.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    right_portrait = {
+        character = scope:black_market_contact
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        age >= 16
+        intrigue >= 8
+        NOT = { has_character_flag = knows_black_market }
+        NOT = { has_trait = murim_righteous_elder }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_sect_leader
+            has_trait = murim_wandering_cultivator
+            has_trait = murim_shadow_operative
+            has_trait = murim_unorthodox_elder
+        }
+        OR = {
+            any_held_title = { tier >= tier_county }
+            gold >= 50
+            intrigue >= 14
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                intrigue >= 10
+                NOT = { has_trait = murim_righteous_elder }
+            }
+            save_scope_as = black_market_contact
+            alternative = {
+                create_character = {
+                    age = { 30 45 }
+                    gender_female_chance = 40
+                    trait = murim_shadow_operative
+                    trait = deceitful
+                    trait = greedy
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = black_market_contact
+                }
+            }
+        }
+        add_character_flag = {
+            flag = discovered_black_market_event
+            days = 30
+        }
+    }
+    
+    # Option A: Enter the underground market
+    option = {
+        name = murim_black_market.0001.a
+        add_character_flag = knows_black_market
+        add_character_modifier = {
+            modifier = murim_black_market_access
+            years = 5
+        }
+        reverse_add_opinion = {
+            target = scope:black_market_contact
+            modifier = murim_black_market_trust
+            opinion = 15
+        }
+        add_intrigue_skill = 1
+        stress_impact = {
+            just = medium_stress_impact_gain
+            honest = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = murim_unorthodox_elder
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = murim_shadow_operative
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = murim_orthodox_disciple
+            }
+        }
+    }
+    
+    # Option B: Report to orthodox authorities
+    option = {
+        name = murim_black_market.0001.b
+        add_piety = 50
+        add_prestige = 100
+        add_character_flag = reported_black_market
+        if = {
+            limit = { exists = scope:black_market_contact }
+            scope:black_market_contact = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_betrayed_trust
+                    opinion = -40
+                }
+                trigger_event = {
+                    id = murim_black_market.0002
+                    days = { 15 45 }
+                }
+            }
+        }
+        stress_impact = {
+            deceitful = medium_stress_impact_gain
+            greedy = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.5
+                has_trait = murim_righteous_elder
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = murim_unorthodox_elder
+            }
+        }
+    }
+    
+    # Option C: Extort the market for protection money
+    option = {
+        name = murim_black_market.0001.c
+        trigger = {
+            OR = {
+                prowess >= 15
+                has_trait = murim_sect_leader
+                has_trait = intimidating
+            }
+        }
+        add_gold = 200
+        add_dread = 25
+        add_character_flag = knows_black_market
+        add_character_flag = black_market_extortionist
+        add_character_modifier = {
+            modifier = murim_black_market_extortion_income
+            years = 3
+        }
+        stress_impact = {
+            compassionate = major_stress_impact_gain
+            generous = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = greedy
+            }
+            modifier = {
+                factor = 2.5
+                has_trait = intimidating
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0002 - Black Market Contact's Revenge
+# Triggered: from 0001 option B report, delayed event
+# AI: Full autonomy - contact seeks revenge for betrayal
+murim_black_market.0002 = {
+    type = character_event
+    title = murim_black_market.0002.t
+    desc = murim_black_market.0002.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+    }
+    
+    immediate = {
+        random_list = {
+            30 = {
+                # Assassination attempt
+                add_character_flag = {
+                    flag = black_market_assassination_attempt
+                    days = 60
+                }
+                trigger_event = {
+                    id = murim_black_market.0003
+                    days = { 5 20 }
+                }
+            }
+            30 = {
+                # Poison in food
+                add_character_flag = {
+                    flag = black_market_poisoned
+                    days = 30
+                }
+                add_character_modifier = {
+                    modifier = murim_slow_poison_affliction
+                    years = 1
+                }
+            }
+            20 = {
+                # Reputation smear campaign
+                every_vassal = {
+                    limit = { is_alive = yes }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_smeared_reputation
+                        opinion = -15
+                    }
+                }
+            }
+            20 = {
+                # Nothing happens - contact fled
+                add_prestige = 50
+            }
+        }
+    }
+    
+    option = {
+        name = murim_black_market.0002.a
+        custom_tooltip = murim_black_market_revenge_tooltip
+        ai_chance = {
+            base = 100
+        }
+    }
+}
+
+# EVENT 0003 - Assassination Attempt from Black Market
+# Triggered: from 0002 assassination branch
+# AI: Full combat response system
+murim_black_market.0003 = {
+    type = character_event
+    title = murim_black_market.0003.t
+    desc = murim_black_market.0003.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = black_market_assassination_attempt
+    }
+    
+    immediate = {
+        hidden_effect = {
+            create_character = {
+                age = { 25 40 }
+                trait = murim_shadow_operative
+                trait = assassin
+                trait = brave
+                prowess = { 14 22 }
+                culture = root.culture
+                faith = root.faith
+                save_scope_as = black_market_assassin
+            }
+        }
+    }
+    
+    # Option A: Fight the assassin directly
+    option = {
+        name = murim_black_market.0003.a
+        duel = {
+            skill = prowess
+            target = scope:black_market_assassin
+            50 = {
+                desc = murim_black_market.0003.a.success
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                send_interface_toast = {
+                    title = murim_black_market.0003.a.success
+                }
+                add_prestige = 200
+                add_character_modifier = {
+                    modifier = murim_survived_assassination
+                    years = 3
+                }
+                scope:black_market_assassin = {
+                    death = {
+                        death_reason = death_duel
+                        killer = root
+                    }
+                }
+            }
+            10 = {
+                desc = murim_black_market.0003.a.pyrrhic
+                min = 10
+                send_interface_toast = {
+                    title = murim_black_market.0003.a.pyrrhic
+                }
+                add_prestige = 100
+                increase_wounds_effect = { reason = duel }
+                scope:black_market_assassin = {
+                    death = {
+                        death_reason = death_duel
+                        killer = root
+                    }
+                }
+            }
+            50 = {
+                desc = murim_black_market.0003.a.failure
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                send_interface_toast = {
+                    title = murim_black_market.0003.a.failure
+                }
+                increase_wounds_effect = { reason = duel }
+                add_character_modifier = {
+                    modifier = murim_grievous_wound
+                    years = 2
+                }
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 3.0
+                prowess >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option B: Use qi technique to escape
+    option = {
+        name = murim_black_market.0003.b
+        trigger = {
+            OR = {
+                has_trait = murim_qi_master
+                has_trait = murim_lightfoot_technique
+                martial >= 16
+            }
+        }
+        add_character_flag = {
+            flag = fled_assassination
+            days = 365
+        }
+        add_stress = 20
+        add_prestige = -50
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                prowess < 12
+            }
+        }
+    }
+    
+    # Option C: Bribe the assassin to turn double agent
+    option = {
+        name = murim_black_market.0003.c
+        trigger = {
+            gold >= 300
+            diplomacy >= 12
+        }
+        add_gold = -300
+        hidden_effect = {
+            scope:black_market_assassin = {
+                set_relation_potential_friend = root
+                add_trait = murim_double_agent
+                add_opinion = {
+                    target = root
+                    modifier = murim_generous_bribe
+                    opinion = 30
+                }
+            }
+        }
+        add_character_modifier = {
+            modifier = murim_has_double_agent
+            years = 5
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                diplomacy >= 18
+            }
+            modifier = {
+                factor = 2.0
+                gold >= 500
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Underground Auction of Forbidden Techniques
+# Triggered: yearly pulse for characters with black market access
+# AI: Full participation system
+murim_black_market.0004 = {
+    type = character_event
+    title = murim_black_market.0004.t
+    desc = murim_black_market.0004.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = personality_greedy
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = knows_black_market
+        NOT = { has_character_flag = attended_auction_recently }
+        gold >= 100
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_sect_leader
+            has_trait = murim_shadow_operative
+            has_trait = murim_unorthodox_elder
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = greedy
+        }
+        modifier = {
+            factor = 1.5
+            intrigue >= 15
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_unorthodox_elder
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = attended_auction_recently
+            days = 365
+        }
+        # Determine auction item
+        random_list = {
+            25 = { set_variable = { name = auction_item value = 1 } } # Forbidden technique scroll
+            25 = { set_variable = { name = auction_item value = 2 } } # Rare poison formula
+            20 = { set_variable = { name = auction_item value = 3 } } # Ancient weapon
+            15 = { set_variable = { name = auction_item value = 4 } } # Cultivation pill
+            15 = { set_variable = { name = auction_item value = 5 } } # Secret intelligence
+        }
+    }
+    
+    # Option A: Bid aggressively
+    option = {
+        name = murim_black_market.0004.a
+        add_gold = -300
+        if = {
+            limit = { has_variable = auction_item }
+            trigger_event = {
+                id = murim_black_market.0005
+                days = 1
+            }
+        }
+        stress_impact = {
+            generous = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                gold >= 500
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 0.5
+                has_trait = content
+            }
+        }
+    }
+    
+    # Option B: Observe and gather intelligence
+    option = {
+        name = murim_black_market.0004.b
+        add_intrigue_skill = 1
+        add_character_modifier = {
+            modifier = murim_black_market_intelligence
+            years = 2
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Rob the auction
+    option = {
+        name = murim_black_market.0004.c
+        trigger = {
+            prowess >= 18
+            OR = {
+                has_trait = brave
+                has_trait = murim_unorthodox_elder
+                has_trait = murim_demon_cultivator
+            }
+        }
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 22
+                }
+                desc = murim_black_market.0004.c.success
+                add_gold = 500
+                add_prestige = -200
+                add_dread = 30
+                add_character_modifier = {
+                    modifier = murim_auction_robber
+                    years = 3
+                }
+                # Get random forbidden item
+                random_list = {
+                    33 = { add_trait = murim_forbidden_technique_user }
+                    33 = { add_character_modifier = { modifier = murim_ancient_weapon_wielder years = 10 } }
+                    34 = { add_character_modifier = { modifier = murim_rare_poison_master years = 5 } }
+                }
+            }
+            60 = {
+                desc = murim_black_market.0004.c.failure
+                add_gold = -100
+                increase_wounds_effect = { reason = fight }
+                add_character_flag = {
+                    flag = black_market_enemy
+                    days = 1825
+                }
+                add_character_modifier = {
+                    modifier = murim_marked_by_underworld
+                    years = 5
+                }
+            }
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = murim_demon_cultivator
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 22
+            }
+        }
+    }
+    
+    # Option D: Leave quietly
+    option = {
+        name = murim_black_market.0004.d
+        stress_impact = {
+            ambitious = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                gold < 200
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Auction Victory: Forbidden Item Acquired
+# Triggered: from 0004 aggressive bid
+# AI: Full item usage system
+murim_black_market.0005 = {
+    type = character_event
+    title = murim_black_market.0005.t
+    desc = murim_black_market.0005.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = happiness
+    }
+    
+    trigger = {
+        is_alive = yes
+    }
+    
+    immediate = {
+        # Already set auction_item variable in 0004
+    }
+    
+    # Forbidden technique scroll
+    option = {
+        name = murim_black_market.0005.a
+        trigger = {
+            has_variable = auction_item
+        }
+        # Study the forbidden technique
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 14
+                }
+                desc = murim_black_market.0005.a.mastery
+                add_trait = murim_forbidden_technique_user
+                add_prowess_skill = 3
+                add_character_modifier = {
+                    modifier = murim_dark_power_surge
+                    years = 5
+                }
+            }
+            30 = {
+                desc = murim_black_market.0005.a.partial
+                add_prowess_skill = 1
+                add_character_modifier = {
+                    modifier = murim_incomplete_forbidden_art
+                    years = 3
+                }
+            }
+            30 = {
+                desc = murim_black_market.0005.a.backlash
+                add_character_modifier = {
+                    modifier = murim_qi_deviation_severe
+                    years = 2
+                }
+                add_stress = 30
+                increase_wounds_effect = { reason = qi_deviation }
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Sell it for profit
+    option = {
+        name = murim_black_market.0005.b
+        add_gold = 500
+        add_prestige = 50
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+        }
+    }
+    
+    # Destroy it to prevent misuse
+    option = {
+        name = murim_black_market.0005.c
+        add_piety = 100
+        add_prestige = 200
+        stress_impact = {
+            greedy = medium_stress_impact_gain
+            ambitious = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 5.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 3.0
+                has_trait = murim_righteous_elder
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Smuggling Network Establishment
+# Triggered: characters with black market access + stewardship >= 12
+# AI: Full trade network building
+murim_black_market.0006 = {
+    type = character_event
+    title = murim_black_market.0006.t
+    desc = murim_black_market.0006.desc
+    theme = stewardship
+    
+    left_portrait = {
+        character = root
+        animation = personality_greedy
+    }
+    right_portrait = {
+        character = scope:smuggler_chief
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = knows_black_market
+        stewardship >= 12
+        NOT = { has_character_modifier = murim_smuggling_network_active }
+        any_held_title = { tier >= tier_county }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = greedy
+        }
+        modifier = {
+            factor = 1.5
+            stewardship >= 16
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                intrigue >= 8
+                NOT = { has_trait = honest }
+            }
+            save_scope_as = smuggler_chief
+            alternative = {
+                create_character = {
+                    age = { 28 50 }
+                    trait = murim_shadow_operative
+                    trait = greedy
+                    trait = deceitful
+                    stewardship = { 10 16 }
+                    intrigue = { 12 18 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = smuggler_chief
+                }
+            }
+        }
+    }
+    
+    # Option A: Establish the smuggling network
+    option = {
+        name = murim_black_market.0006.a
+        add_gold = -200
+        add_character_modifier = {
+            modifier = murim_smuggling_network_active
+            years = 10
+        }
+        # Monthly gold income from smuggling
+        add_character_modifier = {
+            modifier = murim_smuggling_income
+            years = 10
+        }
+        if = {
+            limit = { exists = scope:smuggler_chief }
+            add_courtier = scope:smuggler_chief
+            reverse_add_opinion = {
+                target = scope:smuggler_chief
+                modifier = murim_business_partner
+                opinion = 25
+            }
+        }
+        stress_impact = {
+            honest = major_stress_impact_gain
+            just = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.5
+                has_trait = greedy
+            }
+            modifier = {
+                factor = 2.0
+                stewardship >= 16
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = honest
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = just
+            }
+        }
+    }
+    
+    # Option B: Use network for intelligence only
+    option = {
+        name = murim_black_market.0006.b
+        add_gold = -100
+        add_character_modifier = {
+            modifier = murim_intelligence_network
+            years = 5
+        }
+        add_intrigue_skill = 2
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Decline involvement
+    option = {
+        name = murim_black_market.0006.c
+        add_piety = 25
+        stress_impact = {
+            greedy = minor_stress_impact_gain
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Black Market Raid by Orthodox Alliance
+# Triggered: on_action when orthodox faction strength >= 70%
+# AI: Full response for both sides
+murim_black_market.0007 = {
+    type = character_event
+    title = murim_black_market.0007.t
+    desc = murim_black_market.0007.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    right_portrait = {
+        character = scope:raid_leader
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = knows_black_market
+        NOT = { has_character_flag = survived_market_raid }
+        any_known_character = {
+            has_trait = murim_orthodox_alliance_leader
+            is_alive = yes
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_global_variable = murim_orthodox_crackdown_active
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                OR = {
+                    has_trait = murim_orthodox_alliance_leader
+                    has_trait = murim_righteous_elder
+                }
+                is_alive = yes
+            }
+            save_scope_as = raid_leader
+        }
+        add_character_flag = {
+            flag = in_market_raid
+            days = 30
+        }
+    }
+    
+    # Option A: Fight through the raiders
+    option = {
+        name = murim_black_market.0007.a
+        trigger = {
+            prowess >= 14
+        }
+        duel = {
+            skill = prowess
+            target = scope:raid_leader
+            50 = {
+                desc = murim_black_market.0007.a.escape
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                add_prestige = 100
+                add_character_flag = survived_market_raid
+                add_character_modifier = {
+                    modifier = murim_infamous_outlaw
+                    years = 3
+                }
+            }
+            50 = {
+                desc = murim_black_market.0007.a.captured
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                add_prestige = -200
+                add_gold = -100
+                add_character_flag = captured_by_orthodox
+                imprison = {
+                    target = root
+                    type = dungeon
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Use secret escape tunnel
+    option = {
+        name = murim_black_market.0007.b
+        trigger = {
+            intrigue >= 14
+        }
+        add_character_flag = survived_market_raid
+        add_gold = -50
+        add_stress = 10
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option C: Surrender and cooperate
+    option = {
+        name = murim_black_market.0007.c
+        add_character_flag = survived_market_raid
+        remove_character_flag = knows_black_market
+        add_piety = 50
+        add_prestige = -100
+        if = {
+            limit = { exists = scope:raid_leader }
+            reverse_add_opinion = {
+                target = scope:raid_leader
+                modifier = murim_cooperated_with_law
+                opinion = 20
+            }
+        }
+        # Lose all black market modifiers
+        remove_character_modifier = murim_black_market_access
+        remove_character_modifier = murim_smuggling_network_active
+        remove_character_modifier = murim_smuggling_income
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Poison and Drug Trade Opportunity
+# Triggered: from smuggling network, for characters with medicine knowledge
+# AI: Full trade management
+murim_black_market.0008 = {
+    type = character_event
+    title = murim_black_market.0008.t
+    desc = murim_black_market.0008.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_smuggling_network_active
+        OR = {
+            learning >= 14
+            has_trait = murim_poison_master
+            has_trait = physician
+        }
+        NOT = { has_character_flag = poison_trade_decision_made }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            has_trait = murim_poison_master
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_tang_clan_member
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = murim_poison_flower_palace_member
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = poison_trade_decision_made
+            days = 730
+        }
+    }
+    
+    # Option A: Manufacture and sell poisons
+    option = {
+        name = murim_black_market.0008.a
+        add_gold = 400
+        add_character_modifier = {
+            modifier = murim_poison_trade_profits
+            years = 5
+        }
+        add_character_modifier = {
+            modifier = murim_feared_poison_dealer
+            years = 5
+        }
+        add_dread = 15
+        stress_impact = {
+            compassionate = major_stress_impact_gain
+            just = medium_stress_impact_gain
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = murim_poison_master
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option B: Sell medicinal herbs and healing pills
+    option = {
+        name = murim_black_market.0008.b
+        add_gold = 200
+        add_character_modifier = {
+            modifier = murim_medicine_trade_profits
+            years = 5
+        }
+        add_prestige = 50
+        add_piety = 25
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = physician
+            }
+        }
+    }
+    
+    # Option C: Create both - double the profit, double the risk
+    option = {
+        name = murim_black_market.0008.c
+        trigger = {
+            learning >= 16
+            OR = {
+                has_trait = murim_poison_master
+                has_trait = physician
+            }
+        }
+        add_gold = 600
+        add_character_modifier = {
+            modifier = murim_dual_trade_empire
+            years = 5
+        }
+        random_list = {
+            60 = {
+                desc = murim_black_market.0008.c.success
+                add_character_modifier = {
+                    modifier = murim_underworld_merchant_king
+                    years = 5
+                }
+            }
+            40 = {
+                desc = murim_black_market.0008.c.exposed
+                add_prestige = -300
+                every_vassal = {
+                    limit = { is_alive = yes }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_exposed_criminal
+                        opinion = -30
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                learning >= 20
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Informant Network: Crucial Intelligence
+# Triggered: from intelligence network modifier, yearly check
+# AI: Full intelligence usage
+murim_black_market.0009 = {
+    type = character_event
+    title = murim_black_market.0009.t
+    desc = murim_black_market.0009.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    right_portrait = {
+        character = scope:intelligence_target
+        animation = idle
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_character_modifier = murim_intelligence_network
+            has_character_modifier = murim_has_double_agent
+        }
+        any_known_character = {
+            is_alive = yes
+            NOT = { this = root }
+            OR = {
+                has_trait = murim_sect_leader
+                has_trait = murim_martial_artist
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            intrigue >= 16
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { is_allied_to = root }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_martial_artist
+                }
+            }
+            save_scope_as = intelligence_target
+        }
+        # Determine intelligence type
+        random_list = {
+            25 = { set_variable = { name = intel_type value = 1 } } # Military plans
+            25 = { set_variable = { name = intel_type value = 2 } } # Secret weakness
+            25 = { set_variable = { name = intel_type value = 3 } } # Hidden alliance
+            25 = { set_variable = { name = intel_type value = 4 } } # Treasure location
+        }
+    }
+    
+    # Option A: Use intelligence for blackmail
+    option = {
+        name = murim_black_market.0009.a
+        trigger = {
+            exists = scope:intelligence_target
+        }
+        add_hook = {
+            type = murim_blackmail_hook
+            target = scope:intelligence_target
+        }
+        reverse_add_opinion = {
+            target = scope:intelligence_target
+            modifier = murim_blackmailed
+            opinion = -40
+        }
+        add_dread = 10
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option B: Sell intelligence to highest bidder
+    option = {
+        name = murim_black_market.0009.b
+        add_gold = 250
+        add_intrigue_skill = 1
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+        }
+    }
+    
+    # Option C: Share with allies for trust
+    option = {
+        name = murim_black_market.0009.c
+        trigger = {
+            any_ally = {
+                is_alive = yes
+            }
+        }
+        every_ally = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_valuable_intelligence_shared
+                opinion = 20
+            }
+        }
+        add_prestige = 100
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = trusting
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 14
+            }
+        }
+    }
+    
+    # Option D: Keep for personal use
+    option = {
+        name = murim_black_market.0009.d
+        add_character_modifier = {
+            modifier = murim_secret_knowledge_advantage
+            years = 3
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Black Market Power Struggle
+# Triggered: when multiple characters control market territory
+# AI: Full faction warfare in the underworld
+murim_black_market.0010 = {
+    type = character_event
+    title = murim_black_market.0010.t
+    desc = murim_black_market.0010.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:market_rival
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_smuggling_network_active
+        any_known_character = {
+            is_alive = yes
+            NOT = { this = root }
+            has_character_modifier = murim_smuggling_network_active
+            NOT = { is_allied_to = root }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = ambitious
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                has_character_modifier = murim_smuggling_network_active
+                NOT = { is_allied_to = root }
+            }
+            save_scope_as = market_rival
+        }
+    }
+    
+    # Option A: Challenge rival to underworld duel for territory
+    option = {
+        name = murim_black_market.0010.a
+        trigger = {
+            exists = scope:market_rival
+        }
+        duel = {
+            skill = intrigue
+            target = scope:market_rival
+            50 = {
+                desc = murim_black_market.0010.a.victory
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                add_gold = 500
+                add_prestige = 200
+                add_character_modifier = {
+                    modifier = murim_underworld_king
+                    years = 10
+                }
+                scope:market_rival = {
+                    remove_character_modifier = murim_smuggling_network_active
+                    remove_character_modifier = murim_smuggling_income
+                    add_prestige = -200
+                }
+            }
+            50 = {
+                desc = murim_black_market.0010.a.defeat
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                add_gold = -200
+                add_prestige = -100
+                remove_character_modifier = murim_smuggling_network_active
+                remove_character_modifier = murim_smuggling_income
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Form a cartel alliance
+    option = {
+        name = murim_black_market.0010.b
+        trigger = {
+            exists = scope:market_rival
+            diplomacy >= 12
+        }
+        reverse_add_opinion = {
+            target = scope:market_rival
+            modifier = murim_cartel_alliance
+            opinion = 30
+        }
+        add_character_modifier = {
+            modifier = murim_cartel_profits
+            years = 5
+        }
+        scope:market_rival = {
+            add_character_modifier = {
+                modifier = murim_cartel_profits
+                years = 5
+            }
+        }
+        add_gold = 200
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = gregarious
+            }
+        }
+    }
+    
+    # Option C: Sabotage rival's operation
+    option = {
+        name = murim_black_market.0010.c
+        trigger = {
+            exists = scope:market_rival
+            intrigue >= 14
+        }
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                desc = murim_black_market.0010.c.success
+                scope:market_rival = {
+                    remove_character_modifier = murim_smuggling_network_active
+                    remove_character_modifier = murim_smuggling_income
+                    add_gold = -300
+                }
+                add_gold = 200
+                add_character_modifier = {
+                    modifier = murim_ruthless_operator
+                    years = 3
+                }
+            }
+            50 = {
+                desc = murim_black_market.0010.c.failure
+                reverse_add_opinion = {
+                    target = scope:market_rival
+                    modifier = murim_sabotage_discovered
+                    opinion = -60
+                }
+                add_prestige = -100
+                # Rival retaliates
+                scope:market_rival = {
+                    trigger_event = {
+                        id = murim_black_market.0002
+                        days = { 10 30 }
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+        }
+    }
+}
+
+# EVENT 0011 - Underground Fighting Pit
+# Triggered: characters in black market territory, prowess focused
+# AI: Full participation in underground fights
+murim_black_market.0011 = {
+    type = character_event
+    title = murim_black_market.0011.t
+    desc = murim_black_market.0011.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = rage
+    }
+    right_portrait = {
+        character = scope:pit_champion
+        animation = rage
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = knows_black_market
+        prowess >= 12
+        NOT = { has_character_flag = fought_in_pit_recently }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_wandering_cultivator
+            has_trait = murim_unorthodox_elder
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = wrathful
+        }
+        modifier = {
+            factor = 1.5
+            prowess >= 18
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = fought_in_pit_recently
+            days = 180
+        }
+        create_character = {
+            age = { 20 35 }
+            trait = murim_martial_artist
+            trait = brave
+            trait = strong
+            prowess = { 14 24 }
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = pit_champion
+        }
+    }
+    
+    # Option A: Enter the pit
+    option = {
+        name = murim_black_market.0011.a
+        duel = {
+            skill = prowess
+            target = scope:pit_champion
+            50 = {
+                desc = murim_black_market.0011.a.victory
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                add_gold = 300
+                add_prestige = 150
+                add_character_modifier = {
+                    modifier = murim_pit_champion
+                    years = 2
+                }
+                add_prowess_skill = 1
+            }
+            15 = {
+                desc = murim_black_market.0011.a.draw
+                min = 5
+                add_gold = 50
+                add_prestige = 50
+                add_stress = 10
+            }
+            50 = {
+                desc = murim_black_market.0011.a.defeat
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                add_gold = -50
+                increase_wounds_effect = { reason = fight }
+                add_prestige = -50
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option B: Bet on the fights
+    option = {
+        name = murim_black_market.0011.b
+        trigger = {
+            gold >= 100
+        }
+        random_list = {
+            45 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 14
+                }
+                desc = murim_black_market.0011.b.win
+                add_gold = 200
+            }
+            55 = {
+                desc = murim_black_market.0011.b.lose
+                add_gold = -100
+                add_stress = 10
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+            modifier = {
+                factor = 1.5
+                gold >= 300
+            }
+        }
+    }
+    
+    # Option C: Recruit the champion
+    option = {
+        name = murim_black_market.0011.c
+        trigger = {
+            diplomacy >= 12
+            gold >= 150
+        }
+        add_gold = -150
+        if = {
+            limit = { exists = scope:pit_champion }
+            add_courtier = scope:pit_champion
+            reverse_add_opinion = {
+                target = scope:pit_champion
+                modifier = murim_recruited_patron
+                opinion = 30
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+}
+
+# EVENT 0012 - Black Market Collapse / Crackdown
+# Triggered: global event when orthodox faction power peaks
+# AI: Full response for all market participants
+murim_black_market.0012 = {
+    type = character_event
+    title = murim_black_market.0012.t
+    desc = murim_black_market.0012.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = knows_black_market
+        has_global_variable = murim_orthodox_crackdown_active
+    }
+    
+    immediate = {
+        # The crackdown severity
+        random_list = {
+            30 = { set_variable = { name = crackdown_severity value = 1 } } # Minor
+            40 = { set_variable = { name = crackdown_severity value = 2 } } # Major
+            30 = { set_variable = { name = crackdown_severity value = 3 } } # Total
+        }
+    }
+    
+    # Option A: Go underground completely
+    option = {
+        name = murim_black_market.0012.a
+        add_gold = -100
+        add_character_modifier = {
+            modifier = murim_deep_underground
+            years = 3
+        }
+        remove_character_modifier = murim_smuggling_income
+        add_stress = 20
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 1.5
+                intrigue >= 16
+            }
+        }
+    }
+    
+    # Option B: Bribe the authorities
+    option = {
+        name = murim_black_market.0012.b
+        trigger = {
+            gold >= 500
+        }
+        add_gold = -500
+        # Keep operations running
+        add_character_modifier = {
+            modifier = murim_bribed_authorities
+            years = 2
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                gold >= 800
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = greedy
+            }
+        }
+    }
+    
+    # Option C: Turn yourself in for leniency
+    option = {
+        name = murim_black_market.0012.c
+        remove_character_flag = knows_black_market
+        remove_character_modifier = murim_black_market_access
+        remove_character_modifier = murim_smuggling_network_active
+        remove_character_modifier = murim_smuggling_income
+        remove_character_modifier = murim_intelligence_network
+        add_piety = 100
+        add_prestige = -200
+        add_character_modifier = {
+            modifier = murim_reformed_criminal
+            years = 5
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = honest
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option D: Flee to unorthodox territory
+    option = {
+        name = murim_black_market.0012.d
+        trigger = {
+            NOT = { has_trait = murim_orthodox_disciple }
+        }
+        add_character_modifier = {
+            modifier = murim_underworld_exile
+            years = 5
+        }
+        add_prestige = -100
+        add_character_flag = {
+            flag = fled_to_unorthodox
+            days = 1825
+        }
+        # Keep market connections
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = murim_unorthodox_elder
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = brave
+            }
+        }
+    }
+}
