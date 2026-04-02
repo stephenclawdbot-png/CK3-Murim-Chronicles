@@ -1,0 +1,746 @@
+########################################
+# MURIM FORBIDDEN TECHNIQUE SYSTEM EVENTS
+# Discovery, learning, corruption, purging,
+# broker interactions, and forbidden duels
+# AI characters fully participate
+########################################
+
+namespace = murim_forbidden_technique
+
+# ===========================
+# 0001-0099: DISCOVERY & LEARNING
+# ===========================
+
+# Forbidden Knowledge Discovery — entry point
+murim_forbidden_technique.0001 = {
+	type = character_event
+	title = murim_forbidden_technique.0001.t
+	desc = murim_forbidden_technique.0001.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_irrational }
+
+	trigger = {
+		murim_can_learn_forbidden_technique_trigger = yes
+	}
+
+	# Discover the Soul Devouring Palm
+	option = {
+		name = murim_forbidden_technique.0001.a
+		trigger = { NOT = { has_trait = murim_soul_devouring_palm } }
+		hidden_effect = {
+			trigger_event = { id = murim_forbidden_technique.0010 days = 14 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 prowess >= 18 }
+		}
+	}
+
+	# Discover the Blood Reversal Art
+	option = {
+		name = murim_forbidden_technique.0001.b
+		trigger = { NOT = { has_trait = murim_blood_reversal_art } }
+		hidden_effect = {
+			trigger_event = { id = murim_forbidden_technique.0020 days = 14 }
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 intrigue >= 15 }
+		}
+	}
+
+	# Discover the Void Breathing Method
+	option = {
+		name = murim_forbidden_technique.0001.c
+		trigger = { NOT = { has_trait = murim_void_breathing_method } }
+		hidden_effect = {
+			trigger_event = { id = murim_forbidden_technique.0030 days = 14 }
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 learning >= 14 }
+		}
+	}
+
+	# Discover the Heaven Defying Sutra
+	option = {
+		name = murim_forbidden_technique.0001.d
+		trigger = {
+			NOT = { has_trait = murim_heaven_defying_sutra }
+			var:murim_cultivation_rank >= 5
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_forbidden_technique.0040 days = 14 }
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = ambitious }
+		}
+	}
+
+	# Walk away — this path leads to darkness
+	option = {
+		name = murim_forbidden_technique.0001.e
+		add_piety = 50
+		add_stress = -10
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = just }
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+}
+
+# Soul Devouring Palm — learning sequence
+murim_forbidden_technique.0010 = {
+	type = character_event
+	title = murim_forbidden_technique.0010.t
+	desc = murim_forbidden_technique.0010.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_callous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_soul_devouring_palm }
+	}
+
+	# Commit to learning — drain your first victim's qi
+	option = {
+		name = murim_forbidden_technique.0010.a
+		hidden_effect = { murim_learn_soul_devouring_palm_effect = yes }
+		add_dread = 20
+		add_prestige = 100
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = sadistic }
+		}
+	}
+
+	# Partial study — learn the theory only
+	option = {
+		name = murim_forbidden_technique.0010.b
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_learning = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Destroy the scroll
+	option = {
+		name = murim_forbidden_technique.0010.c
+		add_piety = 100
+		add_prestige = 50
+		ai_chance = {
+			base = 20
+			modifier = { add = 25 has_trait = just }
+		}
+	}
+}
+
+# Blood Reversal Art — learning sequence
+murim_forbidden_technique.0020 = {
+	type = character_event
+	title = murim_forbidden_technique.0020.t
+	desc = murim_forbidden_technique.0020.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_irrational }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_blood_reversal_art }
+	}
+
+	# Learn the Blood Reversal Art
+	option = {
+		name = murim_forbidden_technique.0020.a
+		hidden_effect = { murim_learn_blood_reversal_art_effect = yes }
+		add_dread = 15
+		add_intrigue = 1
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 intrigue >= 15 }
+		}
+	}
+
+	# Study but don't practice
+	option = {
+		name = murim_forbidden_technique.0020.b
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		add_learning = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Reject it
+	option = {
+		name = murim_forbidden_technique.0020.c
+		add_piety = 75
+		ai_chance = { base = 20 }
+	}
+}
+
+# Void Breathing Method — learning sequence
+murim_forbidden_technique.0030 = {
+	type = character_event
+	title = murim_forbidden_technique.0030.t
+	desc = murim_forbidden_technique.0030.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_void_breathing_method }
+	}
+
+	# Absorb the ambient qi and learn
+	option = {
+		name = murim_forbidden_technique.0030.a
+		hidden_effect = { murim_learn_void_breathing_method_effect = yes }
+		add_learning = 1
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 learning >= 14 }
+		}
+	}
+
+	# Too dangerous — the void stares back
+	option = {
+		name = murim_forbidden_technique.0030.b
+		add_stress = 15
+		add_piety = 75
+		ai_chance = { base = 50 }
+	}
+}
+
+# Heaven Defying Sutra — learning sequence
+murim_forbidden_technique.0040 = {
+	type = character_event
+	title = murim_forbidden_technique.0040.t
+	desc = murim_forbidden_technique.0040.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_heaven_defying_sutra }
+		var:murim_cultivation_rank >= 5
+	}
+
+	# Defy heaven itself — learn the ultimate forbidden art
+	option = {
+		name = murim_forbidden_technique.0040.a
+		hidden_effect = { murim_learn_heaven_defying_sutra_effect = yes }
+		add_dread = 40
+		add_prestige = 300
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = ambitious }
+		}
+	}
+
+	# The price is too high
+	option = {
+		name = murim_forbidden_technique.0040.b
+		add_piety = 200
+		add_stress = -20
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+
+	# Seal it for future generations to decide
+	option = {
+		name = murim_forbidden_technique.0040.c
+		add_prestige = 100
+		add_learning = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+# Asura Body Technique discovery (AI-driven)
+murim_forbidden_technique.0050 = {
+	type = character_event
+	title = murim_forbidden_technique.0050.t
+	desc = murim_forbidden_technique.0050.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_asura_body_technique }
+		var:murim_cultivation_rank >= 4
+	}
+
+	option = {
+		name = murim_forbidden_technique.0050.a
+		hidden_effect = { murim_learn_asura_body_technique_effect = yes }
+		add_prowess = 3
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = murim_forbidden_technique.0050.b
+		add_piety = 100
+		ai_chance = { base = 50 }
+	}
+}
+
+# Soul Splitting Art discovery
+murim_forbidden_technique.0060 = {
+	type = character_event
+	title = murim_forbidden_technique.0060.t
+	desc = murim_forbidden_technique.0060.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_soul_splitting_art }
+		intrigue >= 14
+	}
+
+	option = {
+		name = murim_forbidden_technique.0060.a
+		hidden_effect = { murim_learn_soul_splitting_art_effect = yes }
+		add_intrigue = 2
+		ai_chance = { base = 45 }
+	}
+
+	option = {
+		name = murim_forbidden_technique.0060.b
+		add_piety = 75
+		ai_chance = { base = 55 }
+	}
+}
+
+# Death Qi Cultivation discovery
+murim_forbidden_technique.0070 = {
+	type = character_event
+	title = murim_forbidden_technique.0070.t
+	desc = murim_forbidden_technique.0070.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_death_qi_cultivation }
+		var:murim_cultivation_rank >= 4
+	}
+
+	option = {
+		name = murim_forbidden_technique.0070.a
+		hidden_effect = { murim_learn_death_qi_cultivation_effect = yes }
+		add_dread = 25
+		ai_chance = { base = 40 }
+	}
+
+	option = {
+		name = murim_forbidden_technique.0070.b
+		add_piety = 100
+		ai_chance = { base = 60 }
+	}
+}
+
+# Eternal Damnation Sutra — ultimate forbidden technique
+murim_forbidden_technique.0080 = {
+	type = character_event
+	title = murim_forbidden_technique.0080.t
+	desc = murim_forbidden_technique.0080.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_callous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_eternal_damnation_sutra }
+		var:murim_cultivation_rank >= 6
+		murim_has_any_forbidden_technique_trigger = yes
+	}
+
+	# Embrace eternal damnation — become something beyond mortal
+	option = {
+		name = murim_forbidden_technique.0080.a
+		hidden_effect = { murim_learn_eternal_damnation_sutra_effect = yes }
+		add_dread = 50
+		add_prestige = 500
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = sadistic }
+		}
+	}
+
+	# No. Even power has its price.
+	option = {
+		name = murim_forbidden_technique.0080.b
+		add_piety = 300
+		add_stress = -30
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = just }
+		}
+	}
+
+	# Destroy it forever
+	option = {
+		name = murim_forbidden_technique.0080.c
+		add_piety = 500
+		add_prestige = 200
+		ai_chance = { base = 20 }
+	}
+}
+
+# ===========================
+# 0100-0199: PURGING & SEALING
+# ===========================
+
+# Corruption Purging Ritual
+murim_forbidden_technique.0100 = {
+	type = character_event
+	title = murim_forbidden_technique.0100.t
+	desc = murim_forbidden_technique.0100.desc
+	theme = faith
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		murim_has_any_corruption_trigger = yes
+	}
+
+	# Full purge — excruciating but thorough
+	option = {
+		name = murim_forbidden_technique.0100.a
+		hidden_effect = { murim_purge_all_corruption_effect = yes }
+		add_piety = 200
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = murim_corruption_stage_3 }
+		}
+	}
+
+	# Partial purge — reduce one stage
+	option = {
+		name = murim_forbidden_technique.0100.b
+		hidden_effect = { murim_reduce_corruption_effect = yes }
+		add_stress = 25
+		add_health = -0.5
+		ai_chance = { base = 40 }
+	}
+
+	# Abandon the ritual — not ready
+	option = {
+		name = murim_forbidden_technique.0100.c
+		add_stress = 15
+		ai_chance = { base = 20 }
+	}
+}
+
+# Technique Sealing Event
+murim_forbidden_technique.0200 = {
+	type = character_event
+	title = murim_forbidden_technique.0200.t
+	desc = murim_forbidden_technique.0200.desc
+	theme = faith
+
+	trigger = {
+		murim_has_any_forbidden_technique_trigger = yes
+	}
+
+	# Seal the most dangerous technique
+	option = {
+		name = murim_forbidden_technique.0200.a
+		# Remove the last technique learned (simplified — removes first found)
+		if = {
+			limit = { has_trait = murim_eternal_damnation_sutra }
+			remove_trait = murim_eternal_damnation_sutra
+		}
+		else_if = {
+			limit = { has_trait = murim_heaven_defying_sutra }
+			remove_trait = murim_heaven_defying_sutra
+		}
+		else_if = {
+			limit = { has_trait = murim_death_qi_cultivation }
+			remove_trait = murim_death_qi_cultivation
+		}
+		else_if = {
+			limit = { has_trait = murim_soul_devouring_palm }
+			remove_trait = murim_soul_devouring_palm
+		}
+		else_if = {
+			limit = { has_trait = murim_blood_reversal_art }
+			remove_trait = murim_blood_reversal_art
+		}
+		else_if = {
+			limit = { has_trait = murim_asura_body_technique }
+			remove_trait = murim_asura_body_technique
+		}
+		else_if = {
+			limit = { has_trait = murim_soul_splitting_art }
+			remove_trait = murim_soul_splitting_art
+		}
+		else_if = {
+			limit = { has_trait = murim_void_breathing_method }
+			remove_trait = murim_void_breathing_method
+		}
+		hidden_effect = { murim_reduce_corruption_effect = yes }
+		add_piety = 150
+		add_prestige = -100
+		ai_chance = { base = 50 }
+	}
+
+	# Keep the power — accept the corruption
+	option = {
+		name = murim_forbidden_technique.0200.b
+		add_stress = 20
+		add_prowess = 1
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = ambitious }
+		}
+	}
+
+	# Seal ALL forbidden techniques
+	option = {
+		name = murim_forbidden_technique.0200.c
+		# Remove all forbidden technique traits
+		if = { limit = { has_trait = murim_soul_devouring_palm } remove_trait = murim_soul_devouring_palm }
+		if = { limit = { has_trait = murim_blood_reversal_art } remove_trait = murim_blood_reversal_art }
+		if = { limit = { has_trait = murim_void_breathing_method } remove_trait = murim_void_breathing_method }
+		if = { limit = { has_trait = murim_heaven_defying_sutra } remove_trait = murim_heaven_defying_sutra }
+		if = { limit = { has_trait = murim_asura_body_technique } remove_trait = murim_asura_body_technique }
+		if = { limit = { has_trait = murim_soul_splitting_art } remove_trait = murim_soul_splitting_art }
+		if = { limit = { has_trait = murim_death_qi_cultivation } remove_trait = murim_death_qi_cultivation }
+		if = { limit = { has_trait = murim_eternal_damnation_sutra } remove_trait = murim_eternal_damnation_sutra }
+		hidden_effect = { murim_purge_all_corruption_effect = yes }
+		add_piety = 500
+		add_prestige = -300
+		ai_chance = { base = 20 }
+	}
+}
+
+# ===========================
+# 0300-0399: KNOWLEDGE BROKER
+# ===========================
+
+# Visit the Forbidden Knowledge Broker
+murim_forbidden_technique.0300 = {
+	type = character_event
+	title = murim_forbidden_technique.0300.t
+	desc = murim_forbidden_technique.0300.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_cynical }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		intrigue >= 10
+	}
+
+	# Buy a forbidden technique scroll
+	option = {
+		name = murim_forbidden_technique.0300.a
+		add_gold = -100
+		random_list = {
+			25 = { trigger_event = { id = murim_forbidden_technique.0050 days = 7 } }
+			25 = { trigger_event = { id = murim_forbidden_technique.0060 days = 7 } }
+			25 = { trigger_event = { id = murim_forbidden_technique.0070 days = 7 } }
+			25 = { change_variable = { name = murim_cultivation_xp add = 50 } }
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# Sell information about a rival
+	option = {
+		name = murim_forbidden_technique.0300.b
+		add_gold = 75
+		add_intrigue = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Trade a technique for intelligence
+	option = {
+		name = murim_forbidden_technique.0300.c
+		trigger = { murim_has_any_forbidden_technique_trigger = yes }
+		add_intrigue = 2
+		add_gold = 50
+		ai_chance = { base = 20 }
+	}
+
+	# Leave — this place reeks of treachery
+	option = {
+		name = murim_forbidden_technique.0300.d
+		add_stress = -5
+		ai_chance = { base = 10 }
+	}
+}
+
+# ===========================
+# 0400-0499: CORRUPTION PROGRESSION
+# ===========================
+
+# Corruption flare-up (yearly pulse)
+murim_forbidden_technique.0400 = {
+	type = character_event
+	title = murim_forbidden_technique.0400.t
+	desc = murim_forbidden_technique.0400.desc
+	theme = skull
+
+	trigger = { murim_has_any_corruption_trigger = yes }
+
+	# Endure the pain
+	option = {
+		name = murim_forbidden_technique.0400.a
+		add_stress = 15
+		add_health = -0.25
+		ai_chance = { base = 60 }
+	}
+
+	# Channel it into power
+	option = {
+		name = murim_forbidden_technique.0400.b
+		add_prowess = 1
+		add_stress = 25
+		ai_chance = { base = 40 }
+	}
+}
+
+# Severe corruption episode
+murim_forbidden_technique.0410 = {
+	type = character_event
+	title = murim_forbidden_technique.0410.t
+	desc = murim_forbidden_technique.0410.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_irrational }
+
+	trigger = { murim_has_any_corruption_trigger = yes }
+
+	# Fight for control of your mind
+	option = {
+		name = murim_forbidden_technique.0410.a
+		random_list = {
+			50 = {
+				add_stress = 30
+				add_prowess = 2
+			}
+			30 = {
+				add_stress = 50
+				add_health = -0.5
+			}
+			20 = {
+				# Corruption advances
+				hidden_effect = { murim_advance_corruption_effect = yes }
+				add_dread = 15
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Surrender to the darkness momentarily
+	option = {
+		name = murim_forbidden_technique.0410.b
+		hidden_effect = { murim_advance_corruption_effect = yes }
+		add_prowess = 3
+		add_dread = 20
+		ai_chance = { base = 40 }
+	}
+}
+
+# ===========================
+# 0500: ORTHODOX HUNTER EVENT
+# ===========================
+
+# Orthodox masters hunt the corrupted
+murim_forbidden_technique.0500 = {
+	type = character_event
+	title = murim_forbidden_technique.0500.t
+	desc = murim_forbidden_technique.0500.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		murim_has_any_forbidden_technique_trigger = yes
+	}
+
+	# Stand and fight the hunters
+	option = {
+		name = murim_forbidden_technique.0500.a
+		add_prowess = 2
+		add_dread = 15
+		add_stress = 20
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 prowess >= 20 }
+		}
+	}
+
+	# Flee and hide
+	option = {
+		name = murim_forbidden_technique.0500.b
+		add_intrigue = 1
+		add_prestige = -50
+		ai_chance = { base = 30 }
+	}
+
+	# Surrender and accept judgment
+	option = {
+		name = murim_forbidden_technique.0500.c
+		add_piety = 100
+		add_stress = 30
+		trigger_event = { id = murim_tribunal_system.0020 days = 30 }
+		ai_chance = { base = 20 }
+	}
+}
+
+# ===========================
+# FORBIDDEN TECHNIQUE DUELS
+# ===========================
+
+# Two forbidden technique users clash
+murim_forbidden_technique.0600 = {
+	type = character_event
+	title = murim_forbidden_technique.0600.t
+	desc = murim_forbidden_technique.0600.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_callous }
+
+	trigger = {
+		murim_has_any_forbidden_technique_trigger = yes
+		any_ruler = {
+			murim_has_any_forbidden_technique_trigger = yes
+			NOT = { this = root }
+		}
+	}
+
+	# Unleash everything — no holding back
+	option = {
+		name = murim_forbidden_technique.0600.a
+		random_list = {
+			50 = {
+				modifier = { add = prowess factor = 0.3 }
+				add_prestige = 400
+				add_prowess = 3
+				change_variable = { name = murim_cultivation_xp add = 80 }
+			}
+			30 = {
+				add_stress = 40
+				add_health = -1
+				add_prestige = 100
+			}
+			20 = {
+				add_health = -2
+				add_stress = 60
+				hidden_effect = { murim_advance_corruption_effect = yes }
+			}
+		}
+		ai_chance = { base = 55 }
+	}
+
+	# Hold back the forbidden arts — fight with orthodox techniques only
+	option = {
+		name = murim_forbidden_technique.0600.b
+		add_prestige = 150
+		add_piety = 75
+		add_prowess = 1
+		ai_chance = { base = 25 }
+	}
+
+	# Withdraw — this fight is too dangerous
+	option = {
+		name = murim_forbidden_technique.0600.c
+		add_prestige = -75
+		add_stress = 15
+		ai_chance = { base = 20 }
+	}
+}

@@ -1,0 +1,449 @@
+########################################
+# MURIM IMMORTAL ASCENSION SYSTEM EVENTS
+# Half-Immortal and True Immortal ascension,
+# Heaven's Tribulation, immortal rivalries,
+# legacy technique creation, spectacle events
+########################################
+
+namespace = murim_ascension
+
+# ===========================
+# 0001-0009: HALF-IMMORTAL ASCENSION
+# ===========================
+
+# Half-Immortal Ascension Begins
+murim_ascension.0001 = {
+	type = character_event
+	title = murim_ascension.0001.t
+	desc = murim_ascension.0001.desc
+	theme = faith
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		murim_can_attempt_ascension_trigger = yes
+	}
+
+	immediate = {
+		add_character_modifier = { modifier = murim_ascension_spectacle years = 1 }
+		# Notify the martial world
+		every_ruler = {
+			limit = { has_variable = murim_martial_artist }
+			trigger_event = { id = murim_ascension.0005 days = 3 }
+		}
+	}
+
+	# Attempt the breakthrough — face Heaven's judgment
+	option = {
+		name = murim_ascension.0001.a
+		hidden_effect = { murim_attempt_half_immortal_ascension_effect = yes }
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 prowess >= 28 }
+		}
+	}
+
+	# Postpone — prepare further
+	option = {
+		name = murim_ascension.0001.b
+		add_stress = 15
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		ai_chance = { base = 25 }
+	}
+
+	# Abandon the attempt entirely
+	option = {
+		name = murim_ascension.0001.c
+		add_stress = 25
+		add_prestige = -100
+		ai_chance = { base = 15 }
+	}
+}
+
+# World reacts to ascension attempt
+murim_ascension.0005 = {
+	type = character_event
+	title = murim_ascension.0005.t
+	desc = murim_ascension.0005.desc
+	theme = faith
+
+	trigger = {
+		has_variable = murim_martial_artist
+		any_ruler = {
+			has_character_modifier = murim_ascension_spectacle
+			NOT = { this = root }
+		}
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = { has_character_modifier = murim_ascension_spectacle }
+			save_scope_as = ascender
+		}
+	}
+
+	# Support their ascension
+	option = {
+		name = murim_ascension.0005.a
+		add_piety = 50
+		trigger = { exists = scope:ascender }
+		hidden_effect = {
+			scope:ascender = {
+				add_opinion = { target = root modifier = grateful_opinion opinion = 15 }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	# This threatens the balance — oppose it
+	option = {
+		name = murim_ascension.0005.b
+		add_prestige = 50
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Observe and learn
+	option = {
+		name = murim_ascension.0005.c
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		ai_chance = { base = 30 }
+	}
+}
+
+# ===========================
+# 0010-0019: TRUE IMMORTAL ASCENSION
+# ===========================
+
+# True Immortal Ascension Trial
+murim_ascension.0010 = {
+	type = character_event
+	title = murim_ascension.0010.t
+	desc = murim_ascension.0010.desc
+	theme = faith
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_trait = murim_half_immortal
+		NOT = { has_trait = murim_true_immortal }
+	}
+
+	# Three Trials of Immortality — Strength, Wisdom, Will
+	# Trial 1: Strength
+	option = {
+		name = murim_ascension.0010.a
+		trigger = { prowess >= 30 }
+		hidden_effect = {
+			trigger_event = { id = murim_ascension.0011 days = 7 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 prowess >= 35 }
+		}
+	}
+
+	# Trial 1: Wisdom
+	option = {
+		name = murim_ascension.0010.b
+		trigger = { learning >= 20 }
+		hidden_effect = {
+			trigger_event = { id = murim_ascension.0012 days = 7 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 learning >= 25 }
+		}
+	}
+
+	# Not ready — retreat
+	option = {
+		name = murim_ascension.0010.c
+		add_stress = 20
+		ai_chance = { base = 20 }
+	}
+}
+
+# Trial of Strength
+murim_ascension.0011 = {
+	type = character_event
+	title = murim_ascension.0011.t
+	desc = murim_ascension.0011.desc
+	theme = martial
+
+	trigger = { has_trait = murim_half_immortal }
+
+	# Shatter the heavenly barrier with raw power
+	option = {
+		name = murim_ascension.0011.a
+		hidden_effect = { murim_attempt_true_immortal_ascension_effect = yes }
+		ai_chance = { base = 70 }
+	}
+
+	# Pull back at the last moment
+	option = {
+		name = murim_ascension.0011.b
+		add_stress = 30
+		add_prestige = -50
+		ai_chance = { base = 30 }
+	}
+}
+
+# Trial of Wisdom
+murim_ascension.0012 = {
+	type = character_event
+	title = murim_ascension.0012.t
+	desc = murim_ascension.0012.desc
+	theme = learning
+
+	trigger = { has_trait = murim_half_immortal }
+
+	# Unravel the Dao with pure understanding
+	option = {
+		name = murim_ascension.0012.a
+		hidden_effect = { murim_attempt_true_immortal_ascension_effect = yes }
+		ai_chance = { base = 70 }
+	}
+
+	# The answer eludes you — retreat
+	option = {
+		name = murim_ascension.0012.b
+		add_stress = 25
+		add_learning = 1
+		ai_chance = { base = 30 }
+	}
+}
+
+# ===========================
+# 0020-0029: HEAVEN'S TRIBULATION
+# ===========================
+
+# Heaven's Tribulation strikes
+murim_ascension.0020 = {
+	type = character_event
+	title = murim_ascension.0020.t
+	desc = murim_ascension.0020.desc
+	theme = faith
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 5
+	}
+
+	# Face the lightning — nine bolts of heavenly wrath
+	option = {
+		name = murim_ascension.0020.a
+		random_list = {
+			40 = {
+				modifier = { add = prowess factor = 0.3 }
+				# Survive the tribulation
+				change_variable = { name = murim_cultivation_xp add = 200 }
+				add_prowess = 5
+				add_prestige = 500
+				add_health = 1
+			}
+			35 = {
+				# Barely survive
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				add_prowess = 2
+				add_stress = 40
+				add_health = -1
+			}
+			25 = {
+				# Devastating failure
+				add_health = -3
+				add_stress = 60
+				add_prowess = -3
+				add_prestige = -200
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+		}
+	}
+
+	# Use a protective formation to reduce the damage
+	option = {
+		name = murim_ascension.0020.b
+		random_list = {
+			60 = {
+				change_variable = { name = murim_cultivation_xp add = 120 }
+				add_prowess = 3
+			}
+			40 = {
+				add_stress = 30
+				add_health = -0.5
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+
+	# Flee — forfeit the breakthrough
+	option = {
+		name = murim_ascension.0020.c
+		add_prestige = -100
+		add_stress = 25
+		ai_chance = { base = 15 }
+	}
+}
+
+# ===========================
+# 0030-0039: LEGACY & IMMORTAL POWERS
+# ===========================
+
+# Create a Legacy Technique
+murim_ascension.0030 = {
+	type = character_event
+	title = murim_ascension.0030.t
+	desc = murim_ascension.0030.desc
+	theme = learning
+	left_portrait = { character = root animation = personality_content }
+
+	trigger = {
+		murim_is_immortal_trigger = yes
+		learning >= 15
+	}
+
+	# Create an offensive legacy technique
+	option = {
+		name = murim_ascension.0030.a
+		add_prestige = 500
+		add_dynasty_prestige = 300
+		change_variable = { name = murim_cultivation_xp add = 100 }
+		ai_chance = { base = 40 }
+	}
+
+	# Create a defensive/healing legacy technique
+	option = {
+		name = murim_ascension.0030.b
+		add_piety = 300
+		add_dynasty_prestige = 300
+		add_prestige = 200
+		ai_chance = { base = 35 }
+	}
+
+	# Create a cultivation method for future generations
+	option = {
+		name = murim_ascension.0030.c
+		add_dynasty_prestige = 500
+		add_learning = 2
+		ai_chance = { base = 25 }
+	}
+}
+
+# Immortal Rivalry — another immortal challenges you
+murim_ascension.0040 = {
+	type = character_event
+	title = murim_ascension.0040.t
+	desc = murim_ascension.0040.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		murim_is_immortal_trigger = yes
+		any_ruler = {
+			murim_is_immortal_trigger = yes
+			NOT = { this = root }
+		}
+	}
+
+	# Accept the challenge — the heavens aren't big enough for two
+	option = {
+		name = murim_ascension.0040.a
+		random_list = {
+			50 = {
+				modifier = { add = prowess factor = 0.2 }
+				add_prestige = 1000
+				add_prowess = 5
+			}
+			50 = {
+				add_health = -2
+				add_stress = 50
+				add_prestige = -300
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+
+	# Propose coexistence
+	option = {
+		name = murim_ascension.0040.b
+		add_diplomacy = 2
+		add_prestige = 200
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Retreat to a different realm — avoid conflict
+	option = {
+		name = murim_ascension.0040.c
+		add_stress = -20
+		add_learning = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+# Immortal mentors the next generation
+murim_ascension.0050 = {
+	type = character_event
+	title = murim_ascension.0050.t
+	desc = murim_ascension.0050.desc
+	theme = learning
+
+	trigger = {
+		murim_is_immortal_trigger = yes
+	}
+
+	# Take on a personal disciple
+	option = {
+		name = murim_ascension.0050.a
+		add_prestige = 300
+		add_piety = 100
+		set_character_flag = murim_is_mentor
+		ai_chance = { base = 45 }
+	}
+
+	# Scatter teachings across the world
+	option = {
+		name = murim_ascension.0050.b
+		add_dynasty_prestige = 200
+		add_prestige = 200
+		ai_chance = { base = 35 }
+	}
+
+	# Guard your knowledge — immortality's secrets are not for mortals
+	option = {
+		name = murim_ascension.0050.c
+		add_prestige = 100
+		add_stress = -15
+		ai_chance = { base = 20 }
+	}
+}
+
+# Lifespan extension event — immortals live beyond normal years
+murim_ascension.0060 = {
+	type = character_event
+	title = murim_ascension.0060.t
+	desc = murim_ascension.0060.desc
+	theme = faith
+
+	trigger = {
+		murim_is_immortal_trigger = yes
+		age >= 60
+	}
+
+	# Your body defies the passage of time
+	option = {
+		name = murim_ascension.0060.a
+		add_health = 2
+		add_stress = -20
+		ai_chance = { base = 100 }
+	}
+}
