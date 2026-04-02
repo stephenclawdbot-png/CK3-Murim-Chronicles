@@ -1,0 +1,868 @@
+namespace = murim_shadow_politics_expansion5
+
+# Shadow Politics Expansion 5 — Puppet Emperor Endgame, Imperial Manipulation, Final Coup
+# 10 events: Heavenly Demon's ultimate political machinations, emperor control, resistance
+
+murim_shadow_politics_expansion5.0001 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0001.t
+	desc = murim_shadow_politics_expansion5.0001.desc
+	theme = martial_arts
+	
+	# The Emperor's New Advisor — the Heavenly Demon has installed his agent as the
+	# Imperial Grand Advisor. Imperial decrees now subtly favor unorthodox sects.
+	# Taxes on Orthodox territories increase. Military posts go to Demon allies.
+	
+	trigger = {
+		is_ruler = yes
+		any_held_title = { tier >= county }
+		NOT = { has_character_flag = noticed_imperial_corruption }
+		OR = {
+			has_trait = shaolin_disciple
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = paranoid }
+		modifier = { add = 3 intrigue >= 12 }
+	}
+	
+	immediate = {
+		set_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0001.a
+		# Investigate the new Grand Advisor
+		add_intrigue = 4
+		add_character_modifier = {
+			modifier = investigating_imperial_court
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_shadow_politics_expansion5.0002
+				days = { 30 90 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0001.b
+		# Petition the Emperor directly — bypass the advisor
+		add_diplomacy = 3
+		random_list = {
+			30 = {
+				# Audience granted — but the advisor is present
+				add_character_modifier = {
+					modifier = imperial_audience
+					years = 2
+				}
+				hidden_effect = {
+					trigger_event = {
+						id = murim_shadow_politics_expansion5.0003
+						days = { 10 30 }
+					}
+				}
+			}
+			70 = {
+				# Petition denied — you're now on a watchlist
+				add_character_modifier = {
+					modifier = imperial_watchlist
+					years = 5
+				}
+				add_stress = 20
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0001.c
+		# Ignore politics — focus on martial strength
+		add_prowess = 3
+		add_martial = 2
+		add_stress = -10
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_shadow_politics_expansion5.0002 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0002.t
+	desc = murim_shadow_politics_expansion5.0002.desc
+	theme = martial_arts
+	
+	# The Web Revealed — your investigation uncovers a vast conspiracy. The Grand
+	# Advisor is a Heavenly Demon elder. The Emperor's bodyguards are Demon disciples.
+	# The Emperor himself may already be under mind-control through a forbidden technique.
+	
+	trigger = {
+		has_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0002.a
+		# Alert the Orthodox Alliance — this requires a unified response
+		add_diplomacy = 4
+		add_prestige = 400
+		hidden_effect = {
+			every_known_character = {
+				limit = {
+					OR = {
+						has_trait = shaolin_disciple
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+					}
+				}
+				trigger_event = {
+					id = murim_shadow_politics_expansion5.0004
+					days = { 10 20 }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0002.b
+		# Infiltrate the imperial palace yourself — one-person rescue mission
+		add_intrigue = 5
+		add_prowess = 3
+		hidden_effect = {
+			trigger_event = {
+				id = murim_shadow_politics_expansion5.0005
+				days = { 15 30 }
+			}
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = brave } }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0002.c
+		# Publish the evidence widely — let all of Jianghu know
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = truth_publisher
+			years = 5
+		}
+		hidden_effect = {
+			# Demon Sect now targets you specifically
+			set_character_flag = demon_primary_target
+			trigger_event = {
+				id = murim_shadow_politics_expansion5.0006
+				days = { 30 60 }
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_shadow_politics_expansion5.0003 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0003.t
+	desc = murim_shadow_politics_expansion5.0003.desc
+	theme = martial_arts
+	
+	# Imperial Audience — you stand before the Emperor. His eyes are glazed, his
+	# movements puppet-like. The Grand Advisor stands behind the throne, smiling.
+	# You recognize the signs: Soul Binding Technique — a forbidden Demon art.
+	
+	trigger = {
+		has_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0003.a
+		# Attack the Grand Advisor mid-audience — break the binding
+		add_prowess = 4
+		random_list = {
+			30 = {
+				# Strike succeeds — advisor wounded, binding weakens
+				add_prestige = 600
+				add_character_modifier = {
+					modifier = imperial_liberator
+					years = 10
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = soul_binding_weakened
+						value = yes
+					}
+				}
+			}
+			40 = {
+				# Palace guards intervene — you fight your way out
+				add_health = -2
+				add_character_modifier = {
+					modifier = imperial_fugitive
+					years = 5
+				}
+			}
+			30 = {
+				# The advisor is too strong — you're captured
+				add_character_modifier = {
+					modifier = imprisoned_in_palace
+					years = 3
+				}
+				hidden_effect = {
+					trigger_event = {
+						id = murim_shadow_politics_expansion5.0007
+						days = { 30 60 }
+					}
+				}
+			}
+		}
+		ai_chance = { base = 40 modifier = { add = 20 has_trait = brave } }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0003.b
+		# Play along — pretend you notice nothing, gather more intel
+		add_intrigue = 5
+		add_character_modifier = {
+			modifier = deep_cover_in_palace
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = murim_shadow_politics_expansion5.0008
+				days = { 60 120 }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0003.c
+		# Use a qi disruption technique to quietly weaken the binding
+		add_learning = 4
+		random_list = {
+			40 = {
+				# Binding disrupted — Emperor has a moment of clarity
+				add_prestige = 500
+				hidden_effect = {
+					set_global_variable = {
+						name = emperor_moment_of_clarity
+						value = yes
+					}
+				}
+			}
+			60 = {
+				# The advisor detects your attempt
+				add_character_modifier = {
+					modifier = detected_by_demon_advisor
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_shadow_politics_expansion5.0004 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0004.t
+	desc = murim_shadow_politics_expansion5.0004.desc
+	theme = martial_arts
+	
+	# Orthodox Emergency Council on Imperial Crisis — all Orthodox leaders gather
+	# in secret. The revelation that the Emperor is controlled by the Heavenly Demon
+	# changes everything. They must act, but attacking the Emperor means treason.
+	
+	trigger = {
+		OR = {
+			has_trait = shaolin_disciple
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+		}
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0004.a
+		# Plan a covert rescue — free the Emperor without violence
+		add_intrigue = 4
+		add_diplomacy = 3
+		add_character_modifier = {
+			modifier = rescue_planner
+			years = 5
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = emperor_rescue_planned
+				value = yes
+			}
+			trigger_event = {
+				id = murim_shadow_politics_expansion5.0009
+				days = { 60 120 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0004.b
+		# Full assault on the Imperial Palace — damn the consequences
+		add_martial = 5
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = palace_siege_commander
+			years = 5
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = orthodox_attacks_palace
+				value = yes
+			}
+		}
+		ai_chance = { base = 30 modifier = { add = 20 has_trait = wrathful } }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0004.c
+		# Ignore the Emperor — focus on defeating the Heavenly Demon directly
+		add_martial = 4
+		add_character_modifier = {
+			modifier = direct_assault_advocate
+			years = 5
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_shadow_politics_expansion5.0005 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0005.t
+	desc = murim_shadow_politics_expansion5.0005.desc
+	theme = martial_arts
+	
+	# Solo Palace Infiltration — you scale the palace walls at midnight. Demon
+	# guards patrol every corridor. The Emperor's chambers are in the deepest
+	# wing, behind seven locked gates.
+	
+	trigger = {
+		has_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0005.a
+		# Stealth approach — avoid all guards
+		random_list = {
+			30 = {
+				# Perfect infiltration — reach the Emperor
+				add_intrigue = 6
+				add_prestige = 800
+				add_character_modifier = {
+					modifier = phantom_infiltrator
+					years = -1
+				}
+				hidden_effect = {
+					trigger_event = {
+						id = murim_shadow_politics_expansion5.0010
+						days = { 1 3 }
+					}
+				}
+			}
+			40 = {
+				# Detected halfway — fight your way deeper
+				add_prowess = 3
+				add_health = -1
+				add_character_modifier = {
+					modifier = palace_combat_scars
+					years = 5
+				}
+			}
+			30 = {
+				# Trapped — it was a setup all along
+				add_character_modifier = {
+					modifier = trapped_in_palace
+					years = 3
+				}
+				add_health = -2
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0005.b
+		# Fight through — make noise, draw guards away from the Emperor
+		add_prowess = 5
+		add_martial = 3
+		random_list = {
+			40 = {
+				# Create enough chaos to reach the Emperor
+				add_prestige = 500
+				hidden_effect = {
+					trigger_event = {
+						id = murim_shadow_politics_expansion5.0010
+						days = { 1 3 }
+					}
+				}
+			}
+			60 = {
+				# Overwhelmed by numbers — forced to retreat
+				add_health = -2
+				add_character_modifier = {
+					modifier = forced_retreat
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0005.c
+		# Use disguise — dress as a palace eunuch
+		add_intrigue = 5
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = disguised_infiltration
+					years = 3
+				}
+				hidden_effect = {
+					trigger_event = {
+						id = murim_shadow_politics_expansion5.0010
+						days = { 3 10 }
+					}
+				}
+			}
+			50 = {
+				# Disguise seen through
+				add_character_modifier = {
+					modifier = exposed_spy
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+murim_shadow_politics_expansion5.0006 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0006.t
+	desc = murim_shadow_politics_expansion5.0006.desc
+	theme = martial_arts
+	
+	# Demon Retaliation — after publishing evidence of the puppet emperor, the
+	# Heavenly Demon Sect launches a targeted assassination campaign against you
+	# and your allies. Three assassination attempts in one night.
+	
+	trigger = {
+		has_character_flag = demon_primary_target
+	}
+	
+	immediate = {
+		remove_character_flag = demon_primary_target
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0006.a
+		# Fight off all three attempts
+		add_prowess = 5
+		random_list = {
+			40 = {
+				add_trait = triple_assassination_survivor
+				add_prestige = 600
+				add_character_modifier = {
+					modifier = unkillable_reputation
+					years = -1
+				}
+			}
+			35 = {
+				# Survive but badly wounded
+				add_health = -3
+				add_character_modifier = {
+					modifier = assassination_wounds
+					years = 5
+				}
+			}
+			25 = {
+				# Third attempt succeeds
+				death = { death_reason = death_assassination }
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0006.b
+		# Use body doubles and misdirection
+		add_intrigue = 6
+		add_character_modifier = {
+			modifier = master_of_misdirection
+			years = -1
+		}
+		ai_chance = { base = 40 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0006.c
+		# Go into hiding — disappear completely
+		add_intrigue = 4
+		add_character_modifier = {
+			modifier = underground_existence
+			years = 5
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_shadow_politics_expansion5.0007 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0007.t
+	desc = murim_shadow_politics_expansion5.0007.desc
+	theme = martial_arts
+	
+	# Imprisoned in the Palace — the Demon Advisor keeps you alive as a trophy.
+	# He visits your cell nightly to gloat. But in his arrogance, he reveals
+	# the weakness of the Soul Binding technique: it requires monthly renewal.
+	
+	trigger = {
+		has_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0007.a
+		# Wait for the renewal date — strike then
+		add_intrigue = 5
+		add_prowess = 3
+		random_list = {
+			50 = {
+				# Escape during renewal — free the Emperor
+				add_trait = palace_liberator
+				add_prestige = 1000
+				hidden_effect = {
+					set_global_variable = {
+						name = emperor_freed
+						value = yes
+					}
+				}
+			}
+			50 = {
+				# Escape but can't reach the Emperor
+				add_character_modifier = {
+					modifier = narrow_escape
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0007.b
+		# Break out by force — now
+		add_prowess = 5
+		random_list = {
+			40 = {
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = prison_break_legend
+					years = -1
+				}
+			}
+			60 = {
+				add_health = -2
+				add_character_modifier = {
+					modifier = failed_escape_punishment
+					years = 3
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0007.c
+		# Pretend to submit — become a double agent from within
+		add_intrigue = 7
+		add_character_modifier = {
+			modifier = prison_double_agent
+			years = -1
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_shadow_politics_expansion5.0008 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0008.t
+	desc = murim_shadow_politics_expansion5.0008.desc
+	theme = martial_arts
+	
+	# Palace Intelligence Gathering — while pretending loyalty, you map the entire
+	# Demon network within the imperial government. Ministers, generals, eunuchs —
+	# the infiltration is total. But you also discover a faction of loyal imperials.
+	
+	trigger = {
+		has_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0008.a
+		# Contact the loyal imperial faction — build an internal resistance
+		add_diplomacy = 5
+		add_intrigue = 4
+		add_character_modifier = {
+			modifier = resistance_organizer
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = imperial_resistance_formed
+				value = yes
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0008.b
+		# Smuggle the intelligence map to the Orthodox Alliance
+		add_intrigue = 5
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = intelligence_smuggler
+			years = 5
+		}
+		ai_chance = { base = 30 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0008.c
+		# Use the knowledge for personal leverage — play both sides
+		add_intrigue = 6
+		add_gold = 500
+		add_character_modifier = {
+			modifier = playing_both_sides
+			years = -1
+		}
+		stress_impact = {
+			honest = major_stress_impact_gain
+			just = major_stress_impact_gain
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+murim_shadow_politics_expansion5.0009 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0009.t
+	desc = murim_shadow_politics_expansion5.0009.desc
+	theme = martial_arts
+	
+	# Operation Liberation — the covert rescue plan is ready. Orthodox masters
+	# will create diversions at three city gates while a small team infiltrates
+	# the palace through the ancient drainage tunnels.
+	
+	trigger = {
+		has_global_variable = emperor_rescue_planned
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0009.a
+		# Execute the plan — go time
+		add_martial = 4
+		add_intrigue = 4
+		random_list = {
+			35 = {
+				# Perfect execution — Emperor rescued
+				add_trait = emperor_rescuer
+				add_prestige = 2000
+				hidden_effect = {
+					set_global_variable = {
+						name = emperor_freed
+						value = yes
+					}
+					remove_global_variable = emperor_rescue_planned
+				}
+			}
+			35 = {
+				# Partial success — Emperor freed but Grand Advisor escapes
+				add_prestige = 1000
+				add_character_modifier = {
+					modifier = incomplete_victory
+					years = 5
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = emperor_freed
+						value = yes
+					}
+					set_global_variable = {
+						name = demon_advisor_at_large
+						value = yes
+					}
+				}
+			}
+			30 = {
+				# Trap — the advisor knew about the plan
+				add_health = -2
+				add_character_modifier = {
+					modifier = walked_into_trap
+					years = 3
+				}
+				hidden_effect = {
+					random_courtier = {
+						limit = {
+							OR = {
+								has_trait = shaolin_disciple
+								has_trait = mount_hua_disciple
+							}
+						}
+						random = {
+							chance = 50
+							death = { death_reason = death_ambush }
+						}
+					}
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0009.b
+		# Delay — gather more intel first
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = cautious_planner
+			years = 3
+		}
+		ai_chance = { base = 25 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0009.c
+		# Abandon rescue — focus on killing the Heavenly Demon instead
+		add_martial = 4
+		add_character_modifier = {
+			modifier = decapitation_strategy
+			years = 5
+		}
+		ai_chance = { base = 15 }
+	}
+}
+
+murim_shadow_politics_expansion5.0010 = {
+	type = character_event
+	title = murim_shadow_politics_expansion5.0010.t
+	desc = murim_shadow_politics_expansion5.0010.desc
+	theme = martial_arts
+	
+	# Face to Face with the Emperor — you stand before the puppet ruler. His eyes
+	# flicker with trapped consciousness. He mouths words silently: "Kill... me...
+	# or... free... me..." The Soul Binding technique is visible as dark qi threads
+	# wrapped around his meridians.
+	
+	trigger = {
+		has_character_flag = noticed_imperial_corruption
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0010.a
+		# Use qi surgery to cut the Soul Binding threads
+		add_learning = 5
+		add_prowess = 3
+		random_list = {
+			40 = {
+				# Successfully freed — Emperor regains consciousness
+				add_trait = soul_binding_breaker
+				add_prestige = 3000
+				add_character_modifier = {
+					modifier = imperial_savior
+					years = -1
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = emperor_freed
+						value = yes
+					}
+					set_global_variable = {
+						name = imperial_gratitude
+						value = yes
+					}
+				}
+			}
+			30 = {
+				# Partial success — binding weakened but not broken
+				add_character_modifier = {
+					modifier = binding_weakened
+					years = 5
+				}
+			}
+			30 = {
+				# The binding backlash injures you both
+				add_health = -2
+				add_stress = 40
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0010.b
+		# Grant his wish — a merciful death
+		add_piety = 500
+		add_stress = 60
+		add_character_modifier = {
+			modifier = mercy_killer_of_emperor
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = emperor_dead
+				value = yes
+			}
+			# Succession crisis
+			set_global_variable = {
+				name = imperial_succession_crisis
+				value = yes
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+	
+	option = {
+		name = murim_shadow_politics_expansion5.0010.c
+		# Escape with the Emperor — bring him to Orthodox healers
+		add_martial = 3
+		add_prowess = 4
+		random_list = {
+			50 = {
+				# Escape successful
+				add_prestige = 1500
+				add_character_modifier = {
+					modifier = emperor_extraction
+					years = -1
+				}
+				hidden_effect = {
+					set_global_variable = {
+						name = emperor_in_orthodox_care
+						value = yes
+					}
+				}
+			}
+			50 = {
+				# Pursuit — running battle through the capital
+				add_health = -1
+				add_prowess = 3
+				add_character_modifier = {
+					modifier = running_battle_scars
+					years = 5
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+}
