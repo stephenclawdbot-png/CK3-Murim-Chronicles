@@ -1,0 +1,350 @@
+namespace = murim_test_5k
+
+# ============================================
+# TEST 3 - 5KB Diagnostic - 4 Event Blocks
+# ============================================
+
+# Event 1: Qi Deviation Warning
+murim_test_5k.0001 = {
+	type = character_event
+	title = murim_test_5k.0001.t
+	desc = murim_test_5k.0001.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_trait = murim_cultivator
+		age >= 16
+		NOT = { has_character_flag = qi_deviation_cooldown }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 3
+			has_trait = impatient
+		}
+		modifier = {
+			add = 2
+			stress >= 50
+		}
+	}
+	
+	immediate = {
+		save_scope_as = cultivator
+		hidden_effect = {
+			add_character_flag = {
+				flag = qi_deviation_cooldown
+				years = 3
+			}
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0001.a
+		trigger = {
+			has_trait = brave
+		}
+		add_character_modifier = {
+			modifier = qi_deviation_survived
+			years = 10
+		}
+		random_list = {
+			70 = {
+				add_prestige = 200
+				add_character_flag = {
+					flag = overcame_qi_deviation
+					years = 20
+				}
+			}
+			30 = {
+				add_trait = wounded_1
+				add_stress = 30
+			}
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 1.5
+				has_trait = ambitious
+			}
+			modifier = {
+				factor = 0.3
+				has_trait = craven
+			}
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0001.b
+		add_piety = 100
+		add_stress = -20
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 2
+				has_trait = calm
+			}
+		}
+	}
+}
+
+# Event 2: Hidden Technique Discovery
+murim_test_5k.0002 = {
+	type = character_event
+	title = murim_test_5k.0002.t
+	desc = murim_test_5k.0002.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_trait = murim_cultivator
+		learning >= 12
+		NOT = { has_character_flag = found_hidden_technique }
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			add = 5
+			has_trait = scholar
+		}
+		modifier = {
+			add = 3
+			any_held_title = {
+				tier = county
+			}
+		}
+	}
+	
+	immediate = {
+		save_scope_as = discoverer
+		hidden_effect = {
+			add_character_flag = {
+				flag = found_hidden_technique
+				years = 15
+			}
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0002.a
+		add_character_modifier = {
+			modifier = hidden_technique_mastery
+			years = 20
+		}
+		add_prestige = 300
+		stress_impact = {
+			ambitious = medium_stress_impact_loss
+			content = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				factor = 2
+				has_trait = ambitious
+			}
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0002.b
+		trigger = {
+			any_vassal = {
+				has_trait = murim_cultivator
+				opinion = {
+					target = root
+					value >= 30
+				}
+			}
+		}
+		random_vassal = {
+			limit = {
+				has_trait = murim_cultivator
+				opinion = {
+					target = root
+					value >= 30
+				}
+			}
+			add_character_modifier = {
+				modifier = received_hidden_technique
+				years = 20
+			}
+			add_opinion = {
+				target = root
+				modifier = grateful_opinion
+				opinion = 30
+			}
+		}
+		add_piety = 200
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 3
+				has_trait = generous
+			}
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0002.c
+		add_gold = 200
+		add_prestige = -50
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 3
+				has_trait = greedy
+			}
+		}
+	}
+}
+
+# Event 3: Sect Challenge Received
+murim_test_5k.0003 = {
+	type = character_event
+	title = murim_test_5k.0003.t
+	desc = murim_test_5k.0003.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_trait = murim_cultivator
+		prowess >= 14
+		any_neighboring_and_across_water_top_liege_realm_owner = {
+			has_trait = murim_cultivator
+			prowess >= 12
+			NOT = { has_truce = root }
+		}
+	}
+	
+	immediate = {
+		save_scope_as = challenged
+		random_neighboring_and_across_water_top_liege_realm_owner = {
+			limit = {
+				has_trait = murim_cultivator
+				prowess >= 12
+				NOT = { has_truce = root }
+			}
+			save_scope_as = challenger
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0003.a
+		duel = {
+			target = scope:challenger
+			skill = prowess
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = 3.5
+				}
+				desc = murim_test_5k.0003.a.tt.success
+				send_interface_toast = {
+					title = murim_test_5k.0003.a.tt.success
+					add_prestige = 500
+					add_character_modifier = {
+						modifier = sect_champion
+						years = 10
+					}
+				}
+			}
+			50 = {
+				compare_modifier = {
+					value = scope:duel_value
+					multiplier = -3.5
+				}
+				desc = murim_test_5k.0003.a.tt.failure
+				send_interface_toast = {
+					title = murim_test_5k.0003.a.tt.failure
+					add_prestige = -200
+					add_trait = wounded_1
+				}
+			}
+		}
+		ai_chance = {
+			base = 80
+			modifier = {
+				factor = 2
+				has_trait = wrathful
+			}
+			modifier = {
+				factor = 0.2
+				has_trait = craven
+			}
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0003.b
+		add_prestige = -100
+		scope:challenger = {
+			add_opinion = {
+				target = root
+				modifier = insult_opinion
+				opinion = -20
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 3
+				has_trait = craven
+			}
+		}
+	}
+}
+
+# Event 4: Meditation Breakthrough
+murim_test_5k.0004 = {
+	type = character_event
+	title = murim_test_5k.0004.t
+	desc = murim_test_5k.0004.desc
+	theme = martial_arts
+	
+	trigger = {
+		is_alive = yes
+		has_trait = murim_cultivator
+		piety >= 500
+		learning >= 10
+	}
+	
+	immediate = {
+		save_scope_as = meditator
+	}
+	
+	option = {
+		name = murim_test_5k.0004.a
+		add_piety = -300
+		add_character_modifier = {
+			modifier = enlightened_meridians
+			years = 15
+		}
+		add_learning_skill = 2
+		add_prowess_skill = 1
+		stress_impact = {
+			calm = major_stress_impact_loss
+			wrathful = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	
+	option = {
+		name = murim_test_5k.0004.b
+		add_piety = 200
+		add_character_modifier = {
+			modifier = deep_meditation_focus
+			years = 5
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 2
+				has_trait = patient
+			}
+		}
+	}
+}
