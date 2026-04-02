@@ -1,0 +1,433 @@
+namespace = murim_calamity_ai_expansion2
+
+# CALAMITY AI EXPANSION 2 - AUTONOMOUS BETRAYAL AND SURVIVAL CHAIN
+# 10 events: AI-driven betrayals, desperate alliances, last stands, rebuild politics
+
+murim_calamity_ai_expansion2.0001 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0001.t
+	desc = murim_calamity_ai_exp2.0001.desc
+	theme = intrigue
+	left_portrait = { character = root animation = scheme }
+
+	trigger = {
+		has_global_variable = murim_calamity_active
+		has_trait = murim_martial_artist
+		is_ruler = yes
+		any_ally = { has_trait = murim_martial_artist is_ruler = yes }
+		NOT = { has_character_flag = calamity_betrayal_considered }
+	}
+
+	weight_multiplier = {
+		base = 30
+		modifier = { add = 30 has_trait = deceitful }
+		modifier = { add = 20 intrigue >= 15 }
+		modifier = { add = -20 has_trait = honest }
+	}
+
+	immediate = {
+		set_character_flag = calamity_betrayal_considered
+		random_ally = {
+			limit = { has_trait = murim_martial_artist is_ruler = yes }
+			save_scope_as = betrayal_target
+		}
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0001.a
+		trigger = { exists = scope:betrayal_target }
+		add_character_modifier = { modifier = murim_calamity_betrayer years = 20 }
+		scope:betrayal_target = {
+			add_opinion = { modifier = murim_betrayed_during_calamity target = root opinion = -100 }
+			add_character_modifier = { modifier = murim_betrayal_victim years = 10 }
+			random = { chance = 40 add_trait = wounded_2 }
+		}
+		add_gold = 500
+		add_prestige = -500
+		trigger_event = { id = murim_calamity_ai_expansion2.0002 days = { 30 60 } }
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0001.b
+		add_character_modifier = { modifier = murim_calamity_loyal_ally years = 20 }
+		if = { limit = { exists = scope:betrayal_target }
+			scope:betrayal_target = { add_opinion = { modifier = murim_stood_by_in_crisis target = root opinion = 30 } }
+		}
+		add_piety = 300
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0001.c
+		add_character_modifier = { modifier = murim_calamity_lone_wolf years = 15 }
+		add_prowess = 3
+		add_martial = 2
+	}
+}
+
+murim_calamity_ai_expansion2.0002 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0002.t
+	desc = murim_calamity_ai_exp2.0002.desc
+	theme = war
+	left_portrait = { character = root animation = anger }
+
+	trigger = { has_character_modifier = murim_calamity_betrayer has_global_variable = murim_calamity_active }
+
+	immediate = {
+		random_living_character = {
+			limit = { has_character_modifier = murim_betrayal_victim is_alive = yes }
+			save_scope_as = revenge_seeker
+		}
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0002.a
+		trigger = { exists = scope:revenge_seeker }
+		duel = {
+			skill = prowess
+			target = scope:revenge_seeker
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_calamity_ai_exp2.0002.a.win
+				root = { add_prestige = 1000 add_character_modifier = { modifier = murim_calamity_warlord years = 20 } }
+				scope:revenge_seeker = { death = { death_reason = death_duel killer = root } }
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_calamity_ai_exp2.0002.a.lose
+				root = { death = { death_reason = death_duel killer = scope:revenge_seeker } }
+			}
+		}
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0002.b
+		add_gold = -300
+		add_character_modifier = { modifier = murim_bought_forgiveness years = 10 }
+		if = { limit = { exists = scope:revenge_seeker }
+			scope:revenge_seeker = { add_opinion = { modifier = murim_grudging_ceasefire target = root opinion = 15 } }
+		}
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0002.c
+		add_character_modifier = { modifier = murim_fled_revenge years = 10 }
+		add_prestige = -500
+		add_martial = -2
+	}
+}
+
+murim_calamity_ai_expansion2.0003 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0003.t
+	desc = murim_calamity_ai_exp2.0003.desc
+	theme = war
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = {
+		has_global_variable = murim_calamity_active
+		has_trait = murim_martial_artist
+		prowess >= 20
+		NOT = { has_character_flag = calamity_last_stand_made }
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = { add = 30 has_trait = brave }
+	}
+
+	immediate = {
+		set_character_flag = calamity_last_stand_made
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist is_alive = yes NOT = { this = root } }
+			add_to_temporary_list = last_stand_witnesses
+		}
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0003.a
+		add_character_modifier = { modifier = murim_last_stand_hero years = 50 }
+		add_prowess = 10
+		add_prestige = 3000
+		random = {
+			chance = 40
+			add_trait = wounded_3
+		}
+		random = {
+			chance = 15
+			death = { death_reason = death_battle }
+		}
+		every_in_list = {
+			list = last_stand_witnesses
+			add_opinion = { modifier = murim_witnessed_heroic_stand target = root opinion = 40 }
+		}
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0003.b
+		add_character_modifier = { modifier = murim_tactical_retreat years = 10 }
+		add_martial = 3
+		add_prestige = -200
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0003.c
+		add_character_modifier = { modifier = murim_guerrilla_warfare years = 15 }
+		add_intrigue = 5
+		add_prowess = 3
+		trigger_event = { id = murim_calamity_ai_expansion2.0004 days = { 30 90 } }
+	}
+}
+
+murim_calamity_ai_expansion2.0004 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0004.t
+	desc = murim_calamity_ai_exp2.0004.desc
+	theme = intrigue
+	left_portrait = { character = root animation = scheme }
+
+	trigger = { has_character_modifier = murim_guerrilla_warfare has_global_variable = murim_calamity_active }
+
+	option = {
+		name = murim_calamity_ai_exp2.0004.a
+		add_character_modifier = { modifier = murim_guerrilla_success years = 15 }
+		add_prestige = 1000
+		add_gold = 300
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0004.b
+		add_character_modifier = { modifier = murim_guerrilla_exposed years = 5 }
+		random = { chance = 30 add_trait = wounded_2 }
+		add_prestige = -300
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0004.c
+		add_character_modifier = { modifier = murim_guerrilla_alliance years = 20 }
+		add_diplomacy = 3
+		every_living_character = {
+			limit = { has_character_modifier = murim_guerrilla_warfare NOT = { this = root } }
+			add_opinion = { modifier = murim_guerrilla_brotherhood target = root opinion = 30 }
+		}
+	}
+}
+
+murim_calamity_ai_expansion2.0005 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0005.t
+	desc = murim_calamity_ai_exp2.0005.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = personality_honorable }
+
+	trigger = {
+		has_global_variable = murim_calamity_active
+		has_trait = murim_martial_artist
+		diplomacy >= 15
+		NOT = { has_character_flag = calamity_desperate_alliance }
+	}
+
+	immediate = {
+		set_character_flag = calamity_desperate_alliance
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist is_ruler = yes has_relation_rival = root }
+			save_scope_as = bitter_rival
+		}
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0005.a
+		trigger = { exists = scope:bitter_rival }
+		scope:bitter_rival = {
+			add_opinion = { modifier = murim_desperate_alliance target = root opinion = 30 }
+			remove_relation_rival = root
+			add_character_modifier = { modifier = murim_unlikely_ally years = 15 }
+		}
+		add_character_modifier = { modifier = murim_forged_impossible_alliance years = 15 }
+		add_diplomacy = 3
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0005.b
+		add_character_modifier = { modifier = murim_solo_survival years = 10 }
+		add_prowess = 5
+		add_martial = 2
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0005.c
+		add_character_modifier = { modifier = murim_survivor_network years = 20 }
+		add_intrigue = 3
+		add_gold = 200
+	}
+}
+
+murim_calamity_ai_expansion2.0006 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0006.t
+	desc = murim_calamity_ai_exp2.0006.desc
+	theme = death
+	left_portrait = { character = root animation = grief }
+
+	trigger = {
+		has_global_variable = murim_calamity_active
+		has_trait = murim_martial_artist
+		any_relation = { type = friend is_alive = no }
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0006.a
+		add_character_modifier = { modifier = murim_vengeance_oath years = 20 }
+		add_prowess = 8
+		add_stress = 30
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0006.b
+		add_piety = 500
+		add_character_modifier = { modifier = murim_mourning_in_calamity years = 10 }
+		add_learning = 3
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0006.c
+		add_character_modifier = { modifier = murim_cold_survivor years = 15 }
+		add_intrigue = 3
+		remove_trait = compassionate
+		add_trait = callous
+	}
+}
+
+murim_calamity_ai_expansion2.0007 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0007.t
+	desc = murim_calamity_ai_exp2.0007.desc
+	theme = stewardship
+	left_portrait = { character = root animation = thinking }
+
+	trigger = {
+		has_global_variable = murim_calamity_aftermath
+		has_trait = murim_martial_artist
+		has_trait = murim_calamity_survivor
+		NOT = { has_character_flag = rebuild_politics_started }
+	}
+
+	immediate = {
+		set_character_flag = rebuild_politics_started
+		every_living_character = {
+			limit = { has_trait = murim_calamity_survivor NOT = { this = root } }
+			add_to_temporary_list = fellow_survivors
+		}
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0007.a
+		add_character_modifier = { modifier = murim_rebuild_council_leader years = 20 }
+		add_prestige = 1000
+		every_in_list = {
+			list = fellow_survivors
+			add_opinion = { modifier = murim_rebuild_council_member target = root opinion = 15 }
+		}
+		trigger_event = { id = murim_calamity_ai_expansion2.0008 days = { 60 120 } }
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0007.b
+		add_character_modifier = { modifier = murim_rebuild_warlord years = 20 }
+		add_martial = 5
+		add_tyranny = 15
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0007.c
+		add_character_modifier = { modifier = murim_rebuild_hermit years = 20 }
+		add_learning = 5
+		add_piety = 500
+	}
+}
+
+murim_calamity_ai_expansion2.0008 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0008.t
+	desc = murim_calamity_ai_exp2.0008.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = { has_character_modifier = murim_rebuild_council_leader }
+
+	option = {
+		name = murim_calamity_ai_exp2.0008.a
+		add_character_modifier = { modifier = murim_new_murim_alliance years = 30 }
+		add_prestige = 2000
+		set_global_variable = { name = murim_new_alliance_formed value = yes }
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0008.b
+		add_character_modifier = { modifier = murim_rebuild_competition years = 15 }
+		add_martial = 3
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0008.c
+		add_character_modifier = { modifier = murim_rebuild_isolationism years = 20 }
+		add_gold = 300
+		add_stewardship = 3
+	}
+}
+
+murim_calamity_ai_expansion2.0009 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0009.t
+	desc = murim_calamity_ai_exp2.0009.desc
+	theme = learning
+	left_portrait = { character = root animation = ecstasy }
+
+	trigger = {
+		has_global_variable = murim_calamity_aftermath
+		has_trait = murim_calamity_survivor
+		learning >= 15
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0009.a
+		add_character_modifier = { modifier = murim_calamity_historian years = 50 }
+		add_learning = 5
+		add_prestige = 500
+		set_global_variable = { name = murim_calamity_recorded value = yes }
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0009.b
+		add_character_modifier = { modifier = murim_calamity_mythmaker years = 30 }
+		add_piety = 1000
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0009.c
+		add_character_modifier = { modifier = murim_calamity_forgotten years = 20 }
+		add_stress = -30
+		add_health = 1
+	}
+}
+
+murim_calamity_ai_expansion2.0010 = {
+	type = character_event
+	title = murim_calamity_ai_exp2.0010.t
+	desc = murim_calamity_ai_exp2.0010.desc
+	theme = faith
+	left_portrait = { character = root animation = pray }
+
+	trigger = {
+		has_global_variable = murim_calamity_aftermath
+		has_trait = murim_calamity_survivor
+		age >= 70
+	}
+
+	option = {
+		name = murim_calamity_ai_exp2.0010.a
+		add_piety = 3000
+		add_character_modifier = { modifier = murim_sage_of_the_calamity years = 100 }
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist }
+			add_opinion = { modifier = murim_respects_sage target = root opinion = 30 }
+		}
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0010.b
+		add_prestige = 2000
+		add_character_modifier = { modifier = murim_calamity_era_founder years = 50 }
+	}
+	option = {
+		name = murim_calamity_ai_exp2.0010.c
+		add_character_modifier = { modifier = murim_passed_torch years = 20 }
+		random_child = {
+			limit = { has_trait = murim_martial_artist }
+			add_prestige = 2000
+			add_prowess = 5
+			add_character_modifier = { modifier = murim_inheritor_of_calamity_wisdom years = 50 }
+		}
+	}
+}
