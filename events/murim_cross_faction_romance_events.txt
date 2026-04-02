@@ -1,0 +1,1965 @@
+########################################
+# MURIM CROSS-FACTION ROMANCE EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Forbidden love between
+# orthodox/unorthodox, rival clan romances,
+# secret marriages, Romeo-Juliet clan feuds,
+# love triangles, betrayal through love
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_romance
+
+# EVENT 0001 - Chance Encounter: Love at First Sight
+# Triggered: on_action yearly pulse, any martial artist age 16-40
+# AI: Full romantic pursuit with weighted personality
+murim_romance.0001 = {
+    type = character_event
+    title = murim_romance.0001.t
+    desc = murim_romance.0001.desc
+    theme = seduction
+    
+    left_portrait = {
+        character = root
+        animation = flirtation
+    }
+    right_portrait = {
+        character = scope:romantic_interest
+        animation = personality_compassionate
+    }
+    
+    trigger = {
+        is_alive = yes
+        age >= 16
+        age <= 45
+        is_married = no
+        NOT = { has_character_flag = forbidden_romance_active }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_sect_leader
+            has_trait = murim_wandering_cultivator
+        }
+        any_known_character = {
+            is_alive = yes
+            age >= 16
+            age <= 45
+            NOT = { this = root }
+            is_married = no
+            # Must be from opposing faction
+            OR = {
+                AND = {
+                    root = { has_trait = murim_orthodox_disciple }
+                    has_trait = murim_unorthodox_elder
+                }
+                AND = {
+                    root = { has_trait = murim_unorthodox_elder }
+                    has_trait = murim_orthodox_disciple
+                }
+                AND = {
+                    root = { has_trait = murim_shaolin_elder }
+                    OR = {
+                        has_trait = murim_phantom_blade_elder
+                        has_trait = murim_poison_flower_elder
+                    }
+                }
+                AND = {
+                    root = { has_trait = murim_heavens_sword_elder }
+                    has_trait = murim_namgung_elder
+                }
+                AND = {
+                    root = { has_trait = murim_tang_clan_elder }
+                    has_trait = murim_iron_fist_elder
+                }
+                # Any two different clans for rival romance
+                NOT = {
+                    any_relation = {
+                        type = friend
+                        this = prev
+                    }
+                }
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = lustful
+        }
+        modifier = {
+            factor = 1.5
+            has_trait = compassionate
+        }
+        modifier = {
+            factor = 0.3
+            has_trait = chaste
+        }
+        modifier = {
+            factor = 0.5
+            age >= 35
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                age >= 16
+                age <= 45
+                NOT = { this = root }
+                is_married = no
+                NOT = { is_allied_to = root }
+            }
+            save_scope_as = romantic_interest
+        }
+    }
+    
+    # Option A: Pursue the forbidden romance
+    option = {
+        name = murim_romance.0001.a
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        add_character_flag = {
+            flag = forbidden_romance_active
+            days = 3650
+        }
+        set_relation_potential_lover = scope:romantic_interest
+        add_character_modifier = {
+            modifier = murim_forbidden_love_bloom
+            years = 3
+        }
+        reverse_add_opinion = {
+            target = scope:romantic_interest
+            modifier = murim_romantic_attraction
+            opinion = 30
+        }
+        # Chain to secret meetings
+        trigger_event = {
+            id = murim_romance.0002
+            days = { 30 90 }
+        }
+        stress_impact = {
+            shy = medium_stress_impact_gain
+            chaste = major_stress_impact_gain
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = lustful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = chaste
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = cynical
+            }
+        }
+    }
+    
+    # Option B: Admire from afar but do not pursue
+    option = {
+        name = murim_romance.0001.b
+        add_stress = 15
+        add_character_modifier = {
+            modifier = murim_unrequited_longing
+            years = 2
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = shy
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+    
+    # Option C: Reject feelings - duty over love
+    option = {
+        name = murim_romance.0001.c
+        add_stress = 25
+        add_prestige = 50
+        add_piety = 50
+        add_character_modifier = {
+            modifier = murim_iron_heart_discipline
+            years = 3
+        }
+        stress_impact = {
+            compassionate = medium_stress_impact_gain
+            lustful = major_stress_impact_gain
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 3.0
+                has_trait = chaste
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = zealous
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = murim_orthodox_disciple
+            }
+        }
+    }
+}
+
+# EVENT 0002 - Secret Meeting Under Moonlight
+# Triggered: delayed from 0001 romance pursuit
+# AI: Full romantic escalation
+murim_romance.0002 = {
+    type = character_event
+    title = murim_romance.0002.t
+    desc = murim_romance.0002.desc
+    theme = seduction
+    
+    left_portrait = {
+        character = root
+        animation = flirtation
+    }
+    right_portrait = {
+        character = scope:romantic_interest
+        animation = flirtation
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = forbidden_romance_active
+    }
+    
+    immediate = {
+        random_relation = {
+            type = potential_lover
+            save_scope_as = romantic_interest
+        }
+    }
+    
+    # Option A: Confess feelings openly
+    option = {
+        name = murim_romance.0002.a
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 14
+                }
+                desc = murim_romance.0002.a.reciprocated
+                set_relation_lover = scope:romantic_interest
+                add_character_modifier = {
+                    modifier = murim_star_crossed_lovers
+                    years = 10
+                }
+                add_stress = -30
+                trigger_event = {
+                    id = murim_romance.0003
+                    days = { 60 180 }
+                }
+            }
+            40 = {
+                desc = murim_romance.0002.a.rejected
+                add_stress = 40
+                add_prestige = -50
+                remove_character_flag = forbidden_romance_active
+                remove_relation_potential_lover = scope:romantic_interest
+                add_character_modifier = {
+                    modifier = murim_heartbreak
+                    years = 2
+                }
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option B: Exchange secret tokens of affection
+    option = {
+        name = murim_romance.0002.b
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        add_gold = -25
+        reverse_add_opinion = {
+            target = scope:romantic_interest
+            modifier = murim_secret_tokens
+            opinion = 15
+        }
+        add_character_modifier = {
+            modifier = murim_secret_romance_deepening
+            years = 2
+        }
+        trigger_event = {
+            id = murim_romance.0002
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = shy
+            }
+        }
+    }
+    
+    # Option C: End things before they go too far
+    option = {
+        name = murim_romance.0002.c
+        remove_character_flag = forbidden_romance_active
+        if = {
+            limit = { exists = scope:romantic_interest }
+            remove_relation_potential_lover = scope:romantic_interest
+        }
+        add_stress = 20
+        add_prestige = 25
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = chaste
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0003 - Romance Discovered by Clan Elders
+# Triggered: delayed from 0002 successful confession
+# AI: Full clan confrontation system
+murim_romance.0003 = {
+    type = character_event
+    title = murim_romance.0003.t
+    desc = murim_romance.0003.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    right_portrait = {
+        character = scope:angry_elder
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        any_relation = {
+            type = lover
+            is_alive = yes
+        }
+    }
+    
+    immediate = {
+        random_relation = {
+            type = lover
+            save_scope_as = romantic_interest
+        }
+        # Find disapproving elder from root's faction
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_righteous_elder
+                    has_trait = murim_shaolin_elder
+                    has_trait = murim_wudang_elder
+                }
+                NOT = { this = root }
+                NOT = { this = scope:romantic_interest }
+            }
+            save_scope_as = angry_elder
+        }
+    }
+    
+    # Option A: Defy the elders - choose love
+    option = {
+        name = murim_romance.0003.a
+        trigger = {
+            exists = scope:angry_elder
+        }
+        add_prestige = -200
+        add_piety = -100
+        if = {
+            limit = { exists = scope:angry_elder }
+            reverse_add_opinion = {
+                target = scope:angry_elder
+                modifier = murim_defied_clan_elder
+                opinion = -50
+            }
+        }
+        # May be expelled from sect
+        random_list = {
+            40 = {
+                desc = murim_romance.0003.a.expelled
+                add_character_modifier = {
+                    modifier = murim_expelled_from_sect
+                    years = 10
+                }
+                add_trait = murim_wandering_cultivator
+                remove_trait = murim_orthodox_disciple
+            }
+            60 = {
+                desc = murim_romance.0003.a.tolerated
+                add_character_modifier = {
+                    modifier = murim_clan_disapproval
+                    years = 5
+                }
+            }
+        }
+        trigger_event = {
+            id = murim_romance.0004
+            days = { 30 120 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = lustful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option B: Agree to end the romance publicly
+    option = {
+        name = murim_romance.0003.b
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        add_stress = 40
+        add_prestige = 100
+        add_piety = 50
+        # Public breakup but secret continuation possible
+        random_list = {
+            50 = {
+                desc = murim_romance.0003.b.truly_ended
+                remove_relation_lover = scope:romantic_interest
+                remove_character_flag = forbidden_romance_active
+                add_character_modifier = {
+                    modifier = murim_heartbreak
+                    years = 3
+                }
+            }
+            50 = {
+                desc = murim_romance.0003.b.secret_continues
+                add_character_flag = {
+                    flag = murim_secret_affair
+                    days = 3650
+                }
+                add_character_modifier = {
+                    modifier = murim_double_life_strain
+                    years = 5
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+        }
+    }
+    
+    # Option C: Challenge the elder's authority
+    option = {
+        name = murim_romance.0003.c
+        trigger = {
+            exists = scope:angry_elder
+            prowess >= 14
+        }
+        duel = {
+            skill = prowess
+            target = scope:angry_elder
+            50 = {
+                desc = murim_romance.0003.c.victory
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                add_prestige = 300
+                add_character_modifier = {
+                    modifier = murim_fought_for_love
+                    years = 5
+                }
+                scope:angry_elder = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_grudging_respect
+                        opinion = -10
+                    }
+                }
+            }
+            50 = {
+                desc = murim_romance.0003.c.defeat
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                increase_wounds_effect = { reason = duel }
+                add_prestige = -100
+                # Forced separation
+                if = {
+                    limit = { exists = scope:romantic_interest }
+                    remove_relation_lover = scope:romantic_interest
+                }
+                remove_character_flag = forbidden_romance_active
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                prowess >= 20
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Elope Together: Running Away
+# Triggered: from 0003 defiance option
+# AI: Full elopement system
+murim_romance.0004 = {
+    type = character_event
+    title = murim_romance.0004.t
+    desc = murim_romance.0004.desc
+    theme = seduction
+    
+    left_portrait = {
+        character = root
+        animation = happiness
+    }
+    right_portrait = {
+        character = scope:romantic_interest
+        animation = happiness
+    }
+    
+    trigger = {
+        is_alive = yes
+        any_relation = {
+            type = lover
+            is_alive = yes
+        }
+    }
+    
+    immediate = {
+        random_relation = {
+            type = lover
+            save_scope_as = romantic_interest
+        }
+    }
+    
+    # Option A: Elope to the frontier
+    option = {
+        name = murim_romance.0004.a
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        marry = scope:romantic_interest
+        add_character_modifier = {
+            modifier = murim_eloped_lovers
+            years = 10
+        }
+        add_gold = -100
+        add_prestige = -300
+        # Both clans become hostile
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_righteous_elder
+                }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_dishonored_clan
+                opinion = -30
+            }
+        }
+        # Start new life
+        add_trait = murim_wandering_cultivator
+        add_character_modifier = {
+            modifier = murim_frontier_hermit_life
+            years = 5
+        }
+        trigger_event = {
+            id = murim_romance.0005
+            days = { 180 365 }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = lustful
+            }
+            modifier = {
+                factor = 0.2
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Secret marriage within the sect
+    option = {
+        name = murim_romance.0004.b
+        trigger = {
+            exists = scope:romantic_interest
+            intrigue >= 12
+        }
+        marry = scope:romantic_interest
+        add_character_flag = {
+            flag = murim_secret_marriage
+            days = 3650
+        }
+        add_character_modifier = {
+            modifier = murim_secretly_married
+            years = 10
+        }
+        add_stress = 15
+        trigger_event = {
+            id = murim_romance.0006
+            days = { 180 730 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                intrigue >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+    
+    # Option C: Part ways - the world is too cruel
+    option = {
+        name = murim_romance.0004.c
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        remove_relation_lover = scope:romantic_interest
+        remove_character_flag = forbidden_romance_active
+        add_stress = 50
+        add_character_modifier = {
+            modifier = murim_devastating_heartbreak
+            years = 5
+        }
+        # Channel grief into cultivation
+        add_prowess_skill = 2
+        add_character_modifier = {
+            modifier = murim_grief_empowered_cultivation
+            years = 5
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = cynical
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Frontier Life: Building a New Home
+# Triggered: delayed from elopement
+# AI: Full frontier living system
+murim_romance.0005 = {
+    type = character_event
+    title = murim_romance.0005.t
+    desc = murim_romance.0005.desc
+    theme = stewardship
+    
+    left_portrait = {
+        character = root
+        animation = happiness
+    }
+    right_portrait = {
+        character = scope:spouse
+        animation = happiness
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_frontier_hermit_life
+        is_married = yes
+    }
+    
+    immediate = {
+        if = {
+            limit = { exists = spouse }
+            spouse = { save_scope_as = spouse }
+        }
+    }
+    
+    # Option A: Establish a hidden training ground
+    option = {
+        name = murim_romance.0005.a
+        add_gold = -50
+        add_character_modifier = {
+            modifier = murim_hidden_training_paradise
+            years = 10
+        }
+        add_prowess_skill = 2
+        add_martial_skill = 1
+        # Attract other wandering cultivators
+        random_list = {
+            40 = {
+                create_character = {
+                    age = { 18 30 }
+                    trait = murim_wandering_cultivator
+                    trait = brave
+                    culture = root.culture
+                    faith = root.faith
+                }
+                add_prestige = 100
+            }
+            60 = {
+                add_prestige = 50
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 1.5
+                martial >= 14
+            }
+        }
+    }
+    
+    # Option B: Live peacefully as medicine practitioners
+    option = {
+        name = murim_romance.0005.b
+        add_character_modifier = {
+            modifier = murim_peaceful_medicine_couple
+            years = 10
+        }
+        add_learning_skill = 2
+        add_piety = 100
+        add_stress = -30
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+    
+    # Option C: Plot to reunite the clans through your union
+    option = {
+        name = murim_romance.0005.c
+        trigger = {
+            diplomacy >= 14
+        }
+        add_character_modifier = {
+            modifier = murim_peace_through_love
+            years = 5
+        }
+        add_diplomacy_skill = 2
+        add_prestige = 200
+        trigger_event = {
+            id = murim_romance.0008
+            days = { 365 730 }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                diplomacy >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Secret Marriage Discovered
+# Triggered: delayed from secret marriage
+# AI: Full scandal resolution
+murim_romance.0006 = {
+    type = character_event
+    title = murim_romance.0006.t
+    desc = murim_romance.0006.desc
+    theme = intrigue
+    
+    left_portrait = {
+        character = root
+        animation = worry
+    }
+    right_portrait = {
+        character = scope:discoverer
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = murim_secret_marriage
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 0.5
+            intrigue >= 18
+        }
+        modifier = {
+            factor = 2.0
+            any_known_character = {
+                has_trait = paranoid
+                NOT = { this = root }
+            }
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { this = root.spouse }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_righteous_elder
+                    has_trait = gossiper
+                }
+            }
+            save_scope_as = discoverer
+        }
+        # How badly was it discovered?
+        random_list = {
+            30 = { set_variable = { name = discovery_severity value = 1 } } # Rumor
+            40 = { set_variable = { name = discovery_severity value = 2 } } # Proof
+            30 = { set_variable = { name = discovery_severity value = 3 } } # Public
+        }
+    }
+    
+    # Option A: Bribe the discoverer to keep silent
+    option = {
+        name = murim_romance.0006.a
+        trigger = {
+            exists = scope:discoverer
+            gold >= 200
+        }
+        add_gold = -200
+        random_list = {
+            60 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 14
+                }
+                desc = murim_romance.0006.a.silenced
+                reverse_add_opinion = {
+                    target = scope:discoverer
+                    modifier = murim_bribed_silence
+                    opinion = -10
+                }
+                add_hook = {
+                    type = murim_secret_hook
+                    target = scope:discoverer
+                }
+            }
+            40 = {
+                desc = murim_romance.0006.a.leaked
+                add_prestige = -300
+                every_known_character = {
+                    limit = {
+                        is_alive = yes
+                        OR = { has_trait = murim_sect_leader }
+                    }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_secret_marriage_scandal
+                        opinion = -25
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                gold >= 400
+            }
+        }
+    }
+    
+    # Option B: Reveal the marriage publicly and own it
+    option = {
+        name = murim_romance.0006.b
+        remove_character_flag = murim_secret_marriage
+        add_prestige = -200
+        add_character_modifier = {
+            modifier = murim_public_cross_faction_marriage
+            years = 10
+        }
+        # Some admire the courage
+        random_list = {
+            40 = {
+                desc = murim_romance.0006.b.admired
+                add_prestige = 300
+                add_character_modifier = {
+                    modifier = murim_brave_lover
+                    years = 5
+                }
+            }
+            60 = {
+                desc = murim_romance.0006.b.condemned
+                every_known_character = {
+                    limit = {
+                        is_alive = yes
+                        OR = {
+                            has_trait = murim_sect_leader
+                            has_trait = murim_righteous_elder
+                        }
+                    }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_cross_faction_shame
+                        opinion = -30
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = honest
+            }
+        }
+    }
+    
+    # Option C: Deny everything and frame the discoverer
+    option = {
+        name = murim_romance.0006.c
+        trigger = {
+            exists = scope:discoverer
+            intrigue >= 14
+        }
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                desc = murim_romance.0006.c.framed
+                scope:discoverer = {
+                    add_prestige = -200
+                    add_character_modifier = {
+                        modifier = murim_discredited_gossip
+                        years = 3
+                    }
+                }
+                add_prestige = 50
+            }
+            50 = {
+                desc = murim_romance.0006.c.backfired
+                add_prestige = -400
+                add_dread = -20
+                remove_character_flag = murim_secret_marriage
+            }
+        }
+        stress_impact = {
+            honest = major_stress_impact_gain
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Love Triangle: Rival Suitor Appears
+# Triggered: on_action for characters in active romances
+# AI: Full love triangle resolution
+murim_romance.0007 = {
+    type = character_event
+    title = murim_romance.0007.t
+    desc = murim_romance.0007.desc
+    theme = seduction
+    
+    left_portrait = {
+        character = root
+        animation = anger
+    }
+    right_portrait = {
+        character = scope:rival_suitor
+        animation = flirtation
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            any_relation = { type = lover is_alive = yes }
+            any_relation = { type = potential_lover is_alive = yes }
+        }
+        has_character_flag = forbidden_romance_active
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 2.0
+            any_relation = {
+                type = lover
+                attraction >= 50
+            }
+        }
+    }
+    
+    immediate = {
+        random_relation = {
+            type = lover
+            save_scope_as = romantic_interest
+            alternative = {
+                random_relation = {
+                    type = potential_lover
+                    save_scope_as = romantic_interest
+                }
+            }
+        }
+        create_character = {
+            age = { 20 35 }
+            trait = murim_martial_artist
+            trait = ambitious
+            trait = lustful
+            prowess = { 14 22 }
+            diplomacy = { 12 18 }
+            culture = root.culture
+            faith = root.faith
+            save_scope_as = rival_suitor
+        }
+    }
+    
+    # Option A: Duel the rival for your beloved's heart
+    option = {
+        name = murim_romance.0007.a
+        trigger = {
+            exists = scope:rival_suitor
+        }
+        duel = {
+            skill = prowess
+            target = scope:rival_suitor
+            50 = {
+                desc = murim_romance.0007.a.victory
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                add_prestige = 200
+                add_character_modifier = {
+                    modifier = murim_champion_of_love
+                    years = 3
+                }
+                if = {
+                    limit = { exists = scope:romantic_interest }
+                    reverse_add_opinion = {
+                        target = scope:romantic_interest
+                        modifier = murim_fought_for_me
+                        opinion = 30
+                    }
+                }
+                scope:rival_suitor = {
+                    add_prestige = -100
+                    add_character_modifier = {
+                        modifier = murim_defeated_suitor
+                        years = 2
+                    }
+                }
+            }
+            50 = {
+                desc = murim_romance.0007.a.defeat
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                increase_wounds_effect = { reason = duel }
+                add_prestige = -100
+                # Lover may waver
+                random_list = {
+                    40 = {
+                        if = {
+                            limit = { exists = scope:romantic_interest }
+                            remove_relation_lover = scope:romantic_interest
+                        }
+                        remove_character_flag = forbidden_romance_active
+                        add_character_modifier = {
+                            modifier = murim_lost_love_to_rival
+                            years = 5
+                        }
+                    }
+                    60 = {
+                        # Lover stays loyal despite defeat
+                        add_character_modifier = {
+                            modifier = murim_love_tested_and_true
+                            years = 5
+                        }
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                prowess >= 18
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Win through gifts and devotion
+    option = {
+        name = murim_romance.0007.b
+        trigger = {
+            gold >= 200
+            exists = scope:romantic_interest
+        }
+        add_gold = -200
+        reverse_add_opinion = {
+            target = scope:romantic_interest
+            modifier = murim_lavish_devotion
+            opinion = 25
+        }
+        add_character_modifier = {
+            modifier = murim_devoted_lover
+            years = 3
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+            modifier = {
+                factor = 1.5
+                gold >= 400
+            }
+        }
+    }
+    
+    # Option C: Let the beloved choose freely
+    option = {
+        name = murim_romance.0007.c
+        trigger = {
+            exists = scope:romantic_interest
+        }
+        random_list = {
+            50 = {
+                desc = murim_romance.0007.c.chose_you
+                add_prestige = 100
+                add_character_modifier = {
+                    modifier = murim_freely_chosen
+                    years = 5
+                }
+            }
+            50 = {
+                desc = murim_romance.0007.c.chose_rival
+                if = {
+                    limit = { exists = scope:romantic_interest }
+                    remove_relation_lover = scope:romantic_interest
+                }
+                remove_character_flag = forbidden_romance_active
+                add_stress = 40
+                add_character_modifier = {
+                    modifier = murim_heartbreak
+                    years = 3
+                }
+            }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Peace Through Love: Clan Reconciliation Attempt
+# Triggered: from 0005 peace plotting option
+# AI: Full diplomatic reconciliation through marriage
+murim_romance.0008 = {
+    type = character_event
+    title = murim_romance.0008.t
+    desc = murim_romance.0008.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = personality_diplomacy
+    }
+    right_portrait = {
+        character = scope:clan_leader_a
+        animation = thinking
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_peace_through_love
+        is_married = yes
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+                NOT = { this = root }
+            }
+            save_scope_as = clan_leader_a
+        }
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+                NOT = { this = root }
+                NOT = { this = scope:clan_leader_a }
+            }
+            save_scope_as = clan_leader_b
+        }
+    }
+    
+    # Option A: Present union as bridge between factions
+    option = {
+        name = murim_romance.0008.a
+        trigger = {
+            diplomacy >= 16
+            exists = scope:clan_leader_a
+        }
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 20
+                }
+                desc = murim_romance.0008.a.peace
+                add_prestige = 500
+                add_piety = 200
+                add_character_modifier = {
+                    modifier = murim_bridge_between_worlds
+                    years = 10
+                }
+                # Factions soften toward each other
+                if = {
+                    limit = { exists = scope:clan_leader_a }
+                    scope:clan_leader_a = {
+                        add_opinion = {
+                            target = root
+                            modifier = murim_peacemaker
+                            opinion = 30
+                        }
+                    }
+                }
+                if = {
+                    limit = { exists = scope:clan_leader_b }
+                    scope:clan_leader_b = {
+                        add_opinion = {
+                            target = root
+                            modifier = murim_peacemaker
+                            opinion = 30
+                        }
+                    }
+                }
+                set_global_variable = {
+                    name = murim_cross_faction_peace_achieved
+                    value = yes
+                }
+            }
+            60 = {
+                desc = murim_romance.0008.a.rejected
+                add_prestige = -100
+                add_stress = 20
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                diplomacy >= 20
+            }
+        }
+    }
+    
+    # Option B: Accept exile but maintain hope
+    option = {
+        name = murim_romance.0008.b
+        add_character_modifier = {
+            modifier = murim_exile_with_hope
+            years = 5
+        }
+        add_piety = 50
+        add_stress = -10
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Tragedy: Lover's Death
+# Triggered: on_action when lover dies
+# AI: Full grief and vengeance system
+murim_romance.0009 = {
+    type = character_event
+    title = murim_romance.0009.t
+    desc = murim_romance.0009.desc
+    theme = death
+    
+    left_portrait = {
+        character = root
+        animation = grief
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_flag = forbidden_romance_active
+        NOT = {
+            any_relation = {
+                type = lover
+                is_alive = yes
+            }
+        }
+    }
+    
+    weight_multiplier = {
+        base = 5
+    }
+    
+    immediate = {
+        # Determine cause of death
+        random_list = {
+            30 = { set_variable = { name = lover_death_cause value = 1 } } # Killed by enemy clan
+            25 = { set_variable = { name = lover_death_cause value = 2 } } # Killed by own clan
+            20 = { set_variable = { name = lover_death_cause value = 3 } } # Qi deviation
+            15 = { set_variable = { name = lover_death_cause value = 4 } } # Assassination
+            10 = { set_variable = { name = lover_death_cause value = 5 } } # Suicide from shame
+        }
+    }
+    
+    # Option A: Seek vengeance - destroy those responsible
+    option = {
+        name = murim_romance.0009.a
+        add_character_modifier = {
+            modifier = murim_vengeance_sworn
+            years = 10
+        }
+        add_prowess_skill = 3
+        add_character_modifier = {
+            modifier = murim_rage_of_lost_love
+            years = 5
+        }
+        add_trait = wrathful
+        remove_character_flag = forbidden_romance_active
+        # Start vengeance chain
+        trigger_event = {
+            id = murim_romance.0010
+            days = { 30 90 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = wrathful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Withdraw from the world in grief
+    option = {
+        name = murim_romance.0009.b
+        add_stress = 50
+        add_character_modifier = {
+            modifier = murim_grief_hermit
+            years = 5
+        }
+        add_piety = 100
+        add_trait = recluse
+        remove_character_flag = forbidden_romance_active
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option C: Channel grief into becoming the greatest martial artist
+    option = {
+        name = murim_romance.0009.c
+        add_stress = 30
+        add_prowess_skill = 5
+        add_martial_skill = 2
+        add_character_modifier = {
+            modifier = murim_grief_transcendence
+            years = 10
+        }
+        remove_character_flag = forbidden_romance_active
+        # May unlock forbidden technique through emotional breakthrough
+        random_list = {
+            30 = {
+                add_trait = murim_forbidden_technique_user
+                add_character_modifier = {
+                    modifier = murim_love_death_technique
+                    years = 10
+                }
+            }
+            70 = {
+                add_character_modifier = {
+                    modifier = murim_hardened_by_loss
+                    years = 5
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 16
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Vengeance Path: Hunting the Killers
+# Triggered: from 0009 vengeance option
+# AI: Full revenge quest chain
+murim_romance.0010 = {
+    type = character_event
+    title = murim_romance.0010.t
+    desc = murim_romance.0010.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = rage
+    }
+    right_portrait = {
+        character = scope:vengeance_target
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_vengeance_sworn
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { this = root }
+                NOT = { is_allied_to = root }
+                OR = {
+                    has_trait = murim_sect_leader
+                    has_trait = murim_martial_artist
+                }
+            }
+            save_scope_as = vengeance_target
+        }
+    }
+    
+    # Option A: Confront and duel
+    option = {
+        name = murim_romance.0010.a
+        trigger = {
+            exists = scope:vengeance_target
+        }
+        duel = {
+            skill = prowess
+            target = scope:vengeance_target
+            50 = {
+                desc = murim_romance.0010.a.vengeance_complete
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 4.0
+                    min = -49
+                }
+                scope:vengeance_target = {
+                    death = {
+                        death_reason = death_duel
+                        killer = root
+                    }
+                }
+                add_prestige = 300
+                remove_character_modifier = murim_vengeance_sworn
+                add_character_modifier = {
+                    modifier = murim_vengeance_fulfilled
+                    years = 10
+                }
+                add_stress = -40
+            }
+            50 = {
+                desc = murim_romance.0010.a.failed
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -4.0
+                    min = -49
+                }
+                increase_wounds_effect = { reason = duel }
+                add_stress = 20
+                # Try again later
+                trigger_event = {
+                    id = murim_romance.0010
+                    days = { 90 365 }
+                }
+            }
+        }
+        ai_chance = {
+            base = 60
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+        }
+    }
+    
+    # Option B: Use poison and subterfuge
+    option = {
+        name = murim_romance.0010.b
+        trigger = {
+            exists = scope:vengeance_target
+            intrigue >= 14
+        }
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    intrigue >= 18
+                }
+                desc = murim_romance.0010.b.success
+                scope:vengeance_target = {
+                    death = {
+                        death_reason = death_murder_unknown
+                        killer = root
+                    }
+                }
+                remove_character_modifier = murim_vengeance_sworn
+                add_character_modifier = {
+                    modifier = murim_shadow_vengeance
+                    years = 5
+                }
+            }
+            50 = {
+                desc = murim_romance.0010.b.discovered
+                add_prestige = -200
+                add_dread = 20
+                scope:vengeance_target = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_attempted_assassination
+                        opinion = -60
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                intrigue >= 18
+            }
+        }
+    }
+    
+    # Option C: Let go of vengeance
+    option = {
+        name = murim_romance.0010.c
+        remove_character_modifier = murim_vengeance_sworn
+        add_piety = 200
+        add_stress = -20
+        add_character_modifier = {
+            modifier = murim_forgiveness_enlightenment
+            years = 10
+        }
+        add_learning_skill = 3
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = forgiving
+            }
+        }
+    }
+}
+
+# EVENT 0011 - Children of Forbidden Love
+# Triggered: when cross-faction couple has children
+# AI: Full child destiny system
+murim_romance.0011 = {
+    type = character_event
+    title = murim_romance.0011.t
+    desc = murim_romance.0011.desc
+    theme = dynasty
+    
+    left_portrait = {
+        character = root
+        animation = happiness
+    }
+    right_portrait = {
+        character = scope:cross_faction_child
+        animation = idle
+    }
+    
+    trigger = {
+        is_alive = yes
+        is_married = yes
+        OR = {
+            has_character_modifier = murim_eloped_lovers
+            has_character_modifier = murim_secretly_married
+            has_character_modifier = murim_public_cross_faction_marriage
+        }
+        any_child = {
+            is_alive = yes
+            age >= 12
+            age <= 18
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+    }
+    
+    immediate = {
+        random_child = {
+            limit = {
+                is_alive = yes
+                age >= 12
+                age <= 18
+            }
+            save_scope_as = cross_faction_child
+        }
+    }
+    
+    # Option A: Train child in both clans' techniques
+    option = {
+        name = murim_romance.0011.a
+        trigger = {
+            exists = scope:cross_faction_child
+        }
+        scope:cross_faction_child = {
+            add_trait = murim_dual_heritage_cultivator
+            add_prowess_skill = 3
+            add_martial_skill = 2
+            add_character_modifier = {
+                modifier = murim_dual_clan_technique_prodigy
+                years = 20
+            }
+        }
+        add_prestige = 200
+        # Risk of qi conflict
+        random_list = {
+            30 = {
+                scope:cross_faction_child = {
+                    add_character_modifier = {
+                        modifier = murim_qi_harmony_achieved
+                        years = 20
+                    }
+                }
+            }
+            70 = {
+                scope:cross_faction_child = {
+                    add_character_modifier = {
+                        modifier = murim_dual_qi_conflict
+                        years = 5
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Let child choose their own path
+    option = {
+        name = murim_romance.0011.b
+        trigger = {
+            exists = scope:cross_faction_child
+        }
+        scope:cross_faction_child = {
+            random_list = {
+                33 = {
+                    add_trait = murim_orthodox_disciple
+                    add_prowess_skill = 2
+                }
+                33 = {
+                    add_trait = murim_unorthodox_elder
+                    add_intrigue_skill = 2
+                }
+                34 = {
+                    add_trait = murim_wandering_cultivator
+                    add_diplomacy_skill = 2
+                }
+            }
+        }
+        add_piety = 50
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option C: Hide child's dual heritage
+    option = {
+        name = murim_romance.0011.c
+        trigger = {
+            exists = scope:cross_faction_child
+        }
+        scope:cross_faction_child = {
+            add_character_flag = {
+                flag = hidden_dual_heritage
+                days = 7300
+            }
+        }
+        add_stress = 15
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = paranoid
+            }
+        }
+    }
+}
+
+# EVENT 0012 - Legacy of Love: Cross-Faction Alliance Through Marriage
+# Triggered: late-game when cross-faction marriages become common
+# AI: Full alliance system through romance
+murim_romance.0012 = {
+    type = character_event
+    title = murim_romance.0012.t
+    desc = murim_romance.0012.desc
+    theme = diplomacy
+    
+    left_portrait = {
+        character = root
+        animation = personality_diplomacy
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_sect_leader
+        OR = {
+            has_global_variable = murim_cross_faction_peace_achieved
+            has_character_modifier = murim_bridge_between_worlds
+        }
+    }
+    
+    weight_multiplier = {
+        base = 0.3
+        modifier = {
+            factor = 3.0
+            has_global_variable = murim_great_calamity_approaching
+        }
+    }
+    
+    immediate = {
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_sect_leader
+                NOT = { this = root }
+            }
+            add_to_list = potential_alliance_leaders
+        }
+    }
+    
+    # Option A: Propose grand marriage alliance between all nine clans
+    option = {
+        name = murim_romance.0012.a
+        add_prestige = 500
+        add_piety = 300
+        add_diplomacy_skill = 3
+        add_character_modifier = {
+            modifier = murim_grand_alliance_architect
+            years = 20
+        }
+        every_in_list = {
+            list = potential_alliance_leaders
+            add_opinion = {
+                target = root
+                modifier = murim_alliance_through_love
+                opinion = 25
+            }
+        }
+        set_global_variable = {
+            name = murim_nine_clan_marriage_alliance
+            value = yes
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                diplomacy >= 20
+            }
+            modifier = {
+                factor = 3.0
+                has_global_variable = murim_great_calamity_approaching
+            }
+        }
+    }
+    
+    # Option B: Maintain status quo - alliances through strength only
+    option = {
+        name = murim_romance.0012.b
+        add_prestige = 100
+        add_martial_skill = 1
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                has_trait = cynical
+            }
+        }
+    }
+    
+    # Option C: Use marriages as intelligence gathering tools
+    option = {
+        name = murim_romance.0012.c
+        trigger = {
+            intrigue >= 16
+        }
+        add_intrigue_skill = 2
+        add_character_modifier = {
+            modifier = murim_marriage_spy_network
+            years = 10
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                intrigue >= 20
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+        }
+    }
+}
