@@ -1,0 +1,332 @@
+namespace = murim_cross_system
+
+# Cross-System Integration Events
+# Fired by murim_cross_system_on_actions.txt
+# AI characters trigger these identically to players
+
+# === SPY NETWORK DISCOVERS BLACK MARKET ===
+murim_cross_system.0001 = {
+	type = character_event
+	title = murim_cross_system.0001.t
+	desc = murim_cross_system.0001.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_spy_network_active
+		NOT = { has_character_flag = murim_black_market_contact }
+	}
+	
+	# Your spies discovered an underground market
+	option = {
+		name = murim_cross_system.0001.a
+		# Establish contact
+		add_character_flag = murim_black_market_contact
+		add_prestige = -100
+		add_gold = -50
+		add_character_modifier = {
+			modifier = murim_underground_connections
+			years = 5
+		}
+	}
+	option = {
+		name = murim_cross_system.0001.b
+		# Report to orthodox authorities
+		add_piety = 200
+		add_character_flag = murim_orthodox_informant
+		remove_character_flag = murim_spy_network_active
+	}
+	option = {
+		name = murim_cross_system.0001.c
+		# Exploit both sides
+		trigger = { intrigue >= 18 }
+		add_character_flag = murim_black_market_contact
+		add_character_flag = murim_double_agent
+		add_gold = 100
+		add_stress = 30
+	}
+}
+
+# === BLACK MARKET DEALER RECRUITED AS SPY ===
+murim_cross_system.0002 = {
+	type = character_event
+	title = murim_cross_system.0002.t
+	desc = murim_cross_system.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_black_market_contact
+		NOT = { has_character_flag = murim_spy_network_active }
+		intrigue >= 12
+	}
+	
+	option = {
+		name = murim_cross_system.0002.a
+		# Accept espionage role
+		add_character_flag = murim_spy_network_active
+		add_intrigue_skill = 2
+		add_character_modifier = {
+			modifier = murim_shadow_broker
+			years = 10
+		}
+	}
+	option = {
+		name = murim_cross_system.0002.b
+		# Decline, stay in trade only
+		add_gold = 50
+	}
+}
+
+# === TOURNAMENT CHAMPION ATTRACTS SHADOW SECT ===
+murim_cross_system.0003 = {
+	type = character_event
+	title = murim_cross_system.0003.t
+	desc = murim_cross_system.0003.desc
+	theme = skulduggery
+	
+	trigger = {
+		has_character_flag = murim_tournament_champion
+		NOT = { has_character_flag = murim_shadow_sect_member }
+	}
+	
+	immediate = {
+		random_realm_county = {
+			save_scope_as = shadow_meeting_location
+		}
+	}
+	
+	option = {
+		name = murim_cross_system.0003.a
+		# Join the shadow sect
+		add_character_flag = murim_shadow_sect_member
+		add_prowess = 3
+		add_tyranny = 10
+		add_character_modifier = {
+			modifier = murim_shadow_sect_initiate
+			years = -1
+		}
+	}
+	option = {
+		name = murim_cross_system.0003.b
+		# Refuse and report them
+		add_piety = 300
+		add_prestige = 200
+		add_character_flag = murim_shadow_sect_enemy
+	}
+	option = {
+		name = murim_cross_system.0003.c
+		# Infiltrate as double agent
+		trigger = { intrigue >= 15 }
+		add_character_flag = murim_shadow_sect_member
+		add_character_flag = murim_shadow_infiltrator
+		add_intrigue_skill = 2
+		add_stress = 25
+	}
+}
+
+# === CALAMITY SURVIVOR BECOMES RESISTANCE LEADER ===
+murim_cross_system.0004 = {
+	type = character_event
+	title = murim_cross_system.0004.t
+	desc = murim_cross_system.0004.desc
+	theme = war
+	
+	trigger = {
+		has_character_flag = murim_calamity_survivor
+		has_character_flag = murim_spy_network_active
+	}
+	
+	option = {
+		name = murim_cross_system.0004.a
+		# Lead the resistance
+		add_character_flag = murim_resistance_leader
+		add_martial_skill = 3
+		add_diplomacy_skill = 2
+		add_character_modifier = {
+			modifier = murim_resistance_commander
+			years = -1
+		}
+		# Rally survivors
+		every_courtier = {
+			limit = { has_character_flag = murim_calamity_survivor }
+			add_opinion = {
+				target = root
+				modifier = murim_resistance_loyalty
+				opinion = 30
+			}
+		}
+	}
+	option = {
+		name = murim_cross_system.0004.b
+		# Operate from the shadows
+		add_character_flag = murim_resistance_leader
+		add_intrigue_skill = 3
+		add_character_modifier = {
+			modifier = murim_shadow_resistance
+			years = -1
+		}
+	}
+}
+
+# === SUCCESSION WAR ESPIONAGE ESCALATION ===
+murim_cross_system.0005 = {
+	type = character_event
+	title = murim_cross_system.0005.t
+	desc = murim_cross_system.0005.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = murim_succession_war_active
+	}
+	
+	option = {
+		name = murim_cross_system.0005.a
+		# Deploy spies against rival claimant
+		add_gold = -100
+		random_courtier = {
+			limit = { has_character_flag = murim_spy_network_active }
+			add_character_modifier = {
+				modifier = murim_wartime_spymaster
+				years = 3
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_intelligence_advantage
+			years = 2
+		}
+	}
+	option = {
+		name = murim_cross_system.0005.b
+		# Focus on martial strength instead
+		add_martial_skill = 2
+		add_prestige = 100
+	}
+}
+
+# === BLOOD OATH ALLIES SHARE INTELLIGENCE ===
+murim_cross_system.0006 = {
+	type = character_event
+	title = murim_cross_system.0006.t
+	desc = murim_cross_system.0006.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = murim_blood_oath_bound
+		has_character_flag = murim_spy_network_active
+	}
+	
+	option = {
+		name = murim_cross_system.0006.a
+		# Share full intelligence
+		random_ally = {
+			limit = { has_character_flag = murim_blood_oath_bound }
+			add_character_flag = murim_spy_network_active
+			add_opinion = {
+				target = root
+				modifier = murim_shared_intelligence
+				opinion = 25
+			}
+		}
+		add_piety = 100
+	}
+	option = {
+		name = murim_cross_system.0006.b
+		# Share partial intelligence only
+		add_gold = 50
+		add_stress = 10
+	}
+}
+
+# === FORBIDDEN TECHNIQUE TRIGGERS TRIBUNAL ===
+murim_cross_system.0007 = {
+	type = character_event
+	title = murim_cross_system.0007.t
+	desc = murim_cross_system.0007.desc
+	theme = dread
+	
+	trigger = {
+		has_character_flag = murim_forbidden_technique_user
+		NOT = { has_character_flag = murim_tribunal_warrant }
+	}
+	
+	option = {
+		name = murim_cross_system.0007.a
+		# Accept tribunal summons
+		add_character_flag = murim_tribunal_warrant
+		add_stress = 40
+		add_character_modifier = {
+			modifier = murim_tribunal_accused
+			years = 2
+		}
+	}
+	option = {
+		name = murim_cross_system.0007.b
+		# Flee and go into hiding
+		add_character_flag = murim_tribunal_fugitive
+		add_character_flag = murim_in_hiding
+		add_prestige = -500
+		add_intrigue_skill = 3
+	}
+	option = {
+		name = murim_cross_system.0007.c
+		# Challenge the tribunal directly
+		trigger = { prowess >= 20 }
+		add_character_flag = murim_tribunal_defiant
+		add_dread = 30
+		add_prestige = 200
+	}
+}
+
+# === IMMORTAL SEEKER DISCOVERS VAULT ===
+murim_cross_system.0008 = {
+	type = character_event
+	title = murim_cross_system.0008.t
+	desc = murim_cross_system.0008.desc
+	theme = learning
+	
+	trigger = {
+		has_character_flag = murim_immortal_path_active
+		NOT = { has_character_flag = murim_vault_discovered }
+		learning >= 15
+	}
+	
+	option = {
+		name = murim_cross_system.0008.a
+		# Enter the vault alone
+		add_character_flag = murim_vault_discovered
+		add_learning_skill = 3
+		random_list = {
+			50 = {
+				add_character_modifier = {
+					modifier = murim_ancient_knowledge
+					years = -1
+				}
+			}
+			30 = {
+				add_character_flag = murim_forbidden_technique_user
+				add_prowess = 5
+			}
+			20 = {
+				add_stress = 50
+				add_trait = wounded
+			}
+		}
+	}
+	option = {
+		name = murim_cross_system.0008.b
+		# Bring your disciples
+		add_character_flag = murim_vault_discovered
+		every_courtier = {
+			limit = {
+				has_character_flag = murim_disciple
+				count <= 3
+			}
+			add_learning_skill = 1
+		}
+	}
+	option = {
+		name = murim_cross_system.0008.c
+		# Seal it and report to elders
+		add_piety = 300
+		add_character_flag = murim_vault_sealed
+	}
+}
