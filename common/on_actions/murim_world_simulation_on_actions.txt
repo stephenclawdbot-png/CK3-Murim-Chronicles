@@ -817,3 +817,44 @@ murim_world_events_yearly = {
 		}
 	}
 }
+
+# === YEARLY: MEMORY & GRUDGE SYSTEM ===
+# Vengeance opportunities for those with active grudges
+# Generational grudges for children of the slain
+murim_ai_memory_yearly = {
+	on_actions = {
+		delay = { months = 12 }
+		murim_ai_memory_yearly
+	}
+
+	effect = {
+		# Characters with active vengeance oaths may encounter their target
+		every_ruler = {
+			limit = {
+				is_ai = yes
+				has_variable = murim_martial_artist
+				is_alive = yes
+				has_character_flag = murim_sworn_vengeance
+				NOT = { has_character_flag = murim_vengeance_opportunity_cooldown }
+			}
+			random = {
+				chance = 25
+				trigger_event = { id = murim_memory.0002 days = { 30 180 } }
+				set_character_flag = { flag = murim_vengeance_opportunity_cooldown years = 3 }
+			}
+		}
+
+		# Children coming of age discover their parent's killer
+		every_ruler = {
+			limit = {
+				is_ai = yes
+				has_variable = murim_martial_artist
+				is_alive = yes
+				has_character_flag = murim_parents_killer_known
+				age >= 16
+				NOT = { has_character_flag = murim_generational_grudge_resolved }
+			}
+			trigger_event = { id = murim_memory.0003 days = { 30 180 } }
+		}
+	}
+}

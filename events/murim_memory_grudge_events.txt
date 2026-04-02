@@ -1,0 +1,410 @@
+# Murim Chronicles - Kill Memory & Grudge System
+# Tracks who killed who, generates vengeance chains, and creates
+# persistent memories that drive AI behavior across generations.
+#
+# Cross-refs: murim_calamity_phase_on_actions, murim_duel_events,
+#   murim_faction_war_events, murim_dark_path_events
+#
+# Variables used:
+#   character flag: murim_killed_by_<killer_id> (set on death)
+#   character flag: murim_witnessed_death_of_<victim_id>
+#   character modifier: murim_blood_grudge, murim_vengeance_sworn
+#   global var: murim_kill_ledger_count
+
+namespace = murim_memory
+
+########################################
+# 0001 - WITNESS A KILL: Someone you know dies
+# Triggered when a martial artist dies in combat/duel/calamity
+# Sets grudge flags on witnesses (family, sect members, friends)
+########################################
+murim_memory.0001 = {
+	type = character_event
+	title = murim_memory.0001.t
+	desc = murim_memory.0001.desc
+	theme = death
+
+	is_triggered_only = yes
+
+	# scope:killer = the one who killed
+	# ROOT = the witness (family/sect member)
+
+	option = {
+		name = murim_memory.0001.a
+		# Swear vengeance
+		set_character_flag = { flag = murim_sworn_vengeance years = 20 }
+		add_character_modifier = { modifier = murim_vengeance_sworn years = 10 }
+		if = {
+			limit = { exists = scope:killer }
+			add_opinion = {
+				target = scope:killer
+				modifier = murim_killed_my_kin
+				opinion = -100
+			}
+			set_relation_rival = scope:killer
+		}
+		stress_impact = {
+			brave = medium_stress_impact_loss
+			craven = medium_stress_impact_gain
+			compassionate = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = wrathful }
+			modifier = { add = -20 has_trait = craven }
+			modifier = { add = -15 has_trait = content }
+		}
+	}
+
+	option = {
+		name = murim_memory.0001.b
+		# Remember but don't act yet — bide your time
+		set_character_flag = { flag = murim_remembers_grudge years = 30 }
+		if = {
+			limit = { exists = scope:killer }
+			add_opinion = {
+				target = scope:killer
+				modifier = murim_killed_my_kin
+				opinion = -50
+			}
+		}
+		add_stress = 20
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 15 has_trait = deceitful }
+			modifier = { add = 10 has_trait = calm }
+		}
+	}
+
+	option = {
+		name = murim_memory.0001.c
+		# Accept fate — the martial world is cruel
+		add_piety = 50
+		stress_impact = {
+			compassionate = minor_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = content }
+			modifier = { add = 15 has_trait = compassionate }
+			modifier = { add = -20 has_trait = wrathful }
+		}
+	}
+}
+
+########################################
+# 0002 - VENGEANCE OPPORTUNITY: You encounter your grudge target
+# Fires when someone with murim_sworn_vengeance meets the killer
+########################################
+murim_memory.0002 = {
+	type = character_event
+	title = murim_memory.0002.t
+	desc = murim_memory.0002.desc
+	theme = duel
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_character_flag = murim_sworn_vengeance
+		exists = scope:grudge_target
+		scope:grudge_target = { is_alive = yes }
+	}
+
+	option = {
+		name = murim_memory.0002.a
+		# Challenge them to a death duel NOW
+		trigger_event = { id = murim_duel.0001 days = { 1 7 } }
+		remove_character_flag = murim_sworn_vengeance
+		set_character_flag = { flag = murim_vengeance_duel_active days = 30 }
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 has_trait = wrathful }
+			modifier = { add = 20 prowess >= 15 }
+			modifier = { add = -30 has_trait = craven }
+		}
+	}
+
+	option = {
+		name = murim_memory.0002.b
+		# Poison them / hire an assassin
+		if = {
+			limit = { exists = scope:grudge_target }
+			add_opinion = {
+				target = scope:grudge_target
+				modifier = murim_assassination_target
+				opinion = -50
+			}
+		}
+		add_intrigue_skill = 1
+		set_character_flag = { flag = murim_plotting_vengeance years = 3 }
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = deceitful }
+			modifier = { add = 20 intrigue >= 14 }
+			modifier = { add = -20 has_trait = honest }
+		}
+	}
+
+	option = {
+		name = murim_memory.0002.c
+		# Forgive — break the cycle of vengeance
+		remove_character_flag = murim_sworn_vengeance
+		remove_character_modifier = murim_vengeance_sworn
+		add_piety = 100
+		add_prestige = 50
+		stress_impact = {
+			wrathful = major_stress_impact_gain
+			compassionate = medium_stress_impact_loss
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 15 has_trait = just }
+			modifier = { add = -20 has_trait = sadistic }
+		}
+	}
+}
+
+########################################
+# 0003 - GENERATIONAL GRUDGE: Your parent's killer lives
+# Fires for children of killed martial artists
+########################################
+murim_memory.0003 = {
+	type = character_event
+	title = murim_memory.0003.t
+	desc = murim_memory.0003.desc
+	theme = intrigue
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_character_flag = murim_parents_killer_known
+		age >= 16
+		NOT = { has_character_flag = murim_generational_grudge_resolved }
+	}
+
+	option = {
+		name = murim_memory.0003.a
+		# Train relentlessly to avenge your parent
+		add_character_modifier = { modifier = murim_personal_training_bonus years = 5 }
+		set_character_flag = { flag = murim_sworn_vengeance years = 30 }
+		add_character_modifier = { modifier = murim_vengeance_sworn years = 20 }
+		set_character_flag = murim_generational_grudge_resolved
+		ai_chance = {
+			base = 45
+			modifier = { add = 25 has_trait = ambitious }
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = -15 has_trait = lazy }
+		}
+	}
+
+	option = {
+		name = murim_memory.0003.b
+		# Seek the truth first — perhaps it's more complex
+		add_learning_skill = 1
+		add_intrigue_skill = 1
+		set_character_flag = { flag = murim_investigating_parent_death years = 5 }
+		set_character_flag = murim_generational_grudge_resolved
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+
+	option = {
+		name = murim_memory.0003.c
+		# Let the past die — forge your own path
+		add_prestige = 75
+		add_piety = 50
+		set_character_flag = murim_generational_grudge_resolved
+		ai_chance = {
+			base = 25
+			modifier = { add = 20 has_trait = content }
+			modifier = { add = 15 has_trait = compassionate }
+		}
+	}
+}
+
+########################################
+# 0004 - KILL LEDGER: News of a major kill spreads
+# Triggered when a ranked martial artist kills another
+# Spreads the killer's reputation
+########################################
+murim_memory.0004 = {
+	type = character_event
+	title = murim_memory.0004.t
+	desc = murim_memory.0004.desc
+	theme = martial
+
+	is_triggered_only = yes
+
+	# ROOT = the killer
+
+	immediate = {
+		add_prestige = 200
+		add_dread = 25
+	}
+
+	option = {
+		name = murim_memory.0004.a
+		# Revel in your growing infamy
+		add_character_modifier = { modifier = murim_feared_killer years = 5 }
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_trait = sadistic }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	option = {
+		name = murim_memory.0004.b
+		# It was necessary — show no remorse
+		add_martial_skill = 1
+		ai_chance = {
+			base = 40
+			modifier = { add = 15 has_trait = brave }
+			modifier = { add = 10 has_trait = just }
+		}
+	}
+
+	option = {
+		name = murim_memory.0004.c
+		# Feel the weight of taking a life
+		add_stress = 30
+		add_piety = 25
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 15 has_trait = humble }
+		}
+	}
+}
+
+########################################
+# 0005 - HEAVENLY DEMON MASSACRE MEMORY
+# Special event for calamity: Heavenly Demon kills multiple people
+# Survivors carry permanent grudges, children inherit them
+########################################
+murim_memory.0005 = {
+	type = character_event
+	title = murim_memory.0005.t
+	desc = murim_memory.0005.desc
+	theme = death
+
+	is_triggered_only = yes
+
+	# ROOT = survivor who witnessed the massacre
+
+	immediate = {
+		set_character_flag = { flag = murim_witnessed_demon_massacre }
+		set_character_flag = { flag = murim_anti_heavenly_demon years = 50 }
+	}
+
+	option = {
+		name = murim_memory.0005.a
+		# Swear to destroy the Heavenly Demon Sect
+		add_character_modifier = { modifier = murim_vengeance_sworn years = 20 }
+		set_character_flag = { flag = murim_sworn_vengeance years = 30 }
+		set_character_flag = { flag = murim_enemy_heavenly_demon }
+		# Pass grudge to future children
+		every_child = {
+			limit = { is_alive = yes }
+			set_character_flag = { flag = murim_parents_killer_known }
+			set_character_flag = { flag = murim_enemy_heavenly_demon }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 15 has_trait = just }
+			modifier = { add = -20 has_trait = craven }
+		}
+	}
+
+	option = {
+		name = murim_memory.0005.b
+		# Hide and rebuild — survival first
+		add_character_modifier = { modifier = murim_personal_training_bonus years = 5 }
+		set_character_flag = { flag = murim_remembers_grudge years = 30 }
+		set_character_flag = { flag = murim_enemy_heavenly_demon }
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = patient }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+
+	option = {
+		name = murim_memory.0005.c
+		# Flee the martial world entirely
+		add_stress = 50
+		set_character_flag = { flag = murim_retired_from_jianghu years = 10 }
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = craven }
+			modifier = { add = -20 has_trait = brave }
+		}
+	}
+}
+
+########################################
+# 0006 - VENGEANCE FULFILLED: You killed your grudge target
+# Triggered after a successful vengeance duel/assassination
+########################################
+murim_memory.0006 = {
+	type = character_event
+	title = murim_memory.0006.t
+	desc = murim_memory.0006.desc
+	theme = martial
+
+	is_triggered_only = yes
+
+	immediate = {
+		remove_character_flag = murim_sworn_vengeance
+		remove_character_modifier = murim_vengeance_sworn
+		add_prestige = 300
+	}
+
+	option = {
+		name = murim_memory.0006.a
+		# Justice is served — move on
+		add_stress = -50
+		add_piety = 50
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = just }
+			modifier = { add = 15 has_trait = content }
+		}
+	}
+
+	option = {
+		name = murim_memory.0006.b
+		# This was only the beginning — destroy their entire sect
+		add_dread = 30
+		set_character_flag = { flag = murim_vengeance_escalation years = 10 }
+		trigger_event = { id = murim_dark.0001 days = { 30 90 } }
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = sadistic }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -20 has_trait = compassionate }
+		}
+	}
+
+	option = {
+		name = murim_memory.0006.c
+		# Feel empty — vengeance didn't heal the wound
+		add_stress = 25
+		add_learning_skill = 2
+		trigger_event = { id = murim_elder.0006 days = { 30 180 } }
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = compassionate }
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+}

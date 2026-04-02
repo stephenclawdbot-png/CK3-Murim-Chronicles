@@ -61,33 +61,54 @@ murim_calamity_yearly_pulse = {
 				has_global_variable = murim_calamity_active
 				global_var:murim_calamity_phase = 1
 			}
-			# Phase 1 -> Phase 2: Tension to Eruption (after ~2 years)
+			# Phase 1 -> Phase 2: Tension to Eruption
+			# The Heavenly Demon Sect is the primary catalyst — they strike first
 			random = {
 				chance = 30
+				modifier = {
+					add = 20
+					any_living_character = {
+						has_trait = murim_heavenly_demon_clan
+						is_ruler = yes
+					}
+				}
 				set_global_variable = {
 					name = murim_calamity_phase
 					value = 2
 				}
-				# AI clans start declaring wars autonomously
+				# Heavenly Demon strikes first — they initiate the calamity eruption
+				every_living_character = {
+					limit = {
+						has_trait = murim_heavenly_demon_clan
+						is_ruler = yes
+						is_alive = yes
+					}
+					trigger_event = {
+						id = murim_calamity_ai.0001
+						days = { 1 30 }
+					}
+				}
+				# Other clans respond — orthodox sects rally defense
 				every_living_character = {
 					limit = {
 						has_trait = murim_martial_artist
+						is_ruler = yes
+						is_alive = yes
+						NOT = { has_trait = murim_heavenly_demon_clan }
 						OR = {
-							has_trait = murim_heavenly_demon_clan
-							has_trait = murim_iron_fist_clan
 							has_trait = murim_mount_hua_clan
 							has_trait = murim_shaolin_clan
 							has_trait = murim_wudang_clan
 							has_trait = murim_tang_clan
 							has_trait = murim_beggar_sect_clan
+							has_trait = murim_iron_fist_clan
 							has_trait = murim_poison_flower_clan
 							has_trait = murim_phantom_blade_clan
 						}
-						is_ruler = yes
 					}
 					trigger_event = {
 						id = murim_calamity_ai.0001
-						days = { 1 90 }
+						days = { 30 90 }
 					}
 				}
 			}
@@ -189,7 +210,7 @@ murim_calamity_yearly_pulse = {
 				every_living_character = {
 					limit = {
 						has_trait = murim_calamity_survivor
-						has_trait = murim_rebuilder
+						has_trait = murim_calamity_rebuilder
 					}
 					trigger_event = {
 						id = murim_great_calamity_expansion.0003
@@ -332,7 +353,11 @@ murim_calamity_mass_death_pulse = {
 				has_global_variable = murim_calamity_active
 				global_var:murim_calamity_phase = 3
 			}
-			# Kill martial artists who aren't survivors (higher per-tick chance to compensate quarterly)
+			# === HEAVENLY DEMON IS THE PRIMARY KILLER ===
+			# Most deaths are attributed to the Heavenly Demon Sect's rampage.
+			# Survivors carry grudges and pass them to children.
+
+			# Kill martial artists who aren't survivors
 			every_living_character = {
 				limit = {
 					has_trait = murim_martial_artist
@@ -342,11 +367,31 @@ murim_calamity_mass_death_pulse = {
 				}
 				random = {
 					chance = 60
+					# Before death, mark their family with massacre memory
+					every_close_family_member = {
+						limit = {
+							is_alive = yes
+							NOT = { has_character_flag = murim_witnessed_demon_massacre }
+						}
+						trigger_event = { id = murim_memory.0005 days = { 1 60 } }
+					}
 					death = {
 						death_reason = death_battle
 					}
 				}
 			}
+
+			# Survivors witness the massacre — carry permanent grudges
+			every_living_character = {
+				limit = {
+					has_trait = murim_calamity_survivor
+					is_alive = yes
+					NOT = { has_character_flag = murim_witnessed_demon_massacre }
+					NOT = { has_trait = murim_heavenly_demon_clan }
+				}
+				trigger_event = { id = murim_memory.0005 days = { 30 90 } }
+			}
+
 			# Civilian deaths — only rulers' courts, not literally everyone
 			every_ruler = {
 				limit = {
