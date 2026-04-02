@@ -1083,3 +1083,162 @@ murim_harmony.0008 = {
 		}
 	}
 }
+
+###############################################################################
+# 9. INTERNAL RANKING DUEL
+# Clan leader organizes a ranking duel between disciples.
+# Strengthens bonds, settles internal disputes, tests advancement.
+###############################################################################
+murim_harmony.0009 = {
+	type = character_event
+	title = murim_harmony.0009.t
+	desc = murim_harmony.0009.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_clan_leader
+		murim_is_clan_member_trigger = yes
+		NOT = { has_character_flag = internal_duel_tourney_cooldown }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = internal_duel_tourney_cooldown
+			years = 3
+		}
+	}
+
+	# Option A: Host a formal competition — prestige for winner and sect
+	option = {
+		name = murim_harmony.0009.a
+		add_gold = -30
+		if = {
+			limit = { NOT = { has_variable = murim_clan_harmony_score } }
+			set_variable = { name = murim_clan_harmony_score value = 0 }
+		}
+		change_variable = { name = murim_clan_harmony_score add = 10 }
+		add_prestige = 150
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		add_character_modifier = {
+			modifier = murim_new_sect_master
+			months = 6
+		}
+		ai_chance = {
+			base = 55
+			modifier = { add = 15 has_trait = gregarious }
+			modifier = { add = 15 has_trait = generous }
+			modifier = { add = -15 gold < 80 }
+		}
+	}
+
+	# Option B: A personal training sparring session instead
+	option = {
+		name = murim_harmony.0009.b
+		if = {
+			limit = { NOT = { has_variable = murim_clan_harmony_score } }
+			set_variable = { name = murim_clan_harmony_score value = 0 }
+		}
+		change_variable = { name = murim_clan_harmony_score add = 5 }
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		add_character_modifier = {
+			modifier = murim_sparring_fatigue
+			months = 2
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Option C: Let the disciples sort out their own hierarchy
+	option = {
+		name = murim_harmony.0009.c
+		if = {
+			limit = { NOT = { has_variable = murim_clan_harmony_score } }
+			set_variable = { name = murim_clan_harmony_score value = 0 }
+		}
+		change_variable = { name = murim_clan_harmony_score add = -3 }
+		ai_chance = {
+			base = 15
+			modifier = { add = 15 has_trait = arbitrary }
+		}
+	}
+}
+
+###############################################################################
+# 10. ELDER COUNCIL WISDOM
+# A council of sect elders convenes to pass down rare insight to the clan leader.
+# High harmony enables this; the gift is proportional to their cultivation.
+###############################################################################
+murim_harmony.0010 = {
+	type = character_event
+	title = murim_harmony.0010.t
+	desc = murim_harmony.0010.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = reading
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_clan_leader
+		murim_is_clan_member_trigger = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 4
+		NOT = { has_character_flag = elder_council_wisdom_done }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3
+			has_variable = murim_clan_harmony_score
+			var:murim_clan_harmony_score >= 30
+		}
+		modifier = { add = 2 learning >= 14 }
+	}
+
+	immediate = {
+		set_character_flag = elder_council_wisdom_done
+	}
+
+	# Option A: Receive the collective wisdom — transformation through lineage
+	option = {
+		name = murim_harmony.0010.a
+		change_variable = { name = murim_cultivation_xp add = 60 }
+		add_character_modifier = {
+			modifier = murim_heavenly_insight
+			months = 24
+		}
+		add_prestige = 300
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+
+	# Option B: Ask them to teach the entire inner sect instead
+	option = {
+		name = murim_harmony.0010.b
+		if = {
+			limit = { NOT = { has_variable = murim_clan_harmony_score } }
+			set_variable = { name = murim_clan_harmony_score value = 0 }
+		}
+		change_variable = { name = murim_clan_harmony_score add = 20 }
+		add_prestige = 200
+		add_piety = 100
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = generous }
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+}

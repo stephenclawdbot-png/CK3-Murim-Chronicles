@@ -1,0 +1,258 @@
+############################################
+# MURIM AI CULTIVATION BOOST ON_ACTIONS
+# Dedicated AI-only monthly and yearly pulses
+# that give AI martial artists more initiative:
+#
+# Monthly:
+#   - AI demonic cultivators passively build qi
+#   - AI alchemists autonomously gather herbs
+#   - AI rankers maintain training edge
+#
+# Yearly:
+#   - AI high-rank cultivators attempt breakthroughs
+#   - AI sect leaders cultivate their inner sect
+#   - AI wanderers discover rare resources
+#   - AI rivals escalate or de-escalate based on personality
+#
+# This ensures the martial world feels alive even
+# without player involvement. AI sects rise and fall,
+# AI demonic cultivators grow dangerous, AI alchemists
+# become resource-rich over time.
+############################################
+
+on_monthly_character_pulse = {
+
+    effect = {
+
+        # ----------------------------------------
+        # AI DEMONIC CULTIVATOR PASSIVE CORRUPTION
+        # Demonic AI characters build cultivation more
+        # aggressively — dark path demands constant feeding.
+        # ----------------------------------------
+        if = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                has_trait = demonic_cultivator
+                is_imprisoned = no
+                NOT = { has_character_modifier = murim_demonic_qi_satiated }
+            }
+            random = {
+                chance = 25
+                modifier = { add = 15 has_trait = sadistic }
+                modifier = { add = 10 has_variable = murim_forbidden_knowledge }
+                change_variable = { name = murim_cultivation_xp add = 5 }
+                add_character_modifier = {
+                    modifier = murim_demonic_qi_hunger
+                    months = 2
+                }
+            }
+        }
+
+        # ----------------------------------------
+        # AI ALCHEMIST HERB ACCUMULATION
+        # AI alchemists passively gather herbs so they
+        # have resources to use alchemy decisions and
+        # fire alchemy events organically.
+        # ----------------------------------------
+        if = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                OR = {
+                    murim_is_alchemist_trigger = yes
+                    has_trait = alchemist
+                    has_trait = pill_master
+                }
+                is_imprisoned = no
+                NOT = { has_character_flag = murim_ai_herb_gather_cooldown }
+            }
+            random = {
+                chance = 20
+                modifier = { add = 15 has_trait = pill_master }
+                modifier = { add = 10 has_trait = diligent }
+                modifier = { add = -10 is_at_war = yes }
+                add_character_flag = {
+                    flag = murim_ai_herb_gather_cooldown
+                    days = 60
+                }
+                if = {
+                    limit = { NOT = { has_variable = murim_herb_stockpile } }
+                    set_variable = { name = murim_herb_stockpile value = 0 }
+                }
+                change_variable = { name = murim_herb_stockpile add = 2 }
+                if = {
+                    limit = { NOT = { has_variable = murim_alchemy_xp } }
+                    set_variable = { name = murim_alchemy_xp value = 0 }
+                }
+                change_variable = { name = murim_alchemy_xp add = 1 }
+            }
+        }
+
+        # ----------------------------------------
+        # AI RANKED CULTIVATOR TRAINING SHARPENING
+        # Top-ranked cultivators maintain their edge
+        # via steady monthly cultivation gains.
+        # ----------------------------------------
+        if = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                murim_is_ranked_martial_artist_trigger = yes
+                prowess >= 18
+                is_imprisoned = no
+            }
+            random = {
+                chance = 15
+                modifier = { add = 10 has_trait = diligent }
+                change_variable = { name = murim_cultivation_xp add = 3 }
+                add_character_modifier = {
+                    modifier = murim_combat_instinct_sharpened
+                    months = 1
+                }
+            }
+        }
+    }
+}
+
+on_yearly_pulse = {
+
+    effect = {
+
+        # ----------------------------------------
+        # AI HIGH-RANK BREAKTHROUGH ATTEMPTS
+        # High-rank AI cultivators (rank 5+) who have
+        # enough XP periodically attempt to break through.
+        # Ensures AI can reach legendary cultivation tiers.
+        # ----------------------------------------
+        every_living_character = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                has_variable = murim_cultivation_rank
+                var:murim_cultivation_rank >= 5
+                has_variable = murim_cultivation_xp
+                var:murim_cultivation_xp >= 400
+                is_imprisoned = no
+                NOT = { has_character_flag = murim_breakthrough_attempted }
+            }
+            random = {
+                chance = 40
+                modifier = { add = 20 has_trait = ambitious }
+                modifier = { add = 15 has_trait = diligent }
+                modifier = { add = 10 learning >= 16 }
+                trigger_event = {
+                    id = murim_cultivation.0008
+                    days = { 5 30 }
+                }
+                add_character_flag = {
+                    flag = murim_breakthrough_attempted
+                    years = 1
+                }
+            }
+        }
+
+        # ----------------------------------------
+        # AI SECT LEADER INNER SECT CULTIVATION
+        # Sect master AI characters invest yearly in
+        # maintaining their sect's cultivation quality.
+        # ----------------------------------------
+        every_living_character = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                has_character_flag = murim_sect_master
+                is_imprisoned = no
+                NOT = { has_character_flag = murim_ai_sect_cultivation_done }
+            }
+            random = {
+                chance = 35
+                modifier = { add = 20 diplomacy >= 14 }
+                modifier = { add = 15 has_trait = gregarious }
+                if = {
+                    limit = { NOT = { has_variable = murim_clan_harmony_score } }
+                    set_variable = { name = murim_clan_harmony_score value = 0 }
+                }
+                change_variable = { name = murim_clan_harmony_score add = 5 }
+                change_variable = { name = murim_cultivation_xp add = 10 }
+                add_character_flag = {
+                    flag = murim_ai_sect_cultivation_done
+                    months = 10
+                }
+            }
+        }
+
+        # ----------------------------------------
+        # AI WANDERER RESOURCE DISCOVERY
+        # Wandering AI cultivators have higher chance
+        # to find rare herbs and cultivation resources.
+        # ----------------------------------------
+        every_living_character = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                is_landed = no
+                murim_is_martial_artist_trigger = yes
+                is_imprisoned = no
+                NOT = { has_character_flag = murim_ai_wanderer_discover_cooldown }
+            }
+            random = {
+                chance = 30
+                modifier = { add = 15 has_trait = adventurer }
+                modifier = { add = 10 learning >= 12 }
+                add_character_flag = {
+                    flag = murim_ai_wanderer_discover_cooldown
+                    months = 4
+                }
+                if = {
+                    limit = { NOT = { has_variable = murim_herb_stockpile } }
+                    set_variable = { name = murim_herb_stockpile value = 0 }
+                }
+                change_variable = { name = murim_herb_stockpile add = 3 }
+                change_variable = { name = murim_cultivation_xp add = 8 }
+            }
+        }
+
+        # ----------------------------------------
+        # AI RIVAL ESCALATION / DE-ESCALATION
+        # Rivals develop over time based on AI personality.
+        # Vengeful AI escalates. Forgiving AI may cool down.
+        # ----------------------------------------
+        every_living_character = {
+            limit = {
+                is_ai = yes
+                is_alive = yes
+                has_variable = murim_has_rival
+                var:murim_has_rival >= 1
+                has_variable = murim_rival_intensity
+                is_imprisoned = no
+                NOT = { has_character_flag = murim_ai_rival_pulse_cooldown }
+            }
+            add_character_flag = {
+                flag = murim_ai_rival_pulse_cooldown
+                months = 8
+            }
+            # Vengeful AI escalates rivalry
+            if = {
+                limit = { has_trait = vengeful }
+                change_variable = { name = murim_rival_intensity add = 1 }
+                clamp_variable = {
+                    name = murim_rival_intensity
+                    min = 1
+                    max = 5
+                }
+            }
+            # Forgiving/compassionate AI cools down
+            if = {
+                limit = {
+                    OR = {
+                        has_trait = forgiving
+                        has_trait = compassionate
+                    }
+                    var:murim_rival_intensity >= 2
+                }
+                change_variable = { name = murim_rival_intensity add = -1 }
+            }
+        }
+    }
+}

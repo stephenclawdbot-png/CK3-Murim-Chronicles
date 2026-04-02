@@ -1944,3 +1944,138 @@ murim_discover.4004 = {
 # Follow-up events referenced but defined in separate chain files
 # AI fires all events with personality-weighted ai_chance blocks
 # Gender: ZERO sex restrictions anywhere. Fully equal.
+####################################
+# PATH E: WITNESSING & CHANCE ENCOUNTERS
+# New events for court/noble characters and random encounters
+####################################
+
+# 5001: A Court Duel — Witnessing death up close
+murim_discover.5001 = {
+	type = character_event
+	title = murim_discover.5001.t
+	desc = murim_discover.5001.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = shock
+	}
+
+	trigger = {
+		murim_is_eligible_for_discovery_trigger = yes
+		is_landed = yes
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = brave }
+		modifier = { add = 0.5 prowess >= 8 }
+	}
+
+	# Option A: The sight of their power ignites something in you
+	option = {
+		name = murim_discover.5001.a
+		add_trait = martial_awareness
+		add_character_modifier = {
+			modifier = murim_battle_meditation
+			months = 6
+		}
+		add_prestige = 30
+		trigger_event = {
+			id = murim_entry.0001
+			days = { 30 90 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = brave }
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Option B: Commission a master to teach you — gold opens doors
+	option = {
+		name = murim_discover.5001.b
+		trigger = { gold >= 50 }
+		add_gold = -50
+		add_trait = martial_awareness
+		add_trait = basic_martial_training
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -10 gold < 100 }
+		}
+	}
+
+	# Option C: Witness but do not enter — the martial world is not for you
+	option = {
+		name = murim_discover.5001.c
+		add_prestige = 15
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = craven }
+		}
+	}
+}
+
+# 5002: The Beggar Who Wasn't — a wandering master in disguise
+murim_discover.5002 = {
+	type = character_event
+	title = murim_discover.5002.t
+	desc = murim_discover.5002.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_curious
+	}
+
+	trigger = {
+		murim_is_eligible_for_discovery_trigger = yes
+		age >= 10
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 1 has_trait = curious }
+		modifier = { add = 0.5 learning >= 12 }
+		modifier = { add = 0.3 has_trait = humble }
+	}
+
+	# Option A: Listen carefully — the beggar speaks in riddles that suddenly make sense
+	option = {
+		name = murim_discover.5002.a
+		add_trait = martial_awareness
+		add_learning_skill = 1
+		trigger_event = {
+			id = murim_entry.0001
+			days = { 60 180 }
+		}
+		ai_chance = {
+			base = 55
+			modifier = { add = 20 has_trait = curious }
+			modifier = { add = 15 has_trait = humble }
+		}
+	}
+
+	# Option B: Offer food and sit with them — patience is its own teaching
+	option = {
+		name = murim_discover.5002.b
+		add_trait = martial_awareness
+		add_piety = 50
+		change_variable = { name = murim_cultivation_xp add = 10 }
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Option C: Walk away — the wandering mad are everywhere
+	option = {
+		name = murim_discover.5002.c
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = arrogant }
+		}
+	}
+}

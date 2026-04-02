@@ -1638,3 +1638,235 @@ murim_petition_wulin_alliance_interaction = {
 		OR = { has_trait = just has_trait = brave has_trait = honest }
 	}
 }
+######################################
+# CULTIVATION-FOCUSED INTERACTIONS (New)
+######################################
+
+# QI EXCHANGE — High-rank cultivator gifts cultivation qi to a disciple
+murim_qi_exchange_interaction = {
+    category = interaction_category_friendly
+    icon = icon_befriend
+
+    desc = murim_qi_exchange_interaction_desc
+
+    is_shown = {
+        NOT = { scope:actor = scope:recipient }
+        scope:actor = {
+            murim_is_martial_artist_trigger = yes
+            has_variable = murim_cultivation_rank
+            var:murim_cultivation_rank >= 4
+        }
+        scope:recipient = {
+            murim_is_martial_artist_trigger = yes
+            has_variable = murim_cultivation_rank
+            var:murim_cultivation_rank >= 1
+        }
+    }
+
+    is_valid_showing_failures_only = {
+        scope:actor = {
+            NOT = { has_character_modifier = murim_qi_exchange_given }
+            health >= 2
+        }
+        scope:recipient = {
+            NOT = { has_character_modifier = murim_qi_exchange_received }
+        }
+    }
+
+    on_accept = {
+        scope:actor = {
+            add_character_modifier = {
+                modifier = murim_qi_exchange_given
+                months = 6
+            }
+            add_health = -0.3
+            change_variable = { name = murim_cultivation_xp add = -20 }
+            add_prestige = 100
+        }
+        scope:recipient = {
+            add_character_modifier = {
+                modifier = murim_qi_exchange_received
+                months = 12
+            }
+            change_variable = { name = murim_cultivation_xp add = 40 }
+            add_opinion = {
+                target = scope:actor
+                modifier = murim_martial_deep_admiration_opinion
+            }
+        }
+    }
+
+    on_decline = {
+        scope:actor = {
+            add_prestige = -20
+        }
+    }
+
+    ai_accept = {
+        base = 35
+        modifier = {
+            add = 30
+            scope:recipient = { has_character_flag = has_martial_master }
+            scope:actor = { has_character_flag = murim_sect_master }
+        }
+        modifier = {
+            add = 20
+            scope:actor = { has_trait = generous }
+        }
+        modifier = {
+            add = 15
+            scope:actor = { has_trait = compassionate }
+        }
+        modifier = {
+            add = -20
+            scope:actor = { health < 2.5 }
+        }
+    }
+}
+
+# CHALLENGE TRAINING SPAR — Request an informal cultivation exchange duel
+murim_challenge_training_spar_interaction = {
+    category = interaction_category_friendly
+    icon = icon_duel
+
+    desc = murim_challenge_training_spar_interaction_desc
+
+    is_shown = {
+        NOT = { scope:actor = scope:recipient }
+        scope:actor = { murim_is_martial_artist_trigger = yes }
+        scope:recipient = { murim_is_martial_artist_trigger = yes }
+    }
+
+    is_valid_showing_failures_only = {
+        scope:actor = {
+            is_imprisoned = no
+            NOT = { has_character_modifier = murim_sparring_fatigue }
+        }
+        scope:recipient = {
+            is_imprisoned = no
+            NOT = { has_character_modifier = murim_sparring_fatigue }
+        }
+    }
+
+    on_accept = {
+        scope:actor = {
+            add_character_modifier = {
+                modifier = murim_sparring_fatigue
+                months = 1
+            }
+            change_variable = { name = murim_cultivation_xp add = 15 }
+            random = {
+                chance = 30
+                add_prowess_skill = 1
+            }
+            add_opinion = {
+                target = scope:recipient
+                modifier = murim_martial_respect_opinion
+            }
+        }
+        scope:recipient = {
+            add_character_modifier = {
+                modifier = murim_sparring_fatigue
+                months = 1
+            }
+            change_variable = { name = murim_cultivation_xp add = 15 }
+            random = {
+                chance = 30
+                add_prowess_skill = 1
+            }
+            add_opinion = {
+                target = scope:actor
+                modifier = murim_martial_respect_opinion
+            }
+        }
+    }
+
+    on_decline = {}
+
+    ai_accept = {
+        base = 60
+        modifier = {
+            add = 20
+            scope:recipient = { has_trait = ambitious }
+        }
+        modifier = {
+            add = 15
+            scope:recipient = { has_trait = diligent }
+        }
+        modifier = {
+            add = -15
+            scope:recipient = { has_trait = lazy }
+        }
+    }
+}
+
+# GIFT HERBS — Transfer herb stockpile to another cultivator
+murim_gift_herbs_interaction = {
+    category = interaction_category_friendly
+    icon = icon_give_gift
+
+    desc = murim_gift_herbs_interaction_desc
+
+    is_shown = {
+        NOT = { scope:actor = scope:recipient }
+        scope:actor = {
+            murim_is_martial_artist_trigger = yes
+            has_variable = murim_herb_stockpile
+            var:murim_herb_stockpile >= 5
+        }
+        scope:recipient = {
+            murim_is_martial_artist_trigger = yes
+        }
+    }
+
+    is_valid_showing_failures_only = {
+        scope:actor = {
+            has_variable = murim_herb_stockpile
+            var:murim_herb_stockpile >= 5
+        }
+    }
+
+    on_accept = {
+        scope:actor = {
+            change_variable = { name = murim_herb_stockpile add = -5 }
+            add_prestige = 50
+            add_opinion = {
+                target = scope:recipient
+                modifier = murim_martial_respect_opinion
+            }
+        }
+        scope:recipient = {
+            if = {
+                limit = { NOT = { has_variable = murim_herb_stockpile } }
+                set_variable = { name = murim_herb_stockpile value = 0 }
+            }
+            change_variable = { name = murim_herb_stockpile add = 5 }
+            add_opinion = {
+                target = scope:actor
+                modifier = murim_grateful_disciple_opinion
+            }
+        }
+    }
+
+    on_decline = {}
+
+    ai_accept = {
+        base = 50
+        modifier = {
+            add = 25
+            scope:actor = { has_trait = generous }
+        }
+        modifier = {
+            add = 20
+            scope:recipient = { has_character_flag = has_martial_master }
+            scope:actor = { has_character_flag = murim_sect_master }
+        }
+        modifier = {
+            add = -15
+            scope:actor = {
+                has_variable = murim_herb_stockpile
+                var:murim_herb_stockpile < 10
+            }
+        }
+    }
+}

@@ -973,3 +973,170 @@ murim_combat.0006 = {
 		}
 	}
 }
+
+######################################
+# murim_combat.0007 - KILLING INTENT AWAKENING
+# After a brutal battle, the cultivator's qi begins to manifest
+# as killing intent — a blade-edge power that is hard to control.
+######################################
+murim_combat.0007 = {
+	type = character_event
+	title = murim_combat.0007.t
+	desc = murim_combat.0007.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_vengeful
+	}
+
+	trigger = {
+		is_alive = yes
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_flag = killing_intent_awakening_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = sadistic }
+		modifier = { add = 2 prowess >= 18 }
+		modifier = { add = -2 has_trait = compassionate }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = killing_intent_awakening_cooldown
+			years = 5
+		}
+	}
+
+	# Option A: Embrace the killing intent — let it sharpen your blade
+	option = {
+		name = murim_combat.0007.a
+		add_prowess_skill = 3
+		add_dread = 15
+		add_character_modifier = {
+			modifier = murim_killing_intent_active
+			months = 24
+		}
+		change_variable = { name = murim_cultivation_xp add = 25 }
+		stress_impact = {
+			compassionate = medium_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = sadistic }
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = -30 has_trait = compassionate }
+		}
+	}
+
+	# Option B: Suppress it — channel the energy into cultivation purity
+	option = {
+		name = murim_combat.0007.b
+		add_stress = 15
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_character_modifier = {
+			modifier = murim_battle_meditation
+			months = 12
+		}
+		stress_impact = {
+			diligent = minor_stress_impact_loss
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 25 has_trait = diligent }
+			modifier = { add = 20 has_trait = temperate }
+		}
+	}
+
+	# Option C: Accept it as part of the martial path — neither embrace nor suppress
+	option = {
+		name = murim_combat.0007.c
+		add_prowess_skill = 1
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = patient }
+		}
+	}
+}
+
+######################################
+# murim_combat.0008 - BATTLEFIELD ENLIGHTENMENT
+# In the midst of life and death, a cultivator glimpses
+# something beyond technique — pure instinctual martial truth.
+######################################
+murim_combat.0008 = {
+	type = character_event
+	title = murim_combat.0008.t
+	desc = murim_combat.0008.desc
+	theme = martial_arts
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_alive = yes
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_cultivation_rank
+		var:murim_cultivation_rank >= 2
+		NOT = { has_character_flag = battlefield_enlightenment_used }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 prowess >= 18 }
+		modifier = { add = 2 learning >= 14 }
+	}
+
+	immediate = {
+		set_character_flag = battlefield_enlightenment_used
+	}
+
+	# Option A: Let the insight crystallize — breakthrough attempt
+	option = {
+		name = murim_combat.0008.a
+		change_variable = { name = murim_cultivation_xp add = 80 }
+		add_character_modifier = {
+			modifier = murim_heavenly_insight
+			months = 12
+		}
+		random_list = {
+			50 = {
+				desc = murim_combat.0008.a.breakthrough
+				trigger_event = {
+					id = murim_cultivation.0008
+					days = { 3 14 }
+				}
+			}
+			50 = {
+				desc = murim_combat.0008.a.deep_gain
+				add_prowess_skill = 2
+				change_variable = { name = murim_cultivation_xp add = 30 }
+			}
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Option B: Record the insight — write down what you glimpsed
+	option = {
+		name = murim_combat.0008.b
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_learning_skill = 1
+		add_character_modifier = {
+			modifier = murim_combat_instinct_sharpened
+			months = 18
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+}

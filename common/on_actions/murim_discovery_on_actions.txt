@@ -1,0 +1,158 @@
+############################################
+# MURIM DISCOVERY ON_ACTIONS
+# Fires discovery events yearly for characters
+# who have not yet found the martial world.
+#
+# 20 events exist across 4 discovery paths:
+#   1001-1006: Landless wanderers (2x chance)
+#   2001-2005: Landed nobles
+#   3001-3003: Courtiers & scholars
+#   4001-4004: Travellers & explorers
+#
+# Events self-gate via murim_is_eligible_for_discovery_trigger
+# (age 8+, not already martial, not clan member).
+# AI characters get same chances — important for
+# world seeding so non-player factions gain cultivators.
+############################################
+
+on_yearly_pulse = {
+
+    # ------------------------------------------
+    # DISCOVERY PULSE
+    # Non-martial characters have a yearly chance
+    # to stumble into the martial world via one of
+    # the 20 discovery events.
+    # ------------------------------------------
+    effect = {
+        every_living_character = {
+            limit = {
+                murim_is_eligible_for_discovery_trigger = yes
+                NOT = { has_character_flag = murim_discovery_pulse_cooldown }
+            }
+
+            # Base 12% chance per year; landless characters get bonus
+            random = {
+                chance = 12
+                modifier = {
+                    add = 12
+                    is_landed = no
+                }
+                modifier = {
+                    add = 5
+                    has_trait = brave
+                }
+                modifier = {
+                    add = 5
+                    has_trait = curious
+                }
+                modifier = {
+                    add = 3
+                    has_trait = adventurer
+                }
+                modifier = {
+                    add = -5
+                    has_trait = craven
+                }
+
+                add_character_flag = {
+                    flag = murim_discovery_pulse_cooldown
+                    months = 8
+                }
+
+                random_list = {
+                    # ---- LANDLESS PATH ----
+                    20 = {
+                        trigger = { is_landed = no }
+                        trigger_event = { id = murim_discover.1001 days = { 5 30 } }
+                    }
+                    15 = {
+                        trigger = { is_landed = no }
+                        trigger_event = { id = murim_discover.1002 days = { 5 30 } }
+                    }
+                    10 = {
+                        trigger = { is_landed = no }
+                        trigger_event = { id = murim_discover.1003 days = { 10 30 } }
+                    }
+                    10 = {
+                        trigger = { is_landed = no }
+                        trigger_event = { id = murim_discover.1004 days = { 5 25 } }
+                    }
+                    8 = {
+                        trigger = { is_landed = no }
+                        trigger_event = { id = murim_discover.1005 days = { 5 25 } }
+                    }
+                    7 = {
+                        trigger = { is_landed = no }
+                        trigger_event = { id = murim_discover.1006 days = { 10 40 } }
+                    }
+                    # ---- LANDED / NOBLE PATH ----
+                    15 = {
+                        trigger = { is_landed = yes }
+                        trigger_event = { id = murim_discover.2001 days = { 10 40 } }
+                    }
+                    12 = {
+                        trigger = { is_landed = yes }
+                        trigger_event = { id = murim_discover.2002 days = { 10 40 } }
+                    }
+                    8 = {
+                        trigger = { is_landed = yes }
+                        trigger_event = { id = murim_discover.2003 days = { 15 45 } }
+                    }
+                    6 = {
+                        trigger = { is_landed = yes }
+                        trigger_event = { id = murim_discover.2004 days = { 15 45 } }
+                    }
+                    5 = {
+                        trigger = { is_landed = yes age >= 16 }
+                        trigger_event = { id = murim_discover.2005 days = { 15 60 } }
+                    }
+                    # ---- COURTIER / SCHOLAR PATH ----
+                    10 = {
+                        trigger = {
+                            OR = {
+                                is_courtier = yes
+                                learning >= 12
+                            }
+                        }
+                        trigger_event = { id = murim_discover.3001 days = { 10 40 } }
+                    }
+                    8 = {
+                        trigger = { learning >= 10 }
+                        trigger_event = { id = murim_discover.3002 days = { 10 40 } }
+                    }
+                    6 = {
+                        trigger = { learning >= 11 }
+                        trigger_event = { id = murim_discover.3003 days = { 15 45 } }
+                    }
+                    # ---- EXPLORATION PATH ----
+                    8 = {
+                        trigger = { is_travelling = yes }
+                        trigger_event = { id = murim_discover.4001 days = { 5 20 } }
+                    }
+                    6 = {
+                        trigger = { is_travelling = yes }
+                        trigger_event = { id = murim_discover.4002 days = { 5 20 } }
+                    }
+                    5 = {
+                        trigger = { is_travelling = yes }
+                        trigger_event = { id = murim_discover.4003 days = { 5 20 } }
+                    }
+                    4 = {
+                        trigger = { is_travelling = yes }
+                        trigger_event = { id = murim_discover.4004 days = { 5 20 } }
+                    }
+                    # ---- NEW DISCOVERY EVENTS ----
+                    # 5001: Noble witnesses a duel (any landed character)
+                    6 = {
+                        trigger = { is_landed = yes }
+                        trigger_event = { id = murim_discover.5001 days = { 10 30 } }
+                    }
+                    # 5002: Beggar master encounter (any eligible)
+                    5 = {
+                        trigger_event = { id = murim_discover.5002 days = { 10 30 } }
+                    }
+                }
+            }
+        }
+    }
+}

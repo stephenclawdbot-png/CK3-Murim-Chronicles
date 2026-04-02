@@ -1,0 +1,84 @@
+############################################
+# MURIM HARMONY ON_ACTIONS
+# Fires clan harmony events yearly for sect
+# members who hold clan leader status.
+#
+# Events 0001-0008 existed with no on_actions
+# hook — wired here. Events 0009-0010 are new.
+#
+# AI clan leaders get same chances so sects
+# evolve their internal harmony scores without
+# player involvement.
+############################################
+
+on_yearly_pulse = {
+
+    # ------------------------------------------
+    # HARMONY PULSE
+    # Clan leaders evaluate internal cohesion yearly.
+    # ------------------------------------------
+    effect = {
+        every_living_character = {
+            limit = {
+                is_alive = yes
+                has_variable = murim_clan_leader
+                murim_is_clan_member_trigger = yes
+                is_imprisoned = no
+                NOT = { has_character_flag = murim_harmony_pulse_cooldown }
+            }
+
+            random = {
+                chance = 40
+                modifier = {
+                    add = 15
+                    diplomacy >= 14
+                }
+                modifier = {
+                    add = 10
+                    has_trait = gregarious
+                }
+                modifier = {
+                    add = -10
+                    is_ai = yes
+                }
+
+                add_character_flag = {
+                    flag = murim_harmony_pulse_cooldown
+                    months = 9
+                }
+
+                random_list = {
+                    20 = { trigger_event = { id = murim_harmony.0001 days = { 10 40 } } }
+                    15 = { trigger_event = { id = murim_harmony.0002 days = { 10 40 } } }
+                    12 = { trigger_event = { id = murim_harmony.0003 days = { 15 50 } } }
+                    10 = { trigger_event = { id = murim_harmony.0004 days = { 15 50 } } }
+                    10 = { trigger_event = { id = murim_harmony.0005 days = { 15 50 } } }
+                    8 = {
+                        trigger = { has_variable = murim_clan_harmony_score }
+                        trigger_event = { id = murim_harmony.0006 days = { 20 60 } }
+                    }
+                    8 = {
+                        trigger = { has_variable = murim_clan_harmony_score }
+                        trigger_event = { id = murim_harmony.0007 days = { 20 60 } }
+                    }
+                    7 = {
+                        trigger = { has_variable = murim_clan_harmony_score }
+                        trigger_event = { id = murim_harmony.0008 days = { 20 60 } }
+                    }
+                    # New: Internal ranking duel
+                    6 = {
+                        trigger_event = { id = murim_harmony.0009 days = { 15 45 } }
+                    }
+                    # New: Elder council wisdom gift
+                    4 = {
+                        trigger = {
+                            has_variable = murim_cultivation_rank
+                            var:murim_cultivation_rank >= 4
+                        }
+                        trigger_event = { id = murim_harmony.0010 days = { 20 60 } }
+                    }
+                }
+            }
+        }
+    }
+}

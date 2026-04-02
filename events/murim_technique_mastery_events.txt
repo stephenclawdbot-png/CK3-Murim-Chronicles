@@ -846,3 +846,159 @@ murim_technique_mastery.0005 = {
 		}
 	}
 }
+
+######################################
+# murim_technique_mastery.0006 — TECHNIQUE FUSION
+# Two mastered arts merge into something entirely new.
+# The synthesis is unpredictable — possibly transcendent.
+######################################
+murim_technique_mastery.0006 = {
+	type = character_event
+	title = murim_technique_mastery.0006.t
+	desc = murim_technique_mastery.0006.desc
+	theme = martial_arts
+
+	trigger = {
+		is_alive = yes
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 6
+		prowess >= 16
+		NOT = { has_character_flag = technique_fusion_attempted }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 prowess >= 22 }
+		modifier = { factor = 1.5 learning >= 16 }
+	}
+
+	immediate = {
+		set_character_flag = technique_fusion_attempted
+	}
+
+	# Option A: Force the fusion — brute cultivation pressure
+	option = {
+		name = murim_technique_mastery.0006.a
+		random_list = {
+			55 = {
+				desc = murim_technique_mastery.0006.a.success
+				add_prowess_skill = 4
+				change_variable = { name = murim_cultivation_xp add = 60 }
+				add_character_modifier = {
+					modifier = murim_heavenly_insight
+					months = 18
+				}
+			}
+			30 = {
+				desc = murim_technique_mastery.0006.a.partial
+				add_prowess_skill = 2
+				change_variable = { name = murim_cultivation_xp add = 30 }
+			}
+			15 = {
+				desc = murim_technique_mastery.0006.a.failure
+				add_character_modifier = {
+					modifier = murim_qi_deviation_suffering
+					months = 6
+				}
+				add_stress = 20
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = ambitious }
+			modifier = { add = 15 prowess >= 22 }
+		}
+	}
+
+	# Option B: Meditative synthesis — slow and careful
+	option = {
+		name = murim_technique_mastery.0006.b
+		add_character_modifier = {
+			modifier = murim_closed_door_cultivation
+			months = 6
+		}
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		add_prowess_skill = 2
+		add_learning_skill = 1
+		ai_chance = {
+			base = 60
+			modifier = { add = 25 has_trait = diligent }
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+}
+
+######################################
+# murim_technique_mastery.0007 — LOST TECHNIQUE RECOVERY
+# An ancient variant of your style resurfaces from a damaged manual.
+# Recovering it could restore a lost branch of your lineage.
+######################################
+murim_technique_mastery.0007 = {
+	type = character_event
+	title = murim_technique_mastery.0007.t
+	desc = murim_technique_mastery.0007.desc
+	theme = martial_arts
+
+	trigger = {
+		is_alive = yes
+		murim_is_martial_artist_trigger = yes
+		has_variable = murim_cultivation_level
+		var:murim_cultivation_level >= 4
+		learning >= 12
+		NOT = { has_character_flag = lost_technique_recovered }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { factor = 2 learning >= 18 }
+		modifier = { factor = 1.5 has_trait = curious }
+	}
+
+	immediate = {
+		set_character_flag = lost_technique_recovered
+	}
+
+	# Option A: Restore the lost variant to your lineage
+	option = {
+		name = murim_technique_mastery.0007.a
+		add_prowess_skill = 2
+		add_learning_skill = 2
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_prestige = 200
+		create_character_memory = {
+			type = murim_technique_perfection_attempt
+		}
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_trait = diligent }
+		}
+	}
+
+	# Option B: Sell it — another sect will pay dearly for a lost technique
+	option = {
+		name = murim_technique_mastery.0007.b
+		add_gold = 100
+		add_prestige = 100
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		ai_chance = {
+			base = 25
+			modifier = { add = 25 has_trait = greedy }
+		}
+	}
+
+	# Option C: Preserve it in the sect archive — knowledge belongs to all
+	option = {
+		name = murim_technique_mastery.0007.c
+		add_prestige = 150
+		add_piety = 100
+		if = {
+			limit = { has_variable = murim_clan_harmony_score }
+			change_variable = { name = murim_clan_harmony_score add = 10 }
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 has_trait = generous }
+		}
+	}
+}

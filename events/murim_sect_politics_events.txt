@@ -1999,3 +1999,200 @@ murim_sect_politics.0014 = {
 		}
 	}
 }
+
+######################################
+# murim_sect_politics.0015 — HERESY TRIAL
+# An orthodox sect formally accuses a member of
+# practising demonic arts. The accused must answer.
+######################################
+murim_sect_politics.0015 = {
+	type = character_event
+	title = murim_sect_politics.0015.t
+	desc = murim_sect_politics.0015.desc
+	theme = intrigue
+
+	left_portrait = {
+		character = root
+		animation = personality_callous
+	}
+
+	trigger = {
+		is_alive = yes
+		murim_is_clan_member_trigger = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = heresy_trial_cooldown }
+		OR = {
+			has_trait = demonic_cultivator
+			has_variable = murim_forbidden_knowledge
+			has_character_modifier = murim_ancient_demonic_wisdom
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 3 has_trait = demonic_cultivator }
+		modifier = { add = 2 has_variable = murim_forbidden_knowledge }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = heresy_trial_cooldown
+			years = 10
+		}
+	}
+
+	# Option A: Deny all charges — rely on reputation and allies
+	option = {
+		name = murim_sect_politics.0015.a
+		random_list = {
+			60 = {
+				desc = murim_sect_politics.0015.a.cleared
+				add_prestige = 200
+				add_piety = 100
+			}
+			40 = {
+				desc = murim_sect_politics.0015.a.guilty
+				add_prestige = -300
+				add_piety = -200
+				if = {
+					limit = { has_character_modifier = murim_sect_inner_disciple }
+					remove_character_modifier = murim_sect_inner_disciple
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 intrigue >= 14 }
+			modifier = { add = 15 has_trait = brave }
+		}
+	}
+
+	# Option B: Confess and submit to purification
+	option = {
+		name = murim_sect_politics.0015.b
+		add_prestige = -150
+		add_piety = 200
+		if = {
+			limit = { has_trait = demonic_cultivator }
+			remove_trait = demonic_cultivator
+		}
+		if = {
+			limit = { has_variable = murim_forbidden_knowledge }
+			set_variable = { name = murim_forbidden_knowledge value = 0 }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 has_trait = humble }
+			modifier = { add = 20 has_trait = content }
+		}
+	}
+
+	# Option C: Flee the sect and survive as an outcast
+	option = {
+		name = murim_sect_politics.0015.c
+		add_prestige = -200
+		add_prowess_skill = 1
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		# Leave the sect — character becomes a wanderer
+		if = {
+			limit = { has_character_modifier = murim_sect_inner_disciple }
+			remove_character_modifier = murim_sect_inner_disciple
+		}
+		if = {
+			limit = { has_character_modifier = murim_sect_outer_disciple }
+			remove_character_modifier = murim_sect_outer_disciple
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = stubborn }
+		}
+	}
+}
+
+######################################
+# murim_sect_politics.0016 — SECT MERGER PROPOSAL
+# Two weakened sects consider merging their lineages.
+# The consequences reshape the martial world's power structure.
+######################################
+murim_sect_politics.0016 = {
+	type = character_event
+	title = murim_sect_politics.0016.t
+	desc = murim_sect_politics.0016.desc
+	theme = diplomacy
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_alive = yes
+		has_variable = murim_clan_leader
+		murim_is_clan_member_trigger = yes
+		is_imprisoned = no
+		NOT = { has_character_flag = sect_merger_considered_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = { add = 2 diplomacy >= 14 }
+		modifier = { add = 1 has_trait = gregarious }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = sect_merger_considered_cooldown
+			years = 15
+		}
+	}
+
+	# Option A: Agree to merge — combined strength
+	option = {
+		name = murim_sect_politics.0016.a
+		if = {
+			limit = { NOT = { has_variable = murim_clan_harmony_score } }
+			set_variable = { name = murim_clan_harmony_score value = 0 }
+		}
+		change_variable = { name = murim_clan_harmony_score add = 15 }
+		add_prestige = 300
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		add_character_modifier = {
+			modifier = murim_new_sect_master
+			months = 24
+		}
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 diplomacy >= 16 }
+			modifier = { add = 15 has_trait = gregarious }
+		}
+	}
+
+	# Option B: Refuse — lineage integrity above all
+	option = {
+		name = murim_sect_politics.0016.b
+		add_prestige = 100
+		add_piety = 50
+		ai_chance = {
+			base = 45
+			modifier = { add = 20 has_trait = proud }
+			modifier = { add = 15 has_trait = stubborn }
+		}
+	}
+
+	# Option C: Counter-propose absorption — they join your sect
+	option = {
+		name = murim_sect_politics.0016.c
+		add_prestige = 200
+		add_gold = 50
+		add_character_modifier = {
+			modifier = murim_new_sect_master
+			months = 12
+		}
+		ai_chance = {
+			base = 20
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 has_trait = arrogant }
+		}
+	}
+}
