@@ -1,0 +1,866 @@
+namespace = murim_poison_flower_palace
+
+# POISON FLOWER PALACE — Full Clan Event Chain
+# An all-female sect renowned for poison arts, seduction techniques, and flower-based martial arts.
+# Unorthodox faction. Located in a hidden valley filled with lethal exotic flowers.
+# Known for their beauty, ruthlessness, and mastery of the Hundred Poison Body.
+
+# ============================================
+# EVENT 0001 — The Flower Maiden's Trial
+# New disciples must survive a garden of lethal flowers to prove poison resistance
+# ============================================
+murim_poison_flower_palace.0001 = {
+	type = character_event
+	title = murim_poison_flower_palace.0001.t
+	desc = murim_poison_flower_palace.0001.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:palace_mistress
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		is_alive = yes
+		is_female = yes
+		has_trait = murim_martial_artist
+		NOT = { has_trait = poison_flower_initiate }
+		NOT = { has_character_flag = flower_trial_done }
+	}
+	
+	immediate = {
+		random_relation = {
+			type = mentor
+			limit = { has_trait = poison_flower_palace_member }
+			save_scope_as = palace_mistress
+		}
+		set_character_flag = {
+			flag = flower_trial_done
+			days = 3650
+		}
+	}
+	
+	# Option A: Walk through the Garden of a Thousand Poisons
+	option = {
+		name = murim_poison_flower_palace.0001.a
+		random_list = {
+			70 = {
+				add_trait = poison_flower_initiate
+				add_character_modifier = {
+					modifier = poison_resistance_awakened_modifier
+					days = 730
+				}
+				add_prowess = 2
+				add_intrigue = 3
+				trigger_event = {
+					id = murim_poison_flower_palace.0002
+					days = { 60 120 }
+				}
+			}
+			30 = {
+				add_trait = poison_scarred
+				add_character_modifier = {
+					modifier = flower_poison_aftermath_modifier
+					days = 365
+				}
+				add_health = -1
+			}
+		}
+	}
+	
+	# Option B: Build resistance gradually with microdosing
+	option = {
+		name = murim_poison_flower_palace.0001.b
+		add_trait = poison_flower_initiate
+		add_character_modifier = {
+			modifier = slow_poison_resistance_modifier
+			days = 1095
+		}
+		add_intrigue = 2
+		trigger_event = {
+			id = murim_poison_flower_palace.0002
+			days = { 180 365 }
+		}
+	}
+	
+	# Option C: Refuse the trial — poisons are beneath you
+	option = {
+		name = murim_poison_flower_palace.0001.c
+		add_prestige = -200
+		add_opinion = {
+			target = scope:palace_mistress
+			modifier = disappointed_mistress_opinion
+			opinion = -30
+		}
+		add_character_flag = rejected_poison_path
+	}
+}
+
+# ============================================
+# EVENT 0002 — Art of the Venomous Petal
+# Learning the signature fighting style — flower-based poison combat
+# ============================================
+murim_poison_flower_palace.0002 = {
+	type = character_event
+	title = murim_poison_flower_palace.0002.t
+	desc = murim_poison_flower_palace.0002.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:technique_teacher
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = poison_flower_initiate
+		NOT = { has_trait = venomous_petal_practitioner }
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = poison_flower_palace_elder
+			}
+			save_scope_as = technique_teacher
+		}
+	}
+	
+	# Option A: Master the Venomous Petal Dance
+	option = {
+		name = murim_poison_flower_palace.0002.a
+		add_trait = venomous_petal_practitioner
+		add_prowess = 3
+		add_intrigue = 2
+		add_character_modifier = {
+			modifier = venomous_petal_mastery_modifier
+			days = 1095
+		}
+		trigger_event = {
+			id = murim_poison_flower_palace.0003
+			days = { 90 180 }
+		}
+	}
+	
+	# Option B: Focus on poison crafting instead
+	option = {
+		name = murim_poison_flower_palace.0002.b
+		add_trait = master_poison_crafter
+		add_intrigue = 5
+		add_character_modifier = {
+			modifier = poison_crafter_reputation_modifier
+			days = 1825
+		}
+	}
+	
+	# Option C: Learn the forbidden Charm Technique
+	option = {
+		name = murim_poison_flower_palace.0002.c
+		trigger = {
+			OR = {
+				has_trait = lustful
+				diplomacy >= 14
+			}
+		}
+		add_trait = charm_technique_user
+		add_diplomacy = 5
+		add_character_modifier = {
+			modifier = bewitching_aura_modifier
+			days = 1825
+		}
+		add_secret = {
+			type = secret_forbidden_charm
+		}
+	}
+}
+
+# ============================================
+# EVENT 0003 — Hundred Poison Body Cultivation
+# Attempting to achieve the legendary poison-immune body
+# ============================================
+murim_poison_flower_palace.0003 = {
+	type = character_event
+	title = murim_poison_flower_palace.0003.t
+	desc = murim_poison_flower_palace.0003.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	
+	trigger = {
+		has_trait = venomous_petal_practitioner
+		NOT = { has_trait = hundred_poison_body }
+		NOT = { has_character_flag = hundred_poison_attempt }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = hundred_poison_attempt
+			days = 3650
+		}
+	}
+	
+	# Option A: Consume all 100 poisons in the ritual
+	option = {
+		name = murim_poison_flower_palace.0003.a
+		random_list = {
+			40 = {
+				add_trait = hundred_poison_body
+				add_prowess = 5
+				add_intrigue = 3
+				add_character_modifier = {
+					modifier = hundred_poison_body_modifier
+					years = -1
+				}
+				add_prestige = 500
+				trigger_event = {
+					id = murim_poison_flower_palace.0004
+					days = { 60 120 }
+				}
+			}
+			35 = {
+				add_trait = partial_poison_body
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = partial_poison_resistance_modifier
+					days = 1825
+				}
+			}
+			25 = {
+				add_trait = qi_deviation_critical
+				add_health = -3
+				add_character_modifier = {
+					modifier = poison_cultivation_failure_modifier
+					days = 730
+				}
+			}
+		}
+	}
+	
+	# Option B: Use the modified safer method (slower but less risky)
+	option = {
+		name = murim_poison_flower_palace.0003.b
+		add_trait = partial_poison_body
+		add_prowess = 2
+		add_intrigue = 2
+		add_character_modifier = {
+			modifier = gradual_poison_cultivation_modifier
+			days = 1825
+		}
+	}
+	
+	# Option C: Abandon poison cultivation — focus on martial arts only
+	option = {
+		name = murim_poison_flower_palace.0003.c
+		add_prowess = 4
+		remove_trait = venomous_petal_practitioner
+		add_trait = pure_martial_flower
+		add_character_modifier = {
+			modifier = pure_flower_martial_arts_modifier
+			days = 1825
+		}
+	}
+}
+
+# ============================================
+# EVENT 0004 — Palace Mistress Selection
+# The current Palace Mistress seeks a successor
+# ============================================
+murim_poison_flower_palace.0004 = {
+	type = character_event
+	title = murim_poison_flower_palace.0004.t
+	desc = murim_poison_flower_palace.0004.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:current_mistress
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_trait = hundred_poison_body
+		NOT = { has_trait = poison_flower_palace_mistress }
+		NOT = { has_character_flag = palace_mistress_selection }
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = poison_flower_palace_mistress
+			}
+			save_scope_as = current_mistress
+		}
+		set_character_flag = {
+			flag = palace_mistress_selection
+			days = 3650
+		}
+	}
+	
+	# Option A: Accept the nomination and compete
+	option = {
+		name = murim_poison_flower_palace.0004.a
+		trigger_event = {
+			id = murim_poison_flower_palace.0005
+			days = { 30 60 }
+		}
+		add_prestige = 200
+	}
+	
+	# Option B: Decline — prefer the freedom of wandering
+	option = {
+		name = murim_poison_flower_palace.0004.b
+		add_trait = wandering_poison_maiden
+		add_character_modifier = {
+			modifier = wandering_poison_expert_modifier
+			days = 3650
+		}
+		add_prestige = 100
+	}
+	
+	# Option C: Assassinate the rival candidate first
+	option = {
+		name = murim_poison_flower_palace.0004.c
+		trigger = { intrigue >= 16 }
+		add_secret = {
+			type = secret_murder_plot
+		}
+		random_list = {
+			60 = {
+				add_trait = poison_flower_palace_mistress
+				add_prestige = 800
+				add_character_modifier = {
+					modifier = ruthless_mistress_modifier
+					days = 1825
+				}
+			}
+			40 = {
+				add_trait = exposed_assassin
+				add_prestige = -500
+				add_character_flag = palace_exile
+			}
+		}
+	}
+}
+
+# ============================================
+# EVENT 0005 — The Poison Flower Competition
+# Candidates must create the most potent poison and its antidote
+# ============================================
+murim_poison_flower_palace.0005 = {
+	type = character_event
+	title = murim_poison_flower_palace.0005.t
+	desc = murim_poison_flower_palace.0005.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	right_portrait = {
+		character = scope:rival_candidate
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = hundred_poison_body
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = poison_flower_palace_member
+				NOT = { this = root }
+				intrigue >= 12
+			}
+			save_scope_as = rival_candidate
+		}
+	}
+	
+	# Option A: Create the Seven-Color Heartbreak Poison
+	option = {
+		name = murim_poison_flower_palace.0005.a
+		trigger = { intrigue >= 18 }
+		add_trait = poison_flower_palace_mistress
+		add_prestige = 1000
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = seven_color_poison_creator_modifier
+			years = -1
+		}
+		trigger_event = {
+			id = murim_poison_flower_palace.0006
+			days = { 90 180 }
+		}
+	}
+	
+	# Option B: Create a healing-poison hybrid (revolutionary approach)
+	option = {
+		name = murim_poison_flower_palace.0005.b
+		trigger = { learning >= 14 }
+		add_trait = poison_flower_palace_mistress
+		add_prestige = 800
+		add_character_modifier = {
+			modifier = healing_poison_pioneer_modifier
+			years = -1
+		}
+		add_learning = 3
+	}
+	
+	# Option C: Lose the competition gracefully
+	option = {
+		name = murim_poison_flower_palace.0005.c
+		add_prestige = -100
+		add_opinion = {
+			target = scope:rival_candidate
+			modifier = graceful_loss_respect_opinion
+			opinion = 20
+		}
+	}
+}
+
+# ============================================
+# EVENT 0006 — Love and Poison: The Male Outsider
+# A male martial artist infiltrates/visits the Palace — romance or danger
+# ============================================
+murim_poison_flower_palace.0006 = {
+	type = character_event
+	title = murim_poison_flower_palace.0006.t
+	desc = murim_poison_flower_palace.0006.desc
+	theme = seduction
+	
+	left_portrait = {
+		character = root
+		animation = flirtation
+	}
+	right_portrait = {
+		character = scope:male_intruder
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = poison_flower_palace_member
+		NOT = { has_character_flag = male_intruder_event }
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				is_male = yes
+				has_trait = murim_martial_artist
+				prowess >= 15
+			}
+			save_scope_as = male_intruder
+		}
+		set_character_flag = {
+			flag = male_intruder_event
+			days = 1825
+		}
+	}
+	
+	# Option A: Fall in love — forbidden romance
+	option = {
+		name = murim_poison_flower_palace.0006.a
+		set_relation_lover = scope:male_intruder
+		add_secret = {
+			type = secret_lover
+			target = scope:male_intruder
+		}
+		add_character_modifier = {
+			modifier = forbidden_love_modifier
+			days = 1825
+		}
+		stress_impact = {
+			cynical = major_stress_impact_gain
+		}
+		trigger_event = {
+			id = murim_poison_flower_palace.0008
+			days = { 180 365 }
+		}
+	}
+	
+	# Option B: Test your poisons on him
+	option = {
+		name = murim_poison_flower_palace.0006.b
+		scope:male_intruder = {
+			add_character_modifier = {
+				modifier = palace_poison_test_subject_modifier
+				days = 365
+			}
+			add_health = -2
+		}
+		add_intrigue = 2
+		add_character_modifier = {
+			modifier = poison_experimenter_modifier
+			days = 365
+		}
+	}
+	
+	# Option C: Execute him for trespassing
+	option = {
+		name = murim_poison_flower_palace.0006.c
+		scope:male_intruder = {
+			death = {
+				death_reason = death_execution
+				killer = root
+			}
+		}
+		add_prestige = 200
+		add_dread = 30
+	}
+	
+	# Option D: Extract his martial arts secrets through charm technique
+	option = {
+		name = murim_poison_flower_palace.0006.d
+		trigger = { has_trait = charm_technique_user }
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = stolen_technique_knowledge_modifier
+			days = 1825
+		}
+		scope:male_intruder = {
+			add_prowess = -3
+			add_character_modifier = {
+				modifier = charm_technique_victim_modifier
+				days = 730
+			}
+		}
+	}
+}
+
+# ============================================
+# EVENT 0007 — Poison Flower Palace Civil War
+# Factions within the palace fight for control
+# ============================================
+murim_poison_flower_palace.0007 = {
+	type = character_event
+	title = murim_poison_flower_palace.0007.t
+	desc = murim_poison_flower_palace.0007.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	right_portrait = {
+		character = scope:rebel_elder
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = poison_flower_palace_mistress
+		NOT = { has_character_flag = palace_civil_war }
+	}
+	
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_trait = poison_flower_palace_elder
+				opinion = {
+					target = root
+					value < -20
+				}
+			}
+			save_scope_as = rebel_elder
+		}
+		set_character_flag = {
+			flag = palace_civil_war
+			days = 3650
+		}
+	}
+	
+	# Option A: Crush the rebellion with overwhelming poison
+	option = {
+		name = murim_poison_flower_palace.0007.a
+		trigger = { intrigue >= 20 }
+		scope:rebel_elder = {
+			death = {
+				death_reason = death_poison
+				killer = root
+			}
+		}
+		add_prestige = 500
+		add_dread = 40
+		every_courtier = {
+			limit = { has_trait = poison_flower_palace_member }
+			add_opinion = {
+				target = root
+				modifier = feared_mistress_opinion
+				opinion = -20
+			}
+		}
+	}
+	
+	# Option B: Negotiate a compromise — split the palace into branches
+	option = {
+		name = murim_poison_flower_palace.0007.b
+		trigger = { diplomacy >= 14 }
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = palace_reform_modifier
+			days = 1825
+		}
+		add_opinion = {
+			target = scope:rebel_elder
+			modifier = compromise_respect_opinion
+			opinion = 15
+		}
+	}
+	
+	# Option C: Challenge her to a poison duel
+	option = {
+		name = murim_poison_flower_palace.0007.c
+		random_list = {
+			50 = {
+				scope:rebel_elder = {
+					death = {
+						death_reason = death_poison
+						killer = root
+					}
+				}
+				add_prestige = 800
+				add_character_modifier = {
+					modifier = poison_duel_champion_modifier
+					days = 3650
+				}
+			}
+			50 = {
+				add_health = -3
+				add_character_modifier = {
+					modifier = poison_duel_injury_modifier
+					days = 730
+				}
+			}
+		}
+	}
+}
+
+# ============================================
+# EVENT 0008 — The Forbidden Love Consequence
+# The secret romance is discovered
+# ============================================
+murim_poison_flower_palace.0008 = {
+	type = character_event
+	title = murim_poison_flower_palace.0008.t
+	desc = murim_poison_flower_palace.0008.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	right_portrait = {
+		character = scope:male_intruder
+		animation = worry
+	}
+	
+	trigger = {
+		has_trait = poison_flower_palace_member
+		any_secret = {
+			secret_type = secret_lover
+		}
+	}
+	
+	# Option A: Flee the palace together
+	option = {
+		name = murim_poison_flower_palace.0008.a
+		remove_trait = poison_flower_palace_member
+		add_trait = exiled_poison_maiden
+		add_character_modifier = {
+			modifier = lovers_exile_modifier
+			years = -1
+		}
+		add_prestige = -500
+		trigger_event = {
+			id = murim_poison_flower_palace.0010
+			days = { 180 365 }
+		}
+	}
+	
+	# Option B: Kill the lover to preserve your position
+	option = {
+		name = murim_poison_flower_palace.0008.b
+		scope:male_intruder = {
+			death = {
+				death_reason = death_poison
+				killer = root
+			}
+		}
+		add_prestige = 200
+		add_stress = 50
+		add_character_modifier = {
+			modifier = heartbreak_poison_modifier
+			days = 1825
+		}
+	}
+	
+	# Option C: Poison the witnesses to keep the secret
+	option = {
+		name = murim_poison_flower_palace.0008.c
+		trigger = { intrigue >= 16 }
+		add_secret = {
+			type = secret_murder
+		}
+		add_dread = 20
+		add_character_modifier = {
+			modifier = silenced_witnesses_modifier
+			days = 1825
+		}
+	}
+}
+
+# ============================================
+# EVENT 0009 — Petal Storm Apocalypse Technique
+# Creating the ultimate poison technique
+# ============================================
+murim_poison_flower_palace.0009 = {
+	type = character_event
+	title = murim_poison_flower_palace.0009.t
+	desc = murim_poison_flower_palace.0009.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+	
+	trigger = {
+		has_trait = poison_flower_palace_mistress
+		has_trait = hundred_poison_body
+		prowess >= 20
+		intrigue >= 20
+		NOT = { has_character_flag = petal_storm_created }
+	}
+	
+	immediate = {
+		set_character_flag = {
+			flag = petal_storm_created
+			days = 36500
+		}
+	}
+	
+	# Option A: Complete the Petal Storm Apocalypse
+	option = {
+		name = murim_poison_flower_palace.0009.a
+		add_trait = petal_storm_master
+		add_prowess = 10
+		add_intrigue = 5
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = petal_storm_apocalypse_modifier
+			years = -1
+		}
+	}
+	
+	# Option B: Seal it away — too dangerous for the world
+	option = {
+		name = murim_poison_flower_palace.0009.b
+		add_piety = 1000
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = sealed_technique_wisdom_modifier
+			years = -1
+		}
+	}
+	
+	# Option C: Teach it to all palace members — arm the entire sect
+	option = {
+		name = murim_poison_flower_palace.0009.c
+		every_courtier = {
+			limit = { has_trait = poison_flower_palace_member }
+			add_prowess = 3
+			add_character_modifier = {
+				modifier = petal_storm_student_modifier
+				days = 1825
+			}
+		}
+		add_prestige = 1500
+	}
+}
+
+# ============================================
+# EVENT 0010 — Poison Flower Palace Legacy: Eternal Garden
+# Final event — the Palace Mistress creates her eternal legacy
+# ============================================
+murim_poison_flower_palace.0010 = {
+	type = character_event
+	title = murim_poison_flower_palace.0010.t
+	desc = murim_poison_flower_palace.0010.desc
+	theme = martial_arts
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		OR = {
+			has_trait = poison_flower_palace_mistress
+			has_trait = exiled_poison_maiden
+		}
+		age >= 45
+	}
+	
+	# Option A: Create the Eternal Garden — a living repository of all poisons
+	option = {
+		name = murim_poison_flower_palace.0010.a
+		add_trait = eternal_garden_creator
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = eternal_garden_modifier
+			years = -1
+		}
+	}
+	
+	# Option B: Pass everything to a chosen successor
+	option = {
+		name = murim_poison_flower_palace.0010.b
+		random_courtier = {
+			limit = {
+				has_trait = poison_flower_palace_member
+				age <= 25
+			}
+			add_trait = chosen_successor_of_palace
+			add_intrigue = 5
+			add_prowess = 5
+		}
+		add_prestige = 1000
+	}
+	
+	# Option C: Unite the palace with another sect through marriage alliance
+	option = {
+		name = murim_poison_flower_palace.0010.c
+		trigger = { diplomacy >= 16 }
+		add_prestige = 1500
+		add_character_modifier = {
+			modifier = sect_alliance_architect_modifier
+			years = -1
+		}
+	}
+	
+	# Option D: Abandon the palace and become the Poison Immortal — wandering the world
+	option = {
+		name = murim_poison_flower_palace.0010.d
+		remove_trait = poison_flower_palace_mistress
+		add_trait = poison_immortal
+		add_character_modifier = {
+			modifier = poison_immortal_modifier
+			years = -1
+		}
+		add_prowess = 5
+		add_intrigue = 5
+		add_health = 5
+	}
+}
