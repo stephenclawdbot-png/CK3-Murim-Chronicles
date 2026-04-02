@@ -1,0 +1,164 @@
+########################################
+# MURIM CONTINENTAL WAR DECISIONS
+# Faction war declaration, joining sides,
+# neutral path, and peace brokering
+########################################
+
+# === DECLARE CONTINENTAL WAR ===
+murim_declare_continental_war_decision = {
+	title = murim_declare_continental_war_decision
+	desc = murim_declare_continental_war_decision_desc
+	selection_tooltip = murim_declare_continental_war_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_is_faction_leader_trigger = yes
+		NOT = { murim_continental_war_active_trigger = yes }
+	}
+
+	is_valid = {
+		murim_can_declare_faction_war_trigger = yes
+		var:murim_cultivation_rank >= 5
+	}
+
+	effect = {
+		trigger_event = { id = murim_continental_war.0001 days = 7 }
+		custom_tooltip = murim_declare_continental_war_tt
+	}
+
+	ai_check_interval = 360
+	ai_will_do = {
+		base = 5
+		modifier = { add = 15 has_trait = ambitious }
+		modifier = { add = 10 has_trait = wrathful }
+		modifier = { add = -20 has_trait = content }
+		modifier = { add = -15 has_trait = craven }
+	}
+}
+
+# === JOIN ORTHODOX ALLIANCE ===
+murim_join_orthodox_alliance_decision = {
+	title = murim_join_orthodox_alliance_decision
+	desc = murim_join_orthodox_alliance_decision_desc
+	selection_tooltip = murim_join_orthodox_alliance_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		NOT = { has_character_flag = murim_war_orthodox_side }
+		NOT = { has_character_flag = murim_war_unorthodox_side }
+		NOT = { has_character_flag = murim_war_neutral }
+	}
+
+	is_valid = {
+		NOT = { murim_is_unorthodox_faction_trigger = yes }
+	}
+
+	effect = {
+		murim_join_orthodox_war_faction_effect = yes
+		custom_tooltip = murim_join_orthodox_tt
+	}
+
+	ai_check_interval = 30
+	ai_will_do = {
+		base = 20
+		modifier = { add = 40 murim_is_orthodox_faction_trigger = yes }
+		modifier = { add = 15 has_trait = just }
+		modifier = { add = 10 has_trait = zealous }
+	}
+}
+
+# === JOIN UNORTHODOX LEAGUE ===
+murim_join_unorthodox_league_decision = {
+	title = murim_join_unorthodox_league_decision
+	desc = murim_join_unorthodox_league_decision_desc
+	selection_tooltip = murim_join_unorthodox_league_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		NOT = { has_character_flag = murim_war_orthodox_side }
+		NOT = { has_character_flag = murim_war_unorthodox_side }
+		NOT = { has_character_flag = murim_war_neutral }
+	}
+
+	is_valid = {
+		NOT = { murim_is_orthodox_faction_trigger = yes }
+	}
+
+	effect = {
+		murim_join_unorthodox_war_faction_effect = yes
+		custom_tooltip = murim_join_unorthodox_tt
+	}
+
+	ai_check_interval = 30
+	ai_will_do = {
+		base = 20
+		modifier = { add = 40 murim_is_unorthodox_faction_trigger = yes }
+		modifier = { add = 15 has_trait = deceitful }
+		modifier = { add = 10 murim_has_any_corruption_trigger = yes }
+	}
+}
+
+# === STAY NEUTRAL (PROFITEER) ===
+murim_war_neutral_path_decision = {
+	title = murim_war_neutral_path_decision
+	desc = murim_war_neutral_path_decision_desc
+	selection_tooltip = murim_war_neutral_path_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		NOT = { has_character_flag = murim_war_orthodox_side }
+		NOT = { has_character_flag = murim_war_unorthodox_side }
+		NOT = { has_character_flag = murim_war_neutral }
+	}
+
+	is_valid = {
+		intrigue >= 10
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_war_neutral years = 20 }
+		add_character_modifier = { modifier = murim_war_neutral_profiteer years = 10 }
+		trigger_event = { id = murim_continental_war.0050 days = 30 }
+	}
+
+	ai_check_interval = 60
+	ai_will_do = {
+		base = 10
+		modifier = { add = 20 has_trait = greedy }
+		modifier = { add = 15 intrigue >= 15 }
+		modifier = { add = -10 has_trait = brave }
+	}
+}
+
+# === BROKER PEACE ===
+murim_broker_peace_decision = {
+	title = murim_broker_peace_decision
+	desc = murim_broker_peace_decision_desc
+	selection_tooltip = murim_broker_peace_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		diplomacy >= 15
+	}
+
+	is_valid = {
+		NOT = { has_character_flag = murim_peace_broker_cooldown }
+		var:murim_cultivation_rank >= 5
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_peace_broker_cooldown years = 5 }
+		trigger_event = { id = murim_continental_war.0080 days = 14 }
+	}
+
+	ai_check_interval = 180
+	ai_will_do = {
+		base = 5
+		modifier = { add = 25 has_trait = compassionate }
+		modifier = { add = 15 diplomacy >= 18 }
+	}
+}

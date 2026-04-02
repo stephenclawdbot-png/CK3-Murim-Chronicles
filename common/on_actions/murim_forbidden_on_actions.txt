@@ -1,0 +1,254 @@
+########################################
+# MURIM FORBIDDEN TECHNIQUE ON_ACTIONS
+# Autonomous events for forbidden techniques,
+# corruption progression, ascension, war, and AI
+########################################
+
+# === YEARLY PULSE: FORBIDDEN TECHNIQUE CORRUPTION ===
+# Checks corruption effects annually for all corrupted characters
+murim_forbidden_yearly_pulse = {
+	on_actions = {
+		delay = { years = 1 }
+		murim_forbidden_yearly_pulse
+	}
+
+	effect = {
+		every_ruler = {
+			limit = {
+				murim_has_any_corruption_trigger = yes
+				is_alive = yes
+			}
+			# Corruption has ongoing health costs
+			random_list = {
+				70 = { }
+				20 = {
+					trigger_event = { id = murim_forbidden_technique.0400 }
+				}
+				10 = {
+					# Severe corruption episode
+					trigger_event = { id = murim_forbidden_technique.0410 }
+				}
+			}
+		}
+	}
+}
+
+# === YEARLY PULSE: ASCENSION MONITORING ===
+# Checks for potential ascension candidates
+murim_ascension_yearly_pulse = {
+	on_actions = {
+		delay = { years = 1 }
+		murim_ascension_yearly_pulse
+	}
+
+	effect = {
+		every_ruler = {
+			limit = {
+				has_variable = murim_martial_artist
+				var:murim_cultivation_rank >= 6
+				NOT = { murim_is_immortal_trigger = yes }
+				NOT = { has_character_modifier = murim_heavens_attention }
+			}
+			random = {
+				chance = 15
+				add_character_modifier = { modifier = murim_heavens_attention years = 3 }
+			}
+		}
+	}
+}
+
+# === MONTHLY PULSE: AI FORBIDDEN TECHNIQUE DECISIONS ===
+# AI characters autonomously seek or avoid forbidden knowledge
+murim_ai_forbidden_monthly_pulse = {
+	on_actions = {
+		delay = { months = 3 }
+		murim_ai_forbidden_monthly_pulse
+	}
+
+	effect = {
+		every_ruler = {
+			limit = {
+				is_ai = yes
+				has_variable = murim_martial_artist
+				var:murim_cultivation_rank >= 3
+				NOT = { has_character_flag = murim_ai_forbidden_cooldown }
+			}
+			random_list = {
+				80 = { }
+				10 = {
+					# AI discovers forbidden knowledge opportunity
+					modifier = { add = 15 has_trait = ambitious }
+					modifier = { add = 10 has_trait = sadistic }
+					modifier = { add = -20 has_trait = just }
+					trigger_event = { id = murim_forbidden_technique.0001 days = { 7 30 } }
+					set_character_flag = { flag = murim_ai_forbidden_cooldown years = 3 }
+				}
+				10 = {
+					# AI is hunted for knowing forbidden techniques
+					modifier = { factor = 0 NOT = { murim_has_any_forbidden_technique_trigger = yes } }
+					trigger_event = { id = murim_forbidden_technique.0500 days = { 7 30 } }
+				}
+			}
+		}
+	}
+}
+
+# === YEARLY PULSE: CONTINENTAL WAR TENSION ===
+# Monitors faction tension and can trigger war
+murim_continental_war_tension_pulse = {
+	on_actions = {
+		delay = { years = 1 }
+		murim_continental_war_tension_pulse
+	}
+
+	effect = {
+		# Only fire if no war active and no cooldown
+		if = {
+			limit = {
+				NOT = { has_global_variable = murim_continental_war_active }
+				NOT = { has_global_variable = murim_continental_war_cooldown }
+			}
+			random = {
+				chance = 8
+				# Tension builds — small incident
+				random_ruler = {
+					limit = {
+						has_variable = murim_martial_artist
+						var:murim_cultivation_rank >= 4
+					}
+					trigger_event = { id = murim_continental_war.0090 }
+				}
+			}
+		}
+		# Clear cooldown after 25 years
+		if = {
+			limit = {
+				has_global_variable = murim_continental_war_cooldown
+				# Approximate cooldown check
+			}
+			random = {
+				chance = 4
+				remove_global_variable = murim_continental_war_cooldown
+			}
+		}
+	}
+}
+
+# === YEARLY PULSE: TRIBUNAL OPERATIONS ===
+murim_tribunal_yearly_pulse = {
+	on_actions = {
+		delay = { years = 1 }
+		murim_tribunal_yearly_pulse
+	}
+
+	effect = {
+		# Tribunal summons random offenders
+		random_ruler = {
+			limit = {
+				has_trait = murim_tribunal_judge
+				is_alive = yes
+			}
+			random_list = {
+				70 = { }
+				30 = {
+					trigger_event = { id = murim_tribunal_system.0020 days = { 7 60 } }
+				}
+			}
+		}
+
+		# Fill empty tribunal seats
+		if = {
+			limit = {
+				any_ruler = {
+					count < 7
+					has_trait = murim_tribunal_judge
+				}
+			}
+			random_ruler = {
+				limit = {
+					has_variable = murim_martial_artist
+					var:murim_cultivation_rank >= 5
+					NOT = { has_trait = murim_tribunal_judge }
+					NOT = { has_trait = murim_tribunal_exile }
+					NOT = { murim_has_any_corruption_trigger = yes }
+					prowess >= 20
+				}
+				random = {
+					chance = 10
+					trigger_event = { id = murim_tribunal_system.0030 days = { 30 90 } }
+				}
+			}
+		}
+	}
+}
+
+# === MONTHLY PULSE: NPC RIVALRY GENERATION ===
+murim_npc_rivalry_monthly_pulse = {
+	on_actions = {
+		delay = { months = 6 }
+		murim_npc_rivalry_monthly_pulse
+	}
+
+	effect = {
+		random_ruler = {
+			limit = {
+				is_ai = yes
+				has_variable = murim_martial_artist
+				murim_can_generate_rivalry_trigger = yes
+			}
+			random = {
+				chance = 10
+				trigger_event = { id = murim_npc_rivalry.0001 days = { 7 30 } }
+			}
+		}
+	}
+}
+
+# === MONTHLY PULSE: AI SUCCESSION MONITORING ===
+murim_ai_succession_monthly_pulse = {
+	on_actions = {
+		delay = { months = 6 }
+		murim_ai_succession_monthly_pulse
+	}
+
+	effect = {
+		# When an AI clan leader dies, trigger succession
+		every_ruler = {
+			limit = {
+				is_ai = yes
+				has_variable = murim_martial_artist
+				has_character_flag = murim_is_clan_leader
+				is_alive = no
+			}
+			# Find eligible successor
+			random_ruler = {
+				limit = {
+					has_variable = murim_martial_artist
+					murim_succession_eligible_trigger = yes
+					is_alive = yes
+				}
+				trigger_event = { id = murim_succession.0010 days = { 7 30 } }
+			}
+		}
+	}
+}
+
+# === ON DEATH: LEGACY GRUDGE INHERITANCE ===
+on_death = {
+	effect = {
+		if = {
+			limit = {
+				has_trait = murim_sworn_nemesis
+				has_variable = murim_martial_artist
+			}
+			# Pass grudge to a disciple/child
+			random_child = {
+				limit = {
+					has_variable = murim_martial_artist
+					is_alive = yes
+				}
+				murim_inherit_grudge_effect = yes
+			}
+		}
+	}
+}

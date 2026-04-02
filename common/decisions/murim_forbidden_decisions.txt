@@ -1,0 +1,131 @@
+########################################
+# MURIM FORBIDDEN TECHNIQUE DECISIONS
+# Player and AI decisions for forbidden arts,
+# purging corruption, and knowledge brokering
+########################################
+
+# === SEEK FORBIDDEN KNOWLEDGE ===
+murim_seek_forbidden_knowledge_decision = {
+	title = murim_seek_forbidden_knowledge_decision
+	desc = murim_seek_forbidden_knowledge_decision_desc
+	selection_tooltip = murim_seek_forbidden_knowledge_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+		NOT = { has_trait = murim_corruption_stage_4 }
+	}
+
+	is_valid = {
+		murim_can_learn_forbidden_technique_trigger = yes
+		NOT = { has_character_flag = murim_seeking_forbidden_cooldown }
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_seeking_forbidden_cooldown years = 3 }
+		trigger_event = { id = murim_forbidden_technique.0001 days = 7 }
+		custom_tooltip = murim_seek_forbidden_knowledge_tt
+	}
+
+	ai_check_interval = 60
+	ai_will_do = {
+		base = 5
+		modifier = { add = 15 has_trait = ambitious }
+		modifier = { add = 10 has_trait = sadistic }
+		modifier = { add = -20 has_trait = just }
+		modifier = { add = -15 has_trait = compassionate }
+		modifier = { add = 10 intrigue >= 15 }
+	}
+}
+
+# === PURGE CORRUPTION ===
+murim_purge_corruption_decision = {
+	title = murim_purge_corruption_decision
+	desc = murim_purge_corruption_decision_desc
+	selection_tooltip = murim_purge_corruption_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_has_any_corruption_trigger = yes
+	}
+
+	is_valid = {
+		murim_can_purge_corruption_trigger = yes
+		NOT = { has_character_flag = murim_purging_cooldown }
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_purging_cooldown years = 5 }
+		trigger_event = { id = murim_forbidden_technique.0100 days = 14 }
+		custom_tooltip = murim_purge_corruption_tt
+	}
+
+	ai_check_interval = 120
+	ai_will_do = {
+		base = 10
+		modifier = { add = 20 has_trait = murim_corruption_stage_3 }
+		modifier = { add = 10 has_trait = just }
+		modifier = { add = -15 has_trait = ambitious }
+	}
+}
+
+# === SEAL FORBIDDEN TECHNIQUE ===
+murim_seal_forbidden_technique_decision = {
+	title = murim_seal_forbidden_technique_decision
+	desc = murim_seal_forbidden_technique_decision_desc
+	selection_tooltip = murim_seal_forbidden_technique_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		murim_has_any_forbidden_technique_trigger = yes
+	}
+
+	is_valid = {
+		NOT = { has_character_flag = murim_sealing_cooldown }
+		learning >= 10
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_sealing_cooldown years = 5 }
+		trigger_event = { id = murim_forbidden_technique.0200 days = 7 }
+		custom_tooltip = murim_seal_forbidden_technique_tt
+	}
+
+	ai_check_interval = 180
+	ai_will_do = {
+		base = 5
+		modifier = { add = 20 has_trait = murim_corruption_stage_3 }
+		modifier = { add = 30 has_trait = murim_corruption_stage_4 }
+		modifier = { add = 15 has_trait = just }
+	}
+}
+
+# === VISIT FORBIDDEN KNOWLEDGE BROKER ===
+murim_visit_knowledge_broker_decision = {
+	title = murim_visit_knowledge_broker_decision
+	desc = murim_visit_knowledge_broker_decision_desc
+	selection_tooltip = murim_visit_knowledge_broker_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+		intrigue >= 10
+	}
+
+	is_valid = {
+		NOT = { has_character_flag = murim_broker_visited_cooldown }
+		gold >= 50
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_broker_visited_cooldown years = 2 }
+		trigger_event = { id = murim_forbidden_technique.0300 days = 14 }
+	}
+
+	ai_check_interval = 120
+	ai_will_do = {
+		base = 5
+		modifier = { add = 10 has_trait = ambitious }
+		modifier = { add = 10 intrigue >= 15 }
+	}
+}

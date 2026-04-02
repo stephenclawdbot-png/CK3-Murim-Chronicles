@@ -1,0 +1,164 @@
+########################################
+# MURIM HEAVENLY TRIBUNAL DECISIONS
+# Tribunal nomination, judgment, and
+# imperial court integration decisions
+########################################
+
+# === SEEK TRIBUNAL NOMINATION ===
+murim_seek_tribunal_nomination_decision = {
+	title = murim_seek_tribunal_nomination_decision
+	desc = murim_seek_tribunal_nomination_decision_desc
+	selection_tooltip = murim_seek_tribunal_nomination_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 5
+		NOT = { has_trait = murim_tribunal_judge }
+		NOT = { has_trait = murim_tribunal_exile }
+	}
+
+	is_valid = {
+		murim_can_join_tribunal_trigger = yes
+		NOT = { has_character_flag = murim_tribunal_nomination_cooldown }
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_tribunal_nomination_cooldown years = 5 }
+		trigger_event = { id = murim_tribunal_system.0001 days = 30 }
+		custom_tooltip = murim_seek_tribunal_nomination_tt
+	}
+
+	ai_check_interval = 360
+	ai_will_do = {
+		base = 10
+		modifier = { add = 20 has_trait = ambitious }
+		modifier = { add = 15 diplomacy >= 15 }
+		modifier = { add = -15 has_trait = shy }
+	}
+}
+
+# === SUMMON TO TRIBUNAL ===
+murim_summon_to_tribunal_decision = {
+	title = murim_summon_to_tribunal_decision
+	desc = murim_summon_to_tribunal_decision_desc
+	selection_tooltip = murim_summon_to_tribunal_decision_tooltip
+
+	is_shown = {
+		has_trait = murim_tribunal_judge
+	}
+
+	is_valid = {
+		NOT = { has_character_flag = murim_tribunal_summon_cooldown }
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_tribunal_summon_cooldown years = 2 }
+		trigger_event = { id = murim_tribunal_system.0010 days = 7 }
+	}
+
+	ai_check_interval = 120
+	ai_will_do = {
+		base = 10
+		modifier = { add = 15 has_trait = just }
+	}
+}
+
+# === SERVE THE EMPEROR ===
+murim_serve_emperor_decision = {
+	title = murim_serve_emperor_decision
+	desc = murim_serve_emperor_decision_desc
+	selection_tooltip = murim_serve_emperor_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+		NOT = { has_character_flag = murim_imperial_service }
+	}
+
+	is_valid = {
+		NOT = { has_character_flag = murim_imperial_service_cooldown }
+		NOT = { has_character_flag = murim_imperial_rebel_flag }
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_imperial_service years = 10 }
+		set_character_flag = { flag = murim_imperial_service_cooldown years = 15 }
+		add_character_modifier = { modifier = murim_imperial_enforcer years = 10 }
+		trigger_event = { id = murim_imperial_court.0001 days = 14 }
+	}
+
+	ai_check_interval = 180
+	ai_will_do = {
+		base = 10
+		modifier = { add = 15 diplomacy >= 14 }
+		modifier = { add = 10 has_trait = greedy }
+		modifier = { add = -20 murim_is_unorthodox_faction_trigger = yes }
+	}
+}
+
+# === REBEL AGAINST THE EMPEROR ===
+murim_rebel_against_emperor_decision = {
+	title = murim_rebel_against_emperor_decision
+	desc = murim_rebel_against_emperor_decision_desc
+	selection_tooltip = murim_rebel_against_emperor_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 4
+		NOT = { has_character_flag = murim_imperial_rebel_flag }
+	}
+
+	is_valid = {
+		NOT = { has_character_flag = murim_rebel_cooldown }
+		martial >= 12
+		prowess >= 18
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_imperial_rebel_flag years = 20 }
+		set_character_flag = { flag = murim_rebel_cooldown years = 25 }
+		add_character_modifier = { modifier = murim_imperial_rebel years = 20 }
+		trigger_event = { id = murim_imperial_court.0050 days = 7 }
+	}
+
+	ai_check_interval = 360
+	ai_will_do = {
+		base = 3
+		modifier = { add = 15 has_trait = ambitious }
+		modifier = { add = 10 has_trait = brave }
+		modifier = { add = 20 murim_is_unorthodox_faction_trigger = yes }
+		modifier = { add = -20 has_trait = craven }
+	}
+}
+
+# === CLAIM CLAN LEADERSHIP ===
+murim_claim_clan_leadership_decision = {
+	title = murim_claim_clan_leadership_decision
+	desc = murim_claim_clan_leadership_decision_desc
+	selection_tooltip = murim_claim_clan_leadership_decision_tooltip
+
+	is_shown = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+		NOT = { has_character_flag = murim_is_clan_leader }
+	}
+
+	is_valid = {
+		murim_can_claim_leadership_trigger = yes
+		NOT = { has_character_flag = murim_succession_cooldown }
+	}
+
+	effect = {
+		set_character_flag = { flag = murim_succession_cooldown years = 5 }
+		murim_claim_clan_leadership_effect = yes
+		trigger_event = { id = murim_succession.0001 days = 14 }
+	}
+
+	ai_check_interval = 240
+	ai_will_do = {
+		base = 5
+		modifier = { add = 25 has_trait = ambitious }
+		modifier = { add = 15 prowess >= 20 }
+		modifier = { add = -20 has_trait = content }
+	}
+}
