@@ -1,0 +1,1938 @@
+########################################
+# MURIM DEMONIC CULTIVATION PATH EVENTS
+# CK3 Murim Chronicles
+# 12 complete events - Dark qi absorption, blood
+# techniques, soul devouring, demonic transformation,
+# corruption spread, redemption path, demon lord ascension
+# ALL events fire for AI martial artists via on_action
+########################################
+
+namespace = murim_demonic
+
+# EVENT 0001 - Discovery of the Demonic Path
+# Triggered: on_action yearly pulse, martial artists with dark inclinations
+# AI: Full dark cultivation entry with weighted personality
+murim_demonic.0001 = {
+    type = character_event
+    title = murim_demonic.0001.t
+    desc = murim_demonic.0001.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = personality_callous
+    }
+    right_portrait = {
+        character = scope:demonic_tempter
+        animation = scheme
+    }
+    
+    trigger = {
+        is_alive = yes
+        age >= 16
+        NOT = { has_trait = murim_demon_cultivator }
+        NOT = { has_character_flag = refused_demonic_path }
+        OR = {
+            has_trait = murim_martial_artist
+            has_trait = murim_wandering_cultivator
+            has_trait = murim_sect_leader
+            has_trait = murim_unorthodox_elder
+        }
+        OR = {
+            has_trait = ambitious
+            has_trait = sadistic
+            has_trait = wrathful
+            has_trait = callous
+            prowess >= 16
+            AND = {
+                has_trait = murim_qi_deviation_survivor
+                stress >= 50
+            }
+            AND = {
+                has_character_modifier = murim_devastating_heartbreak
+                has_trait = wrathful
+            }
+        }
+        NOT = { has_trait = murim_righteous_elder }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 3.0
+            has_trait = sadistic
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = ambitious
+        }
+        modifier = {
+            factor = 2.0
+            has_trait = wrathful
+        }
+        modifier = {
+            factor = 2.5
+            has_character_modifier = murim_devastating_heartbreak
+        }
+        modifier = {
+            factor = 0.3
+            has_trait = compassionate
+        }
+        modifier = {
+            factor = 0.1
+            has_trait = just
+        }
+    }
+    
+    immediate = {
+        # Find or create the demonic tempter
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_demon_cultivator
+                NOT = { this = root }
+            }
+            save_scope_as = demonic_tempter
+            alternative = {
+                create_character = {
+                    age = { 40 70 }
+                    gender_female_chance = 30
+                    trait = murim_demon_cultivator
+                    trait = deceitful
+                    trait = sadistic
+                    trait = callous
+                    prowess = { 18 28 }
+                    intrigue = { 16 22 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = demonic_tempter
+                }
+            }
+        }
+    }
+    
+    # Option A: Embrace the demonic path
+    option = {
+        name = murim_demonic.0001.a
+        add_trait = murim_demon_cultivator
+        add_prowess_skill = 3
+        add_character_modifier = {
+            modifier = murim_demonic_qi_awakening
+            years = 5
+        }
+        add_dread = 20
+        # Begin corruption
+        set_variable = {
+            name = demonic_corruption
+            value = 10
+        }
+        reverse_add_opinion = {
+            target = scope:demonic_tempter
+            modifier = murim_demonic_disciple
+            opinion = 30
+        }
+        # Orthodox characters react
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_orthodox_disciple
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_fallen_to_darkness
+                opinion = -30
+            }
+        }
+        stress_impact = {
+            just = major_stress_impact_gain
+            compassionate = major_stress_impact_gain
+            honest = medium_stress_impact_gain
+        }
+        trigger_event = {
+            id = murim_demonic.0002
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.5
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = wrathful
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = just
+            }
+        }
+    }
+    
+    # Option B: Take the knowledge but resist corruption
+    option = {
+        name = murim_demonic.0001.b
+        trigger = {
+            learning >= 14
+        }
+        add_learning_skill = 2
+        add_character_modifier = {
+            modifier = murim_dark_knowledge_seeker
+            years = 5
+        }
+        add_character_flag = {
+            flag = murim_studied_demonic_arts
+            days = 3650
+        }
+        add_stress = 20
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 2.0
+                learning >= 18
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Reject the demonic path completely
+    option = {
+        name = murim_demonic.0001.c
+        add_piety = 100
+        add_prestige = 50
+        add_character_flag = {
+            flag = refused_demonic_path
+            days = 3650
+        }
+        add_character_modifier = {
+            modifier = murim_righteous_resolve
+            years = 3
+        }
+        if = {
+            limit = { exists = scope:demonic_tempter }
+            reverse_add_opinion = {
+                target = scope:demonic_tempter
+                modifier = murim_rejected_dark_offer
+                opinion = -30
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 4.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = zealous
+            }
+        }
+    }
+}
+
+# EVENT 0002 - First Blood Technique: Qi Absorption
+# Triggered: delayed from 0001 embrace option
+# AI: Full dark technique training
+murim_demonic.0002 = {
+    type = character_event
+    title = murim_demonic.0002.t
+    desc = murim_demonic.0002.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = personality_callous
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+    }
+    
+    immediate = {
+        # Training outcome
+        random_list = {
+            40 = { set_variable = { name = blood_technique_result value = 1 } } # Full mastery
+            35 = { set_variable = { name = blood_technique_result value = 2 } } # Partial
+            25 = { set_variable = { name = blood_technique_result value = 3 } } # Backlash
+        }
+    }
+    
+    # Option A: Practice on captured enemies
+    option = {
+        name = murim_demonic.0002.a
+        add_dread = 15
+        add_tyranny = 5
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    prowess >= 18
+                }
+                desc = murim_demonic.0002.a.mastery
+                add_prowess_skill = 3
+                add_character_modifier = {
+                    modifier = murim_blood_qi_absorption_master
+                    years = 10
+                }
+                # Increase corruption
+                if = {
+                    limit = { has_variable = demonic_corruption }
+                    change_variable = {
+                        name = demonic_corruption
+                        add = 15
+                    }
+                }
+            }
+            30 = {
+                desc = murim_demonic.0002.a.partial
+                add_prowess_skill = 1
+                add_character_modifier = {
+                    modifier = murim_unstable_blood_qi
+                    years = 3
+                }
+            }
+            20 = {
+                desc = murim_demonic.0002.a.backlash
+                add_character_modifier = {
+                    modifier = murim_blood_qi_backlash
+                    years = 2
+                }
+                increase_wounds_effect = { reason = qi_deviation }
+                add_stress = 25
+            }
+        }
+        trigger_event = {
+            id = murim_demonic.0003
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                prowess >= 18
+            }
+        }
+    }
+    
+    # Option B: Meditate on dark qi patterns
+    option = {
+        name = murim_demonic.0002.b
+        add_learning_skill = 1
+        add_prowess_skill = 1
+        add_character_modifier = {
+            modifier = murim_dark_meditation_insight
+            years = 5
+        }
+        trigger_event = {
+            id = murim_demonic.0003
+            days = { 120 365 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 1.5
+                learning >= 16
+            }
+        }
+    }
+    
+    # Option C: Seek out forbidden demonic scripture
+    option = {
+        name = murim_demonic.0002.c
+        trigger = {
+            gold >= 200
+        }
+        add_gold = -200
+        add_character_modifier = {
+            modifier = murim_forbidden_demonic_scripture
+            years = 10
+        }
+        add_prowess_skill = 2
+        add_intrigue_skill = 1
+        trigger_event = {
+            id = murim_demonic.0003
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                gold >= 400
+            }
+            modifier = {
+                factor = 1.5
+                has_trait = ambitious
+            }
+        }
+    }
+}
+
+# EVENT 0003 - Soul Devouring Technique Unlocked
+# Triggered: continuation of demonic cultivation path
+# AI: Full soul devouring with consequences
+murim_demonic.0003 = {
+    type = character_event
+    title = murim_demonic.0003.t
+    desc = murim_demonic.0003.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = rage
+    }
+    right_portrait = {
+        character = scope:soul_devour_target
+        animation = fear
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+    }
+    
+    immediate = {
+        # Find a target
+        random_courtier = {
+            limit = {
+                is_alive = yes
+                prowess >= 8
+                NOT = { this = root }
+            }
+            save_scope_as = soul_devour_target
+            alternative = {
+                random_known_character = {
+                    limit = {
+                        is_alive = yes
+                        NOT = { this = root }
+                        NOT = { is_allied_to = root }
+                    }
+                    save_scope_as = soul_devour_target
+                }
+            }
+        }
+    }
+    
+    # Option A: Devour the target's martial soul
+    option = {
+        name = murim_demonic.0003.a
+        trigger = {
+            exists = scope:soul_devour_target
+        }
+        duel = {
+            skill = prowess
+            target = scope:soul_devour_target
+            60 = {
+                desc = murim_demonic.0003.a.devoured
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.0
+                    min = -49
+                }
+                # Absorb their power
+                add_prowess_skill = 2
+                add_character_modifier = {
+                    modifier = murim_soul_devoured_power
+                    years = 5
+                }
+                scope:soul_devour_target = {
+                    death = {
+                        death_reason = death_murder_unknown
+                        killer = root
+                    }
+                }
+                add_dread = 25
+                # Increase corruption significantly
+                if = {
+                    limit = { has_variable = demonic_corruption }
+                    change_variable = {
+                        name = demonic_corruption
+                        add = 25
+                    }
+                }
+            }
+            40 = {
+                desc = murim_demonic.0003.a.resisted
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.0
+                    min = -49
+                }
+                add_stress = 20
+                add_prestige = -100
+                scope:soul_devour_target = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_attempted_soul_devour
+                        opinion = -100
+                    }
+                }
+            }
+        }
+        trigger_event = {
+            id = murim_demonic.0004
+            days = { 60 180 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = callous
+            }
+            modifier = {
+                factor = 0.1
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option B: Use technique on beasts instead
+    option = {
+        name = murim_demonic.0003.b
+        add_prowess_skill = 1
+        add_character_modifier = {
+            modifier = murim_beast_soul_absorption
+            years = 5
+        }
+        if = {
+            limit = { has_variable = demonic_corruption }
+            change_variable = {
+                name = demonic_corruption
+                add = 10
+            }
+        }
+        trigger_event = {
+            id = murim_demonic.0004
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option C: Resist the urge - try to control the power
+    option = {
+        name = murim_demonic.0003.c
+        add_stress = 30
+        add_character_modifier = {
+            modifier = murim_controlled_demonic_power
+            years = 5
+        }
+        add_piety = 25
+        trigger_event = {
+            id = murim_demonic.0005
+            days = { 120 365 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+        }
+    }
+}
+
+# EVENT 0004 - Demonic Transformation: Physical Changes
+# Triggered: after deep demonic cultivation
+# AI: Full transformation system with stages
+murim_demonic.0004 = {
+    type = character_event
+    title = murim_demonic.0004.t
+    desc = murim_demonic.0004.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = personality_callous
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+    }
+    
+    immediate = {
+        # Corruption level determines transformation
+        if = {
+            limit = {
+                has_variable = demonic_corruption
+            }
+            # Higher corruption = more extreme transformation
+            random_list = {
+                30 = { set_variable = { name = transformation_stage value = 1 } } # Minor
+                40 = { set_variable = { name = transformation_stage value = 2 } } # Major
+                30 = { set_variable = { name = transformation_stage value = 3 } } # Complete
+            }
+        }
+    }
+    
+    # Option A: Embrace the transformation fully
+    option = {
+        name = murim_demonic.0004.a
+        add_prowess_skill = 4
+        add_martial_skill = 2
+        add_character_modifier = {
+            modifier = murim_demonic_transformation_complete
+            years = 20
+        }
+        add_dread = 40
+        # Physical traits change
+        random_list = {
+            33 = { add_trait = strong }
+            33 = { add_trait = giant }
+            34 = { add_trait = scarred }
+        }
+        # Everyone fears you now
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                NOT = { has_trait = murim_demon_cultivator }
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_demonic_abomination
+                opinion = -20
+            }
+        }
+        trigger_event = {
+            id = murim_demonic.0006
+            days = { 180 365 }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Seek balance between human and demon
+    option = {
+        name = murim_demonic.0004.b
+        add_prowess_skill = 2
+        add_character_modifier = {
+            modifier = murim_half_demon_balance
+            years = 10
+        }
+        add_diplomacy_skill = 1
+        # Less fear but still powerful
+        add_dread = 15
+        trigger_event = {
+            id = murim_demonic.0005
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 1.5
+                diplomacy >= 14
+            }
+        }
+    }
+    
+    # Option C: Fight the transformation with willpower
+    option = {
+        name = murim_demonic.0004.c
+        add_stress = 40
+        add_character_modifier = {
+            modifier = murim_resisting_transformation
+            years = 3
+        }
+        add_piety = 50
+        # May trigger redemption path
+        random_list = {
+            30 = {
+                trigger_event = {
+                    id = murim_demonic.0009
+                    days = { 60 180 }
+                }
+            }
+            70 = {
+                trigger_event = {
+                    id = murim_demonic.0005
+                    days = { 120 365 }
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = just
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0005 - Corruption Spreads: Influence on Others
+# Triggered: continuation of demonic path
+# AI: Full corruption spread to NPCs
+murim_demonic.0005 = {
+    type = character_event
+    title = murim_demonic.0005.t
+    desc = murim_demonic.0005.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = scheme
+    }
+    right_portrait = {
+        character = scope:corruption_target
+        animation = worry
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+        any_courtier = {
+            is_alive = yes
+            NOT = { has_trait = murim_demon_cultivator }
+            age >= 16
+        }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_trait = deceitful
+        }
+    }
+    
+    immediate = {
+        random_courtier = {
+            limit = {
+                is_alive = yes
+                NOT = { has_trait = murim_demon_cultivator }
+                NOT = { has_trait = murim_righteous_elder }
+                age >= 16
+            }
+            save_scope_as = corruption_target
+        }
+    }
+    
+    # Option A: Corrupt them with promises of power
+    option = {
+        name = murim_demonic.0005.a
+        trigger = {
+            exists = scope:corruption_target
+        }
+        random_list = {
+            50 = {
+                modifier = {
+                    factor = 1.5
+                    diplomacy >= 14
+                }
+                modifier = {
+                    factor = 1.5
+                    scope:corruption_target = { has_trait = ambitious }
+                }
+                desc = murim_demonic.0005.a.corrupted
+                scope:corruption_target = {
+                    add_trait = murim_demon_cultivator
+                    add_opinion = {
+                        target = root
+                        modifier = murim_dark_master
+                        opinion = 20
+                    }
+                }
+                add_character_modifier = {
+                    modifier = murim_dark_disciple_gained
+                    years = 5
+                }
+                add_prestige = 100
+            }
+            50 = {
+                desc = murim_demonic.0005.a.resisted
+                scope:corruption_target = {
+                    add_opinion = {
+                        target = root
+                        modifier = murim_tried_to_corrupt_me
+                        opinion = -40
+                    }
+                }
+                add_prestige = -50
+            }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                has_trait = deceitful
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Use blood ritual to force corruption
+    option = {
+        name = murim_demonic.0005.b
+        trigger = {
+            exists = scope:corruption_target
+            prowess >= 16
+        }
+        scope:corruption_target = {
+            add_trait = murim_demon_cultivator
+            add_opinion = {
+                target = root
+                modifier = murim_forced_dark_transformation
+                opinion = -30
+            }
+            add_character_modifier = {
+                modifier = murim_unwilling_demon
+                years = 10
+            }
+        }
+        add_dread = 20
+        add_tyranny = 10
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = callous
+            }
+        }
+    }
+    
+    # Option C: Leave them uncorrupted
+    option = {
+        name = murim_demonic.0005.c
+        add_stress = 10
+        add_piety = 25
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+        }
+    }
+}
+
+# EVENT 0006 - Demon Lord Ascension: Challenge for Supremacy
+# Triggered: high corruption + high prowess demon cultivators
+# AI: Full demon lord ascension chain
+murim_demonic.0006 = {
+    type = character_event
+    title = murim_demonic.0006.t
+    desc = murim_demonic.0006.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = rage
+    }
+    right_portrait = {
+        character = scope:current_demon_lord
+        animation = rage
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+        prowess >= 22
+        has_character_modifier = murim_demonic_transformation_complete
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 3.0
+            prowess >= 26
+        }
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_demon_cultivator
+                prowess >= 20
+                NOT = { this = root }
+            }
+            save_scope_as = current_demon_lord
+            alternative = {
+                create_character = {
+                    age = { 50 80 }
+                    trait = murim_demon_cultivator
+                    trait = sadistic
+                    trait = callous
+                    trait = ambitious
+                    prowess = { 22 30 }
+                    martial = { 16 22 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = current_demon_lord
+                }
+            }
+        }
+    }
+    
+    # Option A: Challenge the current demon lord
+    option = {
+        name = murim_demonic.0006.a
+        trigger = {
+            exists = scope:current_demon_lord
+        }
+        duel = {
+            skill = prowess
+            target = scope:current_demon_lord
+            50 = {
+                desc = murim_demonic.0006.a.ascended
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 4.0
+                    min = -49
+                }
+                scope:current_demon_lord = {
+                    death = {
+                        death_reason = death_duel
+                        killer = root
+                    }
+                }
+                add_trait = murim_demon_lord
+                add_prestige = 1000
+                add_dread = 50
+                add_character_modifier = {
+                    modifier = murim_demon_lord_ascended
+                    years = 20
+                }
+                add_prowess_skill = 5
+                # All demon cultivators acknowledge new lord
+                every_known_character = {
+                    limit = {
+                        is_alive = yes
+                        has_trait = murim_demon_cultivator
+                    }
+                    add_opinion = {
+                        target = root
+                        modifier = murim_demon_lord_acknowledged
+                        opinion = 30
+                    }
+                }
+                set_global_variable = {
+                    name = murim_demon_lord_exists
+                    value = root
+                }
+            }
+            50 = {
+                desc = murim_demonic.0006.a.defeated
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -4.0
+                    min = -49
+                }
+                random_list = {
+                    50 = {
+                        death = {
+                            death_reason = death_duel
+                            killer = scope:current_demon_lord
+                        }
+                    }
+                    50 = {
+                        increase_wounds_effect = { reason = duel }
+                        add_character_modifier = {
+                            modifier = murim_failed_demon_lord_challenge
+                            years = 5
+                        }
+                        add_prestige = -500
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                prowess >= 28
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Serve the current demon lord
+    option = {
+        name = murim_demonic.0006.b
+        trigger = {
+            exists = scope:current_demon_lord
+        }
+        reverse_add_opinion = {
+            target = scope:current_demon_lord
+            modifier = murim_loyal_demon_general
+            opinion = 30
+        }
+        add_character_modifier = {
+            modifier = murim_demon_lord_general
+            years = 10
+        }
+        add_prowess_skill = 2
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = content
+            }
+            modifier = {
+                factor = 0.3
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option C: Build your own dark faction independently
+    option = {
+        name = murim_demonic.0006.c
+        add_character_modifier = {
+            modifier = murim_independent_dark_faction
+            years = 10
+        }
+        add_prestige = 300
+        add_gold = -200
+        trigger_event = {
+            id = murim_demonic.0008
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+            modifier = {
+                factor = 1.5
+                stewardship >= 14
+            }
+        }
+    }
+}
+
+# EVENT 0007 - Orthodox Purge: Hunters Come for You
+# Triggered: when demon cultivators are known to orthodox faction
+# AI: Full survival system for hunted demons
+murim_demonic.0007 = {
+    type = character_event
+    title = murim_demonic.0007.t
+    desc = murim_demonic.0007.desc
+    theme = martial
+    
+    left_portrait = {
+        character = root
+        animation = fear
+    }
+    right_portrait = {
+        character = scope:demon_hunter
+        animation = anger
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+        any_known_character = {
+            is_alive = yes
+            OR = {
+                has_trait = murim_righteous_elder
+                has_trait = murim_orthodox_alliance_leader
+                has_trait = murim_shaolin_elder
+                has_trait = murim_wudang_elder
+            }
+        }
+        NOT = { has_character_flag = survived_purge_recently }
+    }
+    
+    weight_multiplier = {
+        base = 1
+        modifier = {
+            factor = 2.0
+            has_global_variable = murim_orthodox_crackdown_active
+        }
+        modifier = {
+            factor = 2.0
+            dread >= 50
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = survived_purge_recently
+            days = 365
+        }
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_righteous_elder
+                    has_trait = murim_orthodox_alliance_leader
+                }
+                prowess >= 14
+            }
+            save_scope_as = demon_hunter
+            alternative = {
+                create_character = {
+                    age = { 30 50 }
+                    trait = murim_righteous_elder
+                    trait = zealous
+                    trait = brave
+                    prowess = { 16 24 }
+                    martial = { 14 20 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = demon_hunter
+                }
+            }
+        }
+    }
+    
+    # Option A: Stand and fight
+    option = {
+        name = murim_demonic.0007.a
+        trigger = {
+            exists = scope:demon_hunter
+        }
+        duel = {
+            skill = prowess
+            target = scope:demon_hunter
+            50 = {
+                desc = murim_demonic.0007.a.victory
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = 3.5
+                    min = -49
+                }
+                add_prestige = 200
+                add_dread = 20
+                scope:demon_hunter = {
+                    random_list = {
+                        50 = {
+                            death = {
+                                death_reason = death_duel
+                                killer = root
+                            }
+                        }
+                        50 = {
+                            increase_wounds_effect = { reason = duel }
+                        }
+                    }
+                }
+                add_character_modifier = {
+                    modifier = murim_demon_who_slew_the_righteous
+                    years = 5
+                }
+            }
+            50 = {
+                desc = murim_demonic.0007.a.defeat
+                compare_modifier = {
+                    value = scope:duel_value
+                    multiplier = -3.5
+                    min = -49
+                }
+                random_list = {
+                    40 = {
+                        death = {
+                            death_reason = death_execution
+                            killer = scope:demon_hunter
+                        }
+                    }
+                    60 = {
+                        increase_wounds_effect = { reason = duel }
+                        add_prestige = -200
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 45
+            modifier = {
+                factor = 2.0
+                prowess >= 22
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option B: Flee using dark techniques
+    option = {
+        name = murim_demonic.0007.b
+        add_prestige = -100
+        add_character_modifier = {
+            modifier = murim_dark_escape
+            years = 2
+        }
+        add_character_flag = {
+            flag = murim_hiding_from_orthodox
+            days = 730
+        }
+        add_stress = 20
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+            modifier = {
+                factor = 2.0
+                prowess < 18
+            }
+        }
+    }
+    
+    # Option C: Surrender and beg for purification
+    option = {
+        name = murim_demonic.0007.c
+        # Starts redemption path
+        trigger_event = {
+            id = murim_demonic.0009
+            days = 1
+        }
+        ai_chance = {
+            base = 10
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 3.0
+                stress >= 80
+            }
+        }
+    }
+    
+    # Option D: Use hostages to force retreat
+    option = {
+        name = murim_demonic.0007.d
+        trigger = {
+            any_prisoner = {
+                is_alive = yes
+            }
+        }
+        add_dread = 30
+        add_tyranny = 15
+        if = {
+            limit = { exists = scope:demon_hunter }
+            scope:demon_hunter = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_cowardly_hostage_taker
+                    opinion = -50
+                }
+            }
+        }
+        # Orthodox forces retreat
+        add_prestige = -200
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 3.0
+                has_trait = callous
+            }
+        }
+    }
+}
+
+# EVENT 0008 - Dark Sect Establishment
+# Triggered: from 0006 independent faction option
+# AI: Full dark sect creation
+murim_demonic.0008 = {
+    type = character_event
+    title = murim_demonic.0008.t
+    desc = murim_demonic.0008.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = personality_bold
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+        has_character_modifier = murim_independent_dark_faction
+    }
+    
+    immediate = {
+        # Gather followers
+        every_courtier = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_demon_cultivator
+            }
+            add_to_list = dark_sect_founders
+        }
+    }
+    
+    # Option A: Establish the Blood Shadow Sect
+    option = {
+        name = murim_demonic.0008.a
+        add_prestige = 500
+        add_character_modifier = {
+            modifier = murim_blood_shadow_sect_master
+            years = 20
+        }
+        add_gold = -300
+        every_in_list = {
+            list = dark_sect_founders
+            add_opinion = {
+                target = root
+                modifier = murim_sect_founder_loyalty
+                opinion = 30
+            }
+        }
+        set_global_variable = {
+            name = murim_blood_shadow_sect_exists
+            value = yes
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Create a hidden demonic academy
+    option = {
+        name = murim_demonic.0008.b
+        add_gold = -200
+        add_character_modifier = {
+            modifier = murim_hidden_demonic_academy
+            years = 20
+        }
+        add_learning_skill = 2
+        # Attract dark cultivators
+        trigger_event = {
+            id = murim_demonic.0005
+            days = { 90 270 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+        }
+    }
+    
+    # Option C: Operate as a lone wolf dark master
+    option = {
+        name = murim_demonic.0008.c
+        add_character_modifier = {
+            modifier = murim_lone_dark_master
+            years = 10
+        }
+        add_prowess_skill = 3
+        add_dread = 20
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = recluse
+            }
+        }
+    }
+}
+
+# EVENT 0009 - Redemption Path: Turning Away from Darkness
+# Triggered: from various mercy/surrender options
+# AI: Full redemption system
+murim_demonic.0009 = {
+    type = character_event
+    title = murim_demonic.0009.t
+    desc = murim_demonic.0009.desc
+    theme = faith
+    
+    left_portrait = {
+        character = root
+        animation = grief
+    }
+    right_portrait = {
+        character = scope:redemption_guide
+        animation = personality_compassionate
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+    }
+    
+    immediate = {
+        random_known_character = {
+            limit = {
+                is_alive = yes
+                OR = {
+                    has_trait = murim_righteous_elder
+                    has_trait = murim_shaolin_elder
+                    has_trait = murim_wudang_elder
+                }
+                NOT = { this = root }
+            }
+            save_scope_as = redemption_guide
+            alternative = {
+                create_character = {
+                    age = { 50 80 }
+                    trait = murim_righteous_elder
+                    trait = compassionate
+                    trait = forgiving
+                    trait = patient
+                    learning = { 16 22 }
+                    culture = root.culture
+                    faith = root.faith
+                    save_scope_as = redemption_guide
+                }
+            }
+        }
+    }
+    
+    # Option A: Accept purification ritual
+    option = {
+        name = murim_demonic.0009.a
+        trigger = {
+            exists = scope:redemption_guide
+        }
+        random_list = {
+            40 = {
+                modifier = {
+                    factor = 1.5
+                    learning >= 14
+                }
+                modifier = {
+                    factor = 1.5
+                    has_trait = patient
+                }
+                desc = murim_demonic.0009.a.purified
+                remove_trait = murim_demon_cultivator
+                add_trait = murim_redeemed_cultivator
+                add_piety = 300
+                add_prestige = 200
+                add_character_modifier = {
+                    modifier = murim_purified_dark_qi
+                    years = 10
+                }
+                # Lose some power but gain respect
+                add_prowess_skill = -2
+                add_learning_skill = 3
+                reverse_add_opinion = {
+                    target = scope:redemption_guide
+                    modifier = murim_saved_my_soul
+                    opinion = 40
+                }
+            }
+            30 = {
+                desc = murim_demonic.0009.a.partial
+                add_character_modifier = {
+                    modifier = murim_partial_purification
+                    years = 5
+                }
+                add_piety = 100
+                add_stress = 20
+                # Still has demonic trait but weakened
+            }
+            30 = {
+                desc = murim_demonic.0009.a.failed
+                # Dark qi rebels against purification
+                add_character_modifier = {
+                    modifier = murim_purification_backlash
+                    years = 2
+                }
+                increase_wounds_effect = { reason = qi_deviation }
+                add_stress = 40
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 3.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 2.0
+                stress >= 60
+            }
+        }
+    }
+    
+    # Option B: Seek redemption through good deeds
+    option = {
+        name = murim_demonic.0009.b
+        add_character_modifier = {
+            modifier = murim_seeking_redemption
+            years = 10
+        }
+        add_piety = 100
+        # Long slow path to redemption
+        trigger_event = {
+            id = murim_demonic.0010
+            days = { 365 730 }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Reject redemption - embrace darkness fully
+    option = {
+        name = murim_demonic.0009.c
+        add_prowess_skill = 3
+        add_dread = 20
+        add_character_modifier = {
+            modifier = murim_darkness_fully_embraced
+            years = 10
+        }
+        if = {
+            limit = { exists = scope:redemption_guide }
+            scope:redemption_guide = {
+                add_opinion = {
+                    target = root
+                    modifier = murim_rejected_salvation
+                    opinion = -40
+                }
+            }
+        }
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 3.0
+                has_trait = sadistic
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+}
+
+# EVENT 0010 - Redemption Through Sacrifice
+# Triggered: continuation of redemption path
+# AI: Full self-sacrifice for redemption
+murim_demonic.0010 = {
+    type = character_event
+    title = murim_demonic.0010.t
+    desc = murim_demonic.0010.desc
+    theme = faith
+    
+    left_portrait = {
+        character = root
+        animation = personality_compassionate
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_character_modifier = murim_seeking_redemption
+        has_trait = murim_demon_cultivator
+    }
+    
+    immediate = {
+        # What sacrifice is required?
+        random_list = {
+            30 = { set_variable = { name = sacrifice_type value = 1 } } # Power sacrifice
+            30 = { set_variable = { name = sacrifice_type value = 2 } } # Protect innocents
+            20 = { set_variable = { name = sacrifice_type value = 3 } } # Seal own power
+            20 = { set_variable = { name = sacrifice_type value = 4 } } # Die protecting others
+        }
+    }
+    
+    # Option A: Sacrifice your demonic power
+    option = {
+        name = murim_demonic.0010.a
+        remove_trait = murim_demon_cultivator
+        add_trait = murim_redeemed_cultivator
+        add_prowess_skill = -5
+        add_piety = 500
+        add_prestige = 500
+        add_character_modifier = {
+            modifier = murim_redeemed_through_sacrifice
+            years = 20
+        }
+        # Orthodox accepts you back
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_orthodox_disciple
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_redeemed_sinner
+                opinion = 20
+            }
+        }
+        ai_chance = {
+            base = 50
+            modifier = {
+                factor = 2.0
+                has_trait = compassionate
+            }
+        }
+    }
+    
+    # Option B: Use dark power one last time to save others
+    option = {
+        name = murim_demonic.0010.b
+        random_list = {
+            30 = {
+                desc = murim_demonic.0010.b.heroic_death
+                add_prestige = 1000
+                add_piety = 500
+                death = {
+                    death_reason = death_sacrifice_heroic
+                }
+            }
+            70 = {
+                desc = murim_demonic.0010.b.survived
+                remove_trait = murim_demon_cultivator
+                add_trait = murim_redeemed_cultivator
+                add_character_modifier = {
+                    modifier = murim_heroic_redemption
+                    years = 20
+                }
+                add_prestige = 500
+            }
+        }
+        ai_chance = {
+            base = 30
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+        }
+    }
+    
+    # Option C: Not ready yet - continue seeking
+    option = {
+        name = murim_demonic.0010.c
+        add_stress = 15
+        trigger_event = {
+            id = murim_demonic.0010
+            days = { 365 730 }
+        }
+        ai_chance = {
+            base = 20
+            modifier = {
+                factor = 2.0
+                has_trait = craven
+            }
+        }
+    }
+}
+
+# EVENT 0011 - Demonic Qi Deviation Crisis
+# Triggered: on_action for demon cultivators, chance based on corruption
+# AI: Full qi deviation emergency
+murim_demonic.0011 = {
+    type = character_event
+    title = murim_demonic.0011.t
+    desc = murim_demonic.0011.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = pain
+    }
+    
+    trigger = {
+        is_alive = yes
+        has_trait = murim_demon_cultivator
+        NOT = { has_character_flag = demonic_qi_deviation_recently }
+    }
+    
+    weight_multiplier = {
+        base = 0.5
+        modifier = {
+            factor = 3.0
+            has_character_modifier = murim_unstable_blood_qi
+        }
+        modifier = {
+            factor = 2.0
+            stress >= 50
+        }
+    }
+    
+    immediate = {
+        add_character_flag = {
+            flag = demonic_qi_deviation_recently
+            days = 365
+        }
+    }
+    
+    # Option A: Channel the demonic qi outward
+    option = {
+        name = murim_demonic.0011.a
+        random_list = {
+            40 = {
+                desc = murim_demonic.0011.a.controlled
+                add_prowess_skill = 2
+                add_character_modifier = {
+                    modifier = murim_demonic_breakthrough
+                    years = 3
+                }
+            }
+            60 = {
+                desc = murim_demonic.0011.a.rampage
+                add_dread = 30
+                add_tyranny = 10
+                every_courtier = {
+                    limit = {
+                        is_alive = yes
+                    }
+                    random_list = {
+                        80 = { add_opinion = { target = root modifier = murim_terrifying_rampage opinion = -20 } }
+                        20 = { increase_wounds_effect = { reason = qi_explosion } }
+                    }
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                prowess >= 20
+            }
+        }
+    }
+    
+    # Option B: Seal the qi within meditation
+    option = {
+        name = murim_demonic.0011.b
+        trigger = {
+            learning >= 12
+        }
+        add_stress = 30
+        add_character_modifier = {
+            modifier = murim_sealed_demonic_qi
+            years = 2
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                learning >= 16
+            }
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+        }
+    }
+    
+    # Option C: Absorb nearby qi to stabilize
+    option = {
+        name = murim_demonic.0011.c
+        random_courtier = {
+            limit = { is_alive = yes }
+            add_character_modifier = {
+                modifier = murim_qi_drained_by_demon
+                years = 1
+            }
+        }
+        add_prowess_skill = 1
+        add_dread = 10
+        ai_chance = {
+            base = 25
+            modifier = {
+                factor = 2.0
+                has_trait = callous
+            }
+        }
+    }
+}
+
+# EVENT 0012 - The Demon Lord and the Great Calamity
+# Triggered: during Great Calamity if demon lord exists
+# AI: Full endgame demon lord choices
+murim_demonic.0012 = {
+    type = character_event
+    title = murim_demonic.0012.t
+    desc = murim_demonic.0012.desc
+    theme = skulduggery
+    
+    left_portrait = {
+        character = root
+        animation = rage
+    }
+    
+    trigger = {
+        is_alive = yes
+        OR = {
+            has_trait = murim_demon_lord
+            has_character_modifier = murim_demon_lord_ascended
+        }
+        has_global_variable = murim_great_calamity_active
+    }
+    
+    weight_multiplier = {
+        base = 5
+    }
+    
+    # Option A: Use the calamity to seize ultimate power
+    option = {
+        name = murim_demonic.0012.a
+        add_character_modifier = {
+            modifier = murim_demon_lord_calamity_power
+            years = 10
+        }
+        add_prowess_skill = 5
+        add_dread = 50
+        add_prestige = 1000
+        # But risk destruction
+        random_list = {
+            40 = {
+                desc = murim_demonic.0012.a.supreme
+                add_character_modifier = {
+                    modifier = murim_supreme_demon_lord
+                    years = 20
+                }
+                set_global_variable = {
+                    name = murim_demon_lord_rules_murim
+                    value = yes
+                }
+            }
+            60 = {
+                desc = murim_demonic.0012.a.destroyed
+                death = {
+                    death_reason = death_consumed_by_power
+                }
+            }
+        }
+        ai_chance = {
+            base = 40
+            modifier = {
+                factor = 2.0
+                has_trait = ambitious
+            }
+        }
+    }
+    
+    # Option B: Unite with orthodox to survive the calamity
+    option = {
+        name = murim_demonic.0012.b
+        add_prestige = 500
+        add_piety = 200
+        add_character_modifier = {
+            modifier = murim_demon_lord_allied_with_light
+            years = 5
+        }
+        every_known_character = {
+            limit = {
+                is_alive = yes
+                has_trait = murim_orthodox_disciple
+            }
+            add_opinion = {
+                target = root
+                modifier = murim_unlikely_alliance
+                opinion = 20
+            }
+        }
+        ai_chance = {
+            base = 35
+            modifier = {
+                factor = 2.0
+                has_trait = patient
+            }
+            modifier = {
+                factor = 2.0
+                diplomacy >= 16
+            }
+        }
+    }
+    
+    # Option C: Sacrifice yourself to stop the calamity
+    option = {
+        name = murim_demonic.0012.c
+        add_prestige = 2000
+        add_piety = 1000
+        death = {
+            death_reason = death_sacrifice_heroic
+        }
+        # End the calamity
+        set_global_variable = {
+            name = murim_calamity_ended_by_demon
+            value = yes
+        }
+        # Everyone remembers the sacrifice
+        every_known_character = {
+            limit = { is_alive = yes }
+            add_opinion = {
+                target = root
+                modifier = murim_demonic_sacrifice_hero
+                opinion = 50
+            }
+        }
+        ai_chance = {
+            base = 15
+            modifier = {
+                factor = 5.0
+                has_trait = compassionate
+            }
+            modifier = {
+                factor = 3.0
+                has_trait = brave
+            }
+        }
+    }
+}
