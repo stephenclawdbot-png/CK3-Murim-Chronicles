@@ -1,0 +1,587 @@
+########################################
+# MURIM CONTINENTAL WAR SYSTEM EVENTS
+# Faction-scale warfare: orthodox vs unorthodox
+# vs imperial forces. Battles, sieges, betrayals,
+# peace, and war aftermath
+########################################
+
+namespace = murim_continental_war
+
+# ===========================
+# 0001-0009: WAR DECLARATION & JOINING
+# ===========================
+
+# Continental War Declaration
+murim_continental_war.0001 = {
+	type = character_event
+	title = murim_continental_war.0001.t
+	desc = murim_continental_war.0001.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		murim_is_faction_leader_trigger = yes
+		NOT = { murim_continental_war_active_trigger = yes }
+	}
+
+	immediate = {
+		hidden_effect = { murim_declare_continental_war_effect = yes }
+	}
+
+	# Rally the orthodox sects — purge the unorthodox menace
+	option = {
+		name = murim_continental_war.0001.a
+		trigger = { murim_is_orthodox_faction_trigger = yes }
+		add_prestige = 500
+		add_dread = 20
+		add_character_modifier = { modifier = murim_faction_leader_wartime years = 10 }
+		hidden_effect = {
+			every_ruler = {
+				limit = { has_variable = murim_martial_artist }
+				trigger_event = { id = murim_continental_war.0005 days = 7 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Unleash the unorthodox — tear down the old order
+	option = {
+		name = murim_continental_war.0001.b
+		trigger = { murim_is_unorthodox_faction_trigger = yes }
+		add_prestige = 500
+		add_dread = 30
+		add_character_modifier = { modifier = murim_faction_leader_wartime years = 10 }
+		hidden_effect = {
+			every_ruler = {
+				limit = { has_variable = murim_martial_artist }
+				trigger_event = { id = murim_continental_war.0005 days = 7 }
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Imperial decree — the Emperor demands martial submission
+	option = {
+		name = murim_continental_war.0001.c
+		trigger = { has_character_flag = murim_imperial_faction_leader }
+		add_prestige = 400
+		add_character_modifier = { modifier = murim_faction_leader_wartime years = 10 }
+		ai_chance = { base = 60 }
+	}
+}
+
+# War notification to all martial artists
+murim_continental_war.0005 = {
+	type = character_event
+	title = murim_continental_war.0005.t
+	desc = murim_continental_war.0005.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+	}
+
+	# Join the orthodox alliance
+	option = {
+		name = murim_continental_war.0005.a
+		hidden_effect = { murim_join_orthodox_war_faction_effect = yes }
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 murim_is_orthodox_faction_trigger = yes }
+		}
+	}
+
+	# Join the unorthodox league
+	option = {
+		name = murim_continental_war.0005.b
+		hidden_effect = { murim_join_unorthodox_war_faction_effect = yes }
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 murim_is_unorthodox_faction_trigger = yes }
+		}
+	}
+
+	# Stay neutral — profit from both sides
+	option = {
+		name = murim_continental_war.0005.c
+		set_character_flag = { flag = murim_war_neutral years = 20 }
+		add_character_modifier = { modifier = murim_war_neutral_profiteer years = 10 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = greedy }
+		}
+	}
+
+	# Flee — hide until the war is over
+	option = {
+		name = murim_continental_war.0005.d
+		add_prestige = -100
+		add_stress = -20
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = craven }
+		}
+	}
+}
+
+# ===========================
+# 0010-0039: BATTLE EVENTS
+# ===========================
+
+# Major battle — commanding disciples in combat
+murim_continental_war.0010 = {
+	type = character_event
+	title = murim_continental_war.0010.t
+	desc = murim_continental_war.0010.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		OR = {
+			has_character_flag = murim_war_orthodox_side
+			has_character_flag = murim_war_unorthodox_side
+		}
+	}
+
+	# Lead from the front — personal combat
+	option = {
+		name = murim_continental_war.0010.a
+		random_list = {
+			50 = {
+				modifier = { add = prowess factor = 0.3 }
+				add_prestige = 300
+				add_prowess = 2
+				change_variable = { name = murim_war_contribution add = 3 }
+			}
+			30 = {
+				add_prestige = 100
+				add_stress = 20
+				change_variable = { name = murim_war_contribution add = 1 }
+			}
+			20 = {
+				add_health = -1
+				add_stress = 30
+			}
+		}
+		ai_chance = {
+			base = 45
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+
+	# Command from behind — strategic leadership
+	option = {
+		name = murim_continental_war.0010.b
+		add_martial = 1
+		add_prestige = 150
+		change_variable = { name = murim_war_contribution add = 2 }
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 martial >= 16 }
+		}
+	}
+
+	# Use guerrilla tactics
+	option = {
+		name = murim_continental_war.0010.c
+		add_intrigue = 1
+		add_prestige = 100
+		change_variable = { name = murim_war_contribution add = 2 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 intrigue >= 14 }
+		}
+	}
+}
+
+# Siege of a sect headquarters
+murim_continental_war.0020 = {
+	type = character_event
+	title = murim_continental_war.0020.t
+	desc = murim_continental_war.0020.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+	}
+
+	# Storm the walls
+	option = {
+		name = murim_continental_war.0020.a
+		add_character_modifier = { modifier = murim_siege_attacker years = 1 }
+		random_list = {
+			60 = {
+				add_prestige = 400
+				add_prowess = 2
+				change_variable = { name = murim_war_contribution add = 4 }
+			}
+			40 = {
+				add_health = -1
+				add_stress = 30
+				change_variable = { name = murim_war_contribution add = 1 }
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Defend the compound
+	option = {
+		name = murim_continental_war.0020.b
+		add_character_modifier = { modifier = murim_siege_defender years = 1 }
+		add_prestige = 200
+		add_prowess = 1
+		change_variable = { name = murim_war_contribution add = 3 }
+		ai_chance = { base = 35 }
+	}
+
+	# Negotiate a surrender
+	option = {
+		name = murim_continental_war.0020.c
+		add_diplomacy = 2
+		add_prestige = 100
+		ai_chance = {
+			base = 15
+			modifier = { add = 20 diplomacy >= 15 }
+		}
+	}
+}
+
+# War turning point — assassination of faction leader
+murim_continental_war.0035 = {
+	type = character_event
+	title = murim_continental_war.0035.t
+	desc = murim_continental_war.0035.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_irrational }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		intrigue >= 14
+	}
+
+	# Assassinate the enemy faction leader
+	option = {
+		name = murim_continental_war.0035.a
+		random_list = {
+			40 = {
+				modifier = { add = intrigue factor = 0.3 }
+				add_prestige = 500
+				add_dread = 30
+				change_variable = { name = murim_war_contribution add = 5 }
+			}
+			60 = {
+				add_stress = 40
+				add_health = -1
+				add_prestige = -100
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 intrigue >= 18 }
+		}
+	}
+
+	# Betray your faction — switch sides
+	option = {
+		name = murim_continental_war.0035.b
+		add_intrigue = 2
+		add_prestige = -200
+		add_dread = 15
+		# Flip faction flags
+		if = {
+			limit = { has_character_flag = murim_war_orthodox_side }
+			remove_character_flag = murim_war_orthodox_side
+			set_character_flag = { flag = murim_war_unorthodox_side years = 20 }
+		}
+		else_if = {
+			limit = { has_character_flag = murim_war_unorthodox_side }
+			remove_character_flag = murim_war_unorthodox_side
+			set_character_flag = { flag = murim_war_orthodox_side years = 20 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_trait = deceitful }
+		}
+	}
+
+	# Report the plot to your leader
+	option = {
+		name = murim_continental_war.0035.c
+		add_prestige = 150
+		add_piety = 50
+		ai_chance = { base = 40 }
+	}
+}
+
+# Deploy forbidden techniques in war
+murim_continental_war.0040 = {
+	type = character_event
+	title = murim_continental_war.0040.t
+	desc = murim_continental_war.0040.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		murim_has_any_forbidden_technique_trigger = yes
+	}
+
+	# Unleash forbidden arts on the battlefield
+	option = {
+		name = murim_continental_war.0040.a
+		add_dread = 40
+		add_prestige = 300
+		change_variable = { name = murim_war_contribution add = 5 }
+		hidden_effect = { murim_advance_corruption_effect = yes }
+		ai_chance = { base = 45 }
+	}
+
+	# Hold back — some lines shouldn't be crossed
+	option = {
+		name = murim_continental_war.0040.b
+		add_piety = 100
+		add_prestige = 50
+		ai_chance = { base = 55 }
+	}
+}
+
+# ===========================
+# 0050-0069: NEUTRAL PATH
+# ===========================
+
+# Neutral profiteer — smuggling and spying
+murim_continental_war.0050 = {
+	type = character_event
+	title = murim_continental_war.0050.t
+	desc = murim_continental_war.0050.desc
+	theme = intrigue
+	left_portrait = { character = root animation = personality_cynical }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_war_neutral
+	}
+
+	# Sell weapons to both sides
+	option = {
+		name = murim_continental_war.0050.a
+		add_gold = 200
+		add_intrigue = 1
+		ai_chance = { base = 40 }
+	}
+
+	# Spy for the highest bidder
+	option = {
+		name = murim_continental_war.0050.b
+		add_gold = 150
+		add_intrigue = 2
+		ai_chance = { base = 30 }
+	}
+
+	# Smuggle refugees to safety
+	option = {
+		name = murim_continental_war.0050.c
+		add_piety = 150
+		add_prestige = 100
+		ai_chance = {
+			base = 20
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Extract rare resources from abandoned territories
+	option = {
+		name = murim_continental_war.0050.d
+		add_gold = 100
+		add_stewardship = 1
+		ai_chance = { base = 10 }
+	}
+}
+
+# ===========================
+# 0070-0089: WAR AFTERMATH
+# ===========================
+
+# War ends — aftermath
+murim_continental_war.0070 = {
+	type = character_event
+	title = murim_continental_war.0070.t
+	desc = murim_continental_war.0070.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+	}
+
+	immediate = {
+		hidden_effect = { murim_end_continental_war_effect = yes }
+	}
+
+	# Claim the spoils of war
+	option = {
+		name = murim_continental_war.0070.a
+		hidden_effect = { murim_war_contribution_reward_effect = yes }
+		ai_chance = { base = 50 }
+	}
+
+	# Help rebuild — the martial world must recover
+	option = {
+		name = murim_continental_war.0070.b
+		add_piety = 200
+		add_diplomacy = 2
+		add_character_modifier = { modifier = murim_war_peacemaker years = 5 }
+		ai_chance = { base = 30 }
+	}
+
+	# Take advantage of the chaos — raid weakened sects
+	option = {
+		name = murim_continental_war.0070.c
+		add_gold = 200
+		add_dread = 20
+		add_prestige = -100
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_trait = greedy }
+		}
+	}
+}
+
+# Territory redistribution
+murim_continental_war.0075 = {
+	type = character_event
+	title = murim_continental_war.0075.t
+	desc = murim_continental_war.0075.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_continental_war.0075.a
+		add_prestige = 200
+		add_martial = 1
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_continental_war.0075.b
+		add_diplomacy = 1
+		add_prestige = 100
+		ai_chance = { base = 45 }
+	}
+}
+
+# Prisoner exchange
+murim_continental_war.0076 = {
+	type = character_event
+	title = murim_continental_war.0076.t
+	desc = murim_continental_war.0076.desc
+	theme = diplomacy
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_continental_war.0076.a
+		add_diplomacy = 1
+		add_prestige = 100
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_continental_war.0076.b
+		add_gold = 100
+		ai_chance = { base = 40 }
+	}
+}
+
+# ===========================
+# 0080-0089: PEACE BROKERING
+# ===========================
+
+# Peace negotiations
+murim_continental_war.0080 = {
+	type = character_event
+	title = murim_continental_war.0080.t
+	desc = murim_continental_war.0080.desc
+	theme = diplomacy
+	left_portrait = { character = root animation = personality_compassionate }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_continental_war_active_trigger = yes
+		diplomacy >= 15
+	}
+
+	# Propose a grand ceasefire
+	option = {
+		name = murim_continental_war.0080.a
+		add_diplomacy = 3
+		add_prestige = 400
+		add_character_modifier = { modifier = murim_war_peacemaker years = 10 }
+		hidden_effect = {
+			trigger_event = { id = murim_continental_war.0070 days = 30 }
+		}
+		ai_chance = { base = 55 }
+	}
+
+	# Demand the losing side's unconditional surrender
+	option = {
+		name = murim_continental_war.0080.b
+		add_dread = 20
+		add_prestige = 250
+		ai_chance = { base = 25 }
+	}
+
+	# The war must continue — peace now serves no one
+	option = {
+		name = murim_continental_war.0080.c
+		add_stress = 15
+		add_martial = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+# ===========================
+# 0090-0099: TENSION BUILDUP
+# ===========================
+
+# Pre-war tension incident
+murim_continental_war.0090 = {
+	type = character_event
+	title = murim_continental_war.0090.t
+	desc = murim_continental_war.0090.desc
+	theme = intrigue
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { murim_continental_war_active_trigger = yes }
+	}
+
+	# Escalate the incident
+	option = {
+		name = murim_continental_war.0090.a
+		add_dread = 10
+		add_prestige = 50
+		ai_chance = { base = 40 }
+	}
+
+	# De-escalate
+	option = {
+		name = murim_continental_war.0090.b
+		add_diplomacy = 1
+		add_piety = 50
+		ai_chance = { base = 40 }
+	}
+
+	# Use it for personal advantage
+	option = {
+		name = murim_continental_war.0090.c
+		add_intrigue = 1
+		add_gold = 50
+		ai_chance = { base = 20 }
+	}
+}
