@@ -1,576 +1,874 @@
-namespace = murim_iron_fist_exp2
+namespace = murim_iron_fist_expansion2
 
-# Iron Fist Gate Expansion 2 Events
-# Deep dive into body cultivation, iron body techniques, gate hierarchy
-# Mountain fortress defense, smithing arts, endurance trials
+# IRON FIST GATE DEEP EXPANSION 2 — FINAL TECHNIQUES AND CLAN WARS
+# Iron body cultivation, legendary blacksmith forging, internal power struggles
+# Iron Fist Gate vs Phantom Blade assassination war
 
-###################################
-# Iron Body Perfection Trial
-###################################
-murim_iron_fist_exp2.0001 = {
+### EVENT 1: The Adamantine Body Tempering ###
+murim_iron_fist_expansion2.0001 = {
 	type = character_event
-	title = murim_iron_fist_exp2.0001.t
-	desc = murim_iron_fist_exp2.0001.desc
+	title = murim_iron_fist_expansion2.0001.t
+	desc = murim_iron_fist_expansion2.0001.desc
 	theme = martial
 	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
 	trigger = {
-		has_trait = trait_iron_fist_gate
-		prowess >= 14
-		age >= 20
-		NOT = { has_trait = murim_iron_body_perfected }
-		NOT = { has_character_flag = iron_body_trial_attempted }
+		has_trait = murim_iron_fist_gate
+		prowess >= 15
+		NOT = { has_character_flag = adamantine_body_trial }
 	}
 	
 	immediate = {
-		add_character_flag = {
-			flag = iron_body_trial_attempted
-			days = 1095
+		set_character_flag = adamantine_body_trial
+	}
+	
+	# Option A: Endure the Thousand Hammer Tempering
+	option = {
+		name = murim_iron_fist_expansion2.0001.a
+		hidden_effect = {
+			random = {
+				chance = 40
+				add_trait = murim_adamantine_body
+				add_prowess_skill = 6
+				add_character_modifier = {
+					modifier = murim_iron_skin_defense
+					years = -1
+				}
+			}
+			random = {
+				chance = 35
+				add_prowess_skill = 3
+				add_trait = scarred
+				add_character_modifier = {
+					modifier = murim_partial_adamantine
+					years = 15
+				}
+			}
+			random = {
+				chance = 25
+				add_trait = wounded
+				add_stress = 60
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_trait = brave
+			}
 		}
 	}
 	
+	# Option B: Use the Iron Fist Secret Herbal Bath method
 	option = {
-		name = murim_iron_fist_exp2.0001.a
-		# Endure the Thousand Hammer Tempering
-		random_list = {
-			25 = {
-				# Perfect iron body achieved
-				add_trait = murim_iron_body_perfected
-				add_prowess = 6
+		name = murim_iron_fist_expansion2.0001.b
+		add_gold = -200
+		hidden_effect = {
+			random = {
+				chance = 50
+				add_trait = murim_iron_herb_body
+				add_prowess_skill = 4
 				add_character_modifier = {
-					modifier = murim_iron_body_perfection
+					modifier = murim_herbal_iron_defense
 					years = 20
 				}
+			}
+			random = {
+				chance = 50
+				add_prowess_skill = 2
+				add_character_modifier = {
+					modifier = murim_partial_herb_treatment
+					years = 10
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Refuse — the body has limits I won't cross
+	option = {
+		name = murim_iron_fist_expansion2.0001.c
+		add_stress = -20
+		add_prestige = 100
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = craven
+			}
+		}
+	}
+}
+
+### EVENT 2: The Legendary Blacksmith's Challenge ###
+murim_iron_fist_expansion2.0002 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0002.t
+	desc = murim_iron_fist_expansion2.0002.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_gate
+		OR = {
+			has_trait = murim_adamantine_body
+			has_trait = murim_iron_herb_body
+		}
+		NOT = { has_character_flag = blacksmith_challenge }
+	}
+	
+	immediate = {
+		set_character_flag = blacksmith_challenge
+	}
+	
+	# Option A: Forge the Meteor Iron Gauntlets
+	option = {
+		name = murim_iron_fist_expansion2.0002.a
+		add_gold = -300
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_meteor_iron_gauntlets
+				years = -1
+			}
+			add_prowess_skill = 4
+			set_character_flag = has_meteor_gauntlets
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Forge the Heaven-Splitting Iron Staff
+	option = {
+		name = murim_iron_fist_expansion2.0002.b
+		add_gold = -400
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_heaven_splitting_staff
+				years = -1
+			}
+			add_prowess_skill = 5
+			add_martial_skill = 2
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Forge armor for the entire clan instead
+	option = {
+		name = murim_iron_fist_expansion2.0002.c
+		add_gold = -500
+		add_prestige = 400
+		hidden_effect = {
+			every_vassal = {
+				limit = { has_trait = murim_iron_fist_gate }
+				add_character_modifier = {
+					modifier = murim_clan_forged_armor
+					years = 20
+				}
+				add_prowess_skill = 2
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = generous
+			}
+		}
+	}
+}
+
+### EVENT 3: Iron Fist Gate vs Phantom Blade — War Declaration ###
+murim_iron_fist_expansion2.0003 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0003.t
+	desc = murim_iron_fist_expansion2.0003.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = rage
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_gate
+		any_known_character = {
+			has_trait = murim_phantom_blade
+			reverse_opinion = {
+				target = root
+				value <= -30
+			}
+		}
+		NOT = { has_character_flag = iron_vs_phantom_war }
+	}
+	
+	immediate = {
+		set_character_flag = iron_vs_phantom_war
+		random_known_character = {
+			limit = {
+				has_trait = murim_phantom_blade
+			}
+			save_scope_as = phantom_enemy
+		}
+	}
+	
+	# Option A: Declare open war — crush them with iron fists
+	option = {
+		name = murim_iron_fist_expansion2.0003.a
+		add_prestige = 300
+		add_dread = 20
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_iron_fist_wartime
+				years = 5
+			}
+			scope:phantom_enemy = {
+				add_opinion = {
+					target = root
+					modifier = clan_war_declared_opinion
+					opinion = -60
+				}
+			}
+			trigger_event = {
+				id = murim_iron_fist_expansion2.0004
+				days = 60
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 30
+				has_trait = wrathful
+			}
+		}
+	}
+	
+	# Option B: Fortify defenses — let them come to us
+	option = {
+		name = murim_iron_fist_expansion2.0003.b
+		add_prestige = 200
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_iron_fortress_defense
+				years = 5
+			}
+			trigger_event = {
+				id = murim_iron_fist_expansion2.0005
+				days = 90
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Seek alliance with Shaolin against Phantom Blade
+	option = {
+		name = murim_iron_fist_expansion2.0003.c
+		add_diplomacy_skill = 2
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_seeking_orthodox_alliance
+				years = 3
+			}
+			trigger_event = {
+				id = murim_iron_fist_expansion2.0006
+				days = 30
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = diplomat
+			}
+		}
+	}
+}
+
+### EVENT 4: The Iron Fist Offensive ###
+murim_iron_fist_expansion2.0004 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0004.t
+	desc = murim_iron_fist_expansion2.0004.desc
+	theme = war
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_character_flag = iron_vs_phantom_war
+	}
+	
+	immediate = { }
+	
+	# Option A: Lead the charge personally
+	option = {
+		name = murim_iron_fist_expansion2.0004.a
+		add_prowess_skill = 2
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Victory — smash their hideout
+				add_prestige = 800
+				add_character_modifier = {
+					modifier = murim_phantom_hideout_crushed
+					years = 10
+				}
+			}
+			random = {
+				chance = 30
+				# Pyrrhic victory
+				add_trait = wounded
 				add_prestige = 400
 			}
-			40 = {
-				# Partial tempering - stronger but incomplete
-				add_prowess = 3
-				add_character_modifier = {
-					modifier = murim_iron_body_partial
-					years = 10
-				}
+			random = {
+				chance = 20
+				# Ambush — Phantom Blade's trap
 				add_trait = scarred
-			}
-			35 = {
-				# Body rejected the tempering - severe injury
-				add_trait = wounded_3
-				add_character_modifier = {
-					modifier = murim_iron_body_rejection
-					years = 5
-				}
-				add_stress = 50
-			}
-		}
-		ai_chance = { base = 70 }
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0001.b
-		# Train conventionally instead
-		add_prowess = 1
-		ai_chance = { base = 30 }
-	}
-}
-
-###################################
-# Mountain Fortress Defense
-# Gate defends against invaders
-###################################
-murim_iron_fist_exp2.0002 = {
-	type = character_event
-	title = murim_iron_fist_exp2.0002.t
-	desc = murim_iron_fist_exp2.0002.desc
-	theme = war
-	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		has_variable = murim_clan_leader
-		any_living_character = {
-			has_variable = murim_clan_leader
-			NOT = { has_trait = trait_iron_fist_gate }
-			opinion = {
-				target = root
-				value < -30
-			}
-		}
-		NOT = { has_character_flag = fortress_defense_cooldown }
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = fortress_defense_cooldown
-			days = 1825
-		}
-		random_living_character = {
-			limit = {
-				has_variable = murim_clan_leader
-				NOT = { has_trait = trait_iron_fist_gate }
-				opinion = {
-					target = root
-					value < -30
+				add_stress = 60
+				trigger_event = {
+					id = murim_iron_fist_expansion2.0007
+					days = 7
 				}
 			}
-			save_scope_as = attacking_clan
+		}
+		ai_chance = {
+			base = 50
 		}
 	}
 	
+	# Option B: Send the Iron Vanguard
 	option = {
-		name = murim_iron_fist_exp2.0002.a
-		# Hold the mountain pass with iron discipline
-		duel = {
-			skill = prowess
-			target = scope:attacking_clan
-			60 = {
-				comparator = scope:duel_value
-				desc = murim_iron_fist_exp2.0002.success
-				# Fortress holds - attackers repelled
+		name = murim_iron_fist_expansion2.0004.b
+		add_gold = -200
+		hidden_effect = {
+			random = {
+				chance = 40
 				add_prestige = 500
-				add_character_modifier = {
-					modifier = murim_iron_fortress_victory
-					years = 5
-				}
-				scope:attacking_clan = {
-					add_prestige = -300
-					add_opinion = {
-						target = root
-						modifier = murim_defeated_at_gate
-						opinion = -20
-					}
-				}
 			}
-			40 = {
-				comparator = scope:duel_value
-				desc = murim_iron_fist_exp2.0002.failure
-				# Fortress breached
-				add_prestige = -200
-				add_trait = wounded_2
-				add_character_modifier = {
-					modifier = murim_iron_fortress_breached
-					years = 3
-				}
-			}
-		}
-		ai_chance = { base = 80 }
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0002.b
-		# Negotiate rather than fight
-		scope:attacking_clan = {
-			add_opinion = {
-				target = root
-				modifier = murim_iron_fist_negotiated
-				opinion = 15
-			}
-		}
-		add_gold = -100
-		ai_chance = { base = 20 }
-	}
-}
-
-###################################
-# Iron Fist Smithing Arts
-# Forging weapons as meditation
-###################################
-murim_iron_fist_exp2.0003 = {
-	type = character_event
-	title = murim_iron_fist_exp2.0003.t
-	desc = murim_iron_fist_exp2.0003.desc
-	theme = education
-	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		age >= 16
-		NOT = { has_character_flag = smithing_arts_training }
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = smithing_arts_training
-			days = 730
-		}
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0003.a
-		# Forge a personal weapon
-		random_list = {
-			30 = {
-				# Masterwork created
-				add_character_modifier = {
-					modifier = murim_iron_fist_mastersmith
-					years = 10
-				}
-				add_prowess = 3
-				add_prestige = 200
-			}
-			50 = {
-				# Decent weapon forged
-				add_character_modifier = {
-					modifier = murim_iron_fist_smith
-					years = 5
-				}
-				add_prowess = 1
-			}
-			20 = {
-				# Burned during forging
-				add_trait = scarred
-				add_stress = 20
-			}
-		}
-		ai_chance = { base = 70 }
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0003.b
-		# Focus on body cultivation instead
-		add_prowess = 2
-		ai_chance = { base = 30 }
-	}
-}
-
-###################################
-# Iron Fist Gate Hierarchy Challenge
-# Disciple challenges for rank within gate
-###################################
-murim_iron_fist_exp2.0004 = {
-	type = character_event
-	title = murim_iron_fist_exp2.0004.t
-	desc = murim_iron_fist_exp2.0004.desc
-	theme = martial
-	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		prowess >= 12
-		NOT = { has_variable = murim_clan_leader }
-		NOT = { has_character_flag = gate_rank_challenge }
-		any_living_character = {
-			has_trait = trait_iron_fist_gate
-			has_variable = murim_clan_elder
-			prowess < root.prowess
-		}
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = gate_rank_challenge
-			days = 730
-		}
-		random_living_character = {
-			limit = {
-				has_trait = trait_iron_fist_gate
-				has_variable = murim_clan_elder
-				prowess < root.prowess
-			}
-			save_scope_as = gate_elder_target
-		}
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0004.a
-		# Challenge the elder for position
-		duel = {
-			skill = prowess
-			target = scope:gate_elder_target
-			55 = {
-				comparator = scope:duel_value
-				desc = murim_iron_fist_exp2.0004.success
-				add_prestige = 300
-				set_variable = murim_clan_elder
-				scope:gate_elder_target = {
-					remove_variable = murim_clan_elder
-					add_stress = 30
-				}
-			}
-			45 = {
-				comparator = scope:duel_value
-				desc = murim_iron_fist_exp2.0004.failure
-				add_trait = wounded_1
-				add_prestige = -100
-				scope:gate_elder_target = {
-					add_prestige = 150
-				}
-			}
-		}
-		ai_chance = { base = 60 }
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0004.b
-		# Wait for the right moment
-		add_character_modifier = {
-			modifier = murim_iron_fist_patient_wait
-			years = 2
-		}
-		ai_chance = { base = 40 }
-	}
-}
-
-###################################
-# Endurance March Training
-# Cross-mountain training march
-###################################
-murim_iron_fist_exp2.0005 = {
-	type = character_event
-	title = murim_iron_fist_exp2.0005.t
-	desc = murim_iron_fist_exp2.0005.desc
-	theme = martial
-	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		age >= 14
-		age < 30
-		NOT = { has_character_flag = endurance_march_done }
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = endurance_march_done
-			days = 1095
-		}
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0005.a
-		# Complete the Three Peaks March carrying iron weights
-		random_list = {
-			35 = {
-				add_prowess = 4
-				add_character_modifier = {
-					modifier = murim_three_peaks_conqueror
-					years = 10
-				}
-				add_prestige = 150
-			}
-			40 = {
-				add_prowess = 2
-				add_character_modifier = {
-					modifier = murim_endurance_trained
-					years = 5
-				}
-			}
-			25 = {
-				# Collapsed during march
-				add_trait = wounded_1
-				add_stress = 20
-			}
-		}
-		ai_chance = { base = 80 }
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0005.b
-		add_prowess = 1
-		ai_chance = { base = 20 }
-	}
-}
-
-###################################
-# Iron Fist Gate vs Heavenly Demon Confrontation
-###################################
-murim_iron_fist_exp2.0006 = {
-	type = character_event
-	title = murim_iron_fist_exp2.0006.t
-	desc = murim_iron_fist_exp2.0006.desc
-	theme = war
-	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		has_variable = murim_clan_leader
-		any_living_character = {
-			has_trait = trait_heavenly_demon_sect
-			has_variable = murim_clan_leader
-		}
-		NOT = { has_character_flag = iron_demon_confrontation }
-	}
-	
-	immediate = {
-		add_character_flag = {
-			flag = iron_demon_confrontation
-			days = 3650
-		}
-		random_living_character = {
-			limit = {
-				has_trait = trait_heavenly_demon_sect
-				has_variable = murim_clan_leader
-			}
-			save_scope_as = demon_lord
-		}
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0006.a
-		# Challenge the Demon Lord directly - iron vs dark qi
-		duel = {
-			skill = prowess
-			target = scope:demon_lord
-			40 = {
-				comparator = scope:duel_value
-				desc = murim_iron_fist_exp2.0006.iron_wins
-				add_prestige = 800
-				add_prowess = 3
-				add_character_modifier = {
-					modifier = murim_iron_defeats_demon
-					years = 10
-				}
-				scope:demon_lord = {
-					add_prestige = -500
-					add_trait = wounded_2
-				}
-			}
-			60 = {
-				comparator = scope:duel_value
-				desc = murim_iron_fist_exp2.0006.demon_wins
-				add_trait = wounded_3
-				add_prestige = -200
-				scope:demon_lord = {
-					add_prestige = 500
-				}
-			}
-		}
-		ai_chance = { base = 50 }
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0006.b
-		# Rally orthodox alliance first
-		add_character_modifier = {
-			modifier = murim_iron_fist_rallying_orthodox
-			years = 3
-		}
-		every_living_character = {
-			limit = {
-				has_variable = murim_clan_leader
-				OR = {
-					has_trait = trait_mount_hua_sect
-					has_trait = trait_shaolin_temple
-					has_trait = trait_wudang_sect
-				}
-			}
-			add_opinion = {
-				target = root
-				modifier = murim_iron_fist_rally_call
-				opinion = 20
-			}
-		}
-		ai_chance = { base = 50 }
-	}
-}
-
-###################################
-# Iron Fist Gate Initiation Rite
-# New disciples prove their worth
-###################################
-murim_iron_fist_exp2.0007 = {
-	type = character_event
-	title = murim_iron_fist_exp2.0007.t
-	desc = murim_iron_fist_exp2.0007.desc
-	theme = martial
-	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		age >= 12
-		age < 18
-		NOT = { has_character_flag = iron_fist_initiation_done }
-	}
-	
-	immediate = {
-		add_character_flag = iron_fist_initiation_done
-	}
-	
-	option = {
-		name = murim_iron_fist_exp2.0007.a
-		# Break 10 stone slabs with bare fists
-		random_list = {
-			40 = {
-				add_prestige = 100
-				add_prowess = 2
-				add_character_modifier = {
-					modifier = murim_iron_fist_initiated
-					years = 5
-				}
-			}
-			35 = {
-				add_prowess = 1
-				add_trait = scarred
-			}
-			25 = {
-				add_trait = wounded_2
+			random = {
+				chance = 60
+				# Vanguard suffers losses
 				add_stress = 30
 			}
 		}
-		ai_chance = { base = 90 }
+		ai_chance = {
+			base = 30
+		}
 	}
 	
+	# Option C: Use scorched earth — destroy their supply routes
 	option = {
-		name = murim_iron_fist_exp2.0007.b
-		# Ask for an alternative trial
-		add_character_modifier = {
-			modifier = murim_iron_fist_alternative_path
-			years = 3
+		name = murim_iron_fist_expansion2.0004.c
+		add_dread = 25
+		add_tyranny = 10
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_scorched_earth_tactics
+				years = 5
+			}
 		}
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 20
+		}
 	}
 }
 
-###################################
-# Iron Fist Gate Master's Retirement
-# Gate Master passes the mantle
-###################################
-murim_iron_fist_exp2.0008 = {
+### EVENT 5: Phantom Blade Night Assault ###
+murim_iron_fist_expansion2.0005 = {
 	type = character_event
-	title = murim_iron_fist_exp2.0008.t
-	desc = murim_iron_fist_exp2.0008.desc
-	theme = diplomacy
+	title = murim_iron_fist_expansion2.0005.t
+	desc = murim_iron_fist_expansion2.0005.desc
+	theme = intrigue
 	
-	trigger = {
-		has_trait = trait_iron_fist_gate
-		has_variable = murim_clan_leader
-		age >= 55
-		NOT = { has_character_flag = gate_master_retirement }
+	left_portrait = {
+		character = root
+		animation = shock
 	}
 	
-	immediate = {
-		add_character_flag = gate_master_retirement
-		ordered_living_character = {
-			limit = {
-				has_trait = trait_iron_fist_gate
-				NOT = { this = root }
-				age >= 20
+	trigger = {
+		has_character_flag = iron_vs_phantom_war
+		has_character_modifier = murim_iron_fortress_defense
+	}
+	
+	immediate = { }
+	
+	# Option A: The iron gates hold — counterattack!
+	option = {
+		name = murim_iron_fist_expansion2.0005.a
+		hidden_effect = {
+			random = {
+				chance = 60
+				add_prestige = 600
+				add_character_modifier = {
+					modifier = murim_unbreakable_fortress
+					years = 10
+				}
 			}
-			order_by = prowess
-			max = 1
-			save_scope_as = strongest_disciple
+			random = {
+				chance = 40
+				add_stress = 40
+				# They infiltrated through secret passage
+			}
+		}
+		ai_chance = {
+			base = 50
 		}
 	}
 	
+	# Option B: Trap the assassins — iron cage formation
 	option = {
-		name = murim_iron_fist_exp2.0008.a
-		# Pass the Iron Seal to the strongest
-		scope:strongest_disciple = {
-			set_variable = murim_clan_leader
-			add_prestige = 500
+		name = murim_iron_fist_expansion2.0005.b
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Capture phantom blade assassins
+				add_prestige = 700
+				add_dread = 30
+			}
+			random = {
+				chance = 50
+				# They escape but suffer losses
+				add_prestige = 300
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Sacrifice the outer walls to protect the inner sanctum
+	option = {
+		name = murim_iron_fist_expansion2.0005.c
+		add_gold = -150
+		add_prestige = 200
+		hidden_effect = {
 			add_character_modifier = {
-				modifier = murim_new_gate_master
+				modifier = murim_inner_sanctum_protected
+				years = 5
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+### EVENT 6: Shaolin Alliance Negotiations ###
+murim_iron_fist_expansion2.0006 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0006.t
+	desc = murim_iron_fist_expansion2.0006.desc
+	theme = diplomacy
+	
+	left_portrait = {
+		character = root
+		animation = personality_compassionate
+	}
+	
+	trigger = {
+		has_character_modifier = murim_seeking_orthodox_alliance
+	}
+	
+	immediate = { }
+	
+	# Option A: Offer shared blacksmithing secrets for Shaolin support
+	option = {
+		name = murim_iron_fist_expansion2.0006.a
+		add_prestige = 400
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_iron_shaolin_alliance
+				years = 15
+			}
+			# Shaolin agrees
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Shaolin demands you stop using demonic iron — refuse
+	option = {
+		name = murim_iron_fist_expansion2.0006.b
+		add_dread = 15
+		add_prestige = 200
+		hidden_effect = {
+			remove_character_modifier = murim_seeking_orthodox_alliance
+			add_character_modifier = {
+				modifier = murim_iron_fist_independence
 				years = 10
 			}
 		}
-		remove_variable = murim_clan_leader
-		add_character_modifier = {
-			modifier = murim_retired_gate_master
-			years = 30
+		ai_chance = {
+			base = 30
 		}
-		ai_chance = { base = 60 }
 	}
 	
+	# Option C: Accept Shaolin's terms — purify your techniques
 	option = {
-		name = murim_iron_fist_exp2.0008.b
-		# Rule until death - iron will
-		add_stress = 20
-		add_character_modifier = {
-			modifier = murim_iron_will_eternal_master
-			years = 10
+		name = murim_iron_fist_expansion2.0006.c
+		add_piety = 300
+		add_prowess_skill = -1
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_purified_iron_techniques
+				years = 20
+			}
+			add_character_modifier = {
+				modifier = murim_iron_shaolin_alliance
+				years = 20
+			}
 		}
-		ai_chance = { base = 40 }
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+### EVENT 7: Ambush Recovery — Wounded Gate Master ###
+murim_iron_fist_expansion2.0007 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0007.t
+	desc = murim_iron_fist_expansion2.0007.desc
+	theme = death
+	
+	left_portrait = {
+		character = root
+		animation = pain
+	}
+	
+	trigger = {
+		has_character_flag = iron_vs_phantom_war
+		OR = {
+			has_trait = wounded
+			has_trait = scarred
+		}
+	}
+	
+	immediate = { }
+	
+	# Option A: Iron Will Recovery — push through the pain
+	option = {
+		name = murim_iron_fist_expansion2.0007.a
+		hidden_effect = {
+			random = {
+				chance = 50
+				remove_trait = wounded
+				add_trait = murim_iron_will_recovery
+				add_prowess_skill = 3
+			}
+			random = {
+				chance = 50
+				add_stress = 40
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Seek a healer — the Tang Clan has medicines
+	option = {
+		name = murim_iron_fist_expansion2.0007.b
+		add_gold = -100
+		hidden_effect = {
+			random = {
+				chance = 70
+				remove_trait = wounded
+				add_character_modifier = {
+					modifier = murim_tang_healed
+					years = 5
+				}
+			}
+			random = {
+				chance = 30
+				# Tang poison mixed in — treachery!
+				add_trait = murim_poisoned
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Pass leadership temporarily to the Second Gate Master
+	option = {
+		name = murim_iron_fist_expansion2.0007.c
+		add_stress = -30
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_temporary_retirement
+				years = 2
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+### EVENT 8: Iron Fist Gate Succession Crisis ###
+murim_iron_fist_expansion2.0008 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0008.t
+	desc = murim_iron_fist_expansion2.0008.desc
+	theme = intrigue
+	
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_gate
+		age >= 55
+		any_child = {
+			has_trait = murim_iron_fist_gate
+			age >= 18
+		}
+		NOT = { has_character_flag = iron_fist_succession }
+	}
+	
+	immediate = {
+		set_character_flag = iron_fist_succession
+		random_child = {
+			limit = {
+				has_trait = murim_iron_fist_gate
+				age >= 18
+			}
+			save_scope_as = iron_heir
+		}
+	}
+	
+	# Option A: Traditional succession — eldest inherits
+	option = {
+		name = murim_iron_fist_expansion2.0008.a
+		scope:iron_heir = {
+			add_trait = murim_gate_master_heir
+			add_prestige = 500
+		}
+		add_prestige = 300
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: Trial by Iron — all candidates fight
+	option = {
+		name = murim_iron_fist_expansion2.0008.b
+		add_prestige = 400
+		hidden_effect = {
+			trigger_event = {
+				id = murim_iron_fist_expansion2.0009
+				days = 30
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option C: I'm not done yet — refuse to step down
+	option = {
+		name = murim_iron_fist_expansion2.0008.c
+		add_stress = 30
+		add_dread = 20
+		hidden_effect = {
+			scope:iron_heir = {
+				add_opinion = {
+					target = root
+					modifier = denied_succession_opinion
+					opinion = -40
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = ambitious
+			}
+		}
+	}
+}
+
+### EVENT 9: Trial by Iron — Succession Battle ###
+murim_iron_fist_expansion2.0009 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0009.t
+	desc = murim_iron_fist_expansion2.0009.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_character_flag = iron_fist_succession
+	}
+	
+	immediate = { }
+	
+	# Option A: The eldest wins — tradition holds
+	option = {
+		name = murim_iron_fist_expansion2.0009.a
+		add_prestige = 300
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Clean victory
+				add_character_modifier = {
+					modifier = murim_peaceful_succession
+					years = 10
+				}
+			}
+			random = {
+				chance = 50
+				# Loser plots revenge
+				trigger_event = {
+					id = murim_iron_fist_expansion2.0010
+					days = 180
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+	
+	# Option B: A dark horse emerges — the forgotten child
+	option = {
+		name = murim_iron_fist_expansion2.0009.b
+		hidden_effect = {
+			create_character = {
+				age = 22
+				trait = murim_iron_fist_gate
+				trait = murim_hidden_genius
+				trait = brave
+			}
+			add_prestige = 200
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: The trial ends in a draw — joint leadership
+	option = {
+		name = murim_iron_fist_expansion2.0009.c
+		add_prestige = 200
+		add_stress = 20
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_joint_gate_leadership
+				years = 10
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+### EVENT 10: The Iron Fist Legacy — Ultimate Technique ###
+murim_iron_fist_expansion2.0010 = {
+	type = character_event
+	title = murim_iron_fist_expansion2.0010.t
+	desc = murim_iron_fist_expansion2.0010.desc
+	theme = martial
+	
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	
+	trigger = {
+		has_trait = murim_iron_fist_gate
+		OR = {
+			has_trait = murim_adamantine_body
+			has_character_flag = has_meteor_gauntlets
+		}
+		prowess >= 20
+		NOT = { has_character_flag = iron_ultimate_technique }
+	}
+	
+	immediate = {
+		set_character_flag = iron_ultimate_technique
+	}
+	
+	# Option A: Master the Heavenly Iron God Fist — destroy mountains
+	option = {
+		name = murim_iron_fist_expansion2.0010.a
+		add_prowess_skill = 8
+		add_trait = murim_iron_god_fist_master
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_heavenly_iron_god_fist
+				years = -1
+			}
+			add_prestige = 2000
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Create a new technique — the Iron Tyrant's Domain
+	option = {
+		name = murim_iron_fist_expansion2.0010.b
+		add_prowess_skill = 5
+		add_martial_skill = 4
+		add_trait = murim_technique_creator
+		hidden_effect = {
+			add_character_modifier = {
+				modifier = murim_iron_tyrant_domain
+				years = -1
+			}
+			add_prestige = 1500
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	
+	# Option C: Pass the incomplete technique to the next generation
+	option = {
+		name = murim_iron_fist_expansion2.0010.c
+		add_prestige = 800
+		hidden_effect = {
+			if = {
+				limit = { exists = primary_heir }
+				primary_heir = {
+					add_character_modifier = {
+						modifier = murim_incomplete_iron_legacy
+						years = -1
+					}
+					add_prowess_skill = 3
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+		}
 	}
 }
