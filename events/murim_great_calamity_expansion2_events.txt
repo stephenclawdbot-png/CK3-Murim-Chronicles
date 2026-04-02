@@ -1,0 +1,949 @@
+namespace = murim_great_calamity_expansion2
+
+# GREAT CALAMITY EXPANSION 2 — SURVIVOR REBUILDING DEEP CHAIN
+# 10 complete events: post-calamity survivor politics, new era founding, mythology creation
+
+# Event 0001 — Ashes of the Old World
+murim_great_calamity_expansion2.0001 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0001.t
+	desc = murim_great_calamity_exp2.0001.desc
+	theme = death
+	left_portrait = {
+		character = root
+		animation = grief
+	}
+
+	trigger = {
+		has_global_variable = murim_calamity_aftermath
+		has_variable = murim_calamity_survivor
+		NOT = { has_character_flag = calamity_ashes_witnessed }
+	}
+
+	weight_multiplier = {
+		base = 100
+		modifier = {
+			add = 50
+			has_trait = murim_calamity_witness
+		}
+	}
+
+	immediate = {
+		set_character_flag = calamity_ashes_witnessed
+		# Count surviving martial artists in realm
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+			}
+			add_to_temporary_list = calamity_survivors_list
+		}
+	}
+
+	# Option A — Survey the ruins and count survivors
+	option = {
+		name = murim_great_calamity_exp2.0001.a
+		add_character_modifier = {
+			modifier = murim_calamity_surveyor
+			years = 10
+		}
+		# Set survivor count variable
+		set_variable = {
+			name = murim_survivors_counted
+			value = 1
+		}
+		every_in_list = {
+			list = calamity_survivors_list
+			limit = { is_alive = yes }
+			root = {
+				change_variable = {
+					name = murim_survivors_counted
+					add = 1
+				}
+			}
+		}
+		stress_impact = {
+			compassionate = medium_stress_impact_loss
+			callous = medium_stress_impact_gain
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0002
+			days = { 30 60 }
+		}
+	}
+
+	# Option B — Mourn the dead, honor the fallen
+	option = {
+		name = murim_great_calamity_exp2.0001.b
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_mourning_the_fallen
+			years = 5
+		}
+		every_in_list = {
+			list = calamity_survivors_list
+			add_opinion = {
+				modifier = murim_shared_grief
+				target = root
+				opinion = 30
+			}
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0003
+			days = { 60 120 }
+		}
+	}
+
+	# Option C — The old world is gone. We start anew.
+	option = {
+		name = murim_great_calamity_exp2.0001.c
+		add_prestige = 1000
+		add_character_modifier = {
+			modifier = murim_new_era_founder
+			years = 20
+		}
+		set_global_variable = {
+			name = murim_new_era_declared
+			value = yes
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0004
+			days = { 15 30 }
+		}
+	}
+}
+
+# Event 0002 — The Survivor Census
+murim_great_calamity_expansion2.0002 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0002.t
+	desc = murim_great_calamity_exp2.0002.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = thinking
+	}
+
+	trigger = {
+		has_character_flag = calamity_ashes_witnessed
+		has_variable = murim_survivors_counted
+	}
+
+	immediate = {
+		# Categorize survivors by clan
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				has_trait = murim_clan_member
+				is_alive = yes
+			}
+			add_to_temporary_list = clan_survivors
+		}
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { has_trait = murim_clan_member }
+				is_alive = yes
+			}
+			add_to_temporary_list = clanless_survivors
+		}
+	}
+
+	# Option A — Recruit clanless survivors into our ranks
+	option = {
+		name = murim_great_calamity_exp2.0002.a
+		every_in_list = {
+			list = clanless_survivors
+			limit = {
+				NOT = { has_relation_rival = root }
+				opinion = { target = root value >= -20 }
+			}
+			add_opinion = {
+				modifier = murim_recruited_after_calamity
+				target = root
+				opinion = 40
+			}
+			set_variable = {
+				name = murim_adopted_clan
+				value = root
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_rebuilder_recruiter
+			years = 15
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0005
+			days = { 90 180 }
+		}
+	}
+
+	# Option B — Focus on clan survivors only
+	option = {
+		name = murim_great_calamity_exp2.0002.b
+		every_in_list = {
+			list = clan_survivors
+			add_opinion = {
+				modifier = murim_clan_solidarity
+				target = root
+				opinion = 25
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_clan_purist_rebuilder
+			years = 15
+		}
+	}
+
+	# Option C — Create a new unified order from all survivors
+	option = {
+		name = murim_great_calamity_exp2.0002.c
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_unifier_of_survivors
+			years = 20
+		}
+		set_global_variable = {
+			name = murim_unified_survivor_order
+			value = root
+		}
+		every_in_list = {
+			list = clan_survivors
+			add_opinion = {
+				modifier = murim_new_order_member
+				target = root
+				opinion = 15
+			}
+		}
+		every_in_list = {
+			list = clanless_survivors
+			add_opinion = {
+				modifier = murim_new_order_member
+				target = root
+				opinion = 30
+			}
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0006
+			days = { 60 120 }
+		}
+	}
+}
+
+# Event 0003 — Memorial of the Fallen Clans
+murim_great_calamity_expansion2.0003 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0003.t
+	desc = murim_great_calamity_exp2.0003.desc
+	theme = faith
+	left_portrait = {
+		character = root
+		animation = pray
+	}
+
+	trigger = {
+		has_global_variable = murim_calamity_aftermath
+		has_character_flag = calamity_ashes_witnessed
+	}
+
+	immediate = {
+		# Build memorial list of destroyed clans
+		set_variable = {
+			name = murim_clans_destroyed_count
+			value = 0
+		}
+		if = {
+			limit = { has_global_variable = murim_shaolin_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_wudang_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_tang_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_mount_hua_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_beggar_sect_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_heavenly_demon_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_iron_fist_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_poison_flower_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+		if = {
+			limit = { has_global_variable = murim_phantom_blade_destroyed }
+			change_variable = { name = murim_clans_destroyed_count add = 1 }
+		}
+	}
+
+	# Option A — Build stone monument listing all fallen
+	option = {
+		name = murim_great_calamity_exp2.0003.a
+		add_gold = -200
+		add_piety = 1000
+		add_character_modifier = {
+			modifier = murim_monument_builder
+			years = 50
+		}
+		set_global_variable = {
+			name = murim_calamity_monument_exists
+			value = yes
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0007
+			days = { 180 365 }
+		}
+	}
+
+	# Option B — Hold grand funeral ceremony
+	option = {
+		name = murim_great_calamity_exp2.0003.b
+		add_gold = -100
+		add_piety = 500
+		add_prestige = 300
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+			}
+			add_opinion = {
+				modifier = murim_honored_the_dead
+				target = root
+				opinion = 20
+			}
+		}
+	}
+
+	# Option C — The dead are dead. Focus on the living.
+	option = {
+		name = murim_great_calamity_exp2.0003.c
+		add_prestige = 200
+		stress_impact = {
+			compassionate = major_stress_impact_gain
+			cynical = medium_stress_impact_loss
+		}
+		add_character_modifier = {
+			modifier = murim_pragmatic_survivor
+			years = 10
+		}
+	}
+}
+
+# Event 0004 — Declaration of the New Era
+murim_great_calamity_expansion2.0004 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0004.t
+	desc = murim_great_calamity_exp2.0004.desc
+	theme = realm
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_global_variable = murim_new_era_declared
+	}
+
+	immediate = {
+		# Increment era counter
+		if = {
+			limit = { NOT = { has_global_variable = murim_era_count } }
+			set_global_variable = {
+				name = murim_era_count
+				value = 1
+			}
+		}
+		else = {
+			change_global_variable = {
+				name = murim_era_count
+				add = 1
+			}
+		}
+		# Record previous era in mythology
+		set_global_variable = {
+			name = murim_previous_era_mythologized
+			value = yes
+		}
+	}
+
+	# Option A — Name the new era after yourself
+	option = {
+		name = murim_great_calamity_exp2.0004.a
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = murim_era_namer
+			years = 100
+		}
+		set_global_variable = {
+			name = murim_era_founder
+			value = root
+		}
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { this = root }
+			}
+			trigger_event = {
+				id = murim_great_calamity_expansion2.0008
+				days = { 5 15 }
+			}
+		}
+	}
+
+	# Option B — Name it the Era of Restoration
+	option = {
+		name = murim_great_calamity_exp2.0004.b
+		add_prestige = 1000
+		add_piety = 500
+		set_global_variable = {
+			name = murim_era_name
+			value = flag:era_of_restoration
+		}
+		add_character_modifier = {
+			modifier = murim_restoration_leader
+			years = 50
+		}
+	}
+
+	# Option C — Let the survivors choose the name together
+	option = {
+		name = murim_great_calamity_exp2.0004.c
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_democratic_founder
+			years = 30
+		}
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+			}
+			add_opinion = {
+				modifier = murim_respected_our_voice
+				target = root
+				opinion = 25
+			}
+		}
+	}
+}
+
+# Event 0005 — The New Sect Halls Rise
+murim_great_calamity_expansion2.0005 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0005.t
+	desc = murim_great_calamity_exp2.0005.desc
+	theme = stewardship
+	left_portrait = {
+		character = root
+		animation = happiness
+	}
+
+	trigger = {
+		has_global_variable = murim_calamity_aftermath
+		has_character_modifier = murim_rebuilder_recruiter
+	}
+
+	immediate = {
+		set_character_flag = rebuilding_sect_halls
+	}
+
+	# Option A — Rebuild on the ruins of the old headquarters
+	option = {
+		name = murim_great_calamity_exp2.0005.a
+		add_gold = -500
+		add_character_modifier = {
+			modifier = murim_restored_ancient_hall
+			years = 30
+		}
+		# Gain legacy bonus from old site
+		if = {
+			limit = {
+				has_trait = murim_clan_shaolin
+			}
+			add_piety = 1000
+			add_character_modifier = {
+				modifier = murim_shaolin_restored
+				years = 50
+			}
+		}
+		if = {
+			limit = {
+				has_trait = murim_clan_wudang
+			}
+			add_prestige = 800
+			add_character_modifier = {
+				modifier = murim_wudang_restored
+				years = 50
+			}
+		}
+		if = {
+			limit = {
+				has_trait = murim_clan_tang
+			}
+			add_gold = 300
+			add_character_modifier = {
+				modifier = murim_tang_restored
+				years = 50
+			}
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0009
+			days = { 365 730 }
+		}
+	}
+
+	# Option B — Build in a completely new location
+	option = {
+		name = murim_great_calamity_exp2.0005.b
+		add_gold = -300
+		add_character_modifier = {
+			modifier = murim_new_foundation
+			years = 20
+		}
+		add_prestige = 500
+	}
+
+	# Option C — Remain nomadic, no fixed headquarters
+	option = {
+		name = murim_great_calamity_exp2.0005.c
+		add_character_modifier = {
+			modifier = murim_wandering_sect
+			years = 30
+		}
+		add_martial = 3
+		add_prowess = 5
+	}
+}
+
+# Event 0006 — The Unified Survivor Order Assembly
+murim_great_calamity_expansion2.0006 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0006.t
+	desc = murim_great_calamity_exp2.0006.desc
+	theme = diplomacy
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+
+	trigger = {
+		has_global_variable = murim_unified_survivor_order
+	}
+
+	immediate = {
+		# Gather all martial artists for the assembly
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+				NOT = { this = root }
+			}
+			add_to_temporary_list = assembly_attendees
+		}
+	}
+
+	# Option A — Establish democratic council of elders
+	option = {
+		name = murim_great_calamity_exp2.0006.a
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_council_founder
+			years = 30
+		}
+		set_global_variable = {
+			name = murim_elder_council_active
+			value = yes
+		}
+		every_in_list = {
+			list = assembly_attendees
+			limit = { age >= 40 }
+			add_character_modifier = {
+				modifier = murim_elder_council_member
+				years = 20
+			}
+		}
+	}
+
+	# Option B — Declare yourself supreme leader
+	option = {
+		name = murim_great_calamity_exp2.0006.b
+		add_tyranny = 30
+		add_prestige = 2000
+		add_character_modifier = {
+			modifier = murim_supreme_survivor_leader
+			years = 50
+		}
+		every_in_list = {
+			list = assembly_attendees
+			limit = {
+				has_trait = just
+			}
+			add_opinion = {
+				modifier = murim_opposed_tyranny
+				target = root
+				opinion = -40
+			}
+		}
+		every_in_list = {
+			list = assembly_attendees
+			limit = {
+				NOT = { has_trait = just }
+			}
+			add_opinion = {
+				modifier = murim_feared_leader
+				target = root
+				opinion = -10
+			}
+		}
+		trigger_event = {
+			id = murim_great_calamity_expansion2.0010
+			days = { 30 90 }
+		}
+	}
+
+	# Option C — Rotate leadership among clan survivors
+	option = {
+		name = murim_great_calamity_exp2.0006.c
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_rotating_leadership
+			years = 20
+		}
+		every_in_list = {
+			list = assembly_attendees
+			add_opinion = {
+				modifier = murim_fair_system
+				target = root
+				opinion = 15
+			}
+		}
+	}
+}
+
+# Event 0007 — The Monument Dedication Ceremony
+murim_great_calamity_expansion2.0007 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0007.t
+	desc = murim_great_calamity_exp2.0007.desc
+	theme = faith
+	left_portrait = {
+		character = root
+		animation = pray
+	}
+
+	trigger = {
+		has_global_variable = murim_calamity_monument_exists
+	}
+
+	immediate = {
+		set_character_flag = monument_dedicated
+	}
+
+	# Option A — Inscribe the names of every fallen martial artist
+	option = {
+		name = murim_great_calamity_exp2.0007.a
+		add_piety = 1000
+		add_gold = -100
+		add_character_modifier = {
+			modifier = murim_keeper_of_names
+			years = 100
+		}
+		# All survivors gain permanent memory
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+			}
+			add_trait = murim_remembers_the_fallen
+		}
+	}
+
+	# Option B — Only inscribe clan leaders and grandmasters
+	option = {
+		name = murim_great_calamity_exp2.0007.b
+		add_piety = 500
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_honor_the_great
+			years = 50
+		}
+	}
+
+	# Option C — Add a warning for future generations
+	option = {
+		name = murim_great_calamity_exp2.0007.c
+		add_piety = 300
+		add_learning = 3
+		add_character_modifier = {
+			modifier = murim_prophet_of_warning
+			years = 50
+		}
+		set_global_variable = {
+			name = murim_calamity_warning_inscribed
+			value = yes
+		}
+	}
+}
+
+# Event 0008 — Reaction to New Era Declaration
+murim_great_calamity_expansion2.0008 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0008.t
+	desc = murim_great_calamity_exp2.0008.desc
+	theme = intrigue
+	left_portrait = {
+		character = root
+		animation = anger
+	}
+
+	trigger = {
+		has_trait = murim_martial_artist
+		exists = global_var:murim_era_founder
+	}
+
+	immediate = {
+		save_scope_as = reactor
+	}
+
+	# Option A — Accept the new era and its founder
+	option = {
+		name = murim_great_calamity_exp2.0008.a
+		add_opinion = {
+			modifier = murim_accepts_new_era
+			target = global_var:murim_era_founder
+			opinion = 30
+		}
+		add_character_modifier = {
+			modifier = murim_new_era_loyalist
+			years = 20
+		}
+	}
+
+	# Option B — Reject — who is this person to name an era?
+	option = {
+		name = murim_great_calamity_exp2.0008.b
+		add_opinion = {
+			modifier = murim_rejects_new_era
+			target = global_var:murim_era_founder
+			opinion = -40
+		}
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_old_era_loyalist
+			years = 20
+		}
+		# Small chance of rebellion
+		random = {
+			chance = 30
+			trigger_event = {
+				id = murim_great_calamity_expansion2.0010
+				days = { 30 90 }
+			}
+		}
+	}
+
+	# Option C — Stay neutral, wait and see
+	option = {
+		name = murim_great_calamity_exp2.0008.c
+		stress_impact = {
+			ambitious = medium_stress_impact_gain
+		}
+		add_character_modifier = {
+			modifier = murim_cautious_observer
+			years = 10
+		}
+	}
+}
+
+# Event 0009 — Secrets Unearthed in the Ruins
+murim_great_calamity_expansion2.0009 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0009.t
+	desc = murim_great_calamity_exp2.0009.desc
+	theme = learning
+	left_portrait = {
+		character = root
+		animation = ecstasy
+	}
+
+	trigger = {
+		has_character_flag = rebuilding_sect_halls
+	}
+
+	immediate = {
+		set_character_flag = found_ancient_secrets
+	}
+
+	# Option A — Ancient cultivation manual found in the rubble
+	option = {
+		name = murim_great_calamity_exp2.0009.a
+		add_character_modifier = {
+			modifier = murim_ancient_manual_discovered
+			years = 30
+		}
+		add_martial = 5
+		add_prowess = 8
+		# Risk: the manual may be cursed
+		random = {
+			chance = 25
+			add_trait = murim_qi_deviation
+			add_character_modifier = {
+				modifier = murim_cursed_knowledge
+				years = 10
+			}
+		}
+	}
+
+	# Option B — Lost artifact cache beneath the ruins
+	option = {
+		name = murim_great_calamity_exp2.0009.b
+		add_gold = 1000
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_artifact_hoard_found
+			years = 20
+		}
+	}
+
+	# Option C — Map of hidden cultivation grounds
+	option = {
+		name = murim_great_calamity_exp2.0009.c
+		add_character_modifier = {
+			modifier = murim_secret_cultivation_ground
+			years = 50
+		}
+		add_learning = 5
+		add_character_modifier = {
+			modifier = murim_cultivation_boost_major
+			years = 20
+		}
+	}
+}
+
+# Event 0010 — Resistance Against the New Order
+murim_great_calamity_expansion2.0010 = {
+	type = character_event
+	title = murim_great_calamity_exp2.0010.t
+	desc = murim_great_calamity_exp2.0010.desc
+	theme = war
+	left_portrait = {
+		character = root
+		animation = war_over_win
+	}
+
+	trigger = {
+		OR = {
+			has_character_modifier = murim_old_era_loyalist
+			has_character_modifier = murim_supreme_survivor_leader
+		}
+	}
+
+	immediate = {
+		# Identify the resistance leader
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				has_character_modifier = murim_old_era_loyalist
+				NOT = { this = root }
+				prowess >= 15
+			}
+			save_scope_as = resistance_leader
+			weight = {
+				base = 1
+				modifier = {
+					add = 5
+					prowess >= 25
+				}
+				modifier = {
+					add = 3
+					has_trait = ambitious
+				}
+			}
+		}
+	}
+
+	# Option A — Crush the resistance with force
+	option = {
+		name = murim_great_calamity_exp2.0010.a
+		trigger = {
+			prowess >= 20
+		}
+		add_prestige = 500
+		add_tyranny = 20
+		if = {
+			limit = { exists = scope:resistance_leader }
+			scope:resistance_leader = {
+				add_character_modifier = {
+					modifier = murim_crushed_rebel
+					years = 10
+				}
+				add_opinion = {
+					modifier = murim_defeated_by_tyrant
+					target = root
+					opinion = -60
+				}
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_iron_ruler
+			years = 20
+		}
+	}
+
+	# Option B — Negotiate with the dissidents
+	option = {
+		name = murim_great_calamity_exp2.0010.b
+		add_diplomacy = 2
+		if = {
+			limit = { exists = scope:resistance_leader }
+			scope:resistance_leader = {
+				add_opinion = {
+					modifier = murim_willing_to_talk
+					target = root
+					opinion = 20
+				}
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_peaceful_resolver
+			years = 15
+		}
+	}
+
+	# Option C — Step down and let them choose a new leader
+	option = {
+		name = murim_great_calamity_exp2.0010.c
+		remove_character_modifier = murim_supreme_survivor_leader
+		add_prestige = -500
+		add_piety = 500
+		add_character_modifier = {
+			modifier = murim_graceful_abdication
+			years = 30
+		}
+		every_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				is_alive = yes
+			}
+			add_opinion = {
+				modifier = murim_respected_humility
+				target = root
+				opinion = 30
+			}
+		}
+	}
+}
