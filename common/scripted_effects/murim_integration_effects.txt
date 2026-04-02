@@ -1,0 +1,823 @@
+########################################
+# MURIM INTEGRATION EFFECTS
+# Cross-system linkage effects connecting all mod systems
+# Integration Phase - Heartbeat 76
+########################################
+
+# === CLAN-TO-RANKING INTEGRATION ===
+# When a clan member achieves a new rank, propagate effects to their clan
+
+murim_integration_clan_rank_update_effect = {
+	# Called whenever a character's murim rank changes
+	# Updates clan prestige, triggers clan reactions, adjusts faction balance
+	
+	if = {
+		limit = {
+			has_variable = murim_clan_id
+			has_variable = murim_rank
+		}
+		
+		# Shaolin Integration
+		if = {
+			limit = { has_trait = shaolin_disciple }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = shaolin_pillar_of_faith
+					years = 10
+				}
+				every_vassal = {
+					limit = { has_trait = shaolin_disciple }
+					add_opinion = {
+						target = root
+						modifier = inspired_by_senior
+						opinion = 25
+					}
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_shaolin_integration.0001 days = 3 }
+			}
+		}
+		
+		# Wudang Integration
+		if = {
+			limit = { has_trait = wudang_disciple }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = wudang_immortal_sage_aura
+					years = 10
+				}
+				every_vassal = {
+					limit = { has_trait = wudang_disciple }
+					add_opinion = {
+						target = root
+						modifier = dao_reverence
+						opinion = 20
+					}
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_wudang_integration.0001 days = 3 }
+			}
+		}
+		
+		# Mount Hua Integration
+		if = {
+			limit = { has_trait = mount_hua_disciple }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = mount_hua_sword_legend
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_mount_hua_integration.0001 days = 3 }
+			}
+		}
+		
+		# Tang Clan Integration
+		if = {
+			limit = { has_trait = tang_clan_member }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = tang_poison_emperor_aura
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_tang_integration.0001 days = 3 }
+			}
+		}
+		
+		# Beggar Sect Integration
+		if = {
+			limit = { has_trait = beggar_sect_member }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = beggar_king_of_streets
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_beggar_integration.0001 days = 3 }
+			}
+		}
+		
+		# Heavenly Demon Cult Integration
+		if = {
+			limit = { has_trait = heavenly_demon_cultist }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = demon_cult_supreme_elder
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_demon_integration.0001 days = 3 }
+			}
+		}
+		
+		# Iron Fist Gate Integration
+		if = {
+			limit = { has_trait = iron_fist_gate_member }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = iron_fist_legendary_enforcer
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_iron_fist_integration.0001 days = 3 }
+			}
+		}
+		
+		# Poison Flower Palace Integration
+		if = {
+			limit = { has_trait = poison_flower_member }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = poison_flower_empress_aura
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_poison_flower_integration.0001 days = 3 }
+			}
+		}
+		
+		# Phantom Blade Sect Integration
+		if = {
+			limit = { has_trait = phantom_blade_member }
+			if = {
+				limit = { var:murim_rank >= 7 }
+				add_character_modifier = {
+					modifier = phantom_blade_shadow_sovereign
+					years = 10
+				}
+			}
+			if = {
+				limit = { var:murim_rank >= 9 }
+				trigger_event = { id = murim_phantom_blade_integration.0001 days = 3 }
+			}
+		}
+		
+		# Update faction balance after rank change
+		murim_integration_update_faction_balance_effect = yes
+	}
+}
+
+# === FACTION BALANCE INTEGRATION ===
+murim_integration_update_faction_balance_effect = {
+	# Recalculate orthodox vs unorthodox power balance
+	# Based on total ranks of all living martial artists in each faction
+	
+	set_variable = { name = orthodox_total_power value = 0 }
+	set_variable = { name = unorthodox_total_power value = 0 }
+	
+	every_living_character = {
+		limit = {
+			has_variable = murim_rank
+			OR = {
+				has_trait = shaolin_disciple
+				has_trait = wudang_disciple
+				has_trait = mount_hua_disciple
+				has_trait = beggar_sect_member
+				has_trait = iron_fist_gate_member
+			}
+		}
+		root = {
+			change_variable = { name = orthodox_total_power add = prev.var:murim_rank }
+		}
+	}
+	
+	every_living_character = {
+		limit = {
+			has_variable = murim_rank
+			OR = {
+				has_trait = heavenly_demon_cultist
+				has_trait = tang_clan_member
+				has_trait = poison_flower_member
+				has_trait = phantom_blade_member
+			}
+		}
+		root = {
+			change_variable = { name = unorthodox_total_power add = prev.var:murim_rank }
+		}
+	}
+	
+	# Determine dominant faction
+	if = {
+		limit = {
+			var:orthodox_total_power > var:unorthodox_total_power
+			# Check if difference is significant (>20%)
+		}
+		set_global_variable = { name = murim_dominant_faction value = flag:orthodox }
+		if = {
+			limit = { NOT = { has_global_variable = murim_orthodox_dominant_notified } }
+			set_global_variable = { name = murim_orthodox_dominant_notified value = yes }
+			trigger_event = { id = murim_faction_war_integration.0001 days = 30 }
+		}
+	}
+	else_if = {
+		limit = {
+			var:unorthodox_total_power > var:orthodox_total_power
+		}
+		set_global_variable = { name = murim_dominant_faction value = flag:unorthodox }
+		if = {
+			limit = { NOT = { has_global_variable = murim_unorthodox_dominant_notified } }
+			set_global_variable = { name = murim_unorthodox_dominant_notified value = yes }
+			trigger_event = { id = murim_faction_war_integration.0002 days = 30 }
+		}
+	}
+	else = {
+		set_global_variable = { name = murim_dominant_faction value = flag:balanced }
+	}
+}
+
+# === TOURNAMENT-TO-RANKING INTEGRATION ===
+murim_integration_tournament_rank_effect = {
+	# After winning a tournament, check if rank should increase
+	
+	if = {
+		limit = {
+			has_variable = murim_tournament_victories
+			var:murim_tournament_victories >= 3
+			has_variable = murim_rank
+			var:murim_rank < 5
+		}
+		# Three tournament wins = guaranteed rank 5 minimum
+		set_variable = { name = murim_rank value = 5 }
+		trigger_event = { id = murim_ranking_integration.0001 days = 1 }
+	}
+	
+	if = {
+		limit = {
+			has_variable = murim_tournament_victories
+			var:murim_tournament_victories >= 5
+			has_variable = murim_rank
+			var:murim_rank < 7
+		}
+		set_variable = { name = murim_rank value = 7 }
+		trigger_event = { id = murim_ranking_integration.0002 days = 1 }
+	}
+	
+	if = {
+		limit = {
+			has_variable = murim_grand_tournament_champion
+			has_variable = murim_rank
+			var:murim_rank < 8
+		}
+		set_variable = { name = murim_rank value = 8 }
+		trigger_event = { id = murim_ranking_integration.0003 days = 1 }
+		add_character_modifier = {
+			modifier = grand_tournament_champion_fame
+			years = 20
+		}
+	}
+}
+
+# === CALAMITY-TO-ALL-SYSTEMS INTEGRATION ===
+murim_integration_calamity_start_effect = {
+	# When Great Calamity begins, affect ALL systems
+	
+	# Disable tournaments during calamity
+	set_global_variable = { name = murim_tournaments_suspended value = yes }
+	
+	# Force all faction wars to escalate
+	set_global_variable = { name = murim_faction_war_escalated value = yes }
+	
+	# All shadow politics schemes accelerate
+	set_global_variable = { name = murim_shadow_politics_overdrive value = yes }
+	
+	# Ranking system frozen (no peaceful advancement during calamity)
+	set_global_variable = { name = murim_rankings_frozen value = yes }
+	
+	# All clans enter survival mode
+	every_living_character = {
+		limit = {
+			has_variable = murim_clan_id
+			has_variable = murim_rank
+			var:murim_rank >= 5
+		}
+		add_character_modifier = {
+			modifier = calamity_survival_instinct
+			years = 50
+		}
+		trigger_event = { id = murim_calamity_ai_integration.0001 days = { 1 30 } }
+	}
+	
+	# Clan leaders must choose: fight, hide, or betray
+	every_living_character = {
+		limit = {
+			has_trait = sect_leader
+			has_variable = murim_clan_id
+		}
+		trigger_event = { id = murim_calamity_ai_integration.0002 days = { 5 15 } }
+	}
+}
+
+murim_integration_calamity_end_effect = {
+	# When Great Calamity ends, restore and rebuild
+	
+	# Re-enable tournaments
+	remove_global_variable = murim_tournaments_suspended
+	
+	# De-escalate faction wars
+	remove_global_variable = murim_faction_war_escalated
+	
+	# Shadow politics return to normal
+	remove_global_variable = murim_shadow_politics_overdrive
+	
+	# Unfreeze rankings
+	remove_global_variable = murim_rankings_frozen
+	
+	# Survivors get special traits and bonuses
+	every_living_character = {
+		limit = {
+			has_trait = calamity_survivor
+			has_variable = murim_rank
+		}
+		change_variable = { name = murim_rank add = 1 }
+		add_character_modifier = {
+			modifier = calamity_hardened_veteran
+			years = 30
+		}
+	}
+	
+	# Trigger rebuilding phase
+	trigger_event = { id = murim_great_calamity_rebuild.0001 days = 30 }
+	
+	# Previous era becomes mythology
+	set_global_variable = { name = murim_era_count value = 1 }
+	if = {
+		limit = { has_global_variable = murim_era_count }
+		change_global_variable = { name = murim_era_count add = 1 }
+	}
+}
+
+# === ENTRY PATH TO CLAN INTEGRATION ===
+murim_integration_entry_to_clan_effect = {
+	# When a character enters the martial world, determine initial clan affinity
+	
+	if = {
+		limit = { has_variable = murim_entry_path }
+		
+		# Warrior path - drawn to combat clans
+		if = {
+			limit = { var:murim_entry_path = flag:warrior }
+			random_list = {
+				25 = {
+					trigger_event = { id = murim_clan_scout_integration.0001 days = 30 }
+					# Iron Fist Gate scout
+				}
+				25 = {
+					trigger_event = { id = murim_clan_scout_integration.0002 days = 30 }
+					# Mount Hua scout
+				}
+				25 = {
+					trigger_event = { id = murim_clan_scout_integration.0003 days = 30 }
+					# Shaolin scout
+				}
+				25 = {
+					trigger_event = { id = murim_clan_scout_integration.0004 days = 30 }
+					# Phantom Blade scout
+				}
+			}
+		}
+		
+		# Scholar path - drawn to wisdom clans
+		if = {
+			limit = { var:murim_entry_path = flag:scholar }
+			random_list = {
+				30 = {
+					trigger_event = { id = murim_clan_scout_integration.0005 days = 30 }
+					# Wudang scout
+				}
+				30 = {
+					trigger_event = { id = murim_clan_scout_integration.0006 days = 30 }
+					# Shaolin scout (scholarly)
+				}
+				20 = {
+					trigger_event = { id = murim_clan_scout_integration.0007 days = 30 }
+					# Beggar Sect (wisdom of streets)
+				}
+				20 = {
+					trigger_event = { id = murim_clan_scout_integration.0008 days = 30 }
+					# Poison Flower Palace (alchemical knowledge)
+				}
+			}
+		}
+		
+		# Orphan path - drawn to anyone who'll take them
+		if = {
+			limit = { var:murim_entry_path = flag:orphan }
+			random_list = {
+				20 = {
+					trigger_event = { id = murim_clan_scout_integration.0009 days = 15 }
+					# Beggar Sect (natural fit)
+				}
+				15 = {
+					trigger_event = { id = murim_clan_scout_integration.0010 days = 20 }
+					# Shaolin (compassion)
+				}
+				15 = {
+					trigger_event = { id = murim_clan_scout_integration.0011 days = 25 }
+					# Heavenly Demon Cult (recruitment)
+				}
+				15 = {
+					trigger_event = { id = murim_clan_scout_integration.0012 days = 30 }
+					# Tang Clan (child soldier potential)
+				}
+				15 = {
+					trigger_event = { id = murim_clan_scout_integration.0013 days = 30 }
+					# Phantom Blade (shadow recruitment)
+				}
+				10 = {
+					trigger_event = { id = murim_clan_scout_integration.0014 days = 45 }
+					# Mount Hua (talent spotted)
+				}
+				10 = {
+					trigger_event = { id = murim_clan_scout_integration.0015 days = 45 }
+					# Iron Fist Gate (raw potential)
+				}
+			}
+		}
+		
+		# Revenge path - drawn to dark clans
+		if = {
+			limit = { var:murim_entry_path = flag:revenge }
+			random_list = {
+				30 = {
+					trigger_event = { id = murim_clan_scout_integration.0016 days = 15 }
+					# Heavenly Demon Cult (power for revenge)
+				}
+				25 = {
+					trigger_event = { id = murim_clan_scout_integration.0017 days = 20 }
+					# Phantom Blade (assassination skills)
+				}
+				20 = {
+					trigger_event = { id = murim_clan_scout_integration.0018 days = 25 }
+					# Poison Flower Palace (subtle revenge)
+				}
+				15 = {
+					trigger_event = { id = murim_clan_scout_integration.0019 days = 30 }
+					# Tang Clan (tools of vengeance)
+				}
+				10 = {
+					trigger_event = { id = murim_clan_scout_integration.0020 days = 45 }
+					# Iron Fist Gate (overwhelming force)
+				}
+			}
+		}
+	}
+}
+
+# === SHADOW POLITICS TO FACTION WAR INTEGRATION ===
+murim_integration_shadow_to_faction_effect = {
+	# Shadow politics outcomes can trigger faction wars
+	
+	if = {
+		limit = {
+			has_global_variable = heavenly_demon_puppet_emperor
+			NOT = { has_global_variable = murim_puppet_war_triggered }
+		}
+		set_global_variable = { name = murim_puppet_war_triggered value = yes }
+		
+		# Orthodox alliance discovers the puppet emperor
+		random_living_character = {
+			limit = {
+				has_trait = shaolin_disciple
+				has_trait = sect_leader
+			}
+			trigger_event = { id = murim_faction_war_shadow.0001 days = { 30 90 } }
+		}
+		
+		# Wudang seer has vision of corruption
+		random_living_character = {
+			limit = {
+				has_trait = wudang_disciple
+				var:murim_rank >= 7
+			}
+			trigger_event = { id = murim_faction_war_shadow.0002 days = { 15 60 } }
+		}
+	}
+	
+	# Custom clan political influence
+	if = {
+		limit = {
+			has_global_variable = murim_custom_clan_exists
+			has_global_variable = murim_custom_clan_faction
+		}
+		# Custom clan's faction allegiance affects balance
+		if = {
+			limit = { global_var:murim_custom_clan_faction = flag:orthodox }
+			change_global_variable = { name = orthodox_political_power add = 5 }
+		}
+		else = {
+			change_global_variable = { name = unorthodox_political_power add = 5 }
+		}
+	}
+}
+
+# === ROMANCE TO CLAN INTEGRATION ===
+murim_integration_romance_clan_effect = {
+	# Inter-clan romance creates political implications
+	
+	if = {
+		limit = {
+			exists = scope:romance_target
+			has_variable = murim_clan_id
+			scope:romance_target = { has_variable = murim_clan_id }
+			NOT = { var:murim_clan_id = scope:romance_target.var:murim_clan_id }
+		}
+		
+		# Different clan romance - political tension or alliance opportunity
+		random_list = {
+			40 = {
+				# Clan leaders disapprove - forbidden love
+				trigger_event = { id = murim_romance_integration.0001 days = 30 }
+			}
+			30 = {
+				# Potential alliance through marriage
+				trigger_event = { id = murim_romance_integration.0002 days = 30 }
+			}
+			20 = {
+				# Spy accusation
+				trigger_event = { id = murim_romance_integration.0003 days = 30 }
+			}
+			10 = {
+				# Romeo and Juliet - clan war trigger
+				trigger_event = { id = murim_romance_integration.0004 days = 30 }
+			}
+		}
+		
+		# Check if orthodox-unorthodox cross-faction romance
+		if = {
+			limit = {
+				murim_is_orthodox_clan_trigger = yes
+				scope:romance_target = { murim_is_unorthodox_clan_trigger = yes }
+			}
+			# Cross-faction forbidden love is MUCH more dangerous
+			add_character_modifier = {
+				modifier = forbidden_cross_faction_love
+				years = 5
+			}
+			trigger_event = { id = murim_romance_integration.0005 days = 15 }
+		}
+	}
+}
+
+# === MENTOR TO CULTIVATION INTEGRATION ===
+murim_integration_mentor_cultivation_effect = {
+	# Mentor relationship affects cultivation speed and technique learning
+	
+	if = {
+		limit = {
+			exists = scope:mentor
+			has_variable = murim_rank
+		}
+		
+		# Mentor's rank determines training effectiveness
+		if = {
+			limit = { scope:mentor = { var:murim_rank >= 8 } }
+			add_character_modifier = {
+				modifier = legendary_mentor_guidance
+				years = 5
+			}
+			# Can learn mentor's clan techniques
+			if = {
+				limit = {
+					scope:mentor = { has_trait = shaolin_disciple }
+					NOT = { has_trait = shaolin_disciple }
+				}
+				trigger_event = { id = murim_mentor_integration.0001 days = 90 }
+				# Learn external Shaolin technique
+			}
+			if = {
+				limit = {
+					scope:mentor = { has_trait = wudang_disciple }
+					NOT = { has_trait = wudang_disciple }
+				}
+				trigger_event = { id = murim_mentor_integration.0002 days = 90 }
+			}
+			if = {
+				limit = {
+					scope:mentor = { has_trait = heavenly_demon_cultist }
+					NOT = { has_trait = heavenly_demon_cultist }
+				}
+				trigger_event = { id = murim_mentor_integration.0003 days = 90 }
+				# DANGER: learning demonic arts
+			}
+		}
+		
+		# Mentor death triggers revenge/inheritance arc
+		if = {
+			limit = {
+				scope:mentor = { is_alive = no }
+				NOT = { has_variable = murim_mentor_death_processed }
+			}
+			set_variable = { name = murim_mentor_death_processed value = yes }
+			trigger_event = { id = murim_mentor_integration.0010 days = 1 }
+			
+			# Inherit mentor's technique mastery partially
+			if = {
+				limit = { scope:mentor = { has_variable = murim_technique_mastery } }
+				set_variable = {
+					name = murim_inherited_technique
+					value = scope:mentor.var:murim_technique_mastery
+				}
+				change_variable = { name = murim_inherited_technique multiply = 0.5 }
+			}
+		}
+	}
+}
+
+# === DAILY LIFE TO CULTIVATION INTEGRATION ===
+murim_integration_daily_cultivation_effect = {
+	# Daily activities affect cultivation progress
+	
+	if = {
+		limit = { has_variable = murim_cultivation_progress }
+		
+		# Meditation increases progress
+		if = {
+			limit = { has_character_modifier = daily_meditation_routine }
+			change_variable = { name = murim_cultivation_progress add = 2 }
+		}
+		
+		# Training increases progress
+		if = {
+			limit = { has_character_modifier = daily_training_routine }
+			change_variable = { name = murim_cultivation_progress add = 3 }
+		}
+		
+		# Studying manuals
+		if = {
+			limit = { has_character_modifier = studying_martial_manual }
+			change_variable = { name = murim_cultivation_progress add = 4 }
+		}
+		
+		# Drinking/debauchery reduces progress
+		if = {
+			limit = { has_trait = drunkard }
+			change_variable = { name = murim_cultivation_progress add = -2 }
+		}
+		
+		# Check for rank up
+		if = {
+			limit = {
+				var:murim_cultivation_progress >= 100
+				has_variable = murim_rank
+				var:murim_rank < 10
+			}
+			change_variable = { name = murim_rank add = 1 }
+			set_variable = { name = murim_cultivation_progress value = 0 }
+			trigger_event = { id = murim_ranking_integration.0010 days = 1 }
+			murim_integration_clan_rank_update_effect = yes
+		}
+	}
+}
+
+# === ARTIFACT TO COMBAT INTEGRATION ===
+murim_integration_artifact_combat_effect = {
+	# Artifacts provide combat bonuses in duels and faction wars
+	
+	if = {
+		limit = { has_variable = murim_artifact_power }
+		
+		# Artifact power adds to duel strength
+		if = {
+			limit = { has_variable = murim_duel_active }
+			change_variable = { name = murim_duel_power add = var:murim_artifact_power }
+		}
+		
+		# Legendary artifacts attract thieves
+		if = {
+			limit = { var:murim_artifact_power >= 8 }
+			random_list = {
+				80 = { }
+				20 = {
+					trigger_event = { id = murim_artifact_integration.0001 days = { 30 180 } }
+					# Thief attempts to steal artifact
+				}
+			}
+		}
+		
+		# Cursed artifacts cause qi deviation
+		if = {
+			limit = { has_character_modifier = cursed_artifact_bearer }
+			random_list = {
+				70 = { }
+				30 = {
+					trigger_event = { id = murim_artifact_integration.0002 days = { 60 365 } }
+					# Qi deviation from cursed artifact
+				}
+			}
+		}
+	}
+}
+
+# === MURIM LEDGER UI INTEGRATION ===
+murim_integration_ledger_update_effect = {
+	# Update all Murim Ledger UI variables for display
+	
+	# Count living martial artists per clan
+	set_variable = { name = ledger_shaolin_count value = 0 }
+	set_variable = { name = ledger_wudang_count value = 0 }
+	set_variable = { name = ledger_mount_hua_count value = 0 }
+	set_variable = { name = ledger_tang_count value = 0 }
+	set_variable = { name = ledger_beggar_count value = 0 }
+	set_variable = { name = ledger_demon_count value = 0 }
+	set_variable = { name = ledger_iron_fist_count value = 0 }
+	set_variable = { name = ledger_poison_flower_count value = 0 }
+	set_variable = { name = ledger_phantom_blade_count value = 0 }
+	
+	every_living_character = {
+		limit = { has_trait = shaolin_disciple }
+		root = { change_variable = { name = ledger_shaolin_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = wudang_disciple }
+		root = { change_variable = { name = ledger_wudang_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = mount_hua_disciple }
+		root = { change_variable = { name = ledger_mount_hua_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = tang_clan_member }
+		root = { change_variable = { name = ledger_tang_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = beggar_sect_member }
+		root = { change_variable = { name = ledger_beggar_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = heavenly_demon_cultist }
+		root = { change_variable = { name = ledger_demon_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = iron_fist_gate_member }
+		root = { change_variable = { name = ledger_iron_fist_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = poison_flower_member }
+		root = { change_variable = { name = ledger_poison_flower_count add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_trait = phantom_blade_member }
+		root = { change_variable = { name = ledger_phantom_blade_count add = 1 } }
+	}
+	
+	# Count top rankers
+	set_variable = { name = ledger_rank_9_plus value = 0 }
+	set_variable = { name = ledger_rank_7_8 value = 0 }
+	set_variable = { name = ledger_rank_4_6 value = 0 }
+	
+	every_living_character = {
+		limit = { has_variable = murim_rank var:murim_rank >= 9 }
+		root = { change_variable = { name = ledger_rank_9_plus add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_variable = murim_rank var:murim_rank >= 7 var:murim_rank < 9 }
+		root = { change_variable = { name = ledger_rank_7_8 add = 1 } }
+	}
+	every_living_character = {
+		limit = { has_variable = murim_rank var:murim_rank >= 4 var:murim_rank < 7 }
+		root = { change_variable = { name = ledger_rank_4_6 add = 1 } }
+	}
+	
+	# Calamity status
+	if = {
+		limit = { has_global_variable = murim_great_calamity_active }
+		set_variable = { name = ledger_calamity_status value = 1 }
+	}
+	else = {
+		set_variable = { name = ledger_calamity_status value = 0 }
+	}
+	
+	# Faction war status
+	if = {
+		limit = { has_global_variable = murim_faction_war_active }
+		set_variable = { name = ledger_faction_war_status value = 1 }
+	}
+	else = {
+		set_variable = { name = ledger_faction_war_status value = 0 }
+	}
+}
