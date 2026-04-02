@@ -1,0 +1,475 @@
+namespace = murim_mount_hua_expansion4
+
+# MOUNT HUA EXPANSION 4 - PLUM BLOSSOM WAR AND SWORD SAINT ASCENSION
+# 10 complete events: sect war, sword saint path, plum blossom legacy
+
+murim_mount_hua_expansion4.0001 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0001.t
+	desc = murim_mount_hua_exp4.0001.desc
+	theme = war
+	left_portrait = { character = root animation = personality_bold }
+	right_portrait = { character = scope:rival_sect_leader animation = anger }
+
+	trigger = {
+		has_trait = murim_clan_mount_hua
+		is_ruler = yes
+		any_living_character = {
+			has_trait = murim_martial_artist
+			NOT = { has_trait = murim_clan_mount_hua }
+			is_ruler = yes
+			opinion = { target = root value <= -30 }
+		}
+		NOT = { has_character_flag = mount_hua_great_war_started }
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = { add = 30 has_trait = ambitious }
+	}
+
+	immediate = {
+		set_character_flag = mount_hua_great_war_started
+		random_living_character = {
+			limit = {
+				has_trait = murim_martial_artist
+				NOT = { has_trait = murim_clan_mount_hua }
+				is_ruler = yes
+				opinion = { target = root value <= -30 }
+			}
+			save_scope_as = rival_sect_leader
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0001.a
+		trigger = { exists = scope:rival_sect_leader }
+		add_prestige = 300
+		add_character_modifier = { modifier = murim_mount_hua_war_leader years = 10 }
+		trigger_event = { id = murim_mount_hua_expansion4.0002 days = { 30 60 } }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0001.b
+		add_diplomacy = 2
+		if = { limit = { exists = scope:rival_sect_leader }
+			scope:rival_sect_leader = { add_opinion = { modifier = murim_peace_proposal target = root opinion = 20 } }
+		}
+		add_character_modifier = { modifier = murim_mount_hua_diplomat years = 10 }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0001.c
+		add_character_modifier = { modifier = murim_mount_hua_fortified years = 15 }
+		add_gold = -200
+		add_martial = 3
+	}
+}
+
+murim_mount_hua_expansion4.0002 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0002.t
+	desc = murim_mount_hua_exp4.0002.desc
+	theme = war
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = { has_character_modifier = murim_mount_hua_war_leader }
+
+	immediate = {
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist NOT = { has_trait = murim_clan_mount_hua } is_ruler = yes }
+			save_scope_as = war_target
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0002.a
+		trigger = { exists = scope:war_target prowess >= 20 }
+		duel = {
+			skill = prowess
+			target = scope:war_target
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_mount_hua_exp4.0002.a.win
+				root = {
+					add_prestige = 2000
+					add_character_modifier = { modifier = murim_plum_blossom_conqueror years = 20 }
+				}
+				scope:war_target = { add_prestige = -500 add_trait = wounded_2 }
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_mount_hua_exp4.0002.a.lose
+				root = { add_prestige = -500 add_trait = wounded_3 }
+			}
+		}
+	}
+	option = {
+		name = murim_mount_hua_exp4.0002.b
+		add_gold = -300
+		add_character_modifier = { modifier = murim_hired_mercenaries years = 5 }
+		add_prestige = 500
+		trigger_event = { id = murim_mount_hua_expansion4.0003 days = { 30 60 } }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0002.c
+		add_prestige = -200
+		add_piety = 300
+		remove_character_modifier = murim_mount_hua_war_leader
+		add_character_modifier = { modifier = murim_mount_hua_retreat years = 10 }
+	}
+}
+
+murim_mount_hua_expansion4.0003 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0003.t
+	desc = murim_mount_hua_exp4.0003.desc
+	theme = intrigue
+	left_portrait = { character = root animation = scheme }
+
+	trigger = { has_character_modifier = murim_hired_mercenaries has_trait = murim_clan_mount_hua }
+
+	option = {
+		name = murim_mount_hua_exp4.0003.a
+		add_prestige = 500
+		add_character_modifier = { modifier = murim_mercenary_victory years = 10 }
+		add_gold = -100
+	}
+	option = {
+		name = murim_mount_hua_exp4.0003.b
+		add_character_modifier = { modifier = murim_mercenary_betrayal years = 5 }
+		add_gold = -500
+		add_prestige = -300
+		random = { chance = 30 add_trait = wounded_2 }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0003.c
+		add_intrigue = 3
+		add_character_modifier = { modifier = murim_mercenary_alliance years = 15 }
+		add_gold = -200
+	}
+}
+
+murim_mount_hua_expansion4.0004 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0004.t
+	desc = murim_mount_hua_exp4.0004.desc
+	theme = learning
+	left_portrait = { character = root animation = ecstasy }
+
+	trigger = {
+		has_trait = murim_clan_mount_hua
+		prowess >= 28
+		has_trait = murim_cultivation_realm_5
+		NOT = { has_character_flag = sword_saint_path_offered }
+	}
+
+	weight_multiplier = {
+		base = 5
+		modifier = { add = 15 prowess >= 35 }
+	}
+
+	immediate = { set_character_flag = sword_saint_path_offered }
+
+	option = {
+		name = murim_mount_hua_exp4.0004.a
+		add_trait = murim_sword_saint
+		add_prowess = 15
+		add_prestige = 3000
+		add_character_modifier = { modifier = murim_sword_saint_aura years = 100 }
+		trigger_event = { id = murim_mount_hua_expansion4.0005 days = { 90 180 } }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0004.b
+		add_prowess = 8
+		add_character_modifier = { modifier = murim_humble_swordsman years = 30 }
+		add_piety = 500
+	}
+	option = {
+		name = murim_mount_hua_exp4.0004.c
+		add_character_modifier = { modifier = murim_plum_blossom_grandmaster years = 50 }
+		add_prowess = 10
+		add_martial = 5
+		every_vassal = {
+			limit = { has_trait = murim_clan_mount_hua }
+			add_prowess = 3
+			add_opinion = { modifier = murim_inspired_by_master target = root opinion = 30 }
+		}
+	}
+}
+
+murim_mount_hua_expansion4.0005 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0005.t
+	desc = murim_mount_hua_exp4.0005.desc
+	theme = martial
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = { has_trait = murim_sword_saint has_trait = murim_clan_mount_hua }
+
+	immediate = {
+		every_living_character = {
+			limit = { has_trait = murim_martial_artist prowess >= 25 NOT = { this = root } }
+			add_to_temporary_list = worthy_challengers
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0005.a
+		add_character_modifier = { modifier = murim_sword_saint_challenge years = 5 }
+		add_prestige = 1000
+		every_in_list = {
+			list = worthy_challengers
+			add_opinion = { modifier = murim_challenged_by_saint target = root opinion = -10 }
+		}
+		trigger_event = { id = murim_mount_hua_expansion4.0006 days = { 30 60 } }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0005.b
+		add_piety = 1000
+		add_character_modifier = { modifier = murim_sword_saint_meditation years = 20 }
+		add_prowess = 5
+		add_health = 1
+	}
+	option = {
+		name = murim_mount_hua_exp4.0005.c
+		add_prestige = 2000
+		add_character_modifier = { modifier = murim_sword_saint_academy years = 30 }
+		every_vassal = {
+			limit = { has_trait = murim_clan_mount_hua }
+			add_prowess = 5
+			add_character_modifier = { modifier = murim_trained_by_sword_saint years = 20 }
+		}
+	}
+}
+
+murim_mount_hua_expansion4.0006 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0006.t
+	desc = murim_mount_hua_exp4.0006.desc
+	theme = martial
+	left_portrait = { character = root animation = war_over_win }
+	right_portrait = { character = scope:grand_challenger animation = personality_bold }
+
+	trigger = { has_character_modifier = murim_sword_saint_challenge }
+
+	immediate = {
+		random_living_character = {
+			limit = { has_trait = murim_martial_artist prowess >= 30 NOT = { this = root } NOT = { has_trait = murim_clan_mount_hua } }
+			save_scope_as = grand_challenger
+			weight = { base = 1 modifier = { add = 5 prowess >= 35 } }
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0006.a
+		trigger = { exists = scope:grand_challenger }
+		duel = {
+			skill = prowess
+			target = scope:grand_challenger
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_mount_hua_exp4.0006.a.win
+				root = {
+					add_prestige = 5000
+					add_character_modifier = { modifier = murim_undefeated_sword_saint years = 50 }
+					set_global_variable = { name = murim_greatest_swordsman value = root }
+				}
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_mount_hua_exp4.0006.a.lose
+				root = { add_trait = wounded_3 add_prestige = -1000 remove_trait = murim_sword_saint }
+			}
+		}
+	}
+	option = {
+		name = murim_mount_hua_exp4.0006.b
+		add_prestige = 500
+		add_character_modifier = { modifier = murim_sword_saint_draws years = 20 }
+	}
+}
+
+murim_mount_hua_expansion4.0007 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0007.t
+	desc = murim_mount_hua_exp4.0007.desc
+	theme = learning
+	left_portrait = { character = root animation = thinking }
+
+	trigger = {
+		has_trait = murim_clan_mount_hua
+		is_ruler = yes
+		NOT = { has_character_flag = plum_blossom_legacy_decision }
+	}
+
+	weight_multiplier = { base = 15 }
+
+	immediate = { set_character_flag = plum_blossom_legacy_decision }
+
+	option = {
+		name = murim_mount_hua_exp4.0007.a
+		add_character_modifier = { modifier = murim_plum_blossom_scripture_vault years = 50 }
+		add_gold = -300
+		add_learning = 5
+		set_global_variable = { name = murim_mount_hua_scripture_vault value = yes }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0007.b
+		add_character_modifier = { modifier = murim_plum_blossom_training_grounds years = 50 }
+		add_gold = -200
+		every_vassal = {
+			limit = { has_trait = murim_clan_mount_hua }
+			add_prowess = 3
+		}
+	}
+	option = {
+		name = murim_mount_hua_exp4.0007.c
+		add_character_modifier = { modifier = murim_plum_blossom_spy_network years = 30 }
+		add_intrigue = 5
+		add_gold = -150
+	}
+}
+
+murim_mount_hua_expansion4.0008 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0008.t
+	desc = murim_mount_hua_exp4.0008.desc
+	theme = intrigue
+	left_portrait = { character = root animation = worry }
+
+	trigger = {
+		has_trait = murim_clan_mount_hua
+		is_ruler = yes
+		age >= 55
+		any_child = { has_trait = murim_clan_mount_hua prowess >= 15 }
+	}
+
+	immediate = {
+		random_child = {
+			limit = { has_trait = murim_clan_mount_hua prowess >= 15 }
+			save_scope_as = mount_hua_heir
+			weight = { base = 1 modifier = { add = 5 prowess >= 25 } }
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0008.a
+		trigger = { exists = scope:mount_hua_heir }
+		scope:mount_hua_heir = {
+			add_prestige = 1000
+			add_character_modifier = { modifier = murim_mount_hua_chosen_heir years = 30 }
+		}
+		add_character_modifier = { modifier = murim_mount_hua_wise_leader years = 20 }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0008.b
+		add_character_modifier = { modifier = murim_mount_hua_tournament_succession years = 5 }
+		trigger_event = { id = murim_mount_hua_expansion4.0009 days = { 30 60 } }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0008.c
+		add_prestige = 200
+		add_character_modifier = { modifier = murim_mount_hua_no_succession_yet years = 10 }
+	}
+}
+
+murim_mount_hua_expansion4.0009 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0009.t
+	desc = murim_mount_hua_exp4.0009.desc
+	theme = martial
+	left_portrait = { character = root animation = war_over_win }
+
+	trigger = { has_character_modifier = murim_mount_hua_tournament_succession }
+
+	immediate = {
+		every_vassal = {
+			limit = { has_trait = murim_clan_mount_hua prowess >= 15 age >= 20 }
+			add_to_temporary_list = succession_fighters
+		}
+		ordered_in_list = {
+			list = succession_fighters
+			order_by = prowess
+			max = 1
+			save_scope_as = succession_winner
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0009.a
+		if = { limit = { exists = scope:succession_winner }
+			scope:succession_winner = {
+				add_prestige = 2000
+				add_character_modifier = { modifier = murim_mount_hua_new_leader years = 30 }
+			}
+		}
+		add_character_modifier = { modifier = murim_mount_hua_fair_succession years = 20 }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0009.b
+		trigger = { prowess >= 25 }
+		duel = {
+			skill = prowess
+			target = scope:succession_winner
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = 3.5 min = -49 }
+				desc = murim_mount_hua_exp4.0009.b.win
+				root = { add_prestige = 3000 add_character_modifier = { modifier = murim_mount_hua_eternal_leader years = 50 } }
+			}
+			50 = {
+				compare_modifier = { value = scope:duel_value multiplier = -3.5 min = -49 }
+				desc = murim_mount_hua_exp4.0009.b.lose
+				root = { add_trait = wounded_2 add_prestige = -500 }
+			}
+		}
+	}
+}
+
+murim_mount_hua_expansion4.0010 = {
+	type = character_event
+	title = murim_mount_hua_exp4.0010.t
+	desc = murim_mount_hua_exp4.0010.desc
+	theme = faith
+	left_portrait = { character = root animation = pray }
+
+	trigger = {
+		has_trait = murim_clan_mount_hua
+		OR = { has_trait = murim_sword_saint has_trait = murim_plum_blossom_grandmaster }
+		age >= 70
+	}
+
+	immediate = {
+		every_living_character = {
+			limit = { has_trait = murim_clan_mount_hua NOT = { this = root } }
+			add_to_temporary_list = mount_hua_members
+		}
+	}
+
+	option = {
+		name = murim_mount_hua_exp4.0010.a
+		add_piety = 5000
+		add_character_modifier = { modifier = murim_mount_hua_living_legend years = 100 }
+		every_in_list = {
+			list = mount_hua_members
+			add_opinion = { modifier = murim_living_legend_awe target = root opinion = 50 }
+			add_character_modifier = { modifier = murim_inspired_by_legend years = 30 }
+		}
+		set_global_variable = { name = murim_mount_hua_living_legend value = root }
+	}
+	option = {
+		name = murim_mount_hua_exp4.0010.b
+		add_character_modifier = { modifier = murim_plum_blossom_hermit years = 50 }
+		add_health = 3
+		add_prowess = 5
+		add_piety = 2000
+	}
+	option = {
+		name = murim_mount_hua_exp4.0010.c
+		add_prestige = 2000
+		add_character_modifier = { modifier = murim_mount_hua_final_teaching years = 20 }
+		every_in_list = {
+			list = mount_hua_members
+			add_prowess = 5
+			add_learning = 2
+		}
+	}
+}
