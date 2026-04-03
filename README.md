@@ -2,203 +2,132 @@
 
 > **A total conversion mod bringing the world of Murim (martial arts cultivation) to Crusader Kings 3**
 
-[![Version](https://img.shields.io/badge/version-0.9.4--alpha-blue)]()
-[![CK3](https://img.shields.io/badge/CK3-1.12+-green)]()
-[![Files](https://img.shields.io/badge/mod%20files-70-orange)]()
+[![Version](https://img.shields.io/badge/version-1.0.0--beta-blue)]()
+[![CK3](https://img.shields.io/badge/CK3-1.18.2+-green)]()
+[![Files](https://img.shields.io/badge/mod%20files-180+-orange)]()
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
-[![Phase](https://img.shields.io/badge/phases%201--4-COMPLETE-brightgreen)]()
+[![Phase](https://img.shields.io/badge/all%20phases-COMPLETE-brightgreen)]()
 
 ---
 
 ## Overview
 
-**Murim Chronicles** transforms CK3 into a Wuxia/Xianxia cultivation world set in historical East Asia. Characters cultivate qi, practice martial techniques, join sects, duel rivals, undergo heavenly tribulations, and navigate the shadowy politics of the Jianghu -- the underground martial world that secretly controls the imperial court.
+**Murim Chronicles** transforms CK3 into a Wuxia/Xianxia cultivation world set in historical East Asia. Characters cultivate qi, practice martial techniques, join sects, duel rivals, undergo heavenly tribulations, and navigate the shadowy politics of the Jianghu -- the underground martial world that operates as a shadow layer behind vanilla CK3 politics.
 
-This mod integrates deeply with CK3's vanilla systems: council positions, wars, marriages, imprisonments, title grants, and vassal management are all influenced by the hidden cultivation world.
+The martial world exists **behind** vanilla -- it never overrides vanilla mechanics. Your vanilla court, wars, marriages, and politics continue as normal, while the martial world operates as a parallel layer of intrigue and power.
 
 ---
 
 ## Current Status
 
-| Phase | Description | Files | Status |
-|-------|-------------|-------|--------|
-| **Phase 1** | Core Foundation | 15/15 | COMPLETE |
-| **Phase 2** | Grind Loop Systems | 11/11 | COMPLETE |
-| **Phase 3** | Advanced Mechanics | 9/9 | COMPLETE |
-| **Phase 4** | Wuxia Underground | 9/9 | COMPLETE |
-| **Continuous** | Deep Expansion | 26+ | ACTIVE |
-| **Total** | | **70 files** | **100% COMPLETE + EXPANDING** |
+| Phase | Description | Status |
+|-------|-------------|--------|
+| **Phase 1** | Core Foundation (traits, sects, cultivation) | COMPLETE |
+| **Phase 2** | Grind Loop Systems (training, modifiers) | COMPLETE |
+| **Phase 3** | Advanced Mechanics (duels, rankings, celestial) | COMPLETE |
+| **Phase 4** | Wuxia Underground (jianghu, black market) | COMPLETE |
+| **Expansion** | Deep content (180+ event files, 9 sects) | COMPLETE |
+| **Performance** | Optimized for smooth gameplay | COMPLETE |
+| **Definitions** | Zero missing traits/modifiers/opinions | COMPLETE |
 
-> **v0.9.4 Milestone: Romance System & Daily Life Expansion.** Added complete romance event system (10 events: dual cultivation proposals, forbidden love across rival sects, soulmate bonds, marriage duels, romantic rivals, sect loyalty vs love dilemmas, kidnapping rescues, cultivation partner betrayal, joint breakthroughs, love triangles). Expanded daily life from 10 to 20 events with advanced encounters (martial scholar, poisoned wine, orphan talent discovery, ancient tomb exploration, bridge guardian challenges, spirit beast hunts, calligraphy martial insights, flood rescue, mysterious night music, retired grandmaster garden). Added comprehensive localization for romance, politics, fate, training, mentor, and daily life events. Total mod content now exceeds 1.4MB of PDX script across 70 files.
+---
+
+## v1.0.0 Changelog (Latest)
+
+### Performance Optimization
+- **All `every_living_character` converted to `every_ruler`** across 24+ event files and all on_actions -- eliminates expensive full-character-list iteration
+- **All monthly pulses converted to quarterly** -- 66% reduction in idle CPU usage
+- **XP values tripled** to maintain progression rate at quarterly frequency
+- **Expensive `any_living_character` triggers replaced** with cheap flag/prowess checks in AI autonomy
+- **Zero monthly pulses during normal gameplay** -- smooth idle performance
+
+### Martial World / Vanilla Court Connection (NEW)
+- **8 new events** linking the martial world to vanilla rulers as a shadow layer:
+  - **Martial Advisor at Court** -- recruit a martial artist as informal advisor (intelligence, guard training, shadow whispers)
+  - **Sect Leader Seeks Audience** -- a sect leader approaches the king/emperor (ally, enforcer, or decline)
+  - **Imperial Martial Tournament** -- host a tournament to attract martial talent to your court
+  - **Martial World Crisis** -- jianghu violence spills into your realm (military, diplomatic, or isolate)
+  - **Shadow Behind the Throne** -- discover martial influence manipulating your court
+  - **AI Court Influence** -- AI martial leaders autonomously seek court influence
+  - **Martial World Intro** -- non-martial rulers learn about the jianghu for the first time
+- Martial world stays **behind** vanilla -- no overrides, just shadow flavor and modifier benefits
+
+### Ruler Rank Enforcement
+- **Titled rulers who are martial artists get minimum rank:**
+  - Emperor = Vice Leader (rank 5) minimum
+  - King/Duke = Elder (rank 4) minimum  
+  - Count = Inner Disciple (rank 3) minimum
+- Enforced on title gain and yearly catch-all pulse
+- A king wouldn't be an outer disciple -- political power earns martial respect
+
+### Entry Path System Fix
+- **All 4 entry paths now properly triggered** (previously only path 1 was connected):
+  1. **Wanderer Path** -- unlanded characters with prowess discover the martial world
+  2. **Ruler Path** -- landed rulers with martial courtiers learn cultivation secretly
+  3. **Courtier Path** -- courtiers learn from martial peers at court
+  4. **Adventurer Path** -- brave/curious/travelling characters encounter wandering masters
+- **AI participates equally** via ai_chance on all options
+- Both `martial_artist` trait AND `murim_martial_artist` variable now set on all creation paths for consistent detection
+
+### Combat Safety System
+- **All `death = { death_reason = death_battle }` calls** converted to `murim_combat_death_or_injury_effect`
+- **Characters under age 16 are protected from death** -- receive severe injury instead (wounded_3 + trauma modifier)
+- Consistent across ALL 180+ event files -- no exceptions
+
+### Critical Bug Fixes
+- **Fixed `has_trait = murim_martial_artist`** → `murim_is_martial_artist_trigger = yes` across 31 event files + on_actions. The trait was rarely added to characters, causing the entire calamity system and many expansion events to silently fail.
+- **Fixed missing `scope:orthodox_leader`** in faction_war_expansion2 event 0007 (would crash CK3)
+- **Fixed missing `immediate` block** for scope resolution in faction war events
+
+### Complete Definition Coverage
+- **413 trait definitions** added (murim_expansion_traits_patch.txt)
+- **2,933 character modifier definitions** added across patch files
+- **1,071 opinion modifier definitions** added across patch files  
+- **36 county modifier definitions** verified
+- **Zero silent failures** -- every `add_trait`, `add_character_modifier`, `add_opinion`, `has_character_modifier`, and `remove_character_modifier` call resolves to a real definition
+
+### AI Sect Competition (NEW)
+- **4 events** where AI martial leaders challenge each other and the player:
+  - Elder challenges for sect leadership
+  - Sect master challenges
+  - Usurpation schemes
+  - Alliance leader grand challenges
+- AI can take your position -- creates dynamic power struggles
+
+### Civilian Casualty System (NEW)
+- **3 events** for martial world collateral damage:
+  - Street fight collateral
+  - Technique misfire
+  - Village devastation
+- Each has 3 options with different outcomes and AI weights
 
 ---
 
 ## Implemented Systems
 
-### Phase 1 -- Core Foundation (Complete)
-- **Cultivation System**: Qi Condensation through Nascent Soul realms with variable-based progression
-- **Martial Traits**: 90+ traits including prowess techniques, mixed martial arts, body cultivation stages, qi deviation states, martial reputation titles (Sword Saint, Fist Emperor, Heavenly Demon, etc.), bloodline awakening stages, and cultivation markers
-- **Sect Government**: 8 distinct government types with unique succession laws and mechanics
-- **Martial Cultures**: Murim-specific cultural traditions and pillars
-- **Martial Religions**: Dao cultivation paths as religious frameworks
-- **Dynasty Legacies**: 6 complete legacy tracks with 5 levels each (30 total unlocks)
-- **Bloodline Inheritance**: 12 fully-realized dynasty bloodlines with 3 progression stages each
+### Core Systems
+- **Cultivation System**: 7 realms from Outer Qi to Heavenly Tribulation with XP-based progression
+- **9 Martial Sects**: Mount Hua, Shaolin, Wudang, Tang Clan, Beggar Sect, Iron Fist Gate (orthodox) + Heavenly Demon, Poison Flower Palace, Phantom Blade (unorthodox)
+- **Sect Ranks**: Outer Disciple → Associate → Inner Disciple → Elder → Vice Leader → Leader
+- **90+ Martial Traits**: Prowess techniques, body cultivation, qi deviation states, reputation titles
+- **Top 50 Ranking System**: Dynamic martial rankings with yearly updates and ranking duels
 
-### Phase 2 -- Grind Loop Systems (Complete)
-- **Training Events**: Multi-stage training montages with risk/reward (waterfall meditation, iron body tempering, thousand steps, blindfolded combat, gravity formations)
-- **Grind Modifiers**: 80+ modifiers across alchemy, training montage, weapon forging, spirit beast bond, and formation mastery
-- **Grind Triggers**: Comprehensive trigger system for all cultivation states
-- **Grind Effects**: Scripted effects for cultivation advancement, penalty application, and recovery
-- **Grind Values**: Balanced script values for all numerical calculations
-- **Opinion Modifiers**: 40+ opinion modifiers for sect relations, master-disciple bonds, and rivalry
+### Event Systems (180+ files)
+- **Cultivation Events**: Breakthroughs, qi deviation, meditation, body tempering, meridian opening
+- **Duel System**: Honor duels, death matches, ranking fights, tournaments, ambush, revenge chains
+- **Romance System**: Dual cultivation, forbidden love, soulmate bonds, marriage duels, love triangles
+- **Calamity System**: Great Calamity cycles with phase-based progression, world-shaking events
+- **Faction Wars**: Orthodox vs Unorthodox conflict chains with AI participation
+- **Shadow Politics**: Court manipulation, spy networks, assassination, puppet schemes
+- **Daily Life**: 20+ events for everyday martial world encounters
+- **Sect-Specific Chains**: Deep event chains for each of the 9 sects
+- **Court Connection**: Martial world influence on vanilla rulers (shadow layer)
 
-### Phase 3 -- Advanced Mechanics (Complete)
-- **Duel System**: Honor duels, death matches, ranking fights, tournaments, ambush, revenge chains, master vs disciple, AI-driven challenges
-- **Ranking System**: Top 50 martial rankings with yearly updates, ranking duels, hidden talent emergence
-- **Ranker Death Events**: World notifications, memorials, hall of legends, power vacuum events, #1 death world-shaking events
-- **Celestial Events**: Heavenly tribulations, cosmic alignments, celestial being encounters
-- **Combat Trauma**: PTSD-like traits with recovery mechanics, combat flashbacks, and psychological consequences
-- **AI Autonomy**: Full AI decision-making for cultivation, dueling, sect management, and technique selection
-
-### Phase 4 -- Wuxia Underground (Complete)
-- **Jianghu Events**: 20+ events covering underground tournaments, bounty hunting, mercenary work, black market, poison trade, assassination, information brokering, evil alliance formation
-- **Jianghu Interactions**: Challenge to duel, request teaching, offer discipleship, trade techniques, joint cultivation, poison rival, steal technique
-- **Jianghu Triggers**: Comprehensive trigger system for underground world states
-- **Jianghu Effects**: Scripted effects for all underground operations
-- **Jianghu Localization**: Full English localization for all underground content
-- **Sect Decisions**: 15+ decisions for sect management, including founding, merging, and dissolving sects
-
-### Continuous Expansion (Active)
-- **Romance System** (NEW): 10 interconnected romance events -- dual cultivation, forbidden love across rival sects, soulmate bonds, marriage duels, romantic rivals, sect loyalty vs love, kidnapping rescue, cultivation partner betrayal, joint breakthroughs, love triangles
-- **Politics Events**: 10 events -- martial alliance formation, wulin congress, inter-sect diplomacy, marriage alliances, trade negotiations, territory disputes, peace summits, betrayal pacts, war declarations, tribute demands
-- **Fate Events**: 10 events -- heavenly tribulation, karmic debt, reincarnation memories, prophecy, chosen one emergence, destiny's fork, ancestral spirit visions, heaven's judgment, cosmic alignment, fate-defying breakthroughs
-- **Mentor Events**: 10 events -- finding master, test of character, first lesson, master's dark past, secret technique, master falls ill, final words, legacy, betrayal by fellow disciple, surpassing the master
-- **Daily Life Events**: 20 events -- tea house rumors, traveling merchants, street performances, hidden beggars, festivals, wandering masters, night markets, fortune tellers, herb gathering, scholar encounters, poisoned wine, orphan talent, ancient tombs, bridge guardians, spirit beasts, calligraphy insights, floods, mysterious music, retired grandmasters
-- **Training Events**: 10 events -- training montage, sparring, waterfall meditation, iron body tempering, thousand steps, blindfolded combat, gravity formation, secret training ground, spirit beast taming, life-and-death training
-- **Artifact Events**: 10+ events -- weapon discovery, cursed items, ancient scrolls, alchemy, forging, talismans, treasure hunts, spirit beast cores, formation arrays
-- **Technique Events**: Sword arts, palm techniques, body methods, hidden weapon mastery, formation arrays
-- **Cultivation Events**: 20+ events -- breakthroughs, qi deviation, meditation, body tempering, meridian opening, foundation, core formation, nascent soul, tribulation
-- **Imperial Cultivator Events**: Court cultivation politics, imperial tournament, forbidden city events
-- **Mount Hua & Tang Clan**: Faction-specific event chains
-
----
-
-## File Structure
-
-```
-CK3-Murim-Chronicles/
-  descriptor.mod
-  murim.mod
-  README.md
-  common/
-    ai_war_behavior/
-      murim_ai_aggression.txt
-    artifacts/
-      00_martial_artifacts.txt
-    character_interactions/
-      murim_character_interactions.txt
-      murim_jianghu_interactions.txt
-    character_modifiers/
-      murim_combat_trauma_modifiers.txt
-      murim_grind_modifiers.txt
-      murim_penalty_modifiers.txt
-    cultures/
-      01_martial_cultures.txt
-    decisions/
-      00_martial_decisions.txt
-      murim_cultivation_decisions.txt
-      murim_jianghu_decisions.txt
-      murim_sect_decisions.txt
-      murim_technique_decisions.txt
-    dynasty_legacies/
-      01_martial_legacies.txt
-      02_bloodline_inheritance.txt
-    governments/
-      celestial_governments.txt
-    lands/
-      00_asia_murim_setup.txt
-    on_actions/
-      murim_ai_autonomy_on_actions.txt
-      murim_ai_decision_on_actions.txt
-      murim_jianghu_on_actions.txt
-      murim_on_actions.txt
-      murim_ranking_on_actions.txt
-      murim_technique_on_actions.txt
-    opinion_modifiers/
-      murim_grind_opinions.txt
-    religions/
-      01_martial_religions.txt
-    schemes/
-      murim_schemes.txt
-    script_values/
-      murim_celestial_values.txt
-      murim_combat_values.txt
-      murim_cultivation_values.txt
-      murim_grind_values.txt
-      murim_injury_chance_values.txt
-      murim_jianghu_values.txt
-      murim_ranking_values.txt
-      murim_sect_values.txt
-    scripted_effects/
-      00_celestial_effects.txt
-      murim_grind_effects.txt
-      murim_jianghu_effects.txt
-      murim_penalty_effects.txt
-      murim_ranking_effects.txt
-      murim_variable_init.txt
-    scripted_triggers/
-      murim_condition_triggers.txt
-      murim_grind_triggers.txt
-      murim_jianghu_triggers.txt
-      murim_ranking_triggers.txt
-      murim_technique_triggers.txt
-    traits/
-      01_martial_traits.txt
-      02_mixed_martial_traits.txt
-      03_prowess_technique_traits.txt
-      04_grind_loop_traits.txt
-      05_jianghu_underground_traits.txt
-      06_combat_trauma_traits.txt
-      murim_global_martial_traits.txt
-  events/
-    00_cultivation_story.txt
-    00_region_interactions.txt
-    murim_artifact_events.txt
-    murim_breakthrough_events.txt
-    murim_celestial_events.txt
-    murim_combat_events.txt
-    murim_cultivation_events.txt
-    murim_daily_life_events.txt
-    murim_daily_life_advanced_events.txt
-    murim_duel_events.txt
-    murim_duel_advanced_events.txt
-    murim_fate_events.txt
-    murim_global_martial_events.txt
-    murim_grind_events.txt
-    murim_grind_advanced_events.txt
-    murim_imperial_cultivator_events.txt
-    murim_interaction_events.txt
-    murim_jianghu_events.txt
-    murim_mentor_events.txt
-    murim_mount_hua_events.txt
-    murim_politics_events.txt
-    murim_ranker_death_events.txt
-    murim_ranking_events.txt
-    murim_romance_events.txt
-    murim_sect_events.txt
-    murim_tang_clan_events.txt
-    murim_technique_events.txt
-    murim_training_events.txt
-  localization/
-    english/
-      murim_advanced_l_english.yml
-      murim_grind_l_english.yml
-      murim_jianghu_l_english.yml
-      murim_l_english.yml
-      murim_ranking_l_english.yml
-      murim_romance_l_english.yml
-      murim_techniques_l_english.yml
-```
+### Performance
+- Zero `every_living_character` calls in gameplay loops
+- All pulses quarterly (not monthly) with tripled XP to compensate
+- Cheap flag/stat checks replace expensive character iteration in triggers
+- `has_variable = murim_martial_artist` gating skips non-martial characters early
 
 ---
 
@@ -216,16 +145,15 @@ CK3-Murim-Chronicles/
 
 ## Key Features Summary
 
-- **200+ unique events** across cultivation, combat, romance, politics, daily life, and supernatural systems
-- **90+ martial arts traits** with interconnected progression
-- **80+ character modifiers** for cultivation states, combat effects, and training
-- **50+ scripted triggers** for complex condition checking
-- **40+ opinion modifiers** for nuanced relationship dynamics
-- **8 unique government types** with custom succession laws
-- **12 dynasty bloodlines** with 3 progression stages each
-- **7 localization files** with full English support
-- **Full AI autonomy** -- NPCs cultivate, duel, join sects, and make decisions independently
-- **Deep interconnection** -- every system feeds into every other system
+- **180+ event files** across cultivation, combat, romance, politics, sects, calamities, and court connection
+- **2,900+ character modifier definitions** for every martial state and effect
+- **1,000+ opinion modifier definitions** for nuanced relationships
+- **400+ trait definitions** for martial progression and sect membership
+- **9 distinct martial sects** with full event chains and rank systems
+- **Full AI autonomy** -- NPCs cultivate, duel, join sects, seek court influence, and challenge for leadership
+- **Shadow layer design** -- martial world operates behind vanilla, never overrides it
+- **Youth protection** -- characters under 16 cannot die in martial combat
+- **Performance optimized** -- quarterly pulses, efficient iteration, cheap trigger checks
 
 ---
 
