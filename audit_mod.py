@@ -313,6 +313,44 @@ for f in glob.glob(f'{MOD_ROOT}/events/*.txt') + glob.glob(f'{MOD_ROOT}/common/*
             add_issue('CRASH', 'missing_char_modifier_add', name)
 
 # ============================================================
+# 14. CREATE_CHARACTER WITHOUT CULTURE/LOCATION
+# ============================================================
+for f in sorted(glob.glob(f'{MOD_ROOT}/events/*.txt') +
+                glob.glob(f'{MOD_ROOT}/common/**/*.txt', recursive=True)):
+    with open(f, 'r', errors='replace') as fh:
+        content = fh.read()
+    if 'create_character' not in content:
+        continue
+    lines = content.split('\n')
+    i = 0
+    while i < len(lines):
+        if re.search(r'create_character\s*=\s*\{', lines[i]):
+            block_start = i
+            brace_count = 0
+            block_end = None
+            for j in range(i, len(lines)):
+                brace_count += lines[j].count('{') - lines[j].count('}')
+                if brace_count <= 0:
+                    block_end = j
+                    break
+            if block_end is None:
+                i += 1
+                continue
+            block_text = '\n'.join(lines[block_start:block_end+1])
+            has_culture = bool(re.search(r'\bculture\s*=', block_text))
+            has_location = bool(re.search(r'\blocation\s*=', block_text))
+            has_template = bool(re.search(r'\btemplate\s*=', block_text))
+            if not has_location:
+                add_issue('CRASH', 'create_character_no_location',
+                    f'{os.path.relpath(f, MOD_ROOT)}:{block_start+1}')
+            if not has_culture and not has_template:
+                add_issue('CRASH', 'create_character_no_culture',
+                    f'{os.path.relpath(f, MOD_ROOT)}:{block_start+1}')
+            i = block_end + 1
+        else:
+            i += 1
+
+# ============================================================
 # REPORT
 # ============================================================
 crash_issues = [i for i in issues if i[0] == 'CRASH']
