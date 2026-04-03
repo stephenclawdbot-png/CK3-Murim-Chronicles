@@ -226,20 +226,9 @@ on_quarterly_pulse = {
 						prowess >= 15
 					}
 					trigger = {
-						any_living_character = {
-							is_ai = yes
-							prowess >= 8
-							NOT = { this = prev }
-							NOT = { has_character_flag = murim_duel_cooldown }
-							OR = {
-								has_character_flag = murim_initiated
-								has_character_flag = murim_cultivation_enabled
-								AND = {
-									exists = var:murim_cultivation_rank
-									var:murim_cultivation_rank >= 1
-								}
-							}
-						}
+						# Cheap gate: only scan for opponents if we're not on cooldown
+						NOT = { has_character_flag = murim_duel_cooldown }
+						prowess >= 10
 					}
 					# Find a worthy opponent
 					random_living_character = {
@@ -390,19 +379,7 @@ on_quarterly_pulse = {
 					}
 					trigger = {
 						prowess >= 14
-						any_living_character = {
-							is_ai = yes
-							prowess >= 12
-							NOT = { this = prev }
-							NOT = { has_character_flag = murim_duel_cooldown }
-							OR = {
-								has_negative_opinion_of = prev
-								AND = {
-									exists = prev.var:murim_cultivation_rank
-									exists = var:murim_cultivation_rank
-								}
-							}
-						}
+						NOT = { has_character_flag = murim_duel_cooldown }
 					}
 					random_living_character = {
 						limit = {
@@ -545,14 +522,7 @@ on_quarterly_pulse = {
 					}
 					trigger = {
 						exists = var:murim_sect_id
-						any_living_character = {
-							is_ai = yes
-							NOT = { this = prev }
-							NOT = { has_character_flag = murim_duel_cooldown }
-							exists = var:murim_sect_id
-							var:murim_sect_id = prev.var:murim_sect_id
-							prowess >= 8
-						}
+						NOT = { has_character_flag = murim_duel_cooldown }
 					}
 					random_living_character = {
 						limit = {
@@ -671,13 +641,7 @@ on_quarterly_pulse = {
 					}
 					trigger = {
 						intrigue >= 12
-						any_living_character = {
-							is_ai = yes
-							NOT = { this = prev }
-							NOT = { has_character_flag = murim_ambush_immunity }
-							has_negative_opinion_of = prev
-							prowess >= 6
-						}
+						NOT = { has_character_flag = murim_duel_cooldown }
 					}
 					random_living_character = {
 						limit = {
@@ -782,13 +746,11 @@ on_quarterly_pulse = {
 						has_trait = forgiving
 					}
 					trigger = {
+						NOT = { has_character_flag = murim_duel_cooldown }
 						OR = {
 							has_character_flag = murim_revenge_target_flag
-							any_living_character = {
-								is_ai = yes
-								NOT = { this = prev }
-								NOT = { has_character_flag = murim_duel_cooldown }
-								has_relation_rival = prev
+							any_relation = {
+								type = rival
 								prowess >= 8
 							}
 						}
@@ -933,14 +895,7 @@ on_quarterly_pulse = {
 					trigger = {
 						exists = var:murim_cultivation_rank
 						var:murim_cultivation_rank >= 3
-						any_living_character = {
-							is_ai = yes
-							NOT = { this = prev }
-							exists = var:murim_cultivation_rank
-							var:murim_cultivation_rank < prev.var:murim_cultivation_rank
-							var:murim_cultivation_rank >= 1
-							NOT = { has_character_flag = murim_sparring_cooldown }
-						}
+						NOT = { has_character_flag = murim_sparring_cooldown }
 					}
 					random_living_character = {
 						limit = {
@@ -1013,13 +968,7 @@ on_quarterly_pulse = {
 					trigger = {
 						exists = var:murim_cultivation_rank
 						var:murim_cultivation_rank >= 2
-						any_living_character = {
-							is_ai = yes
-							NOT = { this = prev }
-							NOT = { has_character_flag = murim_duel_cooldown }
-							has_character_flag = murim_recent_breakthrough
-							prowess >= 10
-						}
+						NOT = { has_character_flag = murim_duel_cooldown }
 					}
 					random_living_character = {
 						limit = {
@@ -1256,10 +1205,11 @@ on_quarterly_pulse = {
 				years = 1
 			}
 			# Resolve a mini-tournament in background
-			every_living_character = {
+			every_ruler = {
 				limit = {
 					is_ai = yes
 					is_alive = yes
+					has_variable = murim_martial_artist
 					prowess >= 10
 					exists = var:murim_sect_id
 					var:murim_sect_id = prev.var:murim_sect_id
@@ -1294,9 +1244,10 @@ on_quarterly_pulse = {
 
 on_yearly_pulse = {
 	effect = {
-		every_living_character = {
+		every_ruler = {
 			limit = {
 				is_alive = yes
+				has_variable = murim_martial_artist
 				age >= 16
 				OR = {
 					has_character_flag = murim_cultivation_enabled
