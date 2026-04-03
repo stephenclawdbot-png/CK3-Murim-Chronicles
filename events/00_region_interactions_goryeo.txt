@@ -1,0 +1,528 @@
+namespace = goryeo
+
+
+##############################
+# GORYEO EVENTS
+##############################
+
+# GORYEO: Blade Tournament
+goryeo.0001 = {
+	type = character_event
+	title = goryeo.0001.t
+	desc = goryeo.0001.desc
+	theme = martial
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		age >= 16
+		age <= 50
+		prowess >= 10
+		NOT = { has_character_modifier = recently_attended_tournament }
+	}
+
+	weight_multiplier = {
+		base = 40
+		modifier = {
+			add = 20
+			has_trait = murim_sword_aptitude_2
+		}
+		modifier = {
+			add = 30
+			has_trait = murim_sword_aptitude_3
+		}
+		modifier = {
+			add = 15
+			has_trait = brave
+		}
+	}
+
+	# Enter the tournament
+	option = {
+		name = goryeo.0001.a
+		add_character_modifier = {
+			modifier = recently_attended_tournament
+			days = 1825
+		}
+		duel = {
+			skill = prowess
+			30 = {
+				desc = goryeo.0001.a.champion
+				compare_modifier = {
+					value = prowess
+					multiplier = 3
+				}
+				add_prestige = 500
+				add_gold = 300
+				add_character_modifier = {
+					modifier = goryeo_tournament_champion
+					years = 10
+				}
+				if = {
+					limit = { has_variable = murim_duel_wins }
+					change_variable = { name = murim_duel_wins add = 1 }
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_wins } }
+					set_variable = { name = murim_duel_wins value = 1 }
+				}
+				# Chance to advance sword aptitude
+				random = {
+					chance = 25
+					if = {
+						limit = { has_trait = murim_sword_aptitude_2 }
+						remove_trait = murim_sword_aptitude_2
+						add_trait = murim_sword_aptitude_3
+					}
+				}
+			}
+			40 = {
+				desc = goryeo.0001.a.placed_well
+				add_prestige = 150
+				add_prowess = 2
+			}
+			30 = {
+				desc = goryeo.0001.a.eliminated
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				add_prestige = -50
+				add_stress = 15
+				random_list = {
+					70 = { custom_tooltip = goryeo_minor_bruises_tt }
+					20 = { add_trait = wounded_1 }
+					10 = { add_trait = wounded_2 }
+				}
+			}
+		}
+	}
+
+	# Watch as spectator
+	option = {
+		name = goryeo.0001.b
+		add_learning = 1
+		add_character_modifier = {
+			modifier = recently_attended_tournament
+			days = 1825
+		}
+		if = {
+			limit = { has_variable = technique_insights }
+			change_variable = { name = technique_insights add = 5 }
+		}
+	}
+}
+
+
+# GORYEO: Hwarang Warrior Induction
+goryeo.0002 = {
+	type = character_event
+	title = goryeo.0002.t
+	desc = goryeo.0002.desc
+	theme = martial
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		age >= 14
+		age <= 25
+		martial >= 8
+		prowess >= 8
+		NOT = { has_character_flag = hwarang_induction_offered }
+		OR = {
+			has_trait = brave
+			has_trait = ambitious
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+		}
+	}
+
+	weight_multiplier = {
+		base = 25
+		modifier = {
+			add = 20
+			has_trait = brave
+		}
+		modifier = {
+			add = 15
+			has_trait = ambitious
+		}
+	}
+
+	# Accept induction
+	option = {
+		name = goryeo.0002.a
+		add_character_flag = {
+			flag = hwarang_induction_offered
+			days = 36500
+		}
+		add_trait = hwarang_warrior
+		add_prowess = 3
+		add_martial = 2
+		add_diplomacy = 1
+		add_character_modifier = {
+			modifier = hwarang_training_complete
+			years = 20
+		}
+		add_prestige = 200
+		# Brotherhood bonds
+		every_courtier = {
+			limit = {
+				has_trait = hwarang_warrior
+				NOT = { this = root }
+			}
+			add_opinion = {
+				target = root
+				modifier = hwarang_brotherhood
+				opinion = 40
+			}
+		}
+	}
+
+	# Decline - follow own path
+	option = {
+		name = goryeo.0002.b
+		add_character_flag = {
+			flag = hwarang_induction_offered
+			days = 3650
+		}
+		add_stress = 10
+		if = {
+			limit = { has_trait = ambitious }
+			add_stress = -15
+		}
+	}
+}
+
+
+# GORYEO: Mountain Hermit Encounter
+goryeo.0003 = {
+	type = character_event
+	title = goryeo.0003.t
+	desc = goryeo.0003.desc
+	theme = learning
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		OR = {
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+		}
+		NOT = { has_character_flag = hermit_encounter_recent }
+		learning >= 10
+	}
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 20
+			learning >= 20
+		}
+		modifier = {
+			add = 10
+			has_trait = patient
+		}
+	}
+
+	# Study under the hermit
+	option = {
+		name = goryeo.0003.a
+		add_character_flag = {
+			flag = hermit_encounter_recent
+			days = 3650
+		}
+		random_list = {
+			35 = {
+				desc = goryeo.0003.a.enlightened
+				modifier = {
+					add = 15
+					learning >= 20
+				}
+				add_learning = 3
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = hermit_wisdom_blessing
+					years = 15
+				}
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = { name = cultivation_progress add = 25 }
+				}
+				if = {
+					limit = { NOT = { has_variable = cultivation_progress } }
+					set_variable = { name = cultivation_progress value = 25 }
+				}
+			}
+			40 = {
+				desc = goryeo.0003.a.learned
+				add_learning = 1
+				add_character_modifier = {
+					modifier = mountain_meditation_insight
+					years = 5
+				}
+			}
+			25 = {
+				desc = goryeo.0003.a.confused
+				add_stress = 20
+				add_learning = -1
+				custom_tooltip = goryeo_hermit_riddles_tt
+			}
+		}
+	}
+
+	# Challenge the hermit to spar
+	option = {
+		name = goryeo.0003.b
+		trigger = { prowess >= 20 }
+		add_character_flag = {
+			flag = hermit_encounter_recent
+			days = 3650
+		}
+		duel = {
+			skill = prowess
+			25 = {
+				desc = goryeo.0003.b.impressed
+				compare_modifier = {
+					value = prowess
+					multiplier = 2
+				}
+				add_prestige = 300
+				add_prowess = 5
+				add_character_modifier = {
+					modifier = hermit_acknowledgment
+					years = 20
+				}
+			}
+			75 = {
+				desc = goryeo.0003.b.humbled
+				add_prowess = 1
+				add_learning = 2
+				add_stress = 10
+				add_character_modifier = {
+					modifier = humbled_by_master
+					years = 5
+				}
+			}
+		}
+	}
+
+	# Leave respectfully
+	option = {
+		name = goryeo.0003.c
+		add_piety = 50
+		add_stress = -10
+	}
+}
+
+
+# GORYEO: Royal Court Martial Arts Display
+goryeo.0004 = {
+	type = character_event
+	title = goryeo.0004.t
+	desc = goryeo.0004.desc
+	theme = diplomacy
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		prowess >= 15
+		prestige_level >= 2
+		NOT = { has_character_flag = royal_display_recent }
+		any_liege_or_above = {
+			is_alive = yes
+			highest_held_title_tier >= tier_kingdom
+		}
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = {
+			add = 15
+			prowess >= 25
+		}
+		modifier = {
+			add = 10
+			diplomacy >= 15
+		}
+	}
+
+	# Perform an impressive demonstration
+	option = {
+		name = goryeo.0004.a
+		add_character_flag = {
+			flag = royal_display_recent
+			days = 1825
+		}
+		random_list = {
+			40 = {
+				desc = goryeo.0004.a.spectacular
+				modifier = {
+					add = 20
+					prowess >= 30
+				}
+				add_prestige = 500
+				add_gold = 200
+				every_liege_or_above = {
+					add_opinion = {
+						target = root
+						modifier = impressed_by_martial_display
+						opinion = 40
+					}
+				}
+				add_character_modifier = {
+					modifier = royal_favor_martial
+					years = 10
+				}
+			}
+			35 = {
+				desc = goryeo.0004.a.competent
+				add_prestige = 150
+				add_gold = 50
+			}
+			25 = {
+				desc = goryeo.0004.a.embarrassing
+				add_prestige = -200
+				add_stress = 25
+				every_liege_or_above = {
+					add_opinion = {
+						target = root
+						modifier = disappointed_by_display
+						opinion = -20
+					}
+				}
+			}
+		}
+	}
+
+	# Decline the invitation
+	option = {
+		name = goryeo.0004.b
+		add_character_flag = {
+			flag = royal_display_recent
+			days = 730
+		}
+		add_prestige = -50
+	}
+}
+
+
+# GORYEO: Vengeful Spirit of Fallen Warrior
+goryeo.0005 = {
+	type = character_event
+	title = goryeo.0005.t
+	desc = goryeo.0005.desc
+	theme = skull
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		OR = {
+			has_variable = murim_duel_wins
+			any_relation = {
+				type = rival
+				is_alive = no
+			}
+		}
+		NOT = { has_character_flag = vengeful_spirit_encounter }
+		OR = {
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+		}
+	}
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 15
+			has_variable = murim_duel_wins
+		}
+		modifier = {
+			add = 10
+			stress >= 50
+		}
+	}
+
+	# Confront the spirit
+	option = {
+		name = goryeo.0005.a
+		add_character_flag = {
+			flag = vengeful_spirit_encounter
+			days = 3650
+		}
+		random_list = {
+			40 = {
+				desc = goryeo.0005.a.overcome
+				modifier = {
+					add = 20
+					has_trait = brave
+				}
+				add_piety = 200
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = spirit_world_awareness
+					years = 10
+				}
+				if = {
+					limit = { has_trait = craven }
+					remove_trait = craven
+				}
+			}
+			35 = {
+				desc = goryeo.0005.a.unsettled
+				add_stress = 30
+				add_piety = 50
+			}
+			25 = {
+				desc = goryeo.0005.a.cursed
+				add_stress = 50
+				add_character_modifier = {
+					modifier = haunted_by_fallen
+					years = 10
+				}
+				random = {
+					chance = 15
+					add_trait = lunatic
+				}
+			}
+		}
+	}
+
+	# Perform funeral rites
+	option = {
+		name = goryeo.0005.b
+		add_character_flag = {
+			flag = vengeful_spirit_encounter
+			days = 3650
+		}
+		add_piety = 300
+		add_stress = -20
+		remove_short_term_gold = 50
+	}
+
+	# Ignore - spirits aren't real
+	option = {
+		name = goryeo.0005.c
+		trigger = {
+			OR = {
+				has_trait = cynical
+				learning >= 18
+			}
+		}
+		add_character_flag = {
+			flag = vengeful_spirit_encounter
+			days = 1825
+		}
+		add_stress = 10
+		random = {
+			chance = 30
+			add_character_modifier = {
+				modifier = spiritual_curse_ignored
+				years = 5
+			}
+		}
+	}
+}
