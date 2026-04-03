@@ -1,0 +1,188 @@
+namespace = murim_cultivation
+
+
+# ===========================
+# CULTIVATION SYSTEM EVENTS
+# ===========================
+
+# First step on the martial path
+murim_cultivation.0001 = {
+	type = character_event
+	title = murim_cultivation.0001.t
+	desc = murim_cultivation.0001.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_character_flag = murim_first_cultivation }
+	}
+
+	immediate = {
+		set_character_flag = murim_first_cultivation
+	}
+
+	# Begin orthodox cultivation — slow and steady
+	option = {
+		name = murim_cultivation.0001.a
+		add_martial = 1
+		change_variable = { name = murim_cultivation_xp add = 20 }
+		add_stress = -10
+		ai_chance = {
+			base = 50
+			modifier = { add = 20 has_trait = patient }
+		}
+	}
+
+	# Push your body to its limits immediately
+	option = {
+		name = murim_cultivation.0001.b
+		add_prowess = 2
+		change_variable = { name = murim_cultivation_xp add = 35 }
+		add_stress = 20
+		ai_chance = {
+			base = 30
+			modifier = { add = 25 has_trait = brave }
+		}
+	}
+
+	# Seek a master to guide you
+	option = {
+		name = murim_cultivation.0001.c
+		add_learning = 1
+		change_variable = { name = murim_cultivation_xp add = 15 }
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Meridian opening attempt
+murim_cultivation.0020 = {
+	type = character_event
+	title = murim_cultivation.0020.t
+	desc = murim_cultivation.0020.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 2
+	}
+
+	# Force the meridian open with pure qi
+	option = {
+		name = murim_cultivation.0020.a
+		random_list = {
+			60 = {
+				change_variable = { name = murim_cultivation_xp add = 80 }
+				add_prowess = 2
+			}
+			40 = {
+				add_stress = 40
+				add_prowess = -1
+			}
+		}
+		ai_chance = { base = 50 }
+	}
+
+	# Gentle approach — follow the natural flow
+	option = {
+		name = murim_cultivation.0020.b
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		add_stress = -10
+		ai_chance = { base = 50 }
+	}
+}
+
+
+# Qi deviation warning
+murim_cultivation.0021 = {
+	type = character_event
+	title = murim_cultivation.0021.t
+	desc = murim_cultivation.0021.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		stress >= 50
+	}
+
+	# Stabilize through meditation
+	option = {
+		name = murim_cultivation.0021.a
+		add_stress = -30
+		add_learning = 1
+		ai_chance = { base = 60 }
+	}
+
+	# Push through the danger
+	option = {
+		name = murim_cultivation.0021.b
+		random_list = {
+			40 = {
+				change_variable = { name = murim_cultivation_xp add = 100 }
+				add_prowess = 3
+			}
+			60 = {
+				add_stress = 50
+				add_health = -1
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+
+# Dantian formation
+murim_cultivation.0022 = {
+	type = character_event
+	title = murim_cultivation.0022.t
+	desc = murim_cultivation.0022.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+	}
+
+	# Condense the golden core
+	option = {
+		name = murim_cultivation.0022.a
+		change_variable = { name = murim_cultivation_xp add = 120 }
+		add_prowess = 3
+		add_martial = 1
+		ai_chance = { base = 100 }
+	}
+}
+
+
+# Cultivation mastery milestone
+murim_cultivation.0100 = {
+	type = character_event
+	title = murim_cultivation.0100.t
+	desc = murim_cultivation.0100.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 5
+	}
+
+	# Your cultivation reaches a new realm entirely
+	option = {
+		name = murim_cultivation.0100.a
+		add_prestige = 400
+		add_prowess = 5
+		change_variable = { name = murim_cultivation_xp add = 200 }
+		# Cross-system: major breakthrough ripples across the martial world
+		hidden_effect = {
+			trigger_event = { id = murim_realm.0002 days = { 7 14 } }
+			trigger_event = { id = murim_elder.0006 days = { 14 30 } }
+			trigger_event = { id = murim_hero.0001 days = { 30 60 } }
+			trigger_event = { id = murim_renown.0003 days = { 7 21 } }
+			trigger_event = { id = murim_season.0003 days = { 14 30 } }
+		}
+		ai_chance = { base = 100 }
+	}
+}

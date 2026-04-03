@@ -1,0 +1,223 @@
+namespace = murim_demonic_invasion
+
+########################################
+# MURIM CALAMITY EXPANSION EVENTS
+# Fills remaining calamity gaps:
+# Demonic invasion, escalation ladder,
+# civil war integration, world-level decisions,
+# refugee mechanics, tribulation integration
+########################################
+
+
+# ===========================
+# DEMONIC INVASION EVENT CHAIN
+# Triggered during Calamity Phase 2-3
+# ===========================
+
+# Demonic Breach — the barrier between realms tears
+murim_demonic_invasion.0001 = {
+	type = character_event
+	title = murim_demonic_invasion.0001.t
+	desc = murim_demonic_invasion.0001.desc
+	theme = skull
+	left_portrait = { character = root animation = personality_irrational }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_global_variable = murim_great_calamity_active
+		NOT = { has_character_flag = murim_witnessed_demonic_breach }
+	}
+
+	immediate = {
+		set_character_flag = { flag = murim_witnessed_demonic_breach years = 50 }
+	}
+
+	# Rally all sects — orthodox and unorthodox must unite
+	option = {
+		name = murim_demonic_invasion.0001.a
+		add_diplomacy = 2
+		add_prestige = 200
+		add_character_modifier = { modifier = murim_demon_invasion_rally years = 5 }
+		hidden_effect = {
+			trigger_event = { id = murim_demonic_invasion.0010 days = 30 }
+		}
+		ai_chance = {
+			base = 45
+			modifier = { add = 25 has_trait = compassionate }
+			modifier = { add = 15 diplomacy >= 14 }
+		}
+	}
+
+	# Exploit the chaos — demonic energy can fuel forbidden techniques
+	option = {
+		name = murim_demonic_invasion.0001.b
+		trigger = { murim_has_any_corruption_trigger = yes }
+		add_prowess = 3
+		change_variable = { name = murim_cultivation_xp add = 80 }
+		hidden_effect = { murim_advance_corruption_effect = yes }
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 has_trait = ambitious }
+			modifier = { add = 20 murim_has_any_forbidden_technique_trigger = yes }
+		}
+	}
+
+	# Flee to a sealed sanctuary
+	option = {
+		name = murim_demonic_invasion.0001.c
+		add_stress = -20
+		add_prestige = -100
+		ai_chance = {
+			base = 15
+			modifier = { add = 25 has_trait = craven }
+		}
+	}
+
+	# Stand alone — face the demons head-on
+	option = {
+		name = murim_demonic_invasion.0001.d
+		add_prowess = 2
+		add_dread = 20
+		add_stress = 25
+		hidden_effect = {
+			trigger_event = { id = murim_demonic_invasion.0020 days = 14 }
+		}
+		ai_chance = {
+			base = 15
+			modifier = { add = 30 has_trait = brave }
+			modifier = { add = 20 prowess >= 22 }
+		}
+	}
+}
+
+
+# United Front — sects cooperate against demons
+murim_demonic_invasion.0010 = {
+	type = character_event
+	title = murim_demonic_invasion.0010.t
+	desc = murim_demonic_invasion.0010.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = { has_variable = murim_martial_artist }
+
+	# Lead the combined assault
+	option = {
+		name = murim_demonic_invasion.0010.a
+		random_list = {
+			50 = {
+				modifier = { add = martial factor = 0.3 }
+				modifier = { add = prowess factor = 0.2 }
+				add_prestige = 500
+				add_prowess = 3
+				add_martial = 1
+				add_character_modifier = { modifier = murim_demon_slayer years = 10 }
+			}
+			30 = {
+				add_prestige = 200
+				add_prowess = 1
+				add_stress = 25
+			}
+			20 = {
+				add_health = -1.5
+				add_stress = 40
+				add_prestige = 100
+			}
+		}
+		ai_chance = { base = 55 }
+	}
+
+	# Coordinate the defense formations
+	option = {
+		name = murim_demonic_invasion.0010.b
+		add_martial = 2
+		add_diplomacy = 1
+		add_prestige = 300
+		ai_chance = { base = 30 }
+	}
+
+	# Use forbidden techniques to seal the breach
+	option = {
+		name = murim_demonic_invasion.0010.c
+		trigger = { murim_has_any_forbidden_technique_trigger = yes }
+		add_prestige = 400
+		change_variable = { name = murim_cultivation_xp add = 100 }
+		hidden_effect = { murim_advance_corruption_effect = yes }
+		add_piety = -100
+		ai_chance = { base = 15 }
+	}
+}
+
+
+# Solo combat against demonic entity
+murim_demonic_invasion.0020 = {
+	type = character_event
+	title = murim_demonic_invasion.0020.t
+	desc = murim_demonic_invasion.0020.desc
+	theme = skull
+
+	trigger = { has_variable = murim_martial_artist }
+
+	# Overwhelming victory — you become legend
+	option = {
+		name = murim_demonic_invasion.0020.a
+		trigger = { prowess >= 25 }
+		add_prestige = 800
+		add_prowess = 4
+		add_character_modifier = { modifier = murim_demon_slayer years = 20 }
+		change_variable = { name = murim_cultivation_xp add = 150 }
+		ai_chance = { base = 40 }
+	}
+
+	# Pyrrhic victory — you win but at great cost
+	option = {
+		name = murim_demonic_invasion.0020.b
+		add_prestige = 400
+		add_prowess = 2
+		add_health = -2
+		add_stress = 40
+		ai_chance = { base = 40 }
+	}
+
+	# Barely survive — retreat wounded
+	option = {
+		name = murim_demonic_invasion.0020.c
+		add_health = -1
+		add_stress = 30
+		add_prowess = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Demonic corruption spreads — forbidden technique users empowered
+murim_demonic_invasion.0030 = {
+	type = character_event
+	title = murim_demonic_invasion.0030.t
+	desc = murim_demonic_invasion.0030.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_has_any_corruption_trigger = yes
+		has_global_variable = murim_great_calamity_active
+	}
+
+	# Absorb the demonic energy
+	option = {
+		name = murim_demonic_invasion.0030.a
+		add_prowess = 5
+		change_variable = { name = murim_cultivation_xp add = 120 }
+		hidden_effect = { murim_advance_corruption_effect = yes }
+		ai_chance = { base = 50 }
+	}
+
+	# Resist — seal your meridians against the corruption
+	option = {
+		name = murim_demonic_invasion.0030.b
+		add_piety = 100
+		add_stress = 20
+		add_prowess = 1
+		ai_chance = { base = 50 }
+	}
+}
