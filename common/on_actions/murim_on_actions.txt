@@ -378,6 +378,60 @@ on_quarterly_character_pulse = {
 			}
 		}
 	}
+
+	# ------------------------------------------
+	# Cultivation Breakthrough Check (Quarterly)
+	# Characters who accumulated enough XP
+	# attempt to break through to next rank.
+	# Fires for ALL characters (including unlanded)
+	# via on_quarterly_character_pulse.
+	# Only fires once per year via flag cooldown.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_martial_artist
+				has_variable = murim_cultivation_rank
+				has_variable = murim_cultivation_xp
+				var:murim_cultivation_rank >= 1
+				var:murim_cultivation_rank <= 8
+				var:murim_cultivation_xp >= 500
+				NOT = { has_character_flag = murim_breakthrough_attempted }
+			}
+			random_list = {
+				40 = {
+					# Successful breakthrough
+					trigger_event = {
+						id = murim_cultivation.0008
+						days = { 10 60 }
+					}
+					modifier = {
+						factor = 1.5
+						learning >= 16
+					}
+				}
+				30 = {
+					# Partial progress
+					change_variable = {
+						name = murim_cultivation_xp
+						add = -100
+					}
+				}
+				30 = {
+					# Qi deviation during attempt
+					trigger_event = {
+						id = murim_cultivation.0002
+						days = { 5 30 }
+					}
+				}
+			}
+			add_character_flag = {
+				flag = murim_breakthrough_attempted
+				years = 1
+			}
+		}
+	}
 }
 
 # ==========================================
@@ -387,61 +441,8 @@ on_quarterly_character_pulse = {
 
 on_yearly_pulse = {
 
-	# ------------------------------------------
-	# Cultivation Breakthrough Check
-	# Characters who accumulated enough XP
-	# attempt to break through to next rank.
-	# ------------------------------------------
-	effect = {
-		every_ruler = {
-			limit = {
-				is_alive = yes
-				has_variable = murim_martial_artist
-				has_variable = murim_cultivation_rank
-				has_variable = murim_cultivation_xp
-				var:murim_cultivation_rank >= 1
-				var:murim_cultivation_rank <= 8
-			}
-			# Check XP thresholds for breakthrough
-			if = {
-				limit = {
-					var:murim_cultivation_xp >= 500
-					NOT = { has_character_flag = murim_breakthrough_attempted }
-				}
-				random_list = {
-					40 = {
-						# Successful breakthrough
-						trigger_event = {
-							id = murim_cultivation.0008
-							days = { 10 60 }
-						}
-						modifier = {
-							factor = 1.5
-							learning >= 16
-						}
-					}
-					30 = {
-						# Partial progress
-						change_variable = {
-							name = murim_cultivation_xp
-							add = -100
-						}
-					}
-					30 = {
-						# Qi deviation during attempt
-						trigger_event = {
-							id = murim_cultivation.0002
-							days = { 5 30 }
-						}
-					}
-				}
-				add_character_flag = {
-					flag = murim_breakthrough_attempted
-					years = 1
-				}
-			}
-		}
-	}
+	# NOTE: Cultivation Breakthrough moved to on_quarterly_character_pulse
+	# so it fires for ALL characters including unlanded ones.
 
 	# ------------------------------------------
 	# Sect Politics Yearly Events
@@ -456,12 +457,14 @@ on_yearly_pulse = {
 				OR = {
 					has_trait = mount_hua_disciple
 					has_trait = wudang_disciple
+					has_trait = shaolin_disciple
 					has_trait = shaolin_monk
 					has_trait = heavenly_demon_disciple
 					has_trait = beggar_sect_member
 					has_trait = iron_fist_disciple
 					has_trait = poison_flower_disciple
 					has_trait = phantom_blade_disciple
+					has_trait = tang_clan_member
 					has_trait = tang_clan_disciple
 				}
 			}
@@ -787,12 +790,14 @@ on_five_year_pulse = {
 					OR = {
 						has_trait = mount_hua_disciple
 						has_trait = wudang_disciple
+						has_trait = shaolin_disciple
 						has_trait = shaolin_monk
 						has_trait = heavenly_demon_disciple
 						has_trait = beggar_sect_member
 						has_trait = iron_fist_disciple
 						has_trait = poison_flower_disciple
 						has_trait = phantom_blade_disciple
+						has_trait = tang_clan_member
 						has_trait = tang_clan_disciple
 					}
 				}
