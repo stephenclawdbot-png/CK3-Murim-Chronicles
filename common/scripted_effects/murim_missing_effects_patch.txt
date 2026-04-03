@@ -1,0 +1,140 @@
+# Murim Chronicles - Missing Scripted Effects Patch
+# Stub definitions for effects referenced but not previously defined
+# These ensure all effect calls resolve without CK3 errors
+
+# Apply forbidden study consequences
+murim_apply_forbidden_study_effect = {
+	add_character_modifier = {
+		modifier = murim_forbidden_knowledge
+		years = 5
+	}
+	add_stress = 20
+	add_piety = -50
+}
+
+# Apply minor qi deviation (less severe than full deviation)
+murim_apply_minor_qi_deviation = {
+	add_character_modifier = {
+		modifier = murim_qi_slightly_disrupted
+		years = 1
+	}
+	add_stress = 10
+	add_prowess_skill = -1
+}
+
+# Betray sect and leave (combines betrayal + departure)
+murim_betray_sect_effect = {
+	add_character_flag = { flag = murim_betrayed_sect }
+	add_character_modifier = {
+		modifier = murim_betrayal_victim
+		years = 5
+	}
+	murim_leave_sect_effect = yes
+	add_prestige = -200
+	add_stress = 25
+}
+
+# Leave sect voluntarily (non-expulsion, non-betrayal)
+murim_leave_sect_voluntarily_effect = {
+	add_character_flag = { flag = murim_left_sect_voluntarily }
+	murim_leave_sect_effect = yes
+	add_prestige = -50
+}
+
+# Jianghu leader death succession
+murim_jianghu_leader_death_succession = {
+	# When a jianghu leader dies, find a successor
+	random_ruler = {
+		limit = {
+			has_variable = murim_martial_artist
+			prowess >= 15
+			is_ai = yes
+			NOT = { this = root }
+		}
+		weight = {
+			base = 1
+			modifier = { factor = 3 prowess >= 20 }
+			modifier = { factor = 2 has_character_flag = murim_sect_leader }
+		}
+		add_character_flag = {
+			flag = murim_jianghu_leader_candidate
+			years = 3
+		}
+		add_prestige = 200
+	}
+}
+
+# Remove breakthrough failure effects
+murim_remove_breakthrough_failure_effect = {
+	remove_character_modifier = murim_failed_seclusion
+	remove_character_modifier = murim_qi_slightly_disrupted
+	remove_character_flag = murim_breakthrough_failed
+}
+
+# Roll for combat trauma after intense fight
+murim_roll_combat_trauma_effect = {
+	random_list = {
+		60 = {
+			# No lasting trauma
+			add_stress = 10
+		}
+		25 = {
+			# Minor trauma
+			add_character_modifier = {
+				modifier = murim_combat_injuries_moderate
+				years = 2
+			}
+			add_stress = 20
+		}
+		15 = {
+			# Severe trauma
+			add_trait = duel_ptsd
+			add_stress = 40
+		}
+	}
+}
+
+# Update rankings after a duel
+murim_update_rankings_after_duel_effect = {
+	# Winner gains rank score
+	if = {
+		limit = { exists = scope:duel_value }
+		change_variable = {
+			name = murim_martial_rank_score
+			add = 10
+		}
+	}
+	# Recalculate if effect exists
+	if = {
+		limit = { has_variable = murim_martial_rank_score }
+		add_prestige = 25
+	}
+}
+
+# Increase wound severity by one tier
+increase_wounds_effect = {
+	if = {
+		limit = {
+			NOT = { has_trait = wounded_1 }
+			NOT = { has_trait = wounded_2 }
+			NOT = { has_trait = wounded_3 }
+		}
+		add_trait = wounded_1
+	}
+	else_if = {
+		limit = {
+			has_trait = wounded_1
+			NOT = { has_trait = wounded_2 }
+		}
+		remove_trait = wounded_1
+		add_trait = wounded_2
+	}
+	else_if = {
+		limit = {
+			has_trait = wounded_2
+			NOT = { has_trait = wounded_3 }
+		}
+		remove_trait = wounded_2
+		add_trait = wounded_3
+	}
+}

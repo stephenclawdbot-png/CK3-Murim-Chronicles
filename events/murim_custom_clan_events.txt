@@ -66,9 +66,9 @@ murim_custom_clan.0001 = {
 				has_character_flag = defeated_three_clan_leaders
 			}
 		}
-		# Immediate clan creation — no vote needed
+		# Skip votes — go straight to martial style selection
 		trigger_event = {
-			id = murim_custom_clan.0050
+			id = murim_custom_clan.0040
 			days = 1
 		}
 		ai_chance = { base = 100 }
@@ -83,41 +83,34 @@ murim_custom_clan.0001 = {
 }
 
 # ═══════════════════════════════════════════
-# 0010 - PETITION BEGINS — FIRST CLAN LEADER VOTES
-# Each leader evaluates you based on: reputation, prowess, opinion, faction
+# 0010 - PETITION — ALL NINE CLAN LEADERS DELIBERATE
+# Streamlined: one event resolves all 9 votes at once
+# Your approach determines how many approve
 # ═══════════════════════════════════════════
 murim_custom_clan.0010 = {
 	type = character_event
 	title = murim_custom_clan.0010.t
 	desc = murim_custom_clan.0010.desc
-	# "Your petition arrives at the first clan leader's desk. [Leader name]
-	#  of [Clan name] reads your credentials, reviews your fight record,
-	#  considers your philosophy. Then they vote."
 	theme = diplomacy
-	
+
 	trigger = {
 		has_character_flag = murim_clan_petition_active
 	}
-	
+
 	immediate = {
-		# Track votes
-		if = {
-			limit = { NOT = { has_variable = clan_votes_yes } }
-			set_variable = { name = clan_votes_yes value = 0 }
-			set_variable = { name = clan_votes_no value = 0 }
-			set_variable = { name = clan_votes_total value = 0 }
-		}
+		set_variable = { name = clan_votes_yes value = 0 }
+		set_variable = { name = clan_votes_no value = 0 }
 	}
-	
-	# Option A: Present your case formally
+
+	# Option A: Present your case with humility and honor
 	option = {
 		name = murim_custom_clan.0010.a
-		# "Honored leader, I present my petition with humility and conviction."
-		# Vote calculation: base 40% yes, modified by opinion/reputation/prowess
+		# Respectful approach — weighted roll for all 9 votes at once
+		# Base: ~5-6 yes votes, modified by prowess/reputation
 		random_list = {
-			40 = {
+			30 = {
 				modifier = {
-					add = 20
+					add = 15
 					prowess >= 25
 				}
 				modifier = {
@@ -125,132 +118,109 @@ murim_custom_clan.0010 = {
 					has_character_modifier = murim_faction_war_hero
 				}
 				modifier = {
-					add = -20
-					# Rival clan leader less likely to approve
+					add = 10
+					diplomacy >= 15
+				}
+				# Overwhelming approval (7-9 votes)
+				set_variable = { name = clan_votes_yes value = 8 }
+				set_variable = { name = clan_votes_no value = 1 }
+			}
+			40 = {
+				modifier = {
+					add = 10
+					prowess >= 22
+				}
+				# Majority approval (6 votes)
+				set_variable = { name = clan_votes_yes value = 6 }
+				set_variable = { name = clan_votes_no value = 3 }
+			}
+			30 = {
+				modifier = {
+					add = 15
 					has_character_flag = murim_bad_reputation
 				}
-				# YES vote
-				change_variable = { name = clan_votes_yes add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
-				add_character_modifier = {
-					modifier = murim_petition_vote_yes
-					years = 1
-				}
-			}
-			60 = {
 				modifier = {
-					add = -20
+					add = -10
 					prowess >= 25
 				}
-				modifier = {
-					add = 20
-					has_character_flag = murim_bad_reputation
-				}
-				# NO vote
-				change_variable = { name = clan_votes_no add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
-				add_character_modifier = {
-					modifier = murim_petition_vote_no
-					years = 1
-				}
+				# Rejected (4-5 votes)
+				set_variable = { name = clan_votes_yes value = 4 }
+				set_variable = { name = clan_votes_no value = 5 }
 			}
 		}
-		# Continue to next leader or tally
-		if = {
-			limit = {
-				var:clan_votes_total >= 9
-			}
-			# All 9 have voted — tally
-			trigger_event = {
-				id = murim_custom_clan.0030
-				days = { 7 14 }
-			}
-		}
-		else = {
-			# Next leader
-			trigger_event = {
-				id = murim_custom_clan.0010
-				days = { 30 90 }
-			}
+		trigger_event = {
+			id = murim_custom_clan.0030
+			days = { 7 30 }
 		}
 		ai_chance = { base = 60 }
 	}
-	
-	# Option B: Bribe the current leader
+
+	# Option B: Bribe the leaders (costs gold, higher chance)
 	option = {
 		name = murim_custom_clan.0010.b
-		# "Perhaps a generous donation to your clan's treasury would help your deliberation."
-		trigger = { gold >= 100 }
-		remove_short_term_gold = 100
-		# Bribery: 75% yes, but if caught, reputation damage
+		trigger = { gold >= 300 }
+		remove_short_term_gold = 300
 		random_list = {
-			75 = {
-				change_variable = { name = clan_votes_yes add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
+			55 = {
+				# Bribery works — overwhelming approval
+				set_variable = { name = clan_votes_yes value = 7 }
+				set_variable = { name = clan_votes_no value = 2 }
+			}
+			30 = {
+				# Partial success
+				set_variable = { name = clan_votes_yes value = 6 }
+				set_variable = { name = clan_votes_no value = 3 }
 			}
 			15 = {
-				# Takes bribe, still votes no
-				change_variable = { name = clan_votes_no add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
-			}
-			10 = {
-				# Caught bribing — scandal
+				# Bribery scandal — rejected AND reputation damage
+				set_variable = { name = clan_votes_yes value = 3 }
+				set_variable = { name = clan_votes_no value = 6 }
 				add_character_modifier = {
 					modifier = murim_bribery_scandal
 					years = 5
 				}
-				change_variable = { name = clan_votes_no add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
 			}
 		}
-		# Continue
-		if = {
-			limit = { var:clan_votes_total >= 9 }
-			trigger_event = { id = murim_custom_clan.0030 days = { 7 14 } }
-		}
-		else = {
-			trigger_event = { id = murim_custom_clan.0010 days = { 30 90 } }
+		trigger_event = {
+			id = murim_custom_clan.0030
+			days = { 7 30 }
 		}
 		ai_chance = { base = 20 }
 	}
-	
-	# Option C: Challenge this leader to a duel for their vote
+
+	# Option C: Intimidate through martial dominance
 	option = {
 		name = murim_custom_clan.0010.c
-		# "If words won't convince you, perhaps my fists will."
-		trigger = { prowess >= 18 }
-		duel = {
-			skill = prowess
-			target = scope:current_clan_leader
-			50 = {
-				compare_modifier = {
-					value = scope:duel_value
-					multiplier = 2.0
+		trigger = { prowess >= 25 }
+		# High prowess forces approval through fear
+		random_list = {
+			60 = {
+				modifier = {
+					add = 20
+					prowess >= 30
 				}
-				desc = murim_custom_clan.0010.c.win
-				# Forced YES vote through martial superiority
-				change_variable = { name = clan_votes_yes add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
+				set_variable = { name = clan_votes_yes value = 7 }
+				set_variable = { name = clan_votes_no value = 2 }
+				add_dread = 15
 			}
-			50 = {
-				compare_modifier = {
-					value = scope:duel_value
-					multiplier = -2.0
+			25 = {
+				set_variable = { name = clan_votes_yes value = 5 }
+				set_variable = { name = clan_votes_no value = 4 }
+				add_dread = 10
+			}
+			15 = {
+				# Backfires — leaders unite against you
+				set_variable = { name = clan_votes_yes value = 2 }
+				set_variable = { name = clan_votes_no value = 7 }
+				add_character_modifier = {
+					modifier = murim_intimidation_backfire
+					years = 5
 				}
-				desc = murim_custom_clan.0010.c.lose
-				# Definite NO vote + injury
-				change_variable = { name = clan_votes_no add = 1 }
-				change_variable = { name = clan_votes_total add = 1 }
-				add_trait = wounded
 			}
 		}
-		# Continue
-		if = {
-			limit = { var:clan_votes_total >= 9 }
-			trigger_event = { id = murim_custom_clan.0030 days = { 7 14 } }
-		}
-		else = {
-			trigger_event = { id = murim_custom_clan.0010 days = { 30 90 } }
+		trigger_event = {
+			id = murim_custom_clan.0030
+			days = { 7 30 }
 		}
 		ai_chance = { base = 20 }
 	}
@@ -268,31 +238,23 @@ murim_custom_clan.0030 = {
 			triggered_desc = {
 				trigger = { var:clan_votes_yes >= 6 }
 				desc = murim_custom_clan.0030.desc_approved
-				# "The votes are counted. [X] clan leaders voted YES. [Y] voted NO.
-				#  The majority has spoken: the martial world recognizes your right
-				#  to found a new clan. The Nine — now Ten — Great Clans welcome you.
-				#  Name your clan. Choose your path. Write your legacy."
 			}
 			desc = murim_custom_clan.0030.desc_rejected
-			# "The votes are counted. [X] clan leaders voted YES. [Y] voted NO.
-			#  The majority has spoken: you are denied. The martial world is not
-			#  ready for your clan. Perhaps in ten years, when memories fade and
-			#  new alliances form, you may try again."
 		}
 	}
 	theme = diplomacy
-	
-	# Option A: APPROVED — found your clan
+
+	# Option A: APPROVED — choose your martial style
 	option = {
 		name = murim_custom_clan.0030.a
 		trigger = { var:clan_votes_yes >= 6 }
 		trigger_event = {
-			id = murim_custom_clan.0050
+			id = murim_custom_clan.0040
 			days = 1
 		}
 		ai_chance = { base = 100 }
 	}
-	
+
 	# Option B: REJECTED — accept gracefully
 	option = {
 		name = murim_custom_clan.0030.b
@@ -309,7 +271,7 @@ murim_custom_clan.0030 = {
 		}
 		ai_chance = { base = 70 }
 	}
-	
+
 	# Option C: REJECTED — declare anyway (rebellion)
 	option = {
 		name = murim_custom_clan.0030.c
@@ -321,10 +283,8 @@ murim_custom_clan.0030 = {
 				prowess >= 25
 			}
 		}
-		# "They said no. I say I don't care."
-		# Found clan as a ROGUE clan — all 9 clans hostile
 		trigger_event = {
-			id = murim_custom_clan.0050
+			id = murim_custom_clan.0040
 			days = 1
 		}
 		set_character_flag = murim_rogue_clan_founder
@@ -332,7 +292,6 @@ murim_custom_clan.0030 = {
 			modifier = murim_rogue_clan
 			years = -1
 		}
-		# All 9 clans hostile for 10 years
 		add_dread = 20
 		ai_chance = {
 			base = 10
@@ -341,6 +300,223 @@ murim_custom_clan.0030 = {
 				has_trait = ambitious
 			}
 		}
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0040 - CHOOSE YOUR MARTIAL STYLE
+# Pick a fighting style inspired by existing sects
+# This defines your clan's combat identity
+# ═══════════════════════════════════════════
+murim_custom_clan.0040 = {
+	type = character_event
+	title = murim_custom_clan.0040.t
+	desc = murim_custom_clan.0040.desc
+	theme = martial
+
+	# Option A: Sword Arts — elegant blade techniques (Mount Hua style)
+	option = {
+		name = murim_custom_clan.0040.a
+		add_prowess = 3
+		add_martial = 2
+		add_character_modifier = {
+			modifier = murim_custom_sword_arts_style
+			years = -1
+		}
+		set_character_flag = custom_clan_sword_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 20 }
+	}
+
+	# Option B: Internal Cultivation — qi mastery and meditation (Wudang style)
+	option = {
+		name = murim_custom_clan.0040.b
+		add_prowess = 2
+		add_learning = 3
+		add_character_modifier = {
+			modifier = murim_custom_internal_arts_style
+			years = -1
+		}
+		set_character_flag = custom_clan_internal_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 15 }
+	}
+
+	# Option C: Body Tempering — iron body and raw power (Shaolin/Iron Fist style)
+	option = {
+		name = murim_custom_clan.0040.c
+		add_prowess = 5
+		add_character_modifier = {
+			modifier = murim_custom_body_arts_style
+			years = -1
+		}
+		set_character_flag = custom_clan_body_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 15 }
+	}
+
+	# Option D: Hidden Weapons & Poisons — cunning lethality (Tang Clan style)
+	option = {
+		name = murim_custom_clan.0040.d
+		add_prowess = 2
+		add_intrigue = 3
+		add_character_modifier = {
+			modifier = murim_custom_hidden_weapons_style
+			years = -1
+		}
+		set_character_flag = custom_clan_hidden_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 10 }
+	}
+
+	# Option E: Shadow Arts — stealth and assassination (Phantom Blade style)
+	option = {
+		name = murim_custom_clan.0040.e
+		add_prowess = 2
+		add_intrigue = 2
+		add_martial = 1
+		add_character_modifier = {
+			modifier = murim_custom_shadow_arts_style
+			years = -1
+		}
+		set_character_flag = custom_clan_shadow_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 10 }
+	}
+
+	# Option F: Forbidden Techniques — dark power at a cost (Heavenly Demon style)
+	option = {
+		name = murim_custom_clan.0040.f
+		add_prowess = 4
+		add_intrigue = 1
+		add_dread = 15
+		add_character_modifier = {
+			modifier = murim_custom_forbidden_arts_style
+			years = -1
+		}
+		set_character_flag = custom_clan_forbidden_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 10 }
+	}
+
+	# Option G: Information Network — eyes and ears everywhere (Beggar Sect style)
+	option = {
+		name = murim_custom_clan.0040.g
+		add_intrigue = 3
+		add_diplomacy = 2
+		add_character_modifier = {
+			modifier = murim_custom_network_style
+			years = -1
+		}
+		set_character_flag = custom_clan_network_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 10 }
+	}
+
+	# Option H: Seduction & Toxins — beauty as a weapon (Poison Flower style)
+	option = {
+		name = murim_custom_clan.0040.h
+		add_intrigue = 2
+		add_diplomacy = 2
+		add_prowess = 1
+		add_character_modifier = {
+			modifier = murim_custom_seduction_style
+			years = -1
+		}
+		set_character_flag = custom_clan_seduction_style
+		trigger_event = { id = murim_custom_clan.0045 days = 1 }
+		ai_chance = { base = 10 }
+	}
+}
+
+# ═══════════════════════════════════════════
+# 0045 - CHOOSE YOUR CLAN SPECIALTY
+# What makes your clan unique beyond fighting style
+# ═══════════════════════════════════════════
+murim_custom_clan.0045 = {
+	type = character_event
+	title = murim_custom_clan.0045.t
+	desc = murim_custom_clan.0045.desc
+	theme = martial
+
+	# Option A: Alchemy & Medicine — clan produces pills, medicines, antidotes
+	option = {
+		name = murim_custom_clan.0045.a
+		add_learning = 2
+		add_character_modifier = {
+			modifier = murim_custom_alchemy_specialty
+			years = -1
+		}
+		set_character_flag = custom_clan_alchemy
+		trigger_event = { id = murim_custom_clan.0050 days = 1 }
+		ai_chance = { base = 20 }
+	}
+
+	# Option B: Weapon Forging — clan crafts legendary weapons
+	option = {
+		name = murim_custom_clan.0045.b
+		add_stewardship = 2
+		add_character_modifier = {
+			modifier = murim_custom_forging_specialty
+			years = -1
+		}
+		set_character_flag = custom_clan_forging
+		trigger_event = { id = murim_custom_clan.0050 days = 1 }
+		ai_chance = { base = 20 }
+	}
+
+	# Option C: Mercenary Work — clan takes contracts for gold and glory
+	option = {
+		name = murim_custom_clan.0045.c
+		add_martial = 2
+		add_gold = 100
+		add_character_modifier = {
+			modifier = murim_custom_mercenary_specialty
+			years = -1
+		}
+		set_character_flag = custom_clan_mercenary
+		trigger_event = { id = murim_custom_clan.0050 days = 1 }
+		ai_chance = { base = 20 }
+	}
+
+	# Option D: Scholar Tradition — clan preserves ancient martial arts texts
+	option = {
+		name = murim_custom_clan.0045.d
+		add_learning = 3
+		add_character_modifier = {
+			modifier = murim_custom_scholar_specialty
+			years = -1
+		}
+		set_character_flag = custom_clan_scholar
+		trigger_event = { id = murim_custom_clan.0050 days = 1 }
+		ai_chance = { base = 15 }
+	}
+
+	# Option E: Tournament Champions — clan lives for competition
+	option = {
+		name = murim_custom_clan.0045.e
+		add_prowess = 2
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_custom_tournament_specialty
+			years = -1
+		}
+		set_character_flag = custom_clan_tournament
+		trigger_event = { id = murim_custom_clan.0050 days = 1 }
+		ai_chance = { base = 15 }
+	}
+
+	# Option F: Political Influence — clan operates through courts and alliances
+	option = {
+		name = murim_custom_clan.0045.f
+		add_diplomacy = 3
+		add_character_modifier = {
+			modifier = murim_custom_political_specialty
+			years = -1
+		}
+		set_character_flag = custom_clan_political
+		trigger_event = { id = murim_custom_clan.0050 days = 1 }
+		ai_chance = { base = 10 }
 	}
 }
 

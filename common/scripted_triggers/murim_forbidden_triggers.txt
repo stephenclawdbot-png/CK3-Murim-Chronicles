@@ -1,0 +1,207 @@
+########################################
+# MURIM FORBIDDEN TECHNIQUE TRIGGERS
+# Conditions for forbidden technique discovery,
+# corruption checks, ascension eligibility, and war
+########################################
+
+# === FORBIDDEN TECHNIQUE TRIGGERS ===
+
+murim_has_any_forbidden_technique_trigger = {
+	OR = {
+		has_trait = murim_soul_devouring_palm
+		has_trait = murim_blood_reversal_art
+		has_trait = murim_void_breathing_method
+		has_trait = murim_heaven_defying_sutra
+		has_trait = murim_asura_body_technique
+		has_trait = murim_soul_splitting_art
+		has_trait = murim_death_qi_cultivation
+		has_trait = murim_eternal_damnation_sutra
+	}
+}
+
+murim_has_any_corruption_trigger = {
+	OR = {
+		has_trait = murim_corruption_stage_1
+		has_trait = murim_corruption_stage_2
+		has_trait = murim_corruption_stage_3
+		has_trait = murim_corruption_stage_4
+	}
+}
+
+murim_is_corruption_stage_trigger = {
+	OR = {
+		AND = {
+			has_trait = murim_corruption_stage_1
+			NOT = { has_trait = murim_corruption_stage_2 }
+			NOT = { has_trait = murim_corruption_stage_3 }
+			NOT = { has_trait = murim_corruption_stage_4 }
+		}
+		AND = {
+			has_trait = murim_corruption_stage_2
+			NOT = { has_trait = murim_corruption_stage_3 }
+			NOT = { has_trait = murim_corruption_stage_4 }
+		}
+		has_trait = murim_corruption_stage_3
+		has_trait = murim_corruption_stage_4
+	}
+}
+
+murim_can_learn_forbidden_technique_trigger = {
+	has_variable = murim_martial_artist
+	var:murim_cultivation_rank >= 3
+	NOT = { has_trait = murim_corruption_stage_4 }
+	age >= 18
+}
+
+murim_is_forbidden_technique_hunter_trigger = {
+	has_variable = murim_martial_artist
+	OR = {
+		has_trait = just
+		has_trait = zealous
+		has_trait = compassionate
+	}
+	NOT = { murim_has_any_corruption_trigger = yes }
+	var:murim_cultivation_rank >= 4
+}
+
+murim_can_purge_corruption_trigger = {
+	has_variable = murim_martial_artist
+	murim_has_any_corruption_trigger = yes
+	NOT = { has_trait = murim_corruption_stage_4 }
+	learning >= 12
+}
+
+# === ASCENSION TRIGGERS ===
+
+murim_can_attempt_ascension_trigger = {
+	has_variable = murim_martial_artist
+	var:murim_cultivation_rank >= 6
+	NOT = { has_trait = murim_true_immortal }
+	NOT = { has_trait = murim_ascension_failed }
+	NOT = { has_character_flag = murim_ascension_cooldown }
+	age >= 30
+	prowess >= 25
+}
+
+murim_is_immortal_trigger = {
+	OR = {
+		has_trait = murim_half_immortal
+		has_trait = murim_true_immortal
+	}
+}
+
+murim_is_ascension_eligible_trigger = {
+	has_variable = murim_martial_artist
+	var:murim_cultivation_rank >= 6
+	NOT = { has_trait = murim_ascension_failed }
+	# Must have mastered at least 3 peak techniques (approximated by high cultivation)
+	prowess >= 25
+	# Must not be heavily corrupted
+	NOT = { has_trait = murim_corruption_stage_3 }
+	NOT = { has_trait = murim_corruption_stage_4 }
+}
+
+# === CONTINENTAL WAR TRIGGERS ===
+
+murim_is_faction_leader_trigger = {
+	has_variable = murim_martial_artist
+	var:murim_cultivation_rank >= 5
+	OR = {
+		has_character_flag = murim_orthodox_leader
+		has_character_flag = murim_unorthodox_leader
+		has_character_flag = murim_imperial_faction_leader
+	}
+}
+
+murim_is_orthodox_faction_trigger = {
+	has_variable = murim_martial_artist
+	OR = {
+		has_trait = murim_shaolin_monk
+		has_trait = murim_wudang_disciple
+		has_trait = murim_mount_hua_disciple
+		has_trait = murim_beggar_sect_member
+		has_trait = murim_tang_clan_member
+		has_trait = murim_iron_fist_disciple
+	}
+}
+
+murim_is_unorthodox_faction_trigger = {
+	has_variable = murim_martial_artist
+	OR = {
+		has_trait = murim_heavenly_demon_member
+		has_trait = murim_phantom_blade_member
+		has_trait = murim_poison_flower_disciple
+		has_trait = murim_blood_oath_bound
+	}
+}
+
+murim_continental_war_active_trigger = {
+	has_global_variable = murim_continental_war_active
+}
+
+murim_can_declare_faction_war_trigger = {
+	murim_is_faction_leader_trigger = yes
+	NOT = { murim_continental_war_active_trigger = yes }
+	NOT = { has_global_variable = murim_continental_war_cooldown }
+}
+
+# === TRIBUNAL TRIGGERS ===
+
+murim_is_tribunal_member_trigger = {
+	has_trait = murim_tribunal_judge
+}
+
+murim_can_join_tribunal_trigger = {
+	has_variable = murim_martial_artist
+	var:murim_cultivation_rank >= 5
+	NOT = { has_trait = murim_tribunal_judge }
+	NOT = { has_trait = murim_tribunal_exile }
+	NOT = { murim_has_any_corruption_trigger = yes }
+	prowess >= 20
+	diplomacy >= 10
+}
+
+murim_tribunal_can_summon_trigger = {
+	has_variable = murim_martial_artist
+	NOT = { has_trait = murim_tribunal_judge }
+	NOT = { has_character_flag = murim_tribunal_immunity }
+}
+
+# === SUCCESSION TRIGGERS ===
+
+murim_succession_eligible_trigger = {
+	has_variable = murim_martial_artist
+	age >= 18
+	NOT = { has_trait = murim_tribunal_exile }
+	NOT = { has_trait = murim_ascension_failed }
+}
+
+murim_can_claim_leadership_trigger = {
+	murim_succession_eligible_trigger = yes
+	var:murim_cultivation_rank >= 3
+	prowess >= 15
+}
+
+# === RIVALRY TRIGGERS ===
+
+murim_has_active_rivalry_trigger = {
+	has_trait = murim_sworn_nemesis
+}
+
+murim_can_generate_rivalry_trigger = {
+	has_variable = murim_martial_artist
+	NOT = { has_trait = murim_sworn_nemesis }
+	age >= 16
+	var:murim_cultivation_rank >= 2
+}
+
+murim_rivalry_escalation_trigger = {
+	has_trait = murim_sworn_nemesis
+	stress >= 30
+	OR = {
+		has_trait = wrathful
+		has_trait = vengeful
+		has_trait = ambitious
+		prowess >= 18
+	}
+}

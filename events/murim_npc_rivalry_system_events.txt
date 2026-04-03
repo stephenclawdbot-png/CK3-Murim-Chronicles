@@ -1,0 +1,254 @@
+########################################
+# MURIM NPC RIVALRY SYSTEM EVENTS
+# Dynamic rival generation, escalation,
+# resolution, and legacy grudges
+########################################
+
+namespace = murim_npc_rivalry
+
+# Rivalry sparks — two NPCs clash
+murim_npc_rivalry.0001 = {
+	type = character_event
+	title = murim_npc_rivalry.0001.t
+	desc = murim_npc_rivalry.0001.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		murim_can_generate_rivalry_trigger = yes
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_variable = murim_martial_artist
+				NOT = { this = root }
+				var:murim_cultivation_rank >= 2
+			}
+			save_scope_as = new_rival
+		}
+	}
+
+	# Accept the rivalry — this is personal
+	option = {
+		name = murim_npc_rivalry.0001.a
+		trigger = { exists = scope:new_rival }
+		hidden_effect = { murim_generate_rivalry_effect = yes }
+		add_prowess = 1
+		ai_chance = { base = 50 modifier = { add = 25 has_trait = wrathful } }
+	}
+
+	# Let it go — not worth the energy
+	option = {
+		name = murim_npc_rivalry.0001.b
+		add_stress = -10
+		add_piety = 25
+		ai_chance = { base = 50 modifier = { add = 20 has_trait = forgiving } }
+	}
+}
+
+# Rivalry escalation — public insult
+murim_npc_rivalry.0010 = {
+	type = character_event
+	title = murim_npc_rivalry.0010.t
+	desc = murim_npc_rivalry.0010.desc
+	theme = martial
+
+	trigger = {
+		has_trait = murim_sworn_nemesis
+	}
+
+	# Respond with a duel challenge
+	option = {
+		name = murim_npc_rivalry.0010.a
+		add_prestige = 50
+		add_prowess = 1
+		ai_chance = { base = 50 }
+	}
+
+	# Endure the insult
+	option = {
+		name = murim_npc_rivalry.0010.b
+		add_stress = 20
+		ai_chance = { base = 30 }
+	}
+
+	# Respond with a cutting retort
+	option = {
+		name = murim_npc_rivalry.0010.c
+		add_diplomacy = 1
+		add_prestige = 75
+		ai_chance = { base = 20 }
+	}
+}
+
+# Rivalry escalation — assassination attempt
+murim_npc_rivalry.0020 = {
+	type = character_event
+	title = murim_npc_rivalry.0020.t
+	desc = murim_npc_rivalry.0020.desc
+	theme = intrigue
+
+	trigger = {
+		has_trait = murim_sworn_nemesis
+		murim_rivalry_escalation_trigger = yes
+	}
+
+	# Survive and counter-attack
+	option = {
+		name = murim_npc_rivalry.0020.a
+		add_prowess = 2
+		add_dread = 15
+		add_stress = 20
+		ai_chance = { base = 50 }
+	}
+
+	# Barely escape — go into hiding
+	option = {
+		name = murim_npc_rivalry.0020.b
+		add_intrigue = 1
+		add_stress = 25
+		ai_chance = { base = 30 }
+	}
+
+	# Set a counter-trap
+	option = {
+		name = murim_npc_rivalry.0020.c
+		add_intrigue = 2
+		add_dread = 10
+		ai_chance = { base = 20 }
+	}
+}
+
+# Rivalry escalation — clan war triggered
+murim_npc_rivalry.0030 = {
+	type = character_event
+	title = murim_npc_rivalry.0030.t
+	desc = murim_npc_rivalry.0030.desc
+	theme = martial
+
+	trigger = {
+		has_trait = murim_sworn_nemesis
+		has_character_flag = murim_is_clan_leader
+	}
+
+	# Full clan war — mobilize everything
+	option = {
+		name = murim_npc_rivalry.0030.a
+		add_martial = 2
+		add_dread = 20
+		add_prestige = 200
+		ai_chance = { base = 45 }
+	}
+
+	# Limited engagement — keep it personal
+	option = {
+		name = murim_npc_rivalry.0030.b
+		add_prowess = 2
+		add_prestige = 100
+		ai_chance = { base = 35 }
+	}
+
+	# Seek mediation
+	option = {
+		name = murim_npc_rivalry.0030.c
+		add_diplomacy = 1
+		add_piety = 75
+		ai_chance = { base = 20 }
+	}
+}
+
+# Rivalry resolution — one submits
+murim_npc_rivalry.0040 = {
+	type = character_event
+	title = murim_npc_rivalry.0040.t
+	desc = murim_npc_rivalry.0040.desc
+	theme = martial
+
+	trigger = { has_trait = murim_sworn_nemesis }
+
+	# Victory — your rival submits
+	option = {
+		name = murim_npc_rivalry.0040.a
+		hidden_effect = { murim_resolve_rivalry_effect = yes }
+		add_prestige = 300
+		add_prowess = 2
+		ai_chance = { base = 50 }
+	}
+
+	# Draw — mutual respect ends the rivalry
+	option = {
+		name = murim_npc_rivalry.0040.b
+		hidden_effect = { murim_resolve_rivalry_effect = yes }
+		add_diplomacy = 1
+		add_prestige = 150
+		ai_chance = { base = 30 }
+	}
+
+	# Third party mediates
+	option = {
+		name = murim_npc_rivalry.0040.c
+		hidden_effect = { murim_resolve_rivalry_effect = yes }
+		add_piety = 100
+		ai_chance = { base = 20 }
+	}
+}
+
+# Player dragged into NPC rivalry
+murim_npc_rivalry.0050 = {
+	type = character_event
+	title = murim_npc_rivalry.0050.t
+	desc = murim_npc_rivalry.0050.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		NOT = { has_trait = murim_sworn_nemesis }
+	}
+
+	# Side with the challenger
+	option = {
+		name = murim_npc_rivalry.0050.a
+		add_prestige = 100
+		add_stress = 10
+		ai_chance = { base = 35 }
+	}
+
+	# Side with the defender
+	option = {
+		name = murim_npc_rivalry.0050.b
+		add_prestige = 100
+		add_piety = 25
+		ai_chance = { base = 35 }
+	}
+
+	# Stay out of it
+	option = {
+		name = murim_npc_rivalry.0050.c
+		add_stress = -10
+		ai_chance = { base = 30 }
+	}
+}
+
+# Rivalry combat bonus event
+murim_npc_rivalry.0060 = {
+	type = character_event
+	title = murim_npc_rivalry.0060.t
+	desc = murim_npc_rivalry.0060.desc
+	theme = martial
+
+	trigger = { has_trait = murim_sworn_nemesis }
+
+	option = {
+		name = murim_npc_rivalry.0060.a
+		add_prowess = 2
+		add_character_modifier = { modifier = murim_nemesis_combat_focus years = 2 }
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_npc_rivalry.0060.b
+		add_learning = 1
+		add_stress = -15
+		ai_chance = { base = 40 }
+	}
+}

@@ -2,9 +2,9 @@
 
 > **A total conversion mod bringing the world of Murim (martial arts cultivation) to Crusader Kings 3**
 
-[![Version](https://img.shields.io/badge/version-1.0.0--beta-blue)]()
+[![Version](https://img.shields.io/badge/version-1.1.0--beta-blue)]()
 [![CK3](https://img.shields.io/badge/CK3-1.18.2+-green)]()
-[![Files](https://img.shields.io/badge/mod%20files-180+-orange)]()
+[![Files](https://img.shields.io/badge/mod%20files-200+-orange)]()
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)]()
 [![Phase](https://img.shields.io/badge/all%20phases-COMPLETE-brightgreen)]()
 
@@ -26,108 +26,166 @@ The martial world exists **behind** vanilla -- it never overrides vanilla mechan
 | **Phase 2** | Grind Loop Systems (training, modifiers) | COMPLETE |
 | **Phase 3** | Advanced Mechanics (duels, rankings, celestial) | COMPLETE |
 | **Phase 4** | Wuxia Underground (jianghu, black market) | COMPLETE |
-| **Expansion** | Deep content (180+ event files, 9 sects) | COMPLETE |
+| **Expansion** | Deep content (200+ event files, 9 sects) | COMPLETE |
+| **Migration** | Global martial artist migration system | COMPLETE |
 | **Performance** | Optimized for smooth gameplay | COMPLETE |
-| **Definitions** | Zero missing traits/modifiers/opinions | COMPLETE |
+| **Definitions** | Zero missing traits/modifiers/opinions/events | COMPLETE |
+| **Stability** | 10-loop automated audit, zero crash issues | COMPLETE |
 
 ---
 
-## v1.0.0 Changelog (Latest)
+## v1.1.0 Changelog (Latest)
 
-### Performance Optimization
-- **All `every_living_character` converted to `every_ruler`** across 24+ event files and all on_actions -- eliminates expensive full-character-list iteration
-- **All monthly pulses converted to quarterly** -- 66% reduction in idle CPU usage
-- **XP values tripled** to maintain progression rate at quarterly frequency
-- **Expensive `any_living_character` triggers replaced** with cheap flag/prowess checks in AI autonomy
-- **Zero monthly pulses during normal gameplay** -- smooth idle performance
+### Global Martial Artist Migration System (NEW)
+- **8 new migration events** bringing the martial world beyond China/Korea:
+  - **Foreign masters hear rumors** of China's ranking system and journey east
+  - **Arrival events** for foreign fighters entering the martial world
+  - **Tournament challengers** from abroad enter competitions
+  - **Wandering masters** appear at foreign courts
+  - **AI auto-migration** ensures foreign masters actively seek China's rankings
+- Foreign masters arrive with unique fusion martial arts modifiers
 
-### Martial World / Vanilla Court Connection (NEW)
-- **8 new events** linking the martial world to vanilla rulers as a shadow layer:
-  - **Martial Advisor at Court** -- recruit a martial artist as informal advisor (intelligence, guard training, shadow whispers)
-  - **Sect Leader Seeks Audience** -- a sect leader approaches the king/emperor (ally, enforcer, or decline)
-  - **Imperial Martial Tournament** -- host a tournament to attract martial talent to your court
-  - **Martial World Crisis** -- jianghu violence spills into your realm (military, diplomatic, or isolate)
-  - **Shadow Behind the Throne** -- discover martial influence manipulating your court
-  - **AI Court Influence** -- AI martial leaders autonomously seek court influence
-  - **Martial World Intro** -- non-martial rulers learn about the jianghu for the first time
-- Martial world stays **behind** vanilla -- no overrides, just shadow flavor and modifier benefits
+### Expanded Geographical Seeding
+- **Three-tier seeding density**:
+  - **Tier A (51%)**: China, Korea -- dense martial artist population
+  - **Tier B (30%)**: Japan, Mongolia, Tibet, SE Asia, Jurchen, Tungusic -- moderate presence
+  - **Global (0.5-2%)**: Rest of the world via foreign master spawns and talent discovery
+- All regions use `culture = { has_cultural_pillar = heritage_X }` (CK3-correct syntax)
 
-### Ruler Rank Enforcement
-- **Titled rulers who are martial artists get minimum rank:**
-  - Emperor = Vice Leader (rank 5) minimum
-  - King/Duke = Elder (rank 4) minimum  
-  - Count = Inner Disciple (rank 3) minimum
-- Enforced on title gain and yearly catch-all pulse
-- A king wouldn't be an outer disciple -- political power earns martial respect
+### Gender Equality
+- **All `gender_female_chance` set to 50%** across every `create_character` block
+- Martial artists can be male or female equally
 
-### Entry Path System Fix
-- **All 4 entry paths now properly triggered** (previously only path 1 was connected):
-  1. **Wanderer Path** -- unlanded characters with prowess discover the martial world
-  2. **Ruler Path** -- landed rulers with martial courtiers learn cultivation secretly
-  3. **Courtier Path** -- courtiers learn from martial peers at court
-  4. **Adventurer Path** -- brave/curious/travelling characters encounter wandering masters
-- **AI participates equally** via ai_chance on all options
-- Both `martial_artist` trait AND `murim_martial_artist` variable now set on all creation paths for consistent detection
+### All 5 Skills Matter
+- **Stewardship, Martial, Intrigue, Diplomacy** now factor into martial artist selection alongside Prowess
+- Entry path triggers expanded to recognize non-combat talent
+- Weighted selection in all 4 seeding tiers (basic/intermediate/advanced/elite)
 
-### Combat Safety System
-- **All `death = { death_reason = death_battle }` calls** converted to `murim_combat_death_or_injury_effect`
-- **Characters under age 16 are protected from death** -- receive severe injury instead (wounded_3 + trauma modifier)
-- Consistent across ALL 180+ event files -- no exceptions
+### Comprehensive Crash Fixes
+- **447 missing trait definitions** added across 3 trait files (1,213 total traits defined)
+- **1,303 character memory types** defined (was 16 -- 1,287 were missing)
+- **64 invalid `has_culture_group`** calls replaced with CK3-correct `has_cultural_pillar`
+- **Invalid on_action hooks** fixed: `on_title_gain` -> `on_title_gained`, `on_ten_year_pulse` -> `on_five_year_pulse`, `on_bi_yearly_pulse` -> `on_yearly_pulse`
+- **`increase_wounds_effect`** defined (80 calls, was undefined)
+- **66 missing scripted trigger** stubs added
+- **Namespace collision** (`murim_global`) resolved
+- **Missing `beggar_sect_elder` trait** created (fixed dead seeding code)
+- **Cultivation variables** (`murim_cultivation_rank`, `murim_cultivation_xp`, `murim_clan_rank`) added to ALL seeding tiers -- entire progression system was previously disconnected
 
-### Critical Bug Fixes
-- **Fixed `has_trait = murim_martial_artist`** → `murim_is_martial_artist_trigger = yes` across 31 event files + on_actions. The trait was rarely added to characters, causing the entire calamity system and many expansion events to silently fail.
-- **Fixed missing `scope:orthodox_leader`** in faction_war_expansion2 event 0007 (would crash CK3)
-- **Fixed missing `immediate` block** for scope resolution in faction war events
+### Dead-End Event Chain Fixes
+- **110 stub events** created for all referenced-but-undefined event IDs
+- Every decision, event chain, and scripted effect now reaches a valid event
+- Themed content with appropriate rewards (cultivation XP, prestige, gold, etc.)
+- Full localization for all 110 stub events
 
-### Complete Definition Coverage
-- **413 trait definitions** added (murim_expansion_traits_patch.txt)
-- **2,933 character modifier definitions** added across patch files
-- **1,071 opinion modifier definitions** added across patch files  
-- **36 county modifier definitions** verified
-- **Zero silent failures** -- every `add_trait`, `add_character_modifier`, `add_opinion`, `has_character_modifier`, and `remove_character_modifier` call resolves to a real definition
-
-### AI Sect Competition (NEW)
-- **4 events** where AI martial leaders challenge each other and the player:
-  - Elder challenges for sect leadership
-  - Sect master challenges
-  - Usurpation schemes
-  - Alliance leader grand challenges
-- AI can take your position -- creates dynamic power struggles
-
-### Civilian Casualty System (NEW)
-- **3 events** for martial world collateral damage:
-  - Street fight collateral
-  - Technique misfire
-  - Village devastation
-- Each has 3 options with different outcomes and AI weights
+### Stability Verification
+- **10-loop automated audit** confirms zero issues:
+  - 0 bracket mismatches
+  - 0 missing traits
+  - 0 missing events
+  - 0 missing effects/triggers
+  - 0 missing memory types
+  - 0 missing opinion/character modifiers
+  - 0 invalid syntax
+  - 0 duplicate event IDs or trait names
+  - All localization files have UTF-8 BOM
+- Automated audit script included (`audit_mod.py`) for future validation
 
 ---
 
-## Implemented Systems
+## Gameplay Systems
 
-### Core Systems
-- **Cultivation System**: 7 realms from Outer Qi to Heavenly Tribulation with XP-based progression
-- **9 Martial Sects**: Mount Hua, Shaolin, Wudang, Tang Clan, Beggar Sect, Iron Fist Gate (orthodox) + Heavenly Demon, Poison Flower Palace, Phantom Blade (unorthodox)
-- **Sect Ranks**: Outer Disciple → Associate → Inner Disciple → Elder → Vice Leader → Leader
-- **90+ Martial Traits**: Prowess techniques, body cultivation, qi deviation states, reputation titles
-- **Top 50 Ranking System**: Dynamic martial rankings with yearly updates and ranking duels
+### Cultivation & Progression
+- **7 Cultivation Realms**: Outer Qi -> Qi Gathering -> Foundation -> Golden Core -> Nascent Soul -> Spirit Severing -> Heavenly Tribulation
+- **XP-based progression**: Train, meditate, duel, and study to accumulate cultivation XP
+- **Breakthrough events**: Attempt realm advancement with risk of qi deviation (catastrophic failure)
+- **Cultivation variables**: `murim_cultivation_rank`, `murim_cultivation_xp`, `murim_clan_rank` track your progression
+- **All 5 skills contribute**: Prowess (combat), Martial (strategy), Stewardship (resource management), Intrigue (shadow arts), Diplomacy (sect politics)
 
-### Event Systems (180+ files)
-- **Cultivation Events**: Breakthroughs, qi deviation, meditation, body tempering, meridian opening
-- **Duel System**: Honor duels, death matches, ranking fights, tournaments, ambush, revenge chains
-- **Romance System**: Dual cultivation, forbidden love, soulmate bonds, marriage duels, love triangles
-- **Calamity System**: Great Calamity cycles with phase-based progression, world-shaking events
-- **Faction Wars**: Orthodox vs Unorthodox conflict chains with AI participation
-- **Shadow Politics**: Court manipulation, spy networks, assassination, puppet schemes
-- **Daily Life**: 20+ events for everyday martial world encounters
-- **Sect-Specific Chains**: Deep event chains for each of the 9 sects
-- **Court Connection**: Martial world influence on vanilla rulers (shadow layer)
+### 9 Martial Sects
 
-### Performance
-- Zero `every_living_character` calls in gameplay loops
-- All pulses quarterly (not monthly) with tripled XP to compensate
-- Cheap flag/stat checks replace expensive character iteration in triggers
-- `has_variable = murim_martial_artist` gating skips non-martial characters early
+**Orthodox (Righteous Path):**
+| Sect | Specialty | Style |
+|------|-----------|-------|
+| Mount Hua | Sword arts, righteousness | Elegant swordsmanship |
+| Shaolin | Buddhist martial arts, iron body | Monk combat and meditation |
+| Wudang | Taoist cultivation, internal arts | Flowing defensive techniques |
+| Beggar Sect | Information network, Dog Beating Staff | Street-level intelligence |
+| Iron Fist Gate | Pure physical power | Crushing force techniques |
+| Tang Clan | Hidden weapons, poisons | Assassination and alchemy |
+
+**Unorthodox (Demonic Path):**
+| Sect | Specialty | Style |
+|------|-----------|-------|
+| Heavenly Demon | Forbidden techniques, domination | Overwhelming dark power |
+| Poison Flower Palace | Toxins, seduction, beauty | Poisonous and alluring arts |
+| Phantom Blade | Assassination, stealth | Shadow killing techniques |
+
+### Sect Ranks & Clan System
+- **6 Ranks**: Outer Disciple -> Associate -> Inner Disciple -> Elder -> Vice Leader -> Leader
+- **Clan rank enforcement**: Titled rulers get minimum rank matching their political power
+- **Sect politics**: Internal power struggles, elder councils, succession crises
+- **Custom clan creation**: Found your own martial clan
+
+### Top 50 Ranking System
+- **Dynamic rankings** updated periodically based on prowess, cultivation, and achievements
+- **Ranking duels**: Challenge those above you, defend your position
+- **Foreign challengers**: Masters from across the world seek to enter the Top 50
+- **Prestige and reputation** tied to ranking position
+
+### Duel & Combat System
+- **Honor duels**: Formal challenges with witnesses and consequences
+- **Death matches**: Lethal combat for dire situations
+- **Tournament system**: Young Dragon Tournament (under-30) and Grand Tournament (all ages)
+- **Ambush and revenge**: Surprise attacks and vendetta chains
+- **Combat trauma**: Wounds, psychological scars, and recovery
+
+### Romance & Relationships
+- **Dual cultivation**: Train together with a romantic partner for mutual benefit
+- **Forbidden love**: Cross-faction romance with sect consequences
+- **Soulmate bonds**: Deep connections that transcend sect boundaries
+- **Marriage duels**: Fight for the right to marry
+- **Mentor-disciple romance**: Complex relationships with power dynamics
+
+### Jianghu (Underground Martial World)
+- **Shadow brokers**: Information dealers operating behind the scenes
+- **Black market**: Trade forbidden techniques, rare herbs, and stolen artifacts
+- **Protection rackets**: Control territory through martial force
+- **Assassination contracts**: Hire killers or become one
+- **Faction wars**: Orthodox vs. Unorthodox grand conflicts
+
+### Great Calamity System
+- **Cyclical catastrophes** that shake the entire martial world
+- **Phase-based progression**: Warning signs -> Escalation -> Crisis -> Aftermath
+- **World-altering consequences**: Sect destruction, mass casualties, power vacuums
+- **Survivor benefits**: Those who endure gain unique traits and memories
+
+### Court Connection (Shadow Layer)
+- **Martial advisors** at court: Recruit martial artists as informal counselors
+- **Sect audiences**: Sect leaders approach kings and emperors for political alliance
+- **Imperial tournaments**: Host competitions to attract martial talent
+- **Shadow behind the throne**: Discover martial influence manipulating your court
+- **Non-martial rulers** can learn about the martial world
+
+### AI Participation
+- **Full AI autonomy**: NPCs cultivate, duel, join sects, and challenge for leadership
+- **AI migration**: Foreign masters actively journey east seeking glory
+- **Sect competition**: AI martial leaders challenge each other for dominance
+- **Court influence**: AI martial leaders seek positions of power at court
+
+---
+
+## Mod Statistics
+
+| Category | Count |
+|----------|-------|
+| Events | 2,085 |
+| Traits | 1,213 |
+| Character Modifiers | 3,867 |
+| Scripted Effects | 274 |
+| Scripted Triggers | 598 |
+| Character Memory Types | 1,303 |
+| Localization Keys | 4,331 |
 
 ---
 
@@ -143,17 +201,15 @@ The martial world exists **behind** vanilla -- it never overrides vanilla mechan
 
 ---
 
-## Key Features Summary
+## Validation
 
-- **180+ event files** across cultivation, combat, romance, politics, sects, calamities, and court connection
-- **2,900+ character modifier definitions** for every martial state and effect
-- **1,000+ opinion modifier definitions** for nuanced relationships
-- **400+ trait definitions** for martial progression and sect membership
-- **9 distinct martial sects** with full event chains and rank systems
-- **Full AI autonomy** -- NPCs cultivate, duel, join sects, seek court influence, and challenge for leadership
-- **Shadow layer design** -- martial world operates behind vanilla, never overrides it
-- **Youth protection** -- characters under 16 cannot die in martial combat
-- **Performance optimized** -- quarterly pulses, efficient iteration, cheap trigger checks
+Run the included audit script to verify mod integrity:
+
+```bash
+python3 audit_mod.py
+```
+
+This checks: bracket balance, missing traits/events/effects/triggers, invalid syntax, duplicate IDs, localization BOMs, and more. A clean run shows `ALL CLEAR - No issues found!`
 
 ---
 

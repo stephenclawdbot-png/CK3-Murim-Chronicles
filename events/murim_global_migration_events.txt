@@ -1,0 +1,914 @@
+namespace = murim_migration
+
+# Global Martial Artist Migration Events
+# Foreign masters hear of China's rankings and tournaments
+# They journey east to prove themselves, join sects, or seek mastery
+# Makes the martial world feel alive and global
+
+########################################
+# murim_migration.0001 - Rumors of the Rankings
+# Foreign martial artist hears of the legendary Top 50
+# Decides whether to journey toward the murim heartland
+########################################
+murim_migration.0001 = {
+	type = character_event
+	title = murim_migration.0001.t
+	desc = murim_migration.0001.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_flag = murim_foreign_master
+		murim_is_martial_artist_trigger = yes
+		NOT = { has_character_flag = murim_heard_of_rankings }
+		NOT = { has_character_flag = murim_journeying_east }
+		prowess >= 10
+		age >= 18
+		age <= 55
+		is_alive = yes
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			prowess >= 16
+		}
+		modifier = {
+			factor = 1.5
+			has_trait = ambitious
+		}
+		modifier = {
+			factor = 1.5
+			has_trait = brave
+		}
+	}
+
+	immediate = {
+		add_character_flag = murim_heard_of_rankings
+	}
+
+	# Journey east to seek the rankings
+	option = {
+		name = murim_migration.0001.a
+		add_character_flag = {
+			flag = murim_journeying_east
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_eastward_pilgrimage
+			years = 3
+		}
+		add_prowess = 1
+		# Schedule arrival event
+		trigger_event = {
+			id = murim_migration.0002
+			days = { 180 730 }
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				add = 20
+				prowess >= 16
+			}
+			modifier = {
+				add = 10
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Train more first — not ready yet
+	option = {
+		name = murim_migration.0001.b
+		add_character_modifier = {
+			modifier = murim_training_for_journey
+			years = 3
+		}
+		add_prowess = 2
+		# Can try again later
+		add_character_flag = {
+			flag = murim_ranking_delay
+			years = 3
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+
+	# The rankings mean nothing to me
+	option = {
+		name = murim_migration.0001.c
+		add_prestige = 25
+		stress_impact = {
+			base = -5
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+########################################
+# murim_migration.0002 - Arrival in the Murim Heartland
+# Foreign master arrives in China/Goryeo
+# First encounter with the organized martial world
+########################################
+murim_migration.0002 = {
+	type = character_event
+	title = murim_migration.0002.t
+	desc = murim_migration.0002.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:local_master
+		animation = personality_rational
+	}
+
+	trigger = {
+		has_character_flag = murim_journeying_east
+		is_alive = yes
+	}
+
+	immediate = {
+		remove_character_flag = murim_journeying_east
+		add_character_flag = murim_arrived_in_heartland
+		# Find a local martial artist to interact with
+		random_living_character = {
+			limit = {
+				has_variable = murim_martial_artist
+				OR = {
+					culture = { has_cultural_pillar = heritage_chinese }
+					culture = { has_cultural_pillar = heritage_korean }
+				}
+				prowess >= 12
+				is_alive = yes
+				age >= 20
+			}
+			weight = {
+				base = 1
+				modifier = {
+					factor = 3
+					OR = {
+						has_trait = mount_hua_disciple
+						has_trait = wudang_disciple
+						has_trait = shaolin_disciple
+					}
+				}
+				modifier = {
+					factor = 2
+					prowess >= 16
+				}
+			}
+			save_scope_as = local_master
+		}
+	}
+
+	# Challenge a local master to prove yourself
+	option = {
+		name = murim_migration.0002.a
+		duel = {
+			skill = prowess
+			target = scope:local_master
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_migration.0002.victory
+				add_prestige = 200
+				add_prowess = 2
+				add_character_modifier = {
+					modifier = murim_foreign_challenger_victory
+					years = 5
+				}
+				add_character_flag = {
+					flag = murim_proved_worth
+					years = 10
+				}
+				# Earn ranking consideration
+				trigger_event = {
+					id = murim_migration.0004
+					days = { 30 90 }
+				}
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_migration.0002.defeat
+				add_prestige = 50
+				add_prowess = 1
+				add_character_modifier = {
+					modifier = murim_humbled_foreigner
+					years = 2
+				}
+				# Still learn from defeat
+				trigger_event = {
+					id = murim_migration.0003
+					days = { 60 180 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Seek a sect to join first — learn their ways
+	option = {
+		name = murim_migration.0002.b
+		add_character_modifier = {
+			modifier = murim_foreign_sect_seeker
+			years = 3
+		}
+		trigger_event = {
+			id = murim_migration.0005
+			days = { 30 120 }
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Observe from the shadows — study before acting
+	option = {
+		name = murim_migration.0002.c
+		add_learning = 2
+		add_character_modifier = {
+			modifier = murim_observing_martial_world
+			years = 2
+		}
+		trigger_event = {
+			id = murim_migration.0004
+			days = { 180 365 }
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+########################################
+# murim_migration.0003 - Seeking a Master After Defeat
+# Humbled foreign master seeks training from locals
+# Path to integration through humility
+########################################
+murim_migration.0003 = {
+	type = character_event
+	title = murim_migration.0003.t
+	desc = murim_migration.0003.desc
+	theme = education
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		has_character_flag = murim_arrived_in_heartland
+		is_alive = yes
+		NOT = { has_character_flag = murim_sought_local_master }
+	}
+
+	immediate = {
+		add_character_flag = murim_sought_local_master
+	}
+
+	# Train under a local master — abandon old techniques
+	option = {
+		name = murim_migration.0003.a
+		add_prowess = 3
+		add_learning = 1
+		add_character_modifier = {
+			modifier = murim_cross_cultural_training
+			years = 5
+		}
+		# Gain a Chinese technique
+		random_list = {
+			25 = { add_trait = basic_sword_technique }
+			25 = { add_trait = basic_fist_technique }
+			25 = { add_trait = basic_internal_arts }
+			25 = { add_trait = basic_qigong }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Fuse your foreign arts with local techniques
+	option = {
+		name = murim_migration.0003.b
+		add_prowess = 2
+		add_character_modifier = {
+			modifier = murim_fusion_martial_arts
+			years = 10
+		}
+		add_prestige = 100
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Return home in shame
+	option = {
+		name = murim_migration.0003.c
+		remove_character_flag = murim_arrived_in_heartland
+		add_stress = 20
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+########################################
+# murim_migration.0004 - Seeking the Rankings
+# Foreign master attempts to enter the Top 50
+# Must defeat ranked fighters to earn a position
+########################################
+murim_migration.0004 = {
+	type = character_event
+	title = murim_migration.0004.t
+	desc = murim_migration.0004.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:ranked_fighter
+		animation = personality_bold
+	}
+
+	trigger = {
+		has_character_flag = murim_arrived_in_heartland
+		murim_is_martial_artist_trigger = yes
+		prowess >= 14
+		is_alive = yes
+		NOT = { has_character_flag = murim_ranking_challenge_attempted }
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_ranking_challenge_attempted
+			years = 3
+		}
+		# Find a ranked fighter to challenge
+		random_living_character = {
+			limit = {
+				has_variable = murim_martial_artist
+				OR = {
+					has_trait = top_fifty_martial_ranker
+					has_trait = top_ten_martial_ranker
+				}
+				is_alive = yes
+			}
+			weight = {
+				base = 1
+				modifier = {
+					factor = 5
+					has_trait = top_fifty_martial_ranker
+				}
+				modifier = {
+					factor = 1
+					has_trait = top_ten_martial_ranker
+				}
+			}
+			save_scope_as = ranked_fighter
+		}
+	}
+
+	# Challenge for their ranking position
+	option = {
+		name = murim_migration.0004.a
+		duel = {
+			skill = prowess
+			target = scope:ranked_fighter
+			40 = {
+				comparator = scope:duel_value
+				desc = murim_migration.0004.victory
+				add_prestige = 500
+				add_prowess = 3
+				# Enter the rankings!
+				add_trait = top_fifty_martial_ranker
+				add_character_flag = murim_ranked_fighter
+				add_character_flag = murim_top_50
+				add_character_modifier = {
+					modifier = murim_foreign_ranker
+					years = 10
+				}
+				set_variable = {
+					name = murim_power_score
+					value = 70
+				}
+			}
+			60 = {
+				comparator = scope:duel_value
+				desc = murim_migration.0004.defeat
+				add_prestige = 100
+				add_prowess = 2
+				add_trait = wounded_1
+				add_character_modifier = {
+					modifier = murim_ranking_challenge_failed
+					years = 2
+				}
+			}
+		}
+		ai_chance = {
+			base = 80
+		}
+	}
+
+	# Not ready — need more training
+	option = {
+		name = murim_migration.0004.b
+		add_prowess = 1
+		add_prestige = 25
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# murim_migration.0005 - Foreign Master Joins a Sect
+# A foreign master applies to join one of the great sects
+# Culture clash creates interesting dynamics
+########################################
+murim_migration.0005 = {
+	type = character_event
+	title = murim_migration.0005.t
+	desc = murim_migration.0005.desc
+	theme = education
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		has_character_flag = murim_arrived_in_heartland
+		has_character_flag = murim_foreign_master
+		murim_is_martial_artist_trigger = yes
+		is_alive = yes
+		NOT = { has_character_flag = murim_sect_application }
+		NOR = {
+			has_trait = mount_hua_disciple
+			has_trait = wudang_disciple
+			has_trait = shaolin_disciple
+			has_trait = tang_clan_member
+			has_trait = beggar_sect_member
+			has_trait = heavenly_demon_disciple
+		}
+	}
+
+	immediate = {
+		add_character_flag = murim_sect_application
+	}
+
+	# Join Mount Hua Sect — righteous swordsmanship
+	option = {
+		name = murim_migration.0005.a
+		random_list = {
+			60 = {
+				# Accepted!
+				add_trait = mount_hua_disciple
+				add_prowess = 2
+				add_prestige = 150
+				add_character_modifier = {
+					modifier = murim_foreign_disciple_accepted
+					years = 5
+				}
+			}
+			40 = {
+				# Rejected — outsider
+				add_character_modifier = {
+					modifier = murim_sect_rejection
+					years = 2
+				}
+				add_stress = 15
+			}
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+
+	# Join Shaolin Temple — discipline and body cultivation
+	option = {
+		name = murim_migration.0005.b
+		random_list = {
+			70 = {
+				# Shaolin accepts all who seek the Way
+				add_trait = shaolin_disciple
+				add_prowess = 2
+				add_piety = 100
+				add_character_modifier = {
+					modifier = murim_foreign_disciple_accepted
+					years = 5
+				}
+			}
+			30 = {
+				# Failed the trial
+				add_character_modifier = {
+					modifier = murim_sect_rejection
+					years = 2
+				}
+				add_stress = 10
+			}
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+
+	# Join the Beggar Sect — open to everyone
+	option = {
+		name = murim_migration.0005.c
+		# Beggar Sect always accepts
+		add_trait = beggar_sect_member
+		add_intrigue = 2
+		add_character_modifier = {
+			modifier = murim_foreign_disciple_accepted
+			years = 5
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+
+	# Remain independent — forge your own path
+	option = {
+		name = murim_migration.0005.d
+		add_prowess = 1
+		add_prestige = 50
+		add_character_modifier = {
+			modifier = murim_independent_foreign_master
+			years = 10
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+########################################
+# murim_migration.0006 - Tournament Attracts Foreign Fighters
+# When a grand tournament is announced, foreign masters
+# are drawn to compete — creates culture-appropriate fighters
+# Triggered by tournament on_actions or court.0004
+########################################
+murim_migration.0006 = {
+	type = character_event
+	title = murim_migration.0006.t
+	desc = murim_migration.0006.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+	right_portrait = {
+		character = scope:foreign_challenger
+		animation = personality_bold
+	}
+
+	trigger = {
+		murim_is_martial_artist_trigger = yes
+		is_alive = yes
+		OR = {
+			has_character_modifier = murim_imperial_tournament_host
+			has_character_modifier = murim_grand_tournament_cooldown
+		}
+		NOT = { has_character_flag = murim_foreign_challenger_arrived }
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_foreign_challenger_arrived
+			years = 5
+		}
+		# Create a foreign challenger appropriate to the world
+		create_character = {
+			culture = root.culture
+			location = root.capital_province
+			age = { 22 40 }
+			gender_female_chance = 50
+			trait = brave
+			prowess = { 14 24 }
+			martial = { 6 12 }
+			faith = root.faith
+			dynasty = none
+		}
+		new_character = {
+			set_variable = murim_martial_artist
+			add_trait = martial_artist
+			add_character_flag = murim_foreign_master
+			add_character_flag = murim_arrived_in_heartland
+			add_character_flag = murim_tournament_foreigner
+			save_scope_as = foreign_challenger
+		}
+	}
+
+	# Welcome the foreign challenger — honorable
+	option = {
+		name = murim_migration.0006.a
+		scope:foreign_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_acceptance
+			}
+			add_character_modifier = {
+				modifier = murim_tournament_foreigner_welcome
+				years = 3
+			}
+		}
+		add_prestige = 100
+		# Duel the foreigner
+		duel = {
+			skill = prowess
+			target = scope:foreign_challenger
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_migration.0006.victory
+				add_prestige = 200
+				add_prowess = 1
+			}
+			50 = {
+				comparator = scope:duel_value
+				desc = murim_migration.0006.defeat
+				scope:foreign_challenger = {
+					add_prestige = 300
+					add_prowess = 2
+					add_character_modifier = {
+						modifier = murim_foreign_tournament_champion
+						years = 5
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	# Recruit them for your court/sect
+	option = {
+		name = murim_migration.0006.b
+		scope:foreign_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_respect_opinion
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_foreign_talent_recruited
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Send them away — outsiders not welcome
+	option = {
+		name = murim_migration.0006.c
+		scope:foreign_challenger = {
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_me
+			}
+		}
+		add_dread = 5
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+########################################
+# murim_migration.0007 - Word Spreads to Distant Lands
+# Yearly chance for non-martial-artist foreign rulers
+# to hear about the martial world and gain a foreign master
+# Ensures every region can organically connect to murim
+########################################
+murim_migration.0007 = {
+	type = character_event
+	title = murim_migration.0007.t
+	desc = murim_migration.0007.desc
+	theme = learning
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:wandering_master
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_duchy
+		NOT = { has_variable = murim_martial_artist }
+		NOT = { has_character_flag = murim_aware_of_martial_world }
+		NOT = { has_character_flag = murim_foreign_master_visit_cooldown }
+		NOR = {
+			culture = { has_cultural_pillar = heritage_chinese }
+			culture = { has_cultural_pillar = heritage_korean }
+		}
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			highest_held_title_tier >= tier_kingdom
+		}
+		modifier = {
+			factor = 1.5
+			OR = {
+				culture = { has_cultural_pillar = heritage_japanese }
+				culture = { has_cultural_pillar = heritage_mongolic }
+			}
+		}
+		modifier = {
+			factor = 0.5
+			OR = {
+				culture = { has_cultural_pillar = heritage_north_germanic }
+				culture = { has_cultural_pillar = heritage_west_african }
+			}
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_foreign_master_visit_cooldown
+			years = 15
+		}
+			location = root.capital_province
+		# Create a wandering master who arrives at court
+		create_character = {
+			location = root.capital_province
+			age = { 30 50 }
+			gender_female_chance = 50
+			trait = brave
+			trait = wanderer
+			prowess = { 12 20 }
+			learning = { 8 14 }
+			culture = root.culture
+			faith = root.faith
+			dynasty = none
+		}
+		new_character = {
+			set_variable = murim_martial_artist
+			add_trait = martial_artist
+			add_character_flag = murim_foreign_master
+			add_character_flag = murim_wandering_master
+			add_trait = wandering_martial_master
+			save_scope_as = wandering_master
+		}
+	}
+
+	# Welcome the wandering master — gain a martial advisor
+	option = {
+		name = murim_migration.0007.a
+		add_character_flag = murim_aware_of_martial_world
+		scope:wandering_master = {
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_acceptance
+			}
+			add_character_flag = murim_is_court_advisor
+		}
+		add_character_flag = murim_has_martial_advisor
+		add_character_modifier = {
+			modifier = murim_martial_advisor_at_court
+			years = 10
+		}
+		add_prestige = 100
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Learn from them — begin your own martial path
+	option = {
+		name = murim_migration.0007.b
+		add_character_flag = murim_aware_of_martial_world
+		add_trait = martial_artist
+		set_variable = murim_martial_artist
+		add_prowess = 3
+		add_character_modifier = {
+			modifier = murim_ruler_martial_awakening
+			years = 5
+		}
+		scope:wandering_master = {
+			add_opinion = {
+				target = root
+				modifier = murim_mentor_gratitude
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Interesting but not for me
+	option = {
+		name = murim_migration.0007.c
+		add_character_flag = murim_aware_of_martial_world
+		add_prestige = 25
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# murim_migration.0008 - AI Foreign Master Auto-Migration
+# AI-only: foreign masters autonomously journey east
+# Keeps the martial world population flowing toward China
+########################################
+murim_migration.0008 = {
+	type = character_event
+	title = murim_migration.0008.t
+	desc = murim_migration.0008.desc
+	theme = martial
+
+	trigger = {
+		is_ai = yes
+		has_character_flag = murim_foreign_master
+		murim_is_martial_artist_trigger = yes
+		prowess >= 12
+		is_alive = yes
+		NOT = { has_character_flag = murim_arrived_in_heartland }
+		NOT = { has_character_flag = murim_migration_attempted }
+		NOT = { has_character_flag = murim_journeying_east }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 3
+			prowess >= 18
+		}
+		modifier = {
+			factor = 2
+			has_trait = ambitious
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_migration_attempted
+			years = 5
+		}
+	}
+
+	# Journey east immediately
+	option = {
+		name = murim_migration.0008.a
+		add_character_flag = {
+			flag = murim_journeying_east
+			years = 3
+		}
+		add_character_modifier = {
+			modifier = murim_eastward_pilgrimage
+			years = 3
+		}
+		trigger_event = {
+			id = murim_migration.0002
+			days = { 180 730 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 20
+				prowess >= 18
+			}
+			modifier = {
+				add = 15
+				has_trait = ambitious
+			}
+		}
+	}
+
+	# Stay and train locally
+	option = {
+		name = murim_migration.0008.b
+		add_prowess = 1
+		ai_chance = {
+			base = 40
+		}
+	}
+}

@@ -1,0 +1,314 @@
+########################################
+# MURIM FORBIDDEN TECHNIQUE EFFECTS
+# Effects for learning forbidden arts,
+# corruption advancement, purging, ascension,
+# continental war, and tribunal actions
+########################################
+
+# === CORRUPTION EFFECTS ===
+
+murim_advance_corruption_effect = {
+	# Advances corruption to the next stage
+	if = {
+		limit = {
+			NOT = { murim_has_any_corruption_trigger = yes }
+		}
+		add_trait = murim_corruption_stage_1
+	}
+	else_if = {
+		limit = { has_trait = murim_corruption_stage_1 }
+		remove_trait = murim_corruption_stage_1
+		add_trait = murim_corruption_stage_2
+	}
+	else_if = {
+		limit = { has_trait = murim_corruption_stage_2 }
+		remove_trait = murim_corruption_stage_2
+		add_trait = murim_corruption_stage_3
+	}
+	else_if = {
+		limit = { has_trait = murim_corruption_stage_3 }
+		remove_trait = murim_corruption_stage_3
+		add_trait = murim_corruption_stage_4
+	}
+}
+
+murim_reduce_corruption_effect = {
+	# Reduces corruption by one stage
+	if = {
+		limit = { has_trait = murim_corruption_stage_4 }
+		remove_trait = murim_corruption_stage_4
+		add_trait = murim_corruption_stage_3
+	}
+	else_if = {
+		limit = { has_trait = murim_corruption_stage_3 }
+		remove_trait = murim_corruption_stage_3
+		add_trait = murim_corruption_stage_2
+	}
+	else_if = {
+		limit = { has_trait = murim_corruption_stage_2 }
+		remove_trait = murim_corruption_stage_2
+		add_trait = murim_corruption_stage_1
+	}
+	else_if = {
+		limit = { has_trait = murim_corruption_stage_1 }
+		remove_trait = murim_corruption_stage_1
+	}
+}
+
+murim_purge_all_corruption_effect = {
+	# Removes all corruption at great cost
+	if = { limit = { has_trait = murim_corruption_stage_1 } remove_trait = murim_corruption_stage_1 }
+	if = { limit = { has_trait = murim_corruption_stage_2 } remove_trait = murim_corruption_stage_2 }
+	if = { limit = { has_trait = murim_corruption_stage_3 } remove_trait = murim_corruption_stage_3 }
+	if = { limit = { has_trait = murim_corruption_stage_4 } remove_trait = murim_corruption_stage_4 }
+	add_character_modifier = { modifier = murim_purified_cultivator years = 10 }
+	add_stress = 50
+	add_health = -1
+}
+
+# === FORBIDDEN TECHNIQUE LEARNING EFFECTS ===
+
+murim_learn_soul_devouring_palm_effect = {
+	add_trait = murim_soul_devouring_palm
+	murim_advance_corruption_effect = yes
+	add_character_modifier = { modifier = murim_soul_devouring_training years = 1 }
+	change_variable = { name = murim_cultivation_xp add = 100 }
+	add_stress = 30
+}
+
+murim_learn_blood_reversal_art_effect = {
+	add_trait = murim_blood_reversal_art
+	murim_advance_corruption_effect = yes
+	add_character_modifier = { modifier = murim_blood_reversal_training years = 1 }
+	change_variable = { name = murim_cultivation_xp add = 80 }
+	add_stress = 25
+}
+
+murim_learn_void_breathing_method_effect = {
+	add_trait = murim_void_breathing_method
+	murim_advance_corruption_effect = yes
+	add_character_modifier = { modifier = murim_void_breathing_training years = 1 }
+	change_variable = { name = murim_cultivation_xp add = 90 }
+	add_stress = 35
+}
+
+murim_learn_heaven_defying_sutra_effect = {
+	add_trait = murim_heaven_defying_sutra
+	murim_advance_corruption_effect = yes
+	murim_advance_corruption_effect = yes
+	add_character_modifier = { modifier = murim_heaven_defying_training years = 2 }
+	change_variable = { name = murim_cultivation_xp add = 200 }
+	add_stress = 50
+}
+
+murim_learn_asura_body_technique_effect = {
+	add_trait = murim_asura_body_technique
+	murim_advance_corruption_effect = yes
+	change_variable = { name = murim_cultivation_xp add = 120 }
+	add_stress = 40
+}
+
+murim_learn_soul_splitting_art_effect = {
+	add_trait = murim_soul_splitting_art
+	murim_advance_corruption_effect = yes
+	change_variable = { name = murim_cultivation_xp add = 85 }
+	add_stress = 35
+}
+
+murim_learn_death_qi_cultivation_effect = {
+	add_trait = murim_death_qi_cultivation
+	murim_advance_corruption_effect = yes
+	change_variable = { name = murim_cultivation_xp add = 110 }
+	add_stress = 45
+}
+
+murim_learn_eternal_damnation_sutra_effect = {
+	add_trait = murim_eternal_damnation_sutra
+	murim_advance_corruption_effect = yes
+	murim_advance_corruption_effect = yes
+	murim_advance_corruption_effect = yes
+	change_variable = { name = murim_cultivation_xp add = 300 }
+	add_stress = 70
+	add_health = -1
+}
+
+# === ASCENSION EFFECTS ===
+
+murim_attempt_half_immortal_ascension_effect = {
+	set_character_flag = { flag = murim_ascension_cooldown years = 10 }
+	add_character_modifier = { modifier = murim_ascension_spectacle years = 1 }
+	random_list = {
+		40 = {
+			modifier = { add = prowess factor = 0.3 }
+			modifier = { add = learning factor = 0.2 }
+			# Success — become Half-Immortal
+			add_trait = murim_half_immortal
+			add_character_modifier = { modifier = murim_half_immortal_aura years = 20 }
+			change_variable = { name = murim_cultivation_rank add = 1 }
+			change_variable = { name = murim_cultivation_xp add = 500 }
+			add_prestige = 2000
+		}
+		35 = {
+			# Partial — survive but no breakthrough
+			add_stress = 40
+			add_health = -1
+			change_variable = { name = murim_cultivation_xp add = 100 }
+		}
+		25 = {
+			# Failure — crippled cultivation
+			add_trait = murim_ascension_failed
+			add_character_modifier = { modifier = murim_ascension_attempt_recovery years = 5 }
+			add_health = -2
+			add_stress = 60
+		}
+	}
+}
+
+murim_attempt_true_immortal_ascension_effect = {
+	set_character_flag = { flag = murim_ascension_cooldown years = 20 }
+	random_list = {
+		30 = {
+			modifier = { add = prowess factor = 0.2 }
+			modifier = { add = learning factor = 0.2 }
+			# Success — True Immortal
+			if = { limit = { has_trait = murim_half_immortal } remove_trait = murim_half_immortal }
+			add_trait = murim_true_immortal
+			add_character_modifier = { modifier = murim_immortal_cultivator }
+			change_variable = { name = murim_cultivation_rank add = 1 }
+			change_variable = { name = murim_cultivation_xp add = 1000 }
+			add_prestige = 5000
+		}
+		40 = {
+			# Partial
+			add_stress = 50
+			add_health = -2
+			change_variable = { name = murim_cultivation_xp add = 200 }
+		}
+		30 = {
+			# Catastrophic failure
+			add_trait = murim_ascension_failed
+			add_health = -3
+			add_stress = 80
+			add_prestige = -500
+		}
+	}
+}
+
+# === CONTINENTAL WAR EFFECTS ===
+
+murim_declare_continental_war_effect = {
+	set_global_variable = { name = murim_continental_war_active value = 1 }
+	set_global_variable = { name = murim_war_start_year value = current_date }
+	# All martial artists get war modifiers
+	every_ruler = {
+		limit = { has_variable = murim_martial_artist }
+		add_character_modifier = { modifier = murim_wartime_martial_law years = 10 }
+	}
+}
+
+murim_end_continental_war_effect = {
+	remove_global_variable = murim_continental_war_active
+	set_global_variable = { name = murim_continental_war_cooldown value = 1 }
+	# Apply war exhaustion
+	every_ruler = {
+		limit = {
+			has_variable = murim_martial_artist
+			has_character_modifier = murim_wartime_martial_law
+		}
+		remove_character_modifier = murim_wartime_martial_law
+		add_character_modifier = { modifier = murim_war_exhaustion years = 5 }
+	}
+}
+
+murim_join_orthodox_war_faction_effect = {
+	set_character_flag = { flag = murim_war_orthodox_side years = 20 }
+	add_character_modifier = { modifier = murim_war_rally years = 3 }
+	change_variable = { name = murim_war_contribution value = 0 }
+}
+
+murim_join_unorthodox_war_faction_effect = {
+	set_character_flag = { flag = murim_war_unorthodox_side years = 20 }
+	add_character_modifier = { modifier = murim_war_rally years = 3 }
+	change_variable = { name = murim_war_contribution value = 0 }
+}
+
+murim_war_contribution_reward_effect = {
+	# Rewards based on contribution level
+	if = {
+		limit = { var:murim_war_contribution >= 10 }
+		add_trait = murim_war_hero
+		add_prestige = 500
+		add_prowess = 3
+	}
+	else_if = {
+		limit = { var:murim_war_contribution >= 5 }
+		add_prestige = 250
+		add_prowess = 1
+	}
+	else = {
+		add_prestige = 50
+	}
+}
+
+# === TRIBUNAL EFFECTS ===
+
+murim_join_tribunal_effect = {
+	add_trait = murim_tribunal_judge
+	add_character_modifier = { modifier = murim_tribunal_authority years = -1 }
+	add_prestige = 1000
+}
+
+murim_exile_from_tribunal_effect = {
+	if = { limit = { has_trait = murim_tribunal_judge } remove_trait = murim_tribunal_judge }
+	add_trait = murim_tribunal_exile
+	add_character_modifier = { modifier = murim_tribunal_condemned years = 10 }
+	add_prestige = -500
+}
+
+murim_tribunal_seal_cultivation_effect = {
+	add_character_modifier = { modifier = murim_sealed_cultivation years = 10 }
+	add_prestige = -300
+	add_stress = 40
+}
+
+# === SUCCESSION EFFECTS ===
+
+murim_claim_clan_leadership_effect = {
+	set_character_flag = { flag = murim_succession_claimant years = 2 }
+	add_character_modifier = { modifier = murim_succession_claimant years = 2 }
+}
+
+murim_win_succession_effect = {
+	remove_character_flag = murim_succession_claimant
+	add_character_modifier = { modifier = murim_succession_victor years = 5 }
+	add_prestige = 500
+}
+
+murim_lose_succession_effect = {
+	remove_character_flag = murim_succession_claimant
+	add_character_modifier = { modifier = murim_succession_loser years = 3 }
+	add_stress = 30
+}
+
+# === RIVALRY EFFECTS ===
+
+murim_generate_rivalry_effect = {
+	add_trait = murim_sworn_nemesis
+	add_character_modifier = { modifier = murim_nemesis_combat_focus years = 5 }
+	add_stress = 15
+}
+
+murim_inherit_grudge_effect = {
+	add_trait = murim_legacy_grudge
+	add_character_modifier = { modifier = murim_vengeance_training years = 10 }
+	add_stress = 20
+}
+
+murim_resolve_rivalry_effect = {
+	if = { limit = { has_trait = murim_sworn_nemesis } remove_trait = murim_sworn_nemesis }
+	if = { limit = { has_trait = murim_legacy_grudge } remove_trait = murim_legacy_grudge }
+	if = { limit = { has_character_modifier = murim_nemesis_combat_focus } remove_character_modifier = murim_nemesis_combat_focus }
+	if = { limit = { has_character_modifier = murim_vengeance_training } remove_character_modifier = murim_vengeance_training }
+	add_stress = -20
+	add_prestige = 100
+}

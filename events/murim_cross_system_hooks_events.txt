@@ -1,0 +1,304 @@
+########################################
+# MURIM CROSS-SYSTEM HOOK EVENTS
+# Ensures every system connects to 2+ others:
+# tournaments->rankings, rankings->politics,
+# politics->calamity, calamity->forbidden,
+# forbidden->ascension, ascension->rivalry
+########################################
+
+namespace = murim_cross_hooks
+
+# Tournament winner affects rankings
+murim_cross_hooks.0001 = {
+	type = character_event
+	title = murim_cross_hooks.0001.t
+	desc = murim_cross_hooks.0001.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_tournament_winner
+	}
+
+	immediate = {
+		remove_character_flag = murim_tournament_winner
+	}
+
+	# Ranking rises — fame spreads
+	option = {
+		name = murim_cross_hooks.0001.a
+		change_variable = { name = murim_cultivation_rank add = 1 }
+		add_prestige = 300
+		trigger_event = { id = murim_ranking.0001 days = 30 }
+		ai_chance = { base = 100 }
+	}
+}
+
+# High ranking attracts tribunal attention
+murim_cross_hooks.0010 = {
+	type = character_event
+	title = murim_cross_hooks.0010.t
+	desc = murim_cross_hooks.0010.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 5
+		NOT = { has_trait = murim_tribunal_judge }
+		NOT = { has_character_flag = murim_tribunal_noticed }
+	}
+
+	immediate = {
+		set_character_flag = { flag = murim_tribunal_noticed years = 10 }
+	}
+
+	# Accept the Tribunal's interest
+	option = {
+		name = murim_cross_hooks.0010.a
+		add_prestige = 100
+		trigger_event = { id = murim_tribunal_system.0030 days = 60 }
+		ai_chance = { base = 55 }
+	}
+
+	# Decline — stay independent
+	option = {
+		name = murim_cross_hooks.0010.b
+		add_stress = -10
+		ai_chance = { base = 45 }
+	}
+}
+
+# Faction tension builds toward continental war
+murim_cross_hooks.0020 = {
+	type = character_event
+	title = murim_cross_hooks.0020.t
+	desc = murim_cross_hooks.0020.desc
+	theme = intrigue
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_is_clan_leader
+		NOT = { murim_continental_war_active_trigger = yes }
+	}
+
+	# Escalate tensions — war is inevitable
+	option = {
+		name = murim_cross_hooks.0020.a
+		add_dread = 10
+		add_martial = 1
+		ai_chance = { base = 35 }
+	}
+
+	# De-escalate — peace serves us better
+	option = {
+		name = murim_cross_hooks.0020.b
+		add_diplomacy = 1
+		add_piety = 50
+		ai_chance = { base = 40 }
+	}
+
+	# Prepare secretly
+	option = {
+		name = murim_cross_hooks.0020.c
+		add_intrigue = 1
+		add_martial = 1
+		ai_chance = { base = 25 }
+	}
+}
+
+# Calamity creates forbidden technique opportunity
+murim_cross_hooks.0030 = {
+	type = character_event
+	title = murim_cross_hooks.0030.t
+	desc = murim_cross_hooks.0030.desc
+	theme = skull
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_global_variable = murim_great_calamity_active
+		NOT = { has_character_flag = murim_calamity_vault_found }
+	}
+
+	immediate = {
+		set_character_flag = { flag = murim_calamity_vault_found years = 20 }
+	}
+
+	# Raid the unsealed vault
+	option = {
+		name = murim_cross_hooks.0030.a
+		trigger_event = { id = murim_forbidden_technique.0001 days = 7 }
+		add_prestige = 100
+		ai_chance = { base = 40 }
+	}
+
+	# Seal it — even in chaos, some lines hold
+	option = {
+		name = murim_cross_hooks.0030.b
+		add_piety = 150
+		add_prestige = 75
+		ai_chance = { base = 40 }
+	}
+
+	# Guard it for your clan
+	option = {
+		name = murim_cross_hooks.0030.c
+		add_intrigue = 1
+		add_prestige = 50
+		ai_chance = { base = 20 }
+	}
+}
+
+# Corruption blocks ascension — must purge first
+murim_cross_hooks.0040 = {
+	type = character_event
+	title = murim_cross_hooks.0040.t
+	desc = murim_cross_hooks.0040.desc
+	theme = faith
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 6
+		murim_has_any_corruption_trigger = yes
+		NOT = { has_character_flag = murim_corruption_ascension_warning }
+	}
+
+	immediate = {
+		set_character_flag = murim_corruption_ascension_warning
+	}
+
+	# Begin the purging process
+	option = {
+		name = murim_cross_hooks.0040.a
+		trigger_event = { id = murim_forbidden_technique.0100 days = 14 }
+		ai_chance = { base = 55 }
+	}
+
+	# Accept the corruption — find another path to power
+	option = {
+		name = murim_cross_hooks.0040.b
+		add_prowess = 2
+		add_dread = 15
+		ai_chance = { base = 30 }
+	}
+
+	# Despair — the path is closed
+	option = {
+		name = murim_cross_hooks.0040.c
+		add_stress = 30
+		ai_chance = { base = 15 }
+	}
+}
+
+# New immortal threatens existing ones — rivalry triggered
+murim_cross_hooks.0050 = {
+	type = character_event
+	title = murim_cross_hooks.0050.t
+	desc = murim_cross_hooks.0050.desc
+	theme = martial
+
+	trigger = {
+		murim_is_immortal_trigger = yes
+		any_ruler = {
+			murim_is_immortal_trigger = yes
+			NOT = { this = root }
+		}
+	}
+
+	# Challenge the other immortal
+	option = {
+		name = murim_cross_hooks.0050.a
+		trigger_event = { id = murim_ascension.0040 days = 30 }
+		ai_chance = { base = 40 }
+	}
+
+	# Propose coexistence
+	option = {
+		name = murim_cross_hooks.0050.b
+		add_diplomacy = 1
+		add_prestige = 200
+		ai_chance = { base = 40 }
+	}
+
+	# Observe from afar
+	option = {
+		name = murim_cross_hooks.0050.c
+		add_learning = 1
+		ai_chance = { base = 20 }
+	}
+}
+
+# Ranking affects imperial court invitations
+murim_cross_hooks.0060 = {
+	type = character_event
+	title = murim_cross_hooks.0060.t
+	desc = murim_cross_hooks.0060.desc
+	theme = diplomacy
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 4
+		NOT = { has_character_flag = murim_imperial_invitation }
+	}
+
+	immediate = {
+		set_character_flag = { flag = murim_imperial_invitation years = 10 }
+	}
+
+	# Accept the Emperor's invitation
+	option = {
+		name = murim_cross_hooks.0060.a
+		trigger_event = { id = murim_imperial_court.0060 days = 30 }
+		ai_chance = { base = 45 }
+	}
+
+	# Politely decline
+	option = {
+		name = murim_cross_hooks.0060.b
+		add_prestige = 50
+		ai_chance = { base = 35 }
+	}
+
+	# Use it as leverage
+	option = {
+		name = murim_cross_hooks.0060.c
+		add_intrigue = 1
+		add_gold = 50
+		ai_chance = { base = 20 }
+	}
+}
+
+# Rivalry triggers succession crisis
+murim_cross_hooks.0070 = {
+	type = character_event
+	title = murim_cross_hooks.0070.t
+	desc = murim_cross_hooks.0070.desc
+	theme = martial
+
+	trigger = {
+		has_trait = murim_sworn_nemesis
+		has_character_flag = murim_is_clan_leader
+	}
+
+	# The rivalry destabilizes your clan's unity
+	option = {
+		name = murim_cross_hooks.0070.a
+		add_stress = 20
+		trigger_event = { id = murim_succession.0130 days = 60 }
+		ai_chance = { base = 40 }
+	}
+
+	# Channel the rivalry into clan motivation
+	option = {
+		name = murim_cross_hooks.0070.b
+		add_martial = 1
+		add_prestige = 100
+		ai_chance = { base = 40 }
+	}
+
+	# Resolve the rivalry before it tears the clan apart
+	option = {
+		name = murim_cross_hooks.0070.c
+		trigger_event = { id = murim_npc_rivalry.0040 days = 14 }
+		ai_chance = { base = 20 }
+	}
+}

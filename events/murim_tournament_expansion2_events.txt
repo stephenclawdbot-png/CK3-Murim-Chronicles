@@ -14,7 +14,7 @@ murim_tourney_exp2.0001 = {
 	theme = feast
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 		has_global_variable = murim_grand_tournament_active
 	}
 	
@@ -72,7 +72,7 @@ murim_tourney_exp2.0002 = {
 	immediate = {
 		random_ruler = {
 			limit = {
-				has_trait = murim_martial_artist
+				murim_is_martial_artist_trigger = yes
 				NOT = { this = root }
 				OR = {
 					has_character_modifier = murim_tournament_champion_entry
@@ -130,7 +130,7 @@ murim_tourney_exp2.0002 = {
 		trigger_event = { id = murim_tourney_exp2.0003 days = 7 }
 		# Everyone now fears you
 		every_ruler = {
-			limit = { has_trait = murim_martial_artist }
+			limit = { murim_is_martial_artist_trigger = yes }
 			add_opinion = { target = root modifier = murim_tournament_feared opinion = -10 }
 		}
 		ai_chance = { base = 20 }
@@ -145,11 +145,13 @@ murim_tourney_exp2.0003 = {
 	theme = martial_arts
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 	}
 	
 	immediate = {
 		create_character = {
+			culture = root.culture
+			location = root.capital_province
 			age = 22
 			trait = murim_martial_artist
 			trait = murim_rank_peak
@@ -215,7 +217,7 @@ murim_tourney_exp2.0004 = {
 	theme = martial_arts
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 	}
 	
 	# Option A: Fight with everything you have
@@ -328,7 +330,7 @@ murim_tourney_exp2.0006 = {
 	theme = martial_arts
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 		age <= 25
 		age >= 14
 	}
@@ -342,7 +344,7 @@ murim_tourney_exp2.0006 = {
 		}
 		random_list = {
 			30 = {
-				add_trait = murim_young_dragon_champion
+				add_character_modifier = { modifier = murim_young_dragon_champion years = 10 }
 				add_prestige = 2000
 				add_prowess = 4
 				add_martial_skill = 2
@@ -387,7 +389,7 @@ murim_tourney_exp2.0006 = {
 		# Easy wins but dishonorable
 		random_list = {
 			50 = {
-				add_trait = murim_young_dragon_champion
+				add_character_modifier = { modifier = murim_young_dragon_champion years = 10 }
 				add_prestige = 1000
 			}
 			50 = {
@@ -408,7 +410,7 @@ murim_tourney_exp2.0007 = {
 	theme = intrigue
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 		has_global_variable = murim_grand_tournament_active
 	}
 	
@@ -454,7 +456,7 @@ murim_tourney_exp2.0008 = {
 	theme = war
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 		has_trait = murim_combat_trauma_tournament_loss
 	}
 	
@@ -533,7 +535,7 @@ murim_tourney_exp2.0009 = {
 		}
 		set_global_variable = { name = murim_grand_tournament_active value = yes }
 		every_ruler = {
-			limit = { has_trait = murim_martial_artist }
+			limit = { murim_is_martial_artist_trigger = yes }
 			trigger_event = { id = murim_tourney_exp2.0001 days = { 30 90 } }
 		}
 		ai_chance = { base = 40 }
@@ -564,7 +566,7 @@ murim_tourney_exp2.0010 = {
 	theme = martial_arts
 	
 	trigger = {
-		has_trait = murim_martial_artist
+		murim_is_martial_artist_trigger = yes
 		OR = {
 			has_trait = murim_rank_absolute
 			has_trait = murim_rank_transcendent
@@ -591,8 +593,16 @@ murim_tourney_exp2.0010 = {
 				add_prowess = 4
 			}
 			30 = {
-				# Defeated - near death
-				add_health = -5
+				# Defeated - near death (youth get lighter injuries)
+				if = {
+					limit = { age < 16 }
+					add_health = -2
+					add_trait = wounded_2
+				}
+				if = {
+					limit = { age >= 16 }
+					add_health = -5
+				}
 				add_prestige = 1000
 			}
 		}

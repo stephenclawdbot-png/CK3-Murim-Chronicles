@@ -1,0 +1,270 @@
+########################################
+# MURIM AI AUTONOMY EXPANSION EVENTS
+# AI characters independently: declare wars,
+# teach forbidden arts, defect, assassinate,
+# found sects, build alliances, seek revenge
+########################################
+
+namespace = murim_ai_autonomy
+
+# AI clan leader declares war autonomously
+murim_ai_autonomy.0001 = {
+	type = character_event
+	title = murim_ai_autonomy.0001.t
+	desc = murim_ai_autonomy.0001.desc
+	theme = martial
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		has_character_flag = murim_is_clan_leader
+		var:murim_cultivation_rank >= 4
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_variable = murim_martial_artist
+				has_character_flag = murim_is_clan_leader
+				NOT = { this = root }
+			}
+			save_scope_as = rival_leader
+		}
+	}
+
+	option = {
+		name = murim_ai_autonomy.0001.a
+		add_dread = 15
+		add_prestige = 100
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = ambitious } }
+	}
+	option = {
+		name = murim_ai_autonomy.0001.b
+		add_prestige = 50
+		ai_chance = { base = 60 }
+	}
+}
+
+# AI disciple defects to rival clan
+murim_ai_autonomy.0010 = {
+	type = character_event
+	title = murim_ai_autonomy.0010.t
+	desc = murim_ai_autonomy.0010.desc
+	theme = intrigue
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		stress >= 40
+		NOT = { has_character_flag = murim_is_clan_leader }
+	}
+
+	option = {
+		name = murim_ai_autonomy.0010.a
+		add_stress = -30
+		add_prestige = -50
+		ai_chance = { base = 40 modifier = { add = 25 has_trait = deceitful } }
+	}
+	option = {
+		name = murim_ai_autonomy.0010.b
+		add_stress = 15
+		ai_chance = { base = 60 }
+	}
+}
+
+# AI master teaches forbidden arts to disciple
+murim_ai_autonomy.0020 = {
+	type = character_event
+	title = murim_ai_autonomy.0020.t
+	desc = murim_ai_autonomy.0020.desc
+	theme = skull
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		murim_has_any_forbidden_technique_trigger = yes
+		var:murim_cultivation_rank >= 4
+	}
+
+	option = {
+		name = murim_ai_autonomy.0020.a
+		add_prestige = 100
+		add_dread = 10
+		ai_chance = { base = 40 modifier = { add = 30 has_trait = sadistic } }
+	}
+	option = {
+		name = murim_ai_autonomy.0020.b
+		add_piety = 50
+		ai_chance = { base = 60 }
+	}
+}
+
+# AI assassin hunts a target
+murim_ai_autonomy.0030 = {
+	type = character_event
+	title = murim_ai_autonomy.0030.t
+	desc = murim_ai_autonomy.0030.desc
+	theme = intrigue
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		has_trait = murim_phantom_blade_member
+		intrigue >= 14
+	}
+
+	option = {
+		name = murim_ai_autonomy.0030.a
+		add_dread = 20
+		add_gold = 100
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_ai_autonomy.0030.b
+		add_stress = -10
+		ai_chance = { base = 50 }
+	}
+}
+
+# AI attempts cultivation breakthrough
+murim_ai_autonomy.0040 = {
+	type = character_event
+	title = murim_ai_autonomy.0040.t
+	desc = murim_ai_autonomy.0040.desc
+	theme = martial
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+	}
+
+	option = {
+		name = murim_ai_autonomy.0040.a
+		random_list = {
+			50 = {
+				change_variable = { name = murim_cultivation_rank add = 1 }
+				add_prowess = 3
+				add_prestige = 200
+			}
+			30 = { add_stress = 30 add_prowess = 1 }
+			20 = { add_health = -1 add_stress = 40 }
+		}
+		ai_chance = { base = 50 }
+	}
+	option = {
+		name = murim_ai_autonomy.0040.b
+		change_variable = { name = murim_cultivation_xp add = 30 }
+		ai_chance = { base = 50 }
+	}
+}
+
+# AI forms marriage alliance
+murim_ai_autonomy.0050 = {
+	type = character_event
+	title = murim_ai_autonomy.0050.t
+	desc = murim_ai_autonomy.0050.desc
+	theme = diplomacy
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		has_character_flag = murim_is_clan_leader
+	}
+
+	option = {
+		name = murim_ai_autonomy.0050.a
+		add_diplomacy = 1
+		add_prestige = 100
+		ai_chance = { base = 55 }
+	}
+	option = {
+		name = murim_ai_autonomy.0050.b
+		add_prestige = 50
+		ai_chance = { base = 45 }
+	}
+}
+
+# AI revenge arc — disciple returns for master's killer
+murim_ai_autonomy.0060 = {
+	type = character_event
+	title = murim_ai_autonomy.0060.t
+	desc = murim_ai_autonomy.0060.desc
+	theme = martial
+
+	trigger = {
+		is_ai = yes
+		has_trait = murim_legacy_grudge
+		var:murim_cultivation_rank >= 3
+	}
+
+	option = {
+		name = murim_ai_autonomy.0060.a
+		add_prowess = 2
+		add_dread = 15
+		hidden_effect = { murim_resolve_rivalry_effect = yes }
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_ai_autonomy.0060.b
+		add_stress = 20
+		ai_chance = { base = 40 }
+	}
+}
+
+# AI founds new sect
+murim_ai_autonomy.0070 = {
+	type = character_event
+	title = murim_ai_autonomy.0070.t
+	desc = murim_ai_autonomy.0070.desc
+	theme = martial
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 5
+		NOT = { has_character_flag = murim_is_clan_leader }
+	}
+
+	option = {
+		name = murim_ai_autonomy.0070.a
+		set_character_flag = { flag = murim_is_clan_leader years = -1 }
+		set_character_flag = murim_custom_clan_founder
+		add_prestige = 500
+		ai_chance = { base = 30 modifier = { add = 30 has_trait = ambitious } }
+	}
+	option = {
+		name = murim_ai_autonomy.0070.b
+		add_prestige = 50
+		ai_chance = { base = 70 }
+	}
+}
+
+# AI enters tournament
+murim_ai_autonomy.0080 = {
+	type = character_event
+	title = murim_ai_autonomy.0080.t
+	desc = murim_ai_autonomy.0080.desc
+	theme = martial
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		prowess >= 15
+	}
+
+	option = {
+		name = murim_ai_autonomy.0080.a
+		random_list = {
+			40 = { add_prestige = 200 add_prowess = 2 }
+			40 = { add_prestige = 50 add_prowess = 1 }
+			20 = { add_stress = 15 add_health = -0.25 }
+		}
+		ai_chance = { base = 60 }
+	}
+	option = {
+		name = murim_ai_autonomy.0080.b
+		add_prestige = 25
+		ai_chance = { base = 40 }
+	}
+}

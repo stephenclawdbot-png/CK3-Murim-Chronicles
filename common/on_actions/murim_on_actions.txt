@@ -18,14 +18,16 @@
 # ==========================================
 # MONTHLY CHARACTER PULSE
 # The heartbeat of cultivator progression.
-# Fires every month for eligible characters.
+# Fires every QUARTER for eligible characters.
+# Changed from monthly -> quarterly for 66% less CPU usage.
+# XP values tripled to compensate for reduced frequency.
 # ==========================================
 
-on_monthly_character_pulse = {
+on_quarterly_character_pulse = {
 
 	# ------------------------------------------
 	# AI Passive Cultivation Training
-	# AI cultivators gain XP each month to
+	# AI cultivators gain XP each quarter to
 	# simulate off-screen training. Scales
 	# with learning stat and cultivation rank.
 	# ------------------------------------------
@@ -39,27 +41,27 @@ on_monthly_character_pulse = {
 				is_imprisoned = no
 			}
 
-			# Base monthly XP gain for AI
+			# Base quarterly XP gain for AI (tripled from monthly)
 			random_list = {
 				30 = {
 					# Minimal training - distracted
 					change_variable = {
 						name = murim_cultivation_xp
-						add = 3
+						add = 9
 					}
 				}
 				40 = {
 					# Normal training session
 					change_variable = {
 						name = murim_cultivation_xp
-						add = 8
+						add = 24
 					}
 				}
 				20 = {
 					# Intense training - good progress
 					change_variable = {
 						name = murim_cultivation_xp
-						add = 15
+						add = 45
 					}
 					modifier = {
 						factor = 1.5
@@ -74,7 +76,7 @@ on_monthly_character_pulse = {
 					# Enlightenment flash - major gain
 					change_variable = {
 						name = murim_cultivation_xp
-						add = 30
+						add = 90
 					}
 					modifier = {
 						factor = 2.0
@@ -91,14 +93,14 @@ on_monthly_character_pulse = {
 				}
 			}
 
-			# Bonus XP scaling with rank
+			# Bonus XP scaling with rank (tripled)
 			if = {
 				limit = {
 					var:murim_cultivation_rank >= 3
 				}
 				change_variable = {
 					name = murim_cultivation_xp
-					add = 5
+					add = 15
 				}
 			}
 			if = {
@@ -107,11 +109,11 @@ on_monthly_character_pulse = {
 				}
 				change_variable = {
 					name = murim_cultivation_xp
-					add = 10
+					add = 30
 				}
 			}
 
-			# Demonic cultivators gain bonus XP from conflict
+			# Demonic cultivators gain bonus XP from conflict (tripled)
 			if = {
 				limit = {
 					has_trait = demonic_cultivator
@@ -119,7 +121,7 @@ on_monthly_character_pulse = {
 				}
 				change_variable = {
 					name = murim_cultivation_xp
-					add = 12
+					add = 36
 				}
 			}
 		}
@@ -376,6 +378,60 @@ on_monthly_character_pulse = {
 			}
 		}
 	}
+
+	# ------------------------------------------
+	# Cultivation Breakthrough Check (Quarterly)
+	# Characters who accumulated enough XP
+	# attempt to break through to next rank.
+	# Fires for ALL characters (including unlanded)
+	# via on_quarterly_character_pulse.
+	# Only fires once per year via flag cooldown.
+	# ------------------------------------------
+	effect = {
+		if = {
+			limit = {
+				is_alive = yes
+				has_variable = murim_martial_artist
+				has_variable = murim_cultivation_rank
+				has_variable = murim_cultivation_xp
+				var:murim_cultivation_rank >= 1
+				var:murim_cultivation_rank <= 8
+				var:murim_cultivation_xp >= 500
+				NOT = { has_character_flag = murim_breakthrough_attempted }
+			}
+			random_list = {
+				40 = {
+					# Successful breakthrough
+					trigger_event = {
+						id = murim_cultivation.0008
+						days = { 10 60 }
+					}
+					modifier = {
+						factor = 1.5
+						learning >= 16
+					}
+				}
+				30 = {
+					# Partial progress
+					change_variable = {
+						name = murim_cultivation_xp
+						add = -100
+					}
+				}
+				30 = {
+					# Qi deviation during attempt
+					trigger_event = {
+						id = murim_cultivation.0002
+						days = { 5 30 }
+					}
+				}
+			}
+			add_character_flag = {
+				flag = murim_breakthrough_attempted
+				years = 1
+			}
+		}
+	}
 }
 
 # ==========================================
@@ -385,60 +441,8 @@ on_monthly_character_pulse = {
 
 on_yearly_pulse = {
 
-	# ------------------------------------------
-	# Cultivation Breakthrough Check
-	# Characters who accumulated enough XP
-	# attempt to break through to next rank.
-	# ------------------------------------------
-	effect = {
-		every_living_character = {
-			limit = {
-				is_alive = yes
-				has_variable = murim_cultivation_rank
-				has_variable = murim_cultivation_xp
-				var:murim_cultivation_rank >= 1
-				var:murim_cultivation_rank <= 8
-			}
-			# Check XP thresholds for breakthrough
-			if = {
-				limit = {
-					var:murim_cultivation_xp >= 500
-					NOT = { has_character_flag = murim_breakthrough_attempted }
-				}
-				random_list = {
-					40 = {
-						# Successful breakthrough
-						trigger_event = {
-							id = murim_cultivation.0008
-							days = { 10 60 }
-						}
-						modifier = {
-							factor = 1.5
-							learning >= 16
-						}
-					}
-					30 = {
-						# Partial progress
-						change_variable = {
-							name = murim_cultivation_xp
-							add = -100
-						}
-					}
-					30 = {
-						# Qi deviation during attempt
-						trigger_event = {
-							id = murim_cultivation.0002
-							days = { 5 30 }
-						}
-					}
-				}
-				add_character_flag = {
-					flag = murim_breakthrough_attempted
-					years = 1
-				}
-			}
-		}
-	}
+	# NOTE: Cultivation Breakthrough moved to on_quarterly_character_pulse
+	# so it fires for ALL characters including unlanded ones.
 
 	# ------------------------------------------
 	# Sect Politics Yearly Events
@@ -453,12 +457,14 @@ on_yearly_pulse = {
 				OR = {
 					has_trait = mount_hua_disciple
 					has_trait = wudang_disciple
+					has_trait = shaolin_disciple
 					has_trait = shaolin_monk
 					has_trait = heavenly_demon_disciple
 					has_trait = beggar_sect_member
 					has_trait = iron_fist_disciple
 					has_trait = poison_flower_disciple
 					has_trait = phantom_blade_disciple
+					has_trait = tang_clan_member
 					has_trait = tang_clan_disciple
 				}
 			}
@@ -544,42 +550,208 @@ on_yearly_pulse = {
 	# Entry Path Discovery for Non-Martial
 	# Characters near China/Goryeo may stumble
 	# upon the martial world.
+	# All 4 entry paths now triggered:
+	#   0001 = Wanderer (unlanded, prowess)
+	#   0002 = Ruler (landed, martial courtier)
+	#   0003 = Courtier (unlanded, learns from peer)
+	#   0004 = Adventurer (any, brave/curious/travelling)
+	# AI participates equally via ai_chance on options
 	# ------------------------------------------
 	effect = {
-		random_living_character = {
+		# PATH 1: Wandering discovery (unlanded characters)
+		random_ruler = {
 			limit = {
-				is_alive = yes
+				any_courtier = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_path_rejected }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_landed = no
+					age >= 14
+					age <= 45
+					prowess >= 8
+				}
+			}
+			random_courtier = {
+				limit = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_path_rejected }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_landed = no
+					age >= 14
+					age <= 45
+					prowess >= 8
+				}
+				weight = {
+					base = 1
+					modifier = { add = 5 prowess >= 12 }
+					modifier = { add = 3 martial >= 10 }
+					modifier = { add = 3 stewardship >= 10 }
+					modifier = { add = 3 intrigue >= 10 }
+					modifier = { add = 3 diplomacy >= 10 }
+					modifier = { add = 10 has_trait = brave }
+				}
+				trigger_event = {
+					id = murim_entry.0001
+					days = { 30 180 }
+				}
+			}
+		}
+
+		# PATH 2: Ruler discovery (landed rulers — brave, ambitious, prowess, or martial courtier)
+		random_ruler = {
+			limit = {
+				is_landed = yes
 				NOT = { has_trait = martial_artist }
-				NOT = { has_character_flag = murim_entry_path_rejected }
-				age >= 14
-				age <= 45
-				prowess >= 8
+				NOT = { has_character_flag = murim_entry_attempted }
+				age >= 16
 				OR = {
-					murim_is_china_region_trigger = yes
-					murim_is_goryeo_region_trigger = yes
+					any_courtier = { has_trait = martial_artist }
+					prowess >= 12
+					martial >= 12
+					stewardship >= 14
+					intrigue >= 14
+					diplomacy >= 14
+					has_trait = brave
+					has_trait = ambitious
 				}
 			}
 			weight = {
 				base = 1
-				modifier = {
-					add = 5
-					prowess >= 12
-				}
-				modifier = {
-					add = 3
-					learning >= 12
-				}
-				modifier = {
-					add = 10
-					has_trait = brave
-				}
+				modifier = { add = 3 highest_held_title_tier >= tier_kingdom }
+				modifier = { add = 5 prowess >= 10 }
+				modifier = { add = 3 martial >= 10 }
+				modifier = { add = 3 stewardship >= 12 }
+				modifier = { add = 3 intrigue >= 12 }
+				modifier = { add = 3 diplomacy >= 12 }
 			}
-			# Trigger entry path discovery
 			trigger_event = {
-				id = murim_entry.0001
+				id = murim_entry.0002
 				days = { 30 180 }
 			}
 		}
+
+		# PATH 3: Courtier learning from martial peer
+		random_ruler = {
+			limit = {
+				any_courtier = {
+					has_trait = martial_artist
+				}
+				any_courtier = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_courtier = yes
+					is_landed = no
+					age >= 14
+					age <= 45
+					OR = {
+						learning >= 10
+						prowess >= 8
+						martial >= 8
+						stewardship >= 10
+						intrigue >= 10
+						diplomacy >= 10
+						has_trait = diligent
+					}
+				}
+			}
+			random_courtier = {
+				limit = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_courtier = yes
+					is_landed = no
+					age >= 14
+					age <= 45
+					OR = {
+						learning >= 10
+						prowess >= 8
+						martial >= 8
+						stewardship >= 10
+						intrigue >= 10
+						diplomacy >= 10
+						has_trait = diligent
+					}
+				}
+				weight = {
+					base = 1
+					modifier = { add = 3 learning >= 12 }
+					modifier = { add = 3 martial >= 10 }
+					modifier = { add = 2 stewardship >= 10 }
+					modifier = { add = 2 intrigue >= 10 }
+					modifier = { add = 2 diplomacy >= 10 }
+					modifier = { add = 5 has_trait = curious }
+				}
+				trigger_event = {
+					id = murim_entry.0003
+					days = { 30 180 }
+				}
+			}
+		}
+
+		# PATH 4: Adventure discovery (any character, brave/curious/travelling)
+		random_ruler = {
+			limit = {
+				any_courtier_or_guest = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					age >= 14
+					age <= 50
+					OR = {
+						has_trait = brave
+						has_trait = curious
+						has_trait = adventurer
+					}
+				}
+			}
+			random_courtier_or_guest = {
+				limit = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					age >= 14
+					age <= 50
+					OR = {
+						has_trait = brave
+						has_trait = curious
+						has_trait = adventurer
+					}
+				}
+				weight = {
+					base = 1
+					modifier = { add = 5 has_trait = adventurer }
+					modifier = { add = 3 prowess >= 10 }
+				}
+				trigger_event = {
+					id = murim_entry.0004
+					days = { 30 180 }
+				}
+			}
+		}
+	}
+}
+
+# ==========================================
+# YEARLY: YOUNG DRAGONS TOURNAMENT (Ages 8-15)
+# Youth sparring tournament - yearly for parents with martial children
+# ==========================================
+
+on_yearly_pulse = {
+	random_events = {
+		chance_to_happen = 25
+		trigger = {
+			is_alive = yes
+			is_landed = yes
+			has_variable = murim_martial_artist
+			any_child = {
+				is_alive = yes
+				age >= 8
+				age < 16
+				OR = {
+					has_trait = martial_artist
+					has_variable = murim_martial_artist
+				}
+			}
+		}
+		100 = murim_youth.0001
 	}
 }
 
@@ -597,9 +769,10 @@ on_five_year_pulse = {
 	# All 9 clans send their best youth.
 	# ------------------------------------------
 	effect = {
-		every_living_character = {
+		every_ruler = {
 			limit = {
 				is_alive = yes
+				has_variable = murim_martial_artist
 				murim_is_martial_artist_trigger = yes
 				age >= 14
 				age <= 30
@@ -617,12 +790,14 @@ on_five_year_pulse = {
 					OR = {
 						has_trait = mount_hua_disciple
 						has_trait = wudang_disciple
+						has_trait = shaolin_disciple
 						has_trait = shaolin_monk
 						has_trait = heavenly_demon_disciple
 						has_trait = beggar_sect_member
 						has_trait = iron_fist_disciple
 						has_trait = poison_flower_disciple
 						has_trait = phantom_blade_disciple
+						has_trait = tang_clan_member
 						has_trait = tang_clan_disciple
 					}
 				}
@@ -661,12 +836,13 @@ on_five_year_pulse = {
 # Grand Tournament for ALL ranked martial artists.
 # ==========================================
 
-on_ten_year_pulse = {
+on_five_year_pulse = {
 
 	effect = {
-		every_living_character = {
+		every_ruler = {
 			limit = {
 				is_alive = yes
+				has_variable = murim_martial_artist
 				murim_is_martial_artist_trigger = yes
 				prowess >= 12
 				NOT = { has_character_modifier = murim_grand_tournament_cooldown }

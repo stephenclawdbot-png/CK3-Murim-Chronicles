@@ -28,7 +28,7 @@ on_yearly_pulse = {
 				# Phase 1: Omens and warnings
 				trigger_event = { id = murim_great_calamity.0001 days = { 1 30 } }
 				every_ruler = {
-					limit = { has_trait = murim_martial_artist }
+					limit = { murim_is_martial_artist_trigger = yes }
 					trigger_event = { id = murim_great_calamity.0002 days = { 5 60 } }
 				}
 			}
@@ -64,7 +64,7 @@ on_yearly_pulse = {
 			# Phase 3: Mass death - 70-90% kill rate
 			every_ruler = {
 				limit = {
-					has_trait = murim_martial_artist
+					murim_is_martial_artist_trigger = yes
 					is_ai = yes
 				}
 				random = {
@@ -128,7 +128,7 @@ on_death = {
 		if = {
 			limit = {
 				has_global_variable = murim_calamity_active
-				has_trait = murim_martial_artist
+				murim_is_martial_artist_trigger = yes
 			}
 			# Record death in calamity ledger
 			add_to_global_variable = { name = murim_calamity_death_count value = 1 }
@@ -136,11 +136,13 @@ on_death = {
 			if = {
 				limit = { has_trait = murim_clan_leader }
 				random_vassal = {
-					limit = { has_trait = murim_martial_artist }
+					limit = { murim_is_martial_artist_trigger = yes }
 					trigger_event = { id = murim_calamity_ai.0009 days = { 1 30 } }
 				}
 			}
 			# Ranker death causes shockwaves
+			# PERFORMANCE: Only notify clan leaders + players, not every martial artist
+			# During calamity phase 3, many rankers die — notifying all causes cascades
 			if = {
 				limit = {
 					OR = {
@@ -149,9 +151,14 @@ on_death = {
 						has_trait = murim_rank_peak
 					}
 				}
+				every_player = {
+					limit = { NOT = { this = root } }
+					trigger_event = { id = murim_calamity_ai.0010 days = { 1 14 } }
+				}
 				every_ruler = {
 					limit = {
-						has_trait = murim_martial_artist
+						has_trait = murim_clan_leader
+						is_ai = yes
 						NOT = { this = root }
 					}
 					trigger_event = { id = murim_calamity_ai.0010 days = { 1 14 } }
@@ -186,8 +193,9 @@ on_war_started = {
 	}
 }
 
-# === MONTHLY PULSE DURING CALAMITY - CIVILIAN DEATHS ===
-on_monthly_pulse = {
+# === QUARTERLY PULSE DURING CALAMITY - CIVILIAN DEATHS ===
+# Changed from monthly to quarterly for performance
+on_quarterly_pulse = {
 	effect = {
 		if = {
 			limit = {
@@ -228,7 +236,7 @@ on_alliance_broken = {
 			# Witnesses lose trust
 			every_ruler = {
 				limit = {
-					has_trait = murim_martial_artist
+					murim_is_martial_artist_trigger = yes
 					has_relation_friend = scope:first
 				}
 				add_opinion = {
@@ -242,7 +250,7 @@ on_alliance_broken = {
 }
 
 # === POST-CALAMITY REBUILDING TRIGGERS ===
-on_title_gain = {
+on_title_gained = {
 	effect = {
 		if = {
 			limit = {
@@ -304,7 +312,7 @@ on_five_year_pulse = {
 			}
 			every_ruler = {
 				limit = {
-					has_trait = murim_martial_artist
+					murim_is_martial_artist_trigger = yes
 					NOT = { has_trait = murim_calamity_survivor }
 				}
 				random = {
@@ -317,7 +325,7 @@ on_five_year_pulse = {
 }
 
 # === CALAMITY INTENSITY ESCALATION ===
-on_bi_yearly_pulse = {
+on_yearly_pulse = {
 	effect = {
 		if = {
 			limit = {
@@ -340,7 +348,7 @@ on_bi_yearly_pulse = {
 				random = {
 					chance = 30
 					random_ally = {
-						limit = { has_trait = murim_martial_artist }
+						limit = { murim_is_martial_artist_trigger = yes }
 						reverse_add_opinion = {
 							target = prev
 							modifier = murim_calamity_betrayer_opinion
@@ -359,7 +367,7 @@ on_bi_yearly_pulse = {
 			}
 			every_ruler = {
 				limit = {
-					has_trait = murim_martial_artist
+					murim_is_martial_artist_trigger = yes
 					is_ai = yes
 					NOT = { has_trait = murim_rank_absolute }
 					NOT = { has_trait = murim_rank_transcendent }
@@ -384,7 +392,7 @@ on_birthday = {
 				birth_year >= global_var:murim_calamity_year
 				NOT = { has_trait = murim_calamity_born_after }
 				age >= 5
-				has_trait = murim_martial_artist
+				murim_is_martial_artist_trigger = yes
 			}
 			random = {
 				chance = 50

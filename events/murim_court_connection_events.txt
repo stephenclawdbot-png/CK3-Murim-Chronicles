@@ -1,0 +1,821 @@
+# Murim Chronicles - Martial Court Connection Events
+# Links martial world leaders to vanilla rulers without overriding vanilla mechanics
+# The martial world operates BEHIND vanilla — shadow advisors, not replacements
+# Lightweight: ~8 events, fun interactions, AI-friendly
+
+namespace = murim_court
+
+########################################
+# murim_court.0001 - A Martial Advisor Arrives at Court
+# Triggered: yearly pulse for rulers with martial courtiers
+# A skilled martial artist offers service as an informal advisor
+########################################
+murim_court.0001 = {
+	type = character_event
+	title = murim_court.0001.t
+	desc = murim_court.0001.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:martial_advisor
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		NOT = { has_character_flag = murim_has_martial_advisor }
+		NOT = { has_character_flag = murim_court_advisor_cooldown }
+		any_courtier = {
+			has_variable = murim_martial_artist
+			prowess >= 12
+			is_ai = yes
+			NOT = { has_character_flag = murim_is_court_advisor }
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			any_courtier = {
+				has_variable = murim_martial_artist
+				prowess >= 18
+			}
+		}
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_variable = murim_martial_artist
+				prowess >= 12
+				is_ai = yes
+				NOT = { has_character_flag = murim_is_court_advisor }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					factor = 3
+					prowess >= 18
+				}
+				modifier = {
+					factor = 2
+					has_character_flag = murim_sect_leader
+				}
+			}
+			save_scope_as = martial_advisor
+		}
+	}
+
+	# Accept as martial advisor
+	option = {
+		name = murim_court.0001.a
+		add_character_flag = murim_has_martial_advisor
+		scope:martial_advisor = {
+			add_character_flag = murim_is_court_advisor
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_acceptance
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_martial_advisor_at_court
+			years = 10
+		}
+		stress_impact = {
+			base = -10
+		}
+		ai_chance = {
+			base = 70
+		}
+	}
+
+	# Politely decline
+	option = {
+		name = murim_court.0001.b
+		add_character_flag = {
+			flag = murim_court_advisor_cooldown
+			years = 3
+		}
+		scope:martial_advisor = {
+			add_opinion = {
+				target = root
+				modifier = murim_passed_over
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+}
+
+########################################
+# murim_court.0002 - The Martial Advisor's Counsel
+# Triggered: quarterly for rulers with martial advisors
+# The advisor offers insights from the martial world
+########################################
+murim_court.0002 = {
+	type = character_event
+	title = murim_court.0002.t
+	desc = murim_court.0002.desc
+	theme = intrigue
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+	right_portrait = {
+		character = scope:advisor
+		animation = thinking
+	}
+
+	trigger = {
+		is_ruler = yes
+		has_character_flag = murim_has_martial_advisor
+		NOT = { has_character_flag = murim_advisor_counsel_cooldown }
+		any_courtier = {
+			has_character_flag = murim_is_court_advisor
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		random_courtier = {
+			limit = {
+				has_character_flag = murim_is_court_advisor
+			}
+			save_scope_as = advisor
+		}
+		add_character_flag = {
+			flag = murim_advisor_counsel_cooldown
+			years = 1
+		}
+	}
+
+	# Ask about threats — martial intelligence
+	option = {
+		name = murim_court.0002.a
+		add_character_modifier = {
+			modifier = murim_martial_intelligence_briefing
+			years = 2
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Ask about training your guard — prowess benefit
+	option = {
+		name = murim_court.0002.b
+		add_character_modifier = {
+			modifier = murim_guard_martial_training
+			years = 2
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Ask about court intrigue from the jianghu perspective
+	option = {
+		name = murim_court.0002.c
+		add_character_modifier = {
+			modifier = murim_jianghu_court_whispers
+			years = 2
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+########################################
+# murim_court.0003 - Sect Leader Seeks Audience with the Ruler
+# A sect leader or high-ranking martial artist requests a meeting
+# They want influence, protection, or to offer service
+########################################
+murim_court.0003 = {
+	type = character_event
+	title = murim_court.0003.t
+	desc = murim_court.0003.desc
+	theme = diplomacy
+
+	left_portrait = {
+		character = root
+		animation = personality_honorable
+	}
+	right_portrait = {
+		character = scope:sect_leader
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		NOT = { has_character_flag = murim_sect_audience_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			highest_held_title_tier >= tier_empire
+		}
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_variable = murim_martial_artist
+				has_character_flag = murim_sect_leader
+				NOT = { this = root }
+				is_ai = yes
+			}
+			weight = {
+				base = 1
+				modifier = {
+					factor = 3
+					prowess >= 20
+				}
+			}
+			save_scope_as = sect_leader
+		}
+		add_character_flag = {
+			flag = murim_sect_audience_cooldown
+			years = 3
+		}
+	}
+
+	# Grant them a place at court — gain a powerful ally
+	option = {
+		name = murim_court.0003.a
+		scope:sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_acceptance
+			}
+			add_character_flag = {
+				flag = murim_aligned_with_ruler
+				years = 10
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_sect_backing_at_court
+			years = 5
+		}
+		add_prestige = 200
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Use them as a shadow enforcer — intrigue benefit
+	option = {
+		name = murim_court.0003.b
+		scope:sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_mutual_blackmail
+			}
+			add_character_flag = {
+				flag = murim_ruler_shadow_enforcer
+				years = 10
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_shadow_enforcer_at_court
+			years = 5
+		}
+		add_dread = 15
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Decline — you don't trust the martial world
+	option = {
+		name = murim_court.0003.c
+		scope:sect_leader = {
+			add_opinion = {
+				target = root
+				modifier = murim_rejected_me
+			}
+		}
+		add_prestige = 50
+		stress_impact = {
+			base = 5
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# murim_court.0004 - The Emperor's Martial Tournament
+# A ruler hosts a tournament to attract martial world talent
+# Draws in powerful fighters, builds prestige
+########################################
+murim_court.0004 = {
+	type = character_event
+	title = murim_court.0004.t
+	desc = murim_court.0004.desc
+	theme = martial
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_kingdom
+		NOT = { has_character_flag = murim_hosted_court_tournament }
+		gold >= 150
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			highest_held_title_tier >= tier_empire
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_hosted_court_tournament
+			years = 10
+		}
+	}
+
+	# Grand tournament — expensive but massive prestige
+	option = {
+		name = murim_court.0004.a
+		remove_short_term_gold = 150
+		add_prestige = 500
+		add_character_modifier = {
+			modifier = murim_imperial_tournament_host
+			years = 5
+		}
+		# Attract a martial courtier
+		create_character = {
+			location = root.capital_province
+			age = { 25 35 }
+			gender_female_chance = 50
+			trait = brave
+			prowess = { 14 22 }
+			martial = { 8 14 }
+			diplomacy = { 4 8 }
+			faith = root.faith
+			culture = root.culture
+			dynasty = none
+		}
+		new_character = {
+			add_trait = martial_artist
+			set_variable = murim_martial_artist
+			add_character_flag = murim_tournament_recruit
+			add_character_modifier = {
+				modifier = murim_imperial_tournament_champion
+				years = 10
+			}
+			add_opinion = {
+				target = root
+				modifier = murim_grateful_acceptance
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Modest exhibition — cheaper, still draws interest
+	option = {
+		name = murim_court.0004.b
+		remove_short_term_gold = 50
+		add_prestige = 200
+		add_character_modifier = {
+			modifier = murim_court_exhibition_host
+			years = 3
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Not worth the trouble
+	option = {
+		name = murim_court.0004.c
+		add_prestige = -25
+		ai_chance = {
+			base = 15
+		}
+	}
+}
+
+########################################
+# murim_court.0005 - Martial World Crisis Reaches the Throne
+# A major martial world event spills into the ruler's domain
+# Sect war, calamity aftermath, or demonic incursion affects the realm
+########################################
+murim_court.0005 = {
+	type = character_event
+	title = murim_court.0005.t
+	desc = murim_court.0005.desc
+	theme = war
+
+	left_portrait = {
+		character = root
+		animation = worry
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_duchy
+		NOT = { has_character_flag = murim_court_crisis_cooldown }
+	}
+
+	weight_multiplier = {
+		base = 1
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_court_crisis_cooldown
+			years = 5
+		}
+	}
+
+	# Send your army to restore order — martial + prestige
+	option = {
+		name = murim_court.0005.a
+		add_prestige = 150
+		add_character_modifier = {
+			modifier = murim_realm_protector
+			years = 3
+		}
+		remove_short_term_gold = 75
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Negotiate with martial leaders — diplomacy approach
+	option = {
+		name = murim_court.0005.b
+		add_character_modifier = {
+			modifier = murim_diplomatic_bridge
+			years = 3
+		}
+		add_prestige = 50
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Close the borders — let them fight it out
+	option = {
+		name = murim_court.0005.c
+		add_character_modifier = {
+			modifier = murim_isolationist_ruler
+			years = 3
+		}
+		add_dread = 10
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+########################################
+# murim_court.0006 - The Shadow Behind the Throne
+# AI event: A martial leader quietly gains influence over a ruler
+# The player may discover this — or be the target
+########################################
+murim_court.0006 = {
+	type = character_event
+	title = murim_court.0006.t
+	desc = murim_court.0006.desc
+	theme = intrigue
+
+	left_portrait = {
+		character = root
+		animation = scheme
+	}
+	right_portrait = {
+		character = scope:shadow_master
+		animation = personality_cynical
+	}
+
+	trigger = {
+		is_ruler = yes
+		highest_held_title_tier >= tier_duchy
+		NOT = { has_character_flag = murim_shadow_throne_active }
+		NOT = { has_character_flag = murim_shadow_throne_cooldown }
+		NOT = { has_variable = murim_martial_artist }
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 0.5
+			has_trait = paranoid
+		}
+		modifier = {
+			factor = 2
+			has_trait = trusting
+		}
+	}
+
+	immediate = {
+		random_ruler = {
+			limit = {
+				has_variable = murim_martial_artist
+				prowess >= 15
+				intrigue >= 10
+				is_ai = yes
+				NOT = { this = root }
+			}
+			weight = {
+				base = 1
+				modifier = {
+					factor = 3
+					has_character_flag = murim_sect_leader
+				}
+				modifier = {
+					factor = 2
+					intrigue >= 15
+				}
+			}
+			save_scope_as = shadow_master
+		}
+		add_character_flag = {
+			flag = murim_shadow_throne_cooldown
+			years = 8
+		}
+	}
+
+	# You discover the influence — confront them
+	option = {
+		name = murim_court.0006.a
+		scope:shadow_master = {
+			add_opinion = {
+				target = root
+				modifier = murim_exposed_my_corruption
+			}
+		}
+		add_prestige = 100
+		add_character_modifier = {
+			modifier = murim_exposed_shadow_influence
+			years = 3
+		}
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Use it to your advantage — play along
+	option = {
+		name = murim_court.0006.b
+		add_character_flag = {
+			flag = murim_shadow_throne_active
+			years = 5
+		}
+		scope:shadow_master = {
+			add_opinion = {
+				target = root
+				modifier = murim_mutual_blackmail
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_shadow_alliance_benefit
+			years = 5
+		}
+		add_intrigue = 2
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# Purge their influence entirely
+	option = {
+		name = murim_court.0006.c
+		scope:shadow_master = {
+			add_opinion = {
+				target = root
+				modifier = murim_purge_resentment
+			}
+		}
+		add_dread = 20
+		add_tyranny = 5
+		add_character_modifier = {
+			modifier = murim_purged_martial_influence
+			years = 5
+		}
+		ai_chance = {
+			base = 25
+		}
+	}
+}
+
+########################################
+# murim_court.0007 - AI: Martial Leader Approaches a Ruler
+# AI-only event: martial leaders autonomously seek court connections
+# Creates the shadow influence pipeline for AI
+########################################
+murim_court.0007 = {
+	type = character_event
+	title = murim_court.0007.t
+	desc = murim_court.0007.desc
+	theme = diplomacy
+
+	left_portrait = {
+		character = root
+		animation = personality_bold
+	}
+
+	trigger = {
+		is_ai = yes
+		has_variable = murim_martial_artist
+		prowess >= 14
+		NOT = { has_character_flag = murim_seeking_court_influence }
+		NOT = { has_character_flag = murim_court_influence_cooldown }
+		OR = {
+			has_character_flag = murim_sect_leader
+			has_character_flag = murim_sect_elder
+			prowess >= 20
+		}
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			has_character_flag = murim_sect_leader
+		}
+		modifier = {
+			factor = 1.5
+			intrigue >= 12
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_court_influence_cooldown
+			years = 5
+		}
+	}
+
+	# Offer service openly
+	option = {
+		name = murim_court.0007.a
+		add_character_flag = {
+			flag = murim_seeking_court_influence
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_court_influence_seeker
+			years = 5
+		}
+		if = {
+			limit = { is_ruler = yes }
+			liege = {
+				add_opinion = {
+					target = root
+					modifier = murim_respect_opinion
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+
+	# Manipulate from the shadows
+	option = {
+		name = murim_court.0007.b
+		add_character_flag = {
+			flag = murim_shadow_court_manipulator
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_shadow_court_member
+			years = 5
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+
+	# Focus on martial world instead
+	option = {
+		name = murim_court.0007.c
+		add_character_modifier = {
+			modifier = murim_pure_martial_focus
+			years = 3
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+########################################
+# murim_court.0008 - The Ruler Learns of Martial World Power
+# Intro event for non-martial rulers — first contact with the jianghu
+# Educational, sets up future interactions
+########################################
+murim_court.0008 = {
+	type = character_event
+	title = murim_court.0008.t
+	desc = murim_court.0008.desc
+	theme = learning
+
+	left_portrait = {
+		character = root
+		animation = personality_rational
+	}
+
+	trigger = {
+		is_ruler = yes
+		NOT = { has_variable = murim_martial_artist }
+		NOT = { has_character_flag = murim_aware_of_martial_world }
+		NOT = { has_character_flag = murim_martial_world_intro_cooldown }
+		age >= 16
+	}
+
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 2
+			highest_held_title_tier >= tier_kingdom
+		}
+		modifier = {
+			factor = 3
+			highest_held_title_tier >= tier_empire
+		}
+	}
+
+	immediate = {
+		add_character_flag = {
+			flag = murim_martial_world_intro_cooldown
+			years = 20
+		}
+	}
+
+	# Fascinating — investigate further
+	option = {
+		name = murim_court.0008.a
+		add_character_flag = murim_aware_of_martial_world
+		add_character_modifier = {
+			modifier = murim_curious_about_jianghu
+			years = 5
+		}
+		add_learning = 1
+		ai_chance = {
+			base = 40
+		}
+	}
+
+	# Seek to recruit martial artists for your court
+	option = {
+		name = murim_court.0008.b
+		add_character_flag = murim_aware_of_martial_world
+		add_character_flag = {
+			flag = murim_actively_recruiting_martial
+			years = 5
+		}
+		add_character_modifier = {
+			modifier = murim_martial_recruiter_ruler
+			years = 5
+		}
+		ai_chance = {
+			base = 35
+		}
+	}
+
+	# These outlaws are a threat to the realm
+	option = {
+		name = murim_court.0008.c
+		add_character_flag = murim_aware_of_martial_world
+		add_character_flag = {
+			flag = murim_hostile_to_martial_world
+			years = 10
+		}
+		add_character_modifier = {
+			modifier = murim_martial_world_suppressor
+			years = 5
+		}
+		add_dread = 10
+		ai_chance = {
+			base = 25
+		}
+	}
+}
