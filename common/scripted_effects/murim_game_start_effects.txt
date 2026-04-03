@@ -910,9 +910,12 @@ murim_seed_martial_world_effect = {
 	
 	# ============================
 	# PHASE 6: SET INITIAL CLAN RELATIONSHIPS
+	# Uses character modifiers instead of nested every_living_character loops
+	# to avoid O(N^2) performance issues at game start
 	# ============================
-	
-	# Righteous alliance: Mount Hua, Wudang, Shaolin get mutual +20
+
+	# Tag all martial artists with faction alignment flags for opinion modifiers
+	# These flags are used by opinion modifiers defined in murim_missing_opinion_modifiers.txt
 	every_living_character = {
 		limit = {
 			OR = {
@@ -921,173 +924,31 @@ murim_seed_martial_world_effect = {
 				has_trait = shaolin_disciple
 			}
 		}
-		# +50 opinion with same clan
-		every_living_character = {
-			limit = {
-				OR = {
-					AND = {
-						prev = { has_trait = mount_hua_disciple }
-						has_trait = mount_hua_disciple
-					}
-					AND = {
-						prev = { has_trait = wudang_disciple }
-						has_trait = wudang_disciple
-					}
-					AND = {
-						prev = { has_trait = shaolin_disciple }
-						has_trait = shaolin_disciple
-					}
-				}
-				NOT = { this = prev }
-			}
-			add_opinion = {
-				target = prev
-				modifier = same_clan_opinion
-				opinion = 50
-			}
-		}
-		# +20 with other righteous sects
-		every_living_character = {
-			limit = {
-				OR = {
-					has_trait = mount_hua_disciple
-					has_trait = wudang_disciple
-					has_trait = shaolin_disciple
-				}
-				NOT = { this = prev }
-				# Not same clan (already handled above)
-				NOR = {
-					AND = {
-						prev = { has_trait = mount_hua_disciple }
-						has_trait = mount_hua_disciple
-					}
-					AND = {
-						prev = { has_trait = wudang_disciple }
-						has_trait = wudang_disciple
-					}
-					AND = {
-						prev = { has_trait = shaolin_disciple }
-						has_trait = shaolin_disciple
-					}
-				}
-			}
-			add_opinion = {
-				target = prev
-				modifier = righteous_alliance_opinion
-				opinion = 20
-			}
-		}
-		# -30 with Heavenly Demon
-		every_living_character = {
-			limit = {
-				has_trait = heavenly_demon_disciple
-			}
-			add_opinion = {
-				target = prev
-				modifier = righteous_vs_demonic_opinion
-				opinion = -30
-			}
-		}
+		add_character_flag = murim_orthodox_faction
 	}
-	
-	# Heavenly Demon: -20 with all righteous
 	every_living_character = {
 		limit = {
 			has_trait = heavenly_demon_disciple
 		}
-		every_living_character = {
-			limit = {
-				OR = {
-					has_trait = mount_hua_disciple
-					has_trait = wudang_disciple
-					has_trait = shaolin_disciple
-				}
-			}
-			add_opinion = {
-				target = prev
-				modifier = demonic_vs_righteous_opinion
-				opinion = -20
-			}
-		}
-		# +50 within demon sect
-		every_living_character = {
-			limit = {
-				has_trait = heavenly_demon_disciple
-				NOT = { this = prev }
-			}
-			add_opinion = {
-				target = prev
-				modifier = same_clan_opinion
-				opinion = 50
-			}
-		}
+		add_character_flag = murim_unorthodox_faction
 	}
-	
-	# Beggar Sect: +10 with everyone
 	every_living_character = {
 		limit = {
 			has_trait = beggar_sect_member
 		}
-		every_living_character = {
-			limit = {
-				has_trait = martial_artist
-				NOT = { this = prev }
-			}
-			add_opinion = {
-				target = prev
-				modifier = beggar_sect_goodwill_opinion
-				opinion = 10
-			}
-		}
-		# +50 within beggar sect
-		every_living_character = {
-			limit = {
-				has_trait = beggar_sect_member
-				NOT = { this = prev }
-			}
-			add_opinion = {
-				target = prev
-				modifier = same_clan_opinion
-				opinion = 40 # 10 from goodwill + 40 = 50 total
-			}
-		}
+		add_character_flag = murim_beggar_sect_faction
 	}
-	
-	# Tang Clan: +50 within clan, neutral outside
 	every_living_character = {
 		limit = {
 			has_trait = tang_clan_member
 		}
-		every_living_character = {
-			limit = {
-				has_trait = tang_clan_member
-				NOT = { this = prev }
-			}
-			add_opinion = {
-				target = prev
-				modifier = same_clan_opinion
-				opinion = 50
-			}
-		}
+		add_character_flag = murim_tang_faction
 	}
-	
-	# Ranking rivals: fighters within 2 ranks of each other get rivalry
 	every_living_character = {
 		limit = {
 			has_trait = top_ten_martial_ranker
 		}
-		every_living_character = {
-			limit = {
-				has_trait = top_ten_martial_ranker
-				NOT = { this = prev }
-			}
-			# Competitive tension among Top 10
-			add_opinion = {
-				target = prev
-				modifier = ranking_rival_opinion
-				opinion = -15
-			}
-		}
+		add_character_flag = murim_top_ranker
 	}
 }
 
