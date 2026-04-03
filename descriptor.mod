@@ -1,4 +1,4 @@
-version = "1.0.2"
+version = "1.0.3"
 name = "Murim Chronicles"
 path = "mod/murim"
 supported_version = "1.18.*"
