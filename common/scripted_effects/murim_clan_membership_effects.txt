@@ -452,3 +452,79 @@ murim_determine_faction_effect = {
 		remove_character_flag = murim_is_orthodox
 	}
 }
+
+########################################
+# RULER RANK ENFORCEMENT
+# Titled rulers who are martial artists
+# get auto-promoted to Elder (rank 4) minimum.
+# A king/emperor wouldn't be an outer disciple —
+# their political power earns respect.
+# Emperors get vice_leader (5) minimum.
+########################################
+
+murim_enforce_ruler_rank_effect = {
+	# Only applies to martial artists in a sect with a rank below the minimum
+	if = {
+		limit = {
+			has_variable = murim_martial_artist
+			has_variable = murim_clan_rank
+			is_ruler = yes
+		}
+		# Emperors: minimum vice_leader (rank 5)
+		if = {
+			limit = {
+				highest_held_title_tier >= tier_empire
+				var:murim_clan_rank < 5
+			}
+			remove_character_modifier = sect_outer_disciple
+			remove_character_modifier = sect_inner_disciple
+			remove_character_modifier = sect_elder
+			add_character_modifier = { modifier = sect_vice_leader }
+			set_variable = { name = murim_clan_rank value = 5 }
+			add_character_flag = { flag = murim_ruler_rank_elevated }
+			add_character_modifier = {
+				modifier = murim_imperial_cultivator_status
+				years = -1
+			}
+		}
+		# Kings: minimum elder (rank 4)
+		else_if = {
+			limit = {
+				highest_held_title_tier >= tier_kingdom
+				var:murim_clan_rank < 4
+			}
+			remove_character_modifier = sect_outer_disciple
+			remove_character_modifier = sect_inner_disciple
+			add_character_modifier = { modifier = sect_elder }
+			set_variable = { name = murim_clan_rank value = 4 }
+			add_character_flag = { flag = murim_ruler_rank_elevated }
+			add_character_modifier = {
+				modifier = murim_royal_cultivator_status
+				years = -1
+			}
+		}
+		# Dukes: minimum elder (rank 4)
+		else_if = {
+			limit = {
+				highest_held_title_tier >= tier_duchy
+				var:murim_clan_rank < 4
+			}
+			remove_character_modifier = sect_outer_disciple
+			remove_character_modifier = sect_inner_disciple
+			add_character_modifier = { modifier = sect_elder }
+			set_variable = { name = murim_clan_rank value = 4 }
+			add_character_flag = { flag = murim_ruler_rank_elevated }
+		}
+		# Counts: minimum inner disciple (rank 3)
+		else_if = {
+			limit = {
+				highest_held_title_tier >= tier_county
+				var:murim_clan_rank < 3
+			}
+			remove_character_modifier = sect_outer_disciple
+			add_character_modifier = { modifier = sect_inner_disciple }
+			set_variable = { name = murim_clan_rank value = 3 }
+			add_character_flag = { flag = murim_ruler_rank_elevated }
+		}
+	}
+}

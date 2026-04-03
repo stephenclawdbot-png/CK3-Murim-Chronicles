@@ -547,40 +547,151 @@ on_yearly_pulse = {
 	# Entry Path Discovery for Non-Martial
 	# Characters near China/Goryeo may stumble
 	# upon the martial world.
+	# All 4 entry paths now triggered:
+	#   0001 = Wanderer (unlanded, prowess)
+	#   0002 = Ruler (landed, martial courtier)
+	#   0003 = Courtier (unlanded, learns from peer)
+	#   0004 = Adventurer (any, brave/curious/travelling)
+	# AI participates equally via ai_chance on options
 	# ------------------------------------------
 	effect = {
-		random_living_character = {
+		# PATH 1: Wandering discovery (unlanded characters)
+		random_ruler = {
 			limit = {
-				is_alive = yes
-				NOT = { has_trait = martial_artist }
-				NOT = { has_character_flag = murim_entry_path_rejected }
-				age >= 14
-				age <= 45
-				prowess >= 8
-				OR = {
-					murim_is_china_region_trigger = yes
-					murim_is_goryeo_region_trigger = yes
+				any_courtier = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_path_rejected }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_landed = no
+					age >= 14
+					age <= 45
+					prowess >= 8
 				}
+			}
+			random_courtier = {
+				limit = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_path_rejected }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_landed = no
+					age >= 14
+					age <= 45
+					prowess >= 8
+				}
+				weight = {
+					base = 1
+					modifier = { add = 5 prowess >= 12 }
+					modifier = { add = 10 has_trait = brave }
+				}
+				trigger_event = {
+					id = murim_entry.0001
+					days = { 30 180 }
+				}
+			}
+		}
+
+		# PATH 2: Ruler discovery (landed rulers with martial courtiers)
+		random_ruler = {
+			limit = {
+				is_landed = yes
+				NOT = { has_trait = martial_artist }
+				NOT = { has_character_flag = murim_entry_attempted }
+				age >= 16
+				any_courtier = { has_trait = martial_artist }
 			}
 			weight = {
 				base = 1
-				modifier = {
-					add = 5
-					prowess >= 12
+				modifier = { add = 3 highest_held_title_tier >= tier_kingdom }
+				modifier = { add = 5 prowess >= 10 }
+			}
+			trigger_event = {
+				id = murim_entry.0002
+				days = { 30 180 }
+			}
+		}
+
+		# PATH 3: Courtier learning from martial peer
+		random_ruler = {
+			limit = {
+				any_courtier = {
+					has_trait = martial_artist
 				}
-				modifier = {
-					add = 3
-					learning >= 12
-				}
-				modifier = {
-					add = 10
-					has_trait = brave
+				any_courtier = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_courtier = yes
+					is_landed = no
+					age >= 14
+					age <= 45
+					OR = {
+						learning >= 10
+						prowess >= 8
+						has_trait = diligent
+					}
 				}
 			}
-			# Trigger entry path discovery
-			trigger_event = {
-				id = murim_entry.0001
-				days = { 30 180 }
+			random_courtier = {
+				limit = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					is_courtier = yes
+					is_landed = no
+					age >= 14
+					age <= 45
+					OR = {
+						learning >= 10
+						prowess >= 8
+						has_trait = diligent
+					}
+				}
+				weight = {
+					base = 1
+					modifier = { add = 3 learning >= 12 }
+					modifier = { add = 5 has_trait = curious }
+				}
+				trigger_event = {
+					id = murim_entry.0003
+					days = { 30 180 }
+				}
+			}
+		}
+
+		# PATH 4: Adventure discovery (any character, brave/curious/travelling)
+		random_ruler = {
+			limit = {
+				any_courtier_or_guest = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					age >= 14
+					age <= 50
+					OR = {
+						has_trait = brave
+						has_trait = curious
+						has_trait = adventurer
+					}
+				}
+			}
+			random_courtier_or_guest = {
+				limit = {
+					NOT = { has_trait = martial_artist }
+					NOT = { has_character_flag = murim_entry_attempted }
+					age >= 14
+					age <= 50
+					OR = {
+						has_trait = brave
+						has_trait = curious
+						has_trait = adventurer
+					}
+				}
+				weight = {
+					base = 1
+					modifier = { add = 5 has_trait = adventurer }
+					modifier = { add = 3 prowess >= 10 }
+				}
+				trigger_event = {
+					id = murim_entry.0004
+					days = { 30 180 }
+				}
 			}
 		}
 	}
