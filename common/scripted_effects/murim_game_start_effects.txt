@@ -18,10 +18,12 @@
 
 murim_seed_martial_world_effect = {
 	# ============================
-	# PHASE 1: SEED CORE MURIM HEARTLAND (Goryeo & China)
-	# Target: 80-100 existing characters get martial traits
+	# PHASE 1: SEED CORE MURIM SPHERE (East Asia & Neighbors)
+	# China/Korea = dense, Japan/Mongol/Tibetan/SE Asia = moderate
+	# Target: 100-130 existing characters get martial traits
 	# ============================
-	
+
+	# --- TIER A: China & Korea (highest density, 51% get something) ---
 	every_living_character = {
 		limit = {
 			OR = {
@@ -300,6 +302,170 @@ murim_seed_martial_world_effect = {
 		}
 	}
 	
+	# --- TIER B: Japan, Mongol, Tibetan, SE Asia, Jurchen/Tungusic (moderate density) ---
+	# These regions are close to the murim heartland and have their own martial traditions
+	# ~30% get something (vs 51% for China/Korea)
+	every_living_character = {
+		limit = {
+			OR = {
+				has_culture_group = japanese_group
+				has_culture_group = mongolic_group
+				has_culture_group = tibetan_group
+				has_culture_group = thai_group
+				has_culture_group = burmese_group
+				has_culture_group = southeast_asian_group
+				has_culture_group = jurchen_group
+				has_culture_group = tungusic_group
+				culture = { has_cultural_pillar = heritage_mongolic }
+				culture = { has_cultural_pillar = heritage_tibetan }
+				culture = { has_cultural_pillar = heritage_japanese }
+			}
+			age >= 14
+			age <= 65
+			is_alive = yes
+			NOR = {
+				has_trait = martial_artist
+				has_trait = incapable
+				has_trait = infirm
+			}
+		}
+		random_list = {
+			# 70% -- no martial talent
+			700 = { }
+			# 20% -- basic martial artist
+			200 = {
+				modifier = {
+					factor = 1.5
+					has_trait = brave
+				}
+				modifier = {
+					factor = 1.5
+					prowess >= 10
+				}
+				modifier = {
+					factor = 1.3
+					martial >= 10
+				}
+				modifier = {
+					factor = 1.2
+					stewardship >= 10
+				}
+				modifier = {
+					factor = 1.2
+					intrigue >= 10
+				}
+				modifier = {
+					factor = 0.5
+					age >= 50
+				}
+				add_trait = martial_artist
+				set_variable = murim_martial_artist
+				# Culture-appropriate technique
+				random_list = {
+					15 = { add_trait = basic_sword_technique }
+					15 = { add_trait = basic_fist_technique }
+					15 = { add_trait = basic_body_tempering }
+					15 = { add_trait = basic_internal_arts }
+					10 = { add_trait = basic_qigong }
+					15 = { add_trait = basic_movement_technique }
+					15 = { add_trait = basic_palm_technique }
+				}
+				add_prowess_skill = 2
+			}
+			# 8% -- intermediate
+			80 = {
+				modifier = {
+					factor = 2.0
+					prowess >= 14
+				}
+				modifier = {
+					factor = 1.5
+					has_trait = brave
+				}
+				modifier = {
+					factor = 1.3
+					martial >= 12
+				}
+				modifier = {
+					factor = 1.3
+					stewardship >= 12
+				}
+				add_trait = martial_artist
+				set_variable = murim_martial_artist
+				random_list = {
+					60 = { add_trait = qi_condensation }
+					30 = { add_trait = foundation_establishment }
+					10 = { add_trait = core_formation }
+				}
+				random_list = {
+					15 = { add_trait = intermediate_sword_technique }
+					15 = { add_trait = intermediate_fist_technique }
+					15 = { add_trait = intermediate_body_tempering }
+					15 = { add_trait = intermediate_internal_arts }
+					10 = { add_trait = intermediate_qigong }
+					10 = { add_trait = intermediate_movement_technique }
+					10 = { add_trait = intermediate_palm_technique }
+				}
+				random_list = {
+					15 = { add_trait = basic_sword_technique }
+					15 = { add_trait = basic_fist_technique }
+					15 = { add_trait = basic_internal_arts }
+					15 = { add_trait = basic_body_tempering }
+					10 = { add_trait = basic_qigong }
+					15 = { add_trait = basic_movement_technique }
+					15 = { add_trait = basic_palm_technique }
+				}
+				add_prowess_skill = 5
+			}
+			# 2% -- advanced (rare but present)
+			20 = {
+				modifier = {
+					factor = 2.5
+					prowess >= 18
+				}
+				modifier = {
+					factor = 2.0
+					has_trait = brave
+				}
+				modifier = {
+					factor = 1.5
+					martial >= 14
+				}
+				add_trait = martial_artist
+				set_variable = murim_martial_artist
+				random_list = {
+					50 = { add_trait = core_formation }
+					40 = { add_trait = nascent_soul }
+					10 = { add_trait = spirit_severing }
+				}
+				random_list = {
+					15 = { add_trait = advanced_sword_technique }
+					15 = { add_trait = advanced_fist_technique }
+					15 = { add_trait = advanced_internal_arts }
+					15 = { add_trait = advanced_body_tempering }
+					10 = { add_trait = advanced_qigong }
+				}
+				random_list = {
+					20 = { add_trait = intermediate_sword_technique }
+					20 = { add_trait = intermediate_fist_technique }
+					20 = { add_trait = intermediate_internal_arts }
+					20 = { add_trait = intermediate_body_tempering }
+					20 = { add_trait = intermediate_movement_technique }
+				}
+				add_prowess_skill = 10
+				# May join a sect or stay independent
+				random_list = {
+					15 = { add_trait = mount_hua_disciple }
+					10 = { add_trait = wudang_disciple }
+					10 = { add_trait = shaolin_disciple }
+					10 = { add_trait = beggar_sect_member }
+					5 = { add_trait = heavenly_demon_disciple }
+					50 = { } # Independent -- own tradition
+				}
+			}
+		}
+	}
+
 	# ============================
 	# PHASE 2: PRE-POPULATE 6 MAJOR CLANS
 	# Each clan gets 10-15 dedicated members
@@ -987,12 +1153,133 @@ murim_yearly_talent_discovery_effect = {
 		}
 	}
 	
+	# 1.5% chance for young characters in neighboring East Asian cultures
+	every_living_character = {
+		limit = {
+			OR = {
+				has_culture_group = japanese_group
+				has_culture_group = mongolic_group
+				has_culture_group = tibetan_group
+				has_culture_group = thai_group
+				has_culture_group = burmese_group
+				has_culture_group = southeast_asian_group
+				has_culture_group = jurchen_group
+				has_culture_group = tungusic_group
+			}
+			age >= 8
+			age <= 16
+			is_alive = yes
+			NOT = { has_trait = martial_artist }
+			NOT = { has_trait = incapable }
+		}
+		random = {
+			chance = 2
+			modifier = {
+				factor = 0.75 # ~1.5% effective
+			}
+			modifier = {
+				factor = 2.5
+				any_parent = { has_trait = martial_artist }
+			}
+			modifier = {
+				factor = 1.5
+				prowess >= 6
+			}
+			modifier = {
+				factor = 1.3
+				martial >= 6
+			}
+			modifier = {
+				factor = 1.2
+				stewardship >= 6
+			}
+			modifier = {
+				factor = 1.2
+				intrigue >= 6
+			}
+			modifier = {
+				factor = 1.2
+				diplomacy >= 6
+			}
+			add_trait = martial_artist
+			set_variable = murim_martial_artist
+			# Culture-appropriate technique
+			random_list = {
+				20 = {
+					trigger = { has_culture_group = japanese_group }
+					add_trait = basic_sword_technique
+				}
+				15 = {
+					trigger = { has_culture_group = mongolic_group }
+					add_trait = basic_body_tempering
+				}
+				15 = {
+					trigger = {
+						OR = {
+							has_culture_group = tibetan_group
+							has_culture_group = thai_group
+							has_culture_group = burmese_group
+							has_culture_group = southeast_asian_group
+						}
+					}
+					add_trait = basic_fist_technique
+				}
+				15 = {
+					trigger = {
+						OR = {
+							has_culture_group = jurchen_group
+							has_culture_group = tungusic_group
+						}
+					}
+					add_trait = basic_body_tempering
+				}
+				35 = {
+					# Fallback for any culture
+					random_list = {
+						25 = { add_trait = basic_sword_technique }
+						25 = { add_trait = basic_fist_technique }
+						25 = { add_trait = basic_internal_arts }
+						25 = { add_trait = basic_body_tempering }
+					}
+				}
+			}
+			add_prowess_skill = 1
+			# Notify parents
+			if = {
+				limit = {
+					any_parent = {
+						is_alive = yes
+						has_trait = martial_artist
+					}
+				}
+				random_parent = {
+					limit = {
+						is_alive = yes
+						has_trait = martial_artist
+					}
+					trigger_event = {
+						id = murim_mentor.0001
+						days = 30
+					}
+				}
+			}
+		}
+	}
+
 	# 0.5% chance for young characters in OTHER cultures globally
 	every_living_character = {
 		limit = {
 			NOR = {
 				has_culture_group = korean_group
 				has_culture_group = chinese_group
+				has_culture_group = japanese_group
+				has_culture_group = mongolic_group
+				has_culture_group = tibetan_group
+				has_culture_group = thai_group
+				has_culture_group = burmese_group
+				has_culture_group = southeast_asian_group
+				has_culture_group = jurchen_group
+				has_culture_group = tungusic_group
 			}
 			age >= 8
 			age <= 16
