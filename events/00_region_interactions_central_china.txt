@@ -1,0 +1,558 @@
+namespace = central_china
+
+# Region-Specific Unique Interactions - Expanded
+# Central China, Goryeo, Japan, and Wilderness all have unique mechanics
+# All events use exists=yes safety checks and variable validation
+
+
+##############################
+# CENTRAL CHINA EVENTS
+##############################
+
+# CENTRAL CHINA: Sect Leadership Challenge
+central_china.0001 = {
+	type = character_event
+	title = central_china.0001.t
+	desc = central_china.0001.desc
+	theme = martial
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		is_available = yes
+		martial >= 20
+		NOT = { has_character_flag = attempted_sect_challenge }
+		OR = {
+			has_trait = ambitious
+			has_trait = brave
+			prowess >= 25
+		}
+		# Safety: verify cultivation exists
+		OR = {
+			has_variable = cultivation_rank
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+			has_trait = murim_heavenly_tribulation
+		}
+	}
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 20
+			has_trait = murim_golden_core
+		}
+		modifier = {
+			add = 30
+			has_trait = murim_nascent_soul
+		}
+		modifier = {
+			add = 10
+			has_trait = brave
+		}
+	}
+
+	# Challenge the current leader
+	option = {
+		name = central_china.0001.a
+		add_character_flag = {
+			flag = attempted_sect_challenge
+			days = 1825
+		}
+		duel = {
+			skill = prowess
+			target = liege
+			50 = {
+				desc = central_china.0001.a.success
+				compare_modifier = {
+					value = prowess
+					multiplier = 2
+				}
+				send_interface_toast = {
+					title = central_china_sect_challenge_won
+					left_icon = root
+				}
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = sect_leader_aura
+					years = 10
+				}
+				if = {
+					limit = { has_variable = murim_duel_wins }
+					change_variable = {
+						name = murim_duel_wins
+						add = 1
+					}
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_wins } }
+					set_variable = {
+						name = murim_duel_wins
+						value = 1
+					}
+				}
+			}
+			50 = {
+				desc = central_china.0001.a.failure
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				add_prestige = -200
+				add_stress = 30
+				add_character_modifier = {
+					modifier = humiliated_challenger
+					years = 5
+				}
+				if = {
+					limit = { has_variable = murim_duel_losses }
+					change_variable = {
+						name = murim_duel_losses
+						add = 1
+					}
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_losses } }
+					set_variable = {
+						name = murim_duel_losses
+						value = 1
+					}
+				}
+			}
+		}
+	}
+
+	# Bide time and cultivate further
+	option = {
+		name = central_china.0001.b
+		add_stress = -10
+		if = {
+			limit = { NOT = { has_trait = patient } }
+			random = {
+				chance = 30
+				add_trait = patient
+			}
+		}
+		add_character_modifier = {
+			modifier = deep_cultivation_focus
+			years = 3
+		}
+	}
+}
+
+
+# CENTRAL CHINA: Mandate of Heaven Resonance
+central_china.0002 = {
+	type = character_event
+	title = central_china.0002.t
+	desc = central_china.0002.desc
+	theme = celestial
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		prestige_level >= 4
+		piety_level >= 3
+		OR = {
+			has_trait = murim_nascent_soul
+			has_trait = murim_spirit_severing
+			has_trait = murim_heavenly_tribulation
+		}
+		NOT = { has_character_flag = mandate_check_recent }
+	}
+
+	weight_multiplier = {
+		base = 10
+		modifier = {
+			add = 20
+			has_trait = murim_spirit_severing
+		}
+		modifier = {
+			add = 40
+			has_trait = murim_heavenly_tribulation
+		}
+	}
+
+	# Claim the Mandate
+	option = {
+		name = central_china.0002.a
+		add_character_flag = {
+			flag = mandate_check_recent
+			days = 3650
+		}
+		random_list = {
+			40 = {
+				desc = central_china.0002.a.blessed
+				modifier = {
+					add = 20
+					has_trait = murim_heavenly_tribulation
+				}
+				add_prestige = 1000
+				add_piety = 500
+				add_character_modifier = {
+					modifier = mandate_of_heaven_blessed
+					years = 20
+				}
+				if = {
+					limit = { has_variable = celestial_alignment }
+					change_variable = {
+						name = celestial_alignment
+						add = 25
+					}
+				}
+			}
+			35 = {
+				desc = central_china.0002.a.partial
+				add_prestige = 300
+				add_piety = 100
+				add_character_modifier = {
+					modifier = heavenly_favor_partial
+					years = 5
+				}
+			}
+			25 = {
+				desc = central_china.0002.a.rejected
+				add_prestige = -500
+				add_stress = 50
+				add_character_modifier = {
+					modifier = heavenly_rejection
+					years = 10
+				}
+				random = {
+					chance = 20
+					add_trait = lunatic
+				}
+			}
+		}
+	}
+
+	# Meditate on worthiness
+	option = {
+		name = central_china.0002.b
+		add_piety = 200
+		add_learning = 1
+		add_stress = -20
+	}
+}
+
+
+# CENTRAL CHINA: Imperial Examiner Visit
+central_china.0003 = {
+	type = character_event
+	title = central_china.0003.t
+	desc = central_china.0003.desc
+	theme = intrigue
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		learning >= 12
+		NOT = { has_character_flag = imperial_exam_recent }
+		any_courtier = {
+			count >= 3
+			OR = {
+				has_trait = murim_outer_qi
+				has_trait = murim_qi_gathering
+				has_trait = murim_foundation
+				has_trait = murim_golden_core
+			}
+		}
+	}
+
+	weight_multiplier = {
+		base = 20
+		modifier = {
+			add = 15
+			learning >= 20
+		}
+	}
+
+	# Present best disciples
+	option = {
+		name = central_china.0003.a
+		add_character_flag = {
+			flag = imperial_exam_recent
+			days = 3650
+		}
+		random_list = {
+			50 = {
+				desc = central_china.0003.a.impressed
+				add_prestige = 400
+				add_gold = 300
+				every_courtier = {
+					limit = {
+						OR = {
+							has_trait = murim_foundation
+							has_trait = murim_golden_core
+						}
+					}
+					add_opinion = {
+						target = root
+						modifier = grateful_for_recognition
+						opinion = 30
+					}
+				}
+			}
+			30 = {
+				desc = central_china.0003.a.adequate
+				add_prestige = 100
+				add_gold = 50
+			}
+			20 = {
+				desc = central_china.0003.a.disappointing
+				add_prestige = -200
+				add_stress = 20
+			}
+		}
+	}
+
+	# Decline the examination
+	option = {
+		name = central_china.0003.b
+		add_character_flag = {
+			flag = imperial_exam_recent
+			days = 1825
+		}
+		add_prestige = -50
+	}
+}
+
+
+# CENTRAL CHINA: Celestial Herb Market
+central_china.0004 = {
+	type = character_event
+	title = central_china.0004.t
+	desc = central_china.0004.desc
+	theme = stewardship
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		gold >= 100
+		NOT = { has_character_flag = herb_market_visited }
+		OR = {
+			has_variable = cultivation_rank
+			has_trait = murim_outer_qi
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+		}
+	}
+
+	weight_multiplier = {
+		base = 30
+		modifier = {
+			add = 20
+			gold >= 500
+		}
+	}
+
+	# Buy rare cultivation herbs
+	option = {
+		name = central_china.0004.a
+		add_character_flag = {
+			flag = herb_market_visited
+			days = 365
+		}
+		remove_short_term_gold = 200
+		random_list = {
+			30 = {
+				desc = central_china.0004.a.legendary
+				add_character_modifier = {
+					modifier = legendary_herb_consumed
+					years = 10
+				}
+				add_prowess = 3
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = {
+						name = cultivation_progress
+						add = 30
+					}
+				}
+			}
+			40 = {
+				desc = central_china.0004.a.good
+				add_character_modifier = {
+					modifier = medicinal_herb_boost
+					years = 5
+				}
+				add_prowess = 1
+				if = {
+					limit = { has_variable = cultivation_progress }
+					change_variable = {
+						name = cultivation_progress
+						add = 15
+					}
+				}
+			}
+			30 = {
+				desc = central_china.0004.a.fake
+				add_stress = 15
+				custom_tooltip = central_china_fake_herbs_tt
+			}
+		}
+	}
+
+	# Buy alchemy ingredients instead
+	option = {
+		name = central_china.0004.b
+		remove_short_term_gold = 100
+		add_character_modifier = {
+			modifier = alchemy_ingredients_stocked
+			years = 3
+		}
+		if = {
+			limit = { has_variable = alchemy_skill }
+			change_variable = {
+				name = alchemy_skill
+				add = 5
+			}
+		}
+		if = {
+			limit = { NOT = { has_variable = alchemy_skill } }
+			set_variable = {
+				name = alchemy_skill
+				value = 5
+			}
+		}
+	}
+
+	# Too expensive, leave
+	option = {
+		name = central_china.0004.c
+		add_stress = 5
+		if = {
+			limit = { has_trait = greedy }
+			add_stress = -10
+		}
+	}
+}
+
+
+# CENTRAL CHINA: Five Poisons Sect Ambush
+central_china.0005 = {
+	type = character_event
+	title = central_china.0005.t
+	desc = central_china.0005.desc
+	theme = skulduggery
+
+	trigger = {
+		is_ruler = yes
+		is_alive = yes
+		is_available = yes
+		OR = {
+			has_trait = murim_qi_gathering
+			has_trait = murim_foundation
+			has_trait = murim_golden_core
+			has_trait = murim_nascent_soul
+		}
+		NOT = { has_character_flag = five_poisons_encounter }
+		NOT = { has_trait = demonic_aptitude_1 }
+	}
+
+	weight_multiplier = {
+		base = 15
+		modifier = {
+			add = 10
+			any_scheme = { exists = yes }
+		}
+		modifier = {
+			add = 15
+			has_trait = murim_golden_core
+		}
+	}
+
+	# Fight through the ambush
+	option = {
+		name = central_china.0005.a
+		add_character_flag = {
+			flag = five_poisons_encounter
+			days = 1825
+		}
+		duel = {
+			skill = prowess
+			50 = {
+				desc = central_china.0005.a.victory
+				compare_modifier = {
+					value = prowess
+					multiplier = 3
+				}
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = poison_resistance_gained
+					years = 15
+				}
+				if = {
+					limit = { has_variable = murim_duel_wins }
+					change_variable = { name = murim_duel_wins add = 1 }
+				}
+				if = {
+					limit = { NOT = { has_variable = murim_duel_wins } }
+					set_variable = { name = murim_duel_wins value = 1 }
+				}
+			}
+			50 = {
+				desc = central_china.0005.a.poisoned
+				compare_modifier = {
+					value = prowess
+					multiplier = -2
+				}
+				add_character_modifier = {
+					modifier = five_poisons_affliction
+					years = 5
+				}
+				random_list = {
+					60 = { add_trait = wounded_1 }
+					30 = { add_trait = wounded_2 }
+					10 = { add_trait = incapable }
+				}
+			}
+		}
+	}
+
+	# Negotiate with the assassins
+	option = {
+		name = central_china.0005.b
+		trigger = { diplomacy >= 15 }
+		add_character_flag = {
+			flag = five_poisons_encounter
+			days = 1825
+		}
+		random_list = {
+			50 = {
+				desc = central_china.0005.b.success
+				add_intrigue = 2
+				add_character_modifier = {
+					modifier = underworld_contacts
+					years = 10
+				}
+			}
+			50 = {
+				desc = central_china.0005.b.betrayed
+				add_stress = 30
+				remove_short_term_gold = 100
+			}
+		}
+	}
+
+	# Flee
+	option = {
+		name = central_china.0005.c
+		add_character_flag = {
+			flag = five_poisons_encounter
+			days = 730
+		}
+		add_prestige = -100
+		add_stress = 20
+		if = {
+			limit = { NOT = { has_trait = craven } }
+			random = {
+				chance = 25
+				add_trait = craven
+			}
+		}
+	}
+}

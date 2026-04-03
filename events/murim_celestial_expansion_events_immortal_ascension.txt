@@ -1,0 +1,115 @@
+namespace = murim_immortal_ascension
+
+
+# ===========================
+# IMMORTAL ASCENSION
+# ===========================
+
+# Immortal Ascension Trial begins
+murim_immortal_ascension.0001 = {
+	type = character_event
+	title = murim_immortal_ascension.0001.t
+	desc = murim_immortal_ascension.0001.desc
+	theme = faith
+	left_portrait = { character = root animation = personality_zealous }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 6
+		NOT = { has_character_flag = murim_ascension_attempted }
+	}
+
+	immediate = {
+		set_character_flag = murim_ascension_attempted
+		set_character_flag = murim_ascension_trial_declared
+	}
+
+	# Begin the ascension — shed mortality
+	option = {
+		name = murim_immortal_ascension.0001.a
+		random_list = {
+			40 = {
+				modifier = { add = prowess factor = 0.3 }
+				modifier = { add = learning factor = 0.3 }
+				add_prestige = 2000
+				add_prowess = 10
+				change_variable = { name = murim_cultivation_xp add = 500 }
+				hidden_effect = {
+					add_character_modifier = { modifier = murim_immortal_cultivator }
+				}
+			}
+			35 = {
+				add_prestige = 500
+				add_prowess = 3
+				change_variable = { name = murim_cultivation_xp add = 200 }
+				add_stress = 40
+			}
+			25 = {
+				add_health = -3
+				add_stress = 60
+				add_prestige = -200
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 prowess >= 30 }
+		}
+	}
+
+	# Postpone — continue cultivating in the mortal realm
+	option = {
+		name = murim_immortal_ascension.0001.b
+		add_stress = 10
+		change_variable = { name = murim_cultivation_xp add = 50 }
+		remove_character_flag = murim_ascension_attempted
+		ai_chance = { base = 30 }
+	}
+
+	# Forge a new path — neither mortal nor immortal
+	option = {
+		name = murim_immortal_ascension.0001.c
+		add_prowess = 5
+		add_learning = 3
+		change_variable = { name = murim_cultivation_xp add = 300 }
+		add_prestige = 750
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Ascension aftermath — the world reacts
+murim_immortal_ascension.0002 = {
+	type = character_event
+	title = murim_immortal_ascension.0002.t
+	desc = murim_immortal_ascension.0002.desc
+	theme = faith
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_ascension_attempted
+	}
+
+	# Inspire the next generation
+	option = {
+		name = murim_immortal_ascension.0002.a
+		add_prestige = 300
+		add_piety = 200
+		ai_chance = { base = 50 }
+	}
+
+	# Withdraw from the mortal world
+	option = {
+		name = murim_immortal_ascension.0002.b
+		add_stress = -40
+		add_learning = 2
+		ai_chance = { base = 30 }
+	}
+
+	# Begin training a successor
+	option = {
+		name = murim_immortal_ascension.0002.c
+		add_diplomacy = 1
+		add_prestige = 150
+		ai_chance = { base = 20 }
+	}
+}

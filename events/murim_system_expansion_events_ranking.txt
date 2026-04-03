@@ -1,0 +1,181 @@
+namespace = murim_ranking
+
+########################################
+# MURIM SYSTEM EXPANSION EVENTS
+# Missing events for ranking, cultivation,
+# technique, duel, and tournament systems
+# AI characters fully participate
+########################################
+
+
+# ===========================
+# RANKING SYSTEM EVENTS
+# ===========================
+
+# Ranking announcement — a new ranker rises
+murim_ranking.0001 = {
+	type = character_event
+	title = murim_ranking.0001.t
+	desc = murim_ranking.0001.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 3
+		NOT = { has_character_flag = murim_ranking_announced }
+	}
+
+	immediate = {
+		set_character_flag = { flag = murim_ranking_announced years = 2 }
+	}
+
+	# Accept the recognition with humility
+	option = {
+		name = murim_ranking.0001.a
+		add_prestige = 200
+		add_stress = -10
+		ai_chance = {
+			base = 40
+			modifier = { add = 20 has_trait = humble }
+		}
+	}
+
+	# Use this fame to attract disciples
+	option = {
+		name = murim_ranking.0001.b
+		add_prestige = 100
+		add_diplomacy = 1
+		ai_chance = {
+			base = 35
+			modifier = { add = 20 has_trait = ambitious }
+		}
+	}
+
+	# Challenge the ranker above you
+	option = {
+		name = murim_ranking.0001.c
+		add_prowess = 2
+		add_stress = 15
+		hidden_effect = {
+			trigger_event = { id = murim_ranking.0003 days = 30 }
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 30 prowess >= 20 }
+		}
+	}
+}
+
+
+# Ranking challenge issued
+murim_ranking.0003 = {
+	type = character_event
+	title = murim_ranking.0003.t
+	desc = murim_ranking.0003.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = { has_variable = murim_martial_artist }
+
+	# Accept and prepare
+	option = {
+		name = murim_ranking.0003.a
+		add_prowess = 1
+		add_prestige = 150
+		ai_chance = { base = 60 }
+	}
+
+	# Decline — not worth the risk
+	option = {
+		name = murim_ranking.0003.b
+		add_stress = 20
+		ai_chance = { base = 40 }
+	}
+}
+
+
+# Ranking defense — someone challenges your position
+murim_ranking.0005 = {
+	type = character_event
+	title = murim_ranking.0005.t
+	desc = murim_ranking.0005.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 4
+	}
+
+	# Crush the challenger decisively
+	option = {
+		name = murim_ranking.0005.a
+		add_prowess = 2
+		add_dread = 20
+		add_prestige = 200
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 prowess >= 22 }
+		}
+	}
+
+	# Show mercy to the challenger
+	option = {
+		name = murim_ranking.0005.b
+		add_prestige = 100
+		add_piety = 50
+		ai_chance = {
+			base = 30
+			modifier = { add = 20 has_trait = compassionate }
+		}
+	}
+
+	# Refuse the challenge — you're above such games
+	option = {
+		name = murim_ranking.0005.c
+		add_prestige = -50
+		add_stress = -15
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Ranking ceremony — annual update
+murim_ranking.0010 = {
+	type = character_event
+	title = murim_ranking.0010.t
+	desc = murim_ranking.0010.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	option = {
+		name = murim_ranking.0010.a
+		add_prestige = 50
+		ai_chance = { base = 100 }
+	}
+}
+
+
+# Legendary rank achieved
+murim_ranking.0100 = {
+	type = character_event
+	title = murim_ranking.0100.t
+	desc = murim_ranking.0100.desc
+	theme = martial
+	left_portrait = { character = root animation = personality_bold }
+
+	trigger = {
+		has_variable = murim_martial_artist
+		var:murim_cultivation_rank >= 6
+	}
+
+	# Your name echoes across the martial world
+	option = {
+		name = murim_ranking.0100.a
+		add_prestige = 500
+		add_prowess = 3
+		change_variable = { name = murim_cultivation_xp add = 100 }
+		ai_chance = { base = 100 }
+	}
+}

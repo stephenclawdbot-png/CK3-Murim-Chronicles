@@ -1,0 +1,171 @@
+namespace = murim_calamity_refugee
+
+
+# ===========================
+# REFUGEE MECHANICS
+# Power vacuums and displaced cultivators
+# ===========================
+
+# Refugee cultivators arrive seeking shelter
+murim_calamity_refugee.0001 = {
+	type = character_event
+	title = murim_calamity_refugee.0001.t
+	desc = murim_calamity_refugee.0001.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_global_variable = murim_great_calamity_active
+		has_character_flag = murim_is_clan_leader
+	}
+
+	# Welcome them — strength in numbers
+	option = {
+		name = murim_calamity_refugee.0001.a
+		add_diplomacy = 1
+		add_prestige = 100
+		add_character_modifier = { modifier = murim_refugee_shelter years = 5 }
+		ai_chance = {
+			base = 45
+			modifier = { add = 25 has_trait = compassionate }
+		}
+	}
+
+	# Accept only the strongest
+	option = {
+		name = murim_calamity_refugee.0001.b
+		add_prowess = 1
+		add_martial = 1
+		add_dread = 10
+		ai_chance = { base = 35 }
+	}
+
+	# Turn them away — we can barely feed ourselves
+	option = {
+		name = murim_calamity_refugee.0001.c
+		add_stress = 15
+		add_gold = 25
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Clanless survivor — masterless wanderer
+murim_calamity_refugee.0010 = {
+	type = character_event
+	title = murim_calamity_refugee.0010.t
+	desc = murim_calamity_refugee.0010.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_calamity_survivor
+		NOT = { has_character_flag = murim_is_clan_leader }
+	}
+
+	# Seek a new clan
+	option = {
+		name = murim_calamity_refugee.0010.a
+		add_diplomacy = 1
+		add_prestige = 50
+		trigger_event = { id = murim_calamity_refugee.0020 days = 30 }
+		ai_chance = { base = 45 }
+	}
+
+	# Wander alone — the wandering cultivator's path
+	option = {
+		name = murim_calamity_refugee.0010.b
+		add_prowess = 2
+		change_variable = { name = murim_cultivation_xp add = 40 }
+		ai_chance = { base = 35 }
+	}
+
+	# Found a new clan from the ashes
+	option = {
+		name = murim_calamity_refugee.0010.c
+		trigger = { var:murim_cultivation_rank >= 4 }
+		set_character_flag = murim_custom_clan_founder
+		add_prestige = 300
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Finding a new home
+murim_calamity_refugee.0020 = {
+	type = character_event
+	title = murim_calamity_refugee.0020.t
+	desc = murim_calamity_refugee.0020.desc
+	theme = martial
+
+	trigger = { has_variable = murim_martial_artist }
+
+	# Join the strongest surviving sect
+	option = {
+		name = murim_calamity_refugee.0020.a
+		add_prestige = 100
+		add_martial = 1
+		ai_chance = { base = 50 }
+	}
+
+	# Join an unorthodox sect — they accept anyone
+	option = {
+		name = murim_calamity_refugee.0020.b
+		add_intrigue = 1
+		add_prowess = 1
+		ai_chance = { base = 30 }
+	}
+
+	# Offer your services to the Imperial Court
+	option = {
+		name = murim_calamity_refugee.0020.c
+		add_gold = 75
+		add_diplomacy = 1
+		trigger_event = { id = murim_imperial_court.0001 days = 14 }
+		ai_chance = { base = 20 }
+	}
+}
+
+
+# Power vacuum — territory is unclaimed
+murim_calamity_refugee.0030 = {
+	type = character_event
+	title = murim_calamity_refugee.0030.t
+	desc = murim_calamity_refugee.0030.desc
+	theme = martial
+
+	trigger = {
+		has_variable = murim_martial_artist
+		has_character_flag = murim_is_clan_leader
+		OR = {
+			has_character_flag = murim_calamity_survivor
+			has_global_variable = murim_great_calamity_active
+		}
+	}
+
+	# Seize the abandoned territory
+	option = {
+		name = murim_calamity_refugee.0030.a
+		add_prestige = 200
+		add_stewardship = 1
+		add_gold = 100
+		ai_chance = { base = 45 }
+	}
+
+	# Let it remain neutral ground
+	option = {
+		name = murim_calamity_refugee.0030.b
+		add_piety = 100
+		add_diplomacy = 1
+		ai_chance = { base = 35 }
+	}
+
+	# Fortify it as a refugee camp
+	option = {
+		name = murim_calamity_refugee.0030.c
+		add_prestige = 100
+		add_piety = 75
+		add_character_modifier = { modifier = murim_refugee_shelter years = 5 }
+		ai_chance = { base = 20 }
+	}
+}

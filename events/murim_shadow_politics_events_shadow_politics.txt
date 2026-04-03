@@ -1,0 +1,1405 @@
+namespace = murim_shadow_politics
+
+# Murim Chronicles - Heavenly Demon Shadow Politics Events
+# THE HEAVENLY DEMON INFILTRATES GOVERNMENTS. Rulers with aggressive/deceitful/ambitious
+# traits face yearly 15% chance of HD approach. Emperor becomes puppet.
+# INTEGRATION: murim_clan_triggers.txt (is_heavenly_demon_leader, faction triggers)
+# INTEGRATION: murim_faction_war_events.txt (infiltration revealed during wars)
+# INTEGRATION: murim_opinion_modifiers.txt (martial opinion from shadow politics)
+# INTEGRATION: murim_china_center_triggers.txt (China/Korea governments targeted)
+# VANILLA SEPARATION: Shadow politics uses INTRIGUE layer, not vanilla politics.
+#   Puppet modifier is HIDDEN. Does not change government type or succession.
+#   Effects are martial-world scope: persecute orthodox, protect unorthodox, rig tournaments.
+
+
+# =================================================================
+# EVENT 1: HEAVENLY DEMON APPROACHES RULER (Initial Contact)
+# Fires yearly for aggressive/deceitful/ambitious rulers in China/Korea
+# =================================================================
+murim_shadow_politics.0001 = {
+	type = character_event
+	title = murim_shadow_politics.0001.t
+	desc = murim_shadow_politics.0001.desc
+	theme = intrigue
+	
+	trigger = {
+		is_ruler = yes
+		is_adult = yes
+		NOT = { has_character_flag = flag_heavenly_demon_puppet_emperor }
+		NOT = { has_character_flag = flag_rejected_heavenly_demon }
+		NOT = { has_character_flag = flag_orthodox_faction_member }
+		OR = {
+			murim_is_china_core_trigger = yes
+			murim_is_goryeo_trigger = yes
+		}
+		OR = {
+			has_trait = ambitious
+			has_trait = deceitful
+			has_trait = sadistic
+			has_trait = callous
+			has_trait = arbitrary
+			has_trait = vengeful
+		}
+		any_living_character = {
+			has_character_flag = flag_heavenly_demon_leader
+			is_alive = yes
+		}
+	}
+	
+	weight_multiplier = {
+		base = 1
+		modifier = {
+			factor = 1.5
+			has_trait = deceitful
+			has_trait = ambitious
+		}
+		modifier = {
+			factor = 0.5
+			has_trait = just
+		}
+		modifier = {
+			factor = 2.0
+			has_trait = sadistic
+		}
+	}
+	
+	immediate = {
+		random_living_character = {
+			limit = { has_character_flag = flag_heavenly_demon_leader }
+			save_scope_as = hd_leader
+		}
+	}
+	
+	# Option A: Accept the Heavenly Demon's offer (become puppet)
+	option = {
+		name = murim_shadow_politics.0001.a
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				has_trait = ambitious
+			}
+			modifier = {
+				add = 15
+				has_trait = deceitful
+			}
+			modifier = {
+				add = -30
+				has_trait = just
+			}
+		}
+		set_character_flag = {
+			flag = flag_heavenly_demon_puppet_emperor
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_shadow_emperor_power
+			years = -1
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_shadow_puppet_active
+				value = yes
+			}
+			scope:hd_leader = {
+				set_character_flag = {
+					flag = flag_has_puppet_ruler
+					years = -1
+				}
+			}
+			trigger_event = { id = murim_shadow_politics.0002 days = 30 }
+		}
+		# Gain: military power, gold, feared
+		add_dread = 20
+		add_gold = 500
+	}
+	
+	# Option B: Reject with fear (back away quietly)
+	option = {
+		name = murim_shadow_politics.0001.b
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				has_trait = craven
+			}
+		}
+		set_character_flag = {
+			flag = flag_rejected_heavenly_demon
+			years = 5
+		}
+		stress_impact = {
+			base = minor_stress_impact_gain
+			craven = medium_stress_impact_gain
+		}
+	}
+	
+	# Option C: Reject and report to orthodox clans (heroic)
+	option = {
+		name = murim_shadow_politics.0001.c
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 30
+				has_trait = just
+			}
+			modifier = {
+				add = 20
+				has_trait = honest
+			}
+		}
+		set_character_flag = {
+			flag = flag_rejected_heavenly_demon
+			years = -1
+		}
+		add_prestige = 200
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0003 days = 14 }
+		}
+		# Risk: HD may retaliate
+		random = {
+			chance = 30
+			trigger_event = { id = murim_shadow_politics.0004 days = 60 }
+		}
+	}
+	
+	# Option D: Pretend to accept, secretly work against them (double agent ruler)
+	option = {
+		name = murim_shadow_politics.0001.d
+		trigger = {
+			intrigue >= 14
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 20
+				intrigue >= 18
+			}
+		}
+		set_character_flag = {
+			flag = flag_heavenly_demon_puppet_emperor
+			years = -1
+		}
+		set_character_flag = {
+			flag = flag_secretly_anti_hd
+			years = -1
+		}
+		add_character_modifier = {
+			modifier = murim_double_agent_ruler
+			years = -1
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0005 days = 90 }
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 2: PUPPET EMPEROR - FIRST ORDERS (Post-acceptance)
+# =================================================================
+murim_shadow_politics.0002 = {
+	type = character_event
+	title = murim_shadow_politics.0002.t
+	desc = murim_shadow_politics.0002.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = flag_heavenly_demon_puppet_emperor
+	}
+	
+	# Option A: Persecute orthodox martial artists (ban their practices)
+	option = {
+		name = murim_shadow_politics.0002.a
+		add_tyranny = 5
+		add_character_modifier = {
+			modifier = murim_orthodox_persecutor
+			years = 5
+		}
+		hidden_effect = {
+			every_ruler = {
+				limit = { has_character_flag = flag_orthodox_faction_member }
+				add_opinion = {
+					target = root
+					modifier = murim_hostile_refusal_opinion
+				}
+			}
+			set_global_variable = {
+				name = murim_orthodox_persecution_active
+				value = yes
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Protect unorthodox clans (give them legal immunity)
+	option = {
+		name = murim_shadow_politics.0002.b
+		add_character_modifier = {
+			modifier = murim_unorthodox_protector
+			years = 5
+		}
+		hidden_effect = {
+			every_ruler = {
+				limit = { has_character_flag = flag_unorthodox_faction_member }
+				add_opinion = {
+					target = root
+					modifier = murim_respect_opinion
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Rig the next Grand Tournament
+	option = {
+		name = murim_shadow_politics.0002.c
+		add_character_modifier = {
+			modifier = murim_tournament_rigger
+			years = 3
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_tournament_rigged_by_puppet
+				value = yes
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Use the army against orthodox clan headquarters
+	option = {
+		name = murim_shadow_politics.0002.d
+		add_tyranny = 15
+		add_dread = 30
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0006 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option E: Stall for time (do nothing yet)
+	option = {
+		name = murim_shadow_politics.0002.e
+		stress_impact = {
+			base = minor_stress_impact_gain
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0002 days = 365 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 3: RULER REPORTS HD TO ORTHODOX CLANS
+# =================================================================
+murim_shadow_politics.0003 = {
+	type = character_event
+	title = murim_shadow_politics.0003.t
+	desc = murim_shadow_politics.0003.desc
+	theme = diplomacy
+	
+	# Option A: Orthodox clans thank you, offer martial alliance
+	option = {
+		name = murim_shadow_politics.0003.a
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_ally_of_orthodox
+			years = 10
+		}
+		hidden_effect = {
+			every_ruler = {
+				limit = {
+					has_character_flag = flag_orthodox_faction_member
+					murim_is_clan_leader_trigger = yes
+				}
+				add_opinion = {
+					target = root
+					modifier = murim_deep_admiration_opinion
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Request martial bodyguards (protection from HD retaliation)
+	option = {
+		name = murim_shadow_politics.0003.b
+		add_character_modifier = {
+			modifier = murim_orthodox_bodyguards
+			years = 5
+		}
+		# +5 prowess equivalent through guards
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 4: HEAVENLY DEMON RETALIATES AGAINST RULER WHO REJECTED
+# =================================================================
+murim_shadow_politics.0004 = {
+	type = character_event
+	title = murim_shadow_politics.0004.t
+	desc = murim_shadow_politics.0004.desc
+	theme = skull
+	
+	# Option A: Assassination attempt on ruler
+	option = {
+		name = murim_shadow_politics.0004.a
+		duel = {
+			skill = prowess
+			value = 18
+			30 = {
+				# Survive
+				add_trait = wounded_2
+				add_prestige = 200
+				add_character_modifier = {
+					modifier = murim_survived_hd_assassination
+					years = 10
+				}
+			}
+			70 = {
+				# Severely wounded, nearly killed
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_hd_assassination_scarred
+					years = -1
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: They poison your court instead
+	option = {
+		name = murim_shadow_politics.0004.b
+		hidden_effect = {
+			random_courtier = {
+				limit = { is_adult = yes }
+				add_trait = ill
+			}
+			random_courtier = {
+				limit = { is_adult = yes }
+				add_trait = ill
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_court_poisoned_by_hd
+			years = 3
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: They blackmail you with fabricated evidence
+	option = {
+		name = murim_shadow_politics.0004.c
+		add_character_modifier = {
+			modifier = murim_hd_blackmail_victim
+			years = 10
+		}
+		# May still become puppet later under pressure
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0001 days = 365 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 5: DOUBLE AGENT RULER - GATHERING EVIDENCE
+# =================================================================
+murim_shadow_politics.0005 = {
+	type = character_event
+	title = murim_shadow_politics.0005.t
+	desc = murim_shadow_politics.0005.desc
+	theme = intrigue
+	
+	trigger = {
+		has_character_flag = flag_secretly_anti_hd
+		has_character_flag = flag_heavenly_demon_puppet_emperor
+	}
+	
+	# Option A: Gather evidence of HD's network
+	option = {
+		name = murim_shadow_politics.0005.a
+		random = {
+			chance = 40
+			modifier = {
+				add = 20
+				intrigue >= 18
+			}
+			add_character_modifier = {
+				modifier = murim_hd_network_mapped
+				years = 5
+			}
+			# Ready for exposure
+			hidden_effect = {
+				trigger_event = { id = murim_shadow_politics.0007 days = 60 }
+			}
+		}
+		random = {
+			chance = 20
+			# Exposed as double agent
+			trigger_event = { id = murim_shadow_politics.0008 days = 14 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Sabotage HD orders subtly
+	option = {
+		name = murim_shadow_politics.0005.b
+		add_character_modifier = {
+			modifier = murim_subtle_saboteur
+			years = 3
+		}
+		random = {
+			chance = 15
+			# Caught sabotaging
+			trigger_event = { id = murim_shadow_politics.0008 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Contact orthodox clans secretly
+	option = {
+		name = murim_shadow_politics.0005.c
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0003 days = 30 }
+		}
+		random = {
+			chance = 25
+			# HD finds out
+			trigger_event = { id = murim_shadow_politics.0008 days = 45 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Abandon double agent role (just be puppet)
+	option = {
+		name = murim_shadow_politics.0005.d
+		remove_character_flag = flag_secretly_anti_hd
+		stress_impact = {
+			just = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 6: ARMY ATTACKS ORTHODOX CLAN HQ (Puppet emperor order)
+# =================================================================
+murim_shadow_politics.0006 = {
+	type = character_event
+	title = murim_shadow_politics.0006.t
+	desc = murim_shadow_politics.0006.desc
+	theme = war
+	
+	# Option A: Target Mount Hua Sect
+	option = {
+		name = murim_shadow_politics.0006.a
+		add_tyranny = 10
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_mount_hua_under_siege
+				value = yes
+			}
+			# Orthodox unite against puppet
+			trigger_event = { id = murim_shadow_politics.0009 days = 60 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Target Shaolin Temple
+	option = {
+		name = murim_shadow_politics.0006.b
+		add_tyranny = 15
+		# Attacking Shaolin is universally condemned
+		add_prestige = -500
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_shaolin_under_siege
+				value = yes
+			}
+			trigger_event = { id = murim_shadow_politics.0009 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Target ALL orthodox clans simultaneously
+	option = {
+		name = murim_shadow_politics.0006.c
+		trigger = {
+			martial >= 15
+		}
+		add_tyranny = 25
+		add_dread = 50
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_orthodox_purge_active
+				value = yes
+			}
+			trigger_event = { id = murim_shadow_politics.0010 days = 14 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Refuse (defy the Heavenly Demon)
+	option = {
+		name = murim_shadow_politics.0006.d
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0008 days = 7 }
+		}
+		stress_impact = {
+			brave = minor_stress_impact_loss
+			craven = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 7: EXPOSURE - REVEAL HD INFILTRATION TO THE WORLD
+# =================================================================
+murim_shadow_politics.0007 = {
+	type = character_event
+	title = murim_shadow_politics.0007.t
+	desc = murim_shadow_politics.0007.desc
+	theme = diplomacy
+	
+	trigger = {
+		has_character_flag = flag_secretly_anti_hd
+		has_character_modifier = murim_hd_network_mapped
+	}
+	
+	# Option A: Public declaration at Grand Tournament
+	option = {
+		name = murim_shadow_politics.0007.a
+		add_prestige = 500
+		remove_character_flag = flag_heavenly_demon_puppet_emperor
+		remove_character_flag = flag_secretly_anti_hd
+		add_character_modifier = {
+			modifier = murim_exposed_hd_infiltration
+			years = -1
+		}
+		hidden_effect = {
+			remove_global_variable = murim_shadow_puppet_active
+			every_ruler = {
+				limit = { murim_is_martial_artist_trigger = yes }
+				add_opinion = {
+					target = root
+					modifier = murim_deep_admiration_opinion
+				}
+			}
+			# HD furious - assassination chain
+			trigger_event = { id = murim_shadow_politics.0004 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Secret letter to Murim Alliance Leader
+	option = {
+		name = murim_shadow_politics.0007.b
+		add_character_modifier = {
+			modifier = murim_shadow_whistleblower
+			years = 10
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0011 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Use the information as leverage over HD
+	option = {
+		name = murim_shadow_politics.0007.c
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = deceitful
+			}
+		}
+		add_gold = 1000
+		add_character_modifier = {
+			modifier = murim_blackmailing_hd
+			years = 10
+		}
+		# Extremely dangerous
+		hidden_effect = {
+			random = {
+				chance = 40
+				trigger_event = { id = murim_shadow_politics.0004 days = 180 }
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 8: DOUBLE AGENT EXPOSED / PUPPET DEFIES HD
+# =================================================================
+murim_shadow_politics.0008 = {
+	type = character_event
+	title = murim_shadow_politics.0008.t
+	desc = murim_shadow_politics.0008.desc
+	theme = skull
+	
+	# Option A: HD sends assassins
+	option = {
+		name = murim_shadow_politics.0008.a
+		duel = {
+			skill = prowess
+			value = 20
+			25 = {
+				add_prestige = 300
+				add_character_modifier = {
+					modifier = murim_survived_hd_purge
+					years = 10
+				}
+			}
+			50 = {
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_barely_survived_hd
+					years = -1
+				}
+			}
+			25 = {
+				# Death
+				death = { death_reason = death_murder }
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Flee the capital
+	option = {
+		name = murim_shadow_politics.0008.b
+		remove_character_flag = flag_heavenly_demon_puppet_emperor
+		remove_character_flag = flag_secretly_anti_hd
+		add_character_modifier = {
+			modifier = murim_fled_from_hd
+			years = 10
+		}
+		add_prestige = -300
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Beg for forgiveness (grovel to HD)
+	option = {
+		name = murim_shadow_politics.0008.c
+		trigger = {
+			NOT = { has_character_flag = flag_secretly_anti_hd }
+		}
+		add_prestige = -500
+		add_character_modifier = {
+			modifier = murim_hd_broken_puppet
+			years = -1
+		}
+		# Become even MORE controlled puppet
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Fight the Heavenly Demon personally
+	option = {
+		name = murim_shadow_politics.0008.d
+		trigger = {
+			prowess >= 22
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0012 days = 7 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 9: ORTHODOX COALITION AGAINST PUPPET EMPEROR
+# =================================================================
+murim_shadow_politics.0009 = {
+	type = character_event
+	title = murim_shadow_politics.0009.t
+	desc = murim_shadow_politics.0009.desc
+	theme = war
+	
+	# Option A: Lead the coalition against the puppet
+	option = {
+		name = murim_shadow_politics.0009.a
+		trigger = {
+			has_character_flag = flag_orthodox_faction_member
+			murim_is_clan_leader_trigger = yes
+		}
+		add_prestige = 300
+		add_character_modifier = {
+			modifier = murim_anti_puppet_coalition_leader
+			years = 10
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0013 days = 60 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Join the coalition as a fighter
+	option = {
+		name = murim_shadow_politics.0009.b
+		trigger = {
+			has_character_flag = flag_orthodox_faction_member
+		}
+		add_character_modifier = {
+			modifier = murim_coalition_warrior
+			years = 5
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Stay neutral (this is political, not martial)
+	option = {
+		name = murim_shadow_politics.0009.c
+		stress_impact = {
+			brave = minor_stress_impact_gain
+			just = minor_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Support the puppet emperor (unorthodox loyalty)
+	option = {
+		name = murim_shadow_politics.0009.d
+		trigger = {
+			has_character_flag = flag_unorthodox_faction_member
+		}
+		add_character_modifier = {
+			modifier = murim_puppet_defender
+			years = 5
+		}
+		add_dread = 15
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 10: THE GREAT ORTHODOX PURGE (All clans targeted simultaneously)
+# =================================================================
+murim_shadow_politics.0010 = {
+	type = character_event
+	title = murim_shadow_politics.0010.t
+	desc = murim_shadow_politics.0010.desc
+	theme = war
+	
+	trigger = {
+		has_global_variable = murim_orthodox_purge_active
+	}
+	
+	# Option A: Orthodox clans unite (temporary alliance of all 6)
+	option = {
+		name = murim_shadow_politics.0010.a
+		trigger = {
+			has_character_flag = flag_orthodox_faction_member
+		}
+		add_character_modifier = {
+			modifier = murim_united_orthodox_front
+			years = 5
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0013 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Go underground (hide clan identity)
+	option = {
+		name = murim_shadow_politics.0010.b
+		trigger = {
+			has_character_flag = flag_orthodox_faction_member
+		}
+		add_character_modifier = {
+			modifier = murim_hidden_orthodox_identity
+			years = 10
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Flee to foreign lands (Korea, Japan)
+	option = {
+		name = murim_shadow_politics.0010.c
+		add_character_modifier = {
+			modifier = murim_exiled_orthodox
+			years = 10
+		}
+		add_prestige = -200
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Pretend to be unorthodox (infiltrate them)
+	option = {
+		name = murim_shadow_politics.0010.d
+		trigger = { intrigue >= 12 }
+		add_character_modifier = {
+			modifier = murim_orthodox_spy_in_unorthodox
+			years = 10
+		}
+		# Risk of exposure every year
+		hidden_effect = {
+			set_character_flag = flag_undercover_orthodox
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 11: MURIM ALLIANCE LEADER RECEIVES EVIDENCE
+# =================================================================
+murim_shadow_politics.0011 = {
+	type = character_event
+	title = murim_shadow_politics.0011.t
+	desc = murim_shadow_politics.0011.desc
+	theme = diplomacy
+	
+	# Option A: Convene emergency council of all orthodox leaders
+	option = {
+		name = murim_shadow_politics.0011.a
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0009 days = 14 }
+		}
+		add_prestige = 200
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Secret strike team to extract the puppet ruler
+	option = {
+		name = murim_shadow_politics.0011.b
+		hidden_effect = {
+			random = {
+				chance = 50
+				# Success - ruler freed
+				trigger_event = { id = murim_shadow_politics.0014 days = 30 }
+			}
+			random = {
+				chance = 50
+				# Failure - war
+				trigger_event = { id = murim_faction_war.0010 days = 30 }
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Challenge Heavenly Demon directly
+	option = {
+		name = murim_shadow_politics.0011.c
+		trigger = { prowess >= 20 }
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0012 days = 14 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 12: DUEL WITH THE HEAVENLY DEMON
+# =================================================================
+murim_shadow_politics.0012 = {
+	type = character_event
+	title = murim_shadow_politics.0012.t
+	desc = murim_shadow_politics.0012.desc
+	theme = war
+	
+	immediate = {
+		random_living_character = {
+			limit = { has_character_flag = flag_heavenly_demon_leader }
+			save_scope_as = hd_leader
+		}
+	}
+	
+	# Option A: Fight with everything
+	option = {
+		name = murim_shadow_politics.0012.a
+		duel = {
+			skill = prowess
+			value = 22
+			30 = {
+				# Victory over the Heavenly Demon
+				add_prestige = 2000
+				add_character_modifier = {
+					modifier = murim_defeated_heavenly_demon
+					years = -1
+				}
+				hidden_effect = {
+					scope:hd_leader = {
+						add_trait = wounded_3
+						remove_character_flag = flag_has_puppet_ruler
+					}
+					remove_global_variable = murim_shadow_puppet_active
+					trigger_event = { id = murim_shadow_politics.0015 days = 7 }
+				}
+			}
+			40 = {
+				# Draw - both severely wounded
+				add_trait = wounded_3
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_fought_hd_to_draw
+					years = -1
+				}
+			}
+			30 = {
+				# Defeat
+				add_trait = wounded_3
+				random = {
+					chance = 40
+					death = { death_reason = death_duel }
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Use forbidden technique
+	option = {
+		name = murim_shadow_politics.0012.b
+		trigger = {
+			has_character_flag = flag_knows_forbidden_technique
+		}
+		duel = {
+			skill = prowess
+			value = 18
+			50 = {
+				add_prestige = 2000
+				add_character_modifier = {
+					modifier = murim_defeated_hd_with_forbidden
+					years = -1
+				}
+				# But at great cost
+				add_trait = wounded_2
+				hidden_effect = {
+					remove_global_variable = murim_shadow_puppet_active
+					trigger_event = { id = murim_shadow_politics.0015 days = 7 }
+				}
+			}
+			50 = {
+				add_trait = wounded_3
+				add_character_modifier = {
+					modifier = murim_qi_deviation_wartime
+					years = 10
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Retreat (you're outmatched)
+	option = {
+		name = murim_shadow_politics.0012.c
+		add_prestige = -300
+		add_character_modifier = {
+			modifier = murim_fled_from_hd_duel
+			years = 10
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 13: COALITION MARCHES ON THE CAPITAL
+# =================================================================
+murim_shadow_politics.0013 = {
+	type = character_event
+	title = murim_shadow_politics.0013.t
+	desc = murim_shadow_politics.0013.desc
+	theme = war
+	
+	# Option A: Storm the palace
+	option = {
+		name = murim_shadow_politics.0013.a
+		duel = {
+			skill = martial
+			value = 16
+			55 = {
+				add_prestige = 500
+				add_character_modifier = {
+					modifier = murim_palace_liberator
+					years = 10
+				}
+				hidden_effect = {
+					trigger_event = { id = murim_shadow_politics.0014 days = 7 }
+				}
+			}
+			45 = {
+				add_trait = wounded_2
+				add_character_modifier = {
+					modifier = murim_palace_assault_failed
+					years = 5
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Siege and starve them out
+	option = {
+		name = murim_shadow_politics.0013.b
+		add_character_modifier = {
+			modifier = murim_patient_besieger
+			years = 3
+		}
+		hidden_effect = {
+			trigger_event = { id = murim_shadow_politics.0014 days = 180 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Negotiate (puppet emperor may listen)
+	option = {
+		name = murim_shadow_politics.0013.c
+		trigger = { diplomacy >= 15 }
+		random = {
+			chance = 40
+			modifier = {
+				add = 20
+				diplomacy >= 20
+			}
+			trigger_event = { id = murim_shadow_politics.0014 days = 30 }
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 14: PUPPET EMPEROR FREED / HD EXPELLED FROM COURT
+# =================================================================
+murim_shadow_politics.0014 = {
+	type = character_event
+	title = murim_shadow_politics.0014.t
+	desc = murim_shadow_politics.0014.desc
+	theme = diplomacy
+	
+	immediate = {
+		remove_global_variable = murim_shadow_puppet_active
+		remove_global_variable = murim_orthodox_persecution_active
+		remove_global_variable = murim_orthodox_purge_active
+	}
+	
+	# Option A: Pardon the puppet emperor (they were controlled)
+	option = {
+		name = murim_shadow_politics.0014.a
+		add_prestige = 200
+		add_piety = 100
+		hidden_effect = {
+			every_ruler = {
+				limit = { has_character_flag = flag_heavenly_demon_puppet_emperor }
+				remove_character_flag = flag_heavenly_demon_puppet_emperor
+				remove_character_modifier = murim_shadow_emperor_power
+				add_character_modifier = {
+					modifier = murim_freed_puppet_emperor
+					years = 10
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Depose the puppet (they chose this)
+	option = {
+		name = murim_shadow_politics.0014.b
+		add_dread = 20
+		add_prestige = 300
+		hidden_effect = {
+			every_ruler = {
+				limit = { has_character_flag = flag_heavenly_demon_puppet_emperor }
+				remove_character_flag = flag_heavenly_demon_puppet_emperor
+				add_character_modifier = {
+					modifier = murim_deposed_puppet_ruler
+					years = -1
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Execute the puppet publicly
+	option = {
+		name = murim_shadow_politics.0014.c
+		trigger = {
+			OR = {
+				has_trait = sadistic
+				has_trait = callous
+				has_trait = vengeful
+			}
+		}
+		add_dread = 40
+		add_tyranny = 10
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 15: AFTERMATH - HEAVENLY DEMON DEFEATED
+# =================================================================
+murim_shadow_politics.0015 = {
+	type = character_event
+	title = murim_shadow_politics.0015.t
+	desc = murim_shadow_politics.0015.desc
+	theme = diplomacy
+	
+	# Option A: Hunt down all HD remnants
+	option = {
+		name = murim_shadow_politics.0015.a
+		add_dread = 20
+		add_character_modifier = {
+			modifier = murim_hd_hunter
+			years = 10
+		}
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_hd_scattered
+				value = yes
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Offer amnesty to HD members who surrender
+	option = {
+		name = murim_shadow_politics.0015.b
+		add_prestige = 200
+		add_piety = 100
+		add_character_modifier = {
+			modifier = murim_magnanimous_after_victory
+			years = 10
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: The HD will rise again (leave them be)
+	option = {
+		name = murim_shadow_politics.0015.c
+		# Sets up next cycle
+		hidden_effect = {
+			set_global_variable = {
+				name = murim_hd_rebuilding
+				value = yes
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Take the Heavenly Demon's techniques for yourself
+	option = {
+		name = murim_shadow_politics.0015.d
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = deceitful
+			}
+		}
+		add_character_modifier = {
+			modifier = murim_stole_hd_techniques
+			years = -1
+		}
+		add_dread = 30
+		# Risk of corruption
+		hidden_effect = {
+			random = {
+				chance = 30
+				trigger_event = { id = murim_shadow_politics.0016 days = 180 }
+			}
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+}
+
+
+# =================================================================
+# EVENT 16: CORRUPTION FROM HD TECHNIQUES
+# =================================================================
+murim_shadow_politics.0016 = {
+	type = character_event
+	title = murim_shadow_politics.0016.t
+	desc = murim_shadow_politics.0016.desc
+	theme = skull
+	
+	# Option A: The dark qi is consuming you
+	option = {
+		name = murim_shadow_politics.0016.a
+		add_character_modifier = {
+			modifier = murim_dark_qi_corruption
+			years = -1
+		}
+		add_trait = lunatic
+		stress_impact = {
+			base = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option B: Seal the techniques away (destroy what you learned)
+	option = {
+		name = murim_shadow_politics.0016.b
+		remove_character_modifier = murim_stole_hd_techniques
+		add_prestige = 100
+		add_piety = 200
+		stress_impact = {
+			ambitious = major_stress_impact_gain
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option C: Master the corruption (become the new Heavenly Demon?)
+	option = {
+		name = murim_shadow_politics.0016.c
+		trigger = {
+			OR = {
+				has_trait = ambitious
+				has_trait = sadistic
+			}
+			prowess >= 20
+		}
+		add_character_modifier = {
+			modifier = murim_new_heavenly_demon_candidate
+			years = -1
+		}
+		add_dread = 50
+		# This starts a whole new storyline
+		hidden_effect = {
+			set_character_flag = flag_potential_new_hd_leader
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	
+	# Option D: Seek Shaolin's help to purify
+	option = {
+		name = murim_shadow_politics.0016.d
+		trigger = {
+			any_living_character = {
+				has_character_flag = flag_shaolin_member
+				murim_is_clan_leader_trigger = yes
+			}
+		}
+		remove_character_modifier = murim_stole_hd_techniques
+		add_character_modifier = {
+			modifier = murim_shaolin_purified
+			years = 5
+		}
+		add_piety = 300
+		ai_chance = {
+			base = 50
+		}
+	}
+}
